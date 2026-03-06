@@ -28,13 +28,13 @@ This repo is a Claude Code **marketplace**. Add it once, then install the plugin
 
 1. Open the Claude Code chat panel
 2. Click **Manage Plugins** → **Marketplaces** tab
-3. Paste `github:cekura-ai/claude-skills` in the input and click **Add**
+3. Paste `https://github.com/cekura-ai/claude-skills.git` in the input and click **Add**
 4. Switch to the **Plugins** tab and install `cekura-metrics` and `cekura-evals`
 
 ### Terminal CLI
 
 ```
-/plugins add marketplace github:cekura-ai/claude-skills
+/plugins add marketplace https://github.com/cekura-ai/claude-skills.git
 /plugins install cekura-metrics
 /plugins install cekura-evals
 ```
@@ -78,7 +78,7 @@ cp codex/AGENTS.md ./AGENTS.md
 
 | Agent | How to Use |
 |-------|-----------|
-| **Claude Code (VSCode)** | Manage Plugins → Marketplaces → Add `github:cekura-ai/claude-skills` → install plugins |
-| **Claude Code (CLI)** | `/plugins add marketplace github:cekura-ai/claude-skills` then `/plugins install cekura-metrics` |
+| **Claude Code (VSCode)** | Manage Plugins → Marketplaces → Add `https://github.com/cekura-ai/claude-skills.git` → install plugins |
+| **Claude Code (CLI)** | `/plugins add marketplace https://github.com/cekura-ai/claude-skills.git` then `/plugins install cekura-metrics` |
 | **Codex** | Copy `codex/AGENTS.md` to repo root |
 | **Cursor / Other** | Copy `codex/AGENTS.md` to repo root or equivalent rules file |
