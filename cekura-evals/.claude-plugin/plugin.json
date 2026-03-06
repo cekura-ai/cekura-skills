@@ -1,0 +1,10 @@
+{
+  "name": "cekura-evals",
+  "version": "0.1.0",
+  "description": "Manage Cekura evaluators — create, run, and analyze test suites for AI voice agent testing",
+  "author": {
+    "name": "Cekura",
+    "url": "https://cekura.ai"
+  },
+  "keywords": ["cekura", "evaluators", "testing", "voice-ai", "scenarios"]
+}
