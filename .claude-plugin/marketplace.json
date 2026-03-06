@@ -1,0 +1,34 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "cekura-skills",
+  "version": "0.1.0",
+  "description": "Claude Code plugins for Cekura AI voice agent testing and evaluation",
+  "owner": {
+    "name": "Cekura",
+    "email": "support@cekura.ai"
+  },
+  "plugins": [
+    {
+      "name": "cekura-metrics",
+      "description": "Create, improve, and validate metrics for AI voice agent call quality evaluation. Includes metric design best practices, labs improvement workflow, and anti-pattern detection.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Cekura",
+        "email": "support@cekura.ai"
+      },
+      "source": "./plugins/cekura-metrics",
+      "category": "development"
+    },
+    {
+      "name": "cekura-evals",
+      "description": "Create, run, and analyze test suites for AI voice agent testing. Includes eval design best practices, test profiles, conditional actions, and coverage planning.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Cekura",
+        "email": "support@cekura.ai"
+      },
+      "source": "./plugins/cekura-evals",
+      "category": "development"
+    }
+  ]
+}

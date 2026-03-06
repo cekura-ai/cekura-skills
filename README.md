@@ -20,35 +20,26 @@ Create, run, and analyze test suites (evaluators/scenarios) for AI voice agent t
 **Commands:** `create-eval`, `list-evals`, `delete-eval`, `generate-evals`, `create-eval-from-transcript`, `bulk-create-evals`, `run-evals`, `eval-results`, `list-personalities`
 **Agents:** `eval-suite-planner`
 
-## Quick Start
+## Installation
 
-```bash
-git clone https://github.com/cekura-ai/claude-skills.git
-cd claude-skills
-./setup.sh
+This repo is a Claude Code **marketplace**. Register it and install plugins from inside Claude Code:
+
+```
+/plugins add marketplace github:cekura-ai/claude-skills
+/plugins install cekura-metrics
+/plugins install cekura-evals
 ```
 
-This clones the repo and installs both plugins into Claude Code.
-
-## Manual Installation
-
-If you prefer to install plugins individually:
-
-```bash
-git clone https://github.com/cekura-ai/claude-skills.git
-claude install-plugin ./claude-skills/cekura-metrics
-claude install-plugin ./claude-skills/cekura-evals
-```
+That's it — both plugins are now available in all your Claude Code sessions.
 
 ## Prerequisites
 
-- **Claude Code** — [Install Claude Code](https://docs.claude.com/en/docs/claude-code/overview) if you haven't already
+- **Claude Code** — [Install Claude Code](https://code.claude.com/docs/en/overview) if you haven't already
 - **Cekura API key** — Set `CEKURA_API_KEY` environment variable
-- **Cekura MCP server** (optional, recommended) — Provides 84+ structured API tools. Plugins fall back to bash scripts when MCP is not available.
 
 ## MCP Server Setup (Optional)
 
-For the best experience, connect the Cekura MCP server to get structured API access:
+For the best experience, connect the Cekura MCP server to get structured API access with 84+ tools:
 
 ```bash
 claude mcp add cekura-api http://localhost:8000/mcp --transport http --header "X-CEKURA-API-KEY:$CEKURA_API_KEY"
@@ -68,18 +59,16 @@ These plugins don't just provide CRUD commands — they encode best practices le
 
 ## Codex / Other Agents
 
-A Codex-compatible version is available in the [`codex/`](codex/) folder. Copy `codex/AGENTS.md` into your repo root to give Codex (or any agent that reads `AGENTS.md`) the same domain expertise:
+A Codex-compatible version is available in [`codex/AGENTS.md`](codex/AGENTS.md). Copy it into your repo root to give Codex (or any agent that reads `AGENTS.md`) the same domain expertise:
 
 ```bash
-cp claude-skills/codex/AGENTS.md ./AGENTS.md
+cp codex/AGENTS.md ./AGENTS.md
 ```
-
-This is a single consolidated file covering metric design, eval design, API reference, labs workflow, and common anti-patterns — all the knowledge from both plugins in a format any LLM agent can use.
 
 ## Compatibility
 
 | Agent | How to Use |
 |-------|-----------|
-| **Claude Code** | `./setup.sh` — full plugin experience with skills, commands, agents |
+| **Claude Code** | `/plugins add marketplace github:cekura-ai/claude-skills` then `/plugins install cekura-metrics` |
 | **Codex** | Copy `codex/AGENTS.md` to repo root |
 | **Cursor / Other** | Copy `codex/AGENTS.md` to repo root or equivalent rules file |

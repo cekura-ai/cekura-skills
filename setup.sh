@@ -1,21 +1,23 @@
 #!/bin/bash
-# Install Cekura Claude Code plugins
+# Install Cekura plugins from this marketplace
 # Usage: ./setup.sh
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
-echo "Installing Cekura Claude Code plugins..."
-
-claude install-plugin "$SCRIPT_DIR/cekura-metrics"
-echo "  Installed cekura-metrics"
-
-claude install-plugin "$SCRIPT_DIR/cekura-evals"
-echo "  Installed cekura-evals"
-
+echo "Registering Cekura marketplace..."
 echo ""
-echo "Done. Both plugins are now available in Claude Code."
+echo "Run these commands inside Claude Code:"
+echo ""
+echo "  /plugins add marketplace github:cekura-ai/claude-skills"
+echo ""
+echo "Then install the plugins:"
+echo ""
+echo "  /plugins install cekura-metrics"
+echo "  /plugins install cekura-evals"
+echo ""
+echo "Or install both at once from your terminal:"
+echo ""
+echo "  claude /plugins add marketplace github:cekura-ai/claude-skills"
 echo ""
 echo "Optional: Set up the Cekura MCP server for full API access:"
 echo "  claude mcp add cekura-api http://localhost:8000/mcp --transport http --header \"X-CEKURA-API-KEY:\$CEKURA_API_KEY\""
