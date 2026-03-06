@@ -66,8 +66,20 @@ These plugins don't just provide CRUD commands — they encode best practices le
 4. **Coverage planning** — Agent for analyzing agent descriptions and designing comprehensive test suites
 5. **Anti-pattern detection** — Warns about issues like missing baseline metrics, overly specific expected outcomes, and instruction vs personality confusion
 
+## Codex / Other Agents
+
+A Codex-compatible version is available in the [`codex/`](codex/) folder. Copy `codex/AGENTS.md` into your repo root to give Codex (or any agent that reads `AGENTS.md`) the same domain expertise:
+
+```bash
+cp claude-skills/codex/AGENTS.md ./AGENTS.md
+```
+
+This is a single consolidated file covering metric design, eval design, API reference, labs workflow, and common anti-patterns — all the knowledge from both plugins in a format any LLM agent can use.
+
 ## Compatibility
 
-These plugins are built for **Claude Code** using its plugin system (skills, commands, agents). They are not directly compatible with other coding agents (Codex, Cursor, etc.) since those use different plugin/extension architectures.
-
-However, the knowledge content (skill files, reference docs, examples) is plain markdown and can be adapted for use with other tools — the domain expertise is transferable even if the plugin wiring is Claude Code-specific.
+| Agent | How to Use |
+|-------|-----------|
+| **Claude Code** | `./setup.sh` — full plugin experience with skills, commands, agents |
+| **Codex** | Copy `codex/AGENTS.md` to repo root |
+| **Cursor / Other** | Copy `codex/AGENTS.md` to repo root or equivalent rules file |
