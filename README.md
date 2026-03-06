@@ -22,24 +22,37 @@ Create, run, and analyze test suites (evaluators/scenarios) for AI voice agent t
 
 ## Installation
 
-This repo is a Claude Code **marketplace**. Add it once, then install the plugins.
+This repo is a Claude Code **marketplace**. Register it, then install the plugins you want.
 
-### VSCode (Claude Code extension)
+### Step 1: Register the marketplace
 
-1. Open the Claude Code chat panel
-2. Click **Manage Plugins** → **Marketplaces** tab
-3. Paste `https://github.com/cekura-ai/claude-skills.git` in the input and click **Add**
-4. Switch to the **Plugins** tab and install `cekura-metrics` and `cekura-evals`
+**Option A — Direct (recommended):**
 
-### Terminal CLI
+**VSCode:** Open Claude Code chat → **Manage Plugins** → **Marketplaces** tab → paste the URL below and click **Add**
 
+**Terminal CLI:** Inside a Claude Code session, run:
 ```
 /plugins add marketplace https://github.com/cekura-ai/claude-skills.git
-/plugins install cekura-metrics
-/plugins install cekura-evals
 ```
 
-Both plugins are now available in all your Claude Code sessions.
+**Option B — From a local clone:**
+
+If you've already cloned the repo, you still need to register it as a marketplace:
+
+**VSCode:** **Manage Plugins** → **Marketplaces** tab → paste the local path to the cloned repo and click **Add**
+
+**Terminal CLI:** Inside a Claude Code session, run:
+```
+/plugins add marketplace /path/to/claude-skills
+```
+
+### Step 2: Install plugins
+
+**VSCode:** Switch to the **Plugins** tab → search for `cekura` → install `cekura-metrics` and/or `cekura-evals`
+
+**Terminal CLI:** Navigate to the **Discover** tab (arrow keys or tab) → search for `cekura` → toggle the plugin(s) you want → press **Enter** → choose scope (project or global)
+
+Both plugins are now available in your Claude Code sessions.
 
 ## Prerequisites
 
@@ -79,6 +92,6 @@ cp codex/AGENTS.md ./AGENTS.md
 | Agent | How to Use |
 |-------|-----------|
 | **Claude Code (VSCode)** | Manage Plugins → Marketplaces → Add `https://github.com/cekura-ai/claude-skills.git` → install plugins |
-| **Claude Code (CLI)** | `/plugins add marketplace https://github.com/cekura-ai/claude-skills.git` then `/plugins install cekura-metrics` |
+| **Claude Code (CLI)** | `/plugins add marketplace https://github.com/cekura-ai/claude-skills.git` → Discover → search `cekura` → install |
 | **Codex** | Copy `codex/AGENTS.md` to repo root |
 | **Cursor / Other** | Copy `codex/AGENTS.md` to repo root or equivalent rules file |
