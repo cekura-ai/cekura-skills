@@ -24,22 +24,22 @@ Create, run, and analyze test suites (evaluators/scenarios) for AI voice agent t
 
 This repo is a Claude Code **marketplace**. Register it, then install the plugins you want.
 
-### Step 1: Register the marketplace
+### VSCode (Claude Code extension)
 
-Inside a Claude Code session (VSCode or terminal CLI):
+1. Open the Claude Code chat panel
+2. Click **Manage Plugins** → **Marketplaces** tab
+3. Paste `https://github.com/cekura-ai/claude-skills.git` and click **Add**
+4. Switch to the **Plugins** tab → search for `cekura` → install `cekura-metrics` and/or `cekura-evals`
 
-1. Open `/plugins` → go to the **Marketplaces** tab
-2. Select **Add Marketplace**
+### Terminal CLI
+
+1. Inside a Claude Code session, run `/plugins`
+2. Go to the **Marketplaces** tab → select **Add Marketplace**
 3. Paste `https://github.com/cekura-ai/claude-skills.git` and confirm
+4. Go to the **Discover** tab → search for `cekura`
+5. Select the plugin(s) you want → press **Enter** → choose scope (project or global)
 
-> If you've already cloned the repo locally, you can paste the local path instead.
-
-### Step 2: Install plugins
-
-1. Go to the **Discover** tab
-2. Search for `cekura` to see both plugins
-3. Select the plugin(s) you want to install
-4. Choose the scope (project or global)
+> If you've already cloned the repo locally, you can paste the local path instead of the GitHub URL.
 
 Both plugins are now available in your Claude Code sessions.
 
@@ -80,6 +80,7 @@ cp codex/AGENTS.md ./AGENTS.md
 
 | Agent | How to Use |
 |-------|-----------|
-| **Claude Code (VSCode / CLI)** | `/plugins` → Marketplaces → Add `https://github.com/cekura-ai/claude-skills.git` → Discover → install |
+| **Claude Code (VSCode)** | Manage Plugins → Marketplaces → Add `https://github.com/cekura-ai/claude-skills.git` → install plugins |
+| **Claude Code (CLI)** | `/plugins` → Marketplaces → Add Marketplace → paste URL → Discover → install |
 | **Codex** | Copy `codex/AGENTS.md` to repo root |
 | **Cursor / Other** | Copy `codex/AGENTS.md` to repo root or equivalent rules file |
