@@ -70,7 +70,23 @@ These plugins don't just provide CRUD commands — they encode best practices le
 
 ## Codex / Other Agents
 
-A Codex-compatible version is available in [`codex/AGENTS.md`](codex/AGENTS.md). Copy it into your repo root to give Codex (or any agent that reads `AGENTS.md`) the same domain expertise:
+### Codex — Install skills (recommended)
+
+Install the skills directly into Codex for full reuse and discovery:
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo cekura-ai/claude-skills \
+  --path plugins/cekura-metrics/skills/metric-design \
+         plugins/cekura-metrics/skills/labs-workflow \
+         plugins/cekura-evals/skills/eval-design
+```
+
+Restart Codex after install.
+
+### Quick behavior preset (Codex, Cursor, or any agent)
+
+Copy [`codex/AGENTS.md`](codex/AGENTS.md) into your repo root for a single-file behavior preset with all domain knowledge:
 
 ```bash
 cp codex/AGENTS.md ./AGENTS.md
@@ -82,5 +98,5 @@ cp codex/AGENTS.md ./AGENTS.md
 |-------|-----------|
 | **Claude Code (VSCode)** | Manage Plugins → Marketplaces → Add `https://github.com/cekura-ai/claude-skills.git` → install plugins |
 | **Claude Code (CLI)** | `/plugins` → Marketplaces → Add Marketplace → paste URL → Discover → install |
-| **Codex** | Copy `codex/AGENTS.md` to repo root |
+| **Codex** | Install skills via `skill-installer` (see above) or copy `codex/AGENTS.md` to repo root |
 | **Cursor / Other** | Copy `codex/AGENTS.md` to repo root or equivalent rules file |
