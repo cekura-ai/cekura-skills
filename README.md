@@ -22,7 +22,7 @@ Create, run, and analyze test suites (evaluators/scenarios) for AI voice agent t
 
 ## Installation
 
-This is a Claude Code **marketplace**. Register it, then install the plugins you want.
+This repo is a Claude Code **marketplace**. Register it, then install the plugins you want.
 
 ### VSCode (Claude Code extension)
 
