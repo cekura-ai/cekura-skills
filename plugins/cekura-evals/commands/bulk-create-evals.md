@@ -23,6 +23,11 @@ Create multiple evaluators at once from structured input. Follows the proven Kou
    source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
    list_personalities
    ```
+   - Metrics to attach (REQUIRED — every eval needs metrics):
+   ```bash
+   list_metrics "agent=AGENT_ID"
+   ```
+   Collect IDs for: Expected Outcome, Infrastructure Issues, Tool Call Success, Latency at minimum.
    - Test profiles: List existing or create new ones for identity data:
    ```bash
    list_test_profiles "agent_id=AGENT_ID"
@@ -45,10 +50,10 @@ Create multiple evaluators at once from structured input. Follows the proven Kou
 
 5. **Get confirmation**: "Ready to create [N] evaluators for agent [ID]?"
 
-6. **Create sequentially**: Build each eval from the input and submit:
+6. **Create sequentially**: Build each eval from the input and submit. ALWAYS include `metrics` and `tool_ids`:
 ```bash
 for each row:
-  create_scenario '{"name": "...", "personality": PID, "agent": AID, ...}'
+  create_scenario '{"name": "...", "personality": PID, "agent": AID, "metrics": [MID1, MID2, ...], "tool_ids": ["TOOL_END_CALL"], ...}'
 ```
 
 7. **Report results**: Show created vs failed, with error details for failures.

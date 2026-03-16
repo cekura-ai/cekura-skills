@@ -32,9 +32,18 @@ Create a single evaluator (test scenario) on the Cekura platform. The eval-desig
    list_personalities
    ```
 
-4. **Read the agent description** to understand available workflows and decision points.
+4. **Read the agent description** to understand available workflows and decision points:
+   ```bash
+   get_agent_description AGENT_ID
+   ```
 
-5. **Set up test profile**: Check existing profiles first — clients often pre-build profiles tested against their backend. Only create new ones if needed.
+5. **Get baseline metrics**: List existing metrics for the agent/project to attach to the evaluator. Every eval MUST have metrics attached — without them, runs only report call completion, not correctness.
+   ```bash
+   list_metrics "agent=AGENT_ID"
+   ```
+   Collect the IDs for at minimum: Expected Outcome, Infrastructure Issues, Tool Call Success, Latency. If these don't exist yet, create them first using the cekura-metrics plugin.
+
+6. **Set up test profile**: Check existing profiles first — clients often pre-build profiles tested against their backend. Only create new ones if needed.
    ```bash
    # Always check existing profiles first
    list_test_profiles "agent_id=AGENT_ID"
@@ -43,24 +52,27 @@ Create a single evaluator (test scenario) on the Cekura platform. The eval-desig
    ```
    Never hardcode identity data in instructions — always use test profiles.
 
-6. **Write instructions**: First-person behavioral description from the testing agent's perspective. Wrap in `<scenario>` tags with step-by-step format.
+7. **Write instructions**: First-person behavioral description from the testing agent's perspective. Wrap in `<scenario>` tags with step-by-step format.
    - Reference test profile data: "Provide your date of birth when asked for verification"
    - Use template variables if needed: `{{test_profile.date_of_birth}}` or `{{test_profile['key']}}`
    - Be explicit about exact phrases when mock behavior depends on them
    - For conditional actions: build the role + conditions array instead
 
-7. **Write expected outcome**: Define what the main agent should achieve. Agent-centric, specific, measurable.
+8. **Write expected outcome**: Define what the main agent should achieve. Agent-centric, specific, measurable.
 
-8. **Set tags**: Category code, priority, unique ID.
+9. **Set tags**: Category code, priority, unique ID.
 
-9. **Review with user**: Present the full payload before creating.
+10. **Review with user**: Present the full payload before creating.
 
-10. **Create via API**:
+11. **Create via API** — ALWAYS include `metrics` and `tool_ids`:
 ```bash
-create_scenario '{"name": "NAME", "personality": PID, "agent": AID, "instructions": "...", "expected_outcome_prompt": "...", "test_profile": PROFILE_ID, "tags": ["cat", "priority", "id"]}'
+create_scenario '{"name": "NAME", "personality": PID, "agent": AID, "instructions": "...", "expected_outcome_prompt": "...", "test_profile": PROFILE_ID, "metrics": [METRIC_ID1, METRIC_ID2, ...], "tool_ids": ["TOOL_END_CALL"], "tags": ["cat", "priority", "id"]}'
 ```
 
-11. **Offer to run**: Ask if the user wants to execute the eval immediately (text mode for quick iteration, voice for final validation).
+12. **Offer to run**: Ask if the user wants to execute the eval immediately (text mode for quick iteration, voice for final validation).
+```bash
+run_scenarios '{"agent_id": AID, "scenarios": [SCENARIO_ID]}'
+```
 
 ## Key Reminders
 
@@ -70,6 +82,8 @@ create_scenario '{"name": "NAME", "personality": PID, "agent": AID, "instruction
 - Always use test profiles for identity data — never hardcode
 - Personality ID is required — list available ones first. Personalities control voice characteristics (accent, interruption, noise) — instructions cannot alter how the testing agent sounds, only what it says.
 - **Enable tools**: Add `TOOL_END_CALL` (so testing agent can hang up), `TOOL_END_CALL_ON_TRANSFER` (for transfer scenarios), `TOOL_DTMF` (for IVR flows). Missing tools = elongated calls and wasted credits.
-- **Attach baseline metrics**: Every eval should have Expected Outcome, Infrastructure Issues, Tool Call Success, and Latency metrics. Without them, runs report pass/fail based on call completion, not correctness.
+- **ALWAYS attach metrics**: Include `"metrics": [ID1, ID2, ...]` in the creation payload. Every eval needs at minimum Expected Outcome, Infrastructure Issues, Tool Call Success, and Latency. Without them, runs report pass/fail based on call completion, not correctness.
 - Don't include examples of what the main agent "may say" — reference actions by topic instead
 - For deterministic flows, use conditional actions (see eval-design skill)
+- **NEVER write filler steps** like "Listen to the agent's response", "Wait for agent to speak", "End the call politely", or "Respond accordingly". The testing agent does these automatically. Every instruction step must describe a specific caller action.
+- **Consider using generate-evals first**: The generate API often produces better initial scenarios than manual creation. Use manual creation for specific edge cases, red-team tests, or when the generate output needs supplementing.

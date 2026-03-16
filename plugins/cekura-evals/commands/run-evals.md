@@ -28,27 +28,34 @@ list_scenarios "agent=AGENT_ID"
    - Execution mode
    - Estimated time/cost implications
 
-4. **Execute**:
+4. **Execute using batch endpoint** (preferred for multiple evals):
 ```bash
-# Single eval
+# Batch run (preferred — handles multiple evals in one call)
+run_scenarios '{"agent_id": AGENT_ID, "scenarios": [ID1, ID2, ID3], "frequency": 1}'
+
+# Single eval (alternative — use individual run endpoints)
 run_voice "SCENARIO_ID"
 # or
 run_text "SCENARIO_ID"
-
-# Multiple evals — run sequentially
-for id in SCENARIO_IDS; do
-  run_voice "$id"
-done
 ```
 
-5. **Monitor**: Offer to check run status:
+The batch `run_scenarios` endpoint is the standard way to execute multiple evaluators. It accepts:
+- `agent_id` (required): The agent to test
+- `scenarios` (required): Array of scenario IDs
+- `frequency` (optional): How many times each scenario runs (default: 1)
+- `personality_ids` (optional): Override default personalities
+- `test_profile_ids` (optional): Override default test profiles
+
+5. **Monitor**: Check run status:
 ```bash
 list_runs "scenario=SCENARIO_ID"
+# or check specific result
+list_results "agent=AGENT_ID"
 ```
 
 6. **After completion**: Offer to fetch results:
 ```bash
-list_results "agent=AGENT_ID"
+get_result "RESULT_ID"
 ```
 
 ## Execution Modes
