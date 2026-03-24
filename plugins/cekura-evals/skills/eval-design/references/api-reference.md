@@ -8,6 +8,13 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
 
 `https://api.cekura.ai`
 
+## Agent Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/test_framework/v1/agents/` | List agents |
+| GET | `/test_framework/v1/agents/{id}/` | Get agent (includes description) |
+
 ## Evaluator/Scenario Endpoints
 
 | Method | Path | Purpose |
@@ -25,10 +32,26 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | `/test_framework/v1/scenarios/{id}/run-voice/` | Run as voice call |
-| POST | `/test_framework/v1/scenarios/{id}/run-text/` | Run as text chat |
-| POST | `/test_framework/v1/scenarios/{id}/run-websocket/` | Run via WebSocket |
-| POST | `/test_framework/v1/scenarios/{id}/run-pipecat/` | Run via Pipecat |
+| POST | `/test_framework/v1/scenarios/run_scenarios/` | Batch run multiple scenarios (preferred) |
+| POST | `/test_framework/v1/scenarios/{id}/run-voice/` | Run single as voice call |
+| POST | `/test_framework/v1/scenarios/{id}/run-text/` | Run single as text chat |
+| POST | `/test_framework/v1/scenarios/{id}/run-websocket/` | Run single via WebSocket |
+| POST | `/test_framework/v1/scenarios/{id}/run-pipecat/` | Run single via Pipecat |
+
+### Batch Run Schema
+
+```json
+POST /test_framework/v1/scenarios/run_scenarios/
+{
+  "agent_id": 12345,
+  "scenarios": [111, 222, 333],
+  "frequency": 1,
+  "personality_ids": [],
+  "test_profile_ids": []
+}
+```
+
+Returns a result object with `id`, `status`, and `runs` array.
 
 ## Result Endpoints
 

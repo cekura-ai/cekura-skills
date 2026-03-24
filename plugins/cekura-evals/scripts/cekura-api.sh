@@ -10,6 +10,8 @@ RESULTS_URL="${CEKURA_BASE_URL}/test_framework/v1/results"
 RUNS_URL="${CEKURA_BASE_URL}/test_framework/v1/runs"
 TEST_PROFILES_URL="${CEKURA_BASE_URL}/test_framework/v1/test-profiles"
 CALLS_URL="${CEKURA_BASE_URL}/observability/v1/call-logs-external"
+AGENTS_URL="${CEKURA_BASE_URL}/test_framework/v1/agents"
+METRICS_URL="${CEKURA_BASE_URL}/test_framework/v1/metrics"
 
 # Resolve API key: env var first, then .claude/cekura-evals.local.md frontmatter
 resolve_api_key() {
@@ -23,6 +25,42 @@ resolve_api_key() {
     return
   fi
   echo ""
+}
+
+# --- Agents ---
+
+get_agent() {
+  local api_key
+  api_key=$(resolve_api_key)
+  local agent_id="$1"
+  curl -s -X GET "${AGENTS_URL}/${agent_id}/" \
+    -H "X-CEKURA-API-KEY: ${api_key}"
+}
+
+get_agent_description() {
+  local api_key
+  api_key=$(resolve_api_key)
+  local agent_id="$1"
+  curl -s -X GET "${AGENTS_URL}/${agent_id}/" \
+    -H "X-CEKURA-API-KEY: ${api_key}" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('description','') or d.get('agent_description',''))" 2>/dev/null
+}
+
+list_agents() {
+  local api_key
+  api_key=$(resolve_api_key)
+  local query_params="$1"
+  curl -s -X GET "${AGENTS_URL}/?${query_params}" \
+    -H "X-CEKURA-API-KEY: ${api_key}"
+}
+
+# --- Metrics (cross-plugin helper) ---
+
+list_metrics() {
+  local api_key
+  api_key=$(resolve_api_key)
+  local query_params="$1"
+  curl -s -X GET "${METRICS_URL}/?${query_params}" \
+    -H "X-CEKURA-API-KEY: ${api_key}"
 }
 
 # --- Evaluator/Scenario CRUD ---
@@ -103,6 +141,16 @@ create_from_transcript() {
 }
 
 # --- Execution ---
+
+run_scenarios() {
+  local api_key
+  api_key=$(resolve_api_key)
+  local payload="$1"  # JSON: {"agent_id": INT, "scenarios": [IDs], "frequency": 1, "personality_ids": [], "test_profile_ids": []}
+  curl -s -X POST "${SCENARIOS_URL}/run_scenarios/" \
+    -H "X-CEKURA-API-KEY: ${api_key}" \
+    -H "Content-Type: application/json" \
+    -d "$payload"
+}
 
 run_voice() {
   local api_key
