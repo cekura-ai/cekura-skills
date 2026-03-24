@@ -24,33 +24,22 @@ Create, run, and analyze test suites (evaluators/scenarios) for AI voice agent t
 
 This repo is a Claude Code **marketplace**. Register it, then install the plugins you want.
 
-### Step 1: Register the marketplace
+### VSCode (Claude Code extension)
 
-**Option A — Direct (recommended):**
+1. Open the Claude Code chat panel
+2. Click **Manage Plugins** → **Marketplaces** tab
+3. Paste `https://github.com/cekura-ai/claude-skills.git` and click **Add**
+4. Switch to the **Plugins** tab → search for `cekura` → install `cekura-metrics` and/or `cekura-evals`
 
-**VSCode:** Open Claude Code chat → **Manage Plugins** → **Marketplaces** tab → paste the URL below and click **Add**
+### Terminal CLI
 
-**Terminal CLI:** Inside a Claude Code session, run:
-```
-/plugins add marketplace https://github.com/cekura-ai/claude-skills.git
-```
+1. Inside a Claude Code session, run `/plugins`
+2. Go to the **Marketplaces** tab → select **Add Marketplace**
+3. Paste `https://github.com/cekura-ai/claude-skills.git` and confirm
+4. Go to the **Discover** tab → search for `cekura`
+5. Select the plugin(s) you want → press **Enter** → choose scope (project or global)
 
-**Option B — From a local clone:**
-
-If you've already cloned the repo, you still need to register it as a marketplace:
-
-**VSCode:** **Manage Plugins** → **Marketplaces** tab → paste the local path to the cloned repo and click **Add**
-
-**Terminal CLI:** Inside a Claude Code session, run:
-```
-/plugins add marketplace /path/to/claude-skills
-```
-
-### Step 2: Install plugins
-
-**VSCode:** Switch to the **Plugins** tab → search for `cekura` → install `cekura-metrics` and/or `cekura-evals`
-
-**Terminal CLI:** Navigate to the **Discover** tab (arrow keys or tab) → search for `cekura` → toggle the plugin(s) you want → press **Enter** → choose scope (project or global)
+> If you've already cloned the repo locally, you can paste the local path instead of the GitHub URL.
 
 Both plugins are now available in your Claude Code sessions.
 
@@ -81,7 +70,23 @@ These plugins don't just provide CRUD commands — they encode best practices le
 
 ## Codex / Other Agents
 
-A Codex-compatible version is available in [`codex/AGENTS.md`](codex/AGENTS.md). Copy it into your repo root to give Codex (or any agent that reads `AGENTS.md`) the same domain expertise:
+### Codex — Install skills (recommended)
+
+Install the skills directly into Codex for full reuse and discovery:
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo cekura-ai/claude-skills \
+  --path plugins/cekura-metrics/skills/metric-design \
+         plugins/cekura-metrics/skills/labs-workflow \
+         plugins/cekura-evals/skills/eval-design
+```
+
+Restart Codex after install.
+
+### Quick behavior preset (Codex, Cursor, or any agent)
+
+Copy [`codex/AGENTS.md`](codex/AGENTS.md) into your repo root for a single-file behavior preset with all domain knowledge:
 
 ```bash
 cp codex/AGENTS.md ./AGENTS.md
@@ -92,6 +97,6 @@ cp codex/AGENTS.md ./AGENTS.md
 | Agent | How to Use |
 |-------|-----------|
 | **Claude Code (VSCode)** | Manage Plugins → Marketplaces → Add `https://github.com/cekura-ai/claude-skills.git` → install plugins |
-| **Claude Code (CLI)** | `/plugins add marketplace https://github.com/cekura-ai/claude-skills.git` → Discover → search `cekura` → install |
-| **Codex** | Copy `codex/AGENTS.md` to repo root |
+| **Claude Code (CLI)** | `/plugins` → Marketplaces → Add Marketplace → paste URL → Discover → install |
+| **Codex** | Install skills via `skill-installer` (see above) or copy `codex/AGENTS.md` to repo root |
 | **Cursor / Other** | Copy `codex/AGENTS.md` to repo root or equivalent rules file |
