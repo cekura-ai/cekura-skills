@@ -2,7 +2,7 @@
 name: eval-results
 description: Fetch Cekura eval results and summarize common workflow issues
 argument-hint: "[agent ID or result ID]"
-allowed-tools: ["Bash", "AskUserQuestion", "Read", "Write"]
+allowed-tools: ["AskUserQuestion", "Read", "Write", "mcp__cekura__results_list", "mcp__cekura__results_retrieve"]
 ---
 
 # Eval Results & Analysis
@@ -12,12 +12,8 @@ Fetch evaluation results and provide analysis of common workflow issues.
 ## Process
 
 1. **Get results**: Fetch recent results for an agent or a specific result set:
-```bash
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-list_results "agent=AGENT_ID"
-# or specific result
-get_result "RESULT_ID"
-```
+   Use `mcp__cekura__results_list` with agent or scenario filters.
+   Use `mcp__cekura__results_retrieve` for a specific result.
 
 2. **Parse results**: For each result, extract:
    - Scenario name and tags

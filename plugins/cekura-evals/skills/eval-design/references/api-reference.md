@@ -10,10 +10,14 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
 
 ## Agent Endpoints
 
+**Note:** The agent endpoint is `/aiagents/`, NOT `/agents/` — `/agents/` returns 404.
+
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/test_framework/v1/agents/` | List agents |
-| GET | `/test_framework/v1/agents/{id}/` | Get agent (includes description) |
+| GET | `/test_framework/v1/aiagents/` | List agents (filter by `project_id`) |
+| GET | `/test_framework/v1/aiagents/{id}/` | Get agent (includes `description` field) |
+| GET | `/test_framework/v1/aiagents/{id}/tools/` | List mock tools on agent |
+| PATCH | `/test_framework/v1/aiagents/{id}/tools/{tool_id}/` | Update mock tool mappings |
 
 ## Evaluator/Scenario Endpoints
 
@@ -25,8 +29,13 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
 | PATCH | `/test_framework/v1/scenarios/{id}/` | Update evaluator |
 | DELETE | `/test_framework/v1/scenarios/{id}/` | Delete evaluator |
 | POST | `/test_framework/v1/scenarios/generate-bg/` | Auto-generate evaluators (background) |
-| GET | `/test_framework/v1/scenarios/{progress_id}/progress/` | Check generation progress |
+| GET | `/test_framework/v1/scenarios/generate-progress/` | Check generation progress (`?progress_id=<id>`) |
 | POST | `/test_framework/v1/scenarios/from-transcript/` | Create evaluator from call transcript |
+| POST | `/test_framework/v1/scenarios/create_folder/` | Create scenario folder |
+| POST | `/test_framework/v1/scenarios/delete_folder/` | Delete scenario folder |
+| POST | `/test_framework/v1/scenarios/rename_folder/` | Rename scenario folder |
+| POST | `/test_framework/v1/scenarios/move_folder/` | Move scenario to folder |
+| GET | `/test_framework/v1/scenarios/folders/` | List scenario folders |
 
 ## Execution Endpoints
 
@@ -116,12 +125,41 @@ Returns a result object with `id`, `status`, and `runs` array.
 ```json
 POST /test_framework/v1/scenarios/generate-bg/
 {
-  "agent": 12345,
-  "count": 10
+  "agent_id": 12345,
+  "num_scenarios": 10,
+  "extra_instructions": "Focus on cancellation edge cases and tool failure scenarios",
+  "personalities": [693],
+  "generate_expected_outcomes": true,
+  "folder_path": "My Test Folder",
+  "tags": ["generated", "cancellation"],
+  "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"]
 }
 ```
 
-Returns a progress_id to poll for completion.
+Returns `{"progress_id": "<uuid>"}`. Poll with `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<uuid>`.
+
+Progress response:
+```json
+{
+  "total_scenarios": 10,
+  "completed_scenarios": 10,
+  "failed_scenarios": 0,
+  "scenarios_list": [{"id": 123, "name": "..."}]
+}
+```
+
+**Gotchas:** Generation may produce fewer than requested. `scenario_language` defaults to "en" regardless of content — PATCH after. `first_message` may get greetings instead of exact questions — PATCH after.
+
+### Create Folder
+
+```json
+POST /test_framework/v1/scenarios/create_folder/
+{
+  "name": "Mock Tool Scenarios",
+  "project_id": 2998,
+  "parent_path": ""
+}
+```
 
 ### Create from Transcript
 
@@ -173,6 +211,14 @@ Creates an evaluator based on a real call transcript.
   }
 }
 ```
+
+## Phone Number Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/test_framework/v1/phone-numbers/` | List phone numbers (`?project=<id>`) |
+
+Filter for unassigned (`scenario_name: null`), US format (`+1` prefix, 12 chars). Assign via `PATCH /scenarios/{id}/` with `inbound_phone_number: <phone_id>`.
 
 ## Call Log Endpoints (for transcript-based creation)
 
