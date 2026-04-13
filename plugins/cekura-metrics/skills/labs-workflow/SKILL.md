@@ -6,7 +6,7 @@ description: >
   "review metric results", "find misaligned metrics", "iterate on metric quality",
   or discusses the metric improvement cycle, feedback workflow, or labs pipeline
   in the Cekura platform.
-version: 0.1.0
+version: 0.3.0
 ---
 
 # Cekura Labs Workflow
@@ -15,9 +15,21 @@ version: 0.1.0
 
 Guide the metric improvement cycle: identify misaligned metric results, leave structured feedback, run the labs improvement pipeline, and validate changes. This workflow transforms metric quality from initial draft to production-ready through systematic iteration.
 
+## Manual Fix First, Then Labs
+
+**When metrics have systemic issues (high false-fail rates), do NOT jump straight to labs feedback.** Instead:
+
+1. **Read failure explanations** and categorize root causes (e.g., cross-pollination from other flows, extra_questions flagged, end-of-call protocol violations, should-be-N/A cases)
+2. **Write manual prompt fixes** targeting the dominant failure categories — add SCOPE & FOCUS, DO NOT FLAG, narrow FAILURE CONDITIONS
+3. **PATCH the updated descriptions** via API
+4. **Re-evaluate a sample** of 20-30 calls per metric to validate the fixes
+5. **THEN use labs feedback** for remaining edge cases that manual fixes didn't catch
+
+This avoids wasting labs iterations on issues that are clearly fixable by prompt editing. Labs is for nuanced edge cases, not systemic prompt design flaws.
+
 ## The Labs Improvement Cycle
 
-The full cycle for improving a metric:
+For edge case refinement after manual fixes are validated:
 
 1. **Identify misalignment** — Find calls where metric results seem wrong
 2. **Leave feedback** — Vote agree/disagree with explanation on specific results
@@ -32,14 +44,8 @@ The full cycle for improving a metric:
 
 Review recent call evaluations to find suspicious results:
 
-```bash
-# List recent calls for an agent
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-list_calls "agent=AGENT_ID&limit=50"
-
-# Get evaluation results for a specific call
-get_call_evaluation "CALL_ID"
-```
+Use `mcp__cekura__call_logs_list` with agent filters to list recent calls.
+Use `mcp__cekura__call_logs_retrieve` with a call ID to get evaluation results.
 
 Look for:
 - FALSE results that seem like they should be TRUE (false negatives)
@@ -59,12 +65,7 @@ To systematically find misalignment:
 
 ## Step 2: Leave Feedback
 
-Use the `mark_metric_vote` endpoint to leave structured feedback:
-
-```bash
-# Vote on a metric result for a specific call
-mark_metric_vote "CALL_ID" '{"metric_id": METRIC_ID, "vote": "disagree", "feedback": "The metric failed this call because the agent asked two questions in one turn, but they were related follow-ups about the same topic (address confirmation). This should be a PASS per the spirit-vs-letter principle."}'
-```
+Use the mark_metric_vote endpoint to leave structured feedback. Submit via `mcp__cekura__call_logs_retrieve` to get the call, then use the feedback/vote API.
 
 ### Good Feedback Patterns
 
@@ -92,24 +93,27 @@ Track feedback progress:
 
 Once 6+ feedback instances are accumulated:
 
-```bash
-# Trigger auto-improvement for a metric
-auto_improve_metric "METRIC_ID"
-```
+Use `mcp__cekura__metrics_run_reviews_create` with the metric ID to trigger auto-improvement.
 
 Labs analyzes the feedback and suggests changes to the metric prompt. Review the suggested changes carefully:
 - Do the changes address the feedback patterns?
 - Are the changes too broad (might break other cases)?
 - Do the safeguarding examples align with the feedback?
 
+## Cost Guard — Never Evaluate >100 Calls Without Confirmation
+
+Each evaluation costs the client real money. Before triggering any bulk evaluation:
+1. Query the call count first (use `page_size=1` and read the response count)
+2. Report the number to the user
+3. If count > 100, **stop and ask for explicit approval** before proceeding
+
+Use `page_size` parameter (up to 200) instead of paginating through multiple pages. Use server-side filters (`agent_id`, `project`, `timestamp__gte`/`timestamp__lte`) to scope calls before evaluating.
+
 ## Step 5: Validate Changes
 
 Re-run the improved metric on the same calls that had misaligned results:
 
-```bash
-# Re-evaluate specific calls with the updated metric
-rerun_evaluation '{"call_ids": [123, 456, 789], "metric_ids": [METRIC_ID]}'
-```
+Use `mcp__cekura__call_logs_rerun_evaluation_create` with the call IDs and metric ID.
 
 Check:
 - Do the previously misaligned calls now produce correct results?
@@ -145,11 +149,41 @@ When the user wants to simulate the labs workflow interactively:
 | Endpoint | Purpose |
 |----------|---------|
 | `GET /observability/v1/call-logs-external/?agent=ID` | List calls |
-| `GET /observability/v1/call-logs-external/{id}/evaluation/` | Get metric results for a call |
+| `GET /observability/v1/call-logs-external/{id}/` | Get call details + evaluation results |
 | `POST /observability/v1/call-logs-external/{id}/mark_metric_vote/` | Leave feedback |
-| `POST /test_framework/v1/metrics/{id}/auto-improve/` | Run labs auto-improve |
-| `POST /observability/v1/call-logs-external/rerun_evaluation/` | Re-run metrics on calls |
-| `POST /observability/v1/call-logs-external/evaluate_metrics/` | Evaluate specific metrics on calls |
+| `POST /test_framework/metric-reviews/process_feedbacks/` | Run labs auto-improve (see below) |
+| `GET /test_framework/metric-reviews/process_feedbacks_progress/` | Poll improvement progress |
+| `POST /observability/v1/call-logs/evaluate_metrics/` | Evaluate specific metrics on calls |
+| `POST /observability/v1/call-logs/rerun_evaluation/` | Re-run evaluation on calls |
+| `POST /test_framework/test-sets/create_from_call_log/` | Create test set from call log |
+
+### Labs Auto-Improve (process_feedbacks)
+
+```json
+POST /test_framework/metric-reviews/process_feedbacks/
+{
+  "metric_id": 123,
+  "test_set_ids": [456, 789]
+}
+```
+
+Optional fields: `metric_type` (default "llm_judge"), `skip_evaluation` (bool), `simplified_prompt` (string).
+
+Returns `{"progress_id": "<uuid>"}`. Poll at `GET /test_framework/metric-reviews/process_feedbacks_progress/?progress_id=<uuid>`.
+
+The response includes improved `description` and `evaluation_trigger` when complete — **you must PATCH the metric to apply changes** (they are not auto-applied).
+
+### Create Test Set from Call Log
+
+```json
+POST /test_framework/test-sets/create_from_call_log/
+{
+  "call_log_id": 3358270,
+  "metrics": [{"metric": 123, "feedback": "The metric incorrectly failed this call because..."}]
+}
+```
+
+**Note:** `metrics` must be an array of objects `[{"metric": <id>, "feedback": "<text>"}]`, NOT bare metric IDs. Passing bare IDs returns 500.
 
 ## Additional Resources
 

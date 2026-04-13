@@ -2,7 +2,7 @@
 name: evaluate-calls
 description: Run specific Cekura metrics against selected calls for evaluation or re-evaluation
 argument-hint: "[call IDs and/or metric IDs]"
-allowed-tools: ["Bash", "AskUserQuestion"]
+allowed-tools: ["AskUserQuestion", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__call_logs_evaluate_metrics_create", "mcp__cekura__call_logs_rerun_evaluation_create", "mcp__cekura__metrics_list"]
 ---
 
 # Evaluate Calls with Metrics
@@ -14,32 +14,20 @@ Run specific metrics against selected calls, or re-evaluate calls that have alre
 1. **Identify targets**: Determine which calls and which metrics to evaluate.
    - If the user provides call IDs and metric IDs, use them directly
    - If the user wants to evaluate recent calls, fetch them first:
-   ```bash
-   source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-   list_calls "agent=AGENT_ID&limit=20"
-   ```
+     Use `mcp__cekura__call_logs_list` with agent or project filters.
    - If the user wants specific metrics, list them:
-   ```bash
-   list_metrics "agent=AGENT_ID"
-   ```
+     Use `mcp__cekura__metrics_list` with agent or project filters.
 
 2. **Confirm scope**: Show the user what will be evaluated:
    - Number of calls x number of metrics = total evaluations
    - Warn if this is a large batch
 
 3. **Run evaluation**:
-```bash
-# For new evaluations
-evaluate_calls '{"call_ids": [123, 456], "metric_ids": [789, 101]}'
-
-# For re-evaluation of previously scored calls
-rerun_evaluation '{"call_ids": [123, 456], "metric_ids": [789]}'
-```
+   Use `mcp__cekura__call_logs_evaluate_metrics_create` with call IDs and metric IDs.
+   For re-evaluation: Use `mcp__cekura__call_logs_rerun_evaluation_create`.
 
 4. **Check results**: After evaluation completes, offer to fetch results:
-```bash
-get_call_evaluation "CALL_ID"
-```
+   Use `mcp__cekura__call_logs_retrieve` with the call ID.
 
 ## Use Cases
 

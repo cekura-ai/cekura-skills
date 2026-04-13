@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "cekura-api": {
+      "type": "http",
+      "url": "http://localhost:8001/mcp",
+      "headers": {
+        "X-CEKURA-API-KEY": "${CEKURA_API_KEY}"
+      }
+    }
+  }
+}
