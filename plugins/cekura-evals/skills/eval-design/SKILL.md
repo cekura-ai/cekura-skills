@@ -480,6 +480,23 @@ This plugin uses the Cekura MCP server for all API operations. The `.mcp.json` f
 
 **Troubleshooting:** If MCP tools are not available, verify: (1) `CEKURA_API_KEY` is set, (2) the MCP server is running on port 8001, (3) restart Claude Code to pick up the `.mcp.json` config.
 
+**Known MCP limitation — mock tool creation:** `mcp__cekura__aiagents_tools_create` is not exposed by the MCP server. Use `curl` instead:
+
+```bash
+curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tools/ \
+  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "tool_name",
+    "description": "What the tool does",
+    "information": [
+      {"input": {"key": "value"}, "output": {"result": "data"}}
+    ]
+  }'
+```
+
+See the create-agent skill's "Known MCP Limitations" section for full details on MCP workarounds.
+
 See `references/api-reference.md` for complete endpoint documentation including test profiles.
 
 ## Create Evaluator from Transcript

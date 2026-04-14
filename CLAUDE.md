@@ -26,15 +26,24 @@ Each plugin follows the Claude Code plugin structure:
 
 ## MCP Integration
 
-All three plugins use the Cekura MCP server as the **only** API access path. Each plugin has a `.mcp.json` that auto-configures the `cekura-api` MCP server at `http://localhost:8001/mcp`.
+All three plugins use the Cekura MCP server as the **primary** API access path. Each plugin has a `.mcp.json` that auto-configures the `cekura-api` MCP server at `http://localhost:8001/mcp`.
 
-**There are no bash scripts or curl fallbacks.** If MCP tools aren't available, users run `/setup-mcp` to configure the server.
+MCP is the default. If MCP tools aren't available, users run `/setup-mcp` to configure the server.
 
 When writing or updating skills/commands:
 - Reference MCP tools by name (e.g., `mcp__cekura__metrics_create`)
 - Use the standard API Access section format (see any SKILL.md for the pattern)
-- Never add bash/curl code blocks as "fallback" — MCP is the only path
 - Include `mcp__cekura__*` tool names in command `allowed-tools` frontmatter
+
+### Known MCP Limitations
+
+Two MCP endpoints have issues that require `curl` workarounds:
+
+1. **`mcp__cekura__aiagents_create` — 414 URI Too Long on large payloads.** The MCP server encodes params as URL query strings, not JSON bodies. Agent descriptions (10-60KB) exceed nginx's URI limit. **Workaround:** Use `curl -X POST` with a JSON body for any agent creation with a description longer than ~4KB.
+
+2. **`mcp__cekura__aiagents_tools_create` — Not exposed by MCP.** The tool search doesn't return this endpoint. **Workaround:** Use `curl -X POST` to `https://api.cekura.ai/test_framework/v1/aiagents/{id}/tools/`.
+
+Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the create-agent skill's "Known MCP Limitations & Curl Workarounds" section for full curl examples. Skills that hit these endpoints should include `Bash` in their `allowed-tools` frontmatter.
 
 ## Plugin Overview
 

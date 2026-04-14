@@ -317,6 +317,57 @@ This plugin uses the Cekura MCP server for all API operations. The `.mcp.json` f
 
 **Troubleshooting:** If MCP tools are not available, verify: (1) `CEKURA_API_KEY` is set, (2) the MCP server is running on port 8001, (3) restart Claude Code to pick up the `.mcp.json` config. Run `/setup-mcp` for guided setup.
 
+### Known MCP Limitations & Curl Workarounds
+
+Two MCP tools have known issues that require falling back to direct API calls:
+
+**1. `mcp__cekura__aiagents_create` — 414 URI Too Long on large descriptions**
+
+The MCP server encodes all parameters as URL query strings instead of a JSON body. Agent descriptions (system prompts) are often 10-60KB, which blows past nginx's 414 URI length limit.
+
+**Workaround:** Use `curl` to POST a proper JSON body:
+
+```bash
+curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/ \
+  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_name": "Agent Name",
+    "project": 123,
+    "language": "en",
+    "description": "<full system prompt — any length>",
+    "contact_number": "+14155551234",
+    "inbound": true
+  }'
+```
+
+**When to use curl:** Always use curl for `aiagents_create` when the description is longer than ~4KB. For short descriptions, the MCP tool works fine.
+
+**2. `mcp__cekura__aiagents_tools_create` — Not exposed by MCP**
+
+This tool is not returned by the MCP server's tool search, so it's not available as an MCP tool even though the endpoint exists.
+
+**Workaround:** Use `curl` to create mock tools:
+
+```bash
+curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tools/ \
+  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "tool_name",
+    "description": "What the tool does",
+    "information": [
+      {"input": {"key": "value"}, "output": {"result": "data"}},
+      {"input": {"key": "other_value"}, "output": {"result": "other_data"}}
+    ],
+    "freetext_params": ["notes"]
+  }'
+```
+
+**Note:** `mcp__cekura__aiagents_tool_create` (singular, for a specific tool) and `mcp__cekura__aiagents_tool_partial_update` DO work via MCP. Only the bulk/initial creation endpoint is missing.
+
+**Getting the API key for curl:** The API key is in the `CEKURA_API_KEY` environment variable (same one used by MCP). If not set in the shell, check `~/.claude.json` or the project's `.env` file.
+
 ## Additional Resources
 
 ### Reference Files
