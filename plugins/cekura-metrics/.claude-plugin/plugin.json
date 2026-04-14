@@ -1,6 +1,6 @@
 {
   "name": "cekura-metrics",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Manage Cekura metrics — create, improve, and validate metrics for AI voice agent evaluation",
   "author": {
     "name": "Cekura",

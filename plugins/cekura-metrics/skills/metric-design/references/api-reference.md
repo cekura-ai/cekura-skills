@@ -26,12 +26,21 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/observability/v1/call-logs-external/` | List calls |
-| GET | `/observability/v1/call-logs-external/{id}/` | Get call details |
-| GET | `/observability/v1/call-logs-external/{id}/evaluation/` | Get call evaluation results |
-| POST | `/observability/v1/call-logs-external/evaluate_metrics/` | Evaluate specific metrics on calls |
-| POST | `/observability/v1/call-logs-external/rerun_evaluation/` | Re-run evaluation |
+| GET | `/observability/v1/call-logs-external/` | List calls (filter: `agent_id`, `project`, `search`, `timestamp__gte/lte`, `page_size`) |
+| GET | `/observability/v1/call-logs-external/{id}/` | Get call details + evaluation results |
+| POST | `/observability/v1/call-logs/evaluate_metrics/` | Evaluate specific metrics on calls |
+| POST | `/observability/v1/call-logs/rerun_evaluation/` | Re-run evaluation |
 | POST | `/observability/v1/call-logs-external/{id}/mark_metric_vote/` | Leave feedback on metric result |
+
+**Note:** `count` field in list response is unreliable — may return 0 even when results exist. Always check `results` array length and `next` field for pagination.
+
+## Labs / Improvement Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/test_framework/metric-reviews/process_feedbacks/` | Run labs auto-improve |
+| GET | `/test_framework/metric-reviews/process_feedbacks_progress/` | Poll improvement progress (`?progress_id=<uuid>`) |
+| POST | `/test_framework/test-sets/create_from_call_log/` | Create test set from call log |
 
 ## Create Metric Schema
 
@@ -102,13 +111,18 @@ The key must match the upstream metric's `name` field exactly.
 
 ## Evaluate Metrics on Calls
 
+**COST GUARD:** Always query call count first (`page_size=1`) and confirm with user if >100 calls.
+
 ```json
-POST /observability/v1/call-logs-external/evaluate_metrics/
+POST /observability/v1/call-logs/evaluate_metrics/
 {
-  "call_ids": [123, 456],
-  "metric_ids": [789, 101]
+  "call_logs": [123, 456],
+  "metrics": [789, 101],
+  "project_id": 44
 }
 ```
+
+Runs async. Results appear in `evaluation.metrics` on the call object (fetch via GET call details).
 
 ## Leave Feedback (Mark Metric Vote)
 
@@ -124,9 +138,17 @@ POST /observability/v1/call-logs-external/{call_id}/mark_metric_vote/
 ## Re-run Evaluation
 
 ```json
-POST /observability/v1/call-logs-external/rerun_evaluation/
+POST /observability/v1/call-logs/rerun_evaluation/
 {
-  "call_ids": [123, 456],
-  "metric_ids": [789]
+  "call_logs": [123, 456],
+  "metrics": [789]
 }
 ```
+
+## Metric Score Interpretation
+
+On `evaluation.metrics[]` entries in call log objects:
+- `score`: 0 = FAIL, 5 = PASS, None = N/A
+- `score_normalized`: 0 or 1
+- `extra.trigger_failed: true` → trigger didn't fire (N/A)
+- The `value` field does NOT exist on these objects — always use `score`

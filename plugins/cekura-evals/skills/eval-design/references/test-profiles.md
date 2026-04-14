@@ -74,10 +74,7 @@ asks for verification. Your appointment ID is {{test_profile.appointment_id}}.
 
 **Always list existing test profiles before creating new ones.** Clients often pre-build profiles that are already tested against their mock backend or production tools. Reuse these rather than building from scratch.
 
-```bash
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-list_test_profiles "agent_id=AGENT_ID"
-```
+Use `mcp__cekura__test_profiles_list` with the agent ID.
 
 Profiles like `sarah_smith_one_upcoming` or `joseph_carter_failed_cancellation` may already exist and be specifically calibrated to trigger certain backend behaviors.
 
@@ -88,10 +85,7 @@ The most effective approach: **pull call history from observability, analyze too
 ### Data Extraction Workflow
 
 1. **Fetch recent call transcripts:**
-   ```bash
-   source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-   list_calls "agent=AGENT_ID&limit=50"
-   ```
+   Use `mcp__cekura__call_logs_list` with the agent ID.
 
 2. **Analyze toolcall inputs and outputs** from real calls:
    - What names/IDs did callers provide?
