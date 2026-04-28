@@ -8,7 +8,7 @@ description: >
   creating the agent, configuring the provider integration, setting up mock tools,
   uploading knowledge base files, and adding dynamic variables.
 license: MIT
-compatibility: Designed for Claude Code. Requires a Cekura account and API key (https://dashboard.cekura.ai).
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
   version: "0.3.0"

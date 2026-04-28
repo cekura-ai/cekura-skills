@@ -8,7 +8,7 @@ description: >
   triggers, or metric best practices for voice AI agents. Covers creating new
   metrics and reviewing or troubleshooting existing ones.
 license: MIT
-compatibility: Designed for Claude Code. Requires a Cekura account and API key (https://dashboard.cekura.ai).
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
   version: "0.3.0"

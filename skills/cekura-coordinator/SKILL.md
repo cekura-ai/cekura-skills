@@ -7,7 +7,7 @@ description: >
   skill to use for their task. Also relevant as the entry point when a user has
   just installed cekura-skills for the first time.
 license: MIT
-compatibility: Designed for Claude Code. Requires a Cekura account and API key (https://dashboard.cekura.ai).
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
   version: "0.3.0"

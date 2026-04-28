@@ -33,8 +33,8 @@ These encode best practices from real client deployments — proactive guardrail
 
 ## Prerequisites
 
-- **Cekura account** — [Sign up here](https://dashboard.cekura.ai/sign-up)
-- **Cekura API key** — Found under Settings > API Keys in the [Cekura dashboard](https://dashboard.cekura.ai)
+- **Cekura account** — [Sign up here](https://dashboard.cekura.ai/sign-up). Sign in via OAuth or use an API key.
+- **Cekura API key** *(only for the Claude Code plugin path / programmatic MCP access)* — Found under Settings > API Keys in the [Cekura dashboard](https://dashboard.cekura.ai). Not needed for `npx skills add`.
 
 ---
 

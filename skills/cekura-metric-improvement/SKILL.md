@@ -6,7 +6,7 @@ description: >
   or "iterate on metric quality". Covers the metric improvement cycle, the feedback
   workflow, and the labs pipeline used to refine metric accuracy over time.
 license: MIT
-compatibility: Designed for Claude Code. Requires a Cekura account and API key (https://dashboard.cekura.ai).
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
   version: "0.3.0"

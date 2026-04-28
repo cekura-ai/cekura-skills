@@ -8,7 +8,7 @@ description: >
   scenario instructions, expected outcomes, personality selection, test profiles, conditional
   actions, execution modes, and best practices for voice AI agent evaluators.
 license: MIT
-compatibility: Designed for Claude Code. Requires a Cekura account and API key (https://dashboard.cekura.ai).
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
   version: "0.3.0"
