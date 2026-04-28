@@ -272,28 +272,40 @@ On `evaluation.metrics[]` entries: `score` field (0 = FAIL, 5 = PASS, None = N/A
 ## The Eval Design Workflow
 
 1. **Understand the agent** — Read the agent description to identify all workflows, decision points, and edge cases
-2. **Choose a tool strategy** — Ask the user which of the three approaches below
+2. **Choose a mock data strategy** — Self-manage or Cekura mock tools (see below)
 3. **Create a folder first** — Always create a folder before generating or creating scenarios
-4. **Run the pre-creation checkpoint** — Confirm tool strategy, test profile, run mode, personality, adaptive vs conditional, folder, metrics
+4. **Run the pre-creation checkpoint** — Confirm mock data strategy, test profile, personality, adaptive vs conditional, folder, metrics. **Do NOT confirm run mode at creation time** — that's decided when running.
 5. **Auto-generate first (recommended)** — Use the generate endpoint with `folder_path` set
 6. **Review and fix** — PATCH `scenario_language` for non-English, fix `first_message` if auto-gen added greetings
 7. **Set up test infrastructure** — Test profiles + tool data per chosen strategy
 8. **Supplement manually** — Add edge cases, red-team, deterministic tests
 9. **Attach metrics** — Always include baseline metrics
-10. **Run and validate** — Execute, review transcripts, iterate
+10. **Run only when asked** — Run mode (voice/text/websocket/pipecat) is decided inside the run flow, not at creation
 
-## Tool Strategy — Three Approaches
+## Mock Data Strategy — Two Choices
 
-Ask the user early: "How do you want to handle your agent's tool calls during testing?"
+Ask the user early, before creating scenarios:
 
-### A) Client-Side Mock Data
-Client manages their own staging backend. Cekura doesn't mock tools — the agent calls real (staging) endpoints. Your job: **align test profiles with the client's staging data** (names, IDs, date formats must match exactly). No Cekura mock tools needed.
+> "How do you want to handle mock data — **self-manage** (you run a staging backend or supply the data) or **use Cekura mock tools** (Cekura intercepts tool calls)?"
 
-### B) Cekura Mock Tools
+Do NOT preemptively offer to create test profiles. Wait until the user picks a path.
+
+### Self-Managed
+The user runs their own staging backend or supplies the data. Cekura doesn't mock the tools.
+
+**Sub-question — ask immediately after they pick self-manage:**
+
+> "Do you want me to create the test profiles and data for each scenario, or do you already have data you'd like me to use?"
+
+- **User has data:** Mirror it into Cekura test profiles. Confirm formats (dates, phone numbers, IDs). Don't invent fields.
+- **Claude creates data:** Design profiles per scenario shape, create them via the test-profiles endpoint, attach to scenarios, then **return JSON to the user** containing both:
+  1. The test profile objects (so they see exactly what each scenario expects)
+  2. Mock tool input/output mappings — every tool the agent will call, with the inputs the user's backend should recognize and the outputs to return. Include phone-format variants (10-digit, 11-digit `1`-prefix, E.164). Tool names match what the user's backend exposes.
+
+  This JSON is hand-off documentation for wiring up their backend — it is NOT a Cekura mock tool config.
+
+### Cekura Mock Tools
 Cekura intercepts tool calls and returns pre-configured responses. Your job: **auto-fetch tools, add per-scenario mappings, derive test profiles FROM mock outputs.** Use auto-gen with mock tools enabled for tool-aware scenarios. Validate runs by checking tool calls in transcripts.
-
-### C) No Mock Data
-Agent doesn't use tools, or tools aren't relevant to these tests. Use test profiles for caller identity only. Focus scenarios on conversational behavior, not tool outcomes.
 
 ## Auto-Generation (Primary Path)
 
@@ -373,17 +385,16 @@ Create mock tools with input/output mappings. **Critical rules:**
 
 ## Pre-Creation Checkpoint — Confirm Before Building
 
-**Before creating or generating scenarios, always pause and confirm key decisions with the user.** Do not assume defaults:
+**Before creating or generating scenarios, always pause and confirm key decisions with the user.** Do not assume defaults. **Do not ask about run mode here — run mode is decided inside the run flow, not at creation time.**
 
-1. **Tool strategy** — A (client-side staging), B (Cekura mock tools), or C (no mocks)?
-2. **Test profile** — Show the full `information` dict. For A: match client's staging data formats. For B: derive FROM mock tool outputs. For C: caller identity only.
-3. **Run mode** — Default to text/chat (cheapest, same logic coverage). Voice only when explicitly needed.
-4. **Personality** — Default: 693 (Normal Male English). Note exceptions but don't change without asking.
-5. **Adaptive vs conditional** — Default to adaptive. Only use conditional actions for explicit unit-test needs.
-6. **Folder** — Name the folder.
-7. **Metrics** — Confirm baseline metrics attachment.
+1. **Mock data strategy** — Self-managed (existing data / Claude creates JSON) or Cekura mock tools?
+2. **Test profile** — Only relevant if profiles are being created in this session. Show the full `information` dict and confirm. For self-managed (Claude creates): also tell the user you'll return JSON for test profiles and mock tool I/O. For Cekura mock tools: derive fields FROM mock tool outputs.
+3. **Personality** — Default: 693 (Normal Male English). Note exceptions but don't change without asking.
+4. **Adaptive vs conditional** — Default to adaptive. Only use conditional actions for explicit unit-test needs.
+5. **Folder** — Name the folder.
+6. **Metrics** — Confirm baseline metrics attachment.
 
-Skipping this checkpoint leads to wrong tool strategy, data mismatches, wasted voice credits, and rework.
+Skipping this checkpoint leads to wrong mock strategy, data mismatches, and rework.
 
 ## Tool Enablement — Critical for Credit Efficiency
 

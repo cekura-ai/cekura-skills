@@ -60,15 +60,26 @@ Key rules:
 
 What the main agent should achieve. Agent-centric, specific, measurable, but **concise** — overly specific prompts (exact dates/times) cause false failures. Focus on behavioral outcomes.
 
-### 6. Test Profile
+### 6. Mock Data Strategy & Test Profile
 
-**Ask:** "Does this scenario need caller identity data (name, DOB, account info, etc.)?"
+**Do NOT preemptively offer to create a test profile.** Instead, ask the mock data strategy question first, and only handle test profiles inside the path the user picks.
 
-If yes:
-1. Check existing profiles first: `mcp__cekura__test_profiles_list`
-2. Only create new ones if nothing suitable exists
-3. Show the full `information` dict for approval before creating
-4. **Never hardcode identity data in instructions** — always put it in the test profile
+**Ask:** "How do you want to handle mock data for this test — **self-manage** (you run a staging backend or supply the data) or **use Cekura mock tools** (Cekura intercepts tool calls)?"
+
+#### If **self-manage**, ask the sub-question immediately:
+
+> "Do you want me to create the test profile and data for this scenario, or do you already have data you'd like me to use?"
+
+- **User has existing data:** Ask them to share names, IDs, formats. Create a test profile that mirrors their data exactly. Never invent values.
+- **Claude creates data:** Design a profile that fits the scenario shape, create it via `mcp__cekura__test_profiles_create`, attach it to the scenario, and **return JSON to the user** with two parts: (a) the test profile object(s) created, and (b) any mock tool input/output mappings the user will need to wire into their backend so the agent's tool calls return matching data. See the `eval-design` skill's "Self-Managed Mock Data → Sub-path 1b" section for the JSON shape.
+
+#### If **Cekura mock tools**:
+
+1. Check existing test profiles first: `mcp__cekura__test_profiles_list`
+2. If creating new ones, **derive the profile fields from the mock tool outputs** — never independently. If `get_user_info` returns `{"first_name": "John", "dob": "01/15/1990"}`, the profile must use those exact values.
+3. Show the full `information` dict for approval before creating.
+
+**In all cases:** Never hardcode identity data in scenario instructions — put it in the test profile and reference it generically.
 
 ### 7. Language
 
@@ -146,7 +157,7 @@ For new scenarios, ask where to place them. Use `mcp__cekura__scenarios_folders_
 
 ### 14. Inbound Phone Number
 
-For inbound agents using Approach B (Cekura mock tools): assign a unique phone number. Each scenario should get its own phone to avoid mock data collisions.
+For inbound agents using Cekura mock tools: assign a unique phone number. Each scenario should get its own phone to avoid mock data collisions.
 
 ## Checkpoint — Review Before Creating/Updating
 
@@ -183,9 +194,7 @@ Get explicit "looks good" before proceeding.
 ## After Creation
 
 1. **Verify**: Fetch the scenario back to confirm all fields were set correctly
-2. **Offer to run**: "Want to test this scenario now? I recommend text mode for quick iteration."
-   - Text: `mcp__cekura__scenarios_run_scenarios_text_create`
-   - Voice: `mcp__cekura__scenarios_run_scenarios_create`
+2. **Offer to run**: "Want to run this scenario now?" Do NOT recommend a run mode here — wait until the user says yes, then ask which mode (voice / text / websocket / pipecat) inside the `/run-evals` flow. Run mode is a separate decision from creation.
 
 ## Key Reminders
 
