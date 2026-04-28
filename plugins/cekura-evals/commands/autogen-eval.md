@@ -178,7 +178,16 @@ mcp__cekura__scenarios_partial_update:
 ```
 
 ### 4. Test Profile Assignment
-Check if generated scenarios need test profiles. For scenarios involving identity verification, booking, or account lookup — create/assign profiles. Check existing profiles first with `mcp__cekura__test_profiles_list`.
+
+Apply the mock data strategy (see `eval-design` skill → "Mock Data Strategy — Two Choices") **before** creating profiles. Do not preemptively create or offer profiles.
+
+**Ask:** "How do you want to handle mock data — **self-manage** or **Cekura mock tools**?"
+
+- **Self-manage → user has data:** Mirror their data into profiles. Check `mcp__cekura__test_profiles_list` first; reuse anything that already matches.
+- **Self-manage → Claude creates:** Design profiles per scenario, create via `mcp__cekura__test_profiles_create`, attach to scenarios, then **return JSON** with both (a) test profile objects and (b) the mock tool input/output mappings the user needs to wire into their backend. See the `eval-design` skill for the JSON shape.
+- **Cekura mock tools:** Derive profile fields FROM the mock tool outputs. Never invent values independently.
+
+In all paths, only create new profiles for scenarios that genuinely need identity/account data (verification, booking, account lookup).
 
 ### 5. Quality Review
 Review each generated evaluator:
