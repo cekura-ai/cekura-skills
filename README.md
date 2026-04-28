@@ -6,6 +6,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 - [What's Included](#whats-included)
 - [Prerequisites](#prerequisites)
+- [Quick Install (npx skills add)](#quick-install-npx-skills-add)
 - [Claude Code (VS Code)](#claude-code-vs-code)
 - [Claude Code (Terminal CLI)](#claude-code-terminal-cli)
 - [Codex](#codex)
@@ -34,6 +35,60 @@ These encode best practices from real client deployments — proactive guardrail
 
 - **Cekura account** — [Sign up here](https://dashboard.cekura.ai/sign-up)
 - **Cekura API key** — Found under Settings > API Keys in the [Cekura dashboard](https://dashboard.cekura.ai)
+
+---
+
+## Quick Install (`npx skills add`)
+
+The fastest way to get Cekura skills into any [Agent Skills](https://agentskills.io)–compatible client (Claude Code, Cursor, Codex, Windsurf, OpenCode, and many more).
+
+### Install
+
+```bash
+npx skills add cekura-ai/cekura-skills/skills
+```
+
+> **Note the `/skills` suffix.** It scopes the install to the public skills layer. A bare `cekura-ai/cekura-skills` would also pull internal Claude Code plugin files.
+
+The CLI prompts you to pick which skills to install and which agents to install them into. To install everything non-interactively:
+
+```bash
+npx skills add cekura-ai/cekura-skills/skills --all
+```
+
+### Update
+
+```bash
+# Refresh existing skills
+npx skills update
+
+# Or stay fully current — refresh existing AND pick up any newly-added skills
+npx skills add cekura-ai/cekura-skills/skills --all
+```
+
+### Remove
+
+```bash
+npx skills remove cekura-coordinator   # one skill
+npx skills remove --all                 # everything
+```
+
+### What gets installed
+
+Six skills, scoped to specific Cekura workflows:
+
+| Skill | When it activates |
+|---|---|
+| `cekura-coordinator` | "What can Cekura do?" — routes you to the right skill |
+| `cekura-onboarding` | "Get started with Cekura" — full platform walkthrough |
+| `cekura-create-agent` | "Connect my voice agent to Cekura" |
+| `cekura-metric-design` | "Create a metric / measure call quality" |
+| `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
+| `cekura-eval-design` | "Design test scenarios for my voice agent" |
+
+### Want full functionality?
+
+`npx skills add` gives you the **behavioral guidance layer** — the skills auto-activate when you describe relevant tasks. For slash commands and direct API integration, install the full Claude Code plugin marketplace below.
 
 ---
 
@@ -258,6 +313,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 | Platform | Method | Full Plugin Support | MCP Tools | Slash Commands |
 |----------|--------|-------------------|-----------|---------------|
+| **Any Agent Skills client** | `npx skills add` | Skills only | No | No |
 | **Claude Code (VS Code)** | Marketplace install | Yes | Yes | Yes |
 | **Claude Code (CLI)** | `/plugins` install | Yes | Yes | Yes |
 | **Codex** | Skill installer | Skills only | No | No |
