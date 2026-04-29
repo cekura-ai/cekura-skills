@@ -1,14 +1,18 @@
 ---
-name: Cekura Metric Design
+name: cekura-metric-design
 description: >
-  Useful when the user asks to "create a metric", "write a metric", "design a metric",
+  Use when the user asks to "create a metric", "write a metric", "design a metric",
   "build a metric for", "evaluate agent performance", "measure call quality", "track a KPI",
   "add a workflow metric", "improve my metric", "fix a metric", "debug metric results",
   "set up quality scoring", or "what metrics do I need". Also relevant when discussing
   LLM judge prompts, custom code metrics, evaluation triggers, VALID_SKIP patterns,
   section extraction, or metric best practices for Cekura voice AI agents. Covers both
   creating new metrics and reviewing, iterating on, or troubleshooting existing ones.
-version: 0.3.0
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
+metadata:
+  author: cekura
+  version: "0.3.0"
 ---
 
 # Cekura Metric Design
@@ -17,12 +21,16 @@ version: 0.3.0
 
 Guide the creation of effective Cekura metrics that accurately evaluate AI voice agent call quality. Metrics measure call quality after the fact by evaluating transcripts against defined criteria. Each metric targets a specific workflow or KPI that needs tracking per call.
 
+## Performing Platform Actions
+
+When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
+
 ## Core Terminology
 
 - **Main agent**: The client's AI voice agent being tested
 - **Testing agent**: Cekura's simulated caller that exercises the main agent
 - **Metric**: A post-call evaluation that scores a transcript
-- **Evaluator/Scenario**: A test case that simulates a caller (separate concept — see cekura-evals plugin)
+- **Evaluator/Scenario**: A test case that simulates a caller (separate concept — see cekura-eval-design skill)
 
 ## The Metric Creation Workflow
 
@@ -299,7 +307,7 @@ Beyond the baseline predefined metrics, these are commonly valuable custom metri
 
 ### Cost Guard — Never Evaluate >100 Calls Without Confirmation
 
-Each evaluation costs the client real money. Before calling `evaluate_metrics`, ALWAYS query the call count first (use `page_size=1` and read the response) and report the number to the user. If count > 100, stop and ask for explicit approval before proceeding. Use `page_size` parameter (up to 200) instead of paginating, and use server-side filters (`agent_id`, `project`, `timestamp__gte`/`timestamp__lte`) to scope calls.
+Each evaluation costs the client real money. Before evaluating metrics on a batch of calls, ALWAYS query the call count first (use `page_size=1` and read the response) and report the number to the user. If count > 100, stop and ask for explicit approval before proceeding. Use `page_size` parameter (up to 200) instead of paginating, and use server-side filters (`agent_id`, `project`, `timestamp__gte`/`timestamp__lte`) to scope calls.
 
 ### Manual Fix First, Then Labs
 
@@ -326,28 +334,11 @@ This avoids wasting labs iterations on issues that are clearly fixable by prompt
 - Not including safeguarding examples for nuanced evaluation criteria
 - Omitting timestamps in failure explanations
 
-## API Access — Cekura MCP Server
+## Documentation
 
-This plugin uses the Cekura MCP server for all API operations. The `.mcp.json` file in this plugin configures it automatically.
-
-**Prerequisites:**
-1. Set the `CEKURA_API_KEY` environment variable with your Cekura API key
-2. Start the Cekura MCP server: `cd /path/to/cekura-mcp-server && python3 openapi_mcp_server.py` (runs on `http://localhost:8001/mcp`)
-3. The plugin's `.mcp.json` handles the rest — Claude Code connects to the server and makes the `mcp__cekura__*` tools available
-
-**Key MCP tools used by this plugin:**
-| Operation | MCP Tool |
-|-----------|----------|
-| List/get agents | `mcp__cekura__aiagents_list`, `mcp__cekura__aiagents_retrieve` |
-| Metrics CRUD | `mcp__cekura__metrics_create`, `mcp__cekura__metrics_list`, `mcp__cekura__metrics_retrieve`, `mcp__cekura__metrics_partial_update`, `mcp__cekura__metrics_destroy` |
-| Generate trigger | `mcp__cekura__metrics_generate_metrics_create` |
-| Auto-improve | `mcp__cekura__metrics_run_reviews_create`, `mcp__cekura__metrics_run_reviews_progress_retrieve` |
-| Call logs | `mcp__cekura__call_logs_list`, `mcp__cekura__call_logs_retrieve` |
-| Evaluate calls | `mcp__cekura__call_logs_evaluate_metrics_create`, `mcp__cekura__call_logs_rerun_evaluation_create` |
-
-**Docs lookup:** Use the `mcp__cekura__search_cekura` tool or fetch `https://docs.cekura.ai/llms.txt` to look up API details, field schemas, or feature documentation when the plugin references don't cover something.
-
-**Troubleshooting:** If MCP tools are not available, verify: (1) `CEKURA_API_KEY` is set, (2) the MCP server is running on port 8001, (3) restart Claude Code to pick up the `.mcp.json` config.
+- Public docs: https://docs.cekura.ai
+- LLM-friendly docs: https://docs.cekura.ai/llms.txt
+- Concepts: https://docs.cekura.ai/documentation/key-concepts/
 
 See `references/api-reference.md` for complete endpoint documentation and field schemas.
 

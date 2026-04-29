@@ -1,16 +1,18 @@
 ---
-name: Cekura Create Agent
+name: cekura-create-agent
 description: >
-  This skill should be used when the user asks to "create an agent", "set up an agent",
-  "add my agent to Cekura", "configure my voice agent", "connect my agent",
-  "set up mock tools", "add tools to my agent", "upload knowledge base",
-  "configure integration", "connect VAPI", "connect Retell", "connect LiveKit",
-  "connect ElevenLabs", "add dynamic variables", "set up agent connection",
-  or needs to onboard a voice AI agent onto the Cekura platform. Covers the full
-  agent setup flow: collecting context, creating the agent, configuring the provider
-  integration, setting up mock tools, uploading knowledge base files, and adding
-  dynamic variables.
-version: 0.2.0
+  Use when the user asks to "create an agent", "set up an agent", "add my agent to Cekura",
+  "configure my voice agent", "connect my agent", "set up mock tools", "add tools to my agent",
+  "upload knowledge base", "configure integration", "connect VAPI", "connect Retell",
+  "connect LiveKit", "connect ElevenLabs", "add dynamic variables", or needs to onboard
+  a voice AI agent onto the Cekura platform. Covers the full agent setup flow: collecting
+  context, creating the agent, configuring the provider integration, setting up mock tools,
+  uploading knowledge base files, and adding dynamic variables.
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
+metadata:
+  author: cekura
+  version: "0.3.0"
 ---
 
 # Cekura Create Agent
@@ -19,12 +21,16 @@ version: 0.2.0
 
 Collect comprehensive context about a client's voice AI agent and set it up on Cekura — ready for testing and observability. This is an interactive, multi-step flow that creates the agent, configures provider integration, sets up mock tools, uploads knowledge base files, and adds dynamic variables.
 
+## Performing Platform Actions
+
+When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
+
 ## How to Use This Skill
 
 This is an **interactive collection-and-configuration flow**. Walk the user through each phase:
 
 1. Collect information conversationally — ask for what you need, don't dump a form
-2. Use MCP tools or API calls to perform each step
+2. Perform each step via the Cekura API or dashboard
 3. Validate each step before moving to the next
 4. The user may already have some steps done — skip what's complete
 
@@ -68,7 +74,7 @@ If WebRTC/WebSocket only (no phone), this can be skipped.
 
 ## Phase 2: Create the Agent
 
-Once you have the basics, create the agent using `mcp__cekura__aiagents_create` with:
+Once you have the basics, create the agent (POST to `/test_framework/v1/aiagents/`) with:
 
 ```json
 {
@@ -82,6 +88,19 @@ Once you have the basics, create the agent using `mcp__cekura__aiagents_create` 
 ```
 
 Save the returned `id` — you'll need it for all subsequent steps.
+
+### Handling Large Agent Descriptions
+
+For agent descriptions longer than ~4 KB (multi-state agents, full system prompts, exported workflows), send the request as a direct JSON body via the API rather than relying on tools that may URL-encode parameters — large URL-encoded payloads can hit URI length limits.
+
+```bash
+curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/ \
+  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @agent.json
+```
+
+Where `agent.json` contains the full payload (including the long `description`). This is the safest way to create agents with long system prompts or large state-machine configs.
 
 ## Phase 3: Configure Provider Integration
 
@@ -101,7 +120,7 @@ Then collect provider-specific credentials and configure. See `references/integr
 | **SIP** | `sip_endpoint`, optionally `sip_auth` |
 | **Custom** | Webhook URL — they push calls to Cekura |
 
-**Apply via** `mcp__cekura__aiagents_partial_update`:
+**Apply via** PATCH `/test_framework/v1/aiagents/{id}/`:
 
 ```json
 {
@@ -148,7 +167,7 @@ For each tool the agent uses:
 
 1. **Identify tools** — Read the agent description to find all tool references. Ask: "What tools does your agent call? Give me the tool names and what each one does."
 
-2. **Create each mock tool** using `mcp__cekura__aiagents_tool_create`:
+2. **Create each mock tool** (POST to `/test_framework/v1/aiagents/{agent_id}/tools/`):
 
 ```json
 {
@@ -232,7 +251,7 @@ A PATCH with only new mappings **replaces ALL existing mappings**.
 
 Ask: "Does your agent reference any knowledge base documents? (e.g., FAQs, product guides, policy docs)"
 
-If yes, upload files using `mcp__cekura__aiagents_upload_knowledge_base_create`.
+If yes, upload files via the agent knowledge base upload endpoint.
 
 Supported formats: PDF, text files, documents.
 
@@ -243,7 +262,7 @@ Supported formats: PDF, text files, documents.
 
 After upload, the files appear in Agent Settings → Agent's Knowledge.
 
-**Optional:** Link KB files to hallucination detection via `mcp__cekura__aiagents_partial_update` with `{"hallucination_metric_kb_files": [<file_id_1>, <file_id_2>]}`.
+**Optional:** Link KB files to hallucination detection by PATCHing the agent with `{"hallucination_metric_kb_files": [<file_id_1>, <file_id_2>]}`.
 
 ## Phase 6: Dynamic Variables
 
@@ -271,9 +290,9 @@ If the user has dynamic variables that aren't in the description pattern:
 
 After all steps are complete, verify:
 
-1. **Agent exists:** Use `mcp__cekura__aiagents_retrieve` — confirm description, provider, contact number
+1. **Agent exists:** GET the agent — confirm description, provider, contact number
 2. **Provider connected:** Check that `assistant_provider`, API key, and `assistant_id` are set
-3. **Mock tools configured:** Use `mcp__cekura__aiagents_tools_list` — confirm all tools have mappings
+3. **Mock tools configured:** List tools on the agent — confirm all tools have mappings
 4. **Knowledge base uploaded:** Check `knowledge_base_files` on the agent object
 5. **Test connectivity:** Suggest running a single simple evaluator to confirm end-to-end connectivity
 
@@ -287,86 +306,15 @@ Mock tools: [count] configured
 Knowledge base: [count] files uploaded
 Dynamic variables: [list or "none"]
 
-Ready for: evaluator generation → /eval-design
-           metric setup → /metric-design
+Ready for: evaluator generation → cekura-eval-design skill
+           metric setup → cekura-metric-design skill
 ```
 
-## API Access — Cekura MCP Server
+## Documentation
 
-This plugin uses the Cekura MCP server for all API operations. The `.mcp.json` file in this plugin configures it automatically.
-
-**Prerequisites:**
-1. Set the `CEKURA_API_KEY` environment variable with your Cekura API key
-2. Start the Cekura MCP server: `cd /path/to/cekura-mcp-server && python3 openapi_mcp_server.py` (runs on `http://localhost:8001/mcp`)
-3. The plugin's `.mcp.json` handles the rest — Claude Code connects to the server and makes the `mcp__cekura__*` tools available
-
-**Key MCP tools used by this skill:**
-| Operation | MCP Tool |
-|-----------|----------|
-| Create agent | `mcp__cekura__aiagents_create` |
-| Update agent | `mcp__cekura__aiagents_partial_update` |
-| Get agent | `mcp__cekura__aiagents_retrieve` |
-| List agents | `mcp__cekura__aiagents_list` |
-| Create mock tool | `mcp__cekura__aiagents_tool_create` |
-| List mock tools | `mcp__cekura__aiagents_tools_list` |
-| Get/update mock tool | `mcp__cekura__aiagents_tool_retrieve`, `mcp__cekura__aiagents_tool_partial_update` |
-| Upload KB files | `mcp__cekura__aiagents_upload_knowledge_base_create` |
-| List projects | `mcp__cekura__projects_list` |
-
-**Docs lookup:** Use the `mcp__cekura__search_cekura` tool or fetch `https://docs.cekura.ai/llms.txt` to look up API details, field schemas, or feature documentation when the plugin references don't cover something.
-
-**Troubleshooting:** If MCP tools are not available, verify: (1) `CEKURA_API_KEY` is set, (2) the MCP server is running on port 8001, (3) restart Claude Code to pick up the `.mcp.json` config. Run `/setup-mcp` for guided setup.
-
-### Known MCP Limitations & Curl Workarounds
-
-Two MCP tools have known issues that require falling back to direct API calls:
-
-**1. `mcp__cekura__aiagents_create` — 414 URI Too Long on large descriptions**
-
-The MCP server encodes all parameters as URL query strings instead of a JSON body. Agent descriptions (system prompts) are often 10-60KB, which blows past nginx's 414 URI length limit.
-
-**Workaround:** Use `curl` to POST a proper JSON body:
-
-```bash
-curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/ \
-  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "agent_name": "Agent Name",
-    "project": 123,
-    "language": "en",
-    "description": "<full system prompt — any length>",
-    "contact_number": "+14155551234",
-    "inbound": true
-  }'
-```
-
-**When to use curl:** Always use curl for `aiagents_create` when the description is longer than ~4KB. For short descriptions, the MCP tool works fine.
-
-**2. `mcp__cekura__aiagents_tools_create` — Not exposed by MCP**
-
-This tool is not returned by the MCP server's tool search, so it's not available as an MCP tool even though the endpoint exists.
-
-**Workaround:** Use `curl` to create mock tools:
-
-```bash
-curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tools/ \
-  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "tool_name",
-    "description": "What the tool does",
-    "information": [
-      {"input": {"key": "value"}, "output": {"result": "data"}},
-      {"input": {"key": "other_value"}, "output": {"result": "other_data"}}
-    ],
-    "freetext_params": ["notes"]
-  }'
-```
-
-**Note:** `mcp__cekura__aiagents_tool_create` (singular, for a specific tool) and `mcp__cekura__aiagents_tool_partial_update` DO work via MCP. Only the bulk/initial creation endpoint is missing.
-
-**Getting the API key for curl:** The API key is in the `CEKURA_API_KEY` environment variable (same one used by MCP). If not set in the shell, check `~/.claude.json` or the project's `.env` file.
+- Public docs: https://docs.cekura.ai
+- Integrations: https://docs.cekura.ai/documentation/integrations/
+- Dashboard: https://dashboard.cekura.ai
 
 ## Additional Resources
 

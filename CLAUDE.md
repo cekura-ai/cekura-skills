@@ -2,78 +2,81 @@
 
 ## Repository Structure
 
-This is a Claude Code **marketplace** plus an **Agent Skills package** — a collection of plugins and skills that encode domain expertise for the [Cekura](https://cekura.ai) voice AI testing and evaluation platform.
+This is a Claude Code **marketplace** that doubles as an **Agent Skills package** — a collection of plugins and skills that encode domain expertise for the [Cekura](https://cekura.ai) voice AI testing and evaluation platform.
 
 ```
 cekura-skills/
-  plugins/                 # Claude Code plugin marketplace (full functionality)
-    cekura/                # Core plugin — onboarding, agent setup, coordination
-    cekura-metrics/        # Metrics — create, improve, validate call quality metrics
-    cekura-evals/          # Evaluators — create, run, analyze test suites
-  skills/                  # Agent Skills spec layer (public, lightweight)
-    cekura-coordinator/
-    cekura-onboarding/
-    cekura-create-agent/
-    cekura-metric-design/
-    cekura-metric-improvement/
-    cekura-eval-design/
+  plugins/
+    cekura/
+      .claude-plugin/plugin.json   # Plugin manifest
+      .mcp.json                    # MCP auto-config
+      skills/                      # Single source of truth for skills
+        cekura-coordinator/
+        cekura-onboarding/
+        cekura-create-agent/
+      commands/                    # Slash commands (Claude Code only)
+      hooks/                       # MCP failure detection (Claude Code only)
+    cekura-metrics/
+      skills/
+        cekura-metric-design/
+        cekura-metric-improvement/
+      commands/
+    cekura-evals/
+      skills/
+        cekura-eval-design/
+      commands/
+      agents/
   codex/
-    AGENTS.md              # Single-file behavior preset for Codex/Cursor/other agents
-  package.json             # npm package metadata (for `npx skills add ...`)
-  README.md                # User-facing installation and platform setup guide
-  CLAUDE.md                # This file — developer context for contributors
+    AGENTS.md                      # Single-file behavior preset for Codex/Cursor/other agents
+  package.json                     # npm package metadata (used by Agent Skills validators)
+  README.md                        # User-facing installation and platform setup guide
+  CLAUDE.md                        # This file — developer context for contributors
 ```
 
-### Two install paths
+### Two install paths, one source of truth
 
-1. **Claude Code plugin** (`/plugin marketplace add cekura-ai/cekura-skills`) — full functionality including slash commands, MCP integration, hooks. Sources from `plugins/`.
-2. **Agent Skills via npm** (`npx skills add cekura-ai/cekura-skills`) — lightweight, public-facing skills compatible with any Agent Skills-supporting client. Sources from `skills/`.
+The 6 SKILL.md files inside `plugins/<plugin>/skills/` are the **only** source of skill content. Both install paths consume the same files:
 
-The `skills/` directory is the public layer:
-- Frontmatter `name` is lowercase kebab-case matching the directory name (per Agent Skills spec)
-- No `mcp__cekura__*` tool references, no internal endpoints
-- High-level capability descriptions, not implementation details
-- Stays under 500 lines per file (spec recommendation)
+1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
+2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The `plugins/` directory remains the primary install path for Cekura customers using Claude Code:
-- `.claude-plugin/plugin.json` — Plugin manifest (name, version, description)
-- `.mcp.json` — MCP server auto-configuration (connects to Cekura API)
-- `skills/<name>/SKILL.md` — Design knowledge and interactive workflows (richer than the public `skills/` layer)
-- `commands/<name>.md` — Slash commands for specific operations
-- `agents/<name>.md` — Subagent definitions
-- `references/` and `examples/` — Supporting docs within each skill
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` paths, and discovers all 6 skills with no subpath needed. The bare URL works cleanly.
 
-### Subpath gotcha for `npx skills add`
+### Skill content rules
 
-Always document the install command with the `/skills` suffix:
+Every `plugins/<plugin>/skills/<name>/SKILL.md`:
+- `name` field must be lowercase kebab-case (`cekura-foo`) matching the directory name (per Agent Skills spec)
+- `description` includes trigger phrases for skill activation
+- `compatibility` field set to: `Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.`
+- Body is **public-facing**: no `mcp__cekura__*` tool references, no internal endpoints (e.g., `localhost:8001`), no MCP-bug curl workarounds
+- Public API endpoint paths (e.g., `POST /test_framework/v1/...`) are fine — those are user-facing
+- Public provider names (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP) are fine — they're documented at https://docs.cekura.ai/documentation/integrations/
+- Aim for under 500 lines per file (Agent Skills spec recommendation)
 
-```bash
-npx skills add cekura-ai/cekura-skills/skills    # ✓ 6 skills
-npx skills add cekura-ai/cekura-skills           # ✗ 12 skills (also pulls plugins/)
-```
+Operational MCP tool references belong in **command files** (`plugins/<plugin>/commands/*.md`), which are Claude Code–specific and only loaded by the plugin marketplace path. The `npx skills add` path doesn't fetch commands.
 
-The upstream `vercel-labs/skills` CLI follows `.claude-plugin/marketplace.json` `source` paths and discovers SKILL.md files inside the plugin trees in addition to the public `skills/` layer. There's no `.skillsignore` mechanism — the subpath in the install URL is the only clean workaround.
+### Update workflow
 
-### Update workflow (`npx skills` users)
-
-Once installed, users have three ways to stay current:
+Once installed, npx users have three ways to stay current:
 
 | Goal | Command |
 |---|---|
 | Refresh existing skills only | `npx skills update` |
-| Refresh existing AND install any new skills (recommended) | `npx skills add cekura-ai/cekura-skills/skills --all` |
-| Install one specific newly-released skill | `npx skills add cekura-ai/cekura-skills/skills --skill <name>` |
+| Refresh existing AND install any new skills (recommended) | `npx skills add cekura-ai/cekura-skills --all` |
+| Install one specific newly-released skill | `npx skills add cekura-ai/cekura-skills --skill <name>` |
 
-When you publish a **new** skill in `skills/`, mention the `--skill <name>` recipe in the release notes — `update` alone won't pick it up. When you **modify** an existing skill, `update` is sufficient.
+`update` alone does NOT discover newly-added skills — when you publish a new skill, mention `--all` or `--skill <name>` in the release notes.
 
 ### Adding a new public skill (contributor checklist)
 
-1. Create `skills/<kebab-name>/SKILL.md` with spec-compliant frontmatter (`name` field must match directory name)
-2. Body content must stay public-facing — no `mcp__cekura__*` references, no internal endpoints
-3. Stay under 500 lines per file
-4. Bump `package.json` version
-5. Update the "What gets installed" table in `README.md`
-6. In the release notes / commit message, name the new skill so users know what to pass to `--skill`
+1. Pick which plugin owns it: `cekura`, `cekura-metrics`, or `cekura-evals`
+2. Create `plugins/<plugin>/skills/cekura-<kebab-name>/SKILL.md` with spec-compliant frontmatter (`name` must be `cekura-<kebab-name>`, matching the directory)
+3. Body must be public-facing — no `mcp__cekura__*` references, no internal endpoints
+4. Stay under 500 lines per file
+5. Bump `package.json` version
+6. Update the "What's Included" table and Quick Reference table in `README.md`
+7. If the skill needs an operational counterpart, also add a slash command in `plugins/<plugin>/commands/`
+8. In the release notes / commit message, name the new skill so users know what to pass to `--skill`
 
 ## MCP Integration
 
