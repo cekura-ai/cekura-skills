@@ -2,13 +2,10 @@
 name: cekura-eval-design
 description: >
   Use when the user asks to "create an evaluator", "write a test scenario", "design a test case",
-  "build eval coverage", "plan a test suite", "test my agent", "create red team tests",
-  "write workflow tests", "improve eval quality", "what evals do I need", "create test profiles",
-  "conditional actions", "run evals", or discusses evaluator design, test coverage strategy,
-  scenario instructions, expected outcomes, personality selection, test profiles, conditional
-  actions, execution modes, or eval best practices for Cekura voice AI agents. Covers creating
-  individual evals, planning test suites, configuring test infrastructure (profiles, mocks),
-  and designing different eval types (workflow, red-team, edge case, deterministic/unit, etc.).
+  "test my agent", "build eval coverage", "plan a test suite", "create red team tests",
+  "set up test profiles", "configure conditional actions", or "run evals". Covers individual
+  evaluator design, suite coverage strategy, test profiles, mock-tool data design, conditional
+  actions, and best practices for workflow / red-team / edge-case / deterministic test types.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
@@ -53,71 +50,15 @@ When this skill suggests creating, listing, updating, or evaluating something on
 
 **Ask the user early:** "Does your agent call external tools during calls? If so, how do you want to handle tool data for testing?"
 
-The answer determines the entire test infrastructure setup. Present these three options:
+| Approach | When to use | Your job |
+|---|---|---|
+| **A. Client-side mock data** | Client has staging API/test DB | Align test profiles with their mock data |
+| **B. Cekura mock tools** | No staging, want predictable isolated tests | Set up mock mappings + match test profiles to outputs |
+| **C. No mock data** | Conversational-only agents, testing tone/soft skills | Use test profiles for identity only |
 
-### Approach A: Client-Side Mock Data
+**Critical rule for Approach B**: derive test profile values FROM mock outputs (same format, same values). Creating them independently guarantees mismatches.
 
-The client manages their own mock backend (staging API, test database, etc.). Cekura doesn't mock the tools — the agent calls the real (staging) endpoints. Your job is to **align test profiles with the client's mock data** so the agent gets expected responses.
-
-**When to use:** Client already has a staging/test environment, doesn't want to replicate their data in Cekura, or their tool behavior is too complex to mock (multi-step state machines, database transactions).
-
-**Workflow:**
-1. Ask the user for their mock/staging data — what inputs produce what outputs in their system
-2. Create test profiles that match those inputs exactly (names, IDs, phone numbers, dates — all must match what the staging system expects)
-3. Verify data formats align: if the client's system expects `MM/DD/YYYY` for DOB, the test profile must use that format, not `YYYY-MM-DD`
-4. Scenarios reference test profile data generically ("provide your date of birth when asked") — the testing agent reads from the profile, the agent sends it to the real staging backend
-5. No Cekura mock tools needed — leave them disabled
-
-**Key questions to ask the user:**
-- "What test data exists in your staging environment? (test users, accounts, etc.)"
-- "What format does your system expect for dates, phone numbers, IDs?"
-- "Are there specific test accounts I should use, or can we create new ones?"
-
-**Validation:** Run a scenario and check transcript — if the agent says "I couldn't find your account" or gets authentication errors, the test profile data doesn't match the staging system.
-
-### Approach B: Cekura Mock Tools
-
-Cekura intercepts the agent's tool calls and returns pre-configured mock responses. The agent never hits a real backend. Your job is to **set up mock tool mappings and ensure test profiles match the mock outputs**.
-
-**When to use:** No staging environment, want fully isolated tests, need predictable responses for every scenario, or the agent's tools are simple enough to mock (lookups, bookings, CRUD operations).
-
-**Workflow:**
-1. **Auto-fetch tools** (recommended for VAPI/Retell/ElevenLabs): In Cekura UI, go to Agent Settings → Mock Tools → Auto-Fetch. Cekura pulls all tool definitions from the provider and generates sample I/O data. Then enable mock mode per tool.
-2. **Review auto-fetched mappings** — List the agent's tools to see what was created. Each tool has an `information` array of input/output pairs.
-3. **Add per-scenario mappings** — Auto-fetch creates illustrative examples, not exhaustive data. For each scenario you'll test, add the specific input/output pairs that scenario needs. If a tool accepts different parameters (different users, topics, actions), each variant needs its own mapping. See "Mock Tool Data Design" below.
-4. **Create test profiles FROM the mock data** — Derive all profile fields from mock tool outputs. If `get_user_info` returns `{"first_name": "John", "dob": "01/15/1990"}`, the test profile must have those exact values. Never create profile data independently.
-5. **Use auto-gen with mock awareness** — When mock tools are enabled on the agent, the generate endpoint creates tool-aware scenarios automatically. Scenarios will reference the mocked tools in their instructions.
-6. **Validate runs** — After running, check transcripts for: tool calls returning expected data, agent using the mock data correctly, no "tool not found" or format mismatch errors.
-
-**Key questions to ask the user:**
-- "Can I auto-fetch your tools from the provider, or do we need to set them up manually?"
-- "For each tool, what are the different inputs the agent might send?" (per-input branching)
-- "Do any tools depend on data from other tools?" (chain dependencies)
-
-**Handling large mock-tool payloads:** if a tool's `information` array is large (many input/output mappings, or large output objects), create or update the tool by POSTing a direct JSON body via the API rather than passing parameters through tools that may URL-encode them:
-
-```bash
-curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tools/ \
-  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d @tool.json
-```
-
-### Approach C: No Mock Data
-
-The agent either doesn't use external tools, or the tools aren't relevant to what you're testing. Use test profiles for caller identity but don't worry about tool responses.
-
-**When to use:** Agent is conversational only (no tool calls), testing soft skills/tone/adherence rather than tool-dependent workflows, or tools are optional and the scenario focuses on the dialog path.
-
-**Workflow:**
-1. Create test profiles with caller identity data (name, DOB, etc.)
-2. Write scenarios focused on conversational behavior, not tool outcomes
-3. Expected outcomes should not reference tool results — focus on what the agent says and does
-4. If the agent attempts tool calls, they'll hit the real backend (or fail if there's no backend). Decide with the user whether that's acceptable.
-
-**Key questions to ask the user:**
-- "Does your agent use any external tools during calls?"
-- "Are we testing the tool-dependent workflows, or just the conversational quality?"
+**See `references/tool-strategies.md`** for full workflow, key questions to ask, and validation guidance for each approach.
 
 ## Test Profiles — Always Use Them
 
@@ -403,57 +344,16 @@ Matching personality language to agent capabilities.
 
 **Test profiles in chat/websocket:** Test profile data is passed to the main agent in chat and websocket runs, enabling tool verification without voice calls.
 
-## Mock Tool Data Design (Approach B Details)
+## Mock Tool Data Design
 
-This section applies when the user chose **Approach B: Cekura Mock Tools** in the tool strategy. Skip if using Approach A (client-side) or Approach C (no mocks).
+When using Approach B (Cekura mock tools), the mock-tool data design is critical and load-bearing. Key principles:
 
-### Per-Input Branching — The Core Concept
+- **Per-input branching**: one mapping per distinct input the agent might send; not one mapping per tool
+- **Phone format variants**: always add 10-digit, 11-digit-with-1, and E.164 forms (mismatches cause 404s)
+- **Append-not-replace**: PATCHing `information` REPLACES the array; always GET → merge → PATCH
+- **Test profile alignment**: derive profile values FROM mock outputs, not independently
 
-Cekura matches incoming tool calls to the closest input in the mock's `information` array and returns the corresponding output. **A single input/output mapping per tool is NOT enough.** If a tool accepts different parameters that should return different results, each variant needs its own mapping.
-
-Example: a `get_user_info` tool needs separate mappings for each test user, plus phone format variants:
-```json
-"information": [
-  {"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Doe", "dob": "01/15/1990"}},
-  {"input": {"phone": "18645239892"}, "output": {"id": "B001", "name": "John Doe", "dob": "01/15/1990"}},
-  {"input": {"phone": "5551234567"}, "output": {"id": "B002", "name": "Jane Smith", "dob": "03/22/1985"}}
-]
-```
-
-**Think through the full data graph:** user lookup → account data → transaction history → payment methods. All IDs and references must be consistent across tools.
-
-### Setting Up Mock Tools
-
-1. **List existing tools:** GET the agent's tools — check what's already configured
-2. **Auto-fetch (if available):** For VAPI/Retell/ElevenLabs, use the UI: Agent Settings → Mock Tools → Auto-Fetch → enable mock mode per tool. This creates tool definitions with sample mappings.
-3. **Add per-scenario mappings:** Auto-fetch creates illustrative examples, not exhaustive data. Add the specific input/output pairs each scenario needs by PATCHing the tool.
-4. **Validate:** Run one scenario and check the transcript — tool calls should return the expected mock data.
-
-### Critical: Append-Not-Replace
-
-When PATCHing a tool's `information` array, you must GET the existing mappings first, append new ones, then PATCH the full combined array. A PATCH with only new mappings **replaces ALL existing mappings**. Always use the GET → merge → PATCH pattern.
-
-### Phone Number ↔ Mock Data Linkage
-
-For inbound agents, the `inbound_phone_number` on the scenario is the number Cekura calls FROM. The agent sees this as `{{customer.number}}` and uses it to look up the caller. **Critical gotcha: phone format mismatches cause 404s.** Add mappings for ALL format variants:
-- 10-digit: `8645239892`
-- 11-digit with leading 1: `18645239892`
-- Full E.164: `+18645239892`
-
-**Backup phone pattern:** When the primary inbound phone doesn't match, add a fallback:
-1. Add a simple 555-XXX-XXXX backup phone to mock mappings pointing to the same data
-2. Add instruction: "If the agent says they cannot find your account, provide the alternate number XXX-XXX-XXXX"
-3. Update test profile with both `customer_phone_number` and `backup_phone_number`
-
-### Test Profile ↔ Mock Data Alignment
-
-Test profiles must have ALL credentials the testing agent needs. If the agent asks for DOB + SSN last 4 + first name + last name, ALL must be in the test profile. Missing fields = the testing agent improvises or fails authentication.
-
-**Always derive test profile values FROM mock data, not independently.** If `get_user_info` returns `{"dob": "01/15/1990"}`, the test profile must have `"dob": "01/15/1990"` — same format, same value. Creating them separately guarantees mismatches.
-
-### Phone Number Pool
-
-Phone numbers are a shared resource. `GET /test_framework/v1/phone-numbers/?project=<id>` — filter for unassigned ones (`scenario_name: null`), US format (`+1` prefix, 12 chars). Assign via `PATCH /scenarios/{id}/` with `inbound_phone_number: <phone_id>`. Each scenario should get a unique phone to avoid mock data collisions.
+**See `references/mock-tool-design.md`** for full guidance, examples, the backup-phone pattern, and the phone pool workflow.
 
 ## Tagging Strategy
 
@@ -496,55 +396,32 @@ Cekura can create an evaluator directly from a real call transcript. This is use
 
 ## Session Memory Document
 
-When working on a multi-session eval project, offer to create a **session memory document** for the user. This persistent file captures key decisions made during the session so future conversations can pick up where you left off.
+For multi-session eval projects, offer to create a session memory document that captures key decisions (tool strategy, profiles, scenarios, open items) so future sessions don't re-derive context.
 
-**Ask early in the session:** "Would you like me to create a session memory doc? It logs key decisions (eval strategy, mock tool approach, test profile mappings, etc.) so future sessions don't have to rediscover this context."
+**See `references/session-memory.md`** for the template and update workflow.
 
-**If yes, create a file** in the user's working directory (or wherever they prefer) with this structure:
+## Next Steps
 
-```markdown
-# [Project Name] — Eval Session Notes
-
-## Key Decisions
-- **Tool strategy:** [A/B/C — with rationale]
-- **Mock tool approach:** [auto-fetch / manual / N/A]
-- **Default personality:** [ID and name]
-- **Default run mode:** [text / voice]
-- **Folder structure:** [how scenarios are organized]
-
-## Test Profiles Created
-| Profile | ID | Key Fields | Used By |
-|---------|----|-----------| --------|
-
-## Scenarios Created
-| Name | ID | Type | Status |
-|------|----|----|--------|
-
-## Mock Tool Mappings
-[Summary of what data exists for which tools]
-
-## Open Items
-- [Things to do next session]
-
-## Session Log
-- [Date]: [What was done]
-```
-
-**Update throughout the session:** As decisions are made, scenarios created, or mock data configured, append to the relevant section. At the end of the session, summarize what was accomplished.
-
-**In future sessions:** Read this file first to restore context. If the user says "continue from last session" or "pick up where we left off", check for this document.
+After completing eval design, the user typically needs:
+- **Run the suite** → execute via the run-scenarios endpoints (see `references/api-reference.md`)
+- **Review results** → check transcripts and metric scores
+- **Add or improve metrics** → invoke **cekura-metric-design** for new metrics, **cekura-metric-improvement** to refine existing ones
+- **Connect a new agent first** → invoke **cekura-create-agent**
 
 ## Additional Resources
 
-### Reference Files
+### Reference Files (loaded on demand)
 
-- **`references/api-reference.md`** — Complete API endpoints: scenarios, test profiles, results
-- **`references/coverage-patterns.md`** — Test coverage category breakdowns from real deployments
-- **`references/test-profiles.md`** — Test profile guide: creation from real data, template variables, best practices
-- **`references/conditional-actions.md`** — Conditional actions: structure, XML tags, deterministic testing patterns
+- **`references/tool-strategies.md`** — Full workflow for Approaches A/B/C
+- **`references/mock-tool-design.md`** — Per-input branching, append-not-replace, phone-pool gotchas
+- **`references/test-profiles.md`** — Profile creation from real data, template variables
+- **`references/conditional-actions.md`** — Conditional actions: XML tags, deterministic patterns
+- **`references/coverage-patterns.md`** — Test coverage category breakdowns
+- **`references/session-memory.md`** — Multi-session project memory document template
+- **`references/api-reference.md`** — Complete API endpoints: scenarios, profiles, results
 
 ### Example Files
 
-- **`examples/csv-eval-creation.md`** — CSV-to-evaluator workflow (Kouper BCHS pattern)
+- **`examples/csv-eval-creation.md`** — CSV-to-evaluator workflow
 - **`examples/workflow-eval.md`** — Single workflow evaluator example
 - **`examples/red-team-eval.md`** — Red-team evaluator example

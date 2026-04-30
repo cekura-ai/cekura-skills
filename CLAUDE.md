@@ -104,9 +104,9 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 ### cekura (core)
 | Component | Type | Purpose |
 |-----------|------|---------|
-| `onboarding` | skill | Walk new users through full platform setup |
-| `create-agent` | skill | Set up a voice AI agent — provider, mock tools, KB, dynamic vars |
-| `coordinator` | skill | Route users to the right skill/command |
+| `cekura-onboarding` | skill | Walk new users through full platform setup |
+| `cekura-create-agent` | skill | Set up a voice AI agent — provider, mock tools, KB, dynamic vars |
+| `cekura-coordinator` | skill | Route users to the right skill/command |
 | `setup-mcp` | command | Configure the MCP server for all plugins |
 | `upgrade-skills` | command | Pull latest from GitHub |
 | `report-bug` | command | Collect bug context, file GitHub issue, optionally attempt fix |
@@ -115,8 +115,8 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 ### cekura-metrics
 | Component | Type | Purpose |
 |-----------|------|---------|
-| `metric-design` | skill | Core metric design patterns and best practices |
-| `labs-workflow` | skill | Metric improvement through feedback iteration |
+| `cekura-metric-design` | skill | Core metric design patterns and best practices |
+| `cekura-metric-improvement` | skill | Metric improvement through feedback iteration (formerly `labs-workflow`) |
 | `create-metric` | command | Create or update a metric (absorbed `update-metric`) |
 | `list-metrics` | command | List metrics for an agent or project |
 | `evaluate-calls` | command | Run metrics on specific calls |
@@ -126,7 +126,7 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 ### cekura-evals
 | Component | Type | Purpose |
 |-----------|------|---------|
-| `eval-design` | skill | Evaluator design, test profiles, conditional actions, session memory |
+| `cekura-eval-design` | skill | Evaluator design, test profiles, conditional actions, session memory |
 | `manual-create-update-eval` | command | Create or update a single evaluator with full field walkthrough (replaced `create-eval`) |
 | `autogen-eval` | command | Auto-generate evaluators or bulk create from CSV/JSON (replaced `generate-evals` + `bulk-create-evals`) |
 | `list-evals` | command | List evaluators for an agent or project |

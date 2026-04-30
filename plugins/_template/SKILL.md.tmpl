@@ -1,0 +1,75 @@
+---
+# Replace `<kebab-name>` with the actual skill slug.
+# `name` MUST match the parent directory name and use only lowercase letters, numbers, and hyphens.
+name: cekura-<kebab-name>
+
+# Keep description under ~600 chars. Front-load the trigger phrases users would naturally say.
+# Codex caps the initial skills list at ~2% of context (8 KB), so leaner descriptions help.
+description: >
+  Use when the user asks "<trigger phrase 1>", "<trigger phrase 2>", or describes
+  <core scenario>. Covers <one-line scope>.
+
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
+
+metadata:
+  author: cekura
+  version: "0.3.0"
+---
+
+# <Display Name — human-readable>
+
+## Purpose
+
+<1–3 sentences. What this skill does, when it applies, who it's for.>
+
+## Performing Platform Actions
+
+When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
+
+## <Workflow / Phases / Decision Tree>
+
+<The skill's actual content. Aim to keep SKILL.md body under ~5 K tokens / ~400 lines. Move deep guidance to references/ and load on demand.>
+
+## Common Pitfalls
+
+<Anti-pattern bullets — common mistakes the skill helps avoid.>
+
+## Next Steps
+
+After this skill, the user typically needs:
+- For X → invoke **cekura-<related-skill-1>**
+- For Y → invoke **cekura-<related-skill-2>**
+
+## Documentation
+
+- Public docs: https://docs.cekura.ai
+- Concepts: https://docs.cekura.ai/documentation/key-concepts/
+
+## Additional Resources
+
+### Reference Files (loaded on demand)
+
+- **`references/<topic>.md`** — <one-line description of what's in this file>
+
+### Example Files (illustrative, read only when relevant)
+
+- **`examples/<scenario>.md`** — <one-line description>
+
+### Scripts (executable via bash, output-only into context)
+
+- **`scripts/<helper>.sh`** — <one-line description>
+
+---
+
+## Conventions for new skills
+
+1. **Directory name = `name` field.** Lowercase, hyphens only.
+2. **Body content stays public-safe.** No `mcp__cekura__*` tool refs, no internal endpoints, no MCP-server architecture details. Operational MCP details live in command files only.
+3. **Stay under ~400 lines.** Move detail to `references/` and link.
+4. **Public API endpoint paths are fine** (e.g., `POST /test_framework/v1/...`).
+5. **Public provider names are fine** (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP) — they're documented at https://docs.cekura.ai/documentation/integrations/.
+6. **Include the "Performing Platform Actions" directive verbatim** so Claude Code users get tool-preferred routing.
+7. **Add an `agents/openai.yaml`** for nicer Codex UI (optional, ignored elsewhere).
+8. **Bump `package.json` version** when adding/removing skills.
+9. **Update README and CLAUDE.md** Quick Reference tables.

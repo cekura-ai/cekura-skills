@@ -128,6 +128,16 @@ For Claude Code plugin users: each plugin auto-configures access to the Cekura A
 
 For other clients (Cursor, Codex, npx skills installs, etc.): use the Cekura dashboard at https://dashboard.cekura.ai or call the API directly using your API key.
 
+## Next Steps
+
+This skill routes — it doesn't perform tasks itself. After confirming the user's need, **invoke the matching skill**:
+
+- New to Cekura → **cekura-onboarding**
+- Connecting an agent → **cekura-create-agent**
+- Designing metrics → **cekura-metric-design**
+- Improving metric accuracy → **cekura-metric-improvement**
+- Designing test scenarios → **cekura-eval-design**
+
 ## Documentation
 
 - Full API docs: https://docs.cekura.ai/api-reference

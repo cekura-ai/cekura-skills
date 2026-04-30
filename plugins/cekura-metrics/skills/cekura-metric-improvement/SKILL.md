@@ -150,6 +150,13 @@ When the user wants to simulate the labs workflow interactively:
 5. Track feedback count and notify when 6+ is reached
 6. Offer to trigger auto-improve
 
+## Next Steps
+
+After improving a metric, the user typically needs:
+- **Re-run on a fresh call sample** to confirm the fix sticks (use the evaluate-calls / rerun_evaluation endpoints)
+- **Apply similar patterns to other metrics** → invoke **cekura-metric-design** for new metrics that need the same scoping
+- **Validate against test scenarios** → invoke **cekura-eval-design** if metric behavior depends on specific eval flows
+
 ## API Endpoints Reference
 
 | Endpoint | Purpose |

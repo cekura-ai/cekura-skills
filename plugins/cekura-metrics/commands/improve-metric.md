@@ -7,7 +7,7 @@ allowed-tools: ["AskUserQuestion", "mcp__cekura__metrics_retrieve", "mcp__cekura
 
 # Improve a Metric
 
-Single entry point for the full metric improvement cycle: collecting feedback, adding to labs, and running auto-improvement. The labs-workflow skill provides detailed guidance on feedback patterns and improvement strategy.
+Single entry point for the full metric improvement cycle: collecting feedback, adding to labs, and running auto-improvement. The `cekura-metric-improvement` skill provides detailed guidance on feedback patterns and improvement strategy.
 
 ## Determine Phase
 

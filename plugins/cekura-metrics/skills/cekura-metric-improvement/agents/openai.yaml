@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cekura: Metric Improvement"
+  short_description: "Improves an existing metric through structured feedback, the labs auto-improve pipeline, and validation."
+  brand_color: "#8B5CF6"
+
+policy:
+  allow_implicit_invocation: true
