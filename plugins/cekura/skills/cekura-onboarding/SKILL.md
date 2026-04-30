@@ -1,13 +1,16 @@
 ---
-name: Cekura Onboarding
+name: cekura-onboarding
 description: >
-  This skill should be used when the user says "get started with Cekura", "set up Cekura",
-  "onboard to Cekura", "I'm new to Cekura", "help me set up my agent", "how do I use Cekura",
+  Use when the user says "get started with Cekura", "set up Cekura", "onboard to Cekura",
+  "I'm new to Cekura", "help me set up my agent", "how do I use Cekura",
   "walk me through Cekura", "configure my project", "first time using Cekura",
-  or needs guidance on initial platform setup, agent configuration, provider integration,
-  first evaluators, or first metrics. Also relevant when a user has just installed the
-  cekura-skills marketplace and needs to understand what's available.
-version: 0.2.0
+  or needs guidance on initial platform setup, agent configuration, provider
+  integration, first evaluators, or first metrics.
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
+metadata:
+  author: cekura
+  version: "0.3.0"
 ---
 
 # Cekura Platform Onboarding
@@ -16,15 +19,19 @@ version: 0.2.0
 
 Walk a new user through the complete Cekura setup — from account creation to their first successful test run. This is an interactive, step-by-step guide. At each phase, confirm with the user before proceeding and help them with the actual API calls or UI steps.
 
+## Performing Platform Actions
+
+When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
+
 ## How to Use This Skill
 
 This is an **interactive walkthrough**, not a reference doc. Guide the user through each phase conversationally:
 
 1. Ask where they are in the process (some may already have an account/agent)
 2. Skip phases they've already completed
-3. Use the Cekura MCP tools or API to perform actions on their behalf
+3. Use the Cekura API or dashboard to perform actions on their behalf
 4. Validate each step before moving to the next
-5. Hand off to specialized skills (metric-design, eval-design) when appropriate
+5. Hand off to specialized skills (cekura-metric-design, cekura-eval-design) when appropriate
 
 ## Phase 1: Account & Project Setup
 
@@ -32,19 +39,19 @@ This is an **interactive walkthrough**, not a reference doc. Guide the user thro
 
 Ask the user:
 - "Do you already have a Cekura account?"
-- "Do you have an API key?"
+- "Do you have an API key, or do you sign in via OAuth?"
 
-If they have an API key, verify it works by calling `mcp__cekura__metrics_list`. A successful response (even empty) confirms the key is valid.
+If they have an API key, verify it works by calling the metrics list endpoint. A successful response (even empty) confirms the key is valid.
 
 If they don't have an account, direct them to sign up at https://dashboard.cekura.ai/sign-up and create a project.
 
-**If MCP tools aren't available:** Run `/setup-mcp` first to configure the MCP server.
+**For Claude Code plugin users:** If platform operations aren't working, run `/setup-mcp` to configure API access.
 
 ### 1.2 Project Setup
 
 Ask: "Do you already have a project, or do we need to create one?"
 
-**If creating:** Use `mcp__cekura__projects_create` or guide them through the UI.
+**If creating:** Create the project via the Cekura dashboard or projects API.
 
 **Project organization guidance:**
 - Small teams: single project for multiple agents
@@ -57,9 +64,9 @@ Ask: "Do you already have a project, or do we need to create one?"
 
 Ask: "Do you already have a voice AI agent deployed? What provider (VAPI, Retell, LiveKit, ElevenLabs, custom)?"
 
-**If they have an agent:** Get the agent details and create it on Cekura using `mcp__cekura__aiagents_create` with the agent name, project ID, and description.
+**If they have an agent:** Get the agent details and create it on Cekura with the agent name, project ID, and description.
 
-For detailed agent setup (provider integration, mock tools, KB, dynamic variables), hand off to the **create-agent** skill: "Let's use `/create-agent` to configure your agent with all the details."
+For detailed agent setup (provider integration, mock tools, KB, dynamic variables), hand off to the **cekura-create-agent** skill.
 
 **Critical: Agent description is essential.** It enables automatic evaluator generation and powers metrics that reference `{{agent.description}}`. Ask the user to paste their agent's full system prompt.
 
@@ -101,7 +108,7 @@ If yes:
 - Auto-fetch from provider (recommended): Cekura pulls tool definitions automatically
 - Manual setup: Add tool names, descriptions, and input/output mappings
 - Mock tools let you test without hitting real backends
-- See eval-design skill for detailed mock tool configuration
+- See cekura-eval-design skill for detailed mock tool configuration
 
 ## Phase 3: Metrics Setup
 
@@ -122,27 +129,25 @@ Guide: "Go to your project's Metrics section and enable all pre-defined metrics.
 
 ### 3.2 Custom Metrics (optional, defer to later)
 
-For first-time users, skip custom metrics initially. Once they have test results, they can use the **metric-design** skill to create targeted custom metrics.
-
-Mention: "After your first test runs, we can create custom metrics tailored to your specific workflows. The `/metric-design` skill handles that."
+For first-time users, skip custom metrics initially. Once they have test results, they can use the **cekura-metric-design** skill to create targeted custom metrics.
 
 ## Phase 4: First Evaluators
 
 ### 4.1 Auto-Generate Evaluators (Recommended)
 
-The fastest path to first tests — use `mcp__cekura__scenarios_generate_bg_create`:
+The fastest path to first tests — use the scenario auto-generation endpoint:
 
 ```json
 {
   "agent_id": <agent_id>,
   "num_scenarios": 10,
-  "personalities": [693],
+  "personalities": [<personality_id>],
   "generate_expected_outcomes": true,
   "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"]
 }
 ```
 
-Poll progress with `mcp__cekura__scenarios_generate_progress_retrieve`, then review the generated scenarios.
+Poll progress, then review the generated scenarios.
 
 **After generation, check:**
 - Are instructions specific and behavioral?
@@ -158,7 +163,7 @@ Common gaps in auto-generated evals:
 - Multi-language coverage
 - Tool failure scenarios
 
-Mention: "The `/eval-design` skill can help you design more targeted evaluators once you see what the auto-generator produces."
+Hand off to the **cekura-eval-design** skill for designing more targeted evaluators.
 
 ### 4.3 Attach Metrics
 
@@ -172,7 +177,7 @@ Use bulk-add via `actions → modify scenarios` in the UI.
 
 ### 5.1 Execute
 
-Use `mcp__cekura__scenarios_run_scenarios_create` with the agent ID and scenario IDs:
+Run the scenarios with the agent ID and scenario IDs:
 
 ```json
 {
@@ -186,7 +191,7 @@ Use `mcp__cekura__scenarios_run_scenarios_create` with the agent ID and scenario
 
 ### 5.2 Monitor
 
-Check results with `mcp__cekura__results_list`. Each run includes:
+Check results via the results endpoint. Each run includes:
 - Full transcript
 - Audio recording
 - Metric scores
@@ -204,38 +209,20 @@ Guide the user through interpreting results:
 
 After first successful test run, point the user to:
 
-| Need | Skill/Command | Description |
-|------|--------------|-------------|
-| Better metrics | `/metric-design` | Design custom metrics for specific workflows |
-| More evaluators | `/eval-design` | Design targeted test scenarios |
-| Improve metrics | `/labs-workflow` | Iterate metric quality through feedback |
+| Need | Skill | Description |
+|------|-------|-------------|
+| Better metrics | **cekura-metric-design** | Design custom metrics for specific workflows |
+| More evaluators | **cekura-eval-design** | Design targeted test scenarios |
+| Improve metrics | **cekura-metric-improvement** | Iterate metric quality through feedback |
 | Production monitoring | Observability setup | Monitor real calls in production |
 | CI/CD integration | GitHub Actions | Auto-test on code changes |
 | Scheduled tests | Cron jobs | Recurring test suites |
 
-## API Access — Cekura MCP Server
+## Documentation
 
-This plugin uses the Cekura MCP server for all API operations. The `.mcp.json` file in this plugin configures it automatically.
-
-**Prerequisites:**
-1. Set the `CEKURA_API_KEY` environment variable with your Cekura API key
-2. Start the Cekura MCP server: `cd /path/to/cekura-mcp-server && python3 openapi_mcp_server.py` (runs on `http://localhost:8001/mcp`)
-3. The plugin's `.mcp.json` handles the rest — Claude Code connects to the server and makes the `mcp__cekura__*` tools available
-
-**Key MCP tools used during onboarding:**
-| Operation | MCP Tool |
-|-----------|----------|
-| List/create projects | `mcp__cekura__projects_list`, `mcp__cekura__projects_create` |
-| Create/get agents | `mcp__cekura__aiagents_create`, `mcp__cekura__aiagents_retrieve`, `mcp__cekura__aiagents_list` |
-| Update agent | `mcp__cekura__aiagents_partial_update` |
-| Metrics | `mcp__cekura__metrics_list`, `mcp__cekura__metrics_create` |
-| Generate scenarios | `mcp__cekura__scenarios_generate_bg_create`, `mcp__cekura__scenarios_generate_progress_retrieve` |
-| Run scenarios | `mcp__cekura__scenarios_run_scenarios_create` |
-| Results | `mcp__cekura__results_list`, `mcp__cekura__results_retrieve` |
-| Personalities | `mcp__cekura__personalities_list` |
-
-**Docs lookup:** Use the `mcp__cekura__search_cekura` tool or fetch `https://docs.cekura.ai/llms.txt` to look up API details, field schemas, or feature documentation when the plugin references don't cover something.
-
-**Troubleshooting:** If MCP tools are not available, verify: (1) `CEKURA_API_KEY` is set, (2) the MCP server is running on port 8001, (3) restart Claude Code to pick up the `.mcp.json` config. Run `/setup-mcp` for guided setup.
+- Public docs: https://docs.cekura.ai
+- LLM-friendly docs: https://docs.cekura.ai/llms.txt
+- Concepts: https://docs.cekura.ai/documentation/key-concepts/
+- Integrations: https://docs.cekura.ai/documentation/integrations/
 
 See `references/api-quickstart.md` for the essential endpoints used during onboarding.

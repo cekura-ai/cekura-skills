@@ -2,7 +2,7 @@
 name: autogen-eval
 description: Auto-generate Cekura evaluators using the generate API with full configuration
 argument-hint: "[agent ID] [count] [scenario type]"
-allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg_create", "mcp__cekura__scenarios_generate_progress_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_create_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list"]
+allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list"]
 ---
 
 # Auto-Generate Evaluators
@@ -25,7 +25,7 @@ Use `mcp__cekura__aiagents_list` to help find agents. Then read the agent descri
 
 Check existing folders with `mcp__cekura__scenarios_folders_list`, or create a new one:
 ```
-mcp__cekura__scenarios_create_folder_create:
+mcp__cekura__scenarios_folder_create:
   name: "Auto-Generated — [date or purpose]"
   project_id: <project_id>
 ```
@@ -127,7 +127,7 @@ Proceed with generation?
 
 ## Trigger Generation
 
-Use `mcp__cekura__scenarios_generate_bg_create` with:
+Use `mcp__cekura__scenarios_generate_bg` with:
 
 | Field | Value |
 |-------|-------|
@@ -144,7 +144,7 @@ Returns `{"progress_id": "<uuid>"}`.
 
 ## Poll for Completion
 
-Poll every 10 seconds with `mcp__cekura__scenarios_generate_progress_retrieve`:
+Poll every 10 seconds with `mcp__cekura__scenarios_generate_progress`:
 
 ```
 progress_id: <uuid>

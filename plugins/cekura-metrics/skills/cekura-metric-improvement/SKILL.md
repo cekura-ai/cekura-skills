@@ -1,19 +1,26 @@
 ---
-name: Cekura Labs Workflow
+name: cekura-metric-improvement
 description: >
-  This skill should be used when the user asks to "improve a metric", "run labs",
-  "leave feedback on a metric", "add to labs", "fix metric accuracy",
-  "review metric results", "find misaligned metrics", "iterate on metric quality",
-  or discusses the metric improvement cycle, feedback workflow, or labs pipeline
-  in the Cekura platform.
-version: 0.3.0
+  Use when the user asks to "improve a metric", "run labs", "leave feedback on a metric",
+  "add to labs", "fix metric accuracy", "review metric results", "find misaligned metrics",
+  or "iterate on metric quality". Covers the metric improvement cycle, the feedback
+  workflow, and the labs pipeline used to refine metric accuracy over time.
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
+metadata:
+  author: cekura
+  version: "0.3.0"
 ---
 
-# Cekura Labs Workflow
+# Cekura Metric Improvement (Labs Workflow)
 
 ## Purpose
 
 Guide the metric improvement cycle: identify misaligned metric results, leave structured feedback, run the labs improvement pipeline, and validate changes. This workflow transforms metric quality from initial draft to production-ready through systematic iteration.
+
+## Performing Platform Actions
+
+When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
 
 ## Manual Fix First, Then Labs
 
@@ -44,8 +51,7 @@ For edge case refinement after manual fixes are validated:
 
 Review recent call evaluations to find suspicious results:
 
-Use `mcp__cekura__call_logs_list` with agent filters to list recent calls.
-Use `mcp__cekura__call_logs_retrieve` with a call ID to get evaluation results.
+List recent calls (with agent filters) and retrieve specific calls to get evaluation results — see "API Endpoints Reference" below.
 
 Look for:
 - FALSE results that seem like they should be TRUE (false negatives)
@@ -65,7 +71,7 @@ To systematically find misalignment:
 
 ## Step 2: Leave Feedback
 
-Use the mark_metric_vote endpoint to leave structured feedback. Submit via `mcp__cekura__call_logs_retrieve` to get the call, then use the feedback/vote API.
+Use the `mark_metric_vote` endpoint to leave structured feedback. First retrieve the call to find the metric result, then POST the feedback (see "API Endpoints Reference" below).
 
 ### Good Feedback Patterns
 
@@ -93,7 +99,7 @@ Track feedback progress:
 
 Once 6+ feedback instances are accumulated:
 
-Use `mcp__cekura__metrics_run_reviews_create` with the metric ID to trigger auto-improvement.
+Trigger auto-improvement via `POST /test_framework/metric-reviews/process_feedbacks/` with the metric ID.
 
 Labs analyzes the feedback and suggests changes to the metric prompt. Review the suggested changes carefully:
 - Do the changes address the feedback patterns?
@@ -113,7 +119,7 @@ Use `page_size` parameter (up to 200) instead of paginating through multiple pag
 
 Re-run the improved metric on the same calls that had misaligned results:
 
-Use `mcp__cekura__call_logs_rerun_evaluation_create` with the call IDs and metric ID.
+Use `POST /observability/v1/call-logs/rerun_evaluation/` with the call IDs and metric ID.
 
 Check:
 - Do the previously misaligned calls now produce correct results?
@@ -143,6 +149,13 @@ When the user wants to simulate the labs workflow interactively:
 4. If user disagrees, generate the feedback payload and submit via mark_metric_vote
 5. Track feedback count and notify when 6+ is reached
 6. Offer to trigger auto-improve
+
+## Next Steps
+
+After improving a metric, the user typically needs:
+- **Re-run on a fresh call sample** to confirm the fix sticks (use the evaluate-calls / rerun_evaluation endpoints)
+- **Apply similar patterns to other metrics** → invoke **cekura-metric-design** for new metrics that need the same scoping
+- **Validate against test scenarios** → invoke **cekura-eval-design** if metric behavior depends on specific eval flows
 
 ## API Endpoints Reference
 

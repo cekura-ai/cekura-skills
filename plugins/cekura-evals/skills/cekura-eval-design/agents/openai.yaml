@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cekura: Eval Design"
+  short_description: "Designs test scenarios (evaluators) that exercise a voice AI agent — coverage strategy, test profiles, conditional actions, mock tools."
+  brand_color: "#10B981"
+
+policy:
+  allow_implicit_invocation: true
