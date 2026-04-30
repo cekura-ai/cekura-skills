@@ -130,19 +130,42 @@ Run through this checklist:
 
 ### Step 7: Pair with a Test Profile
 
-**Every conditional action evaluator should use a test profile** for any identity data (name, DOB, account number, phone number). Do not hardcode these in the `action` field directly — the testing agent should read from the test profile.
+**Every conditional action evaluator should use a test profile** for any identity data (name, DOB, account number, phone number).
 
-Reference profile data in condition actions by describing what to provide:
-```
-"action": "Provide your full name and date of birth for verification"
+You have two ways to use test profile data in conditions:
+
+**Option A — Behavioral instruction (`fixed_message: false`):** Tell the testing agent what to provide; it reads from the profile and phrases it naturally.
+```json
+{
+  "action": "Provide your full name and date of birth for verification",
+  "fixed_message": false
+}
 ```
 
-Not:
-```
-"action": "My name is John Smith and my DOB is January 1st 1990"
+**Option B — Template variable in a fixed message (`fixed_message: true`):** Inject profile fields directly into verbatim text using `{{test_profile.field_name}}` syntax. The value is substituted at runtime before the message is spoken.
+```json
+{
+  "action": "My name is {{test_profile.first_name}} {{test_profile.last_name}} and my date of birth is {{test_profile.dob}}",
+  "fixed_message": true
+}
 ```
 
-The exception: when the exact value is required for compliance testing or when you intentionally want to test a specific fixed input.
+Use Option B when exact phrasing AND the real profile value both matter — for example, compliance tests that must say the name in a specific format, or IVR flows where the caller needs to speak a precise account number.
+
+**Template variable syntax:**
+- Simple field: `{{test_profile.first_name}}`
+- Bracket notation (for keys with spaces or special chars): `{{test_profile['account_id']}}`
+- Nested field: `{{test_profile.address.city}}`
+
+**Combine with XML tags** when needed:
+```json
+{
+  "action": "My account number is <spell>{{test_profile.account_number}}</spell>",
+  "fixed_message": true
+}
+```
+
+Never hardcode values that come from a test profile unless the value is intentionally fixed for that specific test (e.g., testing a known-bad input).
 
 ### Step 8: Set Supporting Fields
 
@@ -443,4 +466,10 @@ XML tags (fixed_message:true only):
 Action types:
   standard        Fires when conversation context matches condition string
   action_followup Fires immediately after condition ID (int) — multi-part responses
+
+Test profile variables (fixed_message:true only):
+  {{test_profile.field_name}}         Simple field
+  {{test_profile['key']}}             Bracket notation (keys with spaces/special chars)
+  {{test_profile.address.city}}       Nested field
+  <spell>{{test_profile.account_number}}</spell>   Combined with XML tag
 ```
