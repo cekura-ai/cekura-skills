@@ -60,7 +60,7 @@ Keep it concise. The role sets context for the entire conversation.
 
 ### Step 3: Design the Conditions Array
 
-Build one condition per conversation turn. Follow this structure for each:
+Build one condition per conversation turn. All five fields are required on every condition:
 
 ```json
 {
@@ -72,14 +72,15 @@ Build one condition per conversation turn. Follow this structure for each:
 }
 ```
 
-**Start with the opening message (id: 0):**
-- `condition` must be the string `"FIRST_MESSAGE"` exactly
-- `fixed_message` must be `true` — the opener is always spoken verbatim
-- If the main agent speaks first, `action` can be an empty string `""`
+**Start with the opening message (id: 0) — always required:**
+- `condition` must be the string `"FIRST_MESSAGE"` exactly (this is required even when the main agent speaks first)
+- `fixed_message` must be `true`
+- If the main agent speaks first (e.g., IVR or voicemail scenario), set `action` to `""` — the testing agent will wait for the main agent to start
 
 **For all subsequent conditions:**
 - Write the trigger as a natural description of what the main agent will say/do
 - Write the action as either exact text (`fixed_message: true`) or behavioral instructions (`fixed_message: false`)
+- `type` must be set explicitly — the backend no longer defaults it to `"standard"`; omitting it returns a validation error
 - Use `type: "action_followup"` when this condition should fire immediately after a prior one (set `condition` to the integer ID of that prior condition)
 
 ### Step 4: Choose fixed_message per Condition
@@ -110,13 +111,15 @@ XML tags only work with `fixed_message: true`. Each tag controls a distinct beha
 | Call goes on hold | `<hold>` | `<hold time="10s" />` |
 | Caller spells name | `<spell>` | `My name is <spell>SZCZEPANSKI</spell>` |
 | End call naturally | `<endcall>` | `Thanks, that's all I needed <endcall />` |
-| Simulate bad connection | `<network_simulation>` | `<network_simulation packet_loss="10" jitter="50" latency="200" />` |
-| Background noise | `<background_noise>` | `<background_noise sound="office" volume="0.05">I'm at work</background_noise>` |
+| Simulate bad connection | `<network_simulation>` | `<network_simulation packet_loss="10" />` |
+| Background noise | `<background_noise>` | `<background_noise sound="coffee-shop" volume="0.05">I'm at a café</background_noise>` |
 | Interrupt the agent | `<interruption>` | `<interruption time="2s" /> Wait, actually—` |
 
 #### Tag behavior details
 
 **`<ivr>`** — Simulates an uninterruptible IVR system message. The full text plays to completion; the main agent cannot speak over it or cut it short. Use this to model an automated phone menu the caller hears before reaching a live agent or bot.
+
+**Constraint:** `<ivr>` must be the **entire** action — it cannot be combined with other text or tags in the same action string.
 
 ```json
 {
@@ -128,19 +131,37 @@ XML tags only work with `fixed_message: true`. Each tag controls a distinct beha
 }
 ```
 
-**`<voicemail>`** — Simulates an uninterruptible voicemail greeting, identical to `<ivr>` except a beep plays automatically at the end of the text. Use this to model the scenario where the main agent's call goes to voicemail. Whatever follows the tag (if anything) is what the testing agent leaves as a message after the beep.
+**`<voicemail>`** — Simulates an uninterruptible voicemail greeting. The text plays to completion, then a beep sounds automatically at the end. Use this to model the scenario where the main agent's outbound call goes to voicemail.
+
+**Constraint:** `<voicemail>` must be the **entire** action — it cannot be combined with other text or tags. The message left after the beep should be a separate `action_followup` condition.
 
 ```json
 {
+  "id": 0,
+  "condition": "FIRST_MESSAGE",
+  "action": "",
+  "type": "standard",
+  "fixed_message": true
+},
+{
   "id": 1,
   "condition": "The call goes to voicemail",
-  "action": "<voicemail text=\"Hi, you've reached our office. Please leave a message after the beep.\" /> Hi, this is Sarah Johnson calling to confirm my appointment tomorrow.",
+  "action": "<voicemail text=\"Hi, you've reached our office. Please leave a message after the beep.\" />",
   "type": "standard",
+  "fixed_message": true
+},
+{
+  "id": 2,
+  "condition": 1,
+  "action": "Hi, this is Sarah Johnson calling to confirm my appointment tomorrow. Please call me back.",
+  "type": "action_followup",
   "fixed_message": true
 }
 ```
 
-**`<interruption>`** — Must be used as `type: "action_followup"`, referencing the ID of the condition that immediately precedes it. The `time` attribute controls how many seconds after the **main agent starts its next turn** before the testing agent interrupts. This simulates a caller cutting in while the agent is mid-sentence.
+**`<interruption>`** — Must be used as `type: "action_followup"`, referencing the ID of the condition immediately before it. The `time` attribute controls how many seconds after the **main agent starts its next turn** before the testing agent cuts in. This simulates a caller interrupting mid-sentence.
+
+**Constraint:** `<interruption>` must appear at the **very start** of the action string — nothing before it.
 
 ```json
 {
@@ -159,21 +180,49 @@ XML tags only work with `fixed_message: true`. Each tag controls a distinct beha
 }
 ```
 
-`time="2s"` means: wait 2 seconds into the agent's speech, then speak. A shorter time cuts in aggressively; a longer time lets the agent finish more before interrupting.
+`time="2s"` means: wait 2 seconds into the agent's speech, then cut in. A shorter value is more aggressive; a longer value lets the agent get further before being interrupted.
 
-**`<silence>`** — Adds a pause before the caller speaks. Unlike `<interruption>`, this does not cut off the agent — it waits until the caller's turn, then pauses before delivering the action text.
+**`<silence>`** — Adds a pause on the caller's turn before they speak. The main agent **can** interrupt this silence (it is interruptible). Background noise continues playing during the pause. After an interruption, condition matching restarts once the main agent finishes speaking.
 
-**`<hold>`** — Simulates hold music or dead air. The testing agent waits the specified duration without speaking. Useful for testing how the main agent handles prolonged silence from the caller side.
+**`<hold>`** — Simulates hold music or dead air. The testing agent goes silent for the specified duration and **cannot be interrupted** during this time. Background noise also stops during hold. Useful for testing how the main agent handles prolonged dead air.
+
+| | `<silence>` | `<hold>` |
+|---|---|---|
+| Interruptible by main agent | ✅ Yes | ❌ No |
+| Background noise during pause | ✅ Continues | ❌ Stops |
+
+**`<speed>`** — Controls speech rate. Ratio range: **0.8–1.2** (0.8 = 20% slower, 1.2 = 20% faster). Must appear at the start of the action.
+
+**`<volume>`** — Controls speech volume. Ratio range: **0–2** (0 = silent, 1 = normal, 2 = double). Must appear at the start of the action. Cartesia voices only.
+
+**`<background_noise>`** — Adds ambient sound behind the caller's voice. Supported sound names:
+
+| Category | Sounds |
+|----------|--------|
+| Office / retail | `office-ambience`, `coffee-shop`, `kitchen-noise`, `home-chatter`, `restaurant`, `shopping-mall`, `train-station` |
+| Nature / weather | `rain-thunder`, `windy-day`, `air-conditioner` |
+| Transportation | `inside-car`, `inside-train`, `busy-street`, `airport-boarding` |
+| People | `dog-barking`, `baby-crying`, `coughing`, `two-people-talking` |
+| Technical | `keyboard-typing`, `background-printer`, `static-radio`, `fan-buzz`, `ship-humming` |
+| Ambient | `quiet-room`, `stadium-crowd`, `standard-hiss`, `public-park`, `holding-on-song` |
+
+**`<noise>`** — Plays a one-shot sound effect at a point in the action. Supported sounds: `office`, `beep`, `cough1`, `cough2`.
+
+**`<network_simulation>`** — Simulates a degraded connection. Only `packet_loss` is supported (percentage value, e.g. `packet_loss="5"` = 5% packet loss). `jitter` and `latency` attributes are not supported and will be ignored.
 
 ### Step 6: Validate Before Submitting
 
 Run through this checklist:
 
-- [ ] `id: 0` has `"FIRST_MESSAGE"` as condition (exactly this string)
-- [ ] `id: 0` has `fixed_message: true`
+- [ ] `id: 0` exists and has `"FIRST_MESSAGE"` as condition (always required, even when main agent speaks first)
+- [ ] `id: 0` has `fixed_message: true`; if main agent speaks first, `action` is `""`
 - [ ] All IDs are unique integers
-- [ ] Every condition has `id`, `condition`, `action`, `type`, `fixed_message`
+- [ ] Every condition has all five fields: `id`, `condition`, `action`, `type`, `fixed_message`
+- [ ] `type` is explicitly `"standard"` or `"action_followup"` on every condition — omitting it returns a validation error
 - [ ] `action_followup` conditions have an integer (not string) in `condition`
+- [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
+- [ ] `<interruption>` is at the very start of its action string and the condition uses `type: "action_followup"`
+- [ ] `<network_simulation>` only uses `packet_loss` (not `jitter` or `latency`)
 - [ ] No XML tags used with `fixed_message: false`
 - [ ] The last condition ends the conversation (via `<endcall />` or a natural close)
 - [ ] `scenario_language` is set correctly (not left as default `"en"` for non-English tests)
@@ -406,7 +455,7 @@ Before creating the scenario, confirm:
     {
       "id": 0,
       "condition": "FIRST_MESSAGE",
-      "action": "<network_simulation packet_loss='10' jitter='80' latency='200' /> Hello, I'm having trouble hearing you",
+      "action": "<network_simulation packet_loss='10' /> Hello, I'm having trouble hearing you",
       "type": "standard",
       "fixed_message": true
     },
@@ -449,8 +498,28 @@ If you have a test profile, instruct the testing agent to provide the data rathe
 **Wrong:** `"action": "My date of birth is March 15, 1985"`
 **Right:** `"action": "Provide your date of birth for verification"` (agent reads from test profile)
 
+### Don't omit `type` on any condition
+`type` is required on every condition. The backend no longer defaults it — omitting it returns a validation error.
+**Wrong:** `{ "id": 1, "condition": "The agent asks for your name", "action": "John Smith", "fixed_message": true }`
+**Right:** add `"type": "standard"` (or `"action_followup"`)
+
+### Don't combine `<ivr>` or `<voicemail>` with other text or tags
+Both tags must be the entire action. Adding surrounding text or other tags causes a validation error.
+**Wrong:** `"<ivr text='Press 1 for support' /> Please choose an option"`
+**Right:** `"<ivr text='Press 1 for support' />"` — and if the caller needs to respond, use a separate follow-up condition.
+
+### Don't put text before `<interruption>`
+`<interruption>` must be the very first thing in the action string.
+**Wrong:** `"Actually, wait — <interruption time='2s' /> let me ask something"`
+**Right:** `"<interruption time='2s' /> Actually, let me ask something first"`
+
 ### Don't use `<interruption>` as a standard condition
 `<interruption>` only works as `type: "action_followup"`. Using it on a `type: "standard"` condition has no effect — the timing mechanism requires a preceding action to anchor the interrupt to.
+
+### Don't use unsupported `<network_simulation>` attributes
+Only `packet_loss` is supported. `jitter` and `latency` are not valid and will be silently ignored.
+**Wrong:** `<network_simulation packet_loss="10" jitter="50" latency="200" />`
+**Right:** `<network_simulation packet_loss="10" />`
 
 ### Don't create overly long condition arrays
 If your conditions array exceeds ~15 entries, split into multiple evaluators by logical phase (e.g., verification, scheduling, confirmation). Long arrays are harder to debug and may drift from the intended flow.
@@ -498,24 +567,37 @@ If your conditions array exceeds ~15 entries, split into multiple evaluators by 
 ## Quick Reference Card
 
 ```
-Condition fields (all required):
+Condition fields (ALL five required on every condition):
   id           integer       Unique, start at 0
-  condition    str|int       "FIRST_MESSAGE" for id:0; trigger string; or prior ID int for followup
+  condition    str|int       "FIRST_MESSAGE" for id:0 (always required); trigger string for standard;
+                             prior ID int for action_followup
   action       string        Exact text (fixed_message:true) or instructions (fixed_message:false)
-  type         string        "standard" | "action_followup"
+  type         string        "standard" | "action_followup"  — required, no default
   fixed_message boolean      true = verbatim; false = instructions
 
 XML tags (fixed_message:true only):
-  <ivr text="..." />                Uninterruptible IVR message — plays fully, agent cannot cut it off
-  <voicemail text="..." />          Uninterruptible voicemail greeting — beep plays at end of text
+  <ivr text="..." />                Uninterruptible IVR — must be entire action, no surrounding text
+  <voicemail text="..." />          Uninterruptible + beep at end — must be entire action; use
+                                    action_followup for the message left after beep
   <dtmf digits="..." />             Touch-tone input
   <endcall />                       Terminate call
-  <silence time="Xs" />             Pause before the caller speaks (does not cut off agent)
-  <hold time="Xs" />                Dead air / hold simulation — testing agent waits silently
+  <silence time="Xs" />             Pause on caller's turn — interruptible; bg noise continues
+  <hold time="Xs" />                Dead air — NOT interruptible; bg noise stops
   <spell>TEXT</spell>               Spell text letter-by-letter
-  <interruption time="Xs" />        Cut into agent speech Xs after agent starts — MUST be action_followup
-  <network_simulation packet_loss="N" jitter="N" latency="N" />
-  <background_noise sound="..." volume="0.x">...</background_noise>
+  <interruption time="Xs" />        Cut in Xs after agent starts speaking — MUST be action_followup
+                                    AND must be at the very start of the action string
+  <speed ratio="N" />               Speech rate 0.8–1.2; must start the action
+  <volume ratio="N" />              Volume 0–2; must start the action; Cartesia only
+  <network_simulation packet_loss="N" />   Only packet_loss supported (% value); jitter/latency ignored
+  <background_noise sound="NAME" volume="0.x">spoken text</background_noise>
+  <noise sound="NAME" volume="N" />        One-shot sound: office | beep | cough1 | cough2
+
+Background noise sounds (background_noise tag):
+  office-ambience, coffee-shop, kitchen-noise, home-chatter, restaurant, shopping-mall,
+  train-station, rain-thunder, windy-day, air-conditioner, inside-car, inside-train,
+  busy-street, airport-boarding, dog-barking, baby-crying, coughing, two-people-talking,
+  keyboard-typing, background-printer, static-radio, fan-buzz, ship-humming,
+  quiet-room, stadium-crowd, standard-hiss, public-park, holding-on-song
 
 Action types:
   standard        Fires when conversation context matches condition string
