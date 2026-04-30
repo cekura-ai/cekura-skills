@@ -206,7 +206,7 @@ XML tags only work with `fixed_message: true`. Each tag controls a distinct beha
 | Technical | `keyboard-typing`, `background-printer`, `static-radio`, `fan-buzz`, `ship-humming` |
 | Ambient | `quiet-room`, `stadium-crowd`, `standard-hiss`, `public-park`, `holding-on-song` |
 
-**`<noise>`** — Plays a one-shot sound effect at a point in the action. Supported sounds: `office`, `beep`, `cough1`, `cough2`.
+**`<noise>`** — Plays a one-shot sound effect at a point in the action. Supported sounds: `office`, `beep`, `cough1`, `cough2`. The `volume` attribute is optional (e.g. `volume="0.8"`).
 
 **`<network_simulation>`** — Simulates a degraded connection. Only `packet_loss` is supported (percentage value, e.g. `packet_loss="5"` = 5% packet loss). `jitter` and `latency` attributes are not supported and will be ignored.
 

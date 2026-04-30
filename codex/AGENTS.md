@@ -499,7 +499,7 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 | `<volume ratio="N" />` | Volume 0–2. Must start action. Cartesia only. |
 | `<network_simulation packet_loss="N" />` | Only `packet_loss` supported — `jitter`/`latency` are ignored. |
 | `<background_noise sound="NAME" volume="0.x">text</background_noise>` | 29 sounds available (e.g. `coffee-shop`, `office-ambience`, `rain-thunder`) |
-| `<noise sound="NAME" />` | One-shot effect: `office`, `beep`, `cough1`, `cough2` |
+| `<noise sound="NAME" volume="N" />` | One-shot effect: `office`, `beep`, `cough1`, `cough2`. `volume` is optional. |
 
 ### Test Profile Variables in Fixed Messages
 
