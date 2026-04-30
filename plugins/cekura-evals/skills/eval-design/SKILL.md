@@ -1,10 +1,10 @@
 ---
 name: Cekura Eval Design
 description: >
-  Useful when the user asks to "create an evaluator", "write a test scenario", "design a test case",
-  "build eval coverage", "plan a test suite", "test my agent", "create red team tests",
-  "write workflow tests", "improve eval quality", "what evals do I need", "create test profiles",
-  "conditional actions", "run evals",
+  Useful when the user asks to "create an evaluator", "create evals", "create a scenario",
+  "write a test scenario", "design a test case", "build eval coverage", "plan a test suite",
+  "test my agent", "create red team tests", "write workflow tests", "improve eval quality",
+  "what evals do I need", "create test profiles", "conditional actions", "run evals",
   or discusses evaluator design, test coverage strategy, scenario instructions,
   expected outcomes, personality selection, test profiles, conditional actions,
   execution modes, or eval best practices for Cekura voice AI agents. Covers creating
