@@ -7,14 +7,16 @@ description: >
   "auto-improve agent prompt", "use eval results to improve agent", or discusses
   agent self-improvement, prompt iteration from run results, or automated
   agent quality loops in the Cekura platform.
-version: 0.3.0
+version: 0.4.0
 ---
 
 # Cekura Self-Improving Agent
 
 ## Purpose
 
-Close the loop on agent prompt quality. Ingest evaluation signal (scenario IDs to run, completed runs, a result batch, or production call logs), filter to **prompt-following failures only** (drop voice/channel issues), diagnose where the prompt has gaps, conflicts, or ambiguities, propose targeted edits, apply them, and re-run validation — iterating until the agent passes or the iteration cap is reached.
+Close the loop on agent prompt quality. Ingest evaluation signal (scenario IDs to run, completed runs, a result batch, or production call logs), classify failures (prompt-following vs. voice/channel vs. tool/infra) for diagnosis, diagnose where the prompt has gaps, conflicts, or ambiguities, propose targeted edits, apply them, and re-run validation — iterating until the agent reaches **100% pass rate on the validation set** or the iteration cap is reached.
+
+**Exit gate:** the voice/channel/infra filter informs *what to fix* (Phase 3 only proposes edits for prompt-following failures), not *when to stop*. Any remaining failure of any class keeps the loop alive. Do not exit at "zero prompt-following failures but some infra failures remain" — first re-classify with fresh eyes, expand squad scope to other assistants, and consider mitigation prompt edits. Only the iteration cap (or genuine 100% pass) ends the loop.
 
 Currently supported only for **VAPI** and **Retell** agents (Phase 1 gates this).
 
@@ -27,7 +29,7 @@ The four phases run in order, with the last looping until the agent passes:
 1. **Phase 1 — Verify Agent and Provider Support.** Fetch the agent, gate on `assistant_provider ∈ {vapi, retell}`. Halt with a clear error otherwise. For VAPI, also pull the live assistant or squad config from VAPI directly (using `VAPI_KEY` plus `VAPI_ASSISTANT_ID` or `VAPI_SQUAD_ID`) — VAPI is the source of truth for the prompt; the Cekura `description` is not consulted or edited.
 2. **Phase 2 — Collect Failures.** Branch on input type. For `scenario_ids`, run them first and wait for completion; otherwise fetch the supplied runs / call logs. Accumulate expected-outcome and metric failures, **discard voice/channel failures**, and present a structured summary.
 3. **Phase 3 — Propose Prompt Changes.** Map kept failures to prompt sections, classify each as Gap / Conflict / Ambiguity, and produce minimal scoped edits. Show the user before/after blocks and wait for explicit approval.
-4. **Phase 4 — Apply, Validate, and Iterate.** PATCH the prompt, confirm provider-side sync, run validation against the relevant scenarios, re-collect failures with the same Phase 2 filter, and either exit on success or feed the new failure summary back into Phase 3. Loop up to `max_iterations` times.
+4. **Phase 4 — Apply, Validate, and Iterate.** PATCH the prompt, confirm provider-side sync, run validation against the relevant scenarios, re-collect failures with the same Phase 2 classification. Exit only on **100% pass rate**; otherwise feed the new failure summary back into Phase 3 — expanding squad scope or considering mitigation edits if the remaining failures aren't directly prompt-following. Loop up to `max_iterations` times.
 
 Confirm with the user at every phase boundary — the skill should never apply edits or kick off long-running validation runs without an explicit go-ahead.
 
@@ -339,11 +341,13 @@ Use `runs_improve_prompt_create` as a **fallback** when the manual analysis is i
 
 ## Phase 4: Apply, Validate, and Iterate
 
-This phase is a **loop**. Each iteration: apply the approved prompt → run validation → diagnose new failures → propose more changes → apply again. Exit when a validation pass produces zero prompt-following failures, or when the iteration cap is hit.
+This phase is a **loop**. Each iteration: apply the approved prompt → run validation → diagnose new failures → propose more changes → apply again. Exit only when a validation pass produces **100% success on the validation set** (zero failures of any class), or when the iteration cap is hit. Do not exit just because the latest failures look like voice/infra rather than prompt issues — first try expanding squad scope and proposing mitigation edits.
 
 ### Early-exit shortcut
 
-If Phase 2 collected zero prompt-following failures from the initial input (i.e., the agent is already passing on the supplied scenarios / runs / calls), Phase 3 was skipped and there's nothing to apply. Report success and stop. This phase only runs when at least one approved edit exists.
+If Phase 2 collected **zero failures of any class** from the initial input (the agent already passes 100% on the supplied scenarios / runs / calls), Phase 3 was skipped and there's nothing to apply. Report success and stop.
+
+If Phase 2 found failures but they are *all* voice/infra/tool with no prompt-following matches, do **not** auto-exit. Run the same logic as the "kept failures = 0 but total > 0" branch in Step 4.6 (re-classify with fresh eyes, consider squad scope expansion, consider mitigation edits) before deciding to stop.
 
 ### Step 4.1 — Apply the approved edits to the prompt
 
@@ -412,16 +416,30 @@ This guarantees iteration N sees failures filtered identically to iteration 0, s
 
 ### Step 4.6 — Decide: exit or loop
 
-- **Zero kept failures** → success. Report the final pass rate, the cumulative diff applied, and stop.
-- **Kept failures remain** → loop:
+The exit criterion is **100% pass rate on the validation set** — zero failures of any class. The voice/infra filter exists for diagnosis (to focus Phase 3 on prompt-fixable issues), not as the loop's stopping criterion. Do not declare success while the agent is still failing, even when the remaining failures don't look prompt-shaped.
+
+Decide as follows:
+
+- **100% pass rate** → success. Report the final pass rate, the cumulative diff applied, and stop.
+- **Kept (prompt-following) failures > 0** → loop normally:
   1. Feed the new failure summary and the **current (post-edit) prompt** back into Phase 3.
   2. Phase 3 produces a fresh proposal against the updated prompt.
   3. User review (Step 3.5) gates re-entry to this phase.
   4. Repeat from Step 4.1.
+- **Kept failures = 0 but total failures > 0** (all remaining failures look voice/infra/tool):
+  Do **not** exit yet. Work through these checks first, in order:
+  1. **Re-classify with fresh eyes.** A tool error response *handled badly* by the agent is a prompt issue (the agent should have retried, fallen back, or escalated cleanly). Only count as infra if the agent handled the error correctly. A behavior in a *different squad member* than the one currently scoped is still a prompt issue — just out of current scope. Repeated identical agent utterances, self-handoffs, wrong-handoff destinations, and per-member instruction drift are all prompt-fixable; they just live in members you didn't scope yet.
+  2. **Expand squad scope** (squads only). If failures localize to members not currently in scope, ask the user to add them, then re-enter Phase 3 with the expanded scope. The first iteration usually narrows on the entry assistant; deeper failures only become visible after that one passes, so scope expansion across iterations is expected, not a regression.
+  3. **Consider mitigation edits.** Some "infra" failures can be partially mitigated by prompt: better retry counts, clearer fallback messaging, faster escalation, different tool-call argument shaping, or guarding against missing dynamic variables. Surface these as Phase 3 candidates and let the user decide.
+  4. **Only after all three above are exhausted** (no missed prompt issues, no out-of-scope members worth pulling in, no plausible mitigation edit) → surface a clear stop with the residual failures, hand off to the appropriate skill (`create-agent` for tool/config issues, backend team for upstream service errors), and exit. Do not silently exit.
+
+The "kept = 0 but total > 0" path must surface its decision to the user — explicitly state which of the three checks ruled out further iteration. Don't use shape of the failures alone as a reason to stop.
 
 ### Iteration cap
 
-Default to **10 iterations** of the loop. If the user supplies a `max_iterations` value when invoking the skill (e.g., "keep going up to 20", "cap at 5"), use that instead. After the cap is hit, stop and surface a summary regardless of remaining failures:
+Default to **10 iterations** of the loop. If the user supplies a `max_iterations` value when invoking the skill (e.g., "keep going up to 20", "cap at 5"), use that instead. The cap is the **only safety net** besides 100% pass rate — it prevents runaway loops when the residual failures genuinely cannot be fixed by prompt edits (real infra outages, missing tools, dynamic-variable injection failures the user must resolve elsewhere, etc.). Without the cap, the loop is supposed to keep going.
+
+After the cap is hit, stop and surface a summary regardless of remaining failures:
 
 - What's been fixed (pass-rate gain, failures resolved)
 - What's still failing (the residual summary)
@@ -435,6 +453,8 @@ The user can also stop or extend mid-loop ("keep going" / "stop"). Don't loop si
 - **Watch for oscillation** — if iteration N's edit reverses iteration N-1's edit on the same clause, stop and flag it. The two failure sets are pulling the prompt in opposite directions; user judgment is needed.
 - **Watch for new failures the previous prompt didn't have** — if iteration N introduces failures that iteration 0 didn't have, the latest edit caused a regression. Stop and offer to revert that specific edit.
 - **Don't widen the validation set mid-loop** without telling the user. The stopping criterion depends on a stable comparison set.
+- **Squad scope expansion is fair game; validation-set expansion is not.** When the "kept failures = 0 but total > 0" branch decides to bring in a new squad member, that's expanding the *edit scope*, not the validation set. Same scenarios; just more assistants whose prompts can change. The agent under test is the squad as a whole, so this is expected behavior, not a regression risk.
+- **Don't stop just because the failure shape changed.** Iteration N often surfaces a different bug than iteration N-1 (e.g., fixing the entry assistant exposes a self-handoff loop in the screener). That's the loop working, not a reason to declare done.
 
 ## API Access — Cekura MCP Server
 
@@ -472,7 +492,7 @@ These apply to the skill as a whole. Phase-specific anti-patterns are covered in
 - **Iterating with a noisy metric.** If most kept failures come from one metric whose explanations look subjective, the metric is probably miscalibrated. Hand off to `labs-workflow` first; otherwise the loop will keep "fixing" the prompt to satisfy a flawed judge.
 - **Skipping the provider sync gate (Phase 4.2).** For VAPI, confirm the PATCH actually landed (re-fetch and diff the system message). For Retell without auto-sync, Cekura's stored description is not what the live agent runs until the user pushes it from the dashboard. Without confirmation, the loop validates the old prompt and never converges.
 - **Bypassing user review at phase boundaries.** This skill applies edits to a live agent. Every transition (Phase 2 summary → Phase 3 proposal → Phase 4 apply) must be explicitly approved.
-- **Fixing prompt issues that are really agent-config issues.** If failures cluster on missing tools or knowledge gaps, no prompt edit will help — hand off to `create-agent`.
+- **Quitting the loop the moment failures look non-prompt.** The exit gate is 100% pass rate or the iteration cap — not "first sight of an infra-shaped failure." If a residual failure looks like infra/tool/config, first verify there's no in-scope or out-of-scope prompt issue you missed: how the agent *handles* a tool error is a prompt question, and squad members you didn't scope are out of scope but still prompt-fixable. Only after exhausting prompt-side options (re-classify, expand squad scope, propose mitigation edits) should you hand off to `create-agent` for genuine config issues.
 - **Treating expected-outcome failures and metric failures the same.** Expected-outcome failures are first-class signal about agent behavior. Metric failures may reflect either the agent or the metric — be more skeptical.
 
 ## Hand-off to Other Skills
