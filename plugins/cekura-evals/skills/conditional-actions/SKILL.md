@@ -99,7 +99,7 @@ For each condition, decide:
 
 ### Step 5: Add XML Tags Where Needed
 
-XML tags only work with `fixed_message: true`. Use them for:
+XML tags only work with `fixed_message: true`. Each tag controls a distinct behavior — read the notes below before using them.
 
 | Scenario | Tag | Example |
 |----------|-----|---------|
@@ -112,7 +112,58 @@ XML tags only work with `fixed_message: true`. Use them for:
 | End call naturally | `<endcall>` | `Thanks, that's all I needed <endcall />` |
 | Simulate bad connection | `<network_simulation>` | `<network_simulation packet_loss="10" jitter="50" latency="200" />` |
 | Background noise | `<background_noise>` | `<background_noise sound="office" volume="0.05">I'm at work</background_noise>` |
-| Interrupt the agent | `<interruption>` | `<interruption time="2s" /> Wait, I have a question` |
+| Interrupt the agent | `<interruption>` | `<interruption time="2s" /> Wait, actually—` |
+
+#### Tag behavior details
+
+**`<ivr>`** — Simulates an uninterruptible IVR system message. The full text plays to completion; the main agent cannot speak over it or cut it short. Use this to model an automated phone menu the caller hears before reaching a live agent or bot.
+
+```json
+{
+  "id": 0,
+  "condition": "FIRST_MESSAGE",
+  "action": "<ivr text='Thank you for calling. Press 1 for appointments, press 2 for billing.' />",
+  "type": "standard",
+  "fixed_message": true
+}
+```
+
+**`<voicemail>`** — Simulates an uninterruptible voicemail greeting, identical to `<ivr>` except a beep plays automatically at the end of the text. Use this to model the scenario where the main agent's call goes to voicemail. Whatever follows the tag (if anything) is what the testing agent leaves as a message after the beep.
+
+```json
+{
+  "id": 1,
+  "condition": "The call goes to voicemail",
+  "action": "<voicemail text=\"Hi, you've reached our office. Please leave a message after the beep.\" /> Hi, this is Sarah Johnson calling to confirm my appointment tomorrow.",
+  "type": "standard",
+  "fixed_message": true
+}
+```
+
+**`<interruption>`** — Must be used as `type: "action_followup"`, referencing the ID of the condition that immediately precedes it. The `time` attribute controls how many seconds after the **main agent starts its next turn** before the testing agent interrupts. This simulates a caller cutting in while the agent is mid-sentence.
+
+```json
+{
+  "id": 3,
+  "condition": "The agent starts explaining the cancellation policy",
+  "action": "I understand, please go ahead",
+  "type": "standard",
+  "fixed_message": true
+},
+{
+  "id": 4,
+  "condition": 3,
+  "action": "<interruption time='2s' /> Sorry to interrupt — I actually just have a quick question",
+  "type": "action_followup",
+  "fixed_message": true
+}
+```
+
+`time="2s"` means: wait 2 seconds into the agent's speech, then speak. A shorter time cuts in aggressively; a longer time lets the agent finish more before interrupting.
+
+**`<silence>`** — Adds a pause before the caller speaks. Unlike `<interruption>`, this does not cut off the agent — it waits until the caller's turn, then pauses before delivering the action text.
+
+**`<hold>`** — Simulates hold music or dead air. The testing agent waits the specified duration without speaking. Useful for testing how the main agent handles prolonged silence from the caller side.
 
 ### Step 6: Validate Before Submitting
 
@@ -398,6 +449,9 @@ If you have a test profile, instruct the testing agent to provide the data rathe
 **Wrong:** `"action": "My date of birth is March 15, 1985"`
 **Right:** `"action": "Provide your date of birth for verification"` (agent reads from test profile)
 
+### Don't use `<interruption>` as a standard condition
+`<interruption>` only works as `type: "action_followup"`. Using it on a `type: "standard"` condition has no effect — the timing mechanism requires a preceding action to anchor the interrupt to.
+
 ### Don't create overly long condition arrays
 If your conditions array exceeds ~15 entries, split into multiple evaluators by logical phase (e.g., verification, scheduling, confirmation). Long arrays are harder to debug and may drift from the intended flow.
 
@@ -452,15 +506,15 @@ Condition fields (all required):
   fixed_message boolean      true = verbatim; false = instructions
 
 XML tags (fixed_message:true only):
-  <ivr text="..." />                IVR system message
+  <ivr text="..." />                Uninterruptible IVR message — plays fully, agent cannot cut it off
+  <voicemail text="..." />          Uninterruptible voicemail greeting — beep plays at end of text
   <dtmf digits="..." />             Touch-tone input
-  <voicemail text="..." />          Voicemail greeting
   <endcall />                       Terminate call
-  <silence time="Xs" />             Pause before speaking
-  <hold time="Xs" />                Wait (hold music simulation)
+  <silence time="Xs" />             Pause before the caller speaks (does not cut off agent)
+  <hold time="Xs" />                Dead air / hold simulation — testing agent waits silently
   <spell>TEXT</spell>               Spell text letter-by-letter
-  <interruption time="Xs" />        Interrupt agent after timeout
-  <network_simulation ... />        Simulate packet loss/jitter/latency
+  <interruption time="Xs" />        Cut into agent speech Xs after agent starts — MUST be action_followup
+  <network_simulation packet_loss="N" jitter="N" latency="N" />
   <background_noise sound="..." volume="0.x">...</background_noise>
 
 Action types:
