@@ -2,7 +2,7 @@
 name: Cekura Metric Design
 description: >
   Useful when the user asks to "create a metric", "write a metric", "design a metric",
-  "build a metric for", "evaluate agent performance", "measure call quality", "track a KPI",
+  "build a metric for", "score call quality", "measure call quality", "track a KPI",
   "add a workflow metric", "improve my metric", "fix a metric", "debug metric results",
   "set up quality scoring", or "what metrics do I need". Also relevant when discussing
   LLM judge prompts, custom code metrics, evaluation triggers, VALID_SKIP patterns,

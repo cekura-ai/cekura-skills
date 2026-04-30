@@ -1,6 +1,6 @@
 ---
 name: create-metric
-description: Create or update a Cekura metric for evaluating voice AI agent calls
+description: Create or update a Cekura metric — a scoring rubric or LLM-judge prompt run against completed call transcripts.
 argument-hint: "[metric description, requirements, or metric ID to update]"
 allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "WebFetch", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__metrics_create", "mcp__cekura__metrics_list", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__aiagents_retrieve"]
 ---
