@@ -539,13 +539,13 @@ If your conditions array exceeds ~15 entries, split into multiple evaluators by 
 | Update evaluator | `mcp__cekura__scenarios_partial_update` |
 | Get evaluator | `mcp__cekura__scenarios_retrieve` |
 | List evaluators | `mcp__cekura__scenarios_list` |
-| Create folder | `mcp__cekura__scenarios_folder_create` |
+| Create folder | `mcp__cekura__scenarios_create_folder_create` |
 | List folders | `mcp__cekura__scenarios_folders_list` |
 | List test profiles | `mcp__cekura__test_profiles_list` |
 | Create test profile | `mcp__cekura__test_profiles_create` |
 | List personalities | `mcp__cekura__personalities_list` |
-| Run scenario (voice) | `mcp__cekura__scenarios_run_voice` |
-| Run scenario (text) | `mcp__cekura__scenarios_run_text` |
+| Run scenario (voice) | `mcp__cekura__scenarios_run_scenarios_create` |
+| Run scenario (text) | `mcp__cekura__scenarios_run_scenarios_text_create` |
 
 **The `conditions` array goes in the `instructions` field** of the scenario create/update payload, as a JSON object:
 

@@ -33,7 +33,7 @@
     {
       "name": "cekura-evals",
       "description": "Create, run, and analyze test suites for AI voice agent testing. Includes eval design best practices, test profiles, conditional actions, and coverage planning.",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "author": {
         "name": "Cekura",
         "email": "support@cekura.ai"
