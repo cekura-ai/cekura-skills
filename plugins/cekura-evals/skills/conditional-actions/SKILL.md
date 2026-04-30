@@ -526,6 +526,11 @@ If your conditions array exceeds ~15 entries, split into multiple evaluators by 
 
 ## API Access — Cekura MCP Server
 
+**Prerequisites:**
+1. Set the `CEKURA_API_KEY` environment variable with your Cekura API key
+2. Start the Cekura MCP server: `cd /path/to/cekura-mcp-server && python3 openapi_mcp_server.py` (runs on `http://localhost:8001/mcp`)
+3. The plugin's `.mcp.json` handles the rest — Claude Code connects to the server and makes the `mcp__cekura__*` tools available
+
 **Key MCP tools for this skill:**
 
 | Operation | MCP Tool |
