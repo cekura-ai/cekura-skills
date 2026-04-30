@@ -7,7 +7,7 @@ description: >
   "auto-improve agent prompt", "use eval results to improve agent", or discusses
   agent self-improvement, prompt iteration from run results, or automated
   agent quality loops in the Cekura platform.
-version: 0.1.0
+version: 0.3.0
 ---
 
 # Cekura Self-Improving Agent
@@ -24,7 +24,7 @@ This is an **interactive, multi-iteration workflow**. The user supplies an `agen
 
 The four phases run in order, with the last looping until the agent passes:
 
-1. **Phase 1 — Verify Agent and Provider Support.** Fetch the agent, gate on `assistant_provider ∈ {vapi, retell}`. Halt with a clear error otherwise.
+1. **Phase 1 — Verify Agent and Provider Support.** Fetch the agent, gate on `assistant_provider ∈ {vapi, retell}`. Halt with a clear error otherwise. For VAPI, also pull the live assistant or squad config from VAPI directly (using `VAPI_KEY` plus `VAPI_ASSISTANT_ID` or `VAPI_SQUAD_ID`) — VAPI is the source of truth for the prompt; the Cekura `description` is not consulted or edited.
 2. **Phase 2 — Collect Failures.** Branch on input type. For `scenario_ids`, run them first and wait for completion; otherwise fetch the supplied runs / call logs. Accumulate expected-outcome and metric failures, **discard voice/channel failures**, and present a structured summary.
 3. **Phase 3 — Propose Prompt Changes.** Map kept failures to prompt sections, classify each as Gap / Conflict / Ambiguity, and produce minimal scoped edits. Show the user before/after blocks and wait for explicit approval.
 4. **Phase 4 — Apply, Validate, and Iterate.** PATCH the prompt, confirm provider-side sync, run validation against the relevant scenarios, re-collect failures with the same Phase 2 filter, and either exit on success or feed the new failure summary back into Phase 3. Loop up to `max_iterations` times.
@@ -70,6 +70,74 @@ Do not attempt any further phases. Do not fetch results, propose prompt changes,
 - **Agent not found / 404**: surface the error from `mcp__cekura__aiagents_retrieve` directly. Don't retry with a different ID without user confirmation.
 - **`assistant_provider` missing or empty**: treat as unsupported. The agent likely hasn't completed provider configuration — point the user to the `create-agent` skill (Phase 3: Configure Provider Integration).
 - **Case sensitivity**: compare lowercased — providers are stored as `vapi` / `retell` but be defensive against `VAPI` / `Retell` in user input.
+
+### Step 1.4 — Fetch provider-side assistant details (VAPI only)
+
+Once Phase 1.3 has confirmed `assistant_provider == vapi`, pull the live assistant or squad config from VAPI directly. **VAPI is the source of truth for the agent's prompt throughout this skill.** The Cekura `description` field is informational only — it is not read for analysis and not written by Phase 4. All prompt analysis (Phase 3) and all edits (Phase 4) operate on the VAPI-side `model.messages[*].content` of the relevant assistant(s).
+
+Skip this step entirely for `retell`. Retell sync is handled in Phase 4.2 and there is no multi-assistant equivalent to disambiguate.
+
+#### Required environment variables
+
+- `VAPI_KEY` — VAPI private API key. Sent as `Authorization: Bearer $VAPI_KEY`.
+- Exactly one of:
+  - `VAPI_ASSISTANT_ID` — set when the Cekura agent maps to a single VAPI assistant.
+  - `VAPI_SQUAD_ID` — set when the Cekura agent maps to a VAPI squad (multiple member assistants).
+
+If `VAPI_KEY` is missing, stop and ask the user to export it before continuing. Never echo the key to chat or write it to a file.
+
+If neither id is set, ask which applies. Inspect the `aiagents_retrieve` response from Step 1.2 for any provider config that hints at the right scope (e.g. an `assistant_id` or `squad_id` field) and offer it as the default.
+
+If both are set, prefer `VAPI_SQUAD_ID` and ask the user to confirm — squads are supersets, and improving the wrong scope wastes an iteration.
+
+#### Fetch the config
+
+VAPI's API isn't exposed through the Cekura MCP server, so use `Bash` with curl:
+
+- Single assistant: `curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/assistant/$VAPI_ASSISTANT_ID`
+- Squad: `curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/squad/$VAPI_SQUAD_ID`
+
+For squads, the response includes a `members` array. Each member has either `assistantId` (referenced) or an inline `assistant` object. For the referenced case, fetch the full assistant config with the assistant endpoint above; for inline members, read the embedded object directly — no extra fetch needed.
+
+#### Extract and surface
+
+From each assistant config, capture:
+
+- `id`, `name`
+- The system prompt: `model.messages[*].content` where `role == "system"`
+- `model.tools` — function declarations, transfer destinations
+- `voice`, `transcriber`, `firstMessage` — useful for sanity-checking the voice-failure filter in Phase 2
+
+Show the user a compact summary before continuing:
+
+```
+VAPI <Assistant|Squad>: <name> (<id>)
+  Members: <N>            # squad only
+    - <member_name> (<member_id>) — system prompt <K> chars, <T> tools
+  System prompt: <length> chars     # single-assistant case
+  Tools: <N> (<comma-separated names>)
+  Voice: <provider>/<voice_id>
+```
+
+#### Squad scope (squads only)
+
+For single-assistant VAPI agents this is a no-op — the only candidate is the one assistant.
+
+For squads, calls route between members and a given failure usually localizes to one member's prompt. Before continuing to Phase 2, ask the user which member(s) Phase 3 should consider editable. Default options:
+
+- **One named member** — most common; pick when the failures clearly come from a specific stage (e.g. screening vs. closing).
+- **All members** — pick when failures span the call or it isn't yet clear which stage owns them; Phase 3 will localize per-failure based on transcripts.
+- **Auto-localize per failure** — Phase 3 attributes each failure to the member that was speaking in the relevant transcript turn, then proposes member-scoped edits.
+
+Record the chosen scope; Phase 3 only proposes edits inside it, and Phase 4 only PATCHes assistants inside it.
+
+#### Edge cases
+
+- **401 / 403 from VAPI**: `VAPI_KEY` is invalid or lacks scope. Surface the error verbatim and stop — don't retry.
+- **404 on assistant or squad**: id mismatch. Stop; don't guess adjacent ids.
+- **Squad with zero members**: not actionable for self-improvement — surface and ask the user to verify the squad is configured correctly before continuing.
+- **Member with inline `assistant` only**: read the embedded object; skip the second fetch.
+- **Response shape changes / missing fields**: fall back to surfacing the relevant raw JSON section so the user can see what VAPI returned, rather than failing silently.
 
 ## Phase 2: Collect Failures
 
@@ -190,11 +258,14 @@ Take the **kept** failure summary from Phase 2 and the **current agent prompt** 
 
 ### Step 3.1 — Read the current prompt
 
-The canonical agent prompt lives in the `description` field on the Cekura agent (already fetched in Phase 1 via `mcp__cekura__aiagents_retrieve`). Re-fetch if more than a few minutes have passed, in case the user edited it on the provider side.
+The canonical prompt source depends on provider:
+
+- **VAPI**: the `model.messages[*].content` (where `role == "system"`) on each in-scope assistant fetched in Phase 1.4. For squads, the in-scope set is whatever the user picked in the squad-scope step. Re-fetch via `curl https://api.vapi.ai/assistant/{id}` if more than a few minutes have passed since Phase 1.4 — VAPI dashboard edits don't notify Cekura. Do **not** read the Cekura `description` for VAPI agents.
+- **Retell**: the `description` field on the Cekura agent (already fetched in Phase 1 via `mcp__cekura__aiagents_retrieve`). Re-fetch if more than a few minutes have passed.
 
 Also note any dynamic variables (`{{variableName}}` placeholders) — they're injected per call and must not be touched by edits unless the user explicitly asks.
 
-If `description` is empty or clearly not the production prompt (e.g. just a one-line summary), **stop and ask** — either the agent isn't fully configured (point at `create-agent`), or the user is running prod prompt off-platform and needs to paste it in.
+If the source-of-truth prompt is empty or clearly not the production prompt (e.g. just a one-line summary), **stop and ask** — either the agent isn't fully configured (point at `create-agent`), or the user is running prod prompt somewhere this skill can't see and needs to paste it in.
 
 ### Step 3.2 — Map each kept failure to a prompt section
 
@@ -276,20 +347,39 @@ If Phase 2 collected zero prompt-following failures from the initial input (i.e.
 
 ### Step 4.1 — Apply the approved edits to the prompt
 
-Take the approved subset of changes from Step 3.5 and produce the new prompt by applying them to the current `description`. Show the user the **final merged prompt** (or a unified diff if it's long) and confirm one more time before persisting.
+Take the approved subset of changes from Step 3.5 and produce the new prompt by applying them to the current source-of-truth prompt (VAPI assistant `model.messages[*]` for VAPI, Cekura `description` for Retell). Show the user the **final merged prompt** (or a unified diff if it's long) and confirm one more time before persisting.
 
-Then PATCH the Cekura agent:
+Then persist by provider:
+
+**VAPI** — PATCH the in-scope assistant(s) on VAPI directly. The MCP server doesn't expose VAPI write endpoints, so use `Bash` + `curl`:
+
+```
+curl -fsS -X PATCH \
+  -H "Authorization: Bearer $VAPI_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":{"provider":"<existing>","model":"<existing>","messages":[{"role":"system","content":"<NEW_PROMPT>"}, ... <other existing messages unchanged> ...]}}' \
+  https://api.vapi.ai/assistant/$VAPI_ASSISTANT_ID
+```
+
+Important when constructing the PATCH body:
+- Read back the current `model` object from the Phase 1.4 fetch and copy provider/model/temperature/tools/etc. unchanged — VAPI's PATCH replaces `model` wholesale, so omitted fields will be lost.
+- Replace **only** the system message's `content`. Preserve any other messages (e.g. tool-result examples) and their order.
+- For squads with multiple in-scope members edited in this iteration, PATCH each member separately.
+- Do not touch the Cekura `description` field. It is informational and stays as-is.
+
+**Retell** — PATCH the Cekura agent:
 
 - `mcp__cekura__aiagents_partial_update` with the agent_id and `{"description": "<new prompt>"}`
 
-If the agent has dynamic-variable placeholders (`{{...}}`), confirm they're preserved verbatim in the merged prompt.
+If the agent has dynamic-variable placeholders (`{{...}}`), confirm they're preserved verbatim in the merged prompt regardless of provider.
 
 ### Step 4.2 — Make sure the provider is running the new prompt
 
-The PATCH above updates Cekura's stored prompt. Whether the live agent on the provider runs it depends on configuration:
+What the live agent runs depends on where Step 4.1 wrote:
 
+- **VAPI** — Step 4.1 PATCHed VAPI directly. The new prompt is live on VAPI as soon as the PATCH returns 2xx. Re-fetch the assistant (`curl GET https://api.vapi.ai/assistant/{id}`) and confirm the system message's `content` matches the merged prompt before continuing. No dashboard step required.
 - **Retell with `auto_sync_prompt_enabled: true`** — Cekura syncs the prompt to Retell within ~30 seconds. Wait that long, then proceed.
-- **Retell without auto-sync, or VAPI** — the provider side does **not** update automatically. Tell the user to push the new prompt to the provider's dashboard (Retell agents → Prompt; VAPI assistants → System Prompt) before validation runs, then confirm with them.
+- **Retell without auto-sync** — the provider side does **not** update automatically. Tell the user to push the new prompt to the Retell dashboard (Retell agents → Prompt) before validation runs, then confirm with them.
 
 If the provider isn't running the new prompt, validation runs will pass/fail based on the **old** prompt and the loop will spin forever. Don't proceed to Step 4.3 until this is confirmed.
 
@@ -360,12 +450,14 @@ This skill uses the Cekura MCP server for all API operations. The plugin's `.mcp
 | Phase | Operation | MCP Tool |
 |-------|-----------|----------|
 | 1 | List / fetch agents | `mcp__cekura__aiagents_list`, `mcp__cekura__aiagents_retrieve` |
+| 1 | Fetch live VAPI assistant / squad (direct, not MCP) | `Bash` + `curl` against `https://api.vapi.ai/assistant/{id}` or `https://api.vapi.ai/squad/{id}` with `VAPI_KEY` |
 | 2 | Run scenarios (voice / text) | `mcp__cekura__scenarios_run_scenarios_create`, `mcp__cekura__scenarios_run_scenarios_text_create` |
 | 2 | Fetch result batch | `mcp__cekura__results_retrieve` |
 | 2 | Bulk fetch runs | `mcp__cekura__runs_bulk_retrieve` |
 | 2 | Fetch a call log | `mcp__cekura__call_logs_retrieve` |
 | 3 | Auto-improve prompt (fallback) | `mcp__cekura__runs_improve_prompt_create` |
-| 4 | PATCH agent prompt | `mcp__cekura__aiagents_partial_update` |
+| 4 | PATCH agent prompt — Retell | `mcp__cekura__aiagents_partial_update` |
+| 4 | PATCH agent prompt — VAPI (direct) | `Bash` + `curl -X PATCH https://api.vapi.ai/assistant/{id}` with `VAPI_KEY` |
 | 4 | Synthesize scenario from a transcript | `mcp__cekura__scenarios_create_scenario_from_transcript_create` |
 
 **Docs lookup:** Use `mcp__cekura__search_cekura` or fetch `https://docs.cekura.ai/llms.txt` for field schemas, response shapes, or tool details when this skill doesn't cover them.
@@ -378,7 +470,7 @@ These apply to the skill as a whole. Phase-specific anti-patterns are covered in
 
 - **Running the loop on a tiny input.** A single failing run / call is rarely enough signal — one-off failures often reflect noise, not a prompt defect. Ask for at least 5-10 items before iterating, or surface the small-sample caveat in the summary.
 - **Iterating with a noisy metric.** If most kept failures come from one metric whose explanations look subjective, the metric is probably miscalibrated. Hand off to `labs-workflow` first; otherwise the loop will keep "fixing" the prompt to satisfy a flawed judge.
-- **Skipping the provider sync gate (Phase 4.2).** Cekura's stored description is not what the live agent runs unless Retell auto-sync is on (or the user manually pushed to VAPI). Without confirmation, the loop validates the old prompt and never converges.
+- **Skipping the provider sync gate (Phase 4.2).** For VAPI, confirm the PATCH actually landed (re-fetch and diff the system message). For Retell without auto-sync, Cekura's stored description is not what the live agent runs until the user pushes it from the dashboard. Without confirmation, the loop validates the old prompt and never converges.
 - **Bypassing user review at phase boundaries.** This skill applies edits to a live agent. Every transition (Phase 2 summary → Phase 3 proposal → Phase 4 apply) must be explicitly approved.
 - **Fixing prompt issues that are really agent-config issues.** If failures cluster on missing tools or knowledge gaps, no prompt edit will help — hand off to `create-agent`.
 - **Treating expected-outcome failures and metric failures the same.** Expected-outcome failures are first-class signal about agent behavior. Metric failures may reflect either the agent or the metric — be more skeptical.
