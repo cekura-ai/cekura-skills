@@ -1,11 +1,12 @@
 ---
 name: cekura-eval-design
 description: >
-  Use when the user asks to "create an evaluator", "write a test scenario", "design a test case",
-  "test my agent", "build eval coverage", "plan a test suite", "create red team tests",
-  "set up test profiles", "configure conditional actions", or "run evals". Covers individual
-  evaluator design, suite coverage strategy, test profiles, mock-tool data design, conditional
-  actions, and best practices for workflow / red-team / edge-case / deterministic test types.
+  Use when the user asks to "create an evaluator", "create evals", "create a scenario",
+  "write a test scenario", "design a test case", "test my agent", "build eval coverage",
+  "plan a test suite", "create red team tests", "set up test profiles", "configure conditional
+  actions", or "run evals". Covers individual evaluator design, suite coverage strategy, test
+  profiles, mock-tool data design, conditional actions, and best practices for workflow /
+  red-team / edge-case / deterministic test types.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
