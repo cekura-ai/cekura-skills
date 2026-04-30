@@ -73,6 +73,7 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 | Component | Type | Purpose |
 |-----------|------|---------|
 | `eval-design` | skill | Evaluator design, test profiles, conditional actions, session memory |
+| `conditional-actions` | skill | Deep guide for designing and writing conditional action evaluators (deterministic/unit test style) |
 | `manual-create-update-eval` | command | Create or update a single evaluator with full field walkthrough (replaced `create-eval`) |
 | `autogen-eval` | command | Auto-generate evaluators or bulk create from CSV/JSON (replaced `generate-evals` + `bulk-create-evals`) |
 | `list-evals` | command | List evaluators for an agent or project |
