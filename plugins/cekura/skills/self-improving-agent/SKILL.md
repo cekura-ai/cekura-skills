@@ -18,7 +18,7 @@ Close the loop on agent prompt and tool-config quality. Ingest evaluation signal
 
 **What's editable:** for VAPI agents, both **system prompts** and **tool definitions** are editable from this skill. Tool config covers function declarations on inline `model.tools`, referenced `model.toolIds` definitions (their `name`, `description`, `parameters` schema, `messages[*].content` like `request-start` / `request-complete` / `request-failed`, and handoff `destinations`), and which tools each member references via its `toolIds` array (adding or removing a reference).
 
-**Exit gate:** the voice/channel/infra filter informs *what to fix* (Phase 3 only proposes edits for prompt-following failures), not *when to stop*. Any remaining failure of any class keeps the loop alive. Do not exit at "zero prompt-following failures but some infra failures remain" — first re-classify with fresh eyes, expand squad scope to other assistants, consider mitigation prompt edits, **and consider tool-config edits** (a noisy `request-start` message, a hallucinated tool reference, a misshapen function schema, or a wrong handoff destination is fixed in tool config, not prompt). Only the iteration cap (or genuine 100% pass) ends the loop.
+**Exit gate:** the voice/channel/infra filter informs *what to fix* (Phase 3 only proposes edits for prompt-following failures), not *when to stop*. Any remaining failure of any class keeps the loop alive. Do not exit at "zero prompt-following failures but some infra failures remain" — first re-classify with fresh eyes (a behavior in a different squad member is still a prompt issue, just one not yet attributed), consider mitigation prompt edits, **and consider tool-config edits** (a noisy `request-start` message, a hallucinated tool reference, a misshapen function schema, or a wrong handoff destination is fixed in tool config, not prompt). Only the iteration cap (or genuine 100% pass) ends the loop.
 
 Currently supported only for **VAPI** agents (Phase 1 gates this). Retell support is intentionally disabled for now and will be re-enabled in a future revision.
 
@@ -30,10 +30,10 @@ The four phases run in order, with the last looping until the agent passes:
 
 1. **Phase 1 — Verify Agent and Provider Support.** Fetch the agent, gate on `assistant_provider == vapi`. Halt with a clear error otherwise. For VAPI, also pull the live assistant or squad config from VAPI directly (using `VAPI_KEY` plus the `assistant_id` from the Cekura agent record) — VAPI is the source of truth for the prompt; the Cekura `description` is not consulted or edited.
 2. **Phase 2 — Collect Failures.** Branch on input type. For `scenario_ids`, run them first and wait for completion; otherwise fetch the supplied runs / call logs. Accumulate expected-outcome and metric failures, **discard voice/channel failures**, and present a structured summary.
-3. **Phase 3 — Propose Prompt and Tool Changes.** Map kept failures to prompt sections AND tool definitions, classify each as Gap / Conflict / Ambiguity, and produce minimal scoped edits. Edits may be prompt-only, tool-only, or both — whichever the failure points at. Show the user before/after blocks and wait for explicit approval.
-4. **Phase 4 — Apply, Validate, and Iterate.** PATCH the prompt and/or tool definitions, confirm provider-side sync, run validation against the relevant scenarios, re-collect failures with the same Phase 2 classification. Exit only on **100% pass rate**; otherwise feed the new failure summary back into Phase 3 — expanding squad scope or considering tool/mitigation edits if the remaining failures aren't directly prompt-following. Loop up to `max_iterations` times.
+3. **Phase 3 — Propose Prompt and Tool Changes.** Map kept failures to prompt sections AND tool definitions, classify each as Gap / Conflict / Ambiguity, and produce minimal scoped edits. Edits may be prompt-only, tool-only, or both — whichever the failure points at. Show the user before/after blocks and wait for explicit approval. **This gate fires on every iteration**, not just the first.
+4. **Phase 4 — Apply, Validate, and Iterate.** PATCH the prompt and/or tool definitions, confirm provider-side sync, run validation against the relevant scenarios, re-collect failures with the same Phase 2 classification. Exit only on **100% pass rate**; otherwise feed the new failure summary back into Phase 3 — re-attributing failures to whichever squad members are now responsible and considering tool/mitigation edits if the remaining failures aren't directly prompt-following. Loop up to `max_iterations` times.
 
-Confirm with the user at every phase boundary — the skill should never apply edits or kick off long-running validation runs without an explicit go-ahead.
+The user gates the workflow at every Phase 3 → Phase 4 boundary, after seeing the proposed edits. Phase 1 → Phase 2 → Phase 3 runs straight through without pauses (Phase 2 just surfaces the failure summary and advances). Phase 4 loop iterations also re-enter Phase 3, surface a fresh proposal against the post-edit state, and **wait for explicit approval before the next PATCH**. There is no autonomous-iteration mode — every PATCH is preceded by a user OK on the proposed diff for that iteration. The user can interrupt mid-loop at any time, and that's treated as normal input.
 
 ## Phase 1: Verify Agent and Provider Support
 
@@ -130,7 +130,7 @@ From each assistant config, capture:
 
 #### Fetch every referenced tool
 
-For each unique id across all in-scope assistants' `model.toolIds`, fetch:
+For each unique id across all members' `model.toolIds`, fetch:
 
 ```
 curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/tool/$TOOL_ID
@@ -159,17 +159,9 @@ VAPI <Assistant|Squad>: <name> (<id>)
   Voice: <provider>/<voice_id>
 ```
 
-#### Squad scope (squads only)
+#### Squad members are all editable by default
 
-For single-assistant VAPI agents this is a no-op — the only candidate is the one assistant.
-
-For squads, calls route between members and a given failure usually localizes to one member's prompt. Before continuing to Phase 2, ask the user which member(s) Phase 3 should consider editable. Default options:
-
-- **One named member** — most common; pick when the failures clearly come from a specific stage (e.g. screening vs. closing).
-- **All members** — pick when failures span the call or it isn't yet clear which stage owns them; Phase 3 will localize per-failure based on transcripts.
-- **Auto-localize per failure** — Phase 3 attributes each failure to the member that was speaking in the relevant transcript turn, then proposes member-scoped edits.
-
-Record the chosen scope; Phase 3 only proposes edits inside it, and Phase 4 only PATCHes assistants inside it.
+For squads, all members are in scope; Phase 3 attributes each failure to the member that was speaking in the relevant transcript turn (auto-localize) and proposes member-scoped edits. Phase 4 PATCHes whichever members the proposal touches. There is no upfront scope-selection question — the user-side gate is at every Phase 3 → Phase 4 transition (after seeing the per-member proposed edits for that iteration), not earlier.
 
 #### Edge cases
 
@@ -282,15 +274,11 @@ Failure Summary
       Sample explanations:
         - <run/call id>: <explanation excerpt>
         - <run/call id>: <explanation excerpt>
-
-  Planned Fix (preview — full diffs in Phase 3):
-    - <failure cluster 1>: <artifact to edit, e.g. "Hello assistant system prompt, Step 5 verify-and-route block"> — <change type: Gap | Conflict | Ambiguity>
-    - <failure cluster 2>: <artifact> — <change type>
 ```
 
-The **Planned Fix** preview is required, not optional. One line per failure cluster naming the artifact (prompt section, tool field, or `toolIds` reference) and the bucket (Gap / Conflict / Ambiguity). Skip it only when no kept failures exist. Detailed before/after diffs come in Phase 3 — Phase 2.4 just commits to the shape of the fix so the user can evaluate the proceed-to-Phase-3 decision against a concrete plan, not a bare "proceed?" prompt.
+Phase 2's job is to surface failures, not to commit to a fix shape — that belongs to Phase 3.
 
-Before moving on, **show the summary to the user** and confirm they want to proceed to Phase 3 (Propose Prompt Changes). If the failures are dominated by one or two metrics with thin signal, suggest hand-off to the `labs-workflow` skill instead — those are metric-quality issues, not agent-quality issues.
+Show the summary to the user for transparency, then proceed straight to Phase 3. **Phase 2 does not pause for approval** — the user-facing gate is at every Phase 3 → Phase 4 transition (after they see proposed edits), not here. The one exception: if the failures are dominated by one or two metrics with thin signal, stop and suggest hand-off to the `labs-workflow` skill instead — those are metric-quality issues, not agent-quality issues, and Phase 3 won't fix them.
 
 **Do not surface small-sample / overfitting caveats to the user.** Even when the input is a single run, do not include lines like "with N runs any fix risks overfitting" or "5–10+ items would be a healthier signal" in the user-facing summary. Internal calibration of confidence is fine; user-facing hedging is not — it reads as a stall and the user has already chosen to act on the input they have.
 
@@ -304,14 +292,14 @@ Before moving on, **show the summary to the user** and confirm they want to proc
 
 Take the **kept** failure summary from Phase 2 and the **current agent prompt and tool definitions** and produce a concrete, reviewable set of edits. Don't apply anything yet — Phase 4 handles application. Edits split into two streams; either or both may be empty for a given iteration:
 
-- **Prompt edits** — change the system message of one or more in-scope assistants.
+- **Prompt edits** — change the system message of one or more squad members (or the lone assistant for non-squad agents).
 - **Tool-config edits** (VAPI only) — change a tool's name / description / parameter schema / spoken `messages` / handoff `destinations`, or change which tools a given member references via its `toolIds` (i.e. add a tool, remove a tool reference, or create a new tool).
 
 ### Step 3.1 — Read the current prompt and tool definitions
 
-The canonical prompt source is the VAPI-side `model.messages[*].content` (where `role == "system"`) on each in-scope assistant fetched in Phase 1.4. For squads, the in-scope set is whatever the user picked in the squad-scope step. Re-fetch via `curl https://api.vapi.ai/assistant/{id}` if more than a few minutes have passed since Phase 1.4 — VAPI dashboard edits don't notify Cekura. Do **not** read the Cekura `description` for VAPI agents.
+The canonical prompt source is the VAPI-side `model.messages[*].content` (where `role == "system"`) on each assistant fetched in Phase 1.4 (the lone assistant for single-assistant agents, every member for squads). Re-fetch via `curl https://api.vapi.ai/assistant/{id}` if more than a few minutes have passed since Phase 1.4 — VAPI dashboard edits don't notify Cekura. Do **not** read the Cekura `description` for VAPI agents.
 
-Also re-confirm the live tool definitions captured in Phase 1.4 if more than a few minutes have passed — re-fetch each in-scope `toolId` via `curl https://api.vapi.ai/tool/{id}`. Tools can be edited from the VAPI dashboard too, and a stale local copy will produce a wrong PATCH body.
+Also re-confirm the live tool definitions captured in Phase 1.4 if more than a few minutes have passed — re-fetch each `toolId` via `curl https://api.vapi.ai/tool/{id}`. Tools can be edited from the VAPI dashboard too, and a stale local copy will produce a wrong PATCH body.
 
 Also note any dynamic variables (`{{variableName}}` placeholders) in both prompts and tool messages / parameter schemas — they're injected per call and must not be touched by edits unless the user explicitly asks.
 
@@ -321,7 +309,7 @@ If the source-of-truth prompt is empty or clearly not the production prompt (e.g
 
 For each kept failure, locate every artifact that *should* have governed that behavior:
 
-- **Prompt sections** — quote the exact lines from the in-scope assistant's system message that drive (or fail to drive) the observed behavior.
+- **Prompt sections** — quote the exact lines from the responsible assistant's system message (the speaker in the relevant transcript turn for squads) that drive (or fail to drive) the observed behavior.
 - **Tool definitions** — if the failure involves a tool call (the agent called the wrong tool, didn't call a needed tool, called a tool with bad arguments, or a `request-start` message produced unexpected agent speech), pull the relevant tool's definition into the diagnosis. Quote `function.description`, the relevant property in `function.parameters`, the offending `messages[*].content`, or the suspect `destinations` entry.
 
 If no artifact governs the failure, mark it "uncovered" — that's a strong gap signal in the prompt or a missing tool.
@@ -360,15 +348,14 @@ The same Gap / Conflict / Ambiguity classification applies to tool definitions. 
 |---|---|---|
 | **Edit a tool definition** | A failure traces to a specific field on an existing tool: vague `function.description`, ambiguous parameter, an outdated / verbose `request-start.content` that's spoken on every fire, a `destinations[].assistantId` that's wrong, a `destinations[].description` that misleads the LLM about when to use the handoff. | PATCH the tool by id (Step 4.1). Show before/after of the changed field only; don't redisplay the whole tool. |
 | **Add a tool** (new) | A flow step requires a tool call that no current tool covers (e.g., the prompt says "look up the customer's last order" but no `lookup_order` tool exists). | Phase 4.1 creates the tool via POST `/tool`, then PATCHes the relevant assistant's `model.toolIds` to include the new id. The new tool also needs a corresponding prompt edit telling the agent when to call it — usually one prompt edit + one tool create + one toolIds patch. |
-| **Remove a tool reference** | A specific assistant is hallucinating calls to a tool it shouldn't have access to (squad inheritance is a common cause), or a tool's destinations include the assistant itself (self-handoff). The tool may be legitimate for *other* members; the issue is the reference, not the definition. | PATCH that assistant's `model.toolIds` to drop the id. Do NOT delete the tool itself unless no other in-scope or out-of-scope assistant references it. |
-| **Delete a tool** | The tool is dead weight — referenced by no in-scope or out-of-scope assistant after the proposed `toolIds` updates land. | Rare. Only propose if you've cross-referenced ALL squad members (including out-of-scope ones whose `toolIds` you must fetch first) and confirmed nothing else points at it. Prefer leaving the tool dormant over deleting; deletes are irreversible from this skill. |
+| **Remove a tool reference** | A specific assistant is hallucinating calls to a tool it shouldn't have access to (squad inheritance is a common cause), or a tool's destinations include the assistant itself (self-handoff). The tool may be legitimate for *other* members; the issue is the reference, not the definition. | PATCH that assistant's `model.toolIds` to drop the id. Do NOT delete the tool itself unless no other squad member references it. |
+| **Delete a tool** | The tool is dead weight — referenced by no squad member after the proposed `toolIds` updates land. | Rare. Only propose after cross-referencing every squad member's `toolIds` (already fetched in Phase 1.4) and confirming nothing points at it. Prefer leaving the tool dormant over deleting; deletes are irreversible from this skill. |
 
 **Tool-edit anti-patterns:**
 
 - **Editing a tool's `function.name`** — the LLM has been calling the tool by its current name; renaming forces every other place that mentions the name (prompts, other tools' descriptions, downstream metric configs) to be updated atomically. Avoid unless the name is actively misleading.
 - **Tightening `function.parameters` schemas to fix one bad call** — a single bad-args call usually means a prompt issue (the LLM didn't have / didn't use the right inputs). Fix the prompt first.
-- **Editing or removing tools in members the user didn't put in scope** — same rule as for prompts. If a fix requires touching an out-of-scope member's tools, ask the user to expand the scope first (per Phase 1.4 squad-scope rules and Phase 4.6 §2).
-- **Mass-deleting "unused"-looking tools** — a tool with no references in the in-scope members may still be referenced by an out-of-scope member, by another squad, or by a workflow that fires only on rare branches. When in doubt, only remove the *reference*, never the tool.
+- **Mass-deleting "unused"-looking tools** — a tool with no references in this agent's squad members may still be referenced by another squad or by a workflow that fires only on rare branches. When in doubt, only remove the *reference*, never the tool.
 
 #### Clustering
 
@@ -429,7 +416,7 @@ Proposed Change 3 of 4 — Conflict (tool reference)
 
 End with a summary line: `4 changes proposed across 12 prompt-following failures (2 prompt edits, 2 tool edits; 1 gap, 2 conflicts, 1 ambiguity).`
 
-Ask the user to accept all, accept a subset, or push back. Do not move to Phase 4 until they explicitly confirm which edits to apply.
+**This gate fires on every iteration, not just the first.** Ask the user to accept all, accept a subset, or push back; do not move to Phase 4 until they explicitly confirm which edits to apply for this iteration. After Phase 4 PATCHes and re-validates, the loop re-enters Phase 3 with a fresh proposal against the post-edit state — and that proposal is again subject to the same approval gate before its PATCH lands. There is no autonomous-iteration mode; every PATCH is preceded by a user OK on that iteration's diff. The user can interrupt mid-iteration at any time; treat that as normal input.
 
 ### Manual analysis vs. `runs_improve_prompt_create`
 
@@ -453,17 +440,17 @@ Use `runs_improve_prompt_create` as a **fallback** when the manual analysis is i
 
 ## Phase 4: Apply, Validate, and Iterate
 
-This phase is a **loop**. Each iteration: apply the approved prompt → run validation → diagnose new failures → propose more changes → apply again. Exit only when a validation pass produces **100% success on the validation set** (zero failures of any class), or when the iteration cap is hit. Do not exit just because the latest failures look like voice/infra rather than prompt issues — first try expanding squad scope and proposing mitigation edits.
+This phase is a **loop**. Each iteration: apply the approved prompt → run validation → diagnose new failures → propose more changes → apply again. Exit only when a validation pass produces **100% success on the validation set** (zero failures of any class), or when the iteration cap is hit. Do not exit just because the latest failures look like voice/infra rather than prompt issues — first re-attribute squad failures to whichever member is now responsible and consider mitigation edits.
 
 ### Early-exit shortcut
 
 If Phase 2 collected **zero failures of any class** from the initial input (the agent already passes 100% on the supplied scenarios / runs / calls), Phase 3 was skipped and there's nothing to apply. Report success and stop.
 
-If Phase 2 found failures but they are *all* voice/infra/tool with no prompt-following matches, do **not** auto-exit. Run the same logic as the "kept failures = 0 but total > 0" branch in Step 4.6 (re-classify with fresh eyes, consider squad scope expansion, consider mitigation edits) before deciding to stop.
+If Phase 2 found failures but they are *all* voice/infra/tool with no prompt-following matches, do **not** auto-exit. Run the same logic as the "kept failures = 0 but total > 0" branch in Step 4.6 (re-classify with fresh eyes — including re-attributing to whichever squad member was speaking — and consider mitigation edits) before deciding to stop.
 
-### Step 4.1 — Apply the approved edits
+### Step 4.1 — Apply the edits
 
-Take the approved subset of changes from Step 3.5 and apply them in this order:
+Take the **approved** subset of changes from Step 3.5 — whatever the user accepted at this iteration's gate. The gate fires on every iteration (first and subsequent), so this is always an approved subset, never an auto-applied one. Apply in this order:
 
 1. **Tool-definition edits first** (PATCH `/tool/{id}`).
 2. **New tool creation** next (POST `/tool`), capturing the new id.
@@ -472,11 +459,11 @@ Take the approved subset of changes from Step 3.5 and apply them in this order:
 
 The order matters because: if a new tool is referenced, it must exist before the assistant PATCH lands; and bundling toolIds + prompt into one assistant PATCH keeps the LLM's view of "tools available" and "instructions about those tools" consistent across the rollout.
 
-Show the user the **final merged prompt** for each affected assistant (or a unified diff if long) AND a list of all tool changes (which tools, which fields), then confirm once more before persisting.
+Show the user the **final merged prompt** for each affected assistant (or a unified diff if long) AND a list of all tool changes (which tools, which fields) for transparency, then proceed to PATCH — no second confirmation step.
 
 #### VAPI prompt + assistant `toolIds` updates
 
-PATCH the in-scope assistant(s) on VAPI directly. The MCP server doesn't expose VAPI write endpoints, so use `Bash` + `curl`. The id is the VAPI `assistant.id` resolved in Phase 1.4 (for squads, this is each member's `assistantId` — **not** the squad id; you cannot PATCH a squad to change a member's prompt):
+PATCH the assistant(s) the proposal touches on VAPI directly. The MCP server doesn't expose VAPI write endpoints, so use `Bash` + `curl`. The id is the VAPI `assistant.id` resolved in Phase 1.4 (for squads, this is each member's `assistantId` — **not** the squad id; you cannot PATCH a squad to change a member's prompt):
 
 ```
 curl -fsS -X PATCH \
@@ -490,7 +477,7 @@ Important when constructing the PATCH body:
 - Read back the current `model` object from the Phase 1.4 fetch and copy provider/model/temperature/inline tools/etc. unchanged — VAPI's PATCH replaces `model` wholesale, so omitted fields will be lost.
 - Replace **only** the system message's `content`. Preserve any other messages (e.g. tool-result examples) and their order.
 - If updating `toolIds`: send the **full new array** (PATCH replaces it). Add or remove ids relative to the previous array; don't re-sort or de-duplicate without intent.
-- For squads with multiple in-scope members edited in this iteration, PATCH each member separately.
+- For squads with multiple members edited in this iteration, PATCH each member separately.
 - Do not touch the Cekura `description` field. It is informational and stays as-is.
 
 #### VAPI tool-definition edits
@@ -528,7 +515,7 @@ The response includes the new `id`. Use it in the subsequent assistant PATCH's `
 
 #### VAPI tool deletion (rare — gated by Step 3.4 anti-patterns)
 
-Only after confirming no other in-scope or out-of-scope assistant references it:
+Only after confirming no other squad member references it:
 
 ```
 curl -fsS -X DELETE \
@@ -588,19 +575,18 @@ Decide as follows:
 - **Kept (prompt-following) failures > 0** → loop normally:
   1. Feed the new failure summary and the **current (post-edit) prompt** back into Phase 3.
   2. Phase 3 produces a fresh proposal against the updated prompt.
-  3. User review (Step 3.5) gates re-entry to this phase.
-  4. Repeat from Step 4.1.
+  3. Surface the proposal and **wait for explicit approval** before continuing to Step 4.1 — the user gate fires on every iteration.
+  4. Repeat from Step 4.1 with the approved subset for this iteration.
 - **Kept failures = 0 but total failures > 0** (all remaining failures look voice/infra/tool):
   Do **not** exit yet. Work through these checks first, in order:
-  1. **Re-classify with fresh eyes.** A tool error response *handled badly* by the agent is a prompt issue (the agent should have retried, fallen back, or escalated cleanly). Only count as infra if the agent handled the error correctly. A behavior in a *different squad member* than the one currently scoped is still a prompt issue — just out of current scope. Repeated identical agent utterances, self-handoffs, wrong-handoff destinations, and per-member instruction drift are all prompt-fixable; they just live in members you didn't scope yet.
-  2. **Expand squad scope** (squads only). If failures localize to members not currently in scope, ask the user to add them, then re-enter Phase 3 with the expanded scope. The first iteration usually narrows on the entry assistant; deeper failures only become visible after that one passes, so scope expansion across iterations is expected, not a regression.
-  3. **Consider mitigation edits — prompt AND tool config.** Some "infra" failures can be partially mitigated:
+  1. **Re-classify with fresh eyes.** A tool error response *handled badly* by the agent is a prompt issue (the agent should have retried, fallen back, or escalated cleanly). Only count as infra if the agent handled the error correctly. Repeated identical agent utterances, self-handoffs, wrong-handoff destinations, and per-member instruction drift are all prompt-fixable. For squads, re-attribute each failure to whichever member was speaking in the relevant transcript turn — Phase 3 already considers all members editable, so the fix may simply live in a member that hadn't been touched yet.
+  2. **Consider mitigation edits — prompt AND tool config.** Some "infra" failures can be partially mitigated:
      - **By prompt**: better retry counts, clearer fallback messaging, faster escalation, different tool-call argument shaping, or guarding against missing dynamic variables.
      - **By tool config (VAPI)**: a noisy `request-start` message that fires on every routing event, a `request-failed.content` that's misleading to the LLM, a tool whose `function.description` over-matches user intent and gets called too often, a handoff `destinations[]` entry pointing at the wrong assistant, or a self-referencing destination that drives a self-handoff loop. These are tool edits, not prompt edits, and they often resolve "infra-shaped" failures that no prompt change can touch.
-     Surface both kinds as Phase 3 candidates and let the user decide.
-  4. **Only after all three above are exhausted** (no missed prompt issues, no out-of-scope members worth pulling in, no plausible mitigation edit) → surface a clear stop with the residual failures, hand off to the appropriate skill (`create-agent` for tool/config issues, backend team for upstream service errors), and exit. Do not silently exit.
+     Surface both kinds as Phase 3 candidates on the next iteration.
+  3. **Only after both above are exhausted** (no missed prompt issues across any member, no plausible mitigation edit) → surface a clear stop with the residual failures, hand off to the appropriate skill (`create-agent` for tool/config issues, backend team for upstream service errors), and exit. Do not silently exit.
 
-The "kept = 0 but total > 0" path must surface its decision to the user — explicitly state which of the three checks ruled out further iteration. Don't use shape of the failures alone as a reason to stop.
+The "kept = 0 but total > 0" path must surface its decision to the user — explicitly state which of the two checks ruled out further iteration. Don't use shape of the failures alone as a reason to stop.
 
 ### Iteration cap
 
@@ -620,10 +606,10 @@ The user can also stop or extend mid-loop ("keep going" / "stop"). Don't loop si
 - **Watch for oscillation** — if iteration N's edit reverses iteration N-1's edit on the same clause OR the same tool field, stop and flag it. The two failure sets are pulling the agent in opposite directions; user judgment is needed.
 - **Watch for new failures the previous state didn't have** — if iteration N introduces failures that iteration 0 didn't have, the latest edit caused a regression. Stop and offer to revert that specific edit. Tool deletes and `toolIds` removals are particularly regression-prone — the regression often shows up as a *missing* expected tool call, not an extra one.
 - **Don't widen the validation set mid-loop** without telling the user. The stopping criterion depends on a stable comparison set.
-- **Squad scope expansion is fair game; validation-set expansion is not.** When the "kept failures = 0 but total > 0" branch decides to bring in a new squad member, that's expanding the *edit scope*, not the validation set. Same scenarios; just more assistants (and their tools) whose config can change. The agent under test is the squad as a whole, so this is expected behavior, not a regression risk.
+- **Validation-set expansion is not fair game.** All squad members are already in edit scope by default, so there's no scope-expansion step. But the validation set must stay stable across iterations: same scenarios; only the agent's prompts/tools change between iterations. Never quietly add scenarios mid-loop — that breaks the comparison.
 - **Don't stop just because the failure shape changed.** Iteration N often surfaces a different bug than iteration N-1 (e.g., fixing the entry assistant exposes a self-handoff loop in the screener, which turns out to be a tool-config issue rather than a prompt one). That's the loop working, not a reason to declare done.
 - **Always back up tool definitions before editing** — `GET /tool/{id}` and stash the full body to a local file (e.g., `/tmp/vapi_tools/{id}_pre_iter{N}.json`) before issuing any PATCH. VAPI tool PATCH semantics replace nested objects wholesale; a one-line revert is `PATCH` with the backed-up body.
-- **Cross-reference toolIds before deleting a tool** — fetch every squad member's `toolIds` (in-scope AND out-of-scope), confirm no one references the tool, and only then delete. If you can't fetch out-of-scope members for any reason, prefer reference removal over delete.
+- **Cross-reference toolIds before deleting a tool** — every squad member's `toolIds` is already fetched in Phase 1.4; confirm no member references the tool before deleting. If in any doubt, prefer reference removal over delete.
 
 ## API Access — Cekura MCP Server
 
@@ -640,7 +626,7 @@ This skill uses the Cekura MCP server for all API operations. The plugin's `.mcp
 |-------|-----------|----------|
 | 1 | List / fetch agents | `mcp__cekura__aiagents_list`, `mcp__cekura__aiagents_retrieve` |
 | 1 | Fetch live VAPI assistant / squad (direct, not MCP) | `Bash` + `curl` against `https://api.vapi.ai/assistant/{id}` or `https://api.vapi.ai/squad/{id}` with `VAPI_KEY` (id comes from the agent record's `assistant_id` field; try assistant first, fall back to squad on 404) |
-| 1 | Fetch live VAPI tool definition (direct, not MCP) | `Bash` + `curl GET https://api.vapi.ai/tool/{id}` with `VAPI_KEY` — call once per id in each in-scope assistant's `model.toolIds` |
+| 1 | Fetch live VAPI tool definition (direct, not MCP) | `Bash` + `curl GET https://api.vapi.ai/tool/{id}` with `VAPI_KEY` — call once per unique id across all squad members' `model.toolIds` |
 | 2 | Run scenarios (voice / text) | `mcp__cekura__scenarios_run_scenarios_create`, `mcp__cekura__scenarios_run_scenarios_text_create` |
 | 2 | Fetch result batch | `mcp__cekura__results_retrieve` |
 | 2 | Bulk fetch runs | `mcp__cekura__runs_bulk_retrieve` |
@@ -663,8 +649,8 @@ These apply to the skill as a whole. Phase-specific anti-patterns are covered in
 - **Running the loop on a tiny input.** A single failing run / call is rarely enough signal — one-off failures often reflect noise, not a prompt defect. Internally weight the diagnosis with less confidence and prefer minimal, narrowly-scoped edits, but **do not surface the small-sample caveat to the user** (see Step 2.4). The user has already chosen the input they have; hedging in the summary just reads as a stall.
 - **Iterating with a noisy metric.** If most kept failures come from one metric whose explanations look subjective, the metric is probably miscalibrated. Hand off to `labs-workflow` first; otherwise the loop will keep "fixing" the prompt to satisfy a flawed judge.
 - **Skipping the provider sync gate (Phase 4.2).** Confirm the VAPI PATCH actually landed (re-fetch and diff the system message AND every edited tool body). VAPI's tool PATCH semantics replace nested objects wholesale, so a malformed body can silently wipe `messages` or `destinations` while returning 200. Without re-fetch confirmation, the loop validates against state you can't see and never converges.
-- **Bypassing user review at phase boundaries.** This skill applies edits to a live agent. Every transition (Phase 2 summary → Phase 3 proposal → Phase 4 apply) must be explicitly approved.
-- **Quitting the loop the moment failures look non-prompt.** The exit gate is 100% pass rate or the iteration cap — not "first sight of an infra-shaped failure." If a residual failure looks like infra/tool/config, first verify there's no in-scope or out-of-scope prompt OR tool-config issue you missed: how the agent *handles* a tool error is a prompt question, a noisy `request-start` message is a tool-config question, and squad members / tools you didn't scope are out of scope but still fixable. Only after exhausting both prompt and tool-config options (re-classify, expand squad scope, propose mitigation prompt edits, propose tool-config edits) should you hand off to `create-agent` for genuine provider/integration issues.
+- **Bypassing the per-iteration user gate.** The skill applies edits to a live agent, and every PATCH must be preceded by explicit user approval of that iteration's proposed diff. The gate fires at every Phase 3 → Phase 4 boundary — first iteration, second iteration, all of them. Don't skip it, and don't claim a previous approval covers later iterations. Conversely, Phase 1 → Phase 2 → Phase 3 should not pause for approval at all — the failure-summary surface is informational, not a gate.
+- **Quitting the loop the moment failures look non-prompt.** The exit gate is 100% pass rate or the iteration cap — not "first sight of an infra-shaped failure." If a residual failure looks like infra/tool/config, first verify there's no prompt OR tool-config issue you missed: how the agent *handles* a tool error is a prompt question, a noisy `request-start` message is a tool-config question, and for squads the relevant prompt may live in a member that hasn't been touched yet (re-attribute by speaker, not by which member you've been editing). Only after exhausting both prompt and tool-config options (re-classify, propose mitigation prompt edits, propose tool-config edits) should you hand off to `create-agent` for genuine provider/integration issues.
 - **Treating expected-outcome failures and metric failures the same.** Expected-outcome failures are first-class signal about agent behavior. Metric failures may reflect either the agent or the metric — be more skeptical.
 
 ## Hand-off to Other Skills
