@@ -28,7 +28,7 @@ This is an **interactive, multi-iteration workflow**. The user supplies an `agen
 
 The four phases run in order, with the last looping until the agent passes:
 
-1. **Phase 1 — Verify Agent and Provider Support.** Fetch the agent, gate on `assistant_provider ∈ {vapi, retell}`. Halt with a clear error otherwise. For VAPI, also pull the live assistant or squad config from VAPI directly (using `VAPI_KEY` plus `VAPI_ASSISTANT_ID` or `VAPI_SQUAD_ID`) — VAPI is the source of truth for the prompt; the Cekura `description` is not consulted or edited.
+1. **Phase 1 — Verify Agent and Provider Support.** Fetch the agent, gate on `assistant_provider ∈ {vapi, retell}`. Halt with a clear error otherwise. For VAPI, also pull the live assistant or squad config from VAPI directly (using `VAPI_KEY` plus the `assistant_id` from the Cekura agent record) — VAPI is the source of truth for the prompt; the Cekura `description` is not consulted or edited.
 2. **Phase 2 — Collect Failures.** Branch on input type. For `scenario_ids`, run them first and wait for completion; otherwise fetch the supplied runs / call logs. Accumulate expected-outcome and metric failures, **discard voice/channel failures**, and present a structured summary.
 3. **Phase 3 — Propose Prompt and Tool Changes.** Map kept failures to prompt sections AND tool definitions, classify each as Gap / Conflict / Ambiguity, and produce minimal scoped edits. Edits may be prompt-only, tool-only, or both — whichever the failure points at. Show the user before/after blocks and wait for explicit approval.
 4. **Phase 4 — Apply, Validate, and Iterate.** PATCH the prompt and/or tool definitions, confirm provider-side sync, run validation against the relevant scenarios, re-collect failures with the same Phase 2 classification. Exit only on **100% pass rate**; otherwise feed the new failure summary back into Phase 3 — expanding squad scope or considering tool/mitigation edits if the remaining failures aren't directly prompt-following. Loop up to `max_iterations` times.
@@ -81,25 +81,34 @@ Once Phase 1.3 has confirmed `assistant_provider == vapi`, pull the live assista
 
 Skip this step entirely for `retell`. Retell sync is handled in Phase 4.2 and there is no multi-assistant equivalent to disambiguate.
 
-#### Required environment variables
+#### Required environment variable
 
 - `VAPI_KEY` — VAPI private API key. Sent as `Authorization: Bearer $VAPI_KEY`.
-- Exactly one of:
-  - `VAPI_ASSISTANT_ID` — set when the Cekura agent maps to a single VAPI assistant.
-  - `VAPI_SQUAD_ID` — set when the Cekura agent maps to a VAPI squad (multiple member assistants).
 
 If `VAPI_KEY` is missing, stop and ask the user to export it before continuing. Never echo the key to chat or write it to a file.
 
-If neither id is set, ask which applies. Inspect the `aiagents_retrieve` response from Step 1.2 for any provider config that hints at the right scope (e.g. an `assistant_id` or `squad_id` field) and offer it as the default.
+#### Resolve the VAPI id from the Cekura agent record
 
-If both are set, prefer `VAPI_SQUAD_ID` and ask the user to confirm — squads are supersets, and improving the wrong scope wastes an iteration.
+Read the `assistant_id` field from the `mcp__cekura__aiagents_retrieve` response (already fetched in Step 1.2). That single field holds either a VAPI assistant id or a VAPI squad id — Cekura does not distinguish them by field name. Do **not** ask the user to set a separate env var; the id is already in the agent record.
+
+If `assistant_id` is missing or empty, the agent isn't fully configured — stop and point the user at `cekura-create-agent` (Phase 3: Configure Provider Integration).
+
+To determine whether the id is an assistant or a squad, try the assistant endpoint first and fall back to the squad endpoint on 404:
+
+```
+ID="<assistant_id from agent record>"
+curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/assistant/$ID \
+  || curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/squad/$ID
+```
+
+Record which endpoint succeeded — Phase 1.4's "Extract and surface" step branches on assistant-vs-squad, and Phase 4's PATCH targets the matching endpoint. If both 404, the id is stale; surface the error and stop.
 
 #### Fetch the config
 
-VAPI's API isn't exposed through the Cekura MCP server, so use `Bash` with curl:
+VAPI's API isn't exposed through the Cekura MCP server, so use `Bash` with curl. Substituting the resolved id:
 
-- Single assistant: `curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/assistant/$VAPI_ASSISTANT_ID`
-- Squad: `curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/squad/$VAPI_SQUAD_ID`
+- Single assistant: `curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/assistant/$ID`
+- Squad: `curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/squad/$ID`
 
 For squads, the response includes a `members` array. Each member has either `assistantId` (referenced) or an inline `assistant` object. For the referenced case, fetch the full assistant config with the assistant endpoint above; for inline members, read the embedded object directly — no extra fetch needed.
 
@@ -159,7 +168,7 @@ Record the chosen scope; Phase 3 only proposes edits inside it, and Phase 4 only
 #### Edge cases
 
 - **401 / 403 from VAPI**: `VAPI_KEY` is invalid or lacks scope. Surface the error verbatim and stop — don't retry.
-- **404 on assistant or squad**: id mismatch. Stop; don't guess adjacent ids.
+- **404 on both assistant and squad endpoints**: the `assistant_id` on the Cekura agent record is stale or points at a deleted VAPI resource. Stop; don't guess adjacent ids. Suggest the user reconcile the agent's `assistant_id` via `cekura-create-agent`.
 - **Squad with zero members**: not actionable for self-improvement — surface and ask the user to verify the squad is configured correctly before continuing.
 - **Member with inline `assistant` only**: read the embedded object; skip the second fetch.
 - **Response shape changes / missing fields**: fall back to surfacing the relevant raw JSON section so the user can see what VAPI returned, rather than failing silently.
@@ -267,9 +276,17 @@ Failure Summary
       Sample explanations:
         - <run/call id>: <explanation excerpt>
         - <run/call id>: <explanation excerpt>
+
+  Planned Fix (preview — full diffs in Phase 3):
+    - <failure cluster 1>: <artifact to edit, e.g. "Hello assistant system prompt, Step 5 verify-and-route block"> — <change type: Gap | Conflict | Ambiguity>
+    - <failure cluster 2>: <artifact> — <change type>
 ```
 
+The **Planned Fix** preview is required, not optional. One line per failure cluster naming the artifact (prompt section, tool field, or `toolIds` reference) and the bucket (Gap / Conflict / Ambiguity). Skip it only when no kept failures exist. Detailed before/after diffs come in Phase 3 — Phase 2.4 just commits to the shape of the fix so the user can evaluate the proceed-to-Phase-3 decision against a concrete plan, not a bare "proceed?" prompt.
+
 Before moving on, **show the summary to the user** and confirm they want to proceed to Phase 3 (Propose Prompt Changes). If the failures are dominated by one or two metrics with thin signal, suggest hand-off to the `labs-workflow` skill instead — those are metric-quality issues, not agent-quality issues.
+
+**Do not surface small-sample / overfitting caveats to the user.** Even when the input is a single run, do not include lines like "with N runs any fix risks overfitting" or "5–10+ items would be a healthier signal" in the user-facing summary. Internal calibration of confidence is fine; user-facing hedging is not — it reads as a stall and the user has already chosen to act on the input they have.
 
 ### Edge cases
 
@@ -456,14 +473,14 @@ Show the user the **final merged prompt** for each affected assistant (or a unif
 
 #### VAPI prompt + assistant `toolIds` updates
 
-PATCH the in-scope assistant(s) on VAPI directly. The MCP server doesn't expose VAPI write endpoints, so use `Bash` + `curl`:
+PATCH the in-scope assistant(s) on VAPI directly. The MCP server doesn't expose VAPI write endpoints, so use `Bash` + `curl`. The id is the VAPI `assistant.id` resolved in Phase 1.4 (for squads, this is each member's `assistantId` — **not** the squad id; you cannot PATCH a squad to change a member's prompt):
 
 ```
 curl -fsS -X PATCH \
   -H "Authorization: Bearer $VAPI_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":{"provider":"<existing>","model":"<existing>","messages":[{"role":"system","content":"<NEW_PROMPT>"}, ... <other existing messages unchanged> ...],"toolIds":["<id1>","<id2>",...]}}' \
-  https://api.vapi.ai/assistant/$VAPI_ASSISTANT_ID
+  https://api.vapi.ai/assistant/<assistant_id>
 ```
 
 Important when constructing the PATCH body:
@@ -627,7 +644,7 @@ This skill uses the Cekura MCP server for all API operations. The plugin's `.mcp
 | Phase | Operation | MCP Tool |
 |-------|-----------|----------|
 | 1 | List / fetch agents | `mcp__cekura__aiagents_list`, `mcp__cekura__aiagents_retrieve` |
-| 1 | Fetch live VAPI assistant / squad (direct, not MCP) | `Bash` + `curl` against `https://api.vapi.ai/assistant/{id}` or `https://api.vapi.ai/squad/{id}` with `VAPI_KEY` |
+| 1 | Fetch live VAPI assistant / squad (direct, not MCP) | `Bash` + `curl` against `https://api.vapi.ai/assistant/{id}` or `https://api.vapi.ai/squad/{id}` with `VAPI_KEY` (id comes from the agent record's `assistant_id` field; try assistant first, fall back to squad on 404) |
 | 1 | Fetch live VAPI tool definition (direct, not MCP) | `Bash` + `curl GET https://api.vapi.ai/tool/{id}` with `VAPI_KEY` — call once per id in each in-scope assistant's `model.toolIds` |
 | 2 | Run scenarios (voice / text) | `mcp__cekura__scenarios_run_scenarios_create`, `mcp__cekura__scenarios_run_scenarios_text_create` |
 | 2 | Fetch result batch | `mcp__cekura__results_retrieve` |
@@ -649,7 +666,7 @@ This skill uses the Cekura MCP server for all API operations. The plugin's `.mcp
 
 These apply to the skill as a whole. Phase-specific anti-patterns are covered inside each phase.
 
-- **Running the loop on a tiny input.** A single failing run / call is rarely enough signal — one-off failures often reflect noise, not a prompt defect. Ask for at least 5-10 items before iterating, or surface the small-sample caveat in the summary.
+- **Running the loop on a tiny input.** A single failing run / call is rarely enough signal — one-off failures often reflect noise, not a prompt defect. Internally weight the diagnosis with less confidence and prefer minimal, narrowly-scoped edits, but **do not surface the small-sample caveat to the user** (see Step 2.4). The user has already chosen the input they have; hedging in the summary just reads as a stall.
 - **Iterating with a noisy metric.** If most kept failures come from one metric whose explanations look subjective, the metric is probably miscalibrated. Hand off to `labs-workflow` first; otherwise the loop will keep "fixing" the prompt to satisfy a flawed judge.
 - **Skipping the provider sync gate (Phase 4.2).** For VAPI, confirm the PATCH actually landed (re-fetch and diff the system message). For Retell without auto-sync, Cekura's stored description is not what the live agent runs until the user pushes it from the dashboard. Without confirmation, the loop validates the old prompt and never converges.
 - **Bypassing user review at phase boundaries.** This skill applies edits to a live agent. Every transition (Phase 2 summary → Phase 3 proposal → Phase 4 apply) must be explicitly approved.
