@@ -1,8 +1,8 @@
 ---
 name: manual-create-update-eval
-description: Manually create or update a Cekura evaluator with full field walkthrough
+description: Manually create or update a Cekura evaluator (a.k.a. scenario, eval) with full field walkthrough
 argument-hint: "[create|update] [eval type or scenario ID]"
-allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_scenarios_create", "mcp__cekura__scenarios_run_scenarios_text_create", "mcp__cekura__scenarios_create_folder_create", "mcp__cekura__scenarios_folders_list"]
+allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list"]
 ---
 
 # Manually Create or Update an Evaluator
@@ -142,7 +142,7 @@ Format: `["Category", "priority-level", "scenario-ID"]`
 
 ### 13. Folder
 
-For new scenarios, ask where to place them. Use `mcp__cekura__scenarios_folders_list` to show existing folders, or create a new one with `mcp__cekura__scenarios_create_folder_create`.
+For new scenarios, ask where to place them. Use `mcp__cekura__scenarios_folders_list` to show existing folders, or create a new one with `mcp__cekura__scenarios_folder_create`.
 
 ### 14. Inbound Phone Number
 
@@ -184,8 +184,8 @@ Get explicit "looks good" before proceeding.
 
 1. **Verify**: Fetch the scenario back to confirm all fields were set correctly
 2. **Offer to run**: "Want to test this scenario now? I recommend text mode for quick iteration."
-   - Text: `mcp__cekura__scenarios_run_scenarios_text_create`
-   - Voice: `mcp__cekura__scenarios_run_scenarios_create`
+   - Text: `mcp__cekura__scenarios_run_text`
+   - Voice: `mcp__cekura__scenarios_run_voice`
 
 ## Key Reminders
 

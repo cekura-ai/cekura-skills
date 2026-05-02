@@ -102,4 +102,4 @@ Report the setup status:
 - .mcp.json files: all present / missing [which]
 - Connectivity test: passed / failed [reason]
 
-If everything passes: "MCP is configured. All Cekura commands and skills (`/metric-design`, `/eval-design`, `/create-agent`, etc.) will use MCP tools automatically."
+If everything passes: "MCP is configured. All Cekura commands and skills (`cekura-metric-design`, `cekura-eval-design`, `cekura-create-agent`, etc.) will use MCP tools automatically."

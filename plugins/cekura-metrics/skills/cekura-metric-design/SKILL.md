@@ -1,14 +1,18 @@
 ---
-name: Cekura Metric Design
+name: cekura-metric-design
 description: >
-  Useful when the user asks to "create a metric", "write a metric", "design a metric",
+  Use when the user asks to "create a metric", "write a metric", "design a metric",
   "build a metric for", "evaluate agent performance", "measure call quality", "track a KPI",
   "add a workflow metric", "improve my metric", "fix a metric", "debug metric results",
   "set up quality scoring", or "what metrics do I need". Also relevant when discussing
   LLM judge prompts, custom code metrics, evaluation triggers, VALID_SKIP patterns,
   section extraction, or metric best practices for Cekura voice AI agents. Covers both
   creating new metrics and reviewing, iterating on, or troubleshooting existing ones.
-version: 0.3.0
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
+metadata:
+  author: cekura
+  version: "0.3.0"
 ---
 
 # Cekura Metric Design
@@ -17,12 +21,16 @@ version: 0.3.0
 
 Guide the creation of effective Cekura metrics that accurately evaluate AI voice agent call quality. Metrics measure call quality after the fact by evaluating transcripts against defined criteria. Each metric targets a specific workflow or KPI that needs tracking per call.
 
+## Performing Platform Actions
+
+When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
+
 ## Core Terminology
 
 - **Main agent**: The client's AI voice agent being tested
 - **Testing agent**: Cekura's simulated caller that exercises the main agent
 - **Metric**: A post-call evaluation that scores a transcript
-- **Evaluator/Scenario**: A test case that simulates a caller (separate concept — see cekura-evals plugin)
+- **Evaluator/Scenario**: A test case that simulates a caller (separate concept — see cekura-eval-design skill)
 
 ## The Metric Creation Workflow
 
@@ -91,17 +99,13 @@ Two proven structures exist. See `references/prompt-patterns.md` for full templa
 
 Being explicit about PASS vs FAIL with real examples from actual conversations is the single most impactful thing for prompt quality. Vague criteria like "agent should be responsive" produce inconsistent results.
 
-### Anti-Cross-Pollination Scoping (Critical for `{{agent.description}}` metrics)
+### Anti-Cross-Pollination Scoping (when using `{{agent.description}}`)
 
-When a metric uses `{{agent.description}}`, the LLM reads the entire description and can fail based on rules from unrelated flows. For example, an Emergency metric fails because the agent didn't follow a Booking Flow rule. This is the most common source of false failures.
+The most common source of false failures: a metric using `{{agent.description}}` fails based on rules from an unrelated flow (e.g., Emergency metric fails because of a Booking Flow rule).
 
-**Three-layer scoping pattern (mandatory when using `{{agent.description}}`):**
+**Three-layer scoping pattern**: SCOPE & FOCUS ("evaluates X ONLY"), DO NOT FLAG (enumerate false positives by behavioral pattern), FAILURE CONDITIONS (narrow closed list).
 
-1. **SCOPE & FOCUS** — Explicit "evaluates X ONLY" + "IGNORE all non-X rules in the agent description" with a concept-level explanation of what other flows exist and are covered by other metrics.
-2. **DO NOT FLAG THESE** — Enumerated list of common false positives specific to this metric. Named by behavioral pattern (e.g., "Standard booking steps not followed"), not by agent-specific section names.
-3. **FAILURE CONDITIONS (Only These Count)** — Narrow, closed list of what actually constitutes a failure. Instead of "failed on any criterion" (which invites the LLM to find creative reasons from other flows), it's "only flag if ONE of these specific patterns occurs."
-
-**Critical rule: All scoping must be generic/concept-based, never hardcode section names from a specific agent's description.** Use "the emergency sections of the agent description" not "the Emergency Flow section". Use "standard bookings, rescheduling, cancellations" as concept examples, not "Service Booking Flow, Updating Appointment Flow". This ensures metrics can be cross-applied across agents without modification.
+**See `references/advanced-patterns.md`** for full structure and the rule that all scoping language must be concept-based, never hardcoded to a specific agent's section names.
 
 ### Available Template Variables
 
@@ -206,62 +210,15 @@ Check first for conditions where the metric should not apply:
 
 ### Dynamic Variable-Driven Generalized Metrics
 
-When a client injects per-call data via `dynamic_variables`, create metrics that adapt to each call's context instead of hardcoding expected behavior. This is the most powerful pattern for clients with multi-agent flows or per-call configuration.
+For clients that inject per-call `dynamic_variables` (e.g., per-node system prompts, feature flags, employment types), create metrics that adapt to each call instead of hardcoding behavior. **Pattern: one metric per injected prompt variable.** Each metric references ONLY its specific `{{dynamic_variables.promptName}}`, not the full blob or `{{agent.description}}`.
 
-**Pattern: One metric per injected prompt variable.** If a client sends 11 different system prompts as dynamic variables (one per agent node), create 11 metrics — each referencing only its specific `{{dynamic_variables.promptName}}`. This keeps the LLM's context tight and prevents hallucination from irrelevant instructions meant for other agent nodes.
-
-**Example prompt structure:**
-```
-You are evaluating whether a voice AI agent followed its [Node Name] system prompt.
-
-<system_prompt>
-{{dynamic_variables.nodeNamePrompt}}
-</system_prompt>
-
-TRANSCRIPT:
-{{transcript_json}}
-
-[EVALUATION TASK — focus areas specific to this agent node]
-[OUTPUT — TRUE/FALSE/N/A]
-```
-
-Each metric references ONLY the dynamic variable for that agent node, not `{{agent.description}}` or the full `{{dynamic_variables}}` blob.
-
-**Beyond prompts — dynamic variables for triggers and scoping:**
-Dynamic variables aren't limited to system prompts. Clients may inject employment types, feature flags, client identifiers, or call metadata. Use these in triggers to scope metrics to specific call types.
-
-**Discovery workflow:** Fetch 3-5 sample calls, inspect `dynamic_variables` to see what the client sends. Look for: system prompts (long strings with instructions), configuration flags (booleans), identifiers (strings), and contextual data (prior call summaries). Each meaningful variable is a candidate for metric scoping.
+**See `references/advanced-patterns.md`** for the example prompt structure and the discovery workflow for finding dynamic variables in real calls.
 
 ### Tool Call Hallucination Metrics
 
-A distinct metric archetype for agents with detailed tool definitions. This evaluates whether the agent called the **correct tool for each situation** — "action hallucination" (agent doing the wrong thing) vs "fact hallucination" (agent stating wrong info).
+For agents with detailed tool definitions, build a metric that evaluates whether the agent called the **correct tool for each situation** — "action hallucination" (wrong action) vs "fact hallucination" (wrong information). Pattern: extract tool→scenario mapping from agent description, encode as explicit FAILURE CONDITIONS (closed list), DO NOT FLAG API errors / known quirks.
 
-**Pattern:**
-1. Extract every tool name + when to use it + required arguments + sequencing rules from the agent description
-2. Encode as explicit FAILURE CONDITIONS (closed list)
-3. Include a DO NOT FLAG section for API errors, known server-side quirks, and fallback tool usage
-
-**Structure:**
-```
-SCOPE: Evaluates tool call correctness ONLY. Does NOT evaluate tone, flow adherence, or information accuracy.
-
-TOOL-TO-SCENARIO MAPPING (from agent description):
-- [Tool A] → used when [scenario], requires [arguments]
-- [Tool B] → used when [scenario], must be called AFTER [Tool A]
-
-DO NOT FLAG:
-- API errors / server-side failures (not the agent's fault)
-- Known quirks (e.g., success responses with error-like messages)
-- Fallback/default tool usage when appropriate
-
-FAILURE CONDITIONS (Only These Count):
-1. Wrong tool for intent (e.g., called payment tool when user asked about balance)
-2. Missing mandatory arguments
-3. Calling account tools before authentication
-4. Confusing similar workflows (e.g., scheduled payment vs promise-to-pay)
-```
-
-**Without explicit failure conditions**, the LLM judge either passes everything (too lenient) or invents creative failures from unrelated description sections (same cross-pollination problem).
+**See `references/advanced-patterns.md`** for the full prompt structure and TOOL-TO-SCENARIO MAPPING template.
 
 ## Baseline Metrics — Always Recommend
 
@@ -299,7 +256,7 @@ Beyond the baseline predefined metrics, these are commonly valuable custom metri
 
 ### Cost Guard — Never Evaluate >100 Calls Without Confirmation
 
-Each evaluation costs the client real money. Before calling `evaluate_metrics`, ALWAYS query the call count first (use `page_size=1` and read the response) and report the number to the user. If count > 100, stop and ask for explicit approval before proceeding. Use `page_size` parameter (up to 200) instead of paginating, and use server-side filters (`agent_id`, `project`, `timestamp__gte`/`timestamp__lte`) to scope calls.
+Each evaluation costs the client real money. Before evaluating metrics on a batch of calls, ALWAYS query the call count first (use `page_size=1` and read the response) and report the number to the user. If count > 100, stop and ask for explicit approval before proceeding. Use `page_size` parameter (up to 200) instead of paginating, and use server-side filters (`agent_id`, `project`, `timestamp__gte`/`timestamp__lte`) to scope calls.
 
 ### Manual Fix First, Then Labs
 
@@ -326,42 +283,33 @@ This avoids wasting labs iterations on issues that are clearly fixable by prompt
 - Not including safeguarding examples for nuanced evaluation criteria
 - Omitting timestamps in failure explanations
 
-## API Access — Cekura MCP Server
+## Next Steps
 
-This plugin uses the Cekura MCP server for all API operations. The `.mcp.json` file in this plugin configures it automatically.
+After creating a metric, the user typically needs:
+- **Validate it on real calls** → use the evaluate-calls flow (see `references/api-reference.md`)
+- **Iterate on accuracy** → invoke **cekura-metric-improvement** to run the labs feedback cycle
+- **Design test scenarios that exercise this metric** → invoke **cekura-eval-design**
 
-**Prerequisites:**
-1. Set the `CEKURA_API_KEY` environment variable with your Cekura API key
-2. Start the Cekura MCP server: `cd /path/to/cekura-mcp-server && python3 openapi_mcp_server.py` (runs on `http://localhost:8001/mcp`)
-3. The plugin's `.mcp.json` handles the rest — Claude Code connects to the server and makes the `mcp__cekura__*` tools available
+## Documentation
 
-**Key MCP tools used by this plugin:**
-| Operation | MCP Tool |
-|-----------|----------|
-| List/get agents | `mcp__cekura__aiagents_list`, `mcp__cekura__aiagents_retrieve` |
-| Metrics CRUD | `mcp__cekura__metrics_create`, `mcp__cekura__metrics_list`, `mcp__cekura__metrics_retrieve`, `mcp__cekura__metrics_partial_update`, `mcp__cekura__metrics_destroy` |
-| Generate trigger | `mcp__cekura__metrics_generate_metrics_create` |
-| Auto-improve | `mcp__cekura__metrics_run_reviews_create`, `mcp__cekura__metrics_run_reviews_progress_retrieve` |
-| Call logs | `mcp__cekura__call_logs_list`, `mcp__cekura__call_logs_retrieve` |
-| Evaluate calls | `mcp__cekura__call_logs_evaluate_metrics_create`, `mcp__cekura__call_logs_rerun_evaluation_create` |
-
-**Docs lookup:** Use the `mcp__cekura__search_cekura` tool or fetch `https://docs.cekura.ai/llms.txt` to look up API details, field schemas, or feature documentation when the plugin references don't cover something.
-
-**Troubleshooting:** If MCP tools are not available, verify: (1) `CEKURA_API_KEY` is set, (2) the MCP server is running on port 8001, (3) restart Claude Code to pick up the `.mcp.json` config.
+- Public docs: https://docs.cekura.ai
+- LLM-friendly docs: https://docs.cekura.ai/llms.txt
+- Concepts: https://docs.cekura.ai/documentation/key-concepts/
 
 See `references/api-reference.md` for complete endpoint documentation and field schemas.
 
 ## Additional Resources
 
-### Reference Files
+### Reference Files (loaded on demand)
 
 - **`references/prompt-patterns.md`** — Full LLM judge prompt templates with real examples
 - **`references/pythonic-patterns.md`** — Section extraction utility and custom_code patterns
+- **`references/advanced-patterns.md`** — Anti-cross-pollination scoping, dynamic-variable-driven metrics, tool-call hallucination metrics
 - **`references/api-reference.md`** — Complete Cekura metrics API endpoints and schemas
 
 ### Example Files
 
-- **`examples/llm-judge-metric.md`** — Complete llm_judge metric example (Global Soft Skills, sectioned structure)
-- **`examples/narrative-metric.md`** — Complete llm_judge metric example (Transcript Sender Performance, narrative structure)
+- **`examples/llm-judge-metric.md`** — Complete llm_judge metric example (sectioned structure)
+- **`examples/narrative-metric.md`** — Complete llm_judge metric example (narrative structure)
 - **`examples/custom-code-metric.py`** — Complete custom_code metric with gating and VALID_SKIP
 - **`examples/section-extraction-metric.py`** — Pythonic metric with agent description scoping

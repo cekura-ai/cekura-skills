@@ -146,21 +146,3 @@ PATCH /test_framework/v1/aiagents/{id}/
 { "hallucination_metric_kb_files": [<file_id_1>, <file_id_2>] }
 ```
 
-## MCP Tools
-
-| MCP Tool | Purpose |
-|----------|---------|
-| `mcp__cekura__aiagents_create` | Create agent |
-| `mcp__cekura__aiagents_retrieve` | Get agent |
-| `mcp__cekura__aiagents_partial_update` | Update agent |
-| `mcp__cekura__aiagents_update` | Full update agent |
-| `mcp__cekura__aiagents_list` | List agents |
-| `mcp__cekura__aiagents_destroy` | Delete agent |
-| `mcp__cekura__aiagents_duplicate_create` | Duplicate agent |
-| `mcp__cekura__aiagents_tool_create` | Create mock tool |
-| `mcp__cekura__aiagents_tools_list` | List mock tools |
-| `mcp__cekura__aiagents_tool_retrieve` | Get mock tool |
-| `mcp__cekura__aiagents_tool_partial_update` | Update mock tool |
-| `mcp__cekura__aiagents_tool_destroy` | Delete mock tool |
-| `mcp__cekura__aiagents_upload_knowledge_base_create` | Upload KB files |
-| `mcp__cekura__aiagents_mcp_create` | MCP integration |

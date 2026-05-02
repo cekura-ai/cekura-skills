@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cekura: Metric Design"
+  short_description: "Designs LLM-judge and custom-code metrics that score voice AI call quality from transcripts."
+  brand_color: "#8B5CF6"
+
+policy:
+  allow_implicit_invocation: true

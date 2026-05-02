@@ -2,27 +2,81 @@
 
 ## Repository Structure
 
-This is a Claude Code **marketplace** — a collection of plugins that encode domain expertise for the [Cekura](https://cekura.ai) voice AI testing and evaluation platform.
+This is a Claude Code **marketplace** that doubles as an **Agent Skills package** — a collection of plugins and skills that encode domain expertise for the [Cekura](https://cekura.ai) voice AI testing and evaluation platform.
 
 ```
 cekura-skills/
   plugins/
-    cekura/              # Core plugin — onboarding, agent setup, coordination
-    cekura-metrics/      # Metrics — create, improve, validate call quality metrics
-    cekura-evals/        # Evaluators — create, run, analyze test suites
+    cekura/
+      .claude-plugin/plugin.json   # Plugin manifest
+      .mcp.json                    # MCP auto-config
+      skills/                      # Single source of truth for skills
+        cekura-coordinator/
+        cekura-onboarding/
+        cekura-create-agent/
+      commands/                    # Slash commands (Claude Code only)
+      hooks/                       # MCP failure detection (Claude Code only)
+    cekura-metrics/
+      skills/
+        cekura-metric-design/
+        cekura-metric-improvement/
+      commands/
+    cekura-evals/
+      skills/
+        cekura-eval-design/
+      commands/
+      agents/
   codex/
-    AGENTS.md            # Single-file behavior preset for Codex/Cursor/other agents
-  README.md              # User-facing installation and platform setup guide
-  CLAUDE.md              # This file — developer context for contributors
+    AGENTS.md                      # Single-file behavior preset for Codex/Cursor/other agents
+  package.json                     # npm package metadata (used by Agent Skills validators)
+  README.md                        # User-facing installation and platform setup guide
+  CLAUDE.md                        # This file — developer context for contributors
 ```
 
-Each plugin follows the Claude Code plugin structure:
-- `.claude-plugin/plugin.json` — Plugin manifest (name, version, description)
-- `.mcp.json` — MCP server auto-configuration (connects to Cekura API)
-- `skills/<name>/SKILL.md` — Design knowledge and interactive workflows
-- `commands/<name>.md` — Slash commands for specific operations
-- `agents/<name>.md` — Subagent definitions
-- `references/` and `examples/` — Supporting docs within each skill
+### Two install paths, one source of truth
+
+The 6 SKILL.md files inside `plugins/<plugin>/skills/` are the **only** source of skill content. Both install paths consume the same files:
+
+1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
+2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
+
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` paths, and discovers all 6 skills with no subpath needed. The bare URL works cleanly.
+
+### Skill content rules
+
+Every `plugins/<plugin>/skills/<name>/SKILL.md`:
+- `name` field must be lowercase kebab-case (`cekura-foo`) matching the directory name (per Agent Skills spec)
+- `description` includes trigger phrases for skill activation
+- `compatibility` field set to: `Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.`
+- Body is **public-facing**: no `mcp__cekura__*` tool references, no internal endpoints (e.g., `localhost:8001`), no MCP-bug curl workarounds
+- Public API endpoint paths (e.g., `POST /test_framework/v1/...`) are fine — those are user-facing
+- Public provider names (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP) are fine — they're documented at https://docs.cekura.ai/documentation/integrations/
+- Aim for under 500 lines per file (Agent Skills spec recommendation)
+
+Operational MCP tool references belong in **command files** (`plugins/<plugin>/commands/*.md`), which are Claude Code–specific and only loaded by the plugin marketplace path. The `npx skills add` path doesn't fetch commands.
+
+### Update workflow
+
+Once installed, npx users have three ways to stay current:
+
+| Goal | Command |
+|---|---|
+| Refresh existing skills only | `npx skills update` |
+| Refresh existing AND install any new skills (recommended) | `npx skills add cekura-ai/cekura-skills --all` |
+| Install one specific newly-released skill | `npx skills add cekura-ai/cekura-skills --skill <name>` |
+
+`update` alone does NOT discover newly-added skills — when you publish a new skill, mention `--all` or `--skill <name>` in the release notes.
+
+### Adding a new public skill (contributor checklist)
+
+1. Pick which plugin owns it: `cekura`, `cekura-metrics`, or `cekura-evals`
+2. Create `plugins/<plugin>/skills/cekura-<kebab-name>/SKILL.md` with spec-compliant frontmatter (`name` must be `cekura-<kebab-name>`, matching the directory)
+3. Body must be public-facing — no `mcp__cekura__*` references, no internal endpoints
+4. Stay under 500 lines per file
+5. Bump `package.json` version
+6. Update the "What's Included" table and Quick Reference table in `README.md`
+7. If the skill needs an operational counterpart, also add a slash command in `plugins/<plugin>/commands/`
+8. In the release notes / commit message, name the new skill so users know what to pass to `--skill`
 
 ## MCP Integration
 
@@ -50,9 +104,9 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 ### cekura (core)
 | Component | Type | Purpose |
 |-----------|------|---------|
-| `onboarding` | skill | Walk new users through full platform setup |
-| `create-agent` | skill | Set up a voice AI agent — provider, mock tools, KB, dynamic vars |
-| `coordinator` | skill | Route users to the right skill/command |
+| `cekura-onboarding` | skill | Walk new users through full platform setup |
+| `cekura-create-agent` | skill | Set up a voice AI agent — provider, mock tools, KB, dynamic vars |
+| `cekura-coordinator` | skill | Route users to the right skill/command |
 | `setup-mcp` | command | Configure the MCP server for all plugins |
 | `upgrade-skills` | command | Pull latest from GitHub |
 | `report-bug` | command | Collect bug context, file GitHub issue, optionally attempt fix |
@@ -61,8 +115,8 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 ### cekura-metrics
 | Component | Type | Purpose |
 |-----------|------|---------|
-| `metric-design` | skill | Core metric design patterns and best practices |
-| `labs-workflow` | skill | Metric improvement through feedback iteration |
+| `cekura-metric-design` | skill | Core metric design patterns and best practices |
+| `cekura-metric-improvement` | skill | Metric improvement through feedback iteration (formerly `labs-workflow`) |
 | `create-metric` | command | Create or update a metric (absorbed `update-metric`) |
 | `list-metrics` | command | List metrics for an agent or project |
 | `evaluate-calls` | command | Run metrics on specific calls |
@@ -72,8 +126,7 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 ### cekura-evals
 | Component | Type | Purpose |
 |-----------|------|---------|
-| `eval-design` | skill | Evaluator design, test profiles, conditional actions, session memory |
-| `conditional-actions` | skill | Deep guide for designing and writing conditional action evaluators (deterministic/unit test style) |
+| `cekura-eval-design` | skill | Evaluator design, test profiles, conditional actions, session memory |
 | `manual-create-update-eval` | command | Create or update a single evaluator with full field walkthrough (replaced `create-eval`) |
 | `autogen-eval` | command | Auto-generate evaluators or bulk create from CSV/JSON (replaced `generate-evals` + `bulk-create-evals`) |
 | `list-evals` | command | List evaluators for an agent or project |

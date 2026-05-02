@@ -1,0 +1,17 @@
+# Local Claude Code session state — never commit
+.claude/
+
+# OS / editor
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
+
+# Node (if anyone runs npm/npx in the repo)
+node_modules/
+npm-debug.log*
+
+# Local skills CLI test artifacts
+skills-lock.json
+.agents/

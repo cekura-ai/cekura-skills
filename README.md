@@ -6,6 +6,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 - [What's Included](#whats-included)
 - [Prerequisites](#prerequisites)
+- [Quick Install (npx skills add)](#quick-install-npx-skills-add)
 - [Claude Code (VS Code)](#claude-code-vs-code)
 - [Claude Code (Terminal CLI)](#claude-code-terminal-cli)
 - [Codex](#codex)
@@ -20,20 +21,72 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 3 Plugins, 12 Commands
+### 6 Skills, 12 Commands across 3 Plugins
 
 | Plugin | Skills | Commands | Purpose |
 |--------|--------|----------|---------|
-| **cekura** | `onboarding`, `create-agent`, `coordinator` | `setup-mcp`, `upgrade-skills`, `report-bug` | Platform setup, agent onboarding, skill routing |
-| **cekura-metrics** | `metric-design`, `labs-workflow` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` | Create, improve, and validate call quality metrics |
-| **cekura-evals** | `eval-design` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results` | Create, run, and analyze test suites for voice agents |
+| **cekura** | `cekura-coordinator`, `cekura-onboarding`, `cekura-create-agent` | `setup-mcp`, `upgrade-skills`, `report-bug` | Platform setup, agent onboarding, skill routing |
+| **cekura-metrics** | `cekura-metric-design`, `cekura-metric-improvement` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` | Create, improve, and validate call quality metrics |
+| **cekura-evals** | `cekura-eval-design` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results` | Create, run, and analyze test suites for voice agents |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
 ## Prerequisites
 
-- **Cekura account** — [Sign up here](https://dashboard.cekura.ai/sign-up)
-- **Cekura API key** — Found under Settings > API Keys in the [Cekura dashboard](https://dashboard.cekura.ai)
+- **Cekura account** — [Sign up here](https://dashboard.cekura.ai/sign-up). Sign in via OAuth or use an API key.
+- **Cekura API key** *(only for the Claude Code plugin path / programmatic MCP access)* — Found under Settings > API Keys in the [Cekura dashboard](https://dashboard.cekura.ai). Not needed for `npx skills add`.
+
+---
+
+## Quick Install (`npx skills add`)
+
+The fastest way to get Cekura skills into any [Agent Skills](https://agentskills.io)–compatible client (Claude Code, Cursor, Codex, Windsurf, OpenCode, and many more).
+
+### Install
+
+```bash
+npx skills add cekura-ai/cekura-skills
+```
+
+The CLI prompts you to pick which skills to install and which agents to install them into. To install everything non-interactively:
+
+```bash
+npx skills add cekura-ai/cekura-skills --all
+```
+
+### Update
+
+```bash
+# Refresh existing skills
+npx skills update
+
+# Or stay fully current — refresh existing AND pick up any newly-added skills
+npx skills add cekura-ai/cekura-skills --all
+```
+
+### Remove
+
+```bash
+npx skills remove cekura-coordinator   # one skill
+npx skills remove --all                 # everything
+```
+
+### What gets installed
+
+Six skills, scoped to specific Cekura workflows:
+
+| Skill | When it activates |
+|---|---|
+| `cekura-coordinator` | "What can Cekura do?" — routes you to the right skill |
+| `cekura-onboarding` | "Get started with Cekura" — full platform walkthrough |
+| `cekura-create-agent` | "Connect my voice agent to Cekura" |
+| `cekura-metric-design` | "Create a metric / measure call quality" |
+| `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
+| `cekura-eval-design` | "Design test scenarios for my voice agent" |
+
+### Want full functionality?
+
+`npx skills add` gives you the **behavioral guidance layer** — the skills auto-activate when you describe relevant tasks. For slash commands and direct API integration, install the full Claude Code plugin marketplace below.
 
 ---
 
@@ -57,7 +110,7 @@ Full plugin support — skills, slash commands, MCP tools, and auto-configured A
 
 ### Get Started
 
-Try `/onboarding` for a guided walkthrough or ask "what can Cekura do?" to see everything available.
+Ask "I'm new to Cekura, help me get started" for a guided walkthrough, or ask "what can Cekura do?" to see everything available.
 
 ### Upgrade
 
@@ -94,7 +147,7 @@ Same full plugin support as VS Code.
 
 ### Get Started
 
-Try `/onboarding` for a guided walkthrough or ask "what can Cekura do?" to see everything available.
+Ask "I'm new to Cekura, help me get started" for a guided walkthrough, or ask "what can Cekura do?" to see everything available.
 
 ### Upgrade
 
@@ -120,11 +173,11 @@ Codex doesn't support Claude Code plugins directly. Skills are loaded automatica
 ```bash
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo cekura-ai/cekura-skills \
-  --path plugins/cekura/skills/onboarding \
-         plugins/cekura/skills/create-agent \
-         plugins/cekura-metrics/skills/metric-design \
-         plugins/cekura-metrics/skills/labs-workflow \
-         plugins/cekura-evals/skills/eval-design
+  --path plugins/cekura/skills/cekura-onboarding \
+         plugins/cekura/skills/cekura-create-agent \
+         plugins/cekura-metrics/skills/cekura-metric-design \
+         plugins/cekura-metrics/skills/cekura-metric-improvement \
+         plugins/cekura-evals/skills/cekura-eval-design
 ```
 
 Restart Codex after install.
@@ -150,11 +203,11 @@ Re-run the skill installer:
 ```bash
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo cekura-ai/cekura-skills \
-  --path plugins/cekura/skills/onboarding \
-         plugins/cekura/skills/create-agent \
-         plugins/cekura-metrics/skills/metric-design \
-         plugins/cekura-metrics/skills/labs-workflow \
-         plugins/cekura-evals/skills/eval-design
+  --path plugins/cekura/skills/cekura-onboarding \
+         plugins/cekura/skills/cekura-create-agent \
+         plugins/cekura-metrics/skills/cekura-metric-design \
+         plugins/cekura-metrics/skills/cekura-metric-improvement \
+         plugins/cekura-evals/skills/cekura-eval-design
 ```
 
 ---
@@ -226,31 +279,42 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 ## Quick Reference
 
-### Key Commands
+### Slash Commands (Claude Code plugin only)
 
 | Command | What it Does |
 |---------|-------------|
 | `/setup-mcp` | Configure MCP server (run once after install) |
 | `/upgrade-skills` | Pull latest skill updates from GitHub |
 | `/report-bug` | Report a bug — files GitHub issue, optionally attempts a fix |
-| `/onboarding` | Guided platform setup for new users |
-| `/create-agent` | Set up a voice AI agent with provider, tools, KB |
-| `/metric-design` | Design custom metrics with best practices |
 | `/create-metric` | Create or update a metric |
-| `/eval-design` | Design test scenarios and coverage strategy |
+| `/list-metrics` | List metrics for an agent or project |
+| `/evaluate-calls` | Run metrics on specific calls |
+| `/improve-metric` | Improve metric accuracy: feedback, labs, auto-improve |
 | `/autogen-eval` | Auto-generate evaluators (or bulk create from CSV/JSON) |
 | `/manual-create-update-eval` | Create or update a single evaluator with full field walkthrough |
+| `/list-evals` | List evaluators for an agent or project |
 | `/run-evals` | Execute test scenarios |
-| `/improve-metric` | Improve metric accuracy: feedback, labs, auto-improve |
+| `/eval-results` | Check results from a test run |
+
+### Skills (load automatically — both install paths)
+
+| Skill | When it activates |
+|-------|-------------------|
+| `cekura-coordinator` | "What can Cekura do?" — routes to the right skill |
+| `cekura-onboarding` | First-time setup, end-to-end platform walkthrough |
+| `cekura-create-agent` | Setting up an agent — provider, mock tools, KB, dynamic vars |
+| `cekura-metric-design` | Designing or creating metrics |
+| `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
+| `cekura-eval-design` | Designing test scenarios for a voice agent |
 
 ### Getting Started Flow
 
-1. `/setup-mcp` — Configure API access
-2. `/onboarding` — Set up project and agent
-3. `/create-agent` — Configure provider, mock tools, knowledge base
+1. `/setup-mcp` — Configure API access (Claude Code plugin only)
+2. Ask "I'm new to Cekura, help me get started" — activates `cekura-onboarding`
+3. Ask "set up my agent" — activates `cekura-create-agent`
 4. `/autogen-eval` — Auto-generate test scenarios
 5. `/run-evals` — Run your first tests
-6. `/metric-design` — Create custom metrics based on results
+6. Ask "create a metric for X" — activates `cekura-metric-design`
 
 ---
 
@@ -258,6 +322,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 | Platform | Method | Full Plugin Support | MCP Tools | Slash Commands |
 |----------|--------|-------------------|-----------|---------------|
+| **Any Agent Skills client** | `npx skills add` | Skills only | No | No |
 | **Claude Code (VS Code)** | Marketplace install | Yes | Yes | Yes |
 | **Claude Code (CLI)** | `/plugins` install | Yes | Yes | Yes |
 | **Codex** | Skill installer | Skills only | No | No |

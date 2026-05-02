@@ -2,12 +2,12 @@
 name: improve-metric
 description: Improve a Cekura metric through feedback collection, labs pipeline, and auto-improvement
 argument-hint: "[metric ID] [feedback|improve|full-cycle]"
-allowed-tools: ["AskUserQuestion", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__metrics_run_reviews_create", "mcp__cekura__metrics_run_reviews_progress_retrieve", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__call_logs_rerun_evaluation_create", "mcp__cekura__test_framework_test_sets_create_from_call_log_create", "mcp__cekura__test_framework_test_sets_create_from_run_create", "mcp__cekura__test_framework_metric_reviews_process_feedbacks_create", "mcp__cekura__test_framework_metric_reviews_process_feedbacks_progress_retriev"]
+allowed-tools: ["AskUserQuestion", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__metrics_run_reviews_create", "mcp__cekura__metrics_run_reviews_progress", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__call_logs_rerun_evaluation_create", "mcp__cekura__test_sets_create_from_call_log", "mcp__cekura__test_sets_create_from_run", "mcp__cekura__metric_reviews_process_feedbacks", "mcp__cekura__metric_reviews_process_feedbacks_progress"]
 ---
 
 # Improve a Metric
 
-Single entry point for the full metric improvement cycle: collecting feedback, adding to labs, and running auto-improvement. The labs-workflow skill provides detailed guidance on feedback patterns and improvement strategy.
+Single entry point for the full metric improvement cycle: collecting feedback, adding to labs, and running auto-improvement. The `cekura-metric-improvement` skill provides detailed guidance on feedback patterns and improvement strategy.
 
 ## Determine Phase
 
@@ -42,7 +42,7 @@ For each misaligned result:
 
 1. **Show the user**: Present the metric result, explanation, and relevant transcript excerpt
 2. **Ask**: "Do you agree with this result? If not, what should it be and why?"
-3. **Record feedback**: Add to labs via `mcp__cekura__test_framework_test_sets_create_from_call_log_create`:
+3. **Record feedback**: Add to labs via `mcp__cekura__test_sets_create_from_call_log`:
    ```
    call_log_id: <call_id>
    metrics: [{"metric": <metric_id>, "feedback": "<user's explanation of why result is wrong>"}]
@@ -91,7 +91,7 @@ Labs needs at least **6 disagree instances** with explanations to have enough si
 
 1. **Trigger**: Use `mcp__cekura__metrics_run_reviews_create` with the metric ID.
 
-2. **Poll for completion**: Use `mcp__cekura__metrics_run_reviews_progress_retrieve` with the progress ID. Poll every 10 seconds.
+2. **Poll for completion**: Use `mcp__cekura__metrics_run_reviews_progress` with the progress ID. Poll every 10 seconds.
 
 3. **Review changes**: Fetch the updated metric with `mcp__cekura__metrics_retrieve` and compare:
    - Show the diff between old and new prompt

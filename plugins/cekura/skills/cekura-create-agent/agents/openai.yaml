@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cekura: Create Agent"
+  short_description: "Connects a voice AI agent to Cekura — provider integration, mock tools, knowledge base, dynamic variables."
+  brand_color: "#6366F1"
+
+policy:
+  allow_implicit_invocation: true
