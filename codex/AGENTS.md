@@ -446,6 +446,76 @@ Skipping this checkpoint leads to wrong tool strategy, data mismatches, wasted v
 | POST | `/test_framework/v1/aiagents/{id}/tools/` | Create mock tool |
 | GET | `/test_framework/v1/aiagents/{id}/tools/` | List mock tools |
 
+## Conditional Actions — Deterministic Evaluators
+
+Use conditional actions when the user needs a scenario that runs identically each time: unit tests, regression tests, IVR navigation, compliance testing. For adaptive/exploratory scenarios use behavioral instructions instead.
+
+**When to use:** Exact flow validation, deterministic regression, IVR nav, compliance.
+**When NOT to use:** Natural conversation quality, edge cases, red-team — use behavioral instructions.
+
+### Structure
+
+The `instructions` field of the scenario payload becomes a JSON object (not a string):
+
+```json
+{
+  "instructions": {
+    "role": "You are a patient calling to cancel their appointment",
+    "conditions": [...]
+  }
+}
+```
+
+### Condition Fields — All Five Required on Every Condition
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | integer | Unique. First condition must be 0. |
+| `condition` | string or integer | `"FIRST_MESSAGE"` for id:0 (always required, even when agent speaks first). Trigger description for standard. Prior condition's integer ID for action_followup. |
+| `action` | string | Exact text (`fixed_message:true`) or behavioral instruction (`fixed_message:false`). |
+| `type` | string | `"standard"` or `"action_followup"`. **Required — no default.** Omitting returns a validation error. |
+| `fixed_message` | boolean | `true` = spoken verbatim; `false` = natural language instruction. Required. |
+
+When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the testing agent waits.
+
+### Action Types
+
+- **`standard`** — fires when conversation context matches the condition string
+- **`action_followup`** — fires immediately after a prior action; `condition` is the integer ID of that prior condition. Use for multi-part responses and `<interruption>`.
+
+### XML Tags (fixed_message:true only)
+
+| Tag | Behavior |
+|-----|---------|
+| `<ivr text="..." />` | Uninterruptible IVR message. **Must be entire action.** |
+| `<voicemail text="..." />` or `<voicemail />` | Uninterruptible + beep at end. **Must be entire action.** `text` optional (silent voicemail allowed). Post-beep message goes in a separate action_followup. |
+| `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`) |
+| `<endcall />` | Terminate call. **May be combined with surrounding text** (only "communication-class" tag that allows this). |
+| `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues |
+| `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |
+| `<spell>TEXT</spell>` | Spell letter-by-letter |
+| `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be action_followup AND at start of action string.** |
+| `<speed ratio="N" />` | Speech rate 0.8–1.2. Must start action. |
+| `<volume ratio="N" />` | Volume 0–2. Must start action. Cartesia only. |
+| `<send_sms text="..." />` | Trigger an SMS for SMS-driven workflows |
+| `<network_simulation packet_loss="N" />` | Only `packet_loss` supported — `jitter`/`latency` are ignored. |
+| `<background_noise sound="NAME" volume="0.x">text</background_noise>` | Continuous ambient sound (e.g. `coffee-shop`, `office-ambience`, `rain-thunder`, `vacuum-cleaner`, `construction-site`) |
+| `<noise sound="NAME" volume="N" time="Xms" />` | One-shot effect: `office`, `beep`, `cough1`, `cough2`. `volume` and `time` (milliseconds) are optional. |
+
+### Test Profile Variables in Fixed Messages
+
+Inject test profile data into verbatim text: `"My name is {{test_profile.first_name}} {{test_profile.last_name}}"`. Also works nested (`{{test_profile.address.city}}`) and with XML tags (`<spell>{{test_profile.account_number}}</spell>`).
+
+### Key Anti-Patterns
+
+- **Multiple branches in one evaluator** — Each path (success/failure) is a separate evaluator
+- **XML tags with `fixed_message:false`** — Tags only parse when `fixed_message:true`
+- **`<ivr>` or `<voicemail>` combined with other text/tags** — Must be the entire action
+- **`<interruption>` not at start of action or not as `action_followup`** — Both constraints required
+- **`<network_simulation>` with `jitter`/`latency`** — Only `packet_loss` is supported
+- **Missing `type` field** — Required on every condition, no default
+- **No `<endcall />` at end** — Calls run to timeout without it
+
 ---
 
 # PART 3: COMMON ANTI-PATTERNS

@@ -4,14 +4,18 @@ description: >
   Use when the user asks to "create an evaluator", "create evals", "create a scenario",
   "write a test scenario", "design a test case", "test my agent", "build eval coverage",
   "plan a test suite", "create red team tests", "set up test profiles", "configure conditional
-  actions", or "run evals". Covers individual evaluator design, suite coverage strategy, test
-  profiles, mock-tool data design, conditional actions, and best practices for workflow /
-  red-team / edge-case / deterministic test types.
+  actions", "write a conditional action evaluator", "build a deterministic test", "design an
+  IVR test", "IVR navigation test", "write a unit test for a voice agent", "build a regression
+  test", "scripted scenario", "scripted voice test", "structured evaluator", "exact flow test",
+  "sequential conditions", "fixed sequence test", or "run evals". Covers individual evaluator design, suite coverage
+  strategy, test profiles, mock-tool data design, conditional actions (deterministic / unit
+  test / regression / IVR navigation flows), and best practices for workflow / red-team /
+  edge-case / deterministic test types.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Cekura Eval Design
@@ -265,15 +269,18 @@ Without metrics, runs return success/failure based only on whether the call comp
 
 ## Conditional Actions — Deterministic Testing
 
-Conditional actions create structured, repeatable test flows — essentially unit tests for voice agents. The testing agent follows a predefined structure but adapts if the main agent deviates.
+Conditional actions create structured, repeatable test flows — essentially unit tests for voice agents. The testing agent follows a predefined sequence of triggers and responses but adapts if the main agent deviates. Rule of thumb: if a developer would write the test as code, use conditional actions; if they'd describe a persona, use behavioral instructions.
 
-**When to use:** When the user needs a scenario that performs the same way every run (unit testing, regression testing, exact flow validation).
+**When to use:** Exact flow validation, regression testing, IVR navigation, compliance.
+**When NOT to use:** Adaptive quality, edge cases, red-team — use behavioral instructions.
 
-**When NOT to use:** When testing adaptive behavior, general quality, or exploratory scenarios — use behavioral instructions instead.
+**Two gotchas to avoid:**
+- `id: 0` requires `condition: "FIRST_MESSAGE"` (the literal string) and `fixed_message: true`. If the main agent speaks first, set `action: ""`.
+- `type` is required on every condition (`"standard"` or `"action_followup"`) — there is no default; omitting it returns a validation error.
 
-**Structure:** A conditions array where each entry has an ID, trigger condition, action, type, and fixed_message flag. Supports XML tags for IVR, voicemail, DTMF, silence, and more.
+The `instructions` field becomes a JSON object (`{ "role": "...", "conditions": [...] }`), not a string. XML tags (`<ivr>`, `<voicemail>`, `<interruption>`, `<silence>`/`<hold>`, `<dtmf>`, `<endcall>`, `<spell>`, `<network_simulation>`, `<background_noise>`, etc.) work only with `fixed_message: true` and several have placement constraints (e.g. `<ivr>` and `<voicemail>` must be the entire action; `<interruption>` must be at the start of an `action_followup` action).
 
-See `references/conditional-actions.md` for full structure, XML tags, and patterns.
+See `references/conditional-actions.md` for field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, and the quick-reference card.
 
 ## Pre-Creation Checkpoint — Confirm Before Building
 
@@ -416,7 +423,7 @@ After completing eval design, the user typically needs:
 - **`references/tool-strategies.md`** — Full workflow for Approaches A/B/C
 - **`references/mock-tool-design.md`** — Per-input branching, append-not-replace, phone-pool gotchas
 - **`references/test-profiles.md`** — Profile creation from real data, template variables
-- **`references/conditional-actions.md`** — Conditional actions: XML tags, deterministic patterns
+- **`references/conditional-actions.md`** — Conditional actions: field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, quick-reference card
 - **`references/coverage-patterns.md`** — Test coverage category breakdowns
 - **`references/session-memory.md`** — Multi-session project memory document template
 - **`references/api-reference.md`** — Complete API endpoints: scenarios, profiles, results
