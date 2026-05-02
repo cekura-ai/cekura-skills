@@ -212,7 +212,19 @@ Branch on the input type to populate a list of items to inspect:
 
 ### Step 2.3 — Accumulate failures (prompt-following only)
 
-Walk every run / call log and collect two failure classes:
+#### Pre-filter: skip human-reviewed successes
+
+Before accumulating any failures, drop every run or call log that a human has reviewed and marked successful. The signal here is a `reviewed_success` marker on the item (typical shapes: a top-level `review_status == "reviewed_success"`, a `reviewed_success` boolean set true, a `human_review.outcome == "success"`, or any equivalent override field on the run / call log payload). When in doubt, treat any explicit human-review override that resolves to "success" as `reviewed_success`.
+
+Items marked `reviewed_success` are **passes**, full stop. Do not collect their expected-outcome verdicts and do not collect their metric verdicts — even if a metric on that item is `FAIL`. The human review supersedes machine verdicts: a metric judging that call wrong is the metric being miscalibrated, not the agent misbehaving, and feeding it into Phase 3 will push edits that contradict the reviewer.
+
+Track the count of items skipped this way so the summary in Step 2.4 can report it. If the skipped metric failures cluster on one or two metrics (i.e. multiple `reviewed_success` items had the same metric flagging FAIL), surface that as a hint to consider `labs-workflow` for those metrics — but do not act on it from this skill.
+
+This filter applies uniformly to runs and call logs and runs **before** the voice/channel filter below.
+
+#### Accumulate
+
+Walk every run / call log that survived the pre-filter and collect two failure classes:
 
 1. **Expected-outcome failures** *(runs only — not applicable to call logs)*
    - The run's expected outcome verdict is `fail` (or equivalent: not-met, false).
@@ -250,6 +262,8 @@ For text-mode runs and chat call logs the filter is a no-op — there is no voic
 
 Track the discarded count so the summary in Step 2.4 can report it (e.g. "12 failures collected, 4 voice-related discarded, 8 prompt-following failures kept").
 
+The reviewed-success skip count from the pre-filter is tracked separately from voice-related discards — the two are distinct reasons for ignoring an item and the summary should report them on different lines.
+
 ### Step 2.4 — Build the failure summary
 
 Produce a structured summary that Phase 3 will consume. Group failures by **scenario** (for runs) or by **metric** (for call logs), since repeated failures on the same scenario or the same metric are stronger signals than scattered one-offs.
@@ -260,7 +274,8 @@ Suggested shape:
 Failure Summary
   Agent: <name> (<id>) — provider vapi
   Source: <input type> — <N items inspected>
-  Failures: <total collected> — <voice-related discarded> voice-related discarded — <kept> prompt-following kept
+  Reviewed-success skipped: <S items> (human-reviewed pass — metric/outcome verdicts on these items ignored)
+  Failures: <total collected on remaining items> — <voice-related discarded> voice-related discarded — <kept> prompt-following kept
 
   Expected-Outcome Failures (M of N runs):
     - Scenario: <name>
@@ -561,9 +576,9 @@ Poll `mcp__cekura__results_retrieve` until terminal, exactly as in Phase 2.1 (sa
 
 ### Step 4.5 — Collect and filter new failures
 
-Run the new result through **the same accumulation logic from Phase 2.3** — both expected-outcome failures and metric failures, with the voice-failure filter applied. Produce a Phase-2.4-shaped summary.
+Run the new result through **the same accumulation logic from Phase 2.3** — pre-filter `reviewed_success` items, then collect both expected-outcome failures and metric failures, with the voice-failure filter applied. Produce a Phase-2.4-shaped summary.
 
-This guarantees iteration N sees failures filtered identically to iteration 0, so the loop's stopping criterion is consistent across iterations.
+This guarantees iteration N sees failures filtered identically to iteration 0, so the loop's stopping criterion is consistent across iterations. Validation runs created by this skill on each iteration will not normally have human review attached — the `reviewed_success` pre-filter is mostly a no-op for them — but if the original input was `call_ids` and any of those call logs were `reviewed_success`, their re-synthesized scenarios should still be excluded from the validation set (cache the exclusion at Step 4.3 alongside the cached scenario IDs).
 
 ### Step 4.6 — Decide: exit or loop
 
@@ -604,7 +619,6 @@ The user can also stop or extend mid-loop ("keep going" / "stop"). Don't loop si
 
 - **Track cumulative diff for prompts AND tools** — show the user every change that's been applied across all iterations, not just the latest one, and split the cumulative diff by surface (prompt vs. tool definition vs. `toolIds` reference). Easy to lose context across 3 passes when changes are spread across multiple artifacts.
 - **Watch for oscillation** — if iteration N's edit reverses iteration N-1's edit on the same clause OR the same tool field, stop and flag it. The two failure sets are pulling the agent in opposite directions; user judgment is needed.
-- **Watch for new failures the previous state didn't have** — if iteration N introduces failures that iteration 0 didn't have, the latest edit caused a regression. Stop and offer to revert that specific edit. Tool deletes and `toolIds` removals are particularly regression-prone — the regression often shows up as a *missing* expected tool call, not an extra one.
 - **Don't widen the validation set mid-loop** without telling the user. The stopping criterion depends on a stable comparison set.
 - **Validation-set expansion is not fair game.** All squad members are already in edit scope by default, so there's no scope-expansion step. But the validation set must stay stable across iterations: same scenarios; only the agent's prompts/tools change between iterations. Never quietly add scenarios mid-loop — that breaks the comparison.
 - **Don't stop just because the failure shape changed.** Iteration N often surfaces a different bug than iteration N-1 (e.g., fixing the entry assistant exposes a self-handoff loop in the screener, which turns out to be a tool-config issue rather than a prompt one). That's the loop working, not a reason to declare done.
