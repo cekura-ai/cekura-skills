@@ -46,7 +46,7 @@ The `instructions` field of the scenario payload becomes a JSON object (not a st
 ## Condition Types
 
 - **`standard`** — fires when the conversation context matches the `condition` string. Write the trigger as a natural description of what the main agent will say or do.
-- **`action_followup`** — fires immediately after a prior action regardless of what the main agent says next. `condition` is the integer `id` of the preceding condition. Use for multi-part responses and for `<interruption>`.
+- **`action_followup`** — fires on the **next turn** after the referenced condition, not immediately. Sequence: testing agent sends condition X → main agent replies → this fires. The main agent's reply is received but does not affect whether the followup triggers. `condition` is the integer `id` of the preceding condition. Two uses: (1) multi-part responses across consecutive turns, and (2) **scripted sequences** — chain followups to deliver an exact sequence of messages from the testing agent with no conditions to match at all.
 
 ## fixed_message: true vs false
 
@@ -183,6 +183,8 @@ Never hardcode values that come from a test profile unless the value is intentio
 
 ### 4. Multi-Part Response with action_followup
 
+`action_followup` fires on the **next turn** after the referenced condition — not immediately. Sequence: testing agent sends condition 2 → main agent replies → condition 3 fires.
+
 ```json
 {
   "role": "You are a customer calling to update your contact information",
@@ -192,6 +194,20 @@ Never hardcode values that come from a test profile unless the value is intentio
     { "id": 2, "condition": "The agent asks for your new email address", "action": "My new email is john.smith@example.com", "type": "standard", "fixed_message": true },
     { "id": 3, "condition": 2, "action": "And please make sure that's lowercase, all one word", "type": "action_followup", "fixed_message": true },
     { "id": 4, "condition": "The agent confirms the email update", "action": "Perfect, thanks for your help <endcall />", "type": "standard", "fixed_message": true }
+  ]
+}
+```
+
+**Scripted sequence pattern:** Chain `action_followup` conditions to deliver an exact sequence of messages turn by turn, with no conditions to match — each fires automatically after the main agent replies:
+
+```json
+{
+  "role": "You are a customer providing multi-field information",
+  "conditions": [
+    { "id": 0, "condition": "FIRST_MESSAGE", "action": "I need to update my address", "type": "standard", "fixed_message": true },
+    { "id": 1, "condition": 0, "action": "My new street is 123 Main Street", "type": "action_followup", "fixed_message": true },
+    { "id": 2, "condition": 1, "action": "City is Springfield", "type": "action_followup", "fixed_message": true },
+    { "id": 3, "condition": 2, "action": "Zip code is 62701 <endcall />", "type": "action_followup", "fixed_message": true }
   ]
 }
 ```
@@ -245,6 +261,7 @@ Never hardcode values that come from a test profile unless the value is intentio
 - **`<ivr>` or `<voicemail>` combined with other text or tags.** Both tags must be the *entire* action. Surrounding text or additional tags causes a validation error. Use a separate `action_followup` for any post-IVR / post-beep content.
 - **Text before `<interruption>`.** `<interruption>` must be the very first thing in the action string.
 - **`<interruption>` as `type: "standard"`.** It only works as `action_followup`; on `standard` it has no effect because the timing mechanism needs a preceding action to anchor against.
+- **Expecting `action_followup` to fire in the same turn.** `action_followup` fires on the **next turn** — after the testing agent sends condition X and the main agent replies. It does not fire in the same turn as condition X.
 - **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored. `jitter` and `latency` are silently ignored.
 - **No `<endcall />` at end.** Without an explicit termination, the call runs to timeout, wasting credits.
 - **Conditions arrays longer than ~15 entries.** Split into multiple evaluators by phase (verification, scheduling, confirmation). Long arrays drift from the intended flow and are hard to debug.
@@ -315,7 +332,10 @@ Background noise sounds:
 
 Action types:
   standard         Fires when conversation context matches condition string
-  action_followup  Fires immediately after condition id (int) — multi-part responses, <interruption>
+  action_followup  Fires on the NEXT TURN after condition id (int): testing agent sends
+                   condition X → main agent replies → this fires. Does not fire immediately.
+                   Useful for multi-part responses, scripted sequences (no conditions needed),
+                   and <interruption>.
 
 Test profile variables (fixed_message:true only):
   {{test_profile.field_name}}                   Simple field
