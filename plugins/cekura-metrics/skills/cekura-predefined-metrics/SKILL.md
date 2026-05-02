@@ -93,7 +93,7 @@ Use `GET /test_framework/v1/predefined-metrics/` to retrieve the full list of av
 | Metric | Output | Cost | Sim | Obs | Notes |
 |--------|--------|------|-----|-----|-------|
 | **Average Pitch (in Hz)** | Hz | Free | ✓ | ✓ | Average vocal pitch of the main agent during the call. Useful for monitoring voice consistency. |
-| **Gibberish Detection** | True/False | 0.2 credits/min | ✓ | ✓ | Detects garbled or incoherent speech. **Requires stereo audio.** Beta. |
+| **Gibberish Detection** | True/False | 0.3 credits/min | ✓ | ✓ | Detects garbled or incoherent speech. **Requires stereo audio.** Beta. |
 | **Letterwise Pronunciation Detection** | True/False | 0.2 credits | ✓ | ✓ | Checks if the agent spells things out letter-by-letter when appropriate (e.g., confirming phone numbers). **Requires `spelling_word_types` configuration.** |
 | **Pronunciation Check** | 0–100 score | 0.2 credits | ✓ | ✓ | Custom word accuracy — compares spoken output against a list of expected phonemes. **Requires `pronunciation_words` configuration** as phoneme pairs. Beta. |
 | **Speaking Rate** | True/False | 0.2 credits | ✓ | ✓ | Detects abrupt changes in the agent's speaking pace. English only. Beta. |
@@ -124,8 +124,8 @@ Some predefined metrics require or support configuration. Pass these as key-valu
 | Cost | Metrics |
 |------|---------|
 | **Free (0 credits)** | Expected Outcome, Tool Call Success, Mock Tool Call Accuracy, AI Interrupting User, User Interrupting AI, Stop Time after User Interruption, Latency, Detect Silence, Infrastructure Issues, Interruption Score, Unnecessary Repetition Score, Average Pitch, Talk Ratio, Words Per Minute |
-| **0.2 credits/call** | Hallucination, Relevancy, Response Consistency, Voicemail Detection, Appropriate Call Termination (both), Unnecessary Repetition Count, CSAT, Dropoff Node, Sentiment, Topic of Call, Gibberish Detection, Letterwise Pronunciation, Pronunciation Check, Speaking Rate, Voice Change Detection, Voice Tone + Clarity |
-| **0.2 credits/min** | Gibberish Detection |
+| **0.2 credits/call** | Hallucination, Relevancy, Response Consistency, Voicemail Detection, Appropriate Call Termination (both), Unnecessary Repetition Count, CSAT, Dropoff Node, Sentiment, Topic of Call, Letterwise Pronunciation, Pronunciation Check, Speaking Rate, Voice Change Detection, Voice Tone + Clarity |
+| **0.3 credits/min** | Gibberish Detection |
 | **1 credit/min** | Transcription Accuracy |
 
 ---
