@@ -1,0 +1,11 @@
+{
+  "name": "cekura",
+  "version": "0.4.1",
+  "description": "Core Cekura plugin — platform onboarding, skill coordination, and marketplace management",
+  "author": {
+    "name": "Cekura",
+    "email": "support@cekura.ai",
+    "url": "https://cekura.ai"
+  },
+  "keywords": ["cekura", "onboarding", "coordination", "platform"]
+}

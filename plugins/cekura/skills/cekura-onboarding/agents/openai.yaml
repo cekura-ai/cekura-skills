@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cekura: Onboarding"
+  short_description: "Guides a new user through full Cekura setup — account, project, agent, first metrics, first evaluators, first test run."
+  brand_color: "#6366F1"
+
+policy:
+  allow_implicit_invocation: true

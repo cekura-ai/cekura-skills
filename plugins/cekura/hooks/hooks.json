@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUseFailure": [
+      {
+        "matcher": "mcp__cekura__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$PLUGIN_DIR/hooks/on-mcp-failure.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

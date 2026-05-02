@@ -1,97 +1,341 @@
-# Cekura Claude Code Plugins
+# Cekura AI Skills
 
-Claude Code plugins that encode domain expertise for building and improving AI voice agent tests and metrics on the [Cekura](https://cekura.ai) platform.
+AI-powered skills for building and improving voice agent tests and metrics on the [Cekura](https://cekura.ai) platform. Works with Claude Code, Codex, Cursor, and other AI coding assistants.
 
-## Plugins
+## Table of Contents
 
-### cekura-metrics
+- [What's Included](#whats-included)
+- [Prerequisites](#prerequisites)
+- [Quick Install (npx skills add)](#quick-install-npx-skills-add)
+- [Claude Code (VS Code)](#claude-code-vs-code)
+- [Claude Code (Terminal CLI)](#claude-code-terminal-cli)
+- [Codex](#codex)
+- [Cursor](#cursor)
+- [Windsurf / Other Agents](#windsurf--other-agents)
+- [MCP Server](#mcp-server)
+- [Quick Reference](#quick-reference)
+- [Platform Compatibility](#platform-compatibility)
+- [Links](#links)
 
-Create, improve, and validate metrics for AI voice agent call quality evaluation.
+---
 
-**Skills:** `metric-design`, `labs-workflow`
-**Commands:** `create-metric`, `list-metrics`, `update-metric`, `delete-metric`, `generate-trigger`, `bulk-create-metrics`, `evaluate-calls`, `leave-feedback`, `add-to-labs`, `improve-metric`
-**Agents:** `metric-reviewer`
+## What's Included
 
-### cekura-evals
+### 6 Skills, 12 Commands across 3 Plugins
 
-Create, run, and analyze test suites (evaluators/scenarios) for AI voice agent testing.
+| Plugin | Skills | Commands | Purpose |
+|--------|--------|----------|---------|
+| **cekura** | `cekura-coordinator`, `cekura-onboarding`, `cekura-create-agent` | `setup-mcp`, `upgrade-skills`, `report-bug` | Platform setup, agent onboarding, skill routing |
+| **cekura-metrics** | `cekura-metric-design`, `cekura-metric-improvement` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` | Create, improve, and validate call quality metrics |
+| **cekura-evals** | `cekura-eval-design` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results` | Create, run, and analyze test suites for voice agents |
 
-**Skills:** `eval-design`
-**Commands:** `create-eval`, `list-evals`, `delete-eval`, `generate-evals`, `create-eval-from-transcript`, `bulk-create-evals`, `run-evals`, `eval-results`, `list-personalities`
-**Agents:** `eval-suite-planner`
-
-## Installation
-
-This repo is a Claude Code **marketplace**. Register it, then install the plugins you want.
-
-### Step 1: Register the marketplace
-
-**Option A — Direct (recommended):**
-
-**VSCode:** Open Claude Code chat → **Manage Plugins** → **Marketplaces** tab → paste the URL below and click **Add**
-
-**Terminal CLI:** Inside a Claude Code session, run:
-```
-/plugins add marketplace https://github.com/cekura-ai/claude-skills.git
-```
-
-**Option B — From a local clone:**
-
-If you've already cloned the repo, you still need to register it as a marketplace:
-
-**VSCode:** **Manage Plugins** → **Marketplaces** tab → paste the local path to the cloned repo and click **Add**
-
-**Terminal CLI:** Inside a Claude Code session, run:
-```
-/plugins add marketplace /path/to/claude-skills
-```
-
-### Step 2: Install plugins
-
-**VSCode:** Switch to the **Plugins** tab → search for `cekura` → install `cekura-metrics` and/or `cekura-evals`
-
-**Terminal CLI:** Navigate to the **Discover** tab (arrow keys or tab) → search for `cekura` → toggle the plugin(s) you want → press **Enter** → choose scope (project or global)
-
-Both plugins are now available in your Claude Code sessions.
+These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
 ## Prerequisites
 
-- **Claude Code** — [Install Claude Code](https://code.claude.com/docs/en/overview) if you haven't already
-- **Cekura API key** — Set `CEKURA_API_KEY` environment variable
+- **Cekura account** — [Sign up here](https://dashboard.cekura.ai/sign-up). Sign in via OAuth or use an API key.
+- **Cekura API key** *(only for the Claude Code plugin path / programmatic MCP access)* — Found under Settings > API Keys in the [Cekura dashboard](https://dashboard.cekura.ai). Not needed for `npx skills add`.
 
-## MCP Server Setup (Optional)
+---
 
-For the best experience, connect the Cekura MCP server to get structured API access with 84+ tools:
+## Quick Install (`npx skills add`)
 
-```bash
-claude mcp add cekura-api http://localhost:8000/mcp --transport http --header "X-CEKURA-API-KEY:$CEKURA_API_KEY"
-```
+The fastest way to get Cekura skills into any [Agent Skills](https://agentskills.io)–compatible client (Claude Code, Cursor, Codex, Windsurf, OpenCode, and many more).
 
-Without MCP, all commands use bash/curl helpers as a fallback — everything still works.
-
-## How It Works
-
-These plugins don't just provide CRUD commands — they encode best practices learned from real client deployments to guide users from v0 metrics/evals to production-quality v9s through iterative improvement:
-
-1. **Proactive guardrails** — Prevents common mistakes (hardcoded identity data, missing tools, wrong metric types) before they happen
-2. **Real transcript grounding** — Always fetches and studies actual call data before writing metrics
-3. **Labs improvement loop** — Structured feedback → auto-improve → validate → deploy cycle for metrics
-4. **Coverage planning** — Agent for analyzing agent descriptions and designing comprehensive test suites
-5. **Anti-pattern detection** — Warns about issues like missing baseline metrics, overly specific expected outcomes, and instruction vs personality confusion
-
-## Codex / Other Agents
-
-A Codex-compatible version is available in [`codex/AGENTS.md`](codex/AGENTS.md). Copy it into your repo root to give Codex (or any agent that reads `AGENTS.md`) the same domain expertise:
+### Install
 
 ```bash
-cp codex/AGENTS.md ./AGENTS.md
+npx skills add cekura-ai/cekura-skills
 ```
 
-## Compatibility
+The CLI prompts you to pick which skills to install and which agents to install them into. To install everything non-interactively:
 
-| Agent | How to Use |
-|-------|-----------|
-| **Claude Code (VSCode)** | Manage Plugins → Marketplaces → Add `https://github.com/cekura-ai/claude-skills.git` → install plugins |
-| **Claude Code (CLI)** | `/plugins add marketplace https://github.com/cekura-ai/claude-skills.git` → Discover → search `cekura` → install |
-| **Codex** | Copy `codex/AGENTS.md` to repo root |
-| **Cursor / Other** | Copy `codex/AGENTS.md` to repo root or equivalent rules file |
+```bash
+npx skills add cekura-ai/cekura-skills --all
+```
+
+### Update
+
+```bash
+# Refresh existing skills
+npx skills update
+
+# Or stay fully current — refresh existing AND pick up any newly-added skills
+npx skills add cekura-ai/cekura-skills --all
+```
+
+### Remove
+
+```bash
+npx skills remove cekura-coordinator   # one skill
+npx skills remove --all                 # everything
+```
+
+### What gets installed
+
+Six skills, scoped to specific Cekura workflows:
+
+| Skill | When it activates |
+|---|---|
+| `cekura-coordinator` | "What can Cekura do?" — routes you to the right skill |
+| `cekura-onboarding` | "Get started with Cekura" — full platform walkthrough |
+| `cekura-create-agent` | "Connect my voice agent to Cekura" |
+| `cekura-metric-design` | "Create a metric / measure call quality" |
+| `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
+| `cekura-eval-design` | "Design test scenarios for my voice agent" |
+
+### Want full functionality?
+
+`npx skills add` gives you the **behavioral guidance layer** — the skills auto-activate when you describe relevant tasks. For slash commands and direct API integration, install the full Claude Code plugin marketplace below.
+
+---
+
+## Claude Code (VS Code)
+
+Full plugin support — skills, slash commands, MCP tools, and auto-configured API access.
+
+### Install
+
+1. Open the Claude Code chat panel
+2. Click **Manage Plugins** > **Marketplaces** tab
+3. Paste `https://github.com/cekura-ai/cekura-skills.git` and click **Add**
+4. Switch to the **Plugins** tab > search for `cekura` > install all three plugins
+5. Set your API key:
+   ```bash
+   # Add to ~/.zshrc or ~/.bashrc
+   export CEKURA_API_KEY="your-key-here"
+   ```
+6. Restart VS Code to pick up the environment variable
+7. In the Claude Code chat, run `/setup-mcp` to configure the MCP server
+
+### Get Started
+
+Ask "I'm new to Cekura, help me get started" for a guided walkthrough, or ask "what can Cekura do?" to see everything available.
+
+### Upgrade
+
+Run `/upgrade-skills` in any Claude Code session, or manually:
+
+```bash
+cd ~/.claude/plugins/marketplaces/cekura-skills
+git pull origin main
+```
+
+Restart Claude Code after upgrading.
+
+---
+
+## Claude Code (Terminal CLI)
+
+Same full plugin support as VS Code.
+
+### Install
+
+1. Inside a Claude Code session, run `/plugins`
+2. Go to the **Marketplaces** tab > select **Add Marketplace**
+3. Paste `https://github.com/cekura-ai/cekura-skills.git` and confirm
+4. Go to the **Discover** tab > search for `cekura` > install all three plugins
+5. Set your API key:
+   ```bash
+   # Add to ~/.zshrc or ~/.bashrc
+   export CEKURA_API_KEY="your-key-here"
+   ```
+6. Restart your terminal and Claude Code session
+7. Run `/setup-mcp` to configure the MCP server
+
+> **Tip:** If you've already cloned the repo locally, you can paste the local path instead of the GitHub URL.
+
+### Get Started
+
+Ask "I'm new to Cekura, help me get started" for a guided walkthrough, or ask "what can Cekura do?" to see everything available.
+
+### Upgrade
+
+Run `/upgrade-skills` in any Claude Code session, or manually:
+
+```bash
+cd ~/.claude/plugins/marketplaces/cekura-skills
+git pull origin main
+```
+
+Restart Claude Code and your terminal after upgrading.
+
+---
+
+## Codex
+
+Codex doesn't support Claude Code plugins directly. Skills are loaded automatically based on conversation context. No slash commands or MCP tools — uses curl-based API reference instead.
+
+### Install
+
+**Option A: Install skills (recommended)**
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo cekura-ai/cekura-skills \
+  --path plugins/cekura/skills/cekura-onboarding \
+         plugins/cekura/skills/cekura-create-agent \
+         plugins/cekura-metrics/skills/cekura-metric-design \
+         plugins/cekura-metrics/skills/cekura-metric-improvement \
+         plugins/cekura-evals/skills/cekura-eval-design
+```
+
+Restart Codex after install.
+
+**Option B: Behavior preset (quick start)**
+
+Copy the single-file behavior preset into your repo:
+
+```bash
+curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
+```
+
+This gives Codex all the domain knowledge (metric design, eval design, API reference, anti-patterns) in one file.
+
+### Get Started
+
+Ask Codex to help with Cekura metrics or evals — skills load automatically when the conversation matches.
+
+### Upgrade
+
+Re-run the skill installer:
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo cekura-ai/cekura-skills \
+  --path plugins/cekura/skills/cekura-onboarding \
+         plugins/cekura/skills/cekura-create-agent \
+         plugins/cekura-metrics/skills/cekura-metric-design \
+         plugins/cekura-metrics/skills/cekura-metric-improvement \
+         plugins/cekura-evals/skills/cekura-eval-design
+```
+
+---
+
+## Cursor
+
+Uses the behavior preset as a rules file. No slash commands or MCP tools — all domain knowledge is embedded in the rules file.
+
+### Install
+
+Copy the behavior preset into your project:
+
+```bash
+curl -o .cursor/rules/cekura.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
+```
+
+Or add it as a global rule in Cursor Settings > Rules.
+
+### Get Started
+
+Ask Cursor to help with Cekura metrics or evals — the rules file provides all the domain context.
+
+### Upgrade
+
+Re-download the behavior preset:
+
+```bash
+curl -o .cursor/rules/cekura.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
+```
+
+---
+
+## Windsurf / Other Agents
+
+Copy `codex/AGENTS.md` to wherever your agent reads context files from (project root, `.windsurf/rules/`, etc.):
+
+### Install
+
+```bash
+curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
+```
+
+The file contains all Cekura domain knowledge in a single portable format that works with any agent.
+
+### Upgrade
+
+Re-download:
+
+```bash
+curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
+```
+
+---
+
+## MCP Server
+
+All plugins connect to the Cekura API through an MCP (Model Context Protocol) server. This gives structured access to 84+ Cekura API operations as typed tools.
+
+**For Claude Code users:** Run `/setup-mcp` after installing the plugins. It walks you through:
+1. Setting the `CEKURA_API_KEY` environment variable
+2. Starting the MCP server
+3. Verifying connectivity
+
+**For other platforms:** The MCP server is optional. The `AGENTS.md` behavior preset includes API reference with curl examples as a fallback.
+
+**How it works:** Each plugin has a `.mcp.json` file that auto-configures the connection. When Claude Code starts, it reads these files and connects to the MCP server at `http://localhost:8001/mcp`. All `mcp__cekura__*` tools become available automatically.
+
+---
+
+## Quick Reference
+
+### Slash Commands (Claude Code plugin only)
+
+| Command | What it Does |
+|---------|-------------|
+| `/setup-mcp` | Configure MCP server (run once after install) |
+| `/upgrade-skills` | Pull latest skill updates from GitHub |
+| `/report-bug` | Report a bug — files GitHub issue, optionally attempts a fix |
+| `/create-metric` | Create or update a metric |
+| `/list-metrics` | List metrics for an agent or project |
+| `/evaluate-calls` | Run metrics on specific calls |
+| `/improve-metric` | Improve metric accuracy: feedback, labs, auto-improve |
+| `/autogen-eval` | Auto-generate evaluators (or bulk create from CSV/JSON) |
+| `/manual-create-update-eval` | Create or update a single evaluator with full field walkthrough |
+| `/list-evals` | List evaluators for an agent or project |
+| `/run-evals` | Execute test scenarios |
+| `/eval-results` | Check results from a test run |
+
+### Skills (load automatically — both install paths)
+
+| Skill | When it activates |
+|-------|-------------------|
+| `cekura-coordinator` | "What can Cekura do?" — routes to the right skill |
+| `cekura-onboarding` | First-time setup, end-to-end platform walkthrough |
+| `cekura-create-agent` | Setting up an agent — provider, mock tools, KB, dynamic vars |
+| `cekura-metric-design` | Designing or creating metrics |
+| `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
+| `cekura-eval-design` | Designing test scenarios for a voice agent |
+
+### Getting Started Flow
+
+1. `/setup-mcp` — Configure API access (Claude Code plugin only)
+2. Ask "I'm new to Cekura, help me get started" — activates `cekura-onboarding`
+3. Ask "set up my agent" — activates `cekura-create-agent`
+4. `/autogen-eval` — Auto-generate test scenarios
+5. `/run-evals` — Run your first tests
+6. Ask "create a metric for X" — activates `cekura-metric-design`
+
+---
+
+## Platform Compatibility
+
+| Platform | Method | Full Plugin Support | MCP Tools | Slash Commands |
+|----------|--------|-------------------|-----------|---------------|
+| **Any Agent Skills client** | `npx skills add` | Skills only | No | No |
+| **Claude Code (VS Code)** | Marketplace install | Yes | Yes | Yes |
+| **Claude Code (CLI)** | `/plugins` install | Yes | Yes | Yes |
+| **Codex** | Skill installer | Skills only | No | No |
+| **Cursor** | Rules file | Behavior preset | No | No |
+| **Windsurf** | Rules file | Behavior preset | No | No |
+| **Other agents** | Copy AGENTS.md | Behavior preset | No | No |
+
+---
+
+## Links
+
+- **Cekura Dashboard:** [dashboard.cekura.ai](https://dashboard.cekura.ai)
+- **Sign Up:** [dashboard.cekura.ai/sign-up](https://dashboard.cekura.ai/sign-up)
+- **API Docs:** [docs.cekura.ai/api-reference](https://docs.cekura.ai/api-reference)
+- **LLM-friendly Docs:** [docs.cekura.ai/llms.txt](https://docs.cekura.ai/llms.txt)
+- **Concepts:** [docs.cekura.ai/documentation/key-concepts](https://docs.cekura.ai/documentation/key-concepts/)

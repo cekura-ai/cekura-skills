@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cekura: Coordinator"
+  short_description: "Routes the user to the right Cekura skill or command for their task."
+  brand_color: "#6366F1"
+
+policy:
+  allow_implicit_invocation: true

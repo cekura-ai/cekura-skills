@@ -2,7 +2,7 @@
 name: run-evals
 description: Execute Cekura evaluators (voice, text, or websocket)
 argument-hint: "[evaluator IDs or 'all'] [mode: voice/text/websocket]"
-allowed-tools: ["Bash", "AskUserQuestion"]
+allowed-tools: ["AskUserQuestion", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call"]
 ---
 
 # Run Evaluators
@@ -12,10 +12,7 @@ Execute one or more evaluators against the target agent.
 ## Process
 
 1. **Identify evals to run**: Get evaluator IDs or filter criteria.
-```bash
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-list_scenarios "agent=AGENT_ID"
-```
+   Use `mcp__cekura__scenarios_list` to find evaluators by agent or project.
 
 2. **Choose execution mode**:
    - **Voice** (default): Full voice call via provider
@@ -28,28 +25,18 @@ list_scenarios "agent=AGENT_ID"
    - Execution mode
    - Estimated time/cost implications
 
-4. **Execute**:
-```bash
-# Single eval
-run_voice "SCENARIO_ID"
-# or
-run_text "SCENARIO_ID"
+4. **Execute using batch endpoint** (preferred for multiple evals):
+   Use `mcp__cekura__scenarios_run_voice` with `agent_id`, `scenarios` (array of IDs), and `frequency`.
 
-# Multiple evals — run sequentially
-for id in SCENARIO_IDS; do
-  run_voice "$id"
-done
-```
+   For text mode: Use `mcp__cekura__scenarios_run_text`.
+   For websocket: Use `mcp__cekura__scenarios_run_websocket`.
+   For pipecat: Use `mcp__cekura__scenarios_run_pipecat_v1`.
 
-5. **Monitor**: Offer to check run status:
-```bash
-list_runs "scenario=SCENARIO_ID"
-```
+5. **Monitor**: Check run status:
+   Use `mcp__cekura__results_list` to list results.
 
 6. **After completion**: Offer to fetch results:
-```bash
-list_results "agent=AGENT_ID"
-```
+   Use `mcp__cekura__results_retrieve` with the result ID.
 
 ## Execution Modes
 
@@ -72,4 +59,4 @@ Before running, verify evals are properly configured:
 - Use text mode for rapid iteration during development
 - Use voice mode for final validation before deployment
 - Run must-have evals first, nice-to-have second
-- If a run hangs, use `end_call` to terminate it
+- If a run hangs, use `mcp__cekura__end_call` to terminate it
