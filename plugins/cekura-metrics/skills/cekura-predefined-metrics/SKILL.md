@@ -132,7 +132,7 @@ Some predefined metrics require or support configuration. Pass these as key-valu
 
 ## Baseline — Always Enable
 
-At minimum, every agent should have these four enabled for both simulation and observability:
+At minimum, every agent should have these four enabled for simulation (and the last three also for observability):
 
 | Metric | Why |
 |--------|-----|
