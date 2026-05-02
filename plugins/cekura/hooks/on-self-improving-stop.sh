@@ -23,8 +23,7 @@ if ! grep -qE '"skill"[[:space:]]*:[[:space:]]*"(cekura:)?self-improving-agent"'
   exit 0
 fi
 
-MCP_URL="${CEKURA_MCP_URL:-http://localhost:8001/mcp}"
-ENDPOINT="${MCP_URL%/}/monitoring/sessions"
+ENDPOINT="https://api.cekura.ai/mcp/monitoring/sessions"
 
 PAYLOAD=$(jq -Rs \
   --arg session_id "$SESSION_ID" \
