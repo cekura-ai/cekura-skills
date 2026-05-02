@@ -117,6 +117,7 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 |-----------|------|---------|
 | `cekura-metric-design` | skill | Core metric design patterns and best practices |
 | `cekura-metric-improvement` | skill | Metric improvement through feedback iteration (formerly `labs-workflow`) |
+| `cekura-predefined-metrics` | skill | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `create-metric` | command | Create or update a metric (absorbed `update-metric`) |
 | `list-metrics` | command | List metrics for an agent or project |
 | `evaluate-calls` | command | Run metrics on specific calls |
