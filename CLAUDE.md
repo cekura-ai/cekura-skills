@@ -20,6 +20,7 @@ cekura-skills/
       skills/
         cekura-metric-design/
         cekura-metric-improvement/
+        cekura-predefined-metrics/
       commands/
     cekura-evals/
       skills/
@@ -35,12 +36,12 @@ cekura-skills/
 
 ### Two install paths, one source of truth
 
-The 6 SKILL.md files inside `plugins/<plugin>/skills/` are the **only** source of skill content. Both install paths consume the same files:
+The 7 SKILL.md files inside `plugins/<plugin>/skills/` are the **only** source of skill content. Both install paths consume the same files:
 
 1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
 2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` paths, and discovers all 6 skills with no subpath needed. The bare URL works cleanly.
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` paths, and discovers all 7 skills with no subpath needed. The bare URL works cleanly.
 
 ### Skill content rules
 

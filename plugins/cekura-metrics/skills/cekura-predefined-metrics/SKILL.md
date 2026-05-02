@@ -141,7 +141,7 @@ At minimum, every agent should have these four enabled for both simulation and o
 | **Tool Call Success** | Detects broken integrations before they impact real users |
 | **Latency** | Baseline performance tracking; P95/P99 reveal outliers that averages hide |
 
-For a richer baseline, also add: **CSAT**, **Sentiment**, **Latency**, and **Unnecessary Repetition Score**.
+For a richer baseline, also add: **CSAT**, **Sentiment**, and **Unnecessary Repetition Score**.
 
 ---
 

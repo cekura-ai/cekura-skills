@@ -73,7 +73,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Six skills, scoped to specific Cekura workflows:
+Seven skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
@@ -82,6 +82,7 @@ Six skills, scoped to specific Cekura workflows:
 | `cekura-create-agent` | "Connect my voice agent to Cekura" |
 | `cekura-metric-design` | "Create a metric / measure call quality" |
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
+| `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
 
 ### Want full functionality?

@@ -22,7 +22,7 @@
     {
       "name": "cekura-metrics",
       "description": "Create, improve, and validate metrics for AI voice agent call quality evaluation. Includes metric design best practices, labs improvement workflow, and anti-pattern detection.",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "author": {
         "name": "Cekura",
         "email": "support@cekura.ai"
