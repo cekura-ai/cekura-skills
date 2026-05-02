@@ -1,0 +1,829 @@
+---
+name: self-improving-agent
+description: >
+  This skill should be used when the user asks to "improve my agent",
+  "self-improving agent", "auto-tune my agent", "iterate on my agent prompt",
+  "fix my agent based on test results", "close the loop on agent quality",
+  "auto-improve agent prompt", "use eval results to improve agent", or discusses
+  agent self-improvement, prompt iteration from run results, or automated
+  agent quality loops in the Cekura platform.
+version: 0.7.0
+---
+
+# Cekura Self-Improving Agent
+
+## Purpose
+
+Close the loop on agent prompt and tool-config quality. Ingest evaluation signal (scenario IDs to run, completed runs, a result batch, or production call logs), classify failures (prompt-following vs. voice/channel vs. tool/infra) for diagnosis, diagnose where the prompt or tool config has gaps, conflicts, or ambiguities, propose targeted edits, apply them, and re-run validation — iterating until the agent reaches **100% pass rate on the validation set** or the iteration cap is reached.
+
+**Two data streams, one diagnosis.** Every iteration's investigation reads two artifacts in parallel: (1) the agent's prompt + tool definitions, and (2) the provider-side call state for each failing run (variable injection, rendered system messages, tool-call arguments). Phase 3 synthesizes both streams before classifying root cause — a failure that *looks* like a prompt bug is often a missing dynamic variable, and a failure that *looks* upstream is sometimes a prompt/tool conflict that survives correct variable injection. Mapping failures only to prompt sections produces phantom fixes for issues actually rooted upstream.
+
+**What's editable:** for VAPI agents, both **system prompts** and **tool definitions** are editable from this skill. Tool config covers function declarations on inline `model.tools`, referenced `model.toolIds` definitions (their `name`, `description`, `parameters` schema, `messages[*].content` like `request-start` / `request-complete` / `request-failed`, and handoff `destinations`), and which tools each member references via its `toolIds` array (adding or removing a reference).
+
+**Exit gate:** the voice/channel/infra filter informs *what to fix* (Phase 3 only proposes edits for prompt-following failures), not *when to stop*. Any remaining failure of any class keeps the loop alive. Do not exit at "zero prompt-following failures but some infra failures remain" — first re-classify with fresh eyes (a behavior in a different squad member is still a prompt issue, just one not yet attributed), consider mitigation prompt edits, **and consider tool-config edits** (a noisy `request-start` message, a hallucinated tool reference, a misshapen function schema, or a wrong handoff destination is fixed in tool config, not prompt). Only the iteration cap (or genuine 100% pass) ends the loop.
+
+Currently supported only for **VAPI** agents (Phase 1 gates this). Retell support is intentionally disabled for now and will be re-enabled in a future revision.
+
+## How to Use This Skill
+
+This is an **interactive, multi-iteration workflow**. The user supplies an `agent_id` plus exactly one of: `scenario_ids`, `result_id`, `run_ids`, or `call_ids`. Optionally `max_iterations` (default 10).
+
+The four phases run in order, with the last looping until the agent passes:
+
+1. **Phase 1 — Verify Agent and Provider Support.** Fetch the agent, gate on `assistant_provider == vapi`. Halt with a clear error otherwise. For VAPI, also pull the live assistant or squad config from VAPI directly (using `VAPI_KEY` plus the `assistant_id` from the Cekura agent record) — VAPI is the source of truth for the prompt; the Cekura `description` is not consulted or edited.
+2. **Phase 2 — Collect Failures and Inspect Provider Call State.** Branch on input type. For `scenario_ids`, run them first and wait for completion; otherwise fetch the supplied runs / call logs. Accumulate expected-outcome and metric failures, **discard voice/channel failures**, and **for every kept failure also pull the provider call state** (variable injection, rendered system message, tool-call arguments). Both streams flow into Phase 3.
+3. **Phase 3 — Diagnose and Propose Changes.** Synthesize the prompt/tool artifacts AND the variable-state findings from Phase 2 to attribute each failure to its actual root cause: prompt Gap / Conflict / Ambiguity, tool-config issue, or **Upstream/data** (missing or malformed dynamic variables that no prompt edit can fix). Produce minimal scoped edits for the prompt-and-tool roots; surface upstream-rooted failures with a clear hand-off recommendation. Show the user before/after blocks and wait for explicit approval. **This gate fires on every iteration**, not just the first.
+4. **Phase 4 — Apply, Validate, and Iterate.** PATCH the prompt and/or tool definitions, confirm provider-side sync, run validation against the relevant scenarios, re-collect failures with the same Phase 2 classification. Exit only on **100% pass rate**; otherwise feed the new failure summary back into Phase 3 — re-attributing failures to whichever squad members are now responsible and considering tool/mitigation edits if the remaining failures aren't directly prompt-following. Loop up to `max_iterations` times.
+
+The user gates the workflow at every Phase 3 → Phase 4 boundary, after seeing the proposed edits. Phase 1 → Phase 2 → Phase 3 runs straight through without pauses (Phase 2 just surfaces the failure summary and advances). Phase 4 loop iterations also re-enter Phase 3, surface a fresh proposal against the post-edit state, and **wait for explicit approval before the next PATCH**. There is no autonomous-iteration mode — every PATCH is preceded by a user OK on the proposed diff for that iteration. The user can interrupt mid-loop at any time, and that's treated as normal input.
+
+## Phase 1: Verify Agent and Provider Support
+
+Before doing anything else, fetch the agent and confirm it uses a supported provider. Self-improvement is currently supported **only for VAPI agents**. Retell support is intentionally disabled for now (the gate explicitly rejects it) and will be re-enabled in a future revision.
+
+### Step 1.1 — Get the agent ID
+
+Ask the user for the agent ID they want to optimize. If they don't know it, offer to list their agents via `mcp__cekura__aiagents_list` so they can pick one.
+
+### Step 1.2 — Fetch agent details
+
+Call `mcp__cekura__aiagents_retrieve` with the agent ID. Read the `assistant_provider` field from the response.
+
+### Step 1.3 — Gate on provider
+
+Check `assistant_provider` against the supported set:
+
+- **Supported**: `vapi` → continue to Phase 2
+- **Anything else** (`retell`, `elevenlabs`, `livekit`, `pipecat`, `sip`, custom websocket, missing/empty) → **stop the workflow** and return a clear error to the user
+
+`retell` is in the unsupported list on purpose right now — the previous version of this skill accepted it, but Retell handling has been temporarily turned off. Do not bypass the gate for Retell agents.
+
+### Error message format
+
+When the provider isn't supported, respond with exactly this shape (substitute the actual values):
+
+```
+Self-improvement is currently supported only for VAPI agents.
+
+Agent: <agent_name> (id: <agent_id>)
+Provider: <assistant_provider or "not set">
+
+Supported providers: vapi
+```
+
+If the provider is `retell` specifically, append one extra line so the user knows it's a temporary gate, not a permanent decision:
+
+```
+Note: Retell support is temporarily disabled in this skill and will be re-enabled in a future revision.
+```
+
+Do not attempt any further phases. Do not fetch results, propose prompt changes, or offer workarounds — provider support for other integrations will be added later, and silently skipping the gate will produce changes that can't be applied to the live agent.
+
+### Edge cases
+
+- **Agent not found / 404**: surface the error from `mcp__cekura__aiagents_retrieve` directly. Don't retry with a different ID without user confirmation.
+- **`assistant_provider` missing or empty**: treat as unsupported. The agent likely hasn't completed provider configuration — point the user to the `create-agent` skill (Phase 3: Configure Provider Integration).
+- **Case sensitivity**: compare lowercased — the provider field is stored as `vapi` but be defensive against `VAPI` in user input.
+
+### Step 1.4 — Fetch provider-side assistant details (VAPI only)
+
+Once Phase 1.3 has confirmed `assistant_provider == vapi`, pull the live assistant or squad config from VAPI directly. **VAPI is the source of truth for the agent's prompt throughout this skill.** The Cekura `description` field is informational only — it is not read for analysis and not written by Phase 4. All prompt analysis (Phase 3) and all edits (Phase 4) operate on the VAPI-side `model.messages[*].content` of the relevant assistant(s).
+
+#### Required environment variable
+
+- `VAPI_KEY` — VAPI private API key. Sent as `Authorization: Bearer $VAPI_KEY`.
+
+If `VAPI_KEY` is missing, stop and ask the user to export it before continuing. Never echo the key to chat or write it to a file.
+
+#### Resolve the VAPI id from the Cekura agent record
+
+Read the `assistant_id` field from the `mcp__cekura__aiagents_retrieve` response (already fetched in Step 1.2). That single field holds either a VAPI assistant id or a VAPI squad id — Cekura does not distinguish them by field name. Do **not** ask the user to set a separate env var; the id is already in the agent record.
+
+If `assistant_id` is missing or empty, the agent isn't fully configured — stop and point the user at `cekura-create-agent` (Phase 3: Configure Provider Integration).
+
+To determine whether the id is an assistant or a squad, try the assistant endpoint first and fall back to the squad endpoint on 404:
+
+```
+ID="<assistant_id from agent record>"
+curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/assistant/$ID \
+  || curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/squad/$ID
+```
+
+Record which endpoint succeeded — Phase 1.4's "Extract and surface" step branches on assistant-vs-squad, and Phase 4's PATCH targets the matching endpoint. If both 404, the id is stale; surface the error and stop.
+
+#### Fetch the config
+
+VAPI's API isn't exposed through the Cekura MCP server, so use `Bash` with curl. Substituting the resolved id:
+
+- Single assistant: `curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/assistant/$ID`
+- Squad: `curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/squad/$ID`
+
+For squads, the response includes a `members` array. Each member has either `assistantId` (referenced) or an inline `assistant` object. For the referenced case, fetch the full assistant config with the assistant endpoint above; for inline members, read the embedded object directly — no extra fetch needed.
+
+#### Extract and surface
+
+From each assistant config, capture:
+
+- `id`, `name`
+- The system prompt: `model.messages[*].content` where `role == "system"`
+- `model.tools` — inline function declarations
+- `model.toolIds` — array of UUIDs of referenced tool definitions (these live at `https://api.vapi.ai/tool/{id}` and must be fetched separately; **do this in Phase 1.4, not later** — the definitions drive Phase 3 diagnosis as much as the prompt does)
+- `voice`, `transcriber`, `firstMessage` — useful for sanity-checking the voice-failure filter in Phase 2
+
+#### Fetch every referenced tool
+
+For each unique id across all members' `model.toolIds`, fetch:
+
+```
+curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/tool/$TOOL_ID
+```
+
+Capture for each tool:
+
+- `id`, `type` (`function`, `handoff`, `transferCall`, `query`, `mcp`, etc.)
+- `function.name`, `function.description`, `function.parameters` (JSONSchema)
+- `messages` array — especially the `request-start.content` (what the assistant says aloud when the tool fires), `request-complete.content`, `request-failed.content`. **These messages are spoken on the call** and are first-class targets for Phase 3 edits.
+- `destinations` — for `handoff` / `transferCall` tools, the list of `{type, assistantId, description}` entries pointing to other assistants. Wrong / self-referencing destinations are a common bug class.
+- Which member assistants reference this tool (cross-reference back to the `toolIds` arrays you already collected).
+
+Show the user a compact summary before continuing:
+
+```
+VAPI <Assistant|Squad>: <name> (<id>)
+  Members: <N>            # squad only
+    - <member_name> (<member_id>) — system prompt <K> chars, <T> inline tools, <R> referenced tools
+  System prompt: <length> chars     # single-assistant case
+  Inline tools (model.tools): <N> (<comma-separated names>)
+  Referenced tools (model.toolIds → /tool/{id}):
+    - <tool_name> (<tool_id>) — type=<type>, used by <member_name>[, ...]
+        request-start: "<first 80 chars or empty>"
+        destinations: <list or empty>
+  Voice: <provider>/<voice_id>
+```
+
+#### Squad members are all editable by default
+
+For squads, all members are in scope; Phase 3 attributes each failure to the member that was speaking in the relevant transcript turn (auto-localize) and proposes member-scoped edits. Phase 4 PATCHes whichever members the proposal touches. There is no upfront scope-selection question — the user-side gate is at every Phase 3 → Phase 4 transition (after seeing the per-member proposed edits for that iteration), not earlier.
+
+#### Edge cases
+
+- **401 / 403 from VAPI**: `VAPI_KEY` is invalid or lacks scope. Surface the error verbatim and stop — don't retry.
+- **404 on both assistant and squad endpoints**: the `assistant_id` on the Cekura agent record is stale or points at a deleted VAPI resource. Stop; don't guess adjacent ids. Suggest the user reconcile the agent's `assistant_id` via `cekura-create-agent`.
+- **Squad with zero members**: not actionable for self-improvement — surface and ask the user to verify the squad is configured correctly before continuing.
+- **Member with inline `assistant` only**: read the embedded object; skip the second fetch.
+- **Response shape changes / missing fields**: fall back to surfacing the relevant raw JSON section so the user can see what VAPI returned, rather than failing silently.
+
+## Phase 2: Collect Failures and Inspect Provider Call State
+
+The skill accepts **one** of four input types describing what to learn from. Ask the user which they have if not already specified:
+
+| Input | Meaning | Tool path |
+|-------|---------|-----------|
+| `scenario_ids` | Scenarios to execute now, then learn from their runs | Run first, then fetch |
+| `result_id` | A completed test execution batch (one parent containing many runs) | `results_retrieve` |
+| `run_ids` | Specific scenario runs already executed | `runs_bulk_retrieve` |
+| `call_ids` | Production call logs (not test runs) | `call_logs_retrieve` per id |
+
+### Step 2.1 — If input is `scenario_ids`: execute, then wait
+
+Skip this step entirely for the other three input types.
+
+1. **Pick the execution mode** based on the agent. Default to **voice** for VAPI agents (the only provider we support in Phase 1). If the user explicitly asks for text mode for faster iteration, use it — note that text-only runs miss voice-specific failure modes.
+
+2. **Trigger the run** using the agent_id from Phase 1 and the user-supplied scenario IDs:
+   - Voice: `mcp__cekura__scenarios_run_scenarios_create` with `agent_id`, `scenarios` (array of IDs), `frequency`
+   - Text: `mcp__cekura__scenarios_run_scenarios_text_create`
+
+   Capture the `result_id` returned. From here on the flow is identical to the `result_id` input case.
+
+3. **Poll for completion**. Call `mcp__cekura__results_retrieve` with the result_id every ~30 seconds. Voice runs typically take 1-5 minutes per scenario depending on length.
+
+   - Stop polling once the result's status indicates completion (every run inside has a terminal status — completed, failed, or errored).
+   - If the user wants to monitor live, surface progress (`X / N runs complete`) between polls.
+   - Cap waiting at a sensible bound (e.g., 15 min for voice, 5 min for text). If runs are still pending past that, ask the user whether to keep waiting or proceed with whatever has finished.
+
+4. Once the result is complete, treat the case as a `result_id` input and continue.
+
+### Step 2.2 — Fetch the runs or call logs
+
+Branch on the input type to populate a list of items to inspect:
+
+- **`result_id`**: call `mcp__cekura__results_retrieve`. The response contains all runs in that batch — each run has scenario info, status, transcript, expected-outcome verdict, and metric evaluations. No further fetch needed.
+- **`run_ids`**: call `mcp__cekura__runs_bulk_retrieve` with the list. Returns the same per-run shape as above.
+- **`call_ids`**: call `mcp__cekura__call_logs_retrieve` for each call id (no bulk variant exists). Call logs have transcripts and metric evaluations but no "expected outcome" — they're production calls, not scenarios.
+
+### Step 2.3 — Accumulate failures (prompt-following only)
+
+#### Pre-filter: skip human-reviewed successes
+
+Before accumulating any failures, drop every run or call log that a human has reviewed and marked successful. The signal here is a `reviewed_success` marker on the item (typical shapes: a top-level `review_status == "reviewed_success"`, a `reviewed_success` boolean set true, a `human_review.outcome == "success"`, or any equivalent override field on the run / call log payload). When in doubt, treat any explicit human-review override that resolves to "success" as `reviewed_success`.
+
+Items marked `reviewed_success` are **passes**, full stop. Do not collect their expected-outcome verdicts and do not collect their metric verdicts — even if a metric on that item is `FAIL`. The human review supersedes machine verdicts: a metric judging that call wrong is the metric being miscalibrated, not the agent misbehaving, and feeding it into Phase 3 will push edits that contradict the reviewer.
+
+Track the count of items skipped this way so the summary in Step 2.5 can report it. If the skipped metric failures cluster on one or two metrics (i.e. multiple `reviewed_success` items had the same metric flagging FAIL), surface that as a hint to consider `labs-workflow` for those metrics — but do not act on it from this skill.
+
+This filter applies uniformly to runs and call logs and runs **before** the voice/channel filter below.
+
+#### Accumulate
+
+Walk every run / call log that survived the pre-filter and collect two failure classes:
+
+1. **Expected-outcome failures** *(runs only — not applicable to call logs)*
+   - The run's expected outcome verdict is `fail` (or equivalent: not-met, false).
+   - Capture: scenario id + name, transcript excerpt, the expected outcome text, and the verdict's explanation.
+
+2. **Metric failures** *(both runs and call logs)*
+   - Any attached metric evaluation with verdict `FAIL` (skip `PASS`, `N/A`, `VALID_SKIP`).
+   - Capture: metric id + name, the FAIL explanation, and the offending transcript snippet (if the evaluation surfaces one).
+
+A single run can contribute to both classes. Track them separately — Phase 3 treats them differently (expected-outcome failures usually point at agent prompt logic; metric failures may point at either the agent or the metric itself).
+
+#### Filter: keep only prompt-following failures
+
+This skill only optimizes the agent's **prompt**, so discard failures whose root cause is the voice channel rather than the agent's instructions. For each failure, read the explanation and decide:
+
+- **Discard (voice/channel issue)** — the agent likely *would* have followed the prompt if the voice path had worked:
+  - Audio quality, garbled audio, background noise, low volume
+  - Transcription / ASR errors ("misheard", "transcribed incorrectly")
+  - TTS issues, mispronunciation
+  - Latency, dead air, interruptions, talk-over
+  - Connection drops, call cut off mid-conversation, errored runs
+  - Failures from metrics that explicitly score voice quality (e.g. transcription accuracy, audio quality, latency)
+
+- **Keep (prompt-following issue)** — the agent had the input it needed and still behaved wrong:
+  - Skipped a required step in the script
+  - Asked for the wrong information, or in the wrong order
+  - Confirmed something incorrect, hallucinated a fact
+  - Failed to follow escalation / handoff protocol
+  - Went off-topic or out of scope
+  - Missed an end-of-call requirement (disclosure, summary, etc.)
+
+When in doubt, **keep the failure** and flag it for the user. False keeps are recoverable in Phase 3 (the user can ignore the suggested change); false discards silently lose signal.
+
+For text-mode runs and chat call logs the filter is a no-op — there is no voice channel — so every collected failure passes through.
+
+Track the discarded count so the summary in Step 2.5 can report it (e.g. "12 failures collected, 4 voice-related discarded, 8 prompt-following failures kept").
+
+The reviewed-success skip count from the pre-filter is tracked separately from voice-related discards — the two are distinct reasons for ignoring an item and the summary should report them on different lines.
+
+If a failure resists clean classification at this step (e.g., a conditional flow never fired and you can't tell whether the controlling variable was set), don't force a discard/keep decision yet — keep it as "ambiguous" and let Step 2.4's variable-state inspection resolve it.
+
+### Step 2.4 — Inspect provider call state (default)
+
+Run this for **every kept failure**, on every iteration. The output feeds Phase 3 alongside the failure verdicts — Phase 3 reads both streams before attributing root cause. Skipping this step is the most common way the loop produces phantom prompt fixes for issues that are actually rooted in upstream variable injection.
+
+#### What to capture per failure
+
+For each kept failing run / call log, fetch the provider call object and record:
+
+- `provider_call_details.assistantOverrides.variableValues` — what Cekura passed to VAPI at call start (Signal 1: intent).
+- `provider_call_details.artifact.variableValues` — what VAPI saw after merging overrides + assistant/project defaults (Signal 2: runtime).
+- The rendered system message (`artifact.messages[0].content`, or per-activation messages for squads) — search for literal `{{...}}` substrings (Signal 3: substitution failure).
+- Tool-call arguments (`artifact.messages[*].toolCalls[*].function.arguments`) — flag literal placeholder strings, empty arrays where data was expected, hallucinated values (Signal 4: what the LLM produced).
+- For squads: `artifact.assistantActivations` — which member was active per activation, since variable state can shift between activations.
+
+#### How to fetch
+
+- **Runs**: `mcp__cekura__runs_bulk_retrieve` (NOT `results_retrieve` — it doesn't include `provider_call_details`). Payloads are large (250–500 KB per run); use `jq` or python to extract specific fields rather than re-reading the whole blob into context.
+- **Call logs**: `mcp__cekura__call_logs_retrieve`.
+- **Direct VAPI fallback** if `provider_call_details` is missing or stale: `curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/call/$PROVIDER_CALL_ID`.
+
+For the per-signal decision tree (key absent vs. wrong-name vs. literal-placeholder-survives, etc.), see "[Debugging dynamic variables and provider call state](#debugging-dynamic-variables-and-provider-call-state)" — that section is now a reference appendix for this default step rather than a triggered drill-down.
+
+#### When the data isn't available
+
+- **Text-mode runs without provider artifacts** and some chat call logs don't expose `provider_call_details`. Skip the inspection for those items and surface the gap in Step 2.5 — Phase 3 should know it's diagnosing on partial data.
+- **Errored runs** that never produced a transcript also won't have meaningful artifact state; treat as no-signal, not as upstream-OK.
+
+#### Output
+
+A short observation per failure (or grouped, when patterns repeat) that travels into Phase 3:
+
+```
+- Run 3031835: appointment_rules=[] (empty), leadId=null, zipcode=null, currentDate=null;
+  rendered system message contains literal {{leadId}}, {{zipcode}}, {{currentDate}};
+  schedule_lab_appointment fired with leadId="{{leadId}}" (literal).
+- Same pattern across runs 3031836, 3031838.
+```
+
+Group when patterns repeat — "all 3 failed runs show the same variable-injection failure" is more actionable for Phase 3 than per-run repetition.
+
+### Step 2.5 — Build the failure summary
+
+Produce a structured summary that Phase 3 will consume. Group failures by **scenario** (for runs) or by **metric** (for call logs), since repeated failures on the same scenario or the same metric are stronger signals than scattered one-offs.
+
+Suggested shape:
+
+```
+Failure Summary
+  Agent: <name> (<id>) — provider vapi
+  Source: <input type> — <N items inspected>
+  Reviewed-success skipped: <S items> (human-reviewed pass — metric/outcome verdicts on these items ignored)
+  Failures: <total collected on remaining items> — <voice-related discarded> voice-related discarded — <kept> prompt-following kept
+
+  Expected-Outcome Failures (M of N runs):
+    - Scenario: <name>
+      Expected: <expected_outcome text>
+      Verdict: fail — <explanation>
+      Run: <run_id>
+      Transcript excerpt: "<quote>"
+
+  Metric Failures (K total across J unique metrics):
+    - Metric: <name> (id <metric_id>) — <count> failures
+      Sample explanations:
+        - <run/call id>: <explanation excerpt>
+        - <run/call id>: <explanation excerpt>
+
+  Provider Call State Observations (from Step 2.4):
+    - <observation grouping — e.g., "all 3 failed runs share the following pattern:">
+      assistantOverrides.variableValues: <relevant fields>
+      artifact.variableValues: <relevant fields, especially absent / null / empty>
+      Rendered system message: <literal {{...}} placeholders found, or "all substituted">
+      Tool-call arguments: <literal placeholders / empty arrays / hallucinations, or "clean">
+    - <or "no provider state available for these items — text-mode runs">
+```
+
+Phase 2's job is to surface failures, not to commit to a fix shape — that belongs to Phase 3.
+
+Show the summary to the user for transparency, then proceed straight to Phase 3. **Phase 2 does not pause for approval** — the user-facing gate is at every Phase 3 → Phase 4 transition (after they see proposed edits), not here. The one exception: if the failures are dominated by one or two metrics with thin signal, stop and suggest hand-off to the `labs-workflow` skill instead — those are metric-quality issues, not agent-quality issues, and Phase 3 won't fix them.
+
+**Do not surface small-sample / overfitting caveats to the user.** Even when the input is a single run, do not include lines like "with N runs any fix risks overfitting" or "5–10+ items would be a healthier signal" in the user-facing summary. Internal calibration of confidence is fine; user-facing hedging is not — it reads as a stall and the user has already chosen to act on the input they have.
+
+### Edge cases
+
+- **No failures found**: report this and stop. There's nothing to improve from this input. Suggest expanding the input set (more scenarios, more calls).
+- **All runs errored** (vs failed): an errored run never produced a transcript — usually a provider/connection issue, not an agent prompt issue. Don't include errored runs in the failure summary; surface them separately so the user can fix infrastructure before iterating on the prompt.
+- **Mixed input types**: not supported in a single invocation. If the user gives both `scenario_ids` and `call_ids`, ask them to pick one source per iteration — mixing test runs and production calls muddles the signal.
+
+## Phase 3: Diagnose and Propose Changes
+
+Take the **kept** failure summary from Phase 2 — including both the failure verdicts (Step 2.3) AND the provider call state observations (Step 2.4) — and the **current agent prompt and tool definitions**. Synthesize all three into a root-cause attribution per failure, then produce a concrete, reviewable set of edits (or, for upstream-rooted failures, a hand-off recommendation). Don't apply anything yet — Phase 4 handles application. Outputs split into three streams; any of them may be empty for a given iteration:
+
+- **Prompt edits** — change the system message of one or more squad members (or the lone assistant for non-squad agents).
+- **Tool-config edits** (VAPI only) — change a tool's name / description / parameter schema / spoken `messages` / handoff `destinations`, or change which tools a given member references via its `toolIds` (i.e. add a tool, remove a tool reference, or create a new tool).
+- **Upstream hand-off recommendations** — for failures rooted in missing/wrong dynamic variables, no prompt or tool edit fixes the issue. Surface the variable mismatch with a concrete pointer to where it should be set (test profile, scenario config, squad-level defaults, project-level defaults).
+
+### Step 3.1 — Read both data streams: prompt/tool artifacts AND variable state
+
+Read these together — neither alone is sufficient to attribute root cause.
+
+**Prompt and tool artifacts.** The canonical prompt source is the VAPI-side `model.messages[*].content` (where `role == "system"`) on each assistant fetched in Phase 1.4 (the lone assistant for single-assistant agents, every member for squads). Re-fetch via `curl https://api.vapi.ai/assistant/{id}` if more than a few minutes have passed since Phase 1.4 — VAPI dashboard edits don't notify Cekura. Do **not** read the Cekura `description` for VAPI agents. Also re-confirm the live tool definitions captured in Phase 1.4 — re-fetch each `toolId` via `curl https://api.vapi.ai/tool/{id}`. Tools can be edited from the VAPI dashboard too, and a stale local copy will produce a wrong PATCH body. Note any dynamic variables (`{{variableName}}` placeholders) in both prompts and tool messages / parameter schemas — they're injected per call and must not be touched by edits unless the user explicitly asks.
+
+**Variable state.** The variable-state observations from Step 2.4 are co-equal input to this phase. Compare each `{{...}}` placeholder you find in the prompt or tool definitions against what actually appeared in `assistantOverrides.variableValues` and `artifact.variableValues` for the failing runs. A placeholder that the prompt depends on but the runtime never received is the most common root cause of "agent stalled / improvised / hallucinated" failure shapes — and it's invisible if you only read the prompt.
+
+If the source-of-truth prompt is empty or clearly not the production prompt (e.g. just a one-line summary), **stop and ask** — either the agent isn't fully configured (point at `create-agent`), or the user is running prod prompt somewhere this skill can't see and needs to paste it in.
+
+### Step 3.2 — Map each kept failure to its governing artifacts AND its variable state
+
+For each kept failure, locate every artifact that *should* have governed that behavior, AND record the variable state at the moment of failure:
+
+- **Prompt sections** — quote the exact lines from the responsible assistant's system message (the speaker in the relevant transcript turn for squads) that drive (or fail to drive) the observed behavior.
+- **Tool definitions** — if the failure involves a tool call (the agent called the wrong tool, didn't call a needed tool, called a tool with bad arguments, or a `request-start` message produced unexpected agent speech), pull the relevant tool's definition into the diagnosis. Quote `function.description`, the relevant property in `function.parameters`, the offending `messages[*].content`, or the suspect `destinations` entry.
+- **Variable state** — for every `{{...}}` placeholder referenced by the relevant prompt section or tool definition, record what actually appeared in the runtime variable values for this run. Note `null`, empty arrays, missing keys, name mismatches, or literal placeholder strings that survived into rendered messages or tool-call arguments.
+
+If no prompt or tool artifact governs the failure AND variable state looks healthy, mark it "uncovered" — that's a strong gap signal in the prompt or a missing tool. If variable state is malformed, the failure is likely upstream regardless of how clean the prompt looks.
+
+A failure can map to zero, one, or several artifacts in each dimension. Track all matches. **Most failures have signal in more than one dimension** — e.g., a hallucinated self-handoff may be partly the prompt's fault (the LLM was over-eager), partly the tool config's fault (the self-referencing handoff exists at all), AND partly upstream (a missing variable that should have steered the LLM elsewhere). Phase 3.4 will pick the right edit surface; this step just records the candidates across all three dimensions.
+
+### Step 3.3 — Classify each failure
+
+Sort each kept failure into exactly one of four buckets. The bucket determines what kind of change to propose — or whether to propose one at all.
+
+| Bucket | What it looks like | Example |
+|--------|--------------------|---------|
+| **Gap** | No section of the prompt addresses this situation, AND variable state is healthy. The agent improvised and got it wrong. | Prompt never says what to do if the caller asks for a manager → agent makes up a transfer policy. |
+| **Conflict** | The prompt has two clauses that contradict, OR a clause contradicts the tool definition (e.g. tool description says "wait for X", prompt says "don't ask for X"), OR a clause contradicts the desired behavior implied by the failure. | Lab Availability prompt says "skip the question gate, fire handoff immediately"; handoff tool's `function.description` says "wait for user confirms no questions". LLM has no firing trigger and stalls. |
+| **Ambiguity** | One section addresses it but the wording is vague enough the agent could read it either way, AND variable state is healthy. | "Wrap up the call politely" — no concrete steps, agent skipped the legally required disclosure. |
+| **Upstream/data** | Variable state shows the runtime didn't have what the prompt or tool requires: a placeholder is `null` / absent / empty, a key name mismatches, or literal `{{...}}` strings survived into rendered messages or tool-call arguments. The prompt may also be improvable, but no prompt or tool edit fixes the root cause. | Lab Availability prompt depends on `{{leadId}}`, `{{zipcode}}`, `{{appointment_rules}}`. Runtime shows `appointment_rules=[]`, `leadId=null`. Tool calls fire with literal `leadId="{{leadId}}"`. Mock tools return canned data, masking the problem in the transcript. |
+
+If you can't tell, default to **Ambiguity** and flag for the user. Don't force a classification.
+
+**A failure can have both an Upstream/data root AND a Gap/Conflict/Ambiguity component.** When both are present, pick the bucket that, if fixed, would produce the largest behavior change — usually Upstream/data, because phantom prompt fixes against broken variable state will fail re-validation the same way and obscure whether the prompt edit helped. Surface the secondary component as a "deferred — re-evaluate after upstream fix" note rather than proposing it for this iteration.
+
+### Step 3.4 — Propose a change for each diagnosis
+
+Each diagnosis becomes one proposed edit (or, for Upstream/data, one hand-off recommendation). Use the smallest change that fixes the failure — don't rewrite paragraphs (or schemas) to fix one missed step.
+
+#### Upstream/data — no edit, hand off
+
+For Upstream/data failures, this skill cannot fix the root cause. Prompt and tool definitions live in VAPI; dynamic-variable injection lives in the test profile, scenario config, squad-level defaults, or project-level defaults — none of which this skill writes. Surface a hand-off recommendation rather than proposing a phantom edit:
+
+- Name each missing/wrong variable, what the prompt or tool expected, and what the runtime actually saw.
+- Point at the right configuration surface: test profile (for test runs), squad/assistant-level dynamic variables in the VAPI dashboard or `cekura-create-agent` (for cross-call defaults), the upstream caller (for production calls).
+- If a prompt edit could *also* harden the agent against the missing variable (e.g. clearer fallback when `{{x}}` is empty), note it as a secondary candidate but do not include it in the iteration's PATCH set unless the user explicitly asks — the loop will misattribute its effect otherwise.
+
+If **all** kept failures are Upstream/data, this iteration produces zero PATCHes. Surface the hand-off and stop the loop early — re-validation against unchanged broken upstream state will fail identically, burning iterations without learning anything.
+
+#### Prompt edits
+
+| Bucket | Change type | Rule of thumb |
+|--------|-------------|---------------|
+| Gap | **Add** a new clause | Place it next to the closest related section, not at the end. Match the existing voice/format. |
+| Conflict | **Edit** or **Remove** the contradictory clause | Resolve in favor of the behavior the failures expect. If both clauses have legitimate use cases, **scope** them with explicit conditions ("if returning customer..." / "if first-time caller..."). |
+| Ambiguity | **Edit** for specificity | Replace vague verbs ("politely", "appropriately") with concrete steps. Add a checklist if there are >2 required actions. |
+
+#### Tool-config edits (VAPI only)
+
+The same Gap / Conflict / Ambiguity classification applies to tool definitions. Tool edits split into four sub-types — pick the one that matches the failure:
+
+| Sub-type | When to propose | Mechanics |
+|---|---|---|
+| **Edit a tool definition** | A failure traces to a specific field on an existing tool: vague `function.description`, ambiguous parameter, an outdated / verbose `request-start.content` that's spoken on every fire, a `destinations[].assistantId` that's wrong, a `destinations[].description` that misleads the LLM about when to use the handoff. | PATCH the tool by id (Step 4.1). Show before/after of the changed field only; don't redisplay the whole tool. |
+| **Add a tool** (new) | A flow step requires a tool call that no current tool covers (e.g., the prompt says "look up the customer's last order" but no `lookup_order` tool exists). | Phase 4.1 creates the tool via POST `/tool`, then PATCHes the relevant assistant's `model.toolIds` to include the new id. The new tool also needs a corresponding prompt edit telling the agent when to call it — usually one prompt edit + one tool create + one toolIds patch. |
+| **Remove a tool reference** | A specific assistant is hallucinating calls to a tool it shouldn't have access to (squad inheritance is a common cause), or a tool's destinations include the assistant itself (self-handoff). The tool may be legitimate for *other* members; the issue is the reference, not the definition. | PATCH that assistant's `model.toolIds` to drop the id. Do NOT delete the tool itself unless no other squad member references it. |
+| **Delete a tool** | The tool is dead weight — referenced by no squad member after the proposed `toolIds` updates land. | Rare. Only propose after cross-referencing every squad member's `toolIds` (already fetched in Phase 1.4) and confirming nothing points at it. Prefer leaving the tool dormant over deleting; deletes are irreversible from this skill. |
+
+**Tool-edit anti-patterns:**
+
+- **Editing a tool's `function.name`** — the LLM has been calling the tool by its current name; renaming forces every other place that mentions the name (prompts, other tools' descriptions, downstream metric configs) to be updated atomically. Avoid unless the name is actively misleading.
+- **Tightening `function.parameters` schemas to fix one bad call** — a single bad-args call usually means a prompt issue (the LLM didn't have / didn't use the right inputs). Fix the prompt first.
+- **Mass-deleting "unused"-looking tools** — a tool with no references in this agent's squad members may still be referenced by another squad or by a workflow that fires only on rare branches. When in doubt, only remove the *reference*, never the tool.
+
+#### Clustering
+
+Cluster related diagnoses — if 5 failures all stem from the same missing clause OR the same noisy `request-start` message, propose one edit that covers all 5, not five separate edits. Prompt and tool edits can also cluster across artifacts: e.g., "remove tool reference from member X **and** add a clause to its prompt explaining what to do at that decision point instead" is one logical change, surfaced as a paired edit.
+
+### Step 3.5 — Present the proposal to the user
+
+Show every proposed change as a **before/after** block grouped by bucket and edit surface (prompt vs. tool), with the failures it addresses. Example for a prompt edit:
+
+```
+Proposed Change 1 of 4 — Gap (prompt)
+  Surface: VAPI assistant <member_name> (<member_id>), system prompt
+  Addresses: 3 failures (Run abc, Run def, Call xyz)
+  Diagnosis: Prompt does not specify what to do when caller asks for a manager.
+
+  Before:
+    (no governing section — uncovered)
+
+  After (insert after "Escalation rules:"):
+    If the caller asks to speak with a manager, do not promise a transfer.
+    Tell them you'll create a callback ticket and confirm their preferred
+    time. Do not commit to a specific manager or response time.
+```
+
+Example for a tool-definition edit:
+
+```
+Proposed Change 2 of 4 — Conflict (tool)
+  Surface: VAPI tool handoff_to_screener (id 880d...3177), messages[request-start].content
+  Addresses: 8 failures (replays once per user turn after handoff)
+  Diagnosis: request-start message fires on every chat-mode rerouting event,
+             producing a repeated "Perfect, thank you..." utterance.
+
+  Before:
+    "Perfect, thank you for that! Your identity is verified. Now let's get
+     into the exciting part - understanding your health goals..."
+
+  After:
+    "" (empty — squad transitions are handled by the destination's first
+         message; no source-side spoken transition needed)
+```
+
+Example for a `toolIds` reference removal:
+
+```
+Proposed Change 3 of 4 — Conflict (tool reference)
+  Surface: VAPI assistant <member_name> (<member_id>), model.toolIds
+  Addresses: 12 failures (self-handoff loop)
+  Diagnosis: handoff_to_self_member tool is exposed to this member via squad
+             inheritance; LLM keeps calling it as a no-op routing affordance.
+
+  Before:
+    toolIds: [..., "880d2980-...-...", ...]
+
+  After:
+    toolIds: [..., (removed), ...]   # tool definition itself stays — other members may still legitimately use it
+```
+
+Example for an Upstream/data hand-off (no edit applied):
+
+```
+Upstream Finding 1 of 1 — Upstream/data (no edit, hand off)
+  Surface: NOT EDITABLE FROM THIS SKILL — test profile / squad-level dynamic variables
+  Affects: 3 of 3 failed runs
+  Diagnosis: Prompt depends on {{leadId}}, {{zipcode}}, {{labVendors}},
+             {{appointment_rules}}, {{currentDate}}. Runtime shows all null/empty.
+             Tool calls fire with literal placeholders (e.g. leadId="{{leadId}}").
+
+  Recommendation:
+    Inject these variables in the test profile (preferred for test runs) or the
+    squad/assistant-level dynamic variables in VAPI. After upstream is fixed,
+    re-run the same scenarios and return to this skill if any failures remain.
+
+  Hand-off skill: cekura-create-agent (Phase: Add Dynamic Variables) or
+                  scenario / test-profile config.
+
+  Deferred (re-evaluate after upstream fix):
+    - Lab Availability prompt + handoff tool description conflict around the
+      "no questions?" gate. Looks like a real prompt-following bug, but cannot
+      be confirmed against broken variable state.
+```
+
+End with a summary line: `4 changes proposed and 1 upstream hand-off across 12 prompt-following failures (2 prompt edits, 2 tool edits; 1 gap, 2 conflicts, 1 ambiguity, 1 upstream).`
+
+**This gate fires on every iteration, not just the first.** Ask the user to accept all, accept a subset, or push back; do not move to Phase 4 until they explicitly confirm which edits to apply for this iteration. After Phase 4 PATCHes and re-validates, the loop re-enters Phase 3 with a fresh proposal against the post-edit state — and that proposal is again subject to the same approval gate before its PATCH lands. There is no autonomous-iteration mode; every PATCH is preceded by a user OK on that iteration's diff. The user can interrupt mid-iteration at any time; treat that as normal input.
+
+### Manual analysis vs. `runs_improve_prompt_create`
+
+Cekura also exposes `mcp__cekura__runs_improve_prompt_create` — an automated prompt-improver that takes a run and returns suggested edits. This skill defaults to the **manual analysis path above** because:
+
+- It produces explainable, scoped diffs (each tied to specific failures)
+- It works across mixed inputs (results, runs, call logs) in one pass
+- It respects the voice-failure filter from Phase 2
+
+Use `runs_improve_prompt_create` as a **fallback** when the manual analysis is inconclusive (e.g., failures don't cluster, or the user wants a second opinion). Treat its suggestions as input to Step 3.4, not as the final proposal — still surface them as before/after blocks for user review.
+
+### Anti-patterns to avoid in this phase
+
+- **Rewriting the whole prompt** because several sections look weak. Only edit what the failures justify.
+- **Adding catch-all clauses** like "always be helpful and accurate" — they don't change behavior.
+- **Stacking conditions indefinitely** to handle one-off failures. If a clause is getting >3 nested conditions, the underlying flow probably needs restructuring; flag it for the user instead of patching.
+- **Editing dynamic-variable placeholders** (`{{...}}`) in either prompts or tool definitions — they're owned by the calling system. Touch them only if the user explicitly asks.
+- **Silently dropping a failure** because no clean fix is obvious. Surface it to the user as "no change proposed — needs human review" rather than hiding it.
+- **Patching a tool's spoken `messages` to mask a prompt issue.** If the agent says the wrong thing, fix the prompt that drives the tool call, not the tool's request-start message. The exception is when the tool's message is itself the offending utterance (e.g., a verbose request-start that fires repeatedly) — then the tool edit is correct.
+- **Using tool edits to enforce flow.** Adding a tool just to "force" the agent to do something is usually a prompt-clarity problem in disguise. Try the prompt fix first; only add a tool when the failure genuinely requires data the agent doesn't have.
+
+## Phase 4: Apply, Validate, and Iterate
+
+This phase is a **loop**. Each iteration: apply the approved prompt → run validation → diagnose new failures → propose more changes → apply again. Exit only when a validation pass produces **100% success on the validation set** (zero failures of any class), or when the iteration cap is hit. Do not exit just because the latest failures look like voice/infra rather than prompt issues — first re-attribute squad failures to whichever member is now responsible and consider mitigation edits.
+
+### Early-exit shortcut
+
+If Phase 2 collected **zero failures of any class** from the initial input (the agent already passes 100% on the supplied scenarios / runs / calls), Phase 3 was skipped and there's nothing to apply. Report success and stop.
+
+If Phase 2 found failures but they are *all* voice/infra/tool with no prompt-following matches, do **not** auto-exit. Run the same logic as the "kept failures = 0 but total > 0" branch in Step 4.6 (re-classify with fresh eyes — including re-attributing to whichever squad member was speaking — and consider mitigation edits) before deciding to stop.
+
+### Step 4.1 — Apply the edits
+
+Take the **approved** subset of changes from Step 3.5 — whatever the user accepted at this iteration's gate. The gate fires on every iteration (first and subsequent), so this is always an approved subset, never an auto-applied one. Apply in this order:
+
+1. **Tool-definition edits first** (PATCH `/tool/{id}`).
+2. **New tool creation** next (POST `/tool`), capturing the new id.
+3. **Assistant `model.toolIds` updates** (add/remove references) bundled into the assistant PATCH.
+4. **System prompt edits** in the same assistant PATCH as the `toolIds` updates — one PATCH per assistant.
+
+The order matters because: if a new tool is referenced, it must exist before the assistant PATCH lands; and bundling toolIds + prompt into one assistant PATCH keeps the LLM's view of "tools available" and "instructions about those tools" consistent across the rollout.
+
+Show the user the **final merged prompt** for each affected assistant (or a unified diff if long) AND a list of all tool changes (which tools, which fields) for transparency, then proceed to PATCH — no second confirmation step.
+
+#### VAPI prompt + assistant `toolIds` updates
+
+PATCH the assistant(s) the proposal touches on VAPI directly. The MCP server doesn't expose VAPI write endpoints, so use `Bash` + `curl`. The id is the VAPI `assistant.id` resolved in Phase 1.4 (for squads, this is each member's `assistantId` — **not** the squad id; you cannot PATCH a squad to change a member's prompt):
+
+```
+curl -fsS -X PATCH \
+  -H "Authorization: Bearer $VAPI_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":{"provider":"<existing>","model":"<existing>","messages":[{"role":"system","content":"<NEW_PROMPT>"}, ... <other existing messages unchanged> ...],"toolIds":["<id1>","<id2>",...]}}' \
+  https://api.vapi.ai/assistant/<assistant_id>
+```
+
+Important when constructing the PATCH body:
+- Read back the current `model` object from the Phase 1.4 fetch and copy provider/model/temperature/inline tools/etc. unchanged — VAPI's PATCH replaces `model` wholesale, so omitted fields will be lost.
+- Replace **only** the system message's `content`. Preserve any other messages (e.g. tool-result examples) and their order.
+- If updating `toolIds`: send the **full new array** (PATCH replaces it). Add or remove ids relative to the previous array; don't re-sort or de-duplicate without intent.
+- For squads with multiple members edited in this iteration, PATCH each member separately.
+- Do not touch the Cekura `description` field. It is informational and stays as-is.
+
+#### VAPI tool-definition edits
+
+For each tool whose definition changed, PATCH the tool directly:
+
+```
+curl -fsS -X PATCH \
+  -H "Authorization: Bearer $VAPI_KEY" \
+  -H "Content-Type: application/json" \
+  -d '<full tool body with edited fields>' \
+  https://api.vapi.ai/tool/$TOOL_ID
+```
+
+Construction rules:
+- Fetch the current tool first (`GET /tool/{id}`), modify only the changed fields in memory, send the result. VAPI's tool PATCH semantics also replace nested objects wholesale — omitting `messages` or `destinations` will wipe them.
+- Common edits and the field they touch:
+  - **Spoken `request-start` adjustment**: `messages[?(@.type=='request-start')].content`
+  - **Failure messaging**: `messages[?(@.type=='request-failed')].content`
+  - **Function description / parameters**: `function.description`, `function.parameters`
+  - **Handoff destination**: `destinations[i].assistantId`, `destinations[i].description`
+- **Back up the original tool body** to a local file before PATCHing — keep one snapshot per tool per iteration so a revert is one PUT/PATCH away.
+
+#### VAPI new tool creation
+
+```
+curl -fsS -X POST \
+  -H "Authorization: Bearer $VAPI_KEY" \
+  -H "Content-Type: application/json" \
+  -d '<full tool body — type, function spec, messages, destinations as needed>' \
+  https://api.vapi.ai/tool
+```
+
+The response includes the new `id`. Use it in the subsequent assistant PATCH's `toolIds`. Don't reference an id that hasn't returned 2xx yet.
+
+#### VAPI tool deletion (rare — gated by Step 3.4 anti-patterns)
+
+Only after confirming no other squad member references it:
+
+```
+curl -fsS -X DELETE \
+  -H "Authorization: Bearer $VAPI_KEY" \
+  https://api.vapi.ai/tool/$TOOL_ID
+```
+
+Deletion is irreversible from this skill — there's no undo PATCH. If unsure, drop the reference (Step 3.4 "Remove a tool reference") and leave the definition in place.
+
+If the agent has dynamic-variable placeholders (`{{...}}`), confirm they're preserved verbatim in the merged prompt.
+
+### Step 4.2 — Make sure the provider is running the new prompt and tool config
+
+Step 4.1 PATCHed VAPI directly. New prompts, new/edited tool definitions, and `toolIds` membership are all live as soon as their PATCH/POST/DELETE returns 2xx. Confirm by re-fetching:
+
+- `curl GET https://api.vapi.ai/assistant/{id}` — verify system message content AND `toolIds` array match the intended state.
+- `curl GET https://api.vapi.ai/tool/{id}` — for every tool you edited or created, verify the changed fields landed.
+
+Don't skip the tool re-fetch — VAPI's tool PATCH semantics replace nested objects wholesale, and a malformed body can silently wipe `messages` or `destinations` while still returning 200.
+
+If the provider isn't running the new prompt **or** the new tool config, validation runs will pass/fail based on stale state and the loop will spin forever. Don't proceed to Step 4.3 until both prompt and tool changes are confirmed live.
+
+### Step 4.3 — Build the validation set
+
+Pick the validation set based on the **original input type** to this skill (the same input the user passed in Phase 2):
+
+| Original input | Validation set |
+|----------------|----------------|
+| `scenario_ids` | Reuse the same scenario IDs. |
+| `result_id` | Extract `scenario_id` from every run inside the result (already fetched in Phase 2.2). De-duplicate. |
+| `run_ids` | Extract `scenario_id` from every run (already fetched via `runs_bulk_retrieve` in Phase 2.2). De-duplicate. |
+| `call_ids` | Generate one scenario per call via `mcp__cekura__scenarios_create_scenario_from_transcript_create`. Cache the new scenario IDs on the first iteration so subsequent loop iterations reuse them rather than re-creating from transcripts each time. |
+
+**Why scenarios for call_ids:** call logs are production calls, not reproducible — to validate fixes, we synthesize a scenario from each transcript and re-run it against the new prompt.
+
+The validation set should match the failure set when possible — re-running only the scenarios that failed initially gives the cleanest signal that the edit fixed *those specific failures*. Optionally, the user can request the full set (including previously-passing scenarios) to guard against regressions; default to failure-only.
+
+### Step 4.4 — Run validation
+
+Execute the validation set with `mcp__cekura__scenarios_run_scenarios_create` (voice mode for VAPI — the only provider gated through Phase 1). Capture the `result_id`.
+
+Poll `mcp__cekura__results_retrieve` until terminal, exactly as in Phase 2.1 (same 30s cadence and 15-min cap).
+
+### Step 4.5 — Collect, inspect, and filter new failures
+
+Run the new result through **the same Phase 2 logic, end to end** — pre-filter `reviewed_success` items (Step 2.3), collect both expected-outcome failures and metric failures with the voice-failure filter applied, **then re-run the provider-call-state inspection (Step 2.4) against the new runs**, and produce a Step-2.5-shaped summary.
+
+Re-running Step 2.4 each iteration matters: a Phase 4.1 PATCH only changes prompts and tool definitions; it cannot change variable injection. If iteration N-1's failures were rooted in upstream variable state, iteration N's variable-state observations should look identical — that's the signal that the upstream issue is unresolved (and the loop should stop and surface, not iterate further). Conversely, an upstream fix between iterations (made by the user out-of-band) will show up as cleaner variable state, which Phase 3 should then be able to consume to attribute remaining failures correctly.
+
+This guarantees iteration N sees failures filtered identically to iteration 0, so the loop's stopping criterion is consistent across iterations. Validation runs created by this skill on each iteration will not normally have human review attached — the `reviewed_success` pre-filter is mostly a no-op for them — but if the original input was `call_ids` and any of those call logs were `reviewed_success`, their re-synthesized scenarios should still be excluded from the validation set (cache the exclusion at Step 4.3 alongside the cached scenario IDs).
+
+### Step 4.6 — Decide: exit or loop
+
+The exit criterion is **100% pass rate on the validation set** — zero failures of any class. The voice/infra filter exists for diagnosis (to focus Phase 3 on prompt-fixable issues), not as the loop's stopping criterion. Do not declare success while the agent is still failing, even when the remaining failures don't look prompt-shaped.
+
+Decide as follows:
+
+- **100% pass rate** → success. Report the final pass rate, the cumulative diff applied, and stop.
+- **Kept (prompt-following) failures > 0** → loop normally:
+  1. Feed the new failure summary and the **current (post-edit) prompt** back into Phase 3.
+  2. Phase 3 produces a fresh proposal against the updated prompt.
+  3. Surface the proposal and **wait for explicit approval** before continuing to Step 4.1 — the user gate fires on every iteration.
+  4. Repeat from Step 4.1 with the approved subset for this iteration.
+- **Kept failures = 0 but total failures > 0** (all remaining failures look voice/infra/tool):
+  Do **not** exit yet. Work through these checks first, in order:
+  1. **Re-classify with fresh eyes.** A tool error response *handled badly* by the agent is a prompt issue (the agent should have retried, fallen back, or escalated cleanly). Only count as infra if the agent handled the error correctly. Repeated identical agent utterances, self-handoffs, wrong-handoff destinations, and per-member instruction drift are all prompt-fixable. For squads, re-attribute each failure to whichever member was speaking in the relevant transcript turn — Phase 3 already considers all members editable, so the fix may simply live in a member that hadn't been touched yet.
+  2. **Consider mitigation edits — prompt AND tool config.** Some "infra" failures can be partially mitigated:
+     - **By prompt**: better retry counts, clearer fallback messaging, faster escalation, different tool-call argument shaping, or guarding against missing dynamic variables.
+     - **By tool config (VAPI)**: a noisy `request-start` message that fires on every routing event, a `request-failed.content` that's misleading to the LLM, a tool whose `function.description` over-matches user intent and gets called too often, a handoff `destinations[]` entry pointing at the wrong assistant, or a self-referencing destination that drives a self-handoff loop. These are tool edits, not prompt edits, and they often resolve "infra-shaped" failures that no prompt change can touch.
+     Surface both kinds as Phase 3 candidates on the next iteration.
+  3. **Only after both above are exhausted** (no missed prompt issues across any member, no plausible mitigation edit) → surface a clear stop with the residual failures, hand off to the appropriate skill (`create-agent` for tool/config issues, backend team for upstream service errors), and exit. Do not silently exit.
+
+Phase 2.4 already inspected the failing run's `assistantOverrides.variableValues` and rendered system message by default, and Phase 3.3 already classified Upstream/data failures separately. Use those findings to back the "genuinely upstream" call rather than re-running the inspection here. If for some reason Step 2.4 was skipped (e.g. text-mode runs without provider artifacts), do it now before declaring upstream — see "[Debugging dynamic variables and provider call state](#debugging-dynamic-variables-and-provider-call-state)".
+
+The "kept = 0 but total > 0" path must surface its decision to the user — explicitly state which of the two checks ruled out further iteration. Don't use shape of the failures alone as a reason to stop.
+
+### Iteration cap
+
+Default to **10 iterations** of the loop. If the user supplies a `max_iterations` value when invoking the skill (e.g., "keep going up to 20", "cap at 5"), use that instead. The cap is the **only safety net** besides 100% pass rate — it prevents runaway loops when the residual failures genuinely cannot be fixed by prompt edits (real infra outages, missing tools, dynamic-variable injection failures the user must resolve elsewhere, etc.). Without the cap, the loop is supposed to keep going.
+
+After the cap is hit, stop and surface a summary regardless of remaining failures:
+
+- What's been fixed (pass-rate gain, failures resolved)
+- What's still failing (the residual summary)
+- A recommendation: hand off to `eval-design` (test gaps), `labs-workflow` (metric quality), or `create-agent` (provider/tools/KB) depending on what the residual failures look like
+
+The user can also stop or extend mid-loop ("keep going" / "stop"). Don't loop silently past the cap.
+
+### Loop guardrails
+
+- **Track cumulative diff for prompts AND tools** — show the user every change that's been applied across all iterations, not just the latest one, and split the cumulative diff by surface (prompt vs. tool definition vs. `toolIds` reference). Easy to lose context across 3 passes when changes are spread across multiple artifacts.
+- **Watch for oscillation** — if iteration N's edit reverses iteration N-1's edit on the same clause OR the same tool field, stop and flag it. The two failure sets are pulling the agent in opposite directions; user judgment is needed.
+- **Don't widen the validation set mid-loop** without telling the user. The stopping criterion depends on a stable comparison set.
+- **Validation-set expansion is not fair game.** All squad members are already in edit scope by default, so there's no scope-expansion step. But the validation set must stay stable across iterations: same scenarios; only the agent's prompts/tools change between iterations. Never quietly add scenarios mid-loop — that breaks the comparison.
+- **Don't stop just because the failure shape changed.** Iteration N often surfaces a different bug than iteration N-1 (e.g., fixing the entry assistant exposes a self-handoff loop in the screener, which turns out to be a tool-config issue rather than a prompt one). That's the loop working, not a reason to declare done.
+- **Always back up tool definitions before editing** — `GET /tool/{id}` and stash the full body to a local file (e.g., `/tmp/vapi_tools/{id}_pre_iter{N}.json`) before issuing any PATCH. VAPI tool PATCH semantics replace nested objects wholesale; a one-line revert is `PATCH` with the backed-up body.
+- **Cross-reference toolIds before deleting a tool** — every squad member's `toolIds` is already fetched in Phase 1.4; confirm no member references the tool before deleting. If in any doubt, prefer reference removal over delete.
+
+## Debugging dynamic variables and provider call state
+
+This section is the reference appendix for the default Step 2.4 inspection. The goal is to inspect four signals about a specific call: (1) what the caller passed in to VAPI as `assistantOverrides.variableValues`, (2) what VAPI saw after merging defaults in `artifact.variableValues`, (3) what the LLM actually saw in its rendered system message, and (4) what the LLM passed back as tool-call arguments. Each answers a different question and they're rarely all in the same place.
+
+Use this section as the lookup for: which Cekura field exposes which signal, the per-signal decision tree (key absent vs. wrong-name vs. literal-placeholder-survives, etc.), the direct-VAPI fallback when `provider_call_details` is stale, and known caveats around squad per-member message arrays. Step 2.4 is the entry point on every iteration — don't gate this work on whether a failure "looks ambiguous"; the inspection is cheap and catches phantom-prompt-fix failure modes that pure transcript reading does not.
+
+### Where the data lives
+
+`mcp__cekura__results_retrieve` does **not** include provider call state in its run summaries. For test runs, use `mcp__cekura__runs_bulk_retrieve`; for production calls, use `mcp__cekura__call_logs_retrieve`. Both expose the VAPI call object inline:
+
+| Cekura field | What's there |
+|---|---|
+| `provider_call_id` | The VAPI call UUID. Useful for direct VAPI lookups (`GET /call/{id}`) when the inline blob is missing fields or looks stale. |
+| `provider_call_details.assistantOverrides.variableValues` | **Signal 1 — intent.** What the caller (Cekura) passed into VAPI when starting the call. If a key is absent here, the variable was never provided. |
+| `provider_call_details.artifact.variableValues` | **Signal 2 — runtime.** What VAPI substituted at call time after merging overrides + assistant/project defaults. Compare against Signal 1 to spot rename mismatches. |
+| `provider_call_details.artifact.messages` | **Signal 3 — what the LLM saw.** The full message array sent to the model. Search for literal `{{...}}` strings — if any survive here, substitution failed even though the call was made. |
+| `provider_call_details.artifact.messages[*].toolCalls` | **Signal 4 — what the LLM did.** For any handoff or tool call, the actual `arguments` JSON. Reveals `[]`, hallucinated arrays, or relayed-correctly cases. |
+| `provider_call_details.artifact.assistantActivations` | Sequence of which squad members were active when. Useful for attributing a failure to the correct member when transcripts are ambiguous. |
+
+`runs_bulk_retrieve` payloads can be large (250–500 KB per run). Expect the MCP result to overflow the inline limit and land in a saved file — extract the specific fields with `jq` or python rather than re-reading the whole blob into context.
+
+### Direct VAPI lookup (fallback)
+
+If `provider_call_details` is missing or looks truncated, fetch the call object directly from VAPI:
+
+```
+curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/call/$PROVIDER_CALL_ID
+```
+
+The shape is identical to what's embedded in `provider_call_details`. The direct fetch is most useful for very recent calls where Cekura hasn't yet ingested the artifact, or when an inline copy looks stale relative to a known-recent VAPI dashboard edit.
+
+### Decision tree
+
+For a single suspect run (Cekura `run_id`):
+
+1. `mcp__cekura__runs_bulk_retrieve` with `run_ids="<run_id>"` (bare comma-separated string, not a JSON array) → grab `provider_call_id` + `provider_call_details`.
+2. Check `provider_call_details.assistantOverrides.variableValues`:
+   - **Key absent** → variable was never provided. Failure is upstream of the agent (test profile config, scenario setup, or production caller). Prompt edits cannot fix this alone; surface as a hand-off to test-config or whoever populates the variable, and decide whether to also harden the prompt to handle the missing-variable case.
+   - **Key present with expected value** → variable was provided correctly. Move to step 3.
+   - **Key present with a different name than the prompt expects** (e.g. `phoneUpgrade` vs. `shouldAskForPhoneUpgrade`) → name mismatch. Either the prompt's placeholder or the caller's key is wrong. Pick whichever is canonical and fix the other side.
+3. Check `provider_call_details.artifact.messages[0].content` (the rendered system message) for literal `{{...}}` placeholders:
+   - **Literal placeholders present** → substitution failed despite the override being passed. Rare, but happens when placeholder syntax is malformed. Inspect the prompt for nested or escaped braces.
+   - **Placeholders fully substituted** → the LLM saw the right input. Failure is downstream — the LLM didn't act on it correctly. This is a genuine prompt-following issue; Phase 3 should fix it.
+4. If the failure involves a tool call, find the relevant `toolCalls` entry and inspect `arguments`:
+   - **Literal string `{{...}}` in args** → schema validator likely rejected the call; transcripts will show repeated tool calls or stalls.
+   - **Empty array / null where data was expected** → upstream didn't supply, or the LLM didn't relay it forward. Cross-reference with Signal 1.
+   - **Plausible-looking but unverifiable values** → likely hallucination. Compare against the upstream member's own tool-call arguments (the source of the handoff) to confirm.
+
+### Caveats
+
+- The artifact's `variableValues` and the `assistantOverrides.variableValues` are **not** the same object. Overrides are what was passed in; artifact values are the merged result after VAPI applied defaults. A variable can appear in artifact even if it wasn't in overrides — that means a project- or assistant-level default supplied it.
+- Squad calls have **per-member** message arrays. The artifact's top-level `messages` may show the entry assistant's view; use `assistantActivations` and the per-activation message logs (under each activation entry) to inspect downstream members.
+- `runs_bulk_retrieve` requires `run_ids` as a bare comma-separated string (e.g. `"3031399"`), not a JSON array. Passing `[3031399]` returns a 400.
+- Direct VAPI fetches require `VAPI_KEY` (Phase 1 environment). Don't echo it back to chat or write it to a file.
+
+## API Access — Cekura MCP Server
+
+This skill uses the Cekura MCP server for all API operations. The plugin's `.mcp.json` configures it automatically.
+
+**Prerequisites:**
+1. Set the `CEKURA_API_KEY` environment variable with your Cekura API key
+2. Start the Cekura MCP server: `cd /path/to/cekura-mcp-server && python3 openapi_mcp_server.py` (runs on `http://localhost:8001/mcp`)
+3. The plugin's `.mcp.json` handles the rest — Claude Code connects to the server and makes the `mcp__cekura__*` tools available
+
+**Key MCP tools used by this skill:**
+
+| Phase | Operation | MCP Tool |
+|-------|-----------|----------|
+| 1 | List / fetch agents | `mcp__cekura__aiagents_list`, `mcp__cekura__aiagents_retrieve` |
+| 1 | Fetch live VAPI assistant / squad (direct, not MCP) | `Bash` + `curl` against `https://api.vapi.ai/assistant/{id}` or `https://api.vapi.ai/squad/{id}` with `VAPI_KEY` (id comes from the agent record's `assistant_id` field; try assistant first, fall back to squad on 404) |
+| 1 | Fetch live VAPI tool definition (direct, not MCP) | `Bash` + `curl GET https://api.vapi.ai/tool/{id}` with `VAPI_KEY` — call once per unique id across all squad members' `model.toolIds` |
+| 2 | Run scenarios (voice / text) | `mcp__cekura__scenarios_run_scenarios_create`, `mcp__cekura__scenarios_run_scenarios_text_create` |
+| 2 | Fetch result batch | `mcp__cekura__results_retrieve` |
+| 2 | Bulk fetch runs | `mcp__cekura__runs_bulk_retrieve` |
+| 2 | Fetch a call log | `mcp__cekura__call_logs_retrieve` |
+| 3 | Auto-improve prompt (fallback) | `mcp__cekura__runs_improve_prompt_create` |
+| 4 | PATCH agent prompt + `toolIds` — VAPI (direct) | `Bash` + `curl -X PATCH https://api.vapi.ai/assistant/{id}` with `VAPI_KEY` |
+| 4 | Edit a VAPI tool definition (direct) | `Bash` + `curl -X PATCH https://api.vapi.ai/tool/{id}` with `VAPI_KEY` |
+| 4 | Create a VAPI tool (direct) | `Bash` + `curl -X POST https://api.vapi.ai/tool` with `VAPI_KEY` |
+| 4 | Delete a VAPI tool (direct, gated) | `Bash` + `curl -X DELETE https://api.vapi.ai/tool/{id}` with `VAPI_KEY` |
+| 4 | Synthesize scenario from a transcript | `mcp__cekura__scenarios_create_scenario_from_transcript_create` |
+
+**Docs lookup:** Use `mcp__cekura__search_cekura` or fetch `https://docs.cekura.ai/llms.txt` for field schemas, response shapes, or tool details when this skill doesn't cover them.
+
+**Troubleshooting:** If MCP tools aren't available, verify (1) `CEKURA_API_KEY` is set, (2) the MCP server is running on port 8001, (3) restart Claude Code to pick up the `.mcp.json` config. Run `/setup-mcp` for guided setup.
+
+## Anti-Patterns
+
+These apply to the skill as a whole. Phase-specific anti-patterns are covered inside each phase.
+
+- **Running the loop on a tiny input.** A single failing run / call is rarely enough signal — one-off failures often reflect noise, not a prompt defect. Internally weight the diagnosis with less confidence and prefer minimal, narrowly-scoped edits, but **do not surface the small-sample caveat to the user** (see Step 2.5). The user has already chosen the input they have; hedging in the summary just reads as a stall.
+- **Iterating with a noisy metric.** If most kept failures come from one metric whose explanations look subjective, the metric is probably miscalibrated. Hand off to `labs-workflow` first; otherwise the loop will keep "fixing" the prompt to satisfy a flawed judge.
+- **Skipping the provider sync gate (Phase 4.2).** Confirm the VAPI PATCH actually landed (re-fetch and diff the system message AND every edited tool body). VAPI's tool PATCH semantics replace nested objects wholesale, so a malformed body can silently wipe `messages` or `destinations` while returning 200. Without re-fetch confirmation, the loop validates against state you can't see and never converges.
+- **Bypassing the per-iteration user gate.** The skill applies edits to a live agent, and every PATCH must be preceded by explicit user approval of that iteration's proposed diff. The gate fires at every Phase 3 → Phase 4 boundary — first iteration, second iteration, all of them. Don't skip it, and don't claim a previous approval covers later iterations. Conversely, Phase 1 → Phase 2 → Phase 3 should not pause for approval at all — the failure-summary surface is informational, not a gate.
+- **Quitting the loop the moment failures look non-prompt.** The exit gate is 100% pass rate or the iteration cap — not "first sight of an infra-shaped failure." If a residual failure looks like infra/tool/config, first verify there's no prompt OR tool-config issue you missed: how the agent *handles* a tool error is a prompt question, a noisy `request-start` message is a tool-config question, and for squads the relevant prompt may live in a member that hasn't been touched yet (re-attribute by speaker, not by which member you've been editing). Only after exhausting both prompt and tool-config options (re-classify, propose mitigation prompt edits, propose tool-config edits) should you hand off to `create-agent` for genuine provider/integration issues.
+- **Treating expected-outcome failures and metric failures the same.** Expected-outcome failures are first-class signal about agent behavior. Metric failures may reflect either the agent or the metric — be more skeptical.
+- **Skipping the variable-state inspection (Step 2.4) and mapping failures only to prompt sections.** This produces phantom prompt fixes for failures actually rooted in upstream variable injection. A prompt diagnosis can read perfectly self-consistent ("the prompt and tool description conflict — fix it") and still be wrong if the runtime never received the variables the prompt depends on. Read both data streams before classifying; in particular, when transcripts show repeated `Function Call Result: null` or silent stalls, check tool-call `arguments` for literal `{{...}}` strings before building any prompt-edit story.
+
+## Hand-off to Other Skills
+
+If the failures don't actually point at the prompt, redirect rather than iterate:
+
+- **`create-agent`** (in this same plugin) — when failures stem from missing/misconfigured tools, an outdated knowledge base, or provider integration issues. No prompt edit will fix a missing tool.
+- **`eval-design`** (in `cekura-evals`) — when the test set itself is the problem (too narrow, missing key flows, no coverage of failure modes seen in production). Improving the prompt against a thin eval set just overfits.
+- **`metric-design`** (in `cekura-metrics`) — when failures cluster on metrics whose definitions look weak or off-target.
+- **`labs-workflow`** (in `cekura-metrics`) — when metric pass/fail verdicts seem misaligned with the transcripts. Fix the metric first, *then* come back here.
+- **`coordinator`** (in this same plugin) — if the user is unsure where the issue is, route them through coordinator to triage.
