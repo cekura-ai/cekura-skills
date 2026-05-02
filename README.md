@@ -21,12 +21,12 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 6 Skills, 12 Commands across 3 Plugins
+### 7 Skills, 12 Commands across 3 Plugins
 
 | Plugin | Skills | Commands | Purpose |
 |--------|--------|----------|---------|
 | **cekura** | `cekura-coordinator`, `cekura-onboarding`, `cekura-create-agent` | `setup-mcp`, `upgrade-skills`, `report-bug` | Platform setup, agent onboarding, skill routing |
-| **cekura-metrics** | `cekura-metric-design`, `cekura-metric-improvement` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` | Create, improve, and validate call quality metrics |
+| **cekura-metrics** | `cekura-metric-design`, `cekura-metric-improvement`, `cekura-predefined-metrics` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` | Create, improve, and validate call quality metrics |
 | **cekura-evals** | `cekura-eval-design` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results` | Create, run, and analyze test suites for voice agents |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
@@ -73,7 +73,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Six skills, scoped to specific Cekura workflows:
+Seven skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
@@ -82,6 +82,7 @@ Six skills, scoped to specific Cekura workflows:
 | `cekura-create-agent` | "Connect my voice agent to Cekura" |
 | `cekura-metric-design` | "Create a metric / measure call quality" |
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
+| `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
 
 ### Want full functionality?
@@ -177,6 +178,7 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          plugins/cekura/skills/cekura-create-agent \
          plugins/cekura-metrics/skills/cekura-metric-design \
          plugins/cekura-metrics/skills/cekura-metric-improvement \
+         plugins/cekura-metrics/skills/cekura-predefined-metrics \
          plugins/cekura-evals/skills/cekura-eval-design
 ```
 
@@ -207,6 +209,7 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          plugins/cekura/skills/cekura-create-agent \
          plugins/cekura-metrics/skills/cekura-metric-design \
          plugins/cekura-metrics/skills/cekura-metric-improvement \
+         plugins/cekura-metrics/skills/cekura-predefined-metrics \
          plugins/cekura-evals/skills/cekura-eval-design
 ```
 
@@ -305,6 +308,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-create-agent` | Setting up an agent — provider, mock tools, KB, dynamic vars |
 | `cekura-metric-design` | Designing or creating metrics |
 | `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
+| `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
 
 ### Getting Started Flow
