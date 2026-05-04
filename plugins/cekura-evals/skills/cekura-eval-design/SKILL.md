@@ -65,6 +65,24 @@ When this skill suggests creating, listing, updating, or evaluating something on
 
 **See `references/tool-strategies.md`** for full workflow, key questions to ask, and validation guidance for each approach.
 
+## Choosing Authoring Mode
+
+The default authoring mode is **behavioral instructions** (free-form, first-person scenario instructions). Switch to **conditional actions** in two situations:
+
+### Switch immediately, no confirmation, when the user says any of:
+
+"conditional actions", "structured scenario", "scripted scenario", "scripted test", "deterministic test", "unit test", "regression test", "exact flow", "fixed sequence", "compliance test". The user has stated their authoring intent — proceed straight to designing conditional actions (see "Designing Conditional Actions" below).
+
+### Ask first when the user mentions a tag-supported feature without specifying a mode:
+
+"voicemail", "voicemail test", "IVR menu", "IVR navigation", "DTMF entry", "DTMF input", "hold music", "interruption test", "network simulation", "packet loss", "background noise". Conditional actions support these via dedicated XML tags (`<voicemail>`, `<dtmf>`, etc.) and produce higher-fidelity tests, but a behavioral instruction may also be acceptable. Ask one short question:
+
+> "This involves [voicemail / IVR / DTMF / etc.]. Conditional actions support `<voicemail>` / `<dtmf>` / `<...>` tags directly for high-fidelity testing — should I author this as a conditional-actions evaluator (structured turn-by-turn with the right tags), or behavioral instructions (free-form, looser)?"
+
+### Stay in behavioral mode for:
+
+Open-ended persona dialogue, exploratory red-team without specific attack scripts, soft-skill / tone / empathy testing, general edge-case quality probing where the conversation path isn't predictable. The "Writing Instructions" section below is the primary guide for this mode.
+
 ## Test Profiles — Always Use Them
 
 **Test profiles are the backbone of reliable evals.** They serve three critical purposes:
@@ -267,20 +285,130 @@ Every evaluator should have at minimum these metrics enabled:
 
 Without metrics, runs return success/failure based only on whether the call completed — not whether the agent actually did the right thing. This leads to false passes that require manual review.
 
-## Conditional Actions — Deterministic Testing
+## Designing Conditional Actions
 
-Conditional actions create structured, repeatable test flows — essentially unit tests for voice agents. The testing agent follows a predefined sequence of triggers and responses but adapts if the main agent deviates. Rule of thumb: if a developer would write the test as code, use conditional actions; if they'd describe a persona, use behavioral instructions.
+When in conditional-actions mode (per "Choosing Authoring Mode" above), the `instructions` field is a JSON object — `{ "role": "...", "conditions": [...] }` — not a string. The testing agent follows the `conditions` array turn by turn: each condition pairs a trigger (`condition`) with an action (`action`).
 
-**When to use:** Exact flow validation, regression testing, IVR navigation, compliance.
-**When NOT to use:** Adaptive quality, edge cases, red-team — use behavioral instructions.
+### Skeleton
 
-**Two gotchas to avoid:**
-- `id: 0` requires `condition: "FIRST_MESSAGE"` (the literal string) and `fixed_message: true`. If the main agent speaks first, set `action: ""`.
-- `type` is required on every condition (`"standard"` or `"action_followup"`) — there is no default; omitting it returns a validation error.
+Every conditional-actions evaluator must look like this at minimum:
 
-The `instructions` field becomes a JSON object (`{ "role": "...", "conditions": [...] }`), not a string. XML tags (`<ivr>`, `<voicemail>`, `<interruption>`, `<silence>`/`<hold>`, `<dtmf>`, `<endcall>`, `<spell>`, `<network_simulation>`, `<background_noise>`, etc.) work only with `fixed_message: true` and several have placement constraints (e.g. `<ivr>` and `<voicemail>` must be the entire action; `<interruption>` must be at the start of an `action_followup` action).
+```json
+{
+  "role": "You are a [persona] calling to [goal]",
+  "conditions": [
+    { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I need to ...", "type": "standard", "fixed_message": true },
+    { "id": 1, "condition": "The agent asks for X", "action": "Provide X", "type": "standard", "fixed_message": false },
+    { "id": 2, "condition": "The agent confirms", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
+  ]
+}
+```
 
-See `references/conditional-actions.md` for field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, and the quick-reference card.
+All five fields (`id`, `condition`, `action`, `type`, `fixed_message`) are required on every condition. `id: 0` is special: `condition` must be the literal string `"FIRST_MESSAGE"` and `fixed_message` must be `true`. If the main agent speaks first (IVR / voicemail flows), set `action: ""` on `id: 0`.
+
+### Pattern picker by use case
+
+Once the user has confirmed conditional-actions mode, pick the structural pattern from the table:
+
+| User wants to test | Pattern | Key tags |
+|---|---|---|
+| IVR menu navigation | `id:0` `action:""`; main agent (IVR) speaks first; `<dtmf>` for menu input | `<ivr>`, `<dtmf>` |
+| Voicemail handling | `id:0` `action:""`; `<voicemail>` as entire action on next condition; `action_followup` for post-beep message | `<voicemail>` |
+| Verification / compliance | `fixed_message: true` for verbatim phrasing; `<spell>` for IDs/codes; `{{test_profile.X}}` for caller data | `<spell>`, profile vars |
+| Multi-part response | Chain of `action_followup` conditions; each fires on next turn after the previous | — |
+| Interruption mid-sentence | `<interruption time="Xs" />` at start of an `action_followup` action | `<interruption>` |
+| Degraded connection | `<network_simulation packet_loss="N" />` (only `packet_loss` is honored) | `<network_simulation>` |
+| Noisy environment | `<background_noise sound="..." volume="0.x">spoken text</background_noise>` wrapping caller speech | `<background_noise>` |
+| Scripted sequence (no agent reply gating) | Chain `action_followup` from `id:0` — fires automatically each turn, no condition strings to match | — |
+| Hold / silence behavior | `<hold time="Xs" />` (not interruptible) or `<silence time="Xs" />` (interruptible) embedded mid-action | `<hold>`, `<silence>` |
+| SMS-driven workflow | `<send_sms text="..." />` to trigger the SMS | `<send_sms>` |
+
+### XML tag rubric (constraints to follow)
+
+- All XML tags require `fixed_message: true`. With `false`, the testing agent reads the angle brackets as literal instructions.
+- `<ivr text="..." />` and `<voicemail text="..." />` (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags.
+- `<interruption time="Xs" />` requires `type: "action_followup"` AND must appear at the **very start** of the action string.
+- `<silence time="Xs" />` is interruptible by the main agent; background noise continues; condition matching restarts after an interrupt.
+- `<hold time="Xs" />` is not interruptible; background noise stops; multiple `<hold>` tags allowed in one action.
+- `<dtmf digits="..." />` supports `0–9`, `#`, `*`; combinable with surrounding text.
+- `<endcall />` combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
+- `<spell>TEXT</spell>` wraps text to spell letter by letter (good for IDs, account numbers).
+- `<speed ratio="N" />` (range **0.8–1.2**) and `<volume ratio="N" />` (range **0–2**, Cartesia voices only) — must be at the **start** of the action.
+- `<network_simulation packet_loss="N" />` — only `packet_loss` is supported; `jitter` and `latency` are silently ignored.
+
+### Test profile variables (in `fixed_message: true` actions)
+
+Inject profile fields into verbatim text — substitution happens at runtime:
+
+```
+{{test_profile.first_name}}                         simple field
+{{test_profile['account_id']}}                      bracket notation (keys with spaces or special chars)
+{{test_profile.address.city}}                       nested field
+<spell>{{test_profile.account_number}}</spell>      combined with XML tag
+```
+
+Two ways to use profile data: (a) behavioral instruction in `fixed_message: false` (`"Provide your full name and date of birth for verification"` — the agent reads from profile and phrases naturally), or (b) template variable in `fixed_message: true` (`"My name is {{test_profile.first_name}} {{test_profile.last_name}} and my DOB is {{test_profile.dob}}"` — exact phrasing AND real value both matter).
+
+Never hardcode profile data in a fixed message unless the value is intentionally fixed for that test (e.g., known-bad input).
+
+### Anchor examples
+
+**Linear verification flow:**
+```json
+{
+  "role": "You are an established patient calling to check your appointment status",
+  "conditions": [
+    { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I'd like to check on my upcoming appointment", "type": "standard", "fixed_message": true },
+    { "id": 1, "condition": "The agent asks for your name", "action": "My name is {{test_profile.first_name}} {{test_profile.last_name}}", "type": "standard", "fixed_message": true },
+    { "id": 2, "condition": "The agent asks for your date of birth", "action": "Provide your date of birth", "type": "standard", "fixed_message": false },
+    { "id": 3, "condition": "The agent asks for your account number", "action": "My account number is <spell>{{test_profile.account_number}}</spell>", "type": "standard", "fixed_message": true },
+    { "id": 4, "condition": "The agent confirms your identity and provides appointment details", "action": "Thank you, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
+  ]
+}
+```
+
+**IVR navigation:**
+```json
+{
+  "role": "You are a caller trying to reach the billing department through an IVR",
+  "conditions": [
+    { "id": 0, "condition": "FIRST_MESSAGE", "action": "", "type": "standard", "fixed_message": true },
+    { "id": 1, "condition": "The IVR plays the menu options", "action": "<dtmf digits=\"2\" />", "type": "standard", "fixed_message": true },
+    { "id": 2, "condition": "The agent greets you and asks how they can help", "action": "I have a question about a charge on my last bill", "type": "standard", "fixed_message": false },
+    { "id": 3, "condition": "The agent asks for your account number", "action": "<dtmf digits=\"123456#\" />", "type": "standard", "fixed_message": true },
+    { "id": 4, "condition": "The agent resolves your billing question", "action": "Thanks, that clears it up <endcall />", "type": "standard", "fixed_message": true }
+  ]
+}
+```
+
+### Top anti-patterns
+
+- **Vague conditions** — `"condition": "verification"` may not trigger. Write it as a description of what the agent says: `"The agent asks for your name and date of birth to verify your identity"`.
+- **Hardcoding profile data** — when a value lives in both the test profile and a fixed message and they drift, the testing agent hallucinates. Use `{{test_profile.X}}` or behavioral phrasing.
+- **Missing `type` or `fixed_message`** — both are required on every condition. No defaults. Validation rejects the request.
+- **XML tags with `fixed_message: false`** — tags only parse when `true`; otherwise the testing agent treats angle brackets as literal text.
+- **`<ivr>` or `<voicemail>` mixed with other content** — both must be the entire action. Use a separate `action_followup` for any post-IVR / post-beep content.
+- **Text before `<interruption>`** — must be the very first thing in the action string, and on `type: "action_followup"`.
+- **Expecting `action_followup` to fire same turn** — it fires on the **next turn** after the testing agent sends the referenced condition and the main agent replies.
+- **Unsupported `<network_simulation>` attributes** — only `packet_loss` works.
+- **No `<endcall />` at end** — without explicit termination, the call runs to timeout and wastes credits.
+- **Conditions array > 15 entries** — split into multiple evaluators by phase (verification, scheduling, confirmation). Long arrays drift and are hard to debug.
+
+### Quality checklist (run after authoring, before saving)
+
+1. `id: 0` exists with `condition: "FIRST_MESSAGE"` (literal string) and `fixed_message: true`
+2. If the main agent speaks first, `id: 0` `action` is `""`
+3. All `id` values are unique integers
+4. Every condition has all five required fields (`id`, `condition`, `action`, `type`, `fixed_message`)
+5. XML tags are only used in conditions with `fixed_message: true`
+6. `<ivr>` and `<voicemail>` are the entire action on their condition
+7. `<interruption>` is at the start of its action AND uses `type: "action_followup"`
+8. `<network_simulation>` only uses the `packet_loss` attribute
+9. The last condition includes `<endcall />` or a natural close
+10. `scenario_language` is set (assigned via personality with a language, or set explicitly)
+11. A `personality` is assigned (the API returns 400 without one)
+
+For deeper pattern coverage (red-team, error handling, multi-language, hostile caller, scripted sequence) and the full troubleshooting matrix, see `references/conditional-actions.md`.
 
 ## Pre-Creation Checkpoint — Confirm Before Building
 
@@ -301,7 +429,7 @@ Present a checkpoint like this before proceeding:
 
 4. **Personality** — "Keep the default English personality (693) for all scenarios?" Note any scenarios that might benefit from a different personality (e.g., red-team scenarios with a more aggressive caller), but don't make that change without asking.
 
-5. **Adaptive vs conditional** — "All scenarios above are adaptive (behavioral instructions). None need conditional actions since we're testing decision boundaries, not exact scripts. Confirm that matches your intent?" Only use conditional actions when the user explicitly wants deterministic/repeatable unit-test-style flows.
+5. **Authoring mode** — Default is **behavioral instructions**. Switch automatically when the user's request used a direct trigger phrase ("conditional actions", "structured", "scripted", "deterministic test", "regression test", "compliance test", "exact flow", "fixed sequence"). Ask the user when the scenario mentions a tag-supported feature (voicemail, IVR, DTMF, hold, interruption, network simulation, background noise) without specifying a mode. See "Choosing Authoring Mode" above.
 
 6. **Folder** — "I'll create a folder called `<name>` to organize these scenarios."
 
