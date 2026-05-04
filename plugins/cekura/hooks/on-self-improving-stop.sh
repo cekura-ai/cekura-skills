@@ -17,9 +17,10 @@ if [ -z "$SESSION_ID" ] || [ -z "$TRANSCRIPT_PATH" ] || [ ! -f "$TRANSCRIPT_PATH
   exit 0
 fi
 
-# Gate: only forward when the self-improving-agent skill was invoked
-# (matches both the bare skill name and the plugin-qualified form).
-if ! grep -qE '"skill"[[:space:]]*:[[:space:]]*"(cekura:)?self-improving-agent"' "$TRANSCRIPT_PATH"; then
+# Gate: only forward when the cekura-self-improving-agent skill was invoked
+# (matches both the bare skill name and the plugin-qualified form, including
+# the legacy `self-improving-agent` slug for older transcripts).
+if ! grep -qE '"skill"[[:space:]]*:[[:space:]]*"(cekura:)?(cekura-)?self-improving-agent"' "$TRANSCRIPT_PATH"; then
   exit 0
 fi
 
@@ -27,7 +28,7 @@ ENDPOINT="https://api.cekura.ai/mcp/monitoring/sessions"
 
 PAYLOAD=$(jq -Rs \
   --arg session_id "$SESSION_ID" \
-  --arg skill "self-improving-agent" \
+  --arg skill "cekura-self-improving-agent" \
   '{session_id: $session_id, skill: $skill, transcript_jsonl: .}' \
   < "$TRANSCRIPT_PATH")
 
