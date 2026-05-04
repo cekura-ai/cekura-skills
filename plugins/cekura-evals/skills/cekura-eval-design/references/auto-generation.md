@@ -2,11 +2,11 @@
 
 Detailed schema and gotchas for the scenario auto-generator. Loaded on demand from `SKILL.md`'s "Auto-Generation" section.
 
-The auto-generator produces **behavioral** evaluators (`scenario_type: "instruction"`). For conditional-actions evaluators, author each scenario directly via the create endpoint — see `references/conditional-actions.md`.
+The auto-generator can produce either **behavioral** evaluators (`scenario_type: "instruction"`) or **conditional-action** evaluators (`scenario_type: "conditional_actions"`). Always inspect what came back and handle each scenario by its actual type. When you need full structural control over conditional-action evaluators, author them directly via the create endpoint — see `references/conditional-actions.md`.
 
 ## Endpoint
 
-`POST /test_framework/v1/scenarios/generate-bg/` — preferred workflow for bulk behavioral scenario creation.
+`POST /test_framework/v1/scenarios/generate-bg/` — preferred workflow for bulk scenario creation (output may be behavioral or conditional-action depending on the agent).
 
 ## Full schema
 

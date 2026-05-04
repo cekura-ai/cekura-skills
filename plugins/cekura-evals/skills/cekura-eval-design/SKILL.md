@@ -46,9 +46,9 @@ When this skill suggests creating, listing, updating, or evaluating something on
 4. **Run the pre-creation checkpoint** — Confirm all key decisions with the user before building anything. See "Pre-Creation Checkpoint" below.
 5. **Author evaluators — pick the path based on the mode** (per "Choosing Authoring Mode" below):
    - **Behavioral mode (default):** start with auto-generate via `POST /test_framework/v1/scenarios/generate-bg/`. Provide category-level guidance in `extra_instructions`. If using Cekura mock tools, the generator creates tool-aware scenarios automatically. See "Auto-Generation" section below.
-   - **Conditional-actions mode:** skip auto-gen (it produces behavioral output). Author each scenario directly via `POST /test_framework/v1/scenarios/` with `scenario_type: "conditional_actions"` and the `conditional_actions` payload. See "Designing Conditional Actions" below.
-6. **Review and fix generation artifacts (behavioral mode only — skip in conditional-actions mode, which has no generator pass)** — PATCH `scenario_language` for non-English scenarios (defaults to "en" regardless of content). PATCH `first_message` if auto-gen added greetings instead of exact questions. Check for partial completion (generation may produce fewer than requested).
-7. **Supplement manually** — In behavioral mode, add edge cases, red-team scenarios, and deterministic tests that the generator doesn't cover. In conditional-actions mode, this is where you author additional scenarios beyond your initial set.
+   - **Conditional-actions mode:** auto-gen can produce either behavioral or conditional-action scenarios — check the `scenario_type` of generated output and proceed accordingly. When you need full structural control (verbatim phrasing, exact-sequence regression, IVR/voicemail/DTMF flows), author each scenario directly via `POST /test_framework/v1/scenarios/` with `scenario_type: "conditional_actions"` and the `conditional_actions` payload. See "Designing Conditional Actions" below.
+6. **Review and fix generation artifacts (only if you ran auto-gen in step 5)** — Check the `scenario_type` of each generated scenario and inspect the corresponding payload (`instructions` for behavioral, `conditional_actions` for conditional-action). PATCH `scenario_language` for non-English scenarios (defaults to "en" regardless of content). PATCH `first_message` if auto-gen added greetings instead of exact questions. Check for partial completion (generation may produce fewer than requested).
+7. **Supplement manually** — Add edge cases, red-team scenarios, and deterministic tests that the generator didn't cover, or author additional scenarios directly when you need full structural control.
 8. **Set up test infrastructure** — Check existing test profiles first, then create new ones. Configure tool data according to the chosen tool strategy.
 9. **Attach metrics** — ALWAYS include baseline metrics (Expected Outcome, Infrastructure Issues, Tool Call Success, Latency) on every evaluator. Without metrics, runs only report call completion, not correctness.
 10. **Run and validate** — Execute via `run_scenarios`, review transcripts, iterate
@@ -223,9 +223,9 @@ KEY INTERACTION POINTS:
 </scenario>
 ```
 
-## Auto-Generation (behavioral mode)
+## Auto-Generation
 
-The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the preferred workflow for bulk behavioral scenario creation. (Conditional-actions evaluators are not produced by this endpoint — author them directly.)
+The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the preferred workflow for bulk scenario creation. Generated scenarios may come back as either behavioral (`scenario_type: "instruction"`) or conditional-action (`scenario_type: "conditional_actions"`) — check what was created and proceed accordingly. When you need full structural control (verbatim phrasing, exact-sequence regression, IVR/voicemail/DTMF flows), author conditional-action evaluators directly via the create endpoint — see "Designing Conditional Actions" below.
 
 **Full schema:**
 | Field | Type | Required | Description |
