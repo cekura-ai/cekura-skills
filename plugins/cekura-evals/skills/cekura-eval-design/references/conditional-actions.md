@@ -48,6 +48,28 @@ The `instructions` field of the scenario payload becomes a JSON object (not a st
 - **`standard`** — fires when the conversation context matches the `condition` string. Write the trigger as a natural description of what the main agent will say or do.
 - **`action_followup`** — fires on the **next turn** after the referenced condition, not immediately. Sequence: testing agent sends condition X → main agent replies → this fires. The main agent's reply is received but does not affect whether the followup triggers. `condition` is the integer `id` of the preceding condition. Two uses: (1) multi-part responses across consecutive turns, and (2) **scripted sequences** — chain followups to deliver an exact sequence of messages from the testing agent with no conditions to match at all.
 
+## Writing the `condition` String (standard conditions, id > 0)
+
+The `condition` field must describe the main agent's observable action from a **third-person observer** perspective. It must never be a verbatim quote or the agent's own words.
+
+**Good — observer describes what the agent does:**
+- `"The main agent asks for the date of birth"`
+- `"When the main agent greets the caller"`
+- `"The main agent asks to confirm the caller's identity"`
+- `"When asked for the caller's zip code"`
+
+**Bad — verbatim quoted speech:**
+- `"The agent says 'Can you please provide your date of birth?'"` ✗
+- `"The main agent said 'Hi, how are you doing today?'"` ✗
+
+**Bad — the agent's words stated directly:**
+- `"Hi, I am Olivia from Ahealth. How can I assist you today?"` ✗
+- `"Can you please provide your date of birth?"` ✗
+
+Think of conditions as stage directions: *what does the agent do that prompts the caller's `action`?*
+
+**Specificity:** Avoid one-word or vague triggers — `"verification"` may not fire. Prefer `"The main agent asks for the caller's name and date of birth to verify their identity"`.
+
 ## fixed_message: true vs false
 
 **Use `fixed_message: true` when:**
@@ -136,7 +158,40 @@ Two ways to use profile data in conditions:
 - **Behavioral instruction (`fixed_message: false`):** `"Provide your full name and date of birth for verification"` — the testing agent reads from the profile and phrases it naturally.
 - **Template variable in a fixed message (`fixed_message: true`):** `"My name is {{test_profile.first_name}} {{test_profile.last_name}} and my date of birth is {{test_profile.dob}}"` — exact phrasing AND the real profile value both matter (compliance, IVR account-number entry).
 
-Never hardcode values that come from a test profile unless the value is intentionally fixed for that specific test (e.g., known-bad input).
+### Test Profile Rules (read before writing any action)
+
+**Rule A — Key exists → use the placeholder.**
+If a key exists in `test_profile`, you MUST use `{{test_profile.key}}` in the `action` string. Apply **semantic mapping**: the agent may use a different variable name internally (e.g., the agent expects `firstName` but the profile has `customer_name`). If the profile key is semantically equivalent to the data the agent is asking for, use the profile key.
+
+- ✗ `"Yes, this is John."` (when `test_profile` contains `customer_name`)
+- ✓ `"Yes, this is {{test_profile.customer_name}}."`
+
+**Rule B — Key absent → hardcode a realistic literal.**
+If a key is absent from `test_profile` (and no semantically equivalent key exists), hardcode a realistic value. Never reference a placeholder for a key that does not exist.
+
+- ✗ `"Hello, this is {{test_profile.firstName}}."` (will fail if key is missing)
+- ✓ `"Hello, this is John."`
+
+**Rule C — Intentionally wrong values are the exception.**
+You MAY hardcode an incorrect value when the scenario explicitly requires the caller to give wrong information first. The subsequent correction MUST use the `{{test_profile.key}}` placeholder.
+
+- Wrong DOB (intentional): `"It's May 10th, 1980."`
+- Correction: `"Sorry, I meant {{test_profile.dateOfBirth}}."`
+
+## Turn-by-Turn Construction Rules
+
+Apply these rules when building the `conditions` array:
+
+- **One condition per required caller response.** Don't combine two separate agent prompts into one condition.
+- **Proactive information.** If the caller answers the current question and proactively volunteers information for a *future* question in the same turn (e.g., "My DOB is X and my zip is Y"), combine both pieces into a single `action` string on the current `standard` condition. Don't create a separate condition for the anticipated follow-up.
+- **Self-correction.** If the caller misspeaks and immediately corrects themselves, model it as two conditions: the `standard` condition contains the wrong info, and an `action_followup` contains the correction.
+
+  ```json
+  { "id": 2, "condition": "The agent asks for your date of birth", "action": "It's May 10th, 1980.", "type": "standard", "fixed_message": true },
+  { "id": 3, "condition": 2, "action": "Sorry, I meant {{test_profile.dateOfBirth}}.", "type": "action_followup", "fixed_message": true }
+  ```
+
+- **Reproduce specified dialogue exactly.** Do not paraphrase or shorten scripted lines.
 
 ## Worked Examples
 
