@@ -81,3 +81,60 @@ Examples:
 - `SA-07: Suicidal ideation immediate transfer`
 
 Keep names under 80 chars (API limit on the `name` field).
+
+## Eval Types
+
+A complete suite has coverage across these categories. Each type can be authored as **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule.
+
+### Workflow Evals (Core)
+
+Happy path for each major workflow the agent supports — appointment booking, account lookup, password reset, etc. Cover every primary action the agent is supposed to perform end-to-end.
+
+### Deterministic / Unit Test Evals
+
+Conditional-actions evaluators for repeatable, structured testing of specific flows. Use when you need byte-identical behavior every run (regression, compliance verbatim, IVR navigation, DTMF entry).
+
+### Edge Case Evals
+
+Tool failures, multiple matching records, confirmation rejection, retry exhaustion, ambiguous user input. Each edge case is a separate evaluator with its own expected outcome.
+
+### Red Team Evals
+
+Prompt injection, social engineering, information extraction, off-topic manipulation, jailbreak attempts. Specific scripted attacks belong in conditional-actions evaluators (one evaluator per expected outcome — refusal vs compliance). Free-form probing stays behavioral.
+
+### Error Handling Evals
+
+Angry caller, deceased patient, clinical questions, silent tool failures, hostile callers. Tone-driven scenarios are usually behavioral; specific de-escalation flows can be conditional actions.
+
+### Multi-Language Evals
+
+Coverage across every language the agent supports. Set `scenario_language` and pair with a personality that matches. Behavioral covers tone/quality testing; conditional actions cover compliance-verbatim phrasing in the target language.
+
+## Execution Modes
+
+| Mode | Speed | Cost | Best For |
+|------|-------|------|----------|
+| **Voice** | Slow | High | Final validation, voice-specific testing (latency, interruptions, TTS quality) |
+| **Text/Chat** | Fast | Low | Logic testing, rapid iteration, flow validation without voice overhead |
+| **WebSocket** | Medium | Medium | Real-time agents, agents using WebSocket-based providers |
+| **Pipecat** | Medium | Medium | Pipecat framework agents |
+
+**Practical guidance:** Use text/chat for development iteration (fast, cheap, tests logic). Switch to voice for final validation before deployment. WebSocket for agents built on WebSocket providers.
+
+**Test profiles in chat/websocket:** Test profile data is passed to the main agent in chat and websocket runs, enabling tool verification without voice calls.
+
+## Create Evaluator from Transcript
+
+Cekura can create an evaluator directly from a real call transcript. Useful when:
+- A production call demonstrates an important scenario
+- You want to reproduce a specific customer interaction as a repeatable test
+- You're building regression tests from real-world edge cases
+
+**Endpoint:** `POST /test_framework/v1/scenarios/create_scenario_from_transcript/`
+
+**How it works:** Pass an observability call log ID. The endpoint analyzes the transcript, extracts the caller's behavior, and creates an evaluator that replays a similar conversation. The generated scenario captures the caller's intent, actions, and conversational flow — not an exact script replay.
+
+**When to use:** After reviewing production calls in observability, identify calls that represent important test scenarios (edge cases, failures, complex workflows) and convert them directly into evaluators. This is faster and more accurate than manually writing instructions to reproduce the scenario.
+
+**Post-creation:** Always review the generated evaluator — the auto-extraction may need refinement. Attach metrics, assign a test profile if identity data is involved, set the folder path, and enable tools.
+
