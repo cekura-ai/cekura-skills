@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cekura: Self-Improving Agent"
+  short_description: "Closes the loop on agent prompt and tool-config quality — diagnose failures, propose targeted edits, apply, and re-validate until 100% pass."
+  brand_color: "#6366F1"
+
+policy:
+  allow_implicit_invocation: true
