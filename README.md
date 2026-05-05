@@ -21,11 +21,11 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 6 Skills, 12 Commands across 3 Plugins
+### 6 Skills, 13 Commands across 3 Plugins
 
 | Plugin | Skills | Commands | Purpose |
 |--------|--------|----------|---------|
-| **cekura** | `cekura-coordinator`, `cekura-onboarding`, `cekura-create-agent` | `setup-mcp`, `upgrade-skills`, `report-bug` | Platform setup, agent onboarding, skill routing |
+| **cekura** | `cekura-coordinator`, `cekura-onboarding`, `cekura-create-agent` | `cekura-onboarding`, `setup-mcp`, `upgrade-skills`, `report-bug` | Platform setup, agent onboarding, skill routing |
 | **cekura-metrics** | `cekura-metric-design`, `cekura-metric-improvement` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` | Create, improve, and validate call quality metrics |
 | **cekura-evals** | `cekura-eval-design` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report` | Create, run, and analyze test suites for voice agents |
 
@@ -283,6 +283,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 | Command | What it Does |
 |---------|-------------|
+| `/cekura-onboarding` | Guided end-to-end setup — preflight, state-aware resume, walks through agent + metrics + first eval run |
 | `/setup-mcp` | Configure MCP server (run once after install) |
 | `/upgrade-skills` | Pull latest skill updates from GitHub |
 | `/report-bug` | Report a bug — files GitHub issue, optionally attempts a fix |
@@ -311,7 +312,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 ### Getting Started Flow
 
 1. `/setup-mcp` — Configure API access (Claude Code plugin only)
-2. Ask "I'm new to Cekura, help me get started" — activates `cekura-onboarding`
+2. `/cekura-onboarding` — Guided platform setup (preflight + state-aware walkthrough). Or just ask "I'm new to Cekura" to activate the skill directly.
 3. Ask "set up my agent" — activates `cekura-create-agent`
 4. `/autogen-eval` — Auto-generate test scenarios
 5. `/run-evals` — Run your first tests
