@@ -27,7 +27,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 |--------|--------|----------|---------|
 | **cekura** | `cekura-coordinator`, `cekura-onboarding`, `cekura-create-agent` | `setup-mcp`, `upgrade-skills`, `report-bug` | Platform setup, agent onboarding, skill routing |
 | **cekura-metrics** | `cekura-metric-design`, `cekura-metric-improvement` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` | Create, improve, and validate call quality metrics |
-| **cekura-evals** | `cekura-eval-design` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results` | Create, run, and analyze test suites for voice agents |
+| **cekura-evals** | `cekura-eval-design` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report` | Create, run, and analyze test suites for voice agents |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
@@ -295,6 +295,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `/list-evals` | List evaluators for an agent or project |
 | `/run-evals` | Execute test scenarios |
 | `/eval-results` | Check results from a test run |
+| `/cekura-report` | Full end-to-end quality report — generates 10 evals, runs them, produces structured analysis |
 
 ### Skills (load automatically — both install paths)
 
@@ -315,6 +316,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 4. `/autogen-eval` — Auto-generate test scenarios
 5. `/run-evals` — Run your first tests
 6. Ask "create a metric for X" — activates `cekura-metric-design`
+7. `/cekura-report` — Full end-to-end quality report for any agent
 
 ---
 
