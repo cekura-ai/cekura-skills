@@ -1,12 +1,12 @@
 # Phase 5 — Regression Testing
 
-> ## ⚠️ ALL REGRESSION TESTS MUST BE E2E SIMULATIONS OVER TWILIO SIP TELEPHONY
+> ## ⚠️ ALL REGRESSION TESTS MUST BE E2E SIMULATIONS ON CEKURA
 >
-> **Every regression case MUST be run as a full end-to-end voice simulation on Cekura using Twilio SIP telephony** — real phone calls via `run_voice` with the local `twilio-sip-dial-out` bot dialing Cekura over SIP.
+> **Every regression case MUST be run as a full end-to-end simulation on Cekura using the same connection medium as the production call** — same agent, same transport.
 >
-> ❌ Do NOT use Daily/WebRTC. ❌ Do NOT use text mode. ❌ Do NOT use any transport other than Twilio SIP.
+> ❌ Do NOT use text mode. ❌ Do NOT switch transports between phases.
 >
-> Passing regression tests over text or WebRTC while the fix breaks Twilio SIP voice behaviour is a false pass.
+> Passing regression tests over a different medium than production is a false pass.
 
 The fix works for the original bug. Now verify it hasn't broken anything else.
 

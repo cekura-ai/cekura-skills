@@ -1,12 +1,12 @@
 # Phase 4 — Verify the Fix
 
-> ## ⚠️ E2E SIMULATION OVER TWILIO SIP TELEPHONY IS THE ONLY VALID VERIFICATION
+> ## ⚠️ E2E SIMULATION IS THE ONLY VALID VERIFICATION
 >
-> **Verification MUST be done through a full end-to-end Cekura voice simulation using Twilio SIP telephony** — the exact same evaluator from Phase 2, triggered via `run_voice`, with the local bot dialing Cekura over `twilio-sip-dial-out`.
+> **Verification MUST be done through a full end-to-end Cekura simulation using the same connection medium as the production call** — the exact same evaluator from Phase 2, run over the same transport the agent is configured for.
 >
-> ❌ Do NOT use Daily/WebRTC. ❌ Do NOT use text mode. ❌ Do NOT use any transport other than Twilio SIP.
+> ❌ Do NOT use text mode. ❌ Do NOT switch to a different transport than what was used in the prod call.
 >
-> The fix is not verified until Cekura's metric scores show it passing on a real voice call. A fix that passes code review or unit tests but fails the E2E simulation is not a valid fix.
+> The fix is not verified until Cekura's metric scores show it passing over the same medium as production. A fix that passes code review or unit tests but fails the E2E simulation is not a valid fix.
 
 Re-run the same evaluator from Phase 2 against the fixed code. The same conditions that reproduced the bug must now be handled correctly by the fix.
 

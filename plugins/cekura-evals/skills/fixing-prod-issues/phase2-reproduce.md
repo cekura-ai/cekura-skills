@@ -1,22 +1,15 @@
 # Phase 2 — Reproduce the Issue
 
-> ## ⚠️ E2E SIMULATION OVER TWILIO SIP TELEPHONY IS MANDATORY
+> ## ⚠️ E2E SIMULATION IS MANDATORY — USE THE SAME CONNECTION AS THE PROD CALL
 >
-> **Every test in this phase MUST be run as a full end-to-end voice simulation on Cekura using Twilio SIP telephony.** The local agent dials out via `twilio-sip-dial-out` over SIP — this is the only valid connection method.
+> **Every test in this phase MUST be run as a full end-to-end simulation on Cekura using the same connection medium that the production call used.**
 >
-> ### DO NOT use any of these — they are wrong:
-> - ❌ **Daily / WebRTC** — do not use Daily rooms, do not use WebRTC transport, do not use `DailyTransport` for connecting to Cekura
-> - ❌ **Text mode** — `run_text` is not a voice simulation
-> - ❌ **WebSocket mode** — not the same as telephony
-> - ❌ **Any direct connection** that bypasses Twilio SIP
+> Check the agent configuration (`cekura:aiagents_retrieve` on `metadata.agent_id`) to see how the agent is set up — it will tell you which transport to use:
+> - **Telephony / SIP** (most common) → use `run_voice`, local bot dials via `twilio-sip-dial-out` over Twilio SIP
+> - **WebRTC** → use the appropriate WebRTC run endpoint for that provider
+> - **WebSocket** → use `run_websocket`
 >
-> ### The ONLY correct flow:
-> 1. Trigger `run_voice` on Cekura with `agent_number`
-> 2. Get the Cekura outbound number from the response
-> 3. Set `dialout_settings.sip_uri` in `local_runner.py` to dial that number via `cekura-pipecat-local.sip.twilio.com`
-> 4. Run `LOCAL_RUN=1 python bot.py` — the bot dials Cekura over Twilio SIP
->
-> The bot uses `twilio-sip-dial-out/` specifically because it dials via SIP telephony. If you find yourself touching `DailyTransport`, WebRTC, or `run_text`, stop — you are on the wrong path.
+> Use the same agent (`metadata.agent_id` from the prod call) and the same transport it is configured for. Running the simulation over a different medium than the one that triggered the bug is not a valid reproduction.
 
 Build a controlled reproduction of the bug on Cekura **before writing any fix**. The goal is a Cekura eval that fails in exactly the same way as the production call.
 

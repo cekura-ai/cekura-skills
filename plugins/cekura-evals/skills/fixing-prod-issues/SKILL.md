@@ -1,306 +1,61 @@
 ---
 name: fixing-prod-issues
-description: Debugs a failing production call, creates a fix, runs comprehensive regression tests across all affected flows using Cekura evaluators and the local twilio-sip-dial-out agent, then raises a PR with evidence. Use when the user wants to fix a production call bug, investigate a failing prod call, reproduce and fix a production issue, run regression tests before a PR, or says things like "fix this prod call issue", "debug and fix call ID", "test my fix against prod scenarios", "reproduce this production bug", or "regression test before raising PR".
+description: Debugs a failing production call, reproduces the bug with Cekura evaluators, implements a fix, verifies it, runs regression tests, then raises a PR with evidence. Use when the user wants to fix a production call bug, investigate a failing prod call, reproduce and fix a production issue, run regression tests before a PR, or says things like "fix this prod call issue", "debug and fix call ID", "test my fix against prod scenarios", "reproduce this production bug", or "regression test before raising PR".
 ---
 
 # Fixing Production Call Issues
 
-Full workflow — two rounds of testing, no deployment required:
+Full workflow — **debug first, reproduce before fixing, test thoroughly, then PR**.
 
 ```
-Phase 1        Phase 2              Phase 3         Phase 4              Phase 5       Phase 6
-Debug    →   Reproduce setup   →  Confirm bug  →  Fix + re-run     →  Regression  →  PR
-Understand     Evaluators +          Run shows       Same setup on       Happy paths    All result
-root cause     metrics that          eval FAILS      fixed code →        + edge cases   URLs in PR
-               define failure        as expected     eval PASSES         pass too
+Phase 1      Phase 2         Phase 3     Phase 4        Phase 5        Phase 6
+Debug   →   Reproduce   →   Fix    →   Verify    →   Regression  →   PR
+Understand   Confirm bug     Write the   Same eval      Happy paths    All result
+root cause   on Cekura       code fix    must PASS      + edge cases   URLs in PR
+             BEFORE fix      + commit    now            pass too
 ```
 
-## Progress checklist
+## The 6 Phases
 
-```
-- [ ] Phase 1:  Debug the issue
-- [ ] Phase 2:  Build reproduction setup
-  - [ ] 2a. Create conditional-actions evaluator(s) for the failing case
-  - [ ] 2b. Attach predefined metrics + write expected outcome (describes correct behaviour)
-  - [ ] 2c. Configure local agent with edge conditions to reproduce bug
-- [ ] Phase 3:  Confirm reproduction — eval must FAIL before fix
-- [ ] Phase 4:  Apply fix, re-run same setup — eval must PASS
-- [ ] Phase 5:  Regression testing
-  - [ ] 5a. Identify happy paths + edge cases affected by the fix
-  - [ ] 5b. Create evaluators with conditional actions + metrics
-  - [ ] 5c. Run all — everything must PASS
-- [ ] Phase 6:  Raise PR with all result URLs
-```
+| Phase | File | What happens |
+|---|---|---|
+| 1 | [phase1-debug.md](phase1-debug.md) | Fetch prod call + logs, identify root cause, confirm with user |
+| 2 | [phase2-reproduce.md](phase2-reproduce.md) | Build evaluator, attach metrics, run — eval **must fail** before any fix |
+| 3 | [phase3-fix.md](phase3-fix.md) | Write the code fix, commit locally |
+| 4 | [phase4-verify.md](phase4-verify.md) | Re-run same evaluator — eval **must pass** now |
+| 5 | [phase5-regression.md](phase5-regression.md) | Test all affected happy paths and edge cases |
+| 6 | [phase6-pr.md](phase6-pr.md) | Raise PR with all Cekura result URLs |
 
 ---
 
-## Phase 1 — Debug the Issue
+## Strictness Rules — Read Before Starting
 
-Fetch the production call:
+These rules are non-negotiable. Do not proceed past a gate without satisfying it.
 
-```bash
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-get_call "CALL_ID"
-```
+### Rule 0 — Use the same connection medium as the production call. No exceptions.
 
-Extract:
+**Every reproduction, verification, and regression test MUST be a full end-to-end simulation on Cekura using the same transport the agent is configured for** — check `cekura:aiagents_retrieve` on `metadata.agent_id` to confirm. Most likely telephony, but follow what the agent is actually configured to use.
 
-| Field | Path |
-|---|---|
-| Real agent ID | `metadata.agent_id` (not top-level `agent_id`) |
-| Personality ID | `metadata.personality_id` |
-| Project ID | `project` field on the agent |
-| Customer data | `dynamic_variables` |
-| Ended reason | `metadata.ended_reason` |
-| Transcript | `transcript_object` (array of turns with role + content) |
+❌ Text mode is never a valid substitute. ❌ Do not switch transports between phases.
 
-Fetch agent config:
+The bug lives in the real call path; only a simulation over the same medium can confirm it.
 
-```
-cekura:aiagents_retrieve  →  id = metadata.agent_id
-```
+### Rule 1 — Phases are sequential. No skipping.
 
-Extract: `description` (system prompt), `llm_model`, `llm_temperature`, `llm_max_tokens`.
+Each phase has a gate. A gate is not passed by assumption — it is passed by evidence. The sequence exists because:
+- You cannot write a good fix without understanding the root cause (Phase 1 gate)
+- You cannot trust a fix without first proving the bug exists in a controlled way (Phase 2 gate)
+- You cannot call regression tests meaningful without a passing fix verification (Phase 4 gate)
 
-Use Datadog MCP tools to check logs around the call timestamp. Search by `call_id`, `session_id`, or agent ID. Cross-reference with the transcript to pinpoint exactly where and why the call went wrong.
+### Rule 2 — Phase 2 is the hardest gate. Treat it as such.
 
-Confirm the root cause with the user before proceeding.
+Reproducing the bug is the most critical step. **Do not move to Phase 3 until the eval definitively fails on Cekura with metric scores showing the failure.** If there is any doubt about whether the bug is truly reproduced, stop and ask the user. Do not guess.
 
----
+### Rule 3 — When in doubt, ask.
 
-## Phase 2 — Build the Reproduction Setup
+If you are unsure which metrics to use, whether the root cause is correct, whether the edge conditions are right, or whether a result is ambiguous — **stop and ask the user**. A wrong assumption here wastes the entire workflow.
 
-### 2a. Create the evaluator using conditional actions
+### Rule 4 — Never push code until Phase 5 is complete.
 
-Use the `cekura-evals:conditional-actions` skill to build a deterministic evaluator.
+The commit happens in Phase 3. The push happens only after all regression tests pass in Phase 5.
 
-Extract **Testing Agent** turns from `transcript_object` verbatim. Do **not** clean up STT artifacts — garbled text, truncated words, odd punctuation are exactly what the main agent's LLM received in production and are the bug trigger.
-
-Map each turn to a fixed condition:
-- First turn: `trigger: "call_start"`, `type: "fixed"`
-- Subsequent turns: `trigger: "agent_speaks"`, `type: "fixed"`
-- Use tags if the scenario involves voice-specific behaviour: `silence`, `interruption`, `background_noise`, `dtmf`, etc.
-
-```bash
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-create_scenario '{
-  "agent": AGENT_ID,
-  "personality": PERSONALITY_ID,
-  "name": "Bug repro: <brief issue description>",
-  "instructions": "Replay the production call that caused <issue>.",
-  "expected_outcome_prompt": "<describe what CORRECT behaviour looks like — this defines pass/fail>",
-  "conditional_actions": { "role": "caller", "conditions": [...] }
-}'
-```
-
-Save the `scenario_id`.
-
-### 2b. Attach metrics and write the expected outcome
-
-**Expected outcomes are evaluated by an LLM judge reading the call transcript.** They can only assess what appears in the conversation text — what was said, what actions were taken, what the agent communicated. They cannot evaluate audio-level or timing phenomena.
-
-| What to express | How |
-|---|---|
-| Conversational/behavioral outcomes (agent booked, transferred, informed, confirmed) | `expected_outcome_prompt` |
-| Silence gaps, connection drops, agent non-response | Predefined metric: **Infrastructure Issues** |
-| Response latency / slow replies | Predefined metric: **Latency** |
-| Tool call success/failure | Predefined metric: **Tool Call Success** |
-| Whether the overall goal was met | Predefined metric: **Expected Outcome** |
-
-Note: `<silence>` and `<interruption>` XML tags in conditional actions **generate** those conditions for the testing agent to emit — they do not evaluate how the main agent responded to them. To evaluate the response, attach the appropriate predefined metric.
-
-List available predefined metrics and choose the ones relevant to the failure:
-
-```bash
-cekura:predefined_metrics_list
-```
-
-Always attach at minimum: **Expected Outcome**, **Infrastructure Issues**, **Tool Call Success**, **Latency**.
-
-Write an `expected_outcome_prompt` focused on **conversational behaviour only** — what the agent should have said or done. Keep it concise; overly specific prompts (exact phrases, exact dates) cause false failures.
-
-```bash
-update_scenario "SCENARIO_ID" '{
-  "metrics": [METRIC_ID_1, METRIC_ID_2],
-  "expected_outcome_prompt": "Agent confirms the appointment, provides arrival instructions, and ends the call politely."
-}'
-```
-
-### 2c. Configure the local agent to reproduce the bug
-
-Display values for `twilio-sip-dial-out/local_runner.py`:
-
-| Field | Value |
-|---|---|
-| `scenario_config.instructions` | Agent system prompt from Phase 1 |
-| `scenario_config.name` | `"Bug repro: <issue>"` |
-| `configuration.model` | `llm_model` from agent config |
-| `call_details.call_id` | `"patronus_<timestamp>"` |
-| `dialout_settings.sip_uri` | `sip:<CEKURA_OUTBOUND_NUMBER>@cekura-pipecat-local.sip.twilio.com?X-CallerId=+19789751706` |
-
-**Role swap:** If instructions mention "main agent" or "testing agent" by name, swap the labels.
-
-Apply the **same conditions that caused the bug** in production. Examples:
-- **Invalid / expired API key**: set the env var to a bad value
-- **Slow upstream / latency**: add `asyncio.sleep(N)` in the relevant handler
-- **Timeout boundary**: lower `maxDurationSeconds` in the config
-- **Missing data**: omit a field from `dynamic_variables` that the agent expects
-
-These conditions stay in place for Phase 3. They are removed (or fixed) for Phase 4.
-
----
-
-## Phase 3 — Confirm Reproduction
-
-Trigger a voice run on Cekura, passing `agent_number` = `X-CallerId` from `local_runner.py` (`+19789751706`). This tells Cekura to expect an inbound call from that number and answer it with the evaluator:
-
-```bash
-run_voice "SCENARIO_ID" '{"agent_number": "+19789751706"}'
-```
-
-From the response, note the **Cekura outbound number** (the number your local bot must dial). Update `dialout_settings.sip_uri` in `local_runner.py`:
-
-```python
-"dialout_settings": {
-    "sip_uri": "sip:<CEKURA_OUTBOUND_NUMBER>@cekura-pipecat-local.sip.twilio.com?X-CallerId=+19789751706"
-}
-```
-
-Then run the local bot in the background (bug conditions still active). The bot dials Cekura's number via Twilio SIP — Cekura answers with the evaluator and a real phone call begins:
-
-```bash
-cd twilio-sip-dial-out && LOCAL_RUN=1 python bot.py &
-```
-
-Poll for results:
-
-```bash
-get_result "RESULT_ID"
-```
-
-**Expected outcome: the eval FAILS.** If it passes, the reproduction setup is not correctly simulating the bug — revisit Phase 2 before continuing. Do not apply the fix until the eval reliably fails.
-
----
-
-## Phase 4 — Apply the Fix and Re-run
-
-### 4a. Fix the code
-
-Apply the fix. Keep the same edge conditions active (invalid API key, sleep timers, etc.) — the fix must handle those, not just work under ideal conditions.
-
-### 4b. Commit locally
-
-```bash
-git add <changed files>
-git commit -m "fix: <description>"
-```
-
-Do not push yet.
-
-### 4c. Re-run the same evaluator
-
-Trigger a new run for the same `scenario_id` — do not create a new evaluator:
-
-```bash
-run_voice "SCENARIO_ID" '{"agent_number": "+19789751706"}'
-```
-
-From the response, note the new Cekura outbound number, update `dialout_settings.sip_uri` in `local_runner.py`, then run the local bot to dial in:
-
-**Expected outcome: the eval PASSES.** If it still fails, iterate on the fix and re-run. Do not proceed to Phase 5 until this passes.
-
----
-
-## Phase 5 — Regression Testing
-
-### 5a. Identify happy paths and edge cases
-
-Think through every flow that touches the changed code path:
-- Standard happy path flows through the same handler
-- Edge cases the fix might break (error paths, timeouts, retries)
-- Scenarios with voice-specific stress: silence gaps, interruptions, background noise, DTMF input
-- Any other caller intents that reach the same code
-
-Produce a named list and confirm with the user.
-
-### 5b. Create evaluators for each case
-
-Use the `cekura-evals:conditional-actions` skill for each. Design the conversation flow for each case.
-
-To **generate** voice-specific stress conditions, use XML tags in `fixed_message`: `<silence>`, `<interruption>`, `<background_noise>`, `<dtmf>`, etc. These make the testing agent emit those conditions — they do not evaluate the main agent's response.
-
-To **evaluate** the main agent's response to those conditions, attach predefined metrics:
-- Silence / drops / non-response → **Infrastructure Issues**
-- Slow replies → **Latency**
-- Tool call behaviour → **Tool Call Success**
-- Overall conversational goal → **Expected Outcome** (transcript-based LLM judge)
-
-Write `expected_outcome_prompt` for conversational/behavioural outcomes only — what the agent should say or do. Do not write expected outcomes for timing, silence, or audio-level phenomena.
-
-```bash
-create_scenario '{
-  "agent": AGENT_ID,
-  "personality": PERSONALITY_ID,
-  "name": "Regression: <case name>",
-  "instructions": "...",
-  "expected_outcome_prompt": "...",
-  "metrics": [...],
-  "conditional_actions": { "role": "caller", "conditions": [...] }
-}'
-```
-
-### 5c. Run all regression cases
-
-For each scenario, trigger a voice run, note the Cekura outbound number, update `local_runner.py`, run the bot in background. Work through cases one at a time — restore any modified conditions between cases.
-
-Poll all results. Build a summary:
-
-| Case | Status | Pass/Fail | Notes |
-|---|---|---|---|
-| Happy path | completed | PASS | — |
-| Silence gap | completed | PASS | — |
-| Interruption | completed | FAIL | Agent stopped mid-sentence |
-
-For any failure: show the transcript divergence point, fix, and rerun:
-
-```bash
-rerun_result "RESULT_ID"
-```
-
-All cases must pass before proceeding.
-
----
-
-## Phase 6 — Raise the PR
-
-```bash
-gh pr create --title "<fix title>" --body "..."
-```
-
-The `project_id` is the `project` field from the agent config (Phase 1).
-
-Include in the PR body:
-
-```
-## Test evidence
-
-### Bug reproduction (before fix — expected to FAIL)
-| Scenario | Result |
-|---|---|
-| Bug repro | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID_FAIL ❌ (confirmed bug) |
-
-### Fix verification (after fix — expected to PASS)
-| Scenario | Result |
-|---|---|
-| Bug repro | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID_PASS ✅ |
-
-### Regression tests
-| Case | Result |
-|---|---|
-| <Happy path> | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID_1 ✅ |
-| <Edge case>  | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID_2 ✅ |
-
-Prod call: #CALL_ID
-Root cause: <one sentence>
-Edge conditions used to reproduce: <e.g. invalid API key, 2s sleep in handler>
-```
