@@ -97,19 +97,32 @@ Save the `scenario_id`.
 
 ### 2b. Attach metrics and write the expected outcome
 
-List available predefined metrics and choose the ones most relevant to the failure:
+**Expected outcomes are evaluated by an LLM judge reading the call transcript.** They can only assess what appears in the conversation text — what was said, what actions were taken, what the agent communicated. They cannot evaluate audio-level or timing phenomena.
+
+| What to express | How |
+|---|---|
+| Conversational/behavioral outcomes (agent booked, transferred, informed, confirmed) | `expected_outcome_prompt` |
+| Silence gaps, connection drops, agent non-response | Predefined metric: **Infrastructure Issues** |
+| Response latency / slow replies | Predefined metric: **Latency** |
+| Tool call success/failure | Predefined metric: **Tool Call Success** |
+| Whether the overall goal was met | Predefined metric: **Expected Outcome** |
+
+Note: `<silence>` and `<interruption>` XML tags in conditional actions **generate** those conditions for the testing agent to emit — they do not evaluate how the main agent responded to them. To evaluate the response, attach the appropriate predefined metric.
+
+List available predefined metrics and choose the ones relevant to the failure:
 
 ```bash
-# Use MCP tool to list predefined metrics
 cekura:predefined_metrics_list
 ```
 
-Attach the relevant metric IDs to the scenario and write an `expected_outcome_prompt` that clearly describes what **correct** behaviour looks like after the fix. This is the success criterion — the eval will **FAIL** when the bug is present and **PASS** when the fix works.
+Always attach at minimum: **Expected Outcome**, **Infrastructure Issues**, **Tool Call Success**, **Latency**.
+
+Write an `expected_outcome_prompt` focused on **conversational behaviour only** — what the agent should have said or done. Keep it concise; overly specific prompts (exact phrases, exact dates) cause false failures.
 
 ```bash
 update_scenario "SCENARIO_ID" '{
   "metrics": [METRIC_ID_1, METRIC_ID_2],
-  "expected_outcome_prompt": "..."
+  "expected_outcome_prompt": "Agent confirms the appointment, provides arrival instructions, and ends the call politely."
 }'
 ```
 
@@ -139,15 +152,21 @@ These conditions stay in place for Phase 3. They are removed (or fixed) for Phas
 
 ## Phase 3 — Confirm Reproduction
 
-Trigger the evaluator on Cekura, passing `agent_number` = `X-CallerId` from `local_runner.py` (`+19789751706`):
+Trigger a voice run on Cekura, passing `agent_number` = `X-CallerId` from `local_runner.py` (`+19789751706`). This tells Cekura to expect an inbound call from that number and answer it with the evaluator:
 
 ```bash
-run_pipecat "SCENARIO_ID" '{"agent_number": "+19789751706"}'
+run_voice "SCENARIO_ID" '{"agent_number": "+19789751706"}'
 ```
 
-Note the **Cekura outbound number** from the response and update `dialout_settings.sip_uri` in `local_runner.py` with it.
+From the response, note the **Cekura outbound number** (the number your local bot must dial). Update `dialout_settings.sip_uri` in `local_runner.py`:
 
-Run the local bot in the background (bug conditions still active):
+```python
+"dialout_settings": {
+    "sip_uri": "sip:<CEKURA_OUTBOUND_NUMBER>@cekura-pipecat-local.sip.twilio.com?X-CallerId=+19789751706"
+}
+```
+
+Then run the local bot in the background (bug conditions still active). The bot dials Cekura's number via Twilio SIP — Cekura answers with the evaluator and a real phone call begins:
 
 ```bash
 cd twilio-sip-dial-out && LOCAL_RUN=1 python bot.py &
@@ -183,10 +202,10 @@ Do not push yet.
 Trigger a new run for the same `scenario_id` — do not create a new evaluator:
 
 ```bash
-run_pipecat "SCENARIO_ID" '{"agent_number": "+19789751706"}'
+run_voice "SCENARIO_ID" '{"agent_number": "+19789751706"}'
 ```
 
-Update the SIP URI with the new Cekura outbound number, run the bot in background, poll for results.
+From the response, note the new Cekura outbound number, update `dialout_settings.sip_uri` in `local_runner.py`, then run the local bot to dial in:
 
 **Expected outcome: the eval PASSES.** If it still fails, iterate on the fix and re-run. Do not proceed to Phase 5 until this passes.
 
@@ -206,9 +225,17 @@ Produce a named list and confirm with the user.
 
 ### 5b. Create evaluators for each case
 
-Use the `cekura-evals:conditional-actions` skill for each. Design the conversation flow for each case. Use relevant tags where applicable (`silence`, `interruption`, `background_noise`, `dtmf`, etc.).
+Use the `cekura-evals:conditional-actions` skill for each. Design the conversation flow for each case.
 
-For each evaluator, attach predefined metrics and write a precise `expected_outcome_prompt`.
+To **generate** voice-specific stress conditions, use XML tags in `fixed_message`: `<silence>`, `<interruption>`, `<background_noise>`, `<dtmf>`, etc. These make the testing agent emit those conditions — they do not evaluate the main agent's response.
+
+To **evaluate** the main agent's response to those conditions, attach predefined metrics:
+- Silence / drops / non-response → **Infrastructure Issues**
+- Slow replies → **Latency**
+- Tool call behaviour → **Tool Call Success**
+- Overall conversational goal → **Expected Outcome** (transcript-based LLM judge)
+
+Write `expected_outcome_prompt` for conversational/behavioural outcomes only — what the agent should say or do. Do not write expected outcomes for timing, silence, or audio-level phenomena.
 
 ```bash
 create_scenario '{
@@ -224,7 +251,7 @@ create_scenario '{
 
 ### 5c. Run all regression cases
 
-For each scenario, trigger a pipecat run, note the Cekura outbound number, update `local_runner.py`, run the bot in background. Work through cases one at a time — restore any modified conditions between cases.
+For each scenario, trigger a voice run, note the Cekura outbound number, update `local_runner.py`, run the bot in background. Work through cases one at a time — restore any modified conditions between cases.
 
 Poll all results. Build a summary:
 
