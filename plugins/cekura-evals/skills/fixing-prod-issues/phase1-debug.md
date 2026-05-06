@@ -6,12 +6,7 @@ Understand exactly what went wrong before touching any code or building any eval
 
 ## 1a. Fetch the production call
 
-If a call ID was provided, use it. Otherwise list recent calls:
-
-```bash
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-list_calls "limit=20"
-```
+If a call ID was not provided, **ask the user for it** — do not browse recent calls. The user knows which call had the issue.
 
 Fetch the full call:
 
