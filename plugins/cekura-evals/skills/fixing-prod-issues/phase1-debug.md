@@ -36,16 +36,32 @@ Extract: `description` (system prompt).
 
 ---
 
-## 1b. Check logs
+## 1b. Check logs and traces
 
-Use Datadog MCP tools to search logs around the call's timestamp. Search by `call_id`, `session_id`, or agent ID. Look for:
+Use all available observability tools to build a complete picture of what happened during the call. Search using `call_id`, `session_id`, agent ID, or the call's timestamp range.
 
+### Datadog — logs and APM traces
+Use Datadog MCP tools to search logs and traces:
+- `search_datadog_logs` — search application logs around the call timestamp
+- `search_datadog_spans` / `get_datadog_trace` — find the trace for this call and inspect individual spans
+- `search_datadog_events` — check for errors or anomalies flagged during the call
+- `analyze_datadog_logs` — summarise log patterns around the failure window
+
+### LLM observability — LLMObs / Langfuse / similar
+If the agent uses LLM observability (Datadog LLMObs, Langfuse, etc.), search for the LLM spans tied to this call:
+- Look up the session or trace by `call_id` or `session_id`
+- Inspect individual LLM call inputs, outputs, latency, and token counts
+- Check for timeout signals, empty responses, or unexpected completions
+- Datadog LLMObs tools: `get_llmobs_trace`, `get_llmobs_span_details`, `search_llmobs_spans`
+
+### What to look for across all tools
 - Errors or exceptions in the call handler
 - Unexpected tool call inputs or outputs
-- Timeouts or latency spikes
-- Any upstream service returning unexpected responses
+- Timeouts or slow spans (STT, LLM, TTS, tool calls)
+- Any upstream service returning unexpected or empty responses
+- Gaps between transcript turns that suggest a silent failure
 
-Cross-reference the `transcript_object` turn-by-turn with the logs to pinpoint exactly where the call diverged from expected behaviour.
+Cross-reference findings with `transcript_object` turn-by-turn to pinpoint exactly where and why the call diverged from expected behaviour.
 
 ---
 
