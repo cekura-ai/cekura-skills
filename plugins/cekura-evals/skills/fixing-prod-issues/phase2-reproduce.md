@@ -79,7 +79,6 @@ Display values for `twilio-sip-dial-out/local_runner.py`:
 |---|---|
 | `scenario_config.instructions` | Agent system prompt (`description` from Phase 1) |
 | `scenario_config.name` | `"Bug repro: <issue>"` |
-| `configuration.model` | `llm_model` from agent config |
 | `call_details.call_id` | `"patronus_<timestamp>"` |
 | `dialout_settings.sip_uri` | `sip:<CEKURA_OUTBOUND_NUMBER>@cekura-pipecat-local.sip.twilio.com?X-CallerId=+19789751706` |
 

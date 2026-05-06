@@ -32,7 +32,7 @@ Fetch agent config:
 cekura:aiagents_retrieve  →  id = metadata.agent_id
 ```
 
-Extract: `description` (system prompt), `llm_model`, `llm_temperature`, `llm_max_tokens`.
+Extract: `description` (system prompt).
 
 ---
 
