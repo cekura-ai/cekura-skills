@@ -4,10 +4,9 @@
 >
 > **Every test in this phase MUST be run as a full end-to-end simulation on Cekura using the same connection medium that the production call used.**
 >
-> Check the agent configuration (via the Cekura API: `GET /test_framework/v1/ai-agents/{metadata.agent_id}/`) to see how the agent is set up — it will tell you which transport to use:
+> Check the agent configuration via the Cekura API (`GET /test_framework/v1/ai-agents/{metadata.agent_id}/`) to see how the agent is set up — it will tell you which transport to use:
 > - **Telephony / SIP** (most common) → use `run_voice`, local bot dials via `twilio-sip-dial-out` over Twilio SIP
 > - **WebRTC** → use the appropriate WebRTC run endpoint for that provider
-> - **WebSocket** → use `run_websocket`
 >
 > Use the same agent (`metadata.agent_id` from the prod call) and the same transport it is configured for. Running the simulation over a different medium than the one that triggered the bug is not a valid reproduction.
 
@@ -68,15 +67,17 @@ update_scenario "SCENARIO_ID" '{
 
 Before configuring anything, check whether setup instructions for running the local agent and connecting it to Cekura already exist:
 
-1. Check `memory.md` in the project root
-2. Check `CLAUDE.md` in the project root
+1. Read `memory.md` in the project root
+2. Read `CLAUDE.md` in the project root
 
-If instructions are found — follow them. They are the source of truth for this project's local run setup.
+If instructions are found — follow them exactly. They are the source of truth for this project's local run setup.
 
-**If no instructions exist — ask the user:**
-> "How do I run the local agent and connect it to a Cekura simulation? (e.g. what command to start it, how to pass the Cekura outbound number, which config file to edit)"
+**If no instructions are found in either file — you MUST ask the user before proceeding. Do not guess, do not assume, do not try to infer from other files.**
 
-Once the user explains, **save the instructions to `memory.md`** so this question never needs to be asked again for this project.
+Ask:
+> "I couldn't find local run setup instructions in `memory.md` or `CLAUDE.md`. How do I run the local agent and connect it to a Cekura simulation? (e.g. what command to start it, how to pass the Cekura outbound number, which config file to edit)"
+
+Once the user explains, **save the instructions to `memory.md`** so this question never needs to be asked again for this project. Do not proceed to 2d until you have these instructions.
 
 ---
 
@@ -150,26 +151,30 @@ get_result "RESULT_ID"
 
 ---
 
-## ⛔ Phase 2 Gate — HARD STOP
+## ⛔ Phase 2 Gate — ABSOLUTE HARD STOP. DO NOT PASS WITHOUT EVIDENCE.
 
-**The eval MUST fail on Cekura before proceeding to Phase 3. This is non-negotiable.**
+**You MUST NOT move to Phase 3 until the eval definitively fails on Cekura. No exceptions, no shortcuts.**
 
-"Fails" means the **Cekura metric scores** show failure — not just that the call ended or the transcript looks wrong.
+This gate exists because a fix written without a confirmed reproduction is untestable — you have no way to know if the fix actually worked. Skipping this gate invalidates the entire workflow.
 
-Check `runs[].evaluation.metrics[]` in the result. The metrics from the prod call must be scoring failure here too.
+### What "fails" means
+
+"Fails" means the **Cekura metric scores** show failure — not just that the call ended or the transcript looks wrong to you.
+
+Check `runs[].evaluation.metrics[]` in the result. The exact metrics that were failing in the prod call must be scoring failure here too.
 
 > `success: true` on a run only means the call reached a terminal state. It does **not** mean the bug was reproduced. Always read the metric scores.
 
 **Read the transcript from this result and compare it turn-by-turn with the original prod call transcript.** The failure mode must be visibly present in the new transcript AND reflected in the metric scores.
 
-**If the metrics pass or the result is ambiguous:**
+### If the metrics pass or the result is ambiguous — stop and diagnose
 
-Do not proceed. Stop and diagnose:
+Do NOT proceed. Work through this checklist:
 - Are the metrics the exact ones that failed in the prod call? If not, go back to 2b.
-- Are the edge conditions (invalid API key, sleep timers, etc.) actually active? Check and re-apply.
+- Are the edge conditions (invalid API key, sleep timers, etc.) actually active and strong enough? Check and re-apply.
 - Is the evaluator sending the right turns in the right order? Re-check the conditional actions.
 - Is the wrong code path being exercised? Re-read the root cause from Phase 1.
 
-**If still unsure, stop and ask the user** what they observed in the original prod call. Do not guess.
+**If still unsure after checking all of the above — stop and ask the user.** Show them the transcript and metric scores and ask: "Does this match the failure you saw in the prod call?" Do not guess. Do not proceed.
 
 Only when the **Cekura metric scores definitively show failure in the same way as the prod call** move to [Phase 3](phase3-fix.md).
