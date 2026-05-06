@@ -77,7 +77,17 @@ If instructions are found — follow them exactly. They are the source of truth 
 Ask:
 > "I couldn't find local run setup instructions in `memory.md` or `CLAUDE.md`. How do I run the local agent and connect it to a Cekura simulation? (e.g. what command to start it, how to pass the Cekura outbound number, which config file to edit)"
 
-Once the user explains, **save the instructions to `memory.md`** so this question never needs to be asked again for this project. Do not proceed to 2d until you have these instructions.
+Once the user explains, **immediately write the instructions to `memory.md`** before doing anything else. Do not proceed to 2d until you have written it.
+
+Write a dedicated section like this to `memory.md` (create the file if it doesn't exist):
+
+```markdown
+## Local Agent Run Setup
+
+<paste exactly what the user told you — the command to start the agent, which config file to edit, how to pass the Cekura outbound number/connection details, any env vars needed>
+```
+
+Confirm the write succeeded, then proceed to 2d.
 
 ---
 
