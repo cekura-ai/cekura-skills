@@ -53,12 +53,11 @@ create_scenario '{
 
 ## 5c. Run all cases
 
-For each scenario, trigger a voice run, note the Cekura outbound number, update `local_runner.py`, run the bot in the background. Work through cases one at a time — restore any modified conditions between cases.
+For each scenario, trigger a run using the agent's configured transport, extract connection details from the response, start the local agent using the setup instructions from `memory.md` / `CLAUDE.md`. Work through cases one at a time — restore any modified conditions between cases.
 
 ```bash
-run_voice "SCENARIO_ID" '{"agent_number": "+19789751706"}'
-# update SIP URI, then:
-cd twilio-sip-dial-out && LOCAL_RUN=1 python bot.py &
+run_voice "SCENARIO_ID" '{"agent_number": "<local_agent_caller_id>"}'
+# pass connection details to local agent per stored setup instructions
 ```
 
 Poll all results and build a summary:

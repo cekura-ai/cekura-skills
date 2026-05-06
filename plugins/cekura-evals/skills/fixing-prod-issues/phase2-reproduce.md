@@ -64,9 +64,27 @@ update_scenario "SCENARIO_ID" '{
 
 ---
 
-## 2c. Configure the local agent with the same edge conditions
+## 2c. Look up how to run the local agent
 
-Display values for `twilio-sip-dial-out/local_runner.py`:
+Before configuring anything, check whether setup instructions for running the local agent and connecting it to Cekura already exist:
+
+1. Check `memory.md` in the project root
+2. Check `CLAUDE.md` in the project root
+
+If instructions are found — follow them. They are the source of truth for this project's local run setup.
+
+**If no instructions exist — ask the user:**
+> "How do I run the local agent and connect it to a Cekura simulation? (e.g. what command to start it, how to pass the Cekura outbound number, which config file to edit)"
+
+Once the user explains, **save the instructions to `memory.md`** so this question never needs to be asked again for this project.
+
+---
+
+### Example setup (twilio-sip-dial-out) — for reference only
+
+This is one possible setup. Your project may differ.
+
+Configure `local_runner.py`:
 
 | Field | Value |
 |---|---|
@@ -114,19 +132,15 @@ These conditions stay active through Phase 2 and Phase 4. Remove or fix them onl
 
 ## 2d. Run the evaluator
 
-Trigger a voice run on Cekura, passing `agent_number` = `X-CallerId` from `local_runner.py` (`+19789751706`):
+Trigger a run on Cekura using the appropriate endpoint for the agent's configured transport (see Phase 2 header). For telephony:
 
 ```bash
-run_voice "SCENARIO_ID" '{"agent_number": "+19789751706"}'
+run_voice "SCENARIO_ID" '{"agent_number": "<local_agent_caller_id>"}'
 ```
 
-From the response, note the **Cekura outbound number** and update `dialout_settings.sip_uri` in `local_runner.py` with it.
+From the response, extract the connection details (e.g. outbound number for telephony, WebRTC token for WebRTC) and pass them to the local agent using the setup instructions from `memory.md` / `CLAUDE.md`.
 
-Run the local bot in the background (edge conditions active):
-
-```bash
-cd twilio-sip-dial-out && LOCAL_RUN=1 python bot.py &
-```
+Start the local agent with edge conditions active (follow the stored setup instructions).
 
 Poll for results:
 

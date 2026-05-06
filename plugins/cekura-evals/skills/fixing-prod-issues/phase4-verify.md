@@ -12,22 +12,16 @@ Re-run the same evaluator from Phase 2 against the fixed code. The same conditio
 
 ---
 
-## 4a. Trigger a new voice run
+## 4a. Trigger a new run
 
 Use the same `scenario_id` from Phase 2 — do not create a new evaluator:
 
 ```bash
 source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
-run_voice "SCENARIO_ID" '{"agent_number": "+19789751706"}'
+run_voice "SCENARIO_ID" '{"agent_number": "<local_agent_caller_id>"}'
 ```
 
-From the response, note the new Cekura outbound number and update `dialout_settings.sip_uri` in `local_runner.py`.
-
-Run the local bot with the fix applied and edge conditions still active:
-
-```bash
-cd twilio-sip-dial-out && LOCAL_RUN=1 python bot.py &
-```
+From the response, extract the connection details and pass them to the local agent using the setup instructions from `memory.md` / `CLAUDE.md` (same as Phase 2). Run the local agent with the fix applied and edge conditions still active.
 
 Poll for results:
 
