@@ -4,7 +4,7 @@
 >
 > **Every test in this phase MUST be run as a full end-to-end simulation on Cekura using the same connection medium that the production call used.**
 >
-> Check the agent configuration (`the Cekura API (`GET /test_framework/v1/ai-agents/{metadata.agent_id}/`)) to see how the agent is set up — it will tell you which transport to use:
+> Check the agent configuration (via the Cekura API: `GET /test_framework/v1/ai-agents/{metadata.agent_id}/`) to see how the agent is set up — it will tell you which transport to use:
 > - **Telephony / SIP** (most common) → use `run_voice`, local bot dials via `twilio-sip-dial-out` over Twilio SIP
 > - **WebRTC** → use the appropriate WebRTC run endpoint for that provider
 > - **WebSocket** → use `run_websocket`
