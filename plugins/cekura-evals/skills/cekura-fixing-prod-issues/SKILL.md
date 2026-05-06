@@ -1,6 +1,8 @@
 ---
-name: fixing-prod-issues
+name: cekura-fixing-prod-issues
 description: Debugs a failing production call, reproduces the bug with Cekura evaluators, implements a fix, verifies it, runs regression tests, then raises a PR with evidence. Use when the user wants to fix a production call bug, investigate a failing prod call, reproduce and fix a production issue, run regression tests before a PR, or says things like "fix this prod call issue", "debug and fix call ID", "test my fix against prod scenarios", "reproduce this production bug", or "regression test before raising PR".
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 ---
 
 # Fixing Production Call Issues
@@ -34,7 +36,7 @@ These rules are non-negotiable. Do not proceed past a gate without satisfying it
 
 ### Rule 0 — Use the same connection medium as the production call. No exceptions.
 
-**Every reproduction, verification, and regression test MUST be a full end-to-end simulation on Cekura using the same transport the agent is configured for** — check `cekura:aiagents_retrieve` on `metadata.agent_id` to confirm. Most likely telephony, but follow what the agent is actually configured to use.
+**Every reproduction, verification, and regression test MUST be a full end-to-end simulation on Cekura using the same transport the agent is configured for.** Retrieve the agent record (`GET /test_framework/v1/ai-agents/{id}/`) to confirm its transport. Most likely telephony, but follow what the agent is actually configured to use.
 
 ❌ Text mode is never a valid substitute. ❌ Do not switch transports between phases.
 
@@ -58,4 +60,3 @@ If you are unsure which metrics to use, whether the root cause is correct, wheth
 ### Rule 4 — Never push code until Phase 5 is complete.
 
 The commit happens in Phase 3. The push happens only after all regression tests pass in Phase 5.
-

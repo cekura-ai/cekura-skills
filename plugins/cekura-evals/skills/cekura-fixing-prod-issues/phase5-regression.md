@@ -38,7 +38,7 @@ To **evaluate** the main agent's response to those conditions, attach predefined
 Do not write custom `expected_outcome_prompt` — attach the relevant predefined metrics that would catch a failure in each case.
 
 ```bash
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
+
 create_scenario '{
   "agent": AGENT_ID,
   "personality": PERSONALITY_ID,

@@ -17,7 +17,7 @@ Re-run the same evaluator from Phase 2 against the fixed code. The same conditio
 Use the same `scenario_id` from Phase 2 — do not create a new evaluator:
 
 ```bash
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
+
 run_voice "SCENARIO_ID" '{"agent_number": "<local_agent_caller_id>"}'
 ```
 

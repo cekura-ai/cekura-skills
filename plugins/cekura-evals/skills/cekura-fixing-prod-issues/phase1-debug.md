@@ -29,7 +29,7 @@ Extract and record:
 Fetch agent config:
 
 ```
-cekura:aiagents_retrieve  →  id = metadata.agent_id
+Fetch the agent record via `GET /test_framework/v1/ai-agents/{metadata.agent_id}/`
 ```
 
 Extract: `description` (system prompt).

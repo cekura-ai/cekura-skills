@@ -4,7 +4,7 @@
 >
 > **Every test in this phase MUST be run as a full end-to-end simulation on Cekura using the same connection medium that the production call used.**
 >
-> Check the agent configuration (`cekura:aiagents_retrieve` on `metadata.agent_id`) to see how the agent is set up — it will tell you which transport to use:
+> Check the agent configuration (`the Cekura API (`GET /test_framework/v1/ai-agents/{metadata.agent_id}/`)) to see how the agent is set up — it will tell you which transport to use:
 > - **Telephony / SIP** (most common) → use `run_voice`, local bot dials via `twilio-sip-dial-out` over Twilio SIP
 > - **WebRTC** → use the appropriate WebRTC run endpoint for that provider
 > - **WebSocket** → use `run_websocket`
@@ -28,7 +28,7 @@ Map each turn to a fixed condition:
 **Use `metadata.agent_id` from the production call as the `agent` field — not the top-level `agent_id` which may be the monitoring agent.** The evaluator must be created under the same agent that handled the failing call so it runs against the correct agent configuration.
 
 ```bash
-source ${CLAUDE_PLUGIN_ROOT}/scripts/cekura-api.sh
+
 create_scenario '{
   "agent": METADATA_AGENT_ID,
   "personality": PERSONALITY_ID,
@@ -49,7 +49,7 @@ Save the `scenario_id`.
 From Phase 1, you noted which metrics were failing in `runs[].evaluation.metrics[]`. List predefined metrics to get their IDs:
 
 ```bash
-cekura:predefined_metrics_list
+`GET /test_framework/v1/predefined-metrics/`
 ```
 
 Attach those metric IDs to the evaluator:
