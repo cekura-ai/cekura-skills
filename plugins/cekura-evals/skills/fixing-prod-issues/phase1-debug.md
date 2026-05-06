@@ -38,21 +38,15 @@ Extract: `description` (system prompt).
 
 ## 1b. Check logs and traces
 
-Use all available observability tools to build a complete picture of what happened during the call. Search using `call_id`, `session_id`, agent ID, or the call's timestamp range.
+Use all available observability and tracing tools to build a complete picture of what happened during the call. Search using `call_id`, `session_id`, agent ID, or the call's timestamp range.
 
-### Datadog — logs and APM traces
-Use Datadog MCP tools to search logs and traces:
-- `search_datadog_logs` — search application logs around the call timestamp
-- `search_datadog_spans` / `get_datadog_trace` — find the trace for this call and inspect individual spans
-- `search_datadog_events` — check for errors or anomalies flagged during the call
-- `analyze_datadog_logs` — summarise log patterns around the failure window
+### Application logs and APM traces
+Use whatever logging/tracing platform is configured (Datadog, Grafana, CloudWatch, etc.) to search logs and traces around the call timestamp. Look for the trace tied to this call and inspect individual spans.
 
-### LLM observability — LLMObs / Langfuse / similar
-If the agent uses LLM observability (Datadog LLMObs, Langfuse, etc.), search for the LLM spans tied to this call:
-- Look up the session or trace by `call_id` or `session_id`
+### LLM observability
+If the agent uses an LLM observability tool (Langfuse, LLMObs, Helicone, Arize, etc.), look up the session or trace by `call_id` or `session_id`:
 - Inspect individual LLM call inputs, outputs, latency, and token counts
 - Check for timeout signals, empty responses, or unexpected completions
-- Datadog LLMObs tools: `get_llmobs_trace`, `get_llmobs_span_details`, `search_llmobs_spans`
 
 ### What to look for across all tools
 - Errors or exceptions in the call handler
