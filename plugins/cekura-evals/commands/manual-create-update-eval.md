@@ -54,7 +54,7 @@ Key rules:
 - **NEVER write filler steps** like "Listen to the agent's response", "Wait for agent to speak", "End the call politely". Every step must describe a specific caller action.
 - Be explicit about exact phrases when mock/backend behavior depends on them
 
-**For conditional actions:** Build the conditions array. Use `fixed_message: true` for exact scripted lines (name, DOB, specific phrases), `fixed_message: false` for general behavioral instructions. Include `<break time="3s"/>` in fixed messages for speech pauses if needed.
+**For conditional actions:** Build the conditions array. Use `fixed_message: true` for exact scripted lines (name, DOB, specific phrases), `fixed_message: false` for general behavioral instructions. Include `<silence time="3s"/>` in fixed messages for speech pauses if needed.
 
 ### 5. Expected Outcome
 
