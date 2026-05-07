@@ -233,6 +233,8 @@ Every agent should have at minimum these predefined metrics enabled for both obs
 
 **Two-step activation required:** Metrics must be (1) toggled on for simulations at the project level AND (2) added to individual evaluators. Missing either step means metrics won't fire. Without metrics enabled, users get false passes and must manually review every run.
 
+**Expected Outcome is transcript-only — it cannot evaluate audio-layer behavior.** Expected Outcome reads the conversation text to determine whether the agent achieved its goal. It has no visibility into silences, interruptions, barge-ins, audio dropouts, or other voice-channel signals. Do not rely on Expected Outcome to catch these. For anything that depends on the audio stream rather than conversation content, use predefined metrics instead.
+
 **Toolcall data prerequisite:** Tool Call Success and advanced monitoring require the agent to have its provider assistant ID configured on Cekura and complete call data being sent. If transcripts are missing toolcall data, recommend the user configure their provider integration.
 
 ## Output Requirements
