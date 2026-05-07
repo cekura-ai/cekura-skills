@@ -7,21 +7,23 @@ This is a Claude Code **marketplace** that doubles as an **Agent Skills package*
 ```
 cekura-skills/
   .claude-plugin/
-    marketplace.json             # Marketplace registry (single plugin entry, source: ".")
-    plugin.json                  # Plugin manifest
-  .mcp.json                      # MCP auto-config
-  skills/                        # Single source of truth for skills
-    cekura-coordinator/
-    cekura-onboarding/
-    cekura-create-agent/
-    cekura-self-improving-agent/
-    cekura-metric-design/
-    cekura-metric-improvement/
-    cekura-eval-design/
-  commands/                      # Slash commands (Claude Code only)
-  agents/                        # Sub-agent definitions (Claude Code only)
-  hooks/                         # MCP failure detection (Claude Code only)
-  _template/                     # SKILL.md.tmpl scaffold for new skills
+    marketplace.json             # Marketplace registry (single plugin entry, source: "./cekura")
+  cekura/                        # The plugin lives here (marketplace.json points to this dir)
+    .claude-plugin/
+      plugin.json                # Plugin manifest
+    .mcp.json                    # MCP auto-config
+    skills/                      # Single source of truth for skills
+      cekura-coordinator/
+      cekura-onboarding/
+      cekura-create-agent/
+      cekura-self-improving-agent/
+      cekura-metric-design/
+      cekura-metric-improvement/
+      cekura-eval-design/
+    commands/                    # Slash commands (Claude Code only)
+    agents/                      # Sub-agent definitions (Claude Code only)
+    hooks/                       # MCP failure detection (Claude Code only)
+  _template/                     # SKILL.md.tmpl scaffold for new skills (dev-only)
   codex/
     AGENTS.md                    # Single-file behavior preset for Codex/Cursor/other agents
   package.json                   # npm package metadata (used by Agent Skills validators)
@@ -29,18 +31,20 @@ cekura-skills/
   CLAUDE.md                      # This file — developer context for contributors
 ```
 
+> **Note on the `cekura/` subdir:** Claude Code's marketplace validator rejects `"source": "."`, so the plugin contents live under `cekura/` and `marketplace.json` points to `"./cekura"`. The `.claude-plugin/marketplace.json` itself stays at the repo root; everything else (plugin.json, .mcp.json, skills/, commands/, agents/, hooks/) travels with the plugin root under `cekura/`.
+
 ### Two install paths, one source of truth
 
-The 7 SKILL.md files inside `skills/` are the **only** source of skill content. Both install paths consume the same files:
+The 7 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
 
 1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
 2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`.`), and discovers all 7 skills under `skills/`. The bare repo URL works cleanly.
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 7 skills under `cekura/skills/`. The bare repo URL works cleanly.
 
 ### Skill content rules
 
-Every `skills/<name>/SKILL.md`:
+Every `cekura/skills/<name>/SKILL.md`:
 - `name` field must be lowercase kebab-case (`cekura-foo`) matching the directory name (per Agent Skills spec)
 - `description` includes trigger phrases for skill activation
 - `compatibility` field set to: `Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.`
@@ -49,7 +53,7 @@ Every `skills/<name>/SKILL.md`:
 - Public provider names (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP) are fine — they're documented at https://docs.cekura.ai/documentation/integrations/
 - Aim for under 500 lines per file (Agent Skills spec recommendation)
 
-Operational MCP tool references belong in **command files** (`commands/*.md`), which are Claude Code–specific and only loaded by the plugin marketplace path. The `npx skills add` path doesn't fetch commands.
+Operational MCP tool references belong in **command files** (`cekura/commands/*.md`), which are Claude Code–specific and only loaded by the plugin marketplace path. The `npx skills add` path doesn't fetch commands.
 
 ### Update workflow
 
@@ -65,17 +69,17 @@ Once installed, npx users have three ways to stay current:
 
 ### Adding a new public skill (contributor checklist)
 
-1. Create `skills/cekura-<kebab-name>/SKILL.md` with spec-compliant frontmatter (`name` must be `cekura-<kebab-name>`, matching the directory)
+1. Create `cekura/skills/cekura-<kebab-name>/SKILL.md` with spec-compliant frontmatter (`name` must be `cekura-<kebab-name>`, matching the directory)
 2. Body must be public-facing — no `mcp__cekura__*` references, no internal endpoints
 3. Stay under 500 lines per file
 4. Bump `package.json` version
 5. Update the "What's Included" table and Quick Reference table in `README.md`
-6. If the skill needs an operational counterpart, also add a slash command in `commands/`
+6. If the skill needs an operational counterpart, also add a slash command in `cekura/commands/`
 7. In the release notes / commit message, name the new skill so users know what to pass to `--skill`
 
 ## MCP Integration
 
-The plugin uses the Cekura MCP server as the **primary** API access path. The repo-root `.mcp.json` auto-configures the `cekura-api` MCP server at `http://localhost:8001/mcp`.
+The plugin uses the Cekura MCP server as the **primary** API access path. The plugin's `cekura/.mcp.json` auto-configures the `cekura-api` MCP server at `http://localhost:8001/mcp`.
 
 MCP is the default. If MCP tools aren't available, users run `/setup-mcp` to configure the server.
 
@@ -174,7 +178,7 @@ Two mechanisms for catching issues:
 ### Hook Architecture
 
 ```
-hooks/
+cekura/hooks/
   hooks.json           # Hook registration (PostToolUseFailure → mcp__cekura__.*; Stop → self-improving check)
   on-mcp-failure.sh    # Logs failure, returns additionalContext to Claude
   on-self-improving-stop.sh  # Self-improving-agent loop interruption detection

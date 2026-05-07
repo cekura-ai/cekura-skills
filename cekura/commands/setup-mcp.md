@@ -58,10 +58,10 @@ This is idempotent — safe to run even if already set.
 
 ### 5. Verify the .mcp.json file exists
 
-The cekura plugin has a single `.mcp.json` at the marketplace root that auto-connects to the MCP server. Check it exists:
+The cekura plugin has a single `.mcp.json` under the plugin directory that auto-connects to the MCP server. Check it exists:
 
 ```bash
-ls ~/.claude/plugins/marketplaces/cekura-skills/.mcp.json
+ls ~/.claude/plugins/marketplaces/cekura-skills/cekura/.mcp.json
 ```
 
 It should contain:

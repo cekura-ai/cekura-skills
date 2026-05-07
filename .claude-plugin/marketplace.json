@@ -16,7 +16,7 @@
         "name": "Cekura",
         "email": "support@cekura.ai"
       },
-      "source": ".",
+      "source": "./cekura",
       "category": "development"
     }
   ]

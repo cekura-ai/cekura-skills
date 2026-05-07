@@ -181,12 +181,12 @@ Codex doesn't support Claude Code plugins directly. Skills are loaded automatica
 ```bash
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo cekura-ai/cekura-skills \
-  --path skills/cekura-onboarding \
-         skills/cekura-create-agent \
-         skills/cekura-self-improving-agent \
-         skills/cekura-metric-design \
-         skills/cekura-metric-improvement \
-         skills/cekura-eval-design
+  --path cekura/skills/cekura-onboarding \
+         cekura/skills/cekura-create-agent \
+         cekura/skills/cekura-self-improving-agent \
+         cekura/skills/cekura-metric-design \
+         cekura/skills/cekura-metric-improvement \
+         cekura/skills/cekura-eval-design
 ```
 
 Restart Codex after install.
@@ -212,12 +212,12 @@ Re-run the skill installer:
 ```bash
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo cekura-ai/cekura-skills \
-  --path skills/cekura-onboarding \
-         skills/cekura-create-agent \
-         skills/cekura-self-improving-agent \
-         skills/cekura-metric-design \
-         skills/cekura-metric-improvement \
-         skills/cekura-eval-design
+  --path cekura/skills/cekura-onboarding \
+         cekura/skills/cekura-create-agent \
+         cekura/skills/cekura-self-improving-agent \
+         cekura/skills/cekura-metric-design \
+         cekura/skills/cekura-metric-improvement \
+         cekura/skills/cekura-eval-design
 ```
 
 ---
@@ -357,7 +357,7 @@ Version `0.5.0` collapsed the three plugins (`cekura`, `cekura-metrics`, `cekura
 
 Takes ~10 seconds. After this, all 14 commands are namespaced as `cekura:*` (the old `cekura-evals:*` and `cekura-metrics:*` prefixes are gone). The skills themselves keep their original names — `cekura-eval-design`, `cekura-metric-design`, etc.
 
-If you install Cekura via `npx skills`, the `--path` arguments now use `skills/<skill-name>` (no `plugins/<plugin>/skills/` prefix). See the Codex section above for the current invocation.
+If you install Cekura via `npx skills`, the `--path` arguments now use `cekura/skills/<skill-name>` (was `plugins/<plugin>/skills/<skill-name>`). See the Codex section above for the current invocation.
 
 ---
 
