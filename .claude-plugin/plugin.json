@@ -1,0 +1,21 @@
+{
+  "name": "cekura",
+  "version": "0.5.0",
+  "description": "Cekura voice AI testing & evaluation — platform onboarding, agent setup, metric design and improvement, evaluator design and execution.",
+  "author": {
+    "name": "Cekura",
+    "email": "support@cekura.ai",
+    "url": "https://cekura.ai"
+  },
+  "keywords": [
+    "cekura",
+    "voice-ai",
+    "evaluation",
+    "metrics",
+    "evaluators",
+    "testing",
+    "scenarios",
+    "onboarding",
+    "platform"
+  ]
+}

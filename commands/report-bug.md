@@ -54,10 +54,10 @@ If the bug is in a specific skill or command, find the relevant file:
 
 ```bash
 # Skills
-ls ~/.claude/plugins/marketplaces/cekura-skills/plugins/*/skills/*/SKILL.md
+ls ~/.claude/plugins/marketplaces/cekura-skills/skills/*/SKILL.md
 
 # Commands
-ls ~/.claude/plugins/marketplaces/cekura-skills/plugins/*/commands/*.md
+ls ~/.claude/plugins/marketplaces/cekura-skills/commands/*.md
 ```
 
 Read the relevant file to check for obvious issues (wrong MCP tool names, stale API endpoints, etc.).

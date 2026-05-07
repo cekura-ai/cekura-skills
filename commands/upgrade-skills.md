@@ -1,10 +1,10 @@
 ---
 name: upgrade-skills
-description: Update all Cekura skills to the latest version from GitHub
+description: Update Cekura skills to the latest version from GitHub
 allowed-tools: ["Bash", "Read", "Grep"]
 ---
 
-Upgrade all Cekura plugins to the latest version by pulling from the remote repository.
+Upgrade the Cekura plugin to the latest version by pulling from the remote repository.
 
 ## Process
 
@@ -31,7 +31,7 @@ Upgrade all Cekura plugins to the latest version by pulling from the remote repo
    git log --oneline -5
    ```
 
-6. Report which plugins were updated and what changed (new skills, updated commands, etc.).
+6. Report what changed (new skills, updated commands, etc.).
 
 ## If Pull Fails
 
@@ -44,5 +44,5 @@ Upgrade all Cekura plugins to the latest version by pulling from the remote repo
 Report a summary:
 - Previous version (commit hash before pull)
 - New version (commit hash after pull)
-- Files changed (grouped by plugin: cekura-metrics, cekura-evals, cekura)
+- Files changed (skills, commands, agents, hooks)
 - Any new skills, commands, or agents added
