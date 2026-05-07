@@ -348,16 +348,28 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 ## Upgrading from v0.4.x
 
-Version `0.5.0` collapsed the three plugins (`cekura`, `cekura-metrics`, `cekura-evals`) into a single `cekura` plugin. Existing Claude Code installs need a one-time reinstall to pick up the new structure — `git pull` alone leaves stale cache entries for the two retired plugins.
+Version `0.5.0` collapsed the three plugins (`cekura`, `cekura-metrics`, `cekura-evals`) into a single `cekura` plugin. Existing Claude Code installs need a one-time, **4-step** reinstall — `git pull` and `/upgrade-skills` alone leave Claude Code with stale plugin metadata pointing at the old layout.
 
-```
-/plugin marketplace remove cekura-skills
-/plugin marketplace add cekura-ai/cekura-skills
-```
+Run all four commands in order:
 
-Takes ~10 seconds. After this, all 14 commands are namespaced as `cekura:*` (the old `cekura-evals:*` and `cekura-metrics:*` prefixes are gone). The skills themselves keep their original names — `cekura-eval-design`, `cekura-metric-design`, etc.
+1. `/plugin marketplace remove cekura-skills`
+2. `/plugin marketplace add cekura-ai/cekura-skills`
+3. `/plugin marketplace update cekura-skills`
+4. `/plugin install cekura@cekura-skills`
 
-If you install Cekura via `npx skills`, the `--path` arguments now use `cekura/skills/<skill-name>` (was `plugins/<plugin>/skills/<skill-name>`). See the Codex section above for the current invocation.
+Step 3 is the critical one — it forces Claude Code to re-read the new `marketplace.json`. Skipping it causes step 4 to fail with `Source path does not exist: …/plugins/cekura` (Claude Code is still using the cached pre-flatten metadata which pointed at `./plugins/cekura`).
+
+Total time: ~30 seconds. After step 4, `claude plugin list` should show one `cekura@cekura-skills` entry at version 0.5.0, and all 14 commands resolve under `cekura:*` (the old `cekura-evals:*` and `cekura-metrics:*` prefixes are gone). The skills themselves keep their original names — `cekura-eval-design`, `cekura-metric-design`, etc.
+
+### Troubleshooting
+
+**`/plugin install` errors with `Source path does not exist: …/plugins/cekura`:** Claude Code is still using cached marketplace metadata. Re-run step 3 (`/plugin marketplace update cekura-skills`) and retry step 4. If that still doesn't clear it, fully restart Claude Code (close and reopen the session), then redo steps 2–4.
+
+**`claude plugin list` shows zero cekura entries after upgrading:** you've successfully removed the old plugins but haven't yet installed the new one. Run steps 2–4 above.
+
+### npx skills users
+
+The `--path` arguments now use `cekura/skills/<skill-name>` (was `plugins/<plugin>/skills/<skill-name>`). See the Codex section above for the current invocation. `npx skills` does not install slash commands — those remain Claude Code-only.
 
 ---
 
