@@ -33,21 +33,6 @@ Upgrade the Cekura plugin to the latest version by pulling from the remote repos
 
 6. Report what changed (new skills, updated commands, etc.).
 
-7. Post-migration cleanup (one-time, only if upgrading from v0.4.x):
-
-   If the user previously had v0.4.x installed, leftover cache dirs from the satellite plugins (`cekura-evals`, `cekura-metrics`) may still be on disk. They're harmless but can be removed:
-
-   ```bash
-   if [ -d ~/.claude/plugins/cache/cekura-skills/cekura-evals ] || \
-      [ -d ~/.claude/plugins/cache/cekura-skills/cekura-metrics ]; then
-     echo "ℹ  Stale v0.4.x cache dirs found. Safe to remove:"
-     echo "      rm -rf ~/.claude/plugins/cache/cekura-skills/cekura-evals"
-     echo "      rm -rf ~/.claude/plugins/cache/cekura-skills/cekura-metrics"
-   fi
-   ```
-
-   Suggest the cleanup commands to the user; do not run `rm -rf` automatically.
-
 ## If Pull Fails
 
 - **Merge conflicts:** Show the conflicts and ask the user how to proceed. Offer to reset to remote (`git reset --hard origin/main`) with explicit confirmation.
