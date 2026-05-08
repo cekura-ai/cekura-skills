@@ -33,40 +33,37 @@ When this skill suggests creating, listing, updating, or evaluating something on
 
 Skills activate when the user describes a relevant task. Commands are slash commands available only in Claude Code with the plugin installed.
 
-### cekura plugin
-Core platform utilities and agent onboarding.
+### Skills
 
-| Component | Type | Use when |
-|-----------|------|----------|
-| `cekura-onboarding` | skill | New to Cekura, first-time setup, platform walkthrough |
-| `cekura-create-agent` | skill | Set up a voice AI agent — provider, mock tools, KB, dynamic vars |
-| `/setup-mcp` | command | Configure the Cekura MCP server (Claude Code only) |
-| `/upgrade-skills` | command | Update all Cekura skills to latest version |
-| `/report-bug` | command | Report a bug — files GitHub issue, optionally attempts fix |
+| Skill | Use when |
+|-------|----------|
+| `cekura-onboarding` | New to Cekura, first-time setup, platform walkthrough |
+| `cekura-create-agent` | Set up a voice AI agent — provider, mock tools, KB, dynamic vars |
+| `cekura-self-improving-agent` | Auto-tune agent prompts from eval results — diagnose → propose → apply → re-validate |
+| `cekura-metric-design` | Design new metrics, improve existing ones, metric best practices |
+| `cekura-metric-improvement` | Improve metric accuracy through feedback cycle (labs workflow) |
+| `cekura-predefined-metrics` | Catalog of built-in metrics — what each does, costs, constraints, configuration |
+| `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
+| `cekura-fixing-prod-issues` | Debug a failing production call, reproduce with evals, fix, regression test, raise PR |
 
-### cekura-metrics plugin
-Create, improve, and validate metrics for call quality evaluation.
+### Commands
 
-| Component | Type | Use when |
-|-----------|------|----------|
-| `cekura-metric-design` | skill | Design new metrics, improve existing ones, metric best practices |
-| `cekura-metric-improvement` | skill | Improve metric accuracy through feedback cycle (labs workflow) |
-| `/create-metric` | command | Create or update a metric via API |
-| `/list-metrics` | command | List metrics for an agent or project |
-| `/evaluate-calls` | command | Run metrics on specific calls |
-| `/improve-metric` | command | Full improvement cycle: collect feedback, run labs, auto-improve |
-
-### cekura-evals plugin
-Create, run, and analyze test suites for voice agent testing.
-
-| Component | Type | Use when |
-|-----------|------|----------|
-| `cekura-eval-design` | skill | Design evaluators, test suites, coverage strategy |
-| `/manual-create-update-eval` | command | Create or update a single evaluator with full field walkthrough |
-| `/autogen-eval` | command | Auto-generate evaluators (or bulk create from CSV/JSON) |
-| `/list-evals` | command | List evaluators for an agent or project |
-| `/run-evals` | command | Execute evaluators (run test scenarios) |
-| `/eval-results` | command | Check results from a test run |
+| Command | Use when |
+|---------|----------|
+| `/cekura-onboarding` | Run the guided onboarding flow (state-aware, picks up where you left off) |
+| `/setup-mcp` | Configure the Cekura MCP server (Claude Code only) |
+| `/upgrade-skills` | Update all Cekura skills to the latest version |
+| `/report-bug` | Report a bug — files a GitHub issue, optionally attempts a fix |
+| `/create-metric` | Create or update a metric via API |
+| `/list-metrics` | List metrics for an agent or project |
+| `/evaluate-calls` | Run metrics on specific calls |
+| `/improve-metric` | Full improvement cycle: collect feedback, run labs, auto-improve |
+| `/manual-create-update-eval` | Create or update a single evaluator with full field walkthrough |
+| `/autogen-eval` | Auto-generate evaluators (or bulk create from CSV/JSON) |
+| `/list-evals` | List evaluators for an agent or project |
+| `/run-evals` | Execute evaluators (run test scenarios) |
+| `/eval-results` | Check results from a test run |
+| `/cekura-report` | Full end-to-end quality report — generates 10 evals, runs them, produces structured analysis |
 
 ## Routing Guide
 
@@ -95,6 +92,10 @@ When the user describes what they need, route them:
 | "Add mock tools" / "set up tools" | **cekura-create-agent** skill (Phase 4) |
 | "Upload knowledge base" | **cekura-create-agent** skill (Phase 5) |
 | "Something's broken" / "file a bug" | `/report-bug` command |
+| "Improve my agent" / "auto-tune from eval results" | **cekura-self-improving-agent** skill |
+| "Which built-in metrics are available?" / "what does Hallucination Detection cost?" | **cekura-predefined-metrics** skill |
+| "Fix this prod call bug" / "reproduce and test a fix" | **cekura-fixing-prod-issues** skill |
+| "Run a full quality report" / "generate evals and run them end-to-end" | `/cekura-report` command |
 
 ## Typical User Journeys
 
@@ -134,9 +135,12 @@ This skill routes — it doesn't perform tasks itself. After confirming the user
 
 - New to Cekura → **cekura-onboarding**
 - Connecting an agent → **cekura-create-agent**
+- Auto-tuning an agent prompt from eval results → **cekura-self-improving-agent**
 - Designing metrics → **cekura-metric-design**
 - Improving metric accuracy → **cekura-metric-improvement**
+- Picking which built-in metrics to use → **cekura-predefined-metrics**
 - Designing test scenarios → **cekura-eval-design**
+- Fixing a production call bug end-to-end → **cekura-fixing-prod-issues**
 
 ## Documentation
 
