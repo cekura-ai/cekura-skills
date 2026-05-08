@@ -291,7 +291,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 **For other platforms:** The MCP server is optional. The `AGENTS.md` behavior preset includes API reference with curl examples as a fallback.
 
-**How it works:** The plugin ships a single `.mcp.json` file at the marketplace root that auto-configures the connection. When Claude Code starts, it reads the file and connects to the MCP server at `http://localhost:8001/mcp`. All `mcp__cekura__*` tools become available automatically.
+**How it works:** The plugin ships a single `.mcp.json` file at the marketplace root that auto-configures the connection. When Claude Code starts, it reads the file and connects to the Cekura MCP server at `https://api.cekura.ai/mcp`. With `CEKURA_API_KEY` in your environment, all `mcp__cekura__*` tools become available automatically. Or use OAuth via `claude mcp add` for a key-free, one-click browser sign-in — see the [MCP overview](https://docs.cekura.ai/mcp/overview).
 
 ---
 

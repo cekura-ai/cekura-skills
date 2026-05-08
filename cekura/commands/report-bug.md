@@ -28,8 +28,8 @@ claude --version 2>/dev/null || echo "unknown"
 # OS
 uname -s -r
 
-# Check if MCP server is reachable
-curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/mcp 2>/dev/null || echo "unreachable"
+# Check if Cekura MCP server is reachable (production)
+curl -s -o /dev/null -w "%{http_code}" https://api.cekura.ai/mcp 2>/dev/null || echo "unreachable"
 
 # Check CEKURA_API_KEY is set (don't log the actual key)
 [ -n "$CEKURA_API_KEY" ] && echo "API key: set" || echo "API key: NOT SET"
