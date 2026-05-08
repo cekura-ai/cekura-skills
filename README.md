@@ -21,13 +21,13 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 6 Skills, 13 Commands across 3 Plugins
+### 7 Skills, 13 Commands across 3 Plugins
 
 | Plugin | Skills | Commands | Purpose |
 |--------|--------|----------|---------|
 | **cekura** | `cekura-coordinator`, `cekura-onboarding`, `cekura-create-agent` | `cekura-onboarding`, `setup-mcp`, `upgrade-skills`, `report-bug` | Platform setup, agent onboarding, skill routing |
 | **cekura-metrics** | `cekura-metric-design`, `cekura-metric-improvement` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` | Create, improve, and validate call quality metrics |
-| **cekura-evals** | `cekura-eval-design` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report` | Create, run, and analyze test suites for voice agents |
+| **cekura-evals** | `cekura-eval-design`, `cekura-fixing-prod-issues` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report` | Create, run, and analyze test suites for voice agents |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
@@ -73,7 +73,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Six skills, scoped to specific Cekura workflows:
+Seven skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
@@ -83,6 +83,7 @@ Six skills, scoped to specific Cekura workflows:
 | `cekura-metric-design` | "Create a metric / measure call quality" |
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
+| `cekura-fixing-prod-issues` | "Fix a production call bug / reproduce and test a fix before raising a PR" |
 
 ### Want full functionality?
 
@@ -308,6 +309,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-metric-design` | Designing or creating metrics |
 | `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
+| `cekura-fixing-prod-issues` | Fixing a production call bug — debug, reproduce, fix, verify, regression test, PR |
 
 ### Getting Started Flow
 
