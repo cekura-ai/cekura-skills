@@ -8,6 +8,20 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
 
 `https://api.cekura.ai`
 
+## Simulation Data Model
+
+Three IDs appear in simulation workflows — don't confuse them:
+
+| Term | Type | What it is |
+|------|------|-----------|
+| `result_id` | integer | A **Result** — one batch execution grouping multiple runs. `GET /test_framework/v1/results/{result_id}/` |
+| `run_id` | integer | A **Run** — one scenario execution inside a result. `GET /test_framework/v1/runs/{run_id}/`. In the result detail response, `runs` is a dict keyed by run_id. |
+| `run.call_id` | string | The provider's call identifier (e.g. `"patronus_xyz123"`) — a field on the run object, not an endpoint ID. Do not use this where `run_id` is expected. |
+| CallLog ID | integer | A production call log (observability only). `GET /observability/v1/call-logs-external/{id}/`. Simulations do NOT create call logs. |
+
+**Dashboard URL convention:** `https://dashboard.cekura.ai/{project}/results/{result_id}?call_id={run_id}`
+Use `?call_id=` only when constructing a dashboard UI link to a specific run. In all other contexts — API calls, MCP tools, code — use `run_id`.
+
 ## Agent Endpoints
 
 **Note:** The agent endpoint is `/aiagents/`, NOT `/agents/` — `/agents/` returns 404.
@@ -93,7 +107,10 @@ Returns a result object with `id`, `status`, and `runs` array.
   "agent": "integer | null — agent ID (either agent or project required)",
   "project": "integer | null — project ID",
   "name": "string (max 80 chars) — scenario name",
-  "instructions": "string — what the simulated caller should do",
+  "scenario_type": "string — one of: 'instruction' (default), 'real_world_smart', 'real_world_fixed', 'conditional_actions'. Must be 'conditional_actions' to use the conditional_actions field below.",
+  "scenario_language": "string — language code (e.g., 'en', 'es'). Required when scenario_type is 'conditional_actions'; otherwise inferred from personality.",
+  "instructions": "string — free-form, first-person scenario instructions for behavioral evaluators. Do not pass a JSON object here. For conditional-actions evaluators, use the `conditional_actions` field below and leave this unset.",
+  "conditional_actions": "object — required for scenario_type='conditional_actions'. Carries {role, conditions[]}. See 'Authoring a Conditional-Actions Evaluator' below.",
   "expected_outcome_prompt": "string — what success looks like",
   "metrics": "[integer] — metric IDs to evaluate against",
   "tags": "[string] — tags for filtering",
@@ -102,6 +119,40 @@ Returns a result object with `id`, `status`, and `runs` array.
   "inbound_phone_number": "integer — inbound phone number ID"
 }
 ```
+
+### Authoring a Behavioral Evaluator
+
+Set `scenario_type` to `"instruction"` (or omit — it's the default). Pass `instructions` as a free-form string.
+
+```json
+{
+  "scenario_type": "instruction",
+  "instructions": "<scenario>\nSCENARIO: New patient scheduling\n\nYOUR BEHAVIOR:\n1. State you're a new patient and need a first visit\n2. When asked about insurance, say you have Blue Cross PPO\n3. Provide your DOB when asked for verification\n</scenario>"
+}
+```
+
+### Authoring a Conditional-Actions Evaluator
+
+Set `scenario_type` to `"conditional_actions"` and pass the structured payload via the `conditional_actions` field. Do not put the JSON object in `instructions`.
+
+```json
+{
+  "scenario_type": "conditional_actions",
+  "scenario_language": "en",
+  "conditional_actions": {
+    "role": "You are an established patient calling to check your appointment status",
+    "conditions": [
+      { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I'd like to check on my upcoming appointment", "type": "standard", "fixed_message": true },
+      { "id": 1, "condition": "The agent asks for your name", "action": "Provide your name", "type": "standard", "fixed_message": false },
+      { "id": 2, "condition": "The agent confirms your identity", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
+    ]
+  }
+}
+```
+
+Do not set `first_message` or `instructions` when using `conditional_actions` — they are managed for you.
+
+For full field semantics (all 5 required condition fields), validation rules, XML tag constraints, worked examples, anti-patterns, validation checklist, and troubleshooting, see `references/conditional-actions.md`.
 
 ## Personality Schema
 

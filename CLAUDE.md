@@ -134,6 +134,7 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 | `list-evals` | command | List evaluators for an agent or project |
 | `run-evals` | command | Execute evaluators (run test scenarios) |
 | `eval-results` | command | Check results from a test run |
+| `cekura-report` | command | End-to-end quality report: generate 10 evals, run them, produce structured analysis |
 | `eval-suite-planner` | agent | Coverage matrix design from agent descriptions |
 
 ## AGENTS.md (Codex/Cursor)
