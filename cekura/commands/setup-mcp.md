@@ -1,12 +1,12 @@
 ---
 name: setup-mcp
-description: Configure the Cekura MCP server for all Cekura plugins
+description: Configure the Cekura MCP server for the cekura plugin
 allowed-tools: ["Bash", "Read", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__test_simple_tool", "mcp__cekura__list_available_tools"]
 ---
 
 # Set Up Cekura MCP Server
 
-Configure the Cekura MCP server so all Cekura plugins (`cekura`, `cekura-metrics`, `cekura-evals`) can access the Cekura API through MCP tools.
+Configure the Cekura MCP server so the cekura plugin can access the Cekura API through MCP tools.
 
 ## Process
 
@@ -56,17 +56,15 @@ git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
 
 This is idempotent — safe to run even if already set.
 
-### 5. Verify the .mcp.json files exist
+### 5. Verify the .mcp.json file exists
 
-Each Cekura plugin has a `.mcp.json` that auto-connects to the MCP server. Check they exist:
+The cekura plugin has a single `.mcp.json` under the plugin directory that auto-connects to the MCP server. Check it exists:
 
 ```bash
-ls ~/.claude/plugins/marketplaces/cekura-skills/plugins/cekura/.mcp.json
-ls ~/.claude/plugins/marketplaces/cekura-skills/plugins/cekura-metrics/.mcp.json
-ls ~/.claude/plugins/marketplaces/cekura-skills/plugins/cekura-evals/.mcp.json
+ls ~/.claude/plugins/marketplaces/cekura-skills/cekura/.mcp.json
 ```
 
-All three should contain:
+It should contain:
 ```json
 {
   "mcpServers": {
@@ -81,7 +79,7 @@ All three should contain:
 }
 ```
 
-If any are missing, the user may need to run `/upgrade-skills` to pull the latest plugin versions.
+If it's missing, the user may need to run `/upgrade-skills` to pull the latest plugin version.
 
 ### 6. Verify connectivity
 
@@ -92,14 +90,14 @@ Try `mcp__cekura__list_available_tools` — it should return a list of available
 If it fails, check:
 1. Is `CEKURA_API_KEY` set? (`echo $CEKURA_API_KEY`)
 2. Is the MCP server running? (`curl -s http://localhost:8001/mcp` should respond)
-3. Did you restart Claude Code after adding the `.mcp.json` files?
+3. Did you restart Claude Code after adding the `.mcp.json` file?
 
 ## Output
 
 Report the setup status:
 - API key: configured / missing
 - MCP server: running / not reachable
-- .mcp.json files: all present / missing [which]
+- .mcp.json file: present / missing
 - Connectivity test: passed / failed [reason]
 
 If everything passes: "MCP is configured. All Cekura commands and skills (`cekura-metric-design`, `cekura-eval-design`, `cekura-create-agent`, etc.) will use MCP tools automatically."
