@@ -11,7 +11,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Cekura Predefined Metrics
@@ -24,6 +24,17 @@ Predefined metrics are Cekura's built-in evaluators — ready to enable on any a
 
 When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
 
+## Core Terminology
+
+- **Main agent**: The client's AI voice agent being tested
+- **Testing agent**: Cekura's simulated caller that exercises the main agent
+- **Predefined metric**: Built-in evaluator shipped by Cekura — no prompt required, identified by a `code`
+- **Custom metric**: User-authored metric with a custom prompt or `custom_code` (see `cekura-metric-design`)
+- **Simulation**: Test runs using Cekura's testing agent against the main agent (Sim column in the catalog)
+- **Observability**: Real production calls flowing through the agent (Obs column in the catalog)
+- **Project-level toggle**: Enables a predefined metric across simulation OR observability for an entire project
+- **Evaluator attachment**: Adds the metric to a specific test scenario; required for the metric to fire on that evaluator
+
 ## Predefined vs Custom Metrics
 
 Enable predefined metrics first. They require zero prompt engineering and cover the most common quality dimensions out of the box. Only reach for a custom metric when:
@@ -32,6 +43,17 @@ Enable predefined metrics first. They require zero prompt engineering and cover 
 - You need to combine multiple signals into one score
 
 For everything else, a predefined metric will give you reliable, consistent results faster.
+
+## The Predefined Metrics Workflow
+
+1. **Browse the catalog** — Use the four catalog tables below to identify candidate metrics. Filter by Sim/Obs availability, cost, and required constraints.
+2. **Pick a starting set** — Begin with the [Baseline](#baseline--always-enable) below. For richer coverage, see `references/selection-by-use-case.md` for recommended sets per agent type (booking, collections, support, healthcare, voice-quality investigation).
+3. **Toggle on at the project level** — Enables the metric for simulation runs (or observability — they are independent toggles). Without this, attaching the metric to an evaluator does nothing.
+4. **Add to individual evaluators** — Attaches the metric to specific test scenarios so it fires when that scenario runs.
+5. **Configure if required** — Six metrics need or accept configuration (silence thresholds, dropoff/topic node lists, spelling categories, pronunciation phonemes). See `references/configuration-guide.md` for full payload examples.
+6. **Validate by running** — Execute a small batch and review results. If results look off, check the [Common Pitfalls](#common-pitfalls) below before reaching for custom metrics.
+
+For full API endpoints (list, toggle, attach, configure, re-evaluate), see `references/api-reference.md`.
 
 ## Enabling Predefined Metrics
 
@@ -117,6 +139,8 @@ Some predefined metrics require or support configuration. Pass these as key-valu
 | Letterwise Pronunciation | `spelling_word_types` | array of strings | required | Word categories to check (e.g., `["phone_number", "confirmation_code"]`) |
 | Pronunciation Check | `pronunciation_words` | array of objects | required | Phoneme pairs: `[{"word": "Cekura", "phoneme": "sɛˈkjʊrə"}]` |
 
+For full payload examples (including IPA tips and naming guidance) see `references/configuration-guide.md`.
+
 ---
 
 ## Cost & Credits Quick Reference
@@ -142,6 +166,8 @@ At minimum, every agent should have these four enabled for simulation (and the l
 | **Latency** | Baseline performance tracking; P95/P99 reveal outliers that averages hide |
 
 For a richer baseline, also add: **CSAT**, **Sentiment**, and **Unnecessary Repetition Score**.
+
+For agent-type-specific recommended sets (booking, collections, support, healthcare, voice-quality investigation), see `references/selection-by-use-case.md`.
 
 ---
 
@@ -180,3 +206,11 @@ After selecting predefined metrics, the user typically needs:
 - Pre-defined metrics reference: https://docs.cekura.ai/documentation/key-concepts/metrics/pre-defined-metrics
 - Public docs: https://docs.cekura.ai
 - Concepts: https://docs.cekura.ai/documentation/key-concepts/
+
+## Additional Resources
+
+### Reference Files (loaded on demand)
+
+- **`references/configuration-guide.md`** — Full payload examples for every configurable predefined metric (silence thresholds, dropoff/topic node lists, spelling categories, IPA phoneme pairs)
+- **`references/api-reference.md`** — Public API endpoints for listing, toggling, attaching, configuring, and re-evaluating predefined metrics, with an end-to-end example flow
+- **`references/selection-by-use-case.md`** — Recommended predefined metric sets by agent type: booking, collections, customer support, healthcare, and voice-quality investigation
