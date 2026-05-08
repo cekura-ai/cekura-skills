@@ -33,6 +33,39 @@ Upgrade the Cekura plugin to the latest version by pulling from the remote repos
 
 6. Report what changed (new skills, updated commands, etc.).
 
+7. Detect stale plugin entries from a previous Cekura layout. If found, surface the reinstall instructions:
+
+   ```bash
+   INSTALLED="$HOME/.claude/plugins/installed_plugins.json"
+   if [ -f "$INSTALLED" ] && python3 -c "
+   import json, sys
+   try:
+       d = json.load(open('$INSTALLED'))
+       p = d.get('plugins', {})
+       sys.exit(0 if 'cekura-evals@cekura-skills' in p or 'cekura-metrics@cekura-skills' in p else 1)
+   except Exception:
+       sys.exit(1)
+   " 2>/dev/null; then
+     cat <<'EOF'
+
+   ⚠  Stale plugin entries detected from a previous Cekura layout.
+
+   The plugin source has been pulled to the latest layout, but Claude Code
+   is still referencing the old plugin entries. To finish the upgrade, run
+   these 4 commands in order in your Claude Code session:
+
+     /plugin marketplace remove cekura-skills
+     /plugin marketplace add cekura-ai/cekura-skills
+     /plugin marketplace update cekura-skills
+     /plugin install cekura@cekura-skills
+
+   See README "Reinstalling Cekura skills" for details.
+   EOF
+   fi
+   ```
+
+   If the detection prints the migration note, surface it verbatim to the user.
+
 ## If Pull Fails
 
 - **Merge conflicts:** Show the conflicts and ask the user how to proceed. Offer to reset to remote (`git reset --hard origin/main`) with explicit confirmation.

@@ -207,6 +207,6 @@ Users run `/upgrade-skills` which does a `git pull` on this repo. For contributo
 - The marketplace is registered by URL (`https://github.com/cekura-ai/cekura-skills.git`) — users get updates by pulling
 - Breaking changes (renamed commands, removed skills) should be noted in commit messages
 
-### v0.5.0 migration note
+### Stuck-install detection
 
-Version `0.5.0` collapsed the previous 3-plugin layout (`cekura`, `cekura-metrics`, `cekura-evals`) into a single `cekura` plugin. Existing Claude Code users need a one-time `/plugin marketplace remove cekura-skills` followed by `/plugin marketplace add cekura-ai/cekura-skills` — the cache from v0.4.x has 3 plugin entries that can't be cleaned up by `git pull` alone.
+`cekura/commands/upgrade-skills.md` checks `~/.claude/plugins/installed_plugins.json` after each pull and prints the 4-step reinstall instructions if it finds stale plugin entries (`cekura-evals@cekura-skills` or `cekura-metrics@cekura-skills`) — those names existed in earlier marketplace layouts and indicate Claude Code needs a fresh `marketplace remove → add → update → install` cycle. The user-facing reinstall steps live in README "Reinstalling Cekura skills".

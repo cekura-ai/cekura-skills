@@ -15,7 +15,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 - [MCP Server](#mcp-server)
 - [Quick Reference](#quick-reference)
 - [Platform Compatibility](#platform-compatibility)
-- [Upgrading from v0.4.x](#upgrading-from-v04x)
+- [Reinstalling Cekura skills](#reinstalling-cekura-skills)
 - [Links](#links)
 
 ---
@@ -38,7 +38,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
-> **Upgrading from v0.4.x?** The 3 plugins (`cekura`, `cekura-metrics`, `cekura-evals`) have been merged into a single `cekura` plugin. Existing Claude Code users need a one-time reinstall — see [Upgrading from v0.4.x](#upgrading-from-v04x) below.
+> **Stuck after an upgrade?** If `/upgrade-skills` reports stale plugin entries or `/plugin install` fails with `Source path does not exist`, do a clean reinstall — see [Reinstalling Cekura skills](#reinstalling-cekura-skills) below.
 
 ## Prerequisites
 
@@ -356,30 +356,22 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 ---
 
-## Upgrading from v0.4.x
+## Reinstalling Cekura skills
 
-Version `0.5.0` collapsed the three plugins (`cekura`, `cekura-metrics`, `cekura-evals`) into a single `cekura` plugin. Existing Claude Code installs need a one-time, **4-step** reinstall — `git pull` and `/upgrade-skills` alone leave Claude Code with stale plugin metadata pointing at the old layout.
-
-Run all four commands in order:
+If `/upgrade-skills` reports stale plugin entries, or `/plugin install` fails with `Source path does not exist`, your Claude Code install needs a clean reinstall. Run these 4 commands in order in any Claude Code session:
 
 1. `/plugin marketplace remove cekura-skills`
 2. `/plugin marketplace add cekura-ai/cekura-skills`
 3. `/plugin marketplace update cekura-skills`
 4. `/plugin install cekura@cekura-skills`
 
-Step 3 is the critical one — it forces Claude Code to re-read the new `marketplace.json`. Skipping it causes step 4 to fail with `Source path does not exist: …/plugins/cekura` (Claude Code is still using the cached pre-flatten metadata which pointed at `./plugins/cekura`).
-
-Total time: ~30 seconds. After step 4, `claude plugin list` should show one `cekura@cekura-skills` entry at version 0.5.0, and all 14 commands resolve under `cekura:*` (the old `cekura-evals:*` and `cekura-metrics:*` prefixes are gone). The skills themselves keep their original names — `cekura-eval-design`, `cekura-metric-design`, etc.
+Step 3 is the critical one — it forces Claude Code to re-read the marketplace manifest. After step 4, `claude plugin list` should show one `cekura@cekura-skills` entry, and all 14 slash commands resolve under `cekura:*`.
 
 ### Troubleshooting
 
-**`/plugin install` errors with `Source path does not exist: …/plugins/cekura`:** Claude Code is still using cached marketplace metadata. Re-run step 3 (`/plugin marketplace update cekura-skills`) and retry step 4. If that still doesn't clear it, fully restart Claude Code (close and reopen the session), then redo steps 2–4.
+**`/plugin install` errors with `Source path does not exist`:** Re-run step 3 (`/plugin marketplace update cekura-skills`) and retry step 4. If that doesn't clear it, fully restart Claude Code (close and reopen the session), then redo steps 2–4.
 
-**`claude plugin list` shows zero cekura entries after upgrading:** you've successfully removed the old plugins but haven't yet installed the new one. Run steps 2–4 above.
-
-### npx skills users
-
-The `--path` arguments now use `cekura/skills/<skill-name>` (was `plugins/<plugin>/skills/<skill-name>`). See the Codex section above for the current invocation. `npx skills` does not install slash commands — those remain Claude Code-only.
+**`claude plugin list` shows zero cekura entries after upgrading:** you've removed the old plugins but haven't installed the new one. Run steps 2–4 above.
 
 ---
 
