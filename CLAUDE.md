@@ -19,7 +19,9 @@ cekura-skills/
       cekura-self-improving-agent/
       cekura-metric-design/
       cekura-metric-improvement/
+      cekura-predefined-metrics/
       cekura-eval-design/
+      cekura-fixing-prod-issues/
     commands/                    # Slash commands (Claude Code only)
     agents/                      # Sub-agent definitions (Claude Code only)
     hooks/                       # MCP failure detection (Claude Code only)
@@ -35,12 +37,12 @@ cekura-skills/
 
 ### Two install paths, one source of truth
 
-The 7 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
+The 9 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
 
 1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
 2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 7 skills under `cekura/skills/`. The bare repo URL works cleanly.
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 9 skills under `cekura/skills/`. The bare repo URL works cleanly.
 
 ### Skill content rules
 
@@ -109,7 +111,9 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 | `cekura-self-improving-agent` | Auto-tune agent prompts from eval results — diagnose → propose → apply → re-validate loop |
 | `cekura-metric-design` | Core metric design patterns and best practices |
 | `cekura-metric-improvement` | Metric improvement through feedback iteration |
+| `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
+| `cekura-fixing-prod-issues` | Debug a production call, write a fix, and verify it with two rounds of evaluator testing before raising a PR |
 
 ### Commands
 | Component | Purpose |

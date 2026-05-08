@@ -22,7 +22,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 7 Skills, 14 Commands in one plugin
+### 9 Skills, 14 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
@@ -32,7 +32,9 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-self-improving-agent` | |
 | `cekura-metric-design` | |
 | `cekura-metric-improvement` | |
+| `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
+| `cekura-fixing-prod-issues` | |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
@@ -80,7 +82,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Seven skills, scoped to specific Cekura workflows:
+Nine skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
@@ -90,7 +92,9 @@ Seven skills, scoped to specific Cekura workflows:
 | `cekura-self-improving-agent` | "Improve my agent / auto-tune from eval results" |
 | `cekura-metric-design` | "Create a metric / measure call quality" |
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
+| `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
+| `cekura-fixing-prod-issues` | "Fix a production call bug / reproduce and test a fix before raising a PR" |
 
 ### Want full functionality?
 
@@ -186,7 +190,9 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-self-improving-agent \
          cekura/skills/cekura-metric-design \
          cekura/skills/cekura-metric-improvement \
-         cekura/skills/cekura-eval-design
+         cekura/skills/cekura-predefined-metrics \
+         cekura/skills/cekura-eval-design \
+         cekura/skills/cekura-fixing-prod-issues
 ```
 
 Restart Codex after install.
@@ -217,7 +223,9 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-self-improving-agent \
          cekura/skills/cekura-metric-design \
          cekura/skills/cekura-metric-improvement \
-         cekura/skills/cekura-eval-design
+         cekura/skills/cekura-predefined-metrics \
+         cekura/skills/cekura-eval-design \
+         cekura/skills/cekura-fixing-prod-issues
 ```
 
 ---
@@ -318,7 +326,9 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-self-improving-agent` | Auto-tuning an agent prompt from eval results |
 | `cekura-metric-design` | Designing or creating metrics |
 | `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
+| `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
+| `cekura-fixing-prod-issues` | Fixing a production call bug — debug, reproduce, fix, verify, regression test, PR |
 
 ### Getting Started Flow
 
