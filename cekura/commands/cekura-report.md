@@ -232,6 +232,17 @@ Pull the result with `mcp__cekura__results_retrieve` and synthesize a markdown r
 https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=<run_id>
 ```
 
+**Wrap the entire report (from "1. Header" through "5. Next Steps") in HTML-comment sentinels so the product-chat PDF export can pick it out cleanly:**
+
+```
+<!-- CEKURA-REPORT-START -->
+# Cekura Quality Report — <agent name>
+…the full report sections below…
+<!-- CEKURA-REPORT-END -->
+```
+
+The sentinels are invisible in the rendered chat (markdown ignores HTML comments). Pre-report narration ("Pulling the result…", "Analyzing failures…") MUST stay outside the sentinels.
+
 ### 1. Header
 
 Result name + ID, agent name + ID, status, success rate, met / total expected outcomes, connection mode used, scenario count.

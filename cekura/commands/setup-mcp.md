@@ -6,98 +6,89 @@ allowed-tools: ["Bash", "Read", "Grep", "Glob", "AskUserQuestion", "mcp__cekura_
 
 # Set Up Cekura MCP Server
 
-Configure the Cekura MCP server so the cekura plugin can access the Cekura API through MCP tools.
+Configure access to the Cekura MCP server at `https://api.cekura.ai/mcp` so the plugin can call Cekura API operations as MCP tools.
 
 ## Process
 
 ### 1. Check if MCP is already working
 
-Try calling `mcp__cekura__list_available_tools` or `mcp__cekura__test_simple_tool`. If either responds successfully, MCP is already configured — tell the user and skip to step 5 (verification).
+Try calling `mcp__cekura__test_simple_tool` or `mcp__cekura__list_available_tools`. If either returns successfully, MCP is already configured — tell the user the version that's responding, and skip to step 4.
 
-### 2. Get the API key
+If both fail with a tools-not-available error, MCP isn't set up yet. Continue to step 2.
 
-Ask: "What's your Cekura API key? You can find it at https://dashboard.cekura.ai under Settings → API Keys."
+### 2. Choose the auth path
 
-The key should be set as an environment variable. Guide the user:
+Ask the user:
+
+> "Do you want to use OAuth (recommended — one-click browser sign-in, no keys to manage) or an API key (only if you need a project-scoped credential or shared CI access)?"
+
+### 3a. OAuth path (recommended)
+
+Run:
 
 ```bash
-# Add to your shell profile (~/.zshrc or ~/.bashrc)
+claude mcp add --transport http cekura --scope user https://api.cekura.ai/mcp
+```
+
+Tell the user: "Claude Code will open a browser window. Sign into your Cekura account at https://dashboard.cekura.ai and click **Authorize**. The session token is managed by Claude Code automatically — no env vars or config files."
+
+Then verify the server registered:
+
+```bash
+claude mcp list
+```
+
+The `cekura` entry should appear with status `connected`.
+
+### 3b. API key path (alternative)
+
+This is for users who need a project-scoped credential or want to share access via a key.
+
+Ask: "What's your Cekura API key? Find it at https://dashboard.cekura.ai → Settings → API Keys."
+
+Set the env var (persistent — add to shell profile):
+
+```bash
+# In ~/.zshrc or ~/.bashrc
 export CEKURA_API_KEY="<your-key-here>"
 ```
 
-Then reload: `source ~/.zshrc` (or restart the terminal).
+Reload: `source ~/.zshrc` (or restart the terminal).
 
-Verify it's set:
+The plugin's bundled `.mcp.json` reads `${CEKURA_API_KEY}` automatically — no further config needed. Restart the Claude Code session to pick up the env var.
+
+Verify:
+
 ```bash
-echo $CEKURA_API_KEY
+echo $CEKURA_API_KEY                 # should print the key
+claude mcp list                       # should show 'cekura' connected
 ```
 
-### 3. Start the MCP server
+### 4. Verify connectivity
 
-The Cekura MCP server bridges the Cekura API to Claude Code's MCP protocol.
+Try `mcp__cekura__list_available_tools`. It should return a list of Cekura API operations (agents, scenarios, metrics, results, etc.).
 
-**Option A: If you have the server locally:**
-```bash
-cd /path/to/cekura-mcp-server && python3 openapi_mcp_server.py
-```
-The server runs on `http://localhost:8001/mcp`.
+If it fails:
+- **OAuth path:** check `claude mcp list` shows `cekura` as connected. If not, re-run the `claude mcp add` command and re-authorize in the browser.
+- **API key path:** confirm `echo $CEKURA_API_KEY` prints the key and that you restarted Claude Code after setting it.
+- For both paths: verify connectivity to the public API with `curl -I https://api.cekura.ai/mcp` (should return a 2xx or 4xx — a connection error means a network issue).
 
-**Option B: If you don't have it:**
-Ask the user to contact Cekura support or check the docs at https://docs.cekura.ai for the MCP server setup instructions.
+### 5. Fix git remote config (one-time, optional)
 
-### 4. Fix git remote config
-
-Claude Code's marketplace installer may not set the full fetch refspec, which prevents branch operations (`/report-bug`, `/upgrade-skills`, checking out pre-release branches). Fix it:
+Claude Code's marketplace installer may not set the full fetch refspec, which prevents `/upgrade-skills` and `/report-bug` from accessing pre-release branches. This is idempotent:
 
 ```bash
 cd ~/.claude/plugins/marketplaces/cekura-skills
 git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
 ```
 
-This is idempotent — safe to run even if already set.
-
-### 5. Verify the .mcp.json file exists
-
-The cekura plugin has a single `.mcp.json` under the plugin directory that auto-connects to the MCP server. Check it exists:
-
-```bash
-ls ~/.claude/plugins/marketplaces/cekura-skills/cekura/.mcp.json
-```
-
-It should contain:
-```json
-{
-  "mcpServers": {
-    "cekura-api": {
-      "type": "http",
-      "url": "http://localhost:8001/mcp",
-      "headers": {
-        "X-CEKURA-API-KEY": "${CEKURA_API_KEY}"
-      }
-    }
-  }
-}
-```
-
-If it's missing, the user may need to run `/upgrade-skills` to pull the latest plugin version.
-
-### 6. Verify connectivity
-
-After setup, restart Claude Code to pick up the `.mcp.json` config, then test:
-
-Try `mcp__cekura__list_available_tools` — it should return a list of available Cekura API operations.
-
-If it fails, check:
-1. Is `CEKURA_API_KEY` set? (`echo $CEKURA_API_KEY`)
-2. Is the MCP server running? (`curl -s http://localhost:8001/mcp` should respond)
-3. Did you restart Claude Code after adding the `.mcp.json` file?
-
 ## Output
 
 Report the setup status:
-- API key: configured / missing
-- MCP server: running / not reachable
-- .mcp.json file: present / missing
+- Auth path used: OAuth / API key
+- MCP server: connected / not reachable [reason]
 - Connectivity test: passed / failed [reason]
 
-If everything passes: "MCP is configured. All Cekura commands and skills (`cekura-metric-design`, `cekura-eval-design`, `cekura-create-agent`, etc.) will use MCP tools automatically."
+If everything passes:
+
+> "MCP is configured. All Cekura skills (`cekura-create-agent`, `cekura-metric-design`, `cekura-eval-design`, etc.) and slash commands will use MCP tools automatically."
