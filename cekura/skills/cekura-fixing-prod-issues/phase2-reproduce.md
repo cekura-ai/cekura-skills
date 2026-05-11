@@ -163,13 +163,19 @@ get_result "RESULT_ID"
 
 ## ⛔ Phase 2 Gate — ABSOLUTE HARD STOP. DO NOT PASS WITHOUT EVIDENCE.
 
-**You MUST NOT move to Phase 3 until the eval definitively fails on Cekura. No exceptions, no shortcuts.**
+**You MUST NOT move to Phase 3 under ANY circumstance until the eval definitively fails on Cekura.**
 
-This gate exists because a fix written without a confirmed reproduction is untestable — you have no way to know if the fix actually worked. Skipping this gate invalidates the entire workflow.
+This is not a suggestion. This is not negotiable. There are no exceptions.
+
+### Errors are NOT a reason to skip this gate
+
+If the simulation errored, the call failed to connect, the bot crashed, or anything else went wrong — **fix the error and retry**. An error is not a reproduction. An error is not a result. Do not proceed to Phase 3 because "it didn't work, so the bug is probably there" — that reasoning is wrong and will produce an untestable fix.
+
+If you cannot get the simulation to run at all, **stop and ask the user for help**. Do not move forward.
 
 ### What "fails" means
 
-"Fails" means the **Cekura metric scores** show failure — not just that the call ended or the transcript looks wrong to you.
+"Fails" means the **Cekura metric scores** show failure — not just that the call ended, errored, or the transcript looks wrong to you.
 
 Check `runs[].evaluation.metrics[]` in the result. The exact metrics that were failing in the prod call must be scoring failure here too.
 
@@ -177,9 +183,10 @@ Check `runs[].evaluation.metrics[]` in the result. The exact metrics that were f
 
 **Read the transcript from this result and compare it turn-by-turn with the original prod call transcript.** The failure mode must be visibly present in the new transcript AND reflected in the metric scores.
 
-### If the metrics pass or the result is ambiguous — stop and diagnose
+### If the metrics pass, the result is ambiguous, or there was an error — stop and diagnose
 
 Do NOT proceed. Work through this checklist:
+- Did the simulation actually complete a full call? If there was an error, fix it and retry.
 - Are the metrics the exact ones that failed in the prod call? If not, go back to 2b.
 - Are the edge conditions (invalid API key, sleep timers, etc.) actually active and strong enough? Check and re-apply.
 - Is the evaluator sending the right turns in the right order? Re-check the conditional actions.
