@@ -111,7 +111,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<ivr text="..." />` | Uninterruptible IVR menu played **by the testing agent**. Use only when the testing agent simulates a third-party IVR the **main agent** will encounter (typically outbound scenarios). **Do NOT use for inbound IVR testing where the main agent IS the IVR** — leave `id:0 action:""` and use `<dtmf>` on later conditions instead. **When the scenario contains the `<ivr>` tag, any DTMF digits pressed by the main agent appear in the transcript** — use this to write conditions that detect which digit the main agent pressed (e.g., `"The main agent pressed 1"`). | **Must be the entire action.** No surrounding text or other tags. |
+| `<ivr text="..." />` | Uninterruptible IVR menu played **by the testing agent**. Can appear in any condition. **When the scenario contains the `<ivr>` tag, any DTMF digits pressed by the main agent appear in the transcript** — use this to write conditions that detect which digit the main agent pressed (e.g., `"The main agent pressed 1"`). | **Must be the entire action.** No surrounding text or other tags. |
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible voicemail greeting + auto-beep at end. `text` is optional (silent voicemail allowed). | **Must be the entire action.** Post-beep message goes in a separate `action_followup` condition. |
 | `<endcall />` | Terminates the call | **May be combined with surrounding text** (the only "communication-class" tag that allows this — useful for natural sign-offs like `Thanks, that's all I needed <endcall />`). |
 
@@ -439,7 +439,7 @@ Same shape as any other evaluator — set `scenario_language` to the target code
 
 ### IVR navigation — inbound (main agent is the IVR)
 
-Most common IVR test. The main agent plays its own IVR menu; the caller (testing agent) waits silent at `id: 0` and uses `<dtmf>` to navigate. **Do not use the `<ivr>` tag.** See "Worked Example 2: IVR Navigation (Inbound)" above.
+Most common IVR test. The main agent plays its own IVR menu; the testing agent uses `<dtmf>` to navigate — `<dtmf>` can appear in any condition. See "Worked Example 2: IVR Navigation (Inbound)" above.
 
 ### IVR simulation — outbound (testing agent plays an external IVR)
 
