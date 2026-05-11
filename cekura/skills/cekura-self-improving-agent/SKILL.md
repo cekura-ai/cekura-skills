@@ -8,14 +8,14 @@ description: >
   on failures", "rewrite my prompt", or describes agent self-improvement,
   prompt iteration from run results, or automated agent quality loops.
   Covers the full diagnose → propose → apply → re-validate loop for VAPI
-  agents (squads + tool definitions) and for self-hosted agents (pipecat
-  pipelines and custom websocket servers, including the offline / pasted-
-  prompt degenerate variant).
+  agents (squads + tool definitions) and for self-hosted agents (custom
+  websocket servers, including the offline / pasted-prompt degenerate
+  variant).
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.18.0"
+  version: "0.19.0"
 ---
 
 # Cekura Self-Improving Agent
@@ -26,25 +26,20 @@ Close the loop on agent prompt and tool-config quality. Ingest evaluation signal
 
 **Two data streams, one diagnosis.** Every iteration reads two artifacts in parallel: (1) the agent's prompt + tool definitions, and (2) the provider-side call state for each failing run (variable injection, rendered system messages, tool-call arguments where observable). A failure that *looks* like a prompt bug is often a missing dynamic variable; a failure that *looks* upstream is sometimes a prompt/tool conflict that survives correct injection. Mapping failures only to prompt sections produces phantom fixes.
 
-**Two top-level modes, four sub-flavors.** The skill organizes providers under `providers/`:
+**Two top-level modes, three variants.** The skill organizes providers under `providers/`:
 
 - **`vapi`** — VAPI agents. Both system prompts and tool definitions are editable directly via the VAPI API. Tool config covers function declarations, referenced tool definitions (`name`, `description`, `parameters`, spoken `messages` like `request-start` / `request-complete` / `request-failed`, and handoff `destinations`), and which tools each squad member references via its `toolIds` array. Edits land on VAPI; the live agent picks them up immediately. See [`providers/vapi/overview.md`](providers/vapi/overview.md).
-- **`self_hosted`** — umbrella for any agent the user runs themselves. Two sub-flavors:
-  - **`pipecat`** — pipecat pipelines (Pipecat Cloud / user infrastructure). Editable surface is the Cekura agent record's `description` + mock-tool definitions. The user redeploys their pipecat agent before re-validation; in auto mode the gate is skipped and a no-change hypothesis is surfaced after the fact. See [`providers/self-hosted/pipecat.md`](providers/self-hosted/pipecat.md).
-  - **`websocket`** — custom websocket servers (e.g., Python / Node / Go) whose system prompt, tool definitions, **and conversation-orchestration code** live in the user's source code. Editable surface is the user's source file via the `Edit` tool — covering the system prompt, tool schemas, AND orchestration code (conversation-history management, message wiring, state-preservation logic, keepalive / retry plumbing) when a failure's root cause is in code rather than prompt wording. Business logic (what a tool *computes* or what an external service returns) and security-sensitive code (API keys, auth, signing) remain out of scope. **The Cekura agent record's `llm_system_prompt` field is NOT the source of truth in this mode — do not read it, and never ask the user to paste their prompt while a workspace is reachable.** Always source the prompt from the workspace: start with the file currently open in the IDE (`ide_opened_file`), then grep project files for the system-prompt string constant. The user restarts their websocket server before re-validation; in auto mode the gate is skipped. A degenerate `offline` variant covers the "no live websocket reachable" case — the skill renders the rewritten prompt for manual application and asks for pasted failures each iteration (offline variant supports prompt edits only, never code edits). See [`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md).
-
-The `providers/self-hosted/overview.md` file documents the routing decision tree.
+- **`self_hosted` (websocket)** — custom websocket servers (e.g., Python / Node / Go) whose system prompt, tool definitions, **and conversation-orchestration code** live in the user's source code. Editable surface is the user's source file via the `Edit` tool — covering the system prompt, tool schemas, AND orchestration code (conversation-history management, message wiring, state-preservation logic, keepalive / retry plumbing) when a failure's root cause is in code rather than prompt wording. Business logic (what a tool *computes* or what an external service returns) and security-sensitive code (API keys, auth, signing) remain out of scope. **The Cekura agent record's `llm_system_prompt` field is NOT the source of truth in this mode — do not read it, and never ask the user to paste their prompt while a workspace is reachable.** Always source the prompt from the workspace: start with the file currently open in the IDE (`ide_opened_file`), then grep project files for the system-prompt string constant. The user restarts their websocket server before re-validation; in auto mode the gate is skipped. A degenerate `offline` variant covers the "no live websocket reachable" case — the skill renders the rewritten prompt for manual application and asks for pasted failures each iteration (offline variant supports prompt edits only, never code edits). See [`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md) and [`providers/self-hosted/overview.md`](providers/self-hosted/overview.md).
 
 **Exit gate.** The voice/channel/infra filter informs *what to fix* (Phase 3 only proposes edits for prompt-following failures), not *when to stop*. Any remaining failure of any class keeps the loop alive. Only the iteration cap or a genuine 100% pass ends the loop.
 
-Currently supported for **VAPI** and **self-hosted** (pipecat + websocket). Retell support is intentionally disabled and will be re-enabled in a future revision.
+Currently supported for **VAPI** and **self-hosted** (websocket). Retell and pipecat support are intentionally disabled and will be re-enabled in a future revision.
 
 ## Performing Platform Actions
 
 When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
 
 - VAPI mode: VAPI write operations (assistant PATCH, tool create / PATCH / delete) are not exposed through Cekura platform tools — they go directly to the VAPI API with `VAPI_KEY`. Full curl bodies in [`providers/vapi/phase-4-apply.md`](providers/vapi/phase-4-apply.md).
-- Self-hosted / pipecat: prompt and mock-tool edits go through Cekura platform tools (`mcp__cekura__aiagents_partial_update`, `mcp__cekura__aiagents_tool_partial_update`, `mcp__cekura__aiagents_tools_create`). Full flow and redeploy gate in [`providers/self-hosted/pipecat.md`](providers/self-hosted/pipecat.md).
 - Self-hosted / websocket: file edits land via the `Edit` tool on the user's source code — system prompt, tool schemas, and conversation-orchestration code (history management, message wiring, state) are all in scope; optional `mcp__cekura__aiagents_partial_update` to sync the Cekura description as a mirror. Full flow in [`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md).
 
 ## How to Use This Skill
@@ -58,13 +53,12 @@ Optionally:
 
 - `max_iterations` (default 10) — caps the Phase 4 loop.
 - `mode` (`vapi` / `self_hosted`) — explicit override if the resolution would otherwise be ambiguous.
-- `self_hosted_flavor` (`pipecat` / `websocket`) — explicit override for the sub-flavor router.
 - `redeploy_command` (self-hosted only) — shell command(s) the skill should run after each apply step to restart the live agent before re-validation. If provided, Phase 4 runs this automatically and the user-side restart gate is skipped entirely. If set to the literal string `"manual"` (or not provided in `auto_mode: false`), the skill falls back to the canonical "pause and ask the user to restart" gate. Collected at the end of Phase 1.3 for self-hosted modes — see step 1.4 below. VAPI mode ignores this field (VAPI edits land live; nothing to redeploy).
 - `auto_mode` (default **true**) — when true, skip the Phase 3 → Phase 4 approval gate on every iteration. With `redeploy_command` configured, the skill is fully end-to-end autonomous for self-hosted modes (auto-apply → auto-redeploy → auto-validate). Without `redeploy_command`, auto_mode skips the routine user-side deployment pauses too and trusts the user to keep their live system in sync (the no-change detector at Step 4.5 catches stale-state cases after the fact). The iteration cap, oscillation detection, validation-set stability, and the user's ability to interrupt mid-loop all still apply. Set `auto_mode: false` only when you want a per-iteration diff-approval pause AND (if `redeploy_command` is unset) explicit user-side deployment gates before validation.
 
 **Ask for feedback or clarification wherever required, even in auto mode.** Auto mode skips *routine* gates; it does NOT make the skill silent on genuinely ambiguous inputs or risky decisions. Pause and ask when:
 
-- The user's input is ambiguous or incomplete (e.g., `agent_id` + `prompt` supplied without a mode; structured-config file where the prompt field can't be identified safely; empty / one-line / clearly-non-production prompt; sub-flavor routing at Step 1.2 needs a single answer like "pipecat or websocket?").
+- The user's input is ambiguous or incomplete (e.g., `agent_id` + `prompt` supplied without a mode; structured-config file where the prompt field can't be identified safely; empty / one-line / clearly-non-production prompt).
 - Self-hosted / websocket / offline variant — there is no automated path to re-collect failures, so the skill must ask for pasted failures after each iteration.
 - The skill needs to widen the validation set, switch input types mid-loop, or change the validation comparison set in any way — never silent in either mode.
 - Oscillation is detected (same scenario flipping pass/fail across iterations) or a no-change signature appears (identical post-edit failures two iterations in a row). Surface and pause; do not burn the iteration cap.
@@ -76,12 +70,11 @@ When in doubt, ask. A short clarifying question costs less than a wrong PATCH ag
 
 The four phases run in order, with the last looping until the agent passes:
 
-1. **Phase 1 — Verify Agent and Provider Support.** Resolve mode and sub-flavor. For `agent_id` inputs, fetch the agent and gate on `assistant_provider`. Route to one of: `providers/vapi/`, `providers/self-hosted/pipecat.md`, or `providers/self-hosted/websocket.md`. Each loads the source-of-truth artifacts the rest of the loop edits against.
+1. **Phase 1 — Verify Agent and Provider Support.** Resolve mode and variant. For `agent_id` inputs, fetch the agent and gate on `assistant_provider`. Route to one of: `providers/vapi/` or `providers/self-hosted/websocket.md`. Each loads the source-of-truth artifacts the rest of the loop edits against.
 2. **Phase 2 — Collect Failures and Inspect Provider Call State.** Branch on input type. For `scenario_ids`, run them first and wait for completion; for `result_id` / `run_ids` / `call_ids`, fetch the supplied runs / call logs; for pasted failures (offline variant only), trust the user's transcripts + verdicts directly. Pre-filter human-reviewed successes. Accumulate expected-outcome and metric failures, **discard voice/channel failures**, and **for every kept failure also pull the provider call state** when available (variable injection, rendered system message, tool-call arguments). Both streams flow into Phase 3.
 3. **Phase 3 — Diagnose and Propose Changes.** Synthesize the prompt/tool artifacts AND the variable-state findings to attribute each failure to its actual root cause: prompt Gap / Conflict / Ambiguity, tool-config issue, or **Upstream/data** (missing or malformed dynamic variables that no prompt edit can fix). Produce minimal scoped edits for the prompt-and-tool roots; surface upstream-rooted failures with a clear hand-off. In the offline variant, only prompt edits are produced — tool findings become hand-offs.
-4. **Phase 4 — Apply, Validate, and Iterate.** Apply the prompt and/or tool-definition edits to the right surface for the resolved mode and sub-flavor:
+4. **Phase 4 — Apply, Validate, and Iterate.** Apply the prompt and/or tool-definition edits to the right surface for the resolved mode and variant:
    - VAPI → direct API PATCH (see `providers/vapi/phase-4-apply.md`).
-   - Self-hosted / pipecat → Cekura `aiagents_partial_update` + mock-tool tool calls; user redeploys (see `providers/self-hosted/pipecat.md`).
    - Self-hosted / websocket / `file` variant → `Edit` calls on the user's source file; user restarts the server (see `providers/self-hosted/websocket.md`).
    - Self-hosted / websocket / `offline` variant → render the rewritten prompt; user applies and re-runs externally.
 
@@ -107,22 +100,20 @@ Branch on the user's input shape:
 Retrieve the agent and read `assistant_provider`:
 
 - **`vapi`** → continue down the VAPI branch (Step 1.3a; see [`providers/vapi/overview.md`](providers/vapi/overview.md)).
-- **`pipecat`** → continue down the self-hosted / pipecat branch (Step 1.3b; see [`providers/self-hosted/pipecat.md`](providers/self-hosted/pipecat.md)).
-- **`self_hosted`, `custom`, `agentforce`, or any other non-VAPI / non-pipecat tag** → enter the self-hosted sub-flavor router (see [`providers/self-hosted/overview.md`](providers/self-hosted/overview.md)). Ask the user which of `pipecat` or `websocket` matches their setup. If they say neither and don't want to iterate offline, halt.
-- **`retell`, `elevenlabs`, `livekit`, `sip`, or missing/empty** → offer the self-hosted / websocket / `offline` variant ("This skill can't PATCH a `<provider>` agent directly, but it can run in offline mode if you paste your system prompt — want to do that instead?"). Halt only if the user declines.
+- **`self_hosted`, `custom`, `agentforce`, or any other non-VAPI tag** → route to the self-hosted / websocket branch (Step 1.3b; see [`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md)). If the user can't point at a source file, fall back to the `offline` variant.
+- **`retell`, `pipecat`, `elevenlabs`, `livekit`, `sip`, or missing/empty** → offer the self-hosted / websocket / `offline` variant ("This skill can't PATCH a `<provider>` agent directly, but it can run in offline mode if you paste your system prompt — want to do that instead?"). Halt only if the user declines.
 
-`retell` is in the unsupported list on purpose — Retell handling is temporarily disabled. Do not bypass the gate for direct PATCHing. If `assistant_provider` is empty, point the user at `cekura-create-agent` (Phase 3: Configure Provider Integration), or offer the offline variant if they have a draft prompt. Compare lowercased — be defensive against mixed-case input.
+`retell` and `pipecat` are in the unsupported list on purpose — their direct handling is temporarily disabled. Do not bypass the gate for direct PATCHing. If `assistant_provider` is empty, point the user at `cekura-create-agent` (Phase 3: Configure Provider Integration), or offer the offline variant if they have a draft prompt. Compare lowercased — be defensive against mixed-case input.
 
-Track the resolved mode and sub-flavor on the run; every later phase branches on them.
+Track the resolved mode and variant on the run; every later phase branches on them.
 
-For the exact VAPI error-message shape, the Retell-specific note, and 404 handling, see [`providers/vapi/phase-1-fetch.md`](providers/vapi/phase-1-fetch.md). For the self-hosted sub-flavor router, see [`providers/self-hosted/overview.md`](providers/self-hosted/overview.md).
+For the exact VAPI error-message shape, the Retell-specific note, and 404 handling, see [`providers/vapi/phase-1-fetch.md`](providers/vapi/phase-1-fetch.md). For the self-hosted overview, see [`providers/self-hosted/overview.md`](providers/self-hosted/overview.md).
 
 ### Step 1.3 — Fetch the source-of-truth artifacts (branch by mode)
 
 Each branch's full procedure lives in its provider doc:
 
 - **VAPI** — [`providers/vapi/overview.md`](providers/vapi/overview.md) (with [`providers/vapi/phase-1-fetch.md`](providers/vapi/phase-1-fetch.md) for curl bodies + edge cases). VAPI is the source of truth; the Cekura `description` is informational only. Pulls the live `/assistant/{id}` (or squad) plus every referenced `/tool/{id}` using `VAPI_KEY`.
-- **Self-hosted / pipecat** — [`providers/self-hosted/pipecat.md`](providers/self-hosted/pipecat.md). Cekura's stored `description` + mock-tool list are the source of truth. The live pipecat agent is not introspectable.
 - **Self-hosted / websocket** — [`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md). `file` variant: the user's source file (the system prompt is a string constant; tool definitions usually live in the same file); `offline` variant: pasted prompt text, read-only.
 
 Each branch ends by surfacing a compact summary to the user before moving on to Step 1.4 (self-hosted) or Phase 2 (VAPI).
@@ -131,7 +122,7 @@ Each branch ends by surfacing a compact summary to the user before moving on to 
 
 Skipped for VAPI (edits land live; nothing to redeploy) and for the websocket `offline` variant (no live agent at all).
 
-For self-hosted modes with a live target (pipecat + websocket / `file` variant), the live agent does not pick up prompt or tool-config changes until the user redeploys / restarts. The skill can either run that step automatically each iteration (preferred, fully autonomous) or pause on a manual restart gate (the legacy behavior).
+For self-hosted mode with a live target (websocket / `file` variant), the live agent does not pick up prompt or tool-config changes until the user restarts. The skill can either run that step automatically each iteration (preferred, fully autonomous) or pause on a manual restart gate (the legacy behavior).
 
 If `redeploy_command` is already provided in the run inputs, use it. Otherwise, ask the user exactly once:
 
@@ -145,7 +136,6 @@ Examples:
   Docker compose:                   docker compose restart agent
   systemd:                          sudo systemctl restart my-agent
   SSH'd remote host:                ssh user@host 'systemctl restart agent'
-  Pipecat Cloud:                    pcc deploy
   Fly.io:                           fly deploy --strategy immediate
 
 Reply with the shell command, OR reply "manual" if you'd rather restart the
@@ -153,7 +143,7 @@ agent yourself between iterations (I'll pause and ask "done" before each
 re-validation).
 ```
 
-Record the resolved `redeploy_command` on the run. Treat the literal `"manual"` (case-insensitive) as a sentinel meaning "user-driven restart gate every iteration" — that branch is the iter-pause behavior documented in each sub-flavor doc's Phase 4.1.
+Record the resolved `redeploy_command` on the run. Treat the literal `"manual"` (case-insensitive) as a sentinel meaning "user-driven restart gate every iteration" — that branch is the iter-pause behavior documented in the websocket doc's Phase 4.1.
 
 When the user provides a real command, treat it as a contract: the skill will execute it after every iteration's apply step (Phase 4.1, before validation in Phase 4.4). The user is responsible for the command being correct and idempotent; the skill is responsible for running it, capturing exit code + stderr, and failing loudly if it errors. Backgrounded servers (`nohup ... &`, `disown`) are fine — the Bash tool returns once the foreground portion completes.
 
@@ -165,7 +155,7 @@ For the full collection-prompt wording, sentinel handling, command-execution sem
 
 Skip for the other input types. Pick voice mode for VAPI (default). Trigger the run, capture the `result_id`, then poll until terminal (every ~30s, capped at 15 min for voice / 5 min for text). Once complete, treat as a `result_id` input.
 
-For self-hosted agents, scenario execution still runs against the live agent (pipecat agent on Pipecat Cloud; websocket server at the configured URL). In auto mode the skill triggers validation without pausing to ask if the user has redeployed / restarted; if results look unchanged across iterations, the no-change hypothesis is surfaced after the fact (see Phase 4.5). In `auto_mode: false`, Phase 4.1 (per sub-flavor) gates this with the appropriate apply pause.
+For self-hosted agents, scenario execution still runs against the live websocket server at the configured URL. In auto mode the skill triggers validation without pausing to ask if the user has restarted; if results look unchanged across iterations, the no-change hypothesis is surfaced after the fact (see Phase 4.5). In `auto_mode: false`, Phase 4.1 gates this with the appropriate apply pause.
 
 For the offline variant, there are no scenarios to execute — only pasted failures.
 
@@ -227,8 +217,6 @@ For each kept failing run / call log, fetch the provider call object and record:
 
 Bulk-fetch runs (NOT result-fetch — provider call details aren't included there) or fetch call logs individually. Payloads are large (250–500 KB per run); use `jq` or python rather than re-reading the whole blob. Direct-VAPI fallback (`GET https://api.vapi.ai/call/{id}`) is available when `provider_call_details` is missing or stale.
 
-**Self-hosted / pipecat caveats.** The pipecat transcript_provider does not expose `assistantOverrides.variableValues` or a fully-rendered `artifact.messages[0].content` the way VAPI does. The signals available are typically: (1) the test-profile / scenario variable values that Cekura passed at run start (Signal 1, intent — visible on the run record), (2) the transcript and any tool-call records that Cekura captured (Signals 3 and 4 partial). Substitution failures usually surface as the agent literally speaking `{{variableName}}` or as a tool call with placeholder arguments. If a failure looks variable-injection-shaped but you cannot confirm runtime state, mark the diagnosis "suspected upstream — runtime state not observable" and surface the gap rather than blindly proposing a prompt edit.
-
 **Self-hosted / websocket caveats.** The user's websocket server controls what Cekura sees. The convention for `main.py`-style agents is to forward tool-call records to Cekura via `{"role": "Function Call", "data": {...}}` messages; when present, Signal 4 is recoverable. `assistantOverrides.variableValues` is typically NOT observable — most websocket agents don't echo it back. Treat substitution as not-observable unless the transcript literally shows `{{varName}}`. With the `offline` variant, only Signals 3 and 4-partial are available — what the pasted transcript shows.
 
 Group observations when patterns repeat — "all 3 failed runs share the same variable-injection failure" is more actionable than per-run repetition. For the full per-signal decision tree (key absent vs. wrong-name vs. literal-placeholder-survives), the squad per-member-message caveat, and the bare-comma-separated-string gotcha for bulk-retrieve, see [`references/dynamic-variables-debugging.md`](references/dynamic-variables-debugging.md).
@@ -251,23 +239,20 @@ Outputs split into four streams; any may be empty for a given iteration:
 
 - **Prompt edits** —
   - *VAPI:* change the system message of one or more squad members (or the lone assistant for non-squad agents).
-  - *Self-hosted / pipecat:* change the Cekura agent record's `description`. One description per agent.
   - *Self-hosted / websocket / `file`:* change the system prompt string in the user's source file via `Edit`.
   - *Self-hosted / websocket / `offline`:* render a rewritten prompt for the user to copy.
 - **Tool-config edits** —
   - *VAPI:* change a tool's name / description / parameter schema / spoken messages / handoff destinations, OR change which tools a member references via `toolIds` (add a new tool, remove a reference, create a new tool).
-  - *Self-hosted / pipecat:* change a Cekura mock tool's `description` or `parameters` (JSONSchema) via `mcp__cekura__aiagents_tool_partial_update`, or add a new mock tool via `mcp__cekura__aiagents_tools_create`. Do **not** propose edits to spoken `messages`, `destinations`, `toolIds`, or `request-start` content — those are VAPI-only.
-  - *Self-hosted / websocket / `file`:* change tool-definition blocks in the user's source file via `Edit`. These are *live* edits (unlike pipecat mock tools, which only change the testing contract).
+  - *Self-hosted / websocket / `file`:* change tool-definition blocks in the user's source file via `Edit`. These are *live* edits.
   - *Self-hosted / websocket / `offline`:* always empty. Tool findings become upstream hand-offs.
-- **Orchestration-code edits** — *self-hosted / websocket / `file` only.* When the root cause is in the user's conversation-orchestration code rather than prompt wording — e.g., aggressive history truncation that drops earlier qualification answers, missing tool-result forwarding back to the LLM, keepalive / retry logic that silently loses turns, state slicing that breaks mid-conversation — propose a minimal `Edit` to the relevant function. Scope is limited to plumbing/orchestration: how messages flow, how conversation state is preserved, how the loop is structured. **Out of scope**: business logic (what a tool computes, what an external service returns), security-sensitive code (API keys, auth, signing, secrets), dependency / requirements changes, framework upgrades. VAPI, pipecat, and the websocket `offline` variant never produce this stream — code-rooted findings in those modes become upstream hand-offs.
-- **Upstream hand-off recommendations** — for failures rooted in missing / wrong dynamic variables, no prompt or tool edit fixes the issue. Surface the variable mismatch with a concrete pointer to where it should be set (test profile, scenario config, squad / project defaults, upstream caller). In pipecat mode, also consider that the live pipecat code may simply not be reading the variable Cekura is passing. In the websocket `offline` variant, also surface tool-shaped findings here. In VAPI / pipecat / websocket `offline`, also surface code-shaped findings here.
+- **Orchestration-code edits** — *self-hosted / websocket / `file` only.* When the root cause is in the user's conversation-orchestration code rather than prompt wording — e.g., aggressive history truncation that drops earlier qualification answers, missing tool-result forwarding back to the LLM, keepalive / retry logic that silently loses turns, state slicing that breaks mid-conversation — propose a minimal `Edit` to the relevant function. Scope is limited to plumbing/orchestration: how messages flow, how conversation state is preserved, how the loop is structured. **Out of scope**: business logic (what a tool computes, what an external service returns), security-sensitive code (API keys, auth, signing, secrets), dependency / requirements changes, framework upgrades. VAPI and the websocket `offline` variant never produce this stream — code-rooted findings in those modes become upstream hand-offs.
+- **Upstream hand-off recommendations** — for failures rooted in missing / wrong dynamic variables, no prompt or tool edit fixes the issue. Surface the variable mismatch with a concrete pointer to where it should be set (test profile, scenario config, squad / project defaults, upstream caller). In the websocket `offline` variant, also surface tool-shaped findings here. In VAPI / websocket `offline`, also surface code-shaped findings here.
 
 ### Step 3.1 — Read both data streams
 
 Re-fetch the source-of-truth artifacts if more than a few minutes have passed since Phase 1.3:
 
 - *VAPI:* `/assistant/{id}` and every referenced `/tool/{id}` — VAPI dashboard edits don't notify Cekura, and a stale local copy will produce a wrong PATCH body.
-- *Self-hosted / pipecat:* `mcp__cekura__aiagents_retrieve` (description) and `mcp__cekura__aiagents_tools_list` (mock tools) — Cekura dashboard edits between iterations would otherwise be overwritten.
 - *Self-hosted / websocket / `file`:* re-read the source file with the Read tool. The user may have edited the file between iterations (manually, in their IDE).
 - *Self-hosted / websocket / `offline`:* re-read the prompt only if its source was a file path; pasted prompts don't change between iterations unless the user explicitly pastes a new one.
 
@@ -311,10 +296,9 @@ If you can't tell, default to **Ambiguity** and flag for the user. A failure can
 
 Use the smallest change that fixes the failure — don't rewrite paragraphs to fix one missed step.
 
-- **Upstream/data → no edit, hand off.** This skill cannot fix upstream root causes. Surface a hand-off naming each missing/wrong variable, what the prompt expected, what the runtime saw, and where to inject (test profile, squad / assistant-level dynamic variables, upstream caller). In pipecat mode, also consider whether the live pipecat code is reading the variable correctly. In the websocket `offline` variant, runtime state may not be fully observable. If a prompt edit could *also* harden the agent against the missing variable, note it as a secondary candidate but do not include it in the iteration's edit set unless the user asks. If **all** kept failures are Upstream/data, this iteration produces zero edits — surface and stop the loop early.
+- **Upstream/data → no edit, hand off.** This skill cannot fix upstream root causes. Surface a hand-off naming each missing/wrong variable, what the prompt expected, what the runtime saw, and where to inject (test profile, squad / assistant-level dynamic variables, upstream caller). In the websocket `offline` variant, runtime state may not be fully observable. If a prompt edit could *also* harden the agent against the missing variable, note it as a secondary candidate but do not include it in the iteration's edit set unless the user asks. If **all** kept failures are Upstream/data, this iteration produces zero edits — surface and stop the loop early.
 - **Prompt edits.** Gap → **add** a clause next to the closest related section, matching existing voice/format. Conflict → **edit** or **remove** the contradictory clause; if both have legitimate use cases, **scope** them with explicit conditions. Ambiguity → **edit for specificity**; replace vague verbs with concrete steps; add a checklist if there are >2 required actions.
 - **Tool-config edits — VAPI mode.** Four sub-types: (a) **edit** an existing tool's `function.description` / parameters / spoken `messages` / handoff `destinations`; (b) **add** a new tool when a flow step requires data the agent doesn't have (POST `/tool` then PATCH the assistant's `toolIds`); (c) **remove a tool reference** from a specific member when squad inheritance is exposing a tool that member shouldn't use (PATCH `model.toolIds`, leave the tool definition); (d) **delete a tool** — rare, only after cross-referencing every squad member's `toolIds` and confirming no references remain.
-- **Tool-config edits — self-hosted / pipecat.** Two sub-types: (a) **edit** an existing Cekura mock tool's `description` or `parameters` JSONSchema via `mcp__cekura__aiagents_tool_partial_update`; (b) **add** a new mock tool via `mcp__cekura__aiagents_tools_create`. The agent's *real* Python tool implementation lives in the user's pipecat code — if a mock-tool edit is meaningful only because the live Python signature differs, surface that as a hand-off ("update the pipecat tool signature to match") rather than only editing the mock. Do **not** propose `messages` / `destinations` / `toolIds` edits.
 - **Tool-config edits — self-hosted / websocket / `file`.** Two sub-types: (a) **edit** a tool-definition block in the user's source file via `Edit` (the schema flows into the live agent on restart); (b) **add** a new tool-definition entry to the `TOOLS` list (or equivalent). Tool *implementations* (the function body that computes a result or calls an external service) remain out of scope — surface those as hand-offs.
 - **Tool-config edits — self-hosted / websocket / `offline`.** None. Surface tool-shaped findings as upstream hand-offs.
 - **Orchestration-code edits — self-hosted / websocket / `file` only.** When the diagnosis is **CodeBug**, propose the smallest `Edit` that fixes the plumbing. Common shapes:
@@ -345,27 +329,25 @@ This phase is a **loop**. Each iteration: apply the approved edits → run valid
 
 **Early-exit shortcut.** If Phase 2 collected zero failures of any class from the initial input, Phase 3 was skipped — report success and stop. If Phase 2 found failures but they are *all* voice/infra/tool, do not auto-exit; run the same logic as the "kept = 0 but total > 0" branch in Step 4.6 first.
 
-### Step 4.1 — Apply the edits (branch by mode + sub-flavor)
+### Step 4.1 — Apply the edits (branch by mode + variant)
 
 Apply-order details, gate wording, and edge cases live in each provider's doc:
 
 - **VAPI** — [`providers/vapi/phase-4-apply.md`](providers/vapi/phase-4-apply.md): tool PATCH → new-tool POST → assistant PATCH (prompt + `toolIds` bundled). No redeploy step (edits land live).
-- **Self-hosted / pipecat** — [`providers/self-hosted/pipecat.md`](providers/self-hosted/pipecat.md) § "Phase 4.1b — apply order": mock-tool PATCH → new mock-tool POST → description PATCH → **redeploy step** (see below).
-- **Self-hosted / websocket / `file`** — [`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `file`): tool-definition `Edit`s → new-tool `Edit` → system-prompt `Edit` → optional Cekura description sync → **redeploy step** (see below).
-- **Self-hosted / websocket / `offline`** — [`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `offline`): render the rewritten prompt; auto-mode asks once for new pasted failures concisely; non-auto fires the full manual-apply gate. No redeploy step (no live agent).
+- **Self-hosted / websocket / `file`** — [`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `file`): tool-definition `Edit`s → new-tool `Edit` → system-prompt `Edit` → optional Cekura description sync → **restart step** (see below).
+- **Self-hosted / websocket / `offline`** — [`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `offline`): render the rewritten prompt; auto-mode asks once for new pasted failures concisely; non-auto fires the full manual-apply gate. No restart step (no live agent).
 
-**Redeploy step (self-hosted with live target).** After apply lands and before Step 4.2 sync verification, branch on `redeploy_command` (collected in Step 1.4):
+**Restart step (self-hosted with live target).** After apply lands and before Step 4.2 sync verification, branch on `redeploy_command` (collected in Step 1.4):
 
-- **Command provided** → run it via the Bash tool. Capture exit code and stderr. On non-zero exit, surface the failure to the user, do NOT proceed to validation, and ask whether to retry the redeploy or abort. On success (or success-with-warnings), proceed to Step 4.2.
-- **`redeploy_command == "manual"` (or unset and `auto_mode: false`)** → fire the per-sub-flavor manual restart gate (pipecat redeploy gate, websocket restart gate). Wait for explicit user confirmation (`done` / `restarted` / `redeployed` / `yes`).
+- **Command provided** → run it via the Bash tool. Capture exit code and stderr. On non-zero exit, surface the failure to the user, do NOT proceed to validation, and ask whether to retry the restart or abort. On success (or success-with-warnings), proceed to Step 4.2.
+- **`redeploy_command == "manual"` (or unset and `auto_mode: false`)** → fire the websocket restart gate. Wait for explicit user confirmation (`done` / `restarted` / `yes`).
 - **Unset and `auto_mode: true`** → proceed straight to validation without pausing. The Step 4.5 no-change detector surfaces stale-state hypotheses after the fact.
 
-Treat the redeploy step as a critical path: a failed redeploy means validation will reflect the pre-edit live state. Never silently swallow a non-zero exit code and proceed to validation — that produces results indistinguishable from "the prompt edit didn't help" and burns iteration cap.
+Treat the restart step as a critical path: a failed restart means validation will reflect the pre-edit live state. Never silently swallow a non-zero exit code and proceed to validation — that produces results indistinguishable from "the prompt edit didn't help" and burns iteration cap.
 
-### Step 4.2 — Confirm sync (branch by mode + sub-flavor)
+### Step 4.2 — Confirm sync (branch by mode + variant)
 
 - **VAPI** — re-fetch `/assistant/{id}` and every edited / created `/tool/{id}` and verify the changed fields landed. Don't skip the tool re-fetch — VAPI's tool PATCH semantics replace nested objects wholesale.
-- **Self-hosted / pipecat** — re-fetch via `mcp__cekura__aiagents_retrieve` and `mcp__cekura__aiagents_tool_retrieve`. There is no "live agent" sync to verify on Cekura's side; the redeploy gate (non-auto) or the no-change detector (auto) covers the live state.
 - **Self-hosted / websocket / `file`** — re-read the source file (Read tool, not cached) and verify the changed regions match the intended `Edit` output. If a tool-definition edit was supposed to extend `TOOLS` but the post-edit file shows the old length, the edit landed in the wrong place or matched a partial-but-ambiguous `old_string` — roll back and retry.
 - **Self-hosted / websocket / `offline`** — skip; nothing to sync. The user's reply to the apply gate is the only confirmation.
 
@@ -393,7 +375,7 @@ Never widen the failure set or the full set mid-loop without telling the user �
 
 ### Step 4.4 — Run validation
 
-Execute the validation set in voice mode for VAPI. Capture `result_id`, poll until terminal (same 30s cadence and 15-min cap as Phase 2.1). For self-hosted / pipecat and self-hosted / websocket / `file`, the same Cekura-driven execution applies — the validation runs hit the live agent the user just (hopefully) redeployed / restarted.
+Execute the validation set in voice mode for VAPI. Capture `result_id`, poll until terminal (same 30s cadence and 15-min cap as Phase 2.1). For self-hosted / websocket / `file`, the same Cekura-driven execution applies — the validation runs hit the live agent the user just (hopefully) restarted.
 
 In **self-hosted / websocket / `offline` variant**, the skill does not run validation itself. Step 4.4 collapses into "ask the user for the new failure set" — a fresh batch of pasted `{transcript, expected_outcome, verdict}` blocks. Treat zero new failures as a 100% pass.
 
@@ -401,7 +383,7 @@ In **self-hosted / websocket / `offline` variant**, the skill does not run valid
 
 Run the new result through Phase 2 end to end — verdict pre-filter (keep `failure` + `reviewed_failure`, drop `success` + `reviewed_success`), accumulate, voice filter, **and re-run Step 2.4 provider-call-state inspection** against the new runs. Re-running Step 2.4 each iteration matters: a Phase 4.1 edit only changes prompts and tool definitions; it cannot change variable injection. If iteration N-1's failures were rooted upstream, iteration N's variable state should look identical — that's the signal the upstream issue is unresolved (and the loop should stop and surface, not iterate further).
 
-In **self-hosted modes**, also watch for the "no-change" signature: if the new failures look identical to the prior iteration's (same scenarios fail with same transcript shapes), the most likely cause is that the live agent didn't pick up the new state — pipecat redeploy didn't happen, websocket server wasn't restarted, or (offline variant) the rewritten prompt didn't land in the user's system. Surface this hypothesis explicitly in Step 4.6 before iterating further. Self-hosted / websocket / `offline` is the most prone to this — the user has to apply the rewritten prompt to *their* system manually.
+In **self-hosted mode**, also watch for the "no-change" signature: if the new failures look identical to the prior iteration's (same scenarios fail with same transcript shapes), the most likely cause is that the live agent didn't pick up the new state — the websocket server wasn't restarted, or (offline variant) the rewritten prompt didn't land in the user's system. Surface this hypothesis explicitly in Step 4.6 before iterating further. Self-hosted / websocket / `offline` is the most prone to this — the user has to apply the rewritten prompt to *their* system manually.
 
 ### Step 4.6 — Decide: exit, sweep, or loop
 
@@ -436,24 +418,23 @@ For the full PATCH curl bodies, the tool-backup pattern, the loop guardrails (os
 
 - **Asking the user to redeploy / restart / re-apply before triggering evals in auto mode.** `auto_mode` is on by default and skips BOTH the diff-approval gate AND the user-side deployment pauses. The skill proceeds straight to validation. Don't render "before continuing, redeploy your server" instruction blocks in the default path. If results come back unchanged, surface the no-change hypothesis *after the fact* (Step 4.5 already does this).
 - **Exiting on failure-set 100% without running the regression sweep.** A 2/2 pass on the originally-failing subset is a milestone, not the finish line. The exit gate is 100% on the **full set** (every scenario the user originally provided), and the only way to confirm that is to actually run the full set after the failure subset hits 100%. Skipping the sweep masks regressions where an edit fixed scenarios A & B but broke scenario C. Step 4.6's decision tree enforces this — never declare success on failure-set 100% alone.
-- **Treating auto mode as fully silent.** Auto mode skips *routine* gates, NOT the skill's responsibility to ask for clarification on genuinely ambiguous inputs or risky decisions. Ambiguous mode resolution (pipecat vs. websocket), prompt-source ambiguity (which file? which variable?), low-confidence diagnoses, oscillation, no-change signatures, all-upstream failure sets, and metric-quality clusters all require an explicit pause-and-ask.
+- **Treating auto mode as fully silent.** Auto mode skips *routine* gates, NOT the skill's responsibility to ask for clarification on genuinely ambiguous inputs or risky decisions. Ambiguous mode resolution (vapi vs. self-hosted), prompt-source ambiguity (which file? which variable?), low-confidence diagnoses, oscillation, no-change signatures, all-upstream failure sets, and metric-quality clusters all require an explicit pause-and-ask.
 - **Auto mode masking diagnosis quality.** Without the per-iteration human read on the diff, a bad diagnosis lands silently and shows up only as a failed re-validation. Treat oscillation and no-change signatures as harder stops in auto mode — surface and pause rather than burn the iteration cap.
 - **Forcing `auto_mode: false` for routine work.** The diff-approval + deployment-gate pauses are useful when calibrating the skill against a new agent. For repeat use against an agent whose diagnosis quality you've already validated, the default `auto_mode: true` is correct.
 - **Proposing tool-config edits in the offline variant.** Only prompt edits are valid there — tool findings must be surfaced as upstream hand-offs, not edits.
-- **Proposing VAPI-shaped edits in self-hosted modes.** Spoken `messages` (`request-start`, `request-complete`, `request-failed`), handoff `destinations`, squad `model.toolIds` — none of these exist outside VAPI. Phase 3 must filter these edit candidates out for any self-hosted sub-flavor.
+- **Proposing VAPI-shaped edits in self-hosted mode.** Spoken `messages` (`request-start`, `request-complete`, `request-failed`), handoff `destinations`, squad `model.toolIds` — none of these exist outside VAPI. Phase 3 must filter these edit candidates out for self-hosted.
 - **Treating Cekura's `description` as the source of truth in websocket mode.** It is at best a mirror; the live prompt is in the user's source code. Editing the description does nothing to the live agent unless the user's code reads from it.
-- **Reading `llm_system_prompt` from the Cekura agent record in self-hosted mode, or asking the user to paste their prompt.** For `assistant_provider == "self_hosted"` (including websocket and pipecat), `llm_system_prompt` is almost always empty — the live prompt lives in the user's workspace (websocket: source file; pipecat: Cekura `description`, which IS the workspace-of-record for that flavor). Do NOT pull `llm_system_prompt` and do NOT ask "paste your current system prompt so I can run improve-prompt against it." Instead, locate the prompt in the workspace: first the IDE-opened file (`ide_opened_file` context), then grep project files for the prompt string constant, and edit it directly via the `Edit` tool. Asking the user to paste is only acceptable in the explicit `offline` variant where no workspace is reachable.
+- **Reading `llm_system_prompt` from the Cekura agent record in self-hosted mode, or asking the user to paste their prompt.** For `assistant_provider == "self_hosted"`, `llm_system_prompt` is almost always empty — the live prompt lives in the user's workspace (the source file). Do NOT pull `llm_system_prompt` and do NOT ask "paste your current system prompt so I can run improve-prompt against it." Instead, locate the prompt in the workspace: first the IDE-opened file (`ide_opened_file` context), then grep project files for the prompt string constant, and edit it directly via the `Edit` tool. Asking the user to paste is only acceptable in the explicit `offline` variant where no workspace is reachable.
 - **Applying `Edit` with a non-unique `old_string` in websocket / `file` variant.** The Edit tool fails on ambiguous matches. Use enough surrounding context (5–10 lines on either side) for every anchor.
-- **Hallucinating variable-injection findings without runtime state.** Especially common in pipecat and websocket / `offline` variant. Don't claim "the runtime didn't receive `{{accountId}}`" unless the transcript itself shows the placeholder leaking.
+- **Hallucinating variable-injection findings without runtime state.** Especially common in the websocket / `offline` variant. Don't claim "the runtime didn't receive `{{accountId}}`" unless the transcript itself shows the placeholder leaking.
 - **Shortcutting Step 2.3 by reading result-level summary fields instead of per-run `evaluation_status`.** A `results_retrieve` payload exposes both: per-run `evaluation_status` (post-review, authoritative) AND result-level aggregates (`failed_workflow_runs`, `failed_reasons.issues`, `failed_runs_count`, `success_rate`) computed from raw machine scores **before** human review. The aggregates lump `failure` and `reviewed_success` into the same buckets — using them silently smuggles human-overridden passes into the kept set and produces edits that contradict the reviewer. The four-bucket filter only works when applied to each run's own `evaluation_status`. Same rule for `run_ids` (use per-item verdict) and `call_ids` (use per-log verdict). The Step 2.5 funnel line must cite `per-run evaluation_status` as the source so the skip is auditable.
 - **Skipping the variable-state inspection (Step 2.4) and mapping failures only to prompt sections.** Produces phantom prompt fixes for failures actually rooted upstream.
 - **Quitting the loop the moment failures look non-prompt.** The exit gate is 100% pass rate or the iteration cap — not "first sight of an infra-shaped failure." Re-classify with fresh eyes before declaring upstream. In websocket / `file` mode, also check whether the failure is a **CodeBug** (history truncation, missing forwarding, broken state) — those are in-scope for editing, not hand-offs.
 - **Iterating prompt-wording when the diagnosis is CodeBug.** If oscillation or a no-change signature surfaces and the failure shape matches a CodeBug signal (agent forgets earlier turns, agent ignores explicit don't-re-ask rules despite the prompt being clear, etc.) — stop iterating the prompt. Move to the orchestration-code stream. Repeated prompt-only edits will not converge if the plumbing prevents the agent from following the instructions.
 - **Touching business logic, auth code, or dependencies in websocket-mode code edits.** Orchestration-code edits are scoped to plumbing: history management, message wiring, state preservation, keepalive. Tool implementation bodies, API keys / auth code, secrets handling, dependency lists, and framework imports remain out of scope. When in doubt, hand off rather than edit.
-- **Proposing code edits in VAPI, pipecat, or websocket `offline`.** The orchestration-code stream exists only for websocket / `file`. In other modes, code-shaped findings become upstream hand-offs — the skill cannot reach VAPI / pipecat infrastructure code, and the offline variant has no live file to edit.
+- **Proposing code edits in VAPI or websocket `offline`.** The orchestration-code stream exists only for websocket / `file`. In other modes, code-shaped findings become upstream hand-offs — the skill cannot reach VAPI infrastructure code, and the offline variant has no live file to edit.
 - **Skipping the per-iteration user gate in `auto_mode: false`.** The skill applies edits to a live agent. Every PATCH / Edit must be preceded by explicit approval of *that iteration's* proposed diff.
 - **Skipping the Phase 4.2 sync re-fetch.** VAPI's PATCH semantics replace nested objects wholesale; a malformed body can silently wipe `messages` or `destinations` while returning 200. For websocket / `file`, an `Edit` call with an ambiguous anchor can land in the wrong spot. Always re-read and verify.
-- **Treating pipecat mock-tool edits as live-agent changes.** Cekura mock-tool definitions describe the testing contract; the agent's real implementations live in pipecat code. Editing a mock-tool description without asking the user to update the pipecat tool can produce edits that look fine on Cekura but never reach the agent.
 - **Editing dynamic-variable placeholders (`{{...}}`).** They're owned by the calling system. Touch them only if the user explicitly asks.
 - **Patching a tool's spoken `messages` to mask a prompt issue.** If the agent says the wrong thing, fix the prompt — unless the tool's `request-start` message is itself the offending utterance.
 - **Iterating with a noisy metric.** If most kept failures come from one metric whose explanations look subjective, the metric is probably miscalibrated — hand off to `cekura-metric-improvement` first.
@@ -490,9 +471,8 @@ cekura-self-improving-agent/
     │   ├── phase-1-fetch.md                  # assistant/squad/tool fetch curl bodies, edge cases
     │   └── phase-4-apply.md                  # PATCH/POST/DELETE curl bodies, loop guardrails
     └── self-hosted/
-        ├── overview.md                       # sub-flavor router, shared characteristics
-        ├── pipecat.md                        # pipecat sub-flavor — Cekura description + mock tools
-        └── websocket.md                      # websocket sub-flavor — file Edit + restart gate; offline variant
+        ├── overview.md                       # self-hosted overview, shared characteristics
+        └── websocket.md                      # websocket flavor — file Edit + restart gate; offline variant
 └── references/                               # cross-cutting (shared by every mode)
     ├── phase-2-failure-collection.md         # failure summary template, metric hand-off
     ├── phase-3-diagnosis.md                  # classification table, before/after templates
@@ -504,9 +484,8 @@ cekura-self-improving-agent/
 - **[`providers/vapi/overview.md`](providers/vapi/overview.md)** — VAPI editable surfaces, what's PATCHable directly, anti-patterns.
 - **[`providers/vapi/phase-1-fetch.md`](providers/vapi/phase-1-fetch.md)** — Provider-gate error message shapes, VAPI assistant + squad + tool fetch curl bodies, member summary template, Phase 1 edge cases.
 - **[`providers/vapi/phase-4-apply.md`](providers/vapi/phase-4-apply.md)** — VAPI PATCH / POST / DELETE curl bodies, tool-backup pattern, validation-set construction, loop guardrails, iteration-cap exit messaging.
-- **[`providers/self-hosted/overview.md`](providers/self-hosted/overview.md)** — Self-hosted umbrella, sub-flavor router, shared characteristics across pipecat and websocket.
-- **[`providers/self-hosted/pipecat.md`](providers/self-hosted/pipecat.md)** — Pipecat sub-flavor gate, Phase 1.3b summary, Cekura-side PATCH bodies for description and mock tools, redeploy gate, pipecat-specific edge cases.
-- **[`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md)** — Websocket sub-flavor gate, source-file discovery, `Edit`-based apply path, restart-server gate, pasted-prompt / pasted-failures degenerate `offline` variant, websocket-specific edge cases.
+- **[`providers/self-hosted/overview.md`](providers/self-hosted/overview.md)** — Self-hosted overview, shared characteristics, redeploy command flow.
+- **[`providers/self-hosted/websocket.md`](providers/self-hosted/websocket.md)** — Websocket flavor gate, source-file discovery, `Edit`-based apply path, restart-server gate, pasted-prompt / pasted-failures degenerate `offline` variant, websocket-specific edge cases.
 - **[`references/phase-2-failure-collection.md`](references/phase-2-failure-collection.md)** — Full failure-summary template, the metric-improvement hand-off wording, edge cases (no failures / all-errored / mixed inputs), and the no-overfitting-caveats rule.
 - **[`references/phase-3-diagnosis.md`](references/phase-3-diagnosis.md)** — Full classification table with examples, before/after templates per edit surface, tool-edit anti-patterns, the manual-vs-automated-improver guidance, Phase 3 anti-patterns.
 - **[`references/dynamic-variables-debugging.md`](references/dynamic-variables-debugging.md)** — Per-signal decision tree for variable state, where each signal lives in the Cekura payload, the direct-VAPI fallback, the `runs_bulk_retrieve` bare-string gotcha, squad per-member-message caveats.
