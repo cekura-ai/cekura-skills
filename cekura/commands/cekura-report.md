@@ -166,40 +166,44 @@ Now execute whichever option the user picked in 3b:
 
 ## Step 4 — Pick the connection mode and run
 
-### 4a. Ask the user for connection mode
+### 4a. Derive candidate modes from the agent record
 
-Now (not earlier), use `AskUserQuestion` to collect the connection mode. Options:
+Use the agent record from Step 2 (`assistant_provider`, `contact_number`, `websocket_url`, `chat_assistant_id`, `sip_endpoint`, `inbound`) to compute the set of **valid** modes. **Do not** present modes the agent isn't configured for.
 
-- `voice` — generic voice call
-- `text` — text-only chat (fastest, cheapest)
-- `websocket` — custom websocket endpoint
-- `pipecat` — Pipecat v1 client
-- `pipecat-v2` — Pipecat v2 client
-- `retell` — Retell WebRTC
-- `vapi` — VAPI WebRTC
-- `livekit` — LiveKit v2
-- `elevenlabs` — ElevenLabs
-- `sip` — SIP
+The three telephony-style modes are distinct:
+- **`voice`** = generic PSTN call to a `contact_number`. Works with any provider that publishes a phone number.
+- **`sip`** = only when `sip_endpoint` is present (e.g., `sip:agent@yourdomain.com`). Not PSTN — a bare phone number is `voice`, never `sip`.
+- **WebRTC modes** (`vapi`, `retell`, `elevenlabs`, `livekit`) = provider-specific browser/SDK connection, not phone.
 
-### 4b. Validate the chosen mode against the agent
+Mapping:
 
-Using the agent record from Step 2, confirm the chosen mode is actually configured:
+| Agent config signal | Candidate modes |
+|---|---|
+| `assistant_provider: vapi` + `contact_number` | `vapi`, `voice`; add `text` if `chat_assistant_id` set |
+| `assistant_provider: vapi`, no phone | `vapi`; add `text` if `chat_assistant_id` set |
+| `assistant_provider: retell` (analogous) | `retell`; add `voice` if `contact_number`; add `text` if `chat_assistant_id` |
+| `assistant_provider: elevenlabs` (analogous) | `elevenlabs`; add `voice` if `contact_number`; add `text` if `chat_assistant_id` |
+| `assistant_provider: livekit` | `livekit`; add `voice` if `contact_number` |
+| `assistant_provider: pipecat` | `pipecat-v2` (preferred), `pipecat`; add `voice` if `contact_number` |
+| `assistant_provider: self_hosted` + `sip_endpoint` | `sip` |
+| `assistant_provider: self_hosted` + `websocket_url` (no sip) | `websocket` |
+| `assistant_provider: self_hosted` + only `contact_number` | `voice` |
+| No provider, only `contact_number` | `voice` |
+| `websocket_url` set, no provider | `websocket` |
+| `chat_assistant_id` set, nothing else | `text` |
 
-- `voice` → voice provider wired up
-- `text` → text mode supported
-- `websocket` → `websocket_url` present (and `websocket_headers` if needed)
-- `pipecat` / `pipecat-v2` → Pipecat integration configured
-- `retell` → Retell WebRTC configured
-- `vapi` → VAPI WebRTC configured
-- `livekit` → LiveKit v2 configured
-- `elevenlabs` → ElevenLabs configured
-- `sip` → SIP endpoint configured
+### 4b. Auto-pick or ask — only when there's genuine choice
 
-If the mode isn't configured, surface it:
+**Principle:** auto-pick when obvious; ask only when ambiguous; never list modes the agent isn't configured for.
 
-> ⚠️ You picked `websocket` but the agent has no `websocket_url`. Either configure it on the agent or pick a different mode.
+- **Zero candidates** — STOP and surface the gap:
+  > ⚠️ Agent has no provider, phone number, sip_endpoint, or websocket_url configured. Can't run evals. Configure a connection on the agent first.
+- **Exactly one candidate** — **auto-pick** it. Announce:
+  > Auto-selected `<mode>` — only configured connection on this agent.
+  Skip `AskUserQuestion`.
+- **Two or more candidates** — use `AskUserQuestion` with **only the configured options** (never the full 10-way list). Include a one-line speed/cost hint: text fastest/cheapest, WebRTC moderate, PSTN voice realistic but slowest.
 
-Loop on 4a until a valid mode is selected.
+The user can still override by passing a mode explicitly in their initial command.
 
 ### 4c. Trigger the run
 
