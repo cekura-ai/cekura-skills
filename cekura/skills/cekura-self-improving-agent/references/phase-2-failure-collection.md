@@ -10,8 +10,10 @@ Group failures by **scenario** (for runs) or by **metric** (for call logs), sinc
 Failure Summary
   Agent: <name> (<id>) — provider vapi
   Source: <input type> — <N items inspected>
-  Reviewed-success skipped: <S items> (human-reviewed pass — metric/outcome verdicts on these items ignored)
-  Failures: <total collected on remaining items> — <voice-related discarded> voice-related discarded — <kept> prompt-following kept
+  Verdict filter:
+    - kept: <K> (failure: <F>, reviewed_failure: <R>)
+    - dropped: <D> (success: <S>, reviewed_success: <RS>)  ← reviewed_success = human-reviewed pass; metric/outcome verdicts on these items ignored
+  Failures on kept items: <total collected> — <voice-related discarded> voice-related discarded — <prompt-following kept>
 
   Expected-Outcome Failures (M of N runs):
     - Scenario: <name>
@@ -41,7 +43,9 @@ Phase 2's job is to surface failures, not to commit to a fix shape — that belo
 
 The user-facing gate is at every Phase 3 → Phase 4 transition (after they see proposed edits), not at Phase 2. **The one exception**: if the failures are dominated by one or two metrics with thin signal (i.e. most kept failures come from the same metric and the explanations look subjective), stop and suggest hand-off to `cekura-metric-improvement`. Those are metric-quality issues, not agent-quality issues, and Phase 3 won't fix them — the loop will keep "fixing" the prompt to satisfy a flawed judge.
 
-If the `reviewed_success` pre-filter dropped multiple items where the same metric flagged FAIL, that's another flavor of the same signal — surface the metric ids with their FAIL-on-reviewed-success counts and recommend `cekura-metric-improvement` for those metrics specifically. But do not act on it from this skill.
+If the verdict pre-filter dropped multiple `reviewed_success` items where the same metric flagged FAIL, that's another flavor of the same signal (a human overrode a machine fail on the same judge repeatedly — the judge is probably miscalibrated) — surface the metric ids with their FAIL-on-reviewed-success counts and recommend `cekura-metric-improvement` for those metrics specifically. But do not act on it from this skill.
+
+Symmetrically, do **not** route `reviewed_failure` items to `cekura-metric-improvement` just because they cluster on one metric — those are kept failures with explicit human confirmation, and they belong in Phase 3 as the strongest available signal.
 
 ## No small-sample / overfitting caveats (user-facing)
 
@@ -62,4 +66,4 @@ Even when the input is a single run, do **not** include lines like:
 
 ## What "kept" means downstream
 
-The kept failure summary (with provider-call-state observations) is the input to Phase 3. The reviewed-success skip count and voice-discard count are tracked separately because they're distinct reasons for ignoring an item — the summary should report them on different lines so the user can see the full pipeline (items → skipped → discarded → kept) at a glance.
+The kept failure summary (with provider-call-state observations) is the input to Phase 3. The verdict-drop counts (`success` + `reviewed_success`) and the voice-discard count are tracked separately because they're distinct reasons for ignoring an item — the summary should report them on different lines so the user can see the full pipeline (items → verdict-dropped → voice-discarded → kept) at a glance. Within the kept set, `reviewed_failure` items are not separated out for processing (they flow into Phase 3 the same as `failure` items) but the count is surfaced in the summary because the user often wants to know how many of the kept failures carry explicit human confirmation.
