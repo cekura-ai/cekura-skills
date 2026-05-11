@@ -1,8 +1,8 @@
 ---
 name: run-evals
-description: Execute Cekura evaluators (voice, text, or websocket)
-argument-hint: "[evaluator IDs or 'all'] [mode: voice/text/websocket]"
-allowed-tools: ["AskUserQuestion", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call"]
+description: Execute Cekura evaluators (voice, text, websocket, sip, pipecat, vapi, retell, elevenlabs, livekit)
+argument-hint: "[evaluator IDs or 'all'] [mode: voice/text/websocket/sip/pipecat/pipecat-v2/vapi/retell/elevenlabs/livekit]"
+allowed-tools: ["AskUserQuestion", "mcp__cekura__aiagents_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__scenarios_run_pipecat_v2", "mcp__cekura__scenarios_run_vapi_webrtc", "mcp__cekura__scenarios_run_retell_webrtc", "mcp__cekura__scenarios_run_elevenlabs", "mcp__cekura__scenarios_run_livekit_v2", "mcp__cekura__scenarios_run_sip", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call"]
 ---
 
 # Run Evaluators
@@ -14,23 +14,43 @@ Execute one or more evaluators against the target agent.
 1. **Identify evals to run**: Get evaluator IDs or filter criteria.
    Use `mcp__cekura__scenarios_list` to find evaluators by agent or project.
 
-2. **Choose execution mode**:
-   - **Voice** (default): Full voice call via provider
-   - **Text**: Text-based chat (faster, cheaper, good for logic testing)
-   - **WebSocket**: Real-time WebSocket connection
-   - **Pipecat**: Via Pipecat framework
+2. **Determine execution mode from agent config — don't ask if it's obvious.**
+
+   If the user passed `[mode]` as an argument, honor it (skip detection).
+
+   Otherwise, fetch the agent with `mcp__cekura__aiagents_retrieve(id=<agent_id>)` and inspect `assistant_provider`, `contact_number`, `websocket_url`, `chat_assistant_id`, `sip_endpoint`. Derive candidate modes:
+
+   - **`voice`** = PSTN. Valid whenever `contact_number` is set. Note: a bare phone number is `voice`, never `sip`.
+   - **`sip`** = only when `sip_endpoint` is set (e.g. `sip:agent@host`).
+   - **`text`** = when `chat_assistant_id` is set.
+   - **`websocket`** = when `websocket_url` is set and no other provider.
+   - **WebRTC** (`vapi`, `retell`, `elevenlabs`, `livekit`) = when `assistant_provider` matches.
+   - **`pipecat-v2` / `pipecat`** = when `assistant_provider: pipecat`.
+
+   Selection rule:
+   - **0 candidates** → STOP. Surface: *"Agent has no provider, phone number, sip_endpoint, or websocket_url configured — can't run evals."*
+   - **1 candidate** → auto-pick. Announce: *"Auto-selected `<mode>` — only configured connection on this agent."*
+   - **2+ candidates** → use `AskUserQuestion` with **only the configured options**, never the full list. One-line hint: text fastest/cheapest, WebRTC moderate, PSTN voice realistic but slowest.
 
 3. **Confirm scope**: Show the user what will run:
    - Number of evaluators
-   - Execution mode
+   - Execution mode (auto-selected or chosen)
    - Estimated time/cost implications
 
-4. **Execute using batch endpoint** (preferred for multiple evals):
-   Use `mcp__cekura__scenarios_run_voice` with `agent_id`, `scenarios` (array of IDs), and `frequency`.
+4. **Execute using batch endpoint** (preferred for multiple evals). Pass `agent_id`, `scenarios` (array of IDs), and optionally `frequency` (for repeat runs).
 
-   For text mode: Use `mcp__cekura__scenarios_run_text`.
-   For websocket: Use `mcp__cekura__scenarios_run_websocket`.
-   For pipecat: Use `mcp__cekura__scenarios_run_pipecat_v1`.
+   | Mode | Tool |
+   |---|---|
+   | voice | `mcp__cekura__scenarios_run_voice` |
+   | text | `mcp__cekura__scenarios_run_text` |
+   | websocket | `mcp__cekura__scenarios_run_websocket` |
+   | pipecat | `mcp__cekura__scenarios_run_pipecat_v1` |
+   | pipecat-v2 | `mcp__cekura__scenarios_run_pipecat_v2` |
+   | vapi | `mcp__cekura__scenarios_run_vapi_webrtc` |
+   | retell | `mcp__cekura__scenarios_run_retell_webrtc` |
+   | elevenlabs | `mcp__cekura__scenarios_run_elevenlabs` |
+   | livekit | `mcp__cekura__scenarios_run_livekit_v2` |
+   | sip | `mcp__cekura__scenarios_run_sip` |
 
 5. **Monitor**: Check run status:
    Use `mcp__cekura__results_list` to list results.
@@ -42,10 +62,12 @@ Execute one or more evaluators against the target agent.
 
 | Mode | Speed | Cost | Best For |
 |------|-------|------|----------|
-| Voice | Slow | High | Final validation, voice-specific testing |
-| Text | Fast | Low | Logic testing, rapid iteration |
-| WebSocket | Medium | Medium | Real-time agents |
-| Pipecat | Medium | Medium | Pipecat-based agents |
+| text | Fast | Low | Logic testing, rapid iteration (requires `chat_assistant_id`) |
+| websocket | Medium | Medium | Custom websocket agents (requires `websocket_url`) |
+| pipecat / pipecat-v2 | Medium | Medium | Pipecat-based agents |
+| vapi / retell / elevenlabs / livekit (WebRTC) | Medium | Medium | Provider-native browser/SDK testing |
+| voice (PSTN) | Slow | High | Realistic phone-call validation (requires `contact_number`) |
+| sip | Slow | High | Self-hosted SIP endpoints (requires `sip_endpoint`) |
 
 ## Pre-Run Checklist
 
