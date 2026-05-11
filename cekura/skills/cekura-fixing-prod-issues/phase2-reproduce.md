@@ -65,29 +65,36 @@ update_scenario "SCENARIO_ID" '{
 
 ## 2c. Look up how to run the local agent
 
-Before configuring anything, check whether setup instructions for running the local agent and connecting it to Cekura already exist:
+**You MUST physically read the files below using your file reading tool. Do not rely on memory, do not assume, do not skip this step.**
 
-1. Read `memory.md` in the project root
-2. Read `CLAUDE.md` in the project root
+**Step 1 — Actually read these files right now:**
 
-If instructions are found — follow them exactly. They are the source of truth for this project's local run setup.
+```
+Read: <project_root>/memory.md
+Read: <project_root>/CLAUDE.md
+```
 
-**If no instructions are found in either file — you MUST ask the user before proceeding. Do not guess, do not assume, do not try to infer from other files.**
+Use your file reading tool on both files. If a file does not exist, that counts as "not found" — do not treat it as found.
 
-Ask:
-> "I couldn't find local run setup instructions in `memory.md` or `CLAUDE.md`. How do I run the local agent and connect it to a Cekura simulation? (e.g. what command to start it, how to pass the Cekura outbound number, which config file to edit)"
+**Step 2 — Did you find local run setup instructions in either file?**
 
-Once the user explains, **immediately write the instructions to `memory.md`** before doing anything else. Do not proceed to 2d until you have written it.
+**YES** — follow them exactly. They are the source of truth. Skip to 2d.
 
-Write a dedicated section like this to `memory.md` (create the file if it doesn't exist):
+**NO** — you MUST stop and ask the user. Do not infer from other files, do not use the example below, do not guess:
+
+> "I read `memory.md` and `CLAUDE.md` but couldn't find instructions for how to run the local agent. How do I start it and connect it to a Cekura simulation? (e.g. what command, which config file to edit, how to pass the Cekura outbound number)"
+
+**Step 3 — Immediately write what the user tells you to `memory.md`**
+
+Do this before anything else. Create `memory.md` if it doesn't exist:
 
 ```markdown
 ## Local Agent Run Setup
 
-<paste exactly what the user told you — the command to start the agent, which config file to edit, how to pass the Cekura outbound number/connection details, any env vars needed>
+<exactly what the user said — start command, config file, how to pass the outbound number, env vars>
 ```
 
-Confirm the write succeeded, then proceed to 2d.
+Confirm the write succeeded. Only then proceed to 2d.
 
 ---
 
