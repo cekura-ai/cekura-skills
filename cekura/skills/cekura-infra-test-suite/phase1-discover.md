@@ -142,4 +142,4 @@ GAPS:                   [questions you couldn't answer from code alone]
 
 Surface gaps as open questions in the Phase 2 checkpoint — do not guess.
 
-Move to [Phase 2](phase2-map.md).
+Move to [Phase 2](phase2-describe.md).

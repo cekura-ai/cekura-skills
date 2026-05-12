@@ -1,4 +1,4 @@
-# Phase 3 — Create Evaluators on Cekura
+# Phase 4 — Create Evaluators on Cekura
 
 **All infra test scenarios must use `scenario_type: "conditional_actions"`** — always, without exception. Behavioral instructions are not deterministic enough to reliably trigger specific infra behaviors like idle timers, interruptions, or DTMF. Never use behavioral mode for this suite.
 
@@ -6,7 +6,7 @@ Create a folder, then create each confirmed scenario with a conditional_actions 
 
 ---
 
-## 3a. Create a folder
+## 4a. Create a folder
 
 Always group infra scenarios in a dedicated folder. Never dump them in the root.
 
@@ -22,7 +22,7 @@ Use the returned `folder_path` on every scenario in this suite.
 
 ---
 
-## 3b. Required fields on every scenario
+## 4b. Required fields on every scenario
 
 Every scenario must include:
 
@@ -37,7 +37,7 @@ Every scenario must include:
 
 ---
 
-## 3c. Authoring rules — read before writing any conditions
+## 4c. Authoring rules — read before writing any conditions
 
 ### Rule: Condition 0 depends on who speaks first (Q8 answer)
 
@@ -76,11 +76,11 @@ For all other tag constraints (`<interruption>` placement, `<voicemail>` usage, 
 
 ---
 
-## 3d. Create each scenario
+## 4d. Create each scenario
 
-For each scenario confirmed in Phase 2, construct the conditional_actions payload using the rules above and the Q answers from Phase 1. Use the timing values discovered (idle threshold, escalation count, DTMF terminator) and the bot's domain to write appropriate caller actions.
+For each scenario confirmed in Phase 3, construct the conditional_actions payload using the rules above. Use the trigger conditions, timing values, and observable outcomes from `/tmp/infra-workflow-descriptions.md` (written in Phase 2) — not the raw Q answers — as your source of truth for idle thresholds, DTMF terminators, and what to verify in expected outcomes.
 
-## 3e. Attach metrics to every scenario
+## 4e. Attach metrics to every scenario
 
 Use the **cekura-predefined-metrics** skill to identify which metrics to attach to each scenario. It has the full catalog, cost, constraints, and configuration guidance.
 
@@ -92,11 +92,11 @@ One rule specific to infra scenarios: Expected Outcome evaluates conversation co
 
 ---
 
-## Phase 3 Gate
+## Phase 4 Gate
 
 All scenarios are created on Cekura with:
 - ✓ `conditional_actions` payload
 - ✓ Metrics attached (per cekura-predefined-metrics skill)
 - ✓ Placed in the `Infrastructure Test Suite` folder
 
-Move to [Phase 4](phase4-orchestrate.md).
+Move to [Phase 5](phase5-orchestrate.md).

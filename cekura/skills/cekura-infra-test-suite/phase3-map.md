@@ -1,10 +1,12 @@
-# Phase 2 — Map Answers to Tests and Confirm
+# Phase 3 — Map Workflows to Tests and Confirm
 
-Take the Q1–Q9 answers from Phase 1 and decide which scenarios to build. Then confirm the plan with the user before creating anything.
+Read `/tmp/infra-workflow-descriptions.md` (written by Phase 2) before doing anything else. That file has the detailed description of every discovered capability — what conditions trigger it, what the test can control, and what is observable in the transcript. Use it as the authoritative reference when deciding which scenarios to build and how to design them.
+
+Then decide which scenarios to build and confirm the plan with the user before creating anything.
 
 ---
 
-## 2a. Map each Q answer to a test
+## 3a. Map each workflow to a test
 
 Work through the answers in order. For each answer, add the corresponding scenario if the capability was found — skip it if it wasn't.
 
@@ -26,11 +28,11 @@ Work through the answers in order. For each answer, add the corresponding scenar
 
 **Full Pipeline E2E is always included** — it is the baseline every other scenario assumes is passing.
 
-**Add a scenario only if Phase 1 confirmed the capability exists.** If Q5 found no idle timer, there is no idle test. If Q6 found no DTMF, there is no DTMF test.
+**Add a scenario only if Phase 2 confirmed the capability exists and described how to trigger it.** If Q5 found no idle timer, there is no idle test. If Q6 found no DTMF, there is no DTMF test. Use the trigger conditions and observable outcomes from `/tmp/infra-workflow-descriptions.md` — not guesses — when filling in timing values, digit sequences, and expected outcomes.
 
 ---
 
-## 2b. What cannot be tested — exclude unconditionally
+## 3b. What cannot be tested — exclude unconditionally
 
 Remove these from the suite regardless of what Phase 1 found:
 
@@ -42,7 +44,7 @@ Remove these from the suite regardless of what Phase 1 found:
 
 ---
 
-## 2c. Confirm with the user
+## 3c. Confirm with the user
 
 Present the proposed suite before creating anything. Mirror the Phase 1 gate output exactly so the user can verify nothing was lost or misread:
 
@@ -73,15 +75,15 @@ OPEN QUESTIONS:
 Proceed with this suite, or should I adjust?
 ```
 
-**Do not move to Phase 3 until the user explicitly confirms.** If they adjust scope, revise the mapping and re-present.
+**Do not move to Phase 4 until the user explicitly confirms.** If they adjust scope, revise the mapping and re-present.
 
 ---
 
-## Phase 2 Gate
+## Phase 3 Gate
 
 User has confirmed. You now know:
 - The exact scenario list
-- The timing values needed (idle threshold, escalation count, DTMF terminator)
-- Whether the bot speaks first (determines FIRST_MESSAGE handling in Phase 3)
+- The timing values needed (idle threshold, escalation count, DTMF terminator) — sourced from `/tmp/infra-workflow-descriptions.md`
+- Whether the bot speaks first (determines FIRST_MESSAGE handling in Phase 4)
 
-Move to [Phase 3](phase3-create.md).
+Move to [Phase 4](phase4-create.md).

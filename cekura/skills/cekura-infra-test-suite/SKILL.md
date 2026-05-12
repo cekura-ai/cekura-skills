@@ -17,24 +17,26 @@ metadata:
 
 # Cekura Voice AI Infrastructure Test Suite
 
-Discover the stack, map it to tests, confirm, then build — in that order.
+Discover the stack, describe each workflow, map to tests, confirm, then build — in that order.
 
 ```
-Phase 1        Phase 2        Phase 3        Phase 4
-Discover   →   Map       →   Create     →   Orchestrate
-Read code       Component     Cekura         Run script +
-to find         → test         evaluators     CI override
-components      table          + metrics      for local bot
+Phase 1        Phase 2        Phase 3        Phase 4        Phase 5
+Discover   →   Describe   →   Map       →   Create     →   Orchestrate
+Read code       Write          Component     Cekura         Run script +
+to find         workflow       → test         evaluators     CI override
+components      descriptions   table          + metrics      for local bot
+               to temp file
 ```
 
-## The 4 Phases
+## The 5 Phases
 
 | Phase | File | What happens |
 |---|---|---|
 | 1 | [phase1-discover.md](phase1-discover.md) | Read the codebase to identify transport, STT, LLM, TTS, and all pipeline processors |
-| 2 | [phase2-map.md](phase2-map.md) | Map each found component to the right Cekura test pattern; confirm suite plan with user |
-| 3 | [phase3-create.md](phase3-create.md) | Create evaluators on Cekura with conditional actions and attach metrics |
-| 4 | [phase4-orchestrate.md](phase4-orchestrate.md) | Generate a run script and CI override mechanism for local bot testing |
+| 2 | [phase2-describe.md](phase2-describe.md) | Write a detailed description of each discovered workflow — triggers, constraints, what the test can control, what's observable — to `/tmp/infra-workflow-descriptions.md` |
+| 3 | [phase3-map.md](phase3-map.md) | Read the workflow descriptions, map each to the right Cekura test pattern; confirm suite plan with user |
+| 4 | [phase4-create.md](phase4-create.md) | Create evaluators on Cekura with conditional actions and attach metrics |
+| 5 | [phase5-orchestrate.md](phase5-orchestrate.md) | Generate a run script and CI override mechanism for local bot testing |
 
 ---
 

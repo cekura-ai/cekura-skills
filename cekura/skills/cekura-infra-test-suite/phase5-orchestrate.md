@@ -1,10 +1,10 @@
-# Phase 4 — Orchestrate Local Bot Runs
+# Phase 5 — Orchestrate Local Bot Runs
 
-Wire the Cekura scenarios to the local bot so they can run as a CI gate. This phase is entirely driven by how the bot actually works — discovered in Phase 1 (Q1, Q9) and any run instructions the user provides.
+Wire the Cekura scenarios to the local bot so they can run as a CI gate. This phase is entirely driven by how the bot actually works — use the Q9 workflow description from `/tmp/infra-workflow-descriptions.md` (written by Phase 2) for the start command, env vars, and connection injection mechanism. Fall back to the raw Phase 1 Q9 answer or ask the user if the file doesn't have what's needed.
 
 ---
 
-## 4a. Find the local run instructions
+## 5a. Find the local run instructions
 
 Check in this order:
 
@@ -18,7 +18,7 @@ Write whatever the user provides into `memory.md` before continuing.
 
 ---
 
-## 4b. Understand the connection model
+## 5b. Understand the connection model
 
 Based on Q1 and the local run instructions, determine how Cekura connects to the bot:
 
@@ -39,7 +39,7 @@ Identify which model applies — it determines the ordering of steps in the run 
 
 ---
 
-## 4c. Add a connection detail injection mechanism (if not already present)
+## 5c. Add a connection detail injection mechanism (if not already present)
 
 For each scenario run, Cekura assigns fresh connection details (phone number, SIP URI, room URL, token, etc.). The bot must receive these dynamically — hardcoding them breaks CI.
 
@@ -53,9 +53,9 @@ Do not override broad config objects wholesale — only inject the specific fiel
 
 ---
 
-## 4d. Write the run script
+## 5d. Write the run script
 
-The run script logic depends on the connection model from 4b, but the overall structure is the same for every bot:
+The run script logic depends on the connection model from 5b, but the overall structure is the same for every bot:
 
 ```
 For each scenario:
@@ -68,11 +68,11 @@ For each scenario:
   7. Stop the bot and clean up injected config
 ```
 
-Use the start command, env vars, and override mechanism from steps 4a–4c. Adapt the polling interval and startup wait to the bot's actual startup time — a bot that takes 5s to connect needs a shorter wait than one that dials out over SIP and needs transport negotiation.
+Use the start command, env vars, and override mechanism from steps 5a–5c. Adapt the polling interval and startup wait to the bot's actual startup time — a bot that takes 5s to connect needs a shorter wait than one that dials out over SIP and needs transport negotiation.
 
 ---
 
-## 4e. Verify before running the full suite
+## 5e. Verify before running the full suite
 
 Run one scenario end-to-end before committing the script:
 
@@ -85,7 +85,7 @@ Fix any connection or timing issues at this point. A timeout is not a test resul
 
 ---
 
-## Phase 4 Complete
+## Phase 5 Complete
 
 The suite is ready as a CI gate. Run the script before merging a PR — every scenario must pass.
 
