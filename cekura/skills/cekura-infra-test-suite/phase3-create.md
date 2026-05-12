@@ -55,6 +55,19 @@ Every scenario must include:
 
 **Override for start-of-call interruption tests** — if the scenario is specifically testing whether the bot handles being interrupted immediately as it begins speaking, the testing agent should fire into the bot's first message intentionally, regardless of Q8. Use `<interruption>` in condition 0's action to cut in as soon as the bot starts.
 
+### Rule: After condition 0, always use action_followup with fixed_message: true
+
+Infra tests exercise specific technical behaviors — not the content of what the bot says. Every condition after condition 0 must be `type: "action_followup"` with `fixed_message: true`. This delivers a scripted sequence regardless of the bot's exact phrasing, making tests deterministic and independent of wording changes in the bot's responses.
+
+```
+Condition 0 → FIRST_MESSAGE (standard — always the entry point)
+Condition 1 → action_followup of 0, fixed_message: true
+Condition 2 → action_followup of 1, fixed_message: true
+...
+```
+
+Never use `standard` conditions after condition 0. Standard conditions match on bot speech content — infra tests have no business depending on what the bot says, only on triggering and observing a specific pipeline behavior.
+
 ### Rule: Use `<hold>` for idle timer tests, not `<silence>`
 
 Per the Cekura conditional actions docs, `<hold>` produces dead air (background noise stops) while `<silence>` keeps background noise running — which may register as caller activity on sensitive VAD configurations and prevent the idle timer from firing.
@@ -74,10 +87,10 @@ Substitute actual values from Phase 1 (idle threshold, domain-appropriate dialog
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller and asks how it can help", "action": "[first request relevant to this agent's domain]", "fixed_message": false },
-    { "id": 2, "type": "standard", "condition": "The agent responds and asks a follow-up question", "action": "[answer the follow-up]", "fixed_message": false },
-    { "id": 3, "type": "standard", "condition": "The agent provides information or asks for more details", "action": "[complete the interaction]", "fixed_message": false },
-    { "id": 4, "type": "standard", "condition": "The agent confirms and asks if there is anything else", "action": "No, that's all. Thank you.", "fixed_message": false }
+    { "id": 1, "type": "action_followup", "condition": 0, "action": "[first request relevant to this agent's domain]", "fixed_message": true },
+    { "id": 2, "type": "action_followup", "condition": 1, "action": "[answer to the bot's follow-up]", "fixed_message": true },
+    { "id": 3, "type": "action_followup", "condition": 2, "action": "[complete the interaction]", "fixed_message": true },
+    { "id": 4, "type": "action_followup", "condition": 3, "action": "No, that's all. Thank you.", "fixed_message": true }
   ]
 }
 ```
@@ -93,9 +106,9 @@ Expected outcome: "The bot greeted the caller, handled a multi-turn conversation
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller and asks how it can help", "action": "<interruption time=\"1s\" /> Wait, I have a quick question.", "fixed_message": true },
-    { "id": 2, "type": "action_followup", "condition": 1, "action": "[a follow-up question in the agent's domain]", "fixed_message": false },
-    { "id": 3, "type": "standard", "condition": "The agent answers the question", "action": "Thank you, goodbye.", "fixed_message": false }
+    { "id": 1, "type": "action_followup", "condition": 0, "action": "<interruption time=\"1s\" /> Wait, I have a quick question.", "fixed_message": true },
+    { "id": 2, "type": "action_followup", "condition": 1, "action": "[a follow-up question in the agent's domain]", "fixed_message": true },
+    { "id": 3, "type": "action_followup", "condition": 2, "action": "Thank you, goodbye.", "fixed_message": true }
   ]
 }
 ```
@@ -111,11 +124,11 @@ Expected outcome: "The bot was interrupted mid-greeting, stopped speaking, and r
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller and asks how it can help", "action": "<interruption time=\"1s\" /> Sorry, can you repeat that?", "fixed_message": true },
-    { "id": 2, "type": "action_followup", "condition": 1, "action": "[a question in the agent's domain]", "fixed_message": false },
-    { "id": 3, "type": "standard", "condition": "The agent begins responding", "action": "<interruption time=\"1s\" /> Actually, one more thing —", "fixed_message": true },
-    { "id": 4, "type": "action_followup", "condition": 3, "action": "[second follow-up question]", "fixed_message": false },
-    { "id": 5, "type": "standard", "condition": "The agent answers the second question", "action": "Great, thank you. Goodbye.", "fixed_message": false }
+    { "id": 1, "type": "action_followup", "condition": 0, "action": "<interruption time=\"1s\" /> Sorry, can you repeat that?", "fixed_message": true },
+    { "id": 2, "type": "action_followup", "condition": 1, "action": "[a question in the agent's domain]", "fixed_message": true },
+    { "id": 3, "type": "action_followup", "condition": 2, "action": "<interruption time=\"1s\" /> Actually, one more thing —", "fixed_message": true },
+    { "id": 4, "type": "action_followup", "condition": 3, "action": "[second follow-up question]", "fixed_message": true },
+    { "id": 5, "type": "action_followup", "condition": 4, "action": "Great, thank you. Goodbye.", "fixed_message": true }
   ]
 }
 ```
@@ -126,7 +139,7 @@ Expected outcome: "The bot recovered from two back-to-back interruptions and pro
 
 ### Call-Start Silence Timeout
 
-Tests that the bot hangs up when the caller never speaks. No tags needed — the testing agent simply has no further conditions after `FIRST_MESSAGE`, so it stays silent for the entire call. The bot's silence timer fires naturally.
+No conditions after condition 0 — the testing agent stays silent for the entire call. The bot's silence timer fires naturally.
 
 ```json
 {
@@ -139,22 +152,20 @@ Tests that the bot hangs up when the caller never speaks. No tags needed — the
 
 Expected outcome: "The bot greeted the caller, received no response, and ended the call after the silence timeout expired."
 
-> This is the only scenario with `FIRST_MESSAGE action: ""` and **no further conditions**. Every other scenario uses that pattern to wait for the bot's greeting before the first response. Here, never responding is the test itself.
-
 ---
 
 ### Mid-Call Idle
 
-Replace `{THRESHOLD}` with the bot's idle timeout in seconds (from Phase 1). Set silence to `{THRESHOLD} + 2s` so the timer fires before the silence ends.
+Replace `{THRESHOLD}` with the bot's idle timeout in seconds + 2.
 
 ```json
 {
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "Hello, I need help with something.", "fixed_message": false },
-    { "id": 2, "type": "standard", "condition": "The agent asks a follow-up question", "action": "<hold time=\"{THRESHOLD+2}s\" />", "fixed_message": true },
-    { "id": 3, "type": "standard", "condition": "The agent asks if the caller is still there", "action": "Yes, sorry. I'm here.", "fixed_message": false }
+    { "id": 1, "type": "action_followup", "condition": 0, "action": "Hello, I need help with something.", "fixed_message": true },
+    { "id": 2, "type": "action_followup", "condition": 1, "action": "<hold time=\"{THRESHOLD+2}s\" />", "fixed_message": true },
+    { "id": 3, "type": "action_followup", "condition": 2, "action": "Yes, sorry. I'm here.", "fixed_message": true }
   ]
 }
 ```
@@ -165,14 +176,14 @@ Expected outcome: "After a period of silence mid-call, the bot asked if the call
 
 ### Full Idle Escalation to Hang-up
 
-Replace `{TOTAL}` with `{THRESHOLD} × {ESCALATION_COUNT} + 5` (5s buffer past the full escalation budget).
+Replace `{TOTAL}` with `{THRESHOLD} × {ESCALATION_COUNT} + 5`.
 
 ```json
 {
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "<hold time=\"{TOTAL}s\" />", "fixed_message": true }
+    { "id": 1, "type": "action_followup", "condition": 0, "action": "<hold time=\"{TOTAL}s\" />", "fixed_message": true }
   ]
 }
 ```
@@ -183,15 +194,15 @@ Expected outcome: "The bot prompted the caller multiple times asking if they wer
 
 ### DTMF Multi-digit Processing
 
-Replace `{DIGITS}` with a representative digit sequence and `{TERMINATOR}` with the configured terminator (usually `#`).
+Replace `{DIGITS}` and `{TERMINATOR}` with the configured values from Phase 1.
 
 ```json
 {
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller or asks for input", "action": "<dtmf digits=\"{DIGITS}{TERMINATOR}\" /> I've entered the number.", "fixed_message": true },
-    { "id": 2, "type": "standard", "condition": "The agent acknowledges the input or continues", "action": "That's all, goodbye.", "fixed_message": false }
+    { "id": 1, "type": "action_followup", "condition": 0, "action": "<dtmf digits=\"{DIGITS}{TERMINATOR}\" />", "fixed_message": true },
+    { "id": 2, "type": "action_followup", "condition": 1, "action": "That's all, goodbye.", "fixed_message": true }
   ]
 }
 ```
@@ -202,16 +213,14 @@ Expected outcome: "The bot received and processed the DTMF digit sequence."
 
 ### Inbound SMS Handling
 
-Use when the bot is expected to react to an SMS sent by the caller. The `<send_sms>` tag makes the testing agent send an SMS mid-call.
-
 ```json
 {
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "I'll send you the details over text.", "fixed_message": false },
-    { "id": 2, "type": "standard", "condition": "The agent responds or waits", "action": "<send_sms text=\"[the SMS content the caller sends]\" />", "fixed_message": true },
-    { "id": 3, "type": "standard", "condition": "The agent acknowledges the SMS or acts on it", "action": "Great, thanks.", "fixed_message": false }
+    { "id": 1, "type": "action_followup", "condition": 0, "action": "I'll send you the details over text.", "fixed_message": true },
+    { "id": 2, "type": "action_followup", "condition": 1, "action": "<send_sms text=\"[the SMS content the caller sends]\" />", "fixed_message": true },
+    { "id": 3, "type": "action_followup", "condition": 2, "action": "Great, thanks.", "fixed_message": true }
   ]
 }
 ```
@@ -222,15 +231,13 @@ Expected outcome: "The bot received the inbound SMS and responded or acted on it
 
 ### DTMF Output to IVR
 
-Use when the bot dials into an external IVR and must send digits to navigate it. Drive the conversation to the point where the bot is expected to send DTMF, then verify it did so in the transcript or bot response.
-
 ```json
 {
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "[request that triggers the bot to dial an IVR or external system]", "fixed_message": false },
-    { "id": 2, "type": "standard", "condition": "The agent confirms it is connecting or navigating the system", "action": "Great, thank you.", "fixed_message": false }
+    { "id": 1, "type": "action_followup", "condition": 0, "action": "[request that triggers the bot to dial an IVR or external system]", "fixed_message": true },
+    { "id": 2, "type": "action_followup", "condition": 1, "action": "Great, thank you.", "fixed_message": true }
   ]
 }
 ```
@@ -241,15 +248,13 @@ Expected outcome: "The bot initiated a connection to the external system and nav
 
 ### Outbound SMS
 
-Use when the bot can send an SMS to the caller. Drive the conversation to the trigger point and verify the bot confirms the SMS was sent.
-
 ```json
 {
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller and asks how it can help", "action": "[request that should result in the bot sending an SMS — e.g. 'Send me a confirmation text']", "fixed_message": false },
-    { "id": 2, "type": "standard", "condition": "The agent confirms the SMS was sent or asks for the number", "action": "[provide number if asked, or confirm receipt]", "fixed_message": false }
+    { "id": 1, "type": "action_followup", "condition": 0, "action": "[request that should result in the bot sending an SMS]", "fixed_message": true },
+    { "id": 2, "type": "action_followup", "condition": 1, "action": "[provide number if asked, or confirm receipt]", "fixed_message": true }
   ]
 }
 ```
