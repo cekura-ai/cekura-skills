@@ -64,14 +64,25 @@ Answer:
 
 ---
 
-## Q6. Does the bot handle touch-tone (DTMF) input?
+## Q6. What side-channel interactions does the bot support?
 
-Find whether the bot can receive and process keypad digits from the caller.
+Beyond the main voice conversation, find every other communication channel or telephony event the bot can send or receive. For each one found, answer: what triggers it, what does the bot do with it, and in which direction does it flow (bot → caller, caller → bot, or bot → external system)?
 
-Answer:
-- Is there code that receives digit events from the telephony layer?
-- Are digits accumulated (buffered) and processed as a group, or handled one at a time?
-- Is there a terminator key that signals end of input?
+**Touch-tone input (DTMF received):** Can the caller send keypad digits to the bot? Are they accumulated into a buffer or handled one at a time? Is there a terminator key?
+
+**DTMF output (DTMF sent):** Can the bot send keypad digits to an external system — e.g. to navigate an IVR it dialed into?
+
+**SMS received:** Can the caller (or another party) send an SMS that the bot processes during or around a call?
+
+**SMS sent:** Can the bot send an SMS to the caller — e.g. a confirmation, a link, or a follow-up after the call?
+
+**Voicemail detection:** When the bot dials out, can it detect that it reached a voicemail system rather than a live caller? What does it do in that case — leave a message, hang up, retry?
+
+**Voicemail playback / pre-recorded audio:** Can the bot play a pre-recorded audio clip rather than synthesizing speech for certain responses?
+
+**Call recording:** Is the call being recorded? Is recording triggered by the bot, or always-on?
+
+**Any other events or channels** specific to this platform or vendor (e.g. call status webhooks the bot reacts to, mid-call metadata, real-time transcription callbacks used for something other than STT)?
 
 ---
 
@@ -123,7 +134,8 @@ Q3 — LLM:               [what generates response; retry: yes/no; validation: y
                           timeout: yes/no; fallback: yes/no]
 Q4 — TTS:               [what synthesizes audio; interruption: yes/no + mechanism; fallback: yes/no]
 Q5 — Caller silence:    [idle detection: yes/no; threshold: Xs; escalation: N prompts then hang-up]
-Q6 — DTMF:              [yes/no; buffered/single; terminator: X]
+Q6 — Side channels:     [DTMF received: yes/no; DTMF sent: yes/no; SMS in/out: yes/no;
+                          voicemail detection: yes/no; recording: yes/no; other: ...]
 Q7 — Other behaviors:   [list each found + what triggers it]
 Q8 — Bot speaks first:  [yes/no; opening message if yes]
 Q9 — Local run:         [start command; how to override call destination; existing CI script: yes/no]

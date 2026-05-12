@@ -207,6 +207,63 @@ Expected outcome: "The bot received and processed the DTMF digit sequence."
 
 ---
 
+### DTMF Output to IVR
+
+Use when the bot dials into an external IVR and must send digits to navigate it. Drive the conversation to the point where the bot is expected to send DTMF, then verify it did so in the transcript or bot response.
+
+```json
+{
+  "role": "caller",
+  "conditions": [
+    { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
+    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "[request that triggers the bot to dial an IVR or external system]", "fixed_message": false },
+    { "id": 2, "type": "standard", "condition": "The agent confirms it is connecting or navigating the system", "action": "Great, thank you.", "fixed_message": false }
+  ]
+}
+```
+
+Expected outcome: "The bot initiated a connection to the external system and navigated it using the correct digits."
+
+---
+
+### Outbound SMS
+
+Use when the bot can send an SMS to the caller. Drive the conversation to the trigger point and verify the bot confirms the SMS was sent.
+
+```json
+{
+  "role": "caller",
+  "conditions": [
+    { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
+    { "id": 1, "type": "standard", "condition": "The agent greets the caller and asks how it can help", "action": "[request that should result in the bot sending an SMS — e.g. 'Send me a confirmation text']", "fixed_message": false },
+    { "id": 2, "type": "standard", "condition": "The agent confirms the SMS was sent or asks for the number", "action": "[provide number if asked, or confirm receipt]", "fixed_message": false }
+  ]
+}
+```
+
+Expected outcome: "The bot confirmed that an SMS was sent to the caller."
+
+---
+
+### Voicemail Detection
+
+Use when the bot dials out and may reach a voicemail system instead of a live caller. Cekura's `<voicemail>` tag plays a voicemail greeting to simulate this condition.
+
+```json
+{
+  "role": "caller",
+  "conditions": [
+    { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "<voicemail />", "fixed_message": true }
+  ]
+}
+```
+
+Expected outcome: "The bot detected a voicemail system and either left a message or ended the call cleanly without treating the voicemail as a live conversation."
+
+> `<voicemail>` must be the entire action on the condition that uses it — it cannot be combined with other tags or text in the same action.
+
+---
+
 ### Network Degradation
 
 ```json
