@@ -6,12 +6,12 @@ Create a folder, then create each confirmed scenario with a conditional_actions 
 
 ## 3a. Create a folder
 
-Always group CI scenarios in a dedicated folder. Never dump them in the root.
+Always group infra scenarios in a dedicated folder. Never dump them in the root.
 
 ```
 POST /test_framework/v1/scenarios/folder/
 {
-  "name": "CI_CD",
+  "name": "Infrastructure Test Suite",
   "project_id": <project_id>
 }
 ```
@@ -29,7 +29,7 @@ Use these on every scenario:
   "personality": 693,
   "tool_ids": ["TOOL_END_CALL"],
   "scenario_type": "conditional_actions",
-  "folder_path": "CI_CD"
+  "folder_path": "Infrastructure Test Suite"
 }
 ```
 
