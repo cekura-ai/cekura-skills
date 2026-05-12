@@ -1,152 +1,94 @@
 # Phase 4 — Orchestrate Local Bot Runs
 
-Wire the scenarios to the local bot so they can run as a CI gate. This phase produces a run script and a config override mechanism.
+Wire the Cekura scenarios to the local bot so they can run as a CI gate. This phase is entirely driven by how the bot actually works — discovered in Phase 1 (Q1, Q9) and any run instructions the user provides.
 
 ---
 
-## 4a. Understand how to start the bot locally
+## 4a. Find the local run instructions
 
-From Phase 1 you should already know the start command and any required env vars. If not, check `CLAUDE.md` and `memory.md` now. If still unclear, ask the user:
+Check in this order:
 
-> "How do I start the bot locally? What command, which env vars, and how do I tell it which SIP URI to dial?"
+1. **`CLAUDE.md` and `memory.md`** — read both if they exist. They may already document exactly how to start the bot and connect it to a test run.
+2. **Phase 1 Q9 answer** — use what was discovered about the start command, env vars, and config override mechanism.
+3. **Ask the user** if neither source has what's needed:
 
-Write what the user tells you into `memory.md` before continuing.
+> "How do I run the bot locally for testing? I need: the start command, any required env vars or flags, and how to tell the bot which endpoint to connect to for a given Cekura run."
+
+Write whatever the user provides into `memory.md` before continuing.
 
 ---
 
-## 4b. Add a config override mechanism (if not already present)
+## 4b. Understand the connection model
 
-The run script needs to tell the bot which SIP URI to dial for each scenario. Cekura assigns a different outbound number per run — the bot must read it dynamically.
+Based on Q1 and the local run instructions, determine how Cekura connects to the bot:
 
-Choose the approach that fits how the bot already reads config:
+**Cekura calls the bot (inbound to bot):**
+- Cekura dials the bot's phone number or SIP endpoint
+- The bot must be reachable at a stable address before the run starts
+- The run script starts the bot first, waits for it to be ready, then triggers the Cekura run
 
-### Option A — JSON override file
+**Bot calls Cekura (outbound from bot):**
+- Cekura provides a number or endpoint for the bot to dial
+- The run script triggers the Cekura run first to get the connection details, then starts the bot with those details injected
 
-The bot reads a file at startup and applies overrides before dialing:
+**WebRTC / WebSocket:**
+- Cekura may provide a room URL, token, or WebSocket endpoint
+- The run script extracts the connection details from the Cekura run response and passes them to the bot
 
-```python
-# In the bot's local run setup (e.g. dial_out_utils.py, local_runner.py)
-import json, pathlib
+Identify which model applies — it determines the ordering of steps in the run script.
 
-ci_override_path = pathlib.Path(__file__).parent / ".ci_test_config.json"
-if ci_override_path.exists():
-    overrides = json.load(open(ci_override_path))
-    if "sip_uri" in overrides:
-        body["dialout_settings"]["sip_uri"] = overrides["sip_uri"]
-    # add other override keys as needed
+---
+
+## 4c. Add a connection detail injection mechanism (if not already present)
+
+For each scenario run, Cekura assigns fresh connection details (phone number, SIP URI, room URL, token, etc.). The bot must receive these dynamically — hardcoding them breaks CI.
+
+Choose the mechanism that fits how the bot already reads config:
+- **Environment variable** — pass connection details as an env var when spawning the bot
+- **Config file** — write a temporary file the bot reads at startup; delete it after the run
+- **CLI argument** — pass the connection detail as a command-line argument
+- **API / webhook** — if the bot exposes a control endpoint, POST the details before starting the call
+
+Do not override broad config objects wholesale — only inject the specific fields that change per run.
+
+---
+
+## 4d. Write the run script
+
+The run script logic depends on the connection model from 4b, but the overall structure is the same for every bot:
+
+```
+For each scenario:
+  1. Trigger the Cekura run → get connection details for this run
+  2. Inject connection details into the bot (mechanism from 4c)
+  3. Start the bot (or signal it to dial, if already running)
+  4. Wait for the bot to establish the connection
+  5. Poll Cekura until the run status is completed or timeout is reached
+  6. Record pass / fail (evaluation_status == "success")
+  7. Stop the bot and clean up injected config
 ```
 
-The run script writes this file before starting the bot and deletes it after.
-
-### Option B — Environment variable
-
-The bot reads a `SIP_URI` env var (or similar) at startup:
-
-```python
-import os
-sip_uri = os.environ.get("CI_SIP_URI", default_sip_uri)
-```
-
-The run script passes it via `env={**os.environ, "CI_SIP_URI": sip_uri}` when spawning the bot.
-
-**Important — avoid overriding nested config dicts wholesale.** Python's `dict.update()` replaces entire nested structures. Overriding a top-level `configuration` dict wipes nested fields like `model.provider`. Only override specific leaf keys.
+Use the start command, env vars, and override mechanism from steps 4a–4c. Adapt the polling interval and startup wait to the bot's actual startup time — a bot that takes 5s to connect needs a shorter wait than one that dials out over SIP and needs transport negotiation.
 
 ---
 
-## 4c. Write the run script
+## 4e. Verify before running the full suite
 
-Generate a script tailored to this codebase. Use the start command, env vars, and override mechanism from steps 4a–4b. The outline below is the logical skeleton — adapt it to match how this project actually works.
+Run one scenario end-to-end before committing the script:
 
-```python
-SCENARIOS = [
-    {"id": <cekura_scenario_id>, "name": "S1 — Full Pipeline E2E",       "timeout_s": 400},
-    {"id": <cekura_scenario_id>, "name": "S2 — Mid-Speech Interruption",  "timeout_s": 400},
-    # ... one entry per confirmed scenario from Phase 2
-]
+1. Trigger a single scenario run
+2. Confirm the bot connects to Cekura's testing agent
+3. Confirm the run moves through `pending → in_progress → completed`
+4. Confirm the result reflects a real pass or a meaningful failure — not a timeout or connection error
 
-AGENT_ID       = <cekura_agent_id>
-BOT_NUMBER     = "<bot_inbound_number>"   # the number Cekura calls to reach the bot
-SIP_DOMAIN     = "cekura-pipecat-local.sip.twilio.com"  # or equivalent for this setup
-BOT_START_CMD  = ["python", "bot.py"]    # adapt to this project
-BOT_ENV_EXTRAS = {"LOCAL_RUN": "1"}      # any required env vars
-
-async def run_scenario(session, scenario):
-    # 1. Trigger Cekura run — obtain the testing agent's outbound number
-    result = await session.post(
-        "https://api.cekura.ai/test_framework/v1/scenarios/run_scenarios/",
-        json={"agent_id": AGENT_ID, "scenarios": [scenario["id"]],
-              "frequency": 1, "agent_number": BOT_NUMBER, "concurrency_limit": 1}
-    )
-    data = await result.json()
-    run_id     = data["result_id"]
-    run_number = data["runs"][0]["number"]
-    sip_uri    = f"sip:{run_number}@{SIP_DOMAIN}?X-CallerId={BOT_NUMBER}"
-
-    # 2. Inject SIP URI (Option A or B from step 4b)
-    inject_sip_uri(sip_uri)
-
-    # 3. Start bot
-    proc = subprocess.Popen(BOT_START_CMD, env={**os.environ, **BOT_ENV_EXTRAS})
-    await asyncio.sleep(20)  # wait for transport setup + outbound dial
-
-    # 4. Poll until complete or timeout
-    deadline = time.time() + scenario["timeout_s"]
-    run_data  = {}
-    while time.time() < deadline:
-        r = await session.get(f"https://api.cekura.ai/test_framework/v1/runs/{run_id}/")
-        run_data = await r.json()
-        if run_data.get("status") == "completed":
-            break
-        await asyncio.sleep(10)
-    else:
-        print(f"  [poll] Timed out after {scenario['timeout_s']}s")
-
-    # 5. Record result
-    passed = run_data.get("evaluation_status") == "success"
-
-    # 6. Cleanup
-    proc.terminate()
-    clear_sip_uri_injection()
-
-    return passed
-```
-
----
-
-## 4d. Timing notes
-
-| Wait | Why |
-|---|---|
-| **20s after bot start** | The bot needs time to connect to the WebRTC/SIP transport and initiate the outbound dial to Cekura |
-| **10s poll interval** | Short enough to catch completion promptly; long enough not to spam the API |
-| **Timeout buffer** | Add 60–90s beyond the expected call duration — evaluations run asynchronously after the call ends |
-
-**Do not start the bot before you have `runs[0].number` from the API response.** The bot will dial before the testing agent is listening.
-
----
-
-## 4e. Verify the setup
-
-Run one scenario end-to-end manually before committing the script:
-
-1. Start the script for a single scenario
-2. Confirm the bot dials out to Cekura's number
-3. Confirm the Cekura run moves through `pending → in_progress → completed`
-4. Confirm the result shows `evaluation_status = success` or a meaningful failure
-
-If the bot fails to dial (wrong SIP URI, startup timing issue) or the run times out, fix those before running the full suite.
+Fix any connection or timing issues at this point. A timeout is not a test result — it means the bot didn't connect.
 
 ---
 
 ## Phase 4 Complete
 
-The suite is ready as a CI gate. To use it:
-
-1. Run the script before merging a PR
-2. All scenarios marked `pr_gate: True` must pass
-3. A timed-out scenario is a CI failure — investigate whether the bot is dialing correctly
+The suite is ready as a CI gate. Run the script before merging a PR — every scenario must pass.
 
 **Next steps:**
 - To add behavioral (non-infra) test coverage → **cekura-eval-design**
-- To add or tune metrics → **cekura-metric-design**
 - To debug a failing production call → **cekura-fixing-prod-issues**
