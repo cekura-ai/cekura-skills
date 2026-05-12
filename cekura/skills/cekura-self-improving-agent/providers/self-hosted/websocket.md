@@ -1,6 +1,6 @@
 # Self-Hosted — Websocket Sub-Flavor
 
-Websocket-flavor agents are custom servers the user runs themselves. The Cekura agent record holds a `websocket_url` (e.g., `wss://...ngrok-free.app` or an internal host) and an informational `description` that is typically empty or a stub (`.`). The **real** system prompt, tool definitions, and conversation-orchestration code live in the user's source code — typically a Python/Node/Go file that wires up an LLM client, defines a `SYSTEM_PROMPT` string constant (and a `TOOLS` list), manages conversation history, forwards tool calls, and serves a websocket endpoint that Cekura connects to during runs.
+Websocket-flavor agents are custom servers the user runs themselves. The Cekura agent record holds a `websocket_url` (e.g., `wss://...ngrok-free.app`, an internal host, or any custom websocket endpoint) and an informational `description` that is typically empty or a stub (`.`). The **real** system prompt, tool definitions, and conversation-orchestration code live in the user's source code — typically a Python/Node/Go file that wires up an LLM client, defines a `SYSTEM_PROMPT` string constant (and a `TOOLS` list), manages conversation history, forwards tool calls, and serves a websocket endpoint that Cekura connects to during runs.
 
 This sub-flavor edits the source file directly using the `Edit` tool. Three editable surfaces in the same file: the **system prompt**, the **tool schemas**, and the **orchestration code** (history management, message wiring, state preservation, keepalive plumbing). Validation runs through Cekura — Cekura drives the test scenario, opens a websocket to the user's URL, and captures the transcript exactly the same way as VAPI. The user must restart their websocket server before re-validation for edits to take effect.
 
@@ -10,7 +10,7 @@ Use this reference together with the main SKILL.md and `providers/self-hosted/ov
 
 ## Websocket-flavor gate (Phase 1.2)
 
-After routing to the self-hosted / websocket flavor (see `overview.md`), confirm one more thing before fetching anything:
+After the user picks `websocket` at the self-hosted sub-flavor router (see `overview.md`), confirm one more thing before fetching anything:
 
 ```
 Websocket sub-flavor confirmed. To edit the live prompt, the skill needs to
@@ -142,7 +142,7 @@ If a failure looks variable-injection-shaped in either variant and runtime state
 Editable:
 
 - **System prompt** — the located string constant / file. Edits land via `Edit` in Phase 4.1d.
-- **Tool definitions** — if they live in the same file (or a file the skill can reach). Edits land via `Edit` in Phase 4.1d. Tool definition edits in websocket mode are *live* edits — they take effect after the server restart.
+- **Tool definitions** — if they live in the same file (or a file the skill can reach). Edits land via `Edit` in Phase 4.1d. Tool definition edits are *live* edits — they take effect after the server restart.
 - **Orchestration code** — when the failure's root cause is in conversation plumbing rather than prompt wording. Concrete sub-surfaces:
   - History-management code: window size, slice indices, truncation policy, role-filter conditions. Common bug: an `if len(history) > 12: tail = history[-10:]` slice that drops earlier collected info before booking — raise the window or summarize-and-prepend.
   - Tool-call dispatch and result-forwarding: ensuring `tool_call_id` is propagated, the tool result is appended back to `history` as a `"role": "tool"` message with the right id, and the LLM gets a chance to read it before the next user turn.
@@ -304,7 +304,7 @@ The 100% pass exit is the same as the other modes.
 - **Source file is in a git working tree with uncommitted changes.** Don't roll those back as part of a failed `Edit` rollback. If a roll back is needed, only undo the lines this skill touched. Surface to the user if the situation is ambiguous.
 - **Source file is read-only or outside the workspace.** `Edit` will fail. Stop and offer the `offline` variant — there's no path to direct editing.
 - **Multiple websocket agents share one source file (parameterized by env var / config).** The file edits will affect all agents that read from that file. Surface this before applying — the user may want to copy the file first or branch on the variable.
-- **Server is in a hot-reload container (fly.io, etc.) where "restart" is a deploy.** The user does the deploy; the skill waits or trusts auto mode.
+- **Server is in a hot-reload container (fly.io, ECS, etc.) where "restart" is a deploy.** The user does the deploy; the skill waits or trusts auto mode.
 
 ## Anti-patterns specific to websocket-flavor
 
@@ -314,5 +314,5 @@ The 100% pass exit is the same as the other modes.
 - **Proposing speculative refactors.** An orchestration-code fix should be the smallest `Edit` that addresses the failure — change the slice size, add the missing append, fix the role mapping. Do not rewrite whole functions, introduce new helpers, or restructure data flow just because the surrounding code "could be cleaner". If the fix genuinely needs more than one `Edit` or new function definitions, hand off instead.
 - **Applying `Edit` with a non-unique `old_string`.** The Edit tool's failure mode is "ambiguous match". Use enough surrounding context (5–10 lines on either side of the actual change) to make every anchor unique. For multi-tool list edits, target each tool block separately rather than the whole list. Same rule applies to orchestration-code edits — code blocks often have repeated patterns (`for ... in ...:`, `if not ...:`), so anchor on the surrounding distinctive context.
 - **Rendering the restart gate in auto mode.** Auto mode is opt-out for a reason — the gate breaks the autonomous loop. The no-change detector at Step 4.5 handles the stale-state case after the fact. (In `auto_mode: false` the gate fires every iteration — that's the trade-off the user opted into.)
-- **Editing a tool's schema without confirming the live implementation matches.** Websocket tools are usually one and the same — but the skill is only editing the schema. If the implementation in `call_tool()` (or wherever) returns a different shape than the schema declares, the agent will get confusing errors at runtime. Surface this as a hand-off when in doubt.
+- **Editing a tool's schema without confirming the live implementation matches.** Websocket tools are usually schema and implementation in the same file — but the skill is only editing the schema. If the implementation in `call_tool()` (or wherever) returns a different shape than the schema declares, the agent will get confusing errors at runtime. Surface this as a hand-off when in doubt.
 - **Iterating in `offline` variant when the user has a live websocket they could expose.** The full closed loop runs much faster — encourage `file` whenever feasible. The offline variant also can't access the orchestration-code surface, so CodeBug-shaped failures stay stuck as hand-offs there.
