@@ -88,7 +88,7 @@ Two activation steps are required — missing either means the metric never fire
 1. **Toggle on at the project level**
 2. **Add to individual evaluators**
 
-One rule specific to infra scenarios: the Expected Outcome metric evaluates transcript text only — it has no access to audio, silences, or interruptions. Write its prompt to describe only what is visible in the conversation, not internal pipeline state.
+One rule specific to infra scenarios: Expected Outcome evaluates conversation content only — not timing, silences, interruptions, or audio quality. Most infra behaviors (latency, idle timer firing, interruption responsiveness) are not visible in transcript text and will not be caught by Expected Outcome. Use dedicated predefined metrics for those. Reserve Expected Outcome for verifying the overall call outcome — e.g. whether the caller's request was handled, or whether the call ended appropriately.
 
 ---
 
