@@ -20,20 +20,24 @@ Use the returned `folder_path` on every scenario in this suite.
 
 ---
 
-## 3b. Universal field defaults
+## 3b. Required fields on every scenario
 
-Use these on every scenario:
+Every scenario must include:
 
 ```json
 {
-  "personality": 693,
-  "tool_ids": ["TOOL_END_CALL"],
   "scenario_type": "conditional_actions",
   "folder_path": "Infrastructure Test Suite"
 }
 ```
 
-Add `"TOOL_END_CALL_ON_TRANSFER"` to `tool_ids` for transfer scenarios.
+**`personality`** — choose based on what the scenario needs to test: accent, language, background noise level, interruption tendency. Use `GET /test_framework/v1/personalities/` to list available options. Do not default to a fixed ID.
+
+**`tool_ids`** — choose based on what the testing agent needs to do:
+- `TOOL_END_CALL` — if the testing agent should hang up after completing its objective
+- `TOOL_END_CALL_ON_TRANSFER` — if the scenario involves a transfer to a human or IVR
+- `TOOL_DTMF` — if the scenario sends touch-tone digits
+- Omit entirely if none of the above apply
 
 ---
 
