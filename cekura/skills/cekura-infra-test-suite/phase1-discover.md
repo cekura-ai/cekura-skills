@@ -11,9 +11,9 @@ For each section below, look for the **behavior** — not just a specific class 
 **What to find:** How the bot establishes calls — both inbound (receiving) and outbound (dialing).
 
 **Behavioral signals:**
-- Outbound: code that constructs a SIP URI, dials a phone number, or joins a room URL before the conversation starts
+- Outbound: code that constructs a destination address (SIP URI, phone number, room URL) and initiates a connection before the conversation starts
 - Inbound: a webhook handler, WebSocket server, or listener that accepts incoming calls
-- Config values: `sip_uri`, `room_url`, `from_number`, `to_number`, `phone_number`, or a server URL the bot registers with
+- Config: wherever the destination address, caller ID, or server endpoint is set — the name of the key doesn't matter, the value format does (`sip:...`, `wss://...`, `+1...`, `https://...`)
 
 **Provider examples to recognize:** Twilio, Vonage, Telnyx, Plivo (SIP/PSTN) · Daily, LiveKit, Agora (WebRTC) · Raw WebSocket servers
 
@@ -26,10 +26,9 @@ Record: **transport type** and **how the bot dials out or receives calls**.
 **What to find:** Where audio from the caller gets converted to text, and whether the bot uses voice activity detection.
 
 **Behavioral signals:**
-- A service or client that accepts an audio stream and emits transcription results
-- Config values: `stt_provider`, `transcriber`, `model` (for speech models), `language`
+- A service or client that accepts an audio stream and emits text transcription results
 - VAD: logic that decides when the caller has started or stopped speaking — look for energy thresholds, silence duration checks, or a dedicated VAD model
-- Fallback: a secondary transcriber that activates when the primary fails
+- Fallback: a secondary transcriber that activates when the primary fails or returns an error
 
 **Provider examples to recognize:** Deepgram, Google Speech-to-Text, Azure Cognitive Speech, AssemblyAI, OpenAI Whisper, Groq Whisper, Rev AI
 
@@ -76,10 +75,9 @@ Record: **LLM provider**, **retry logic present (yes/no)**, **output validation 
 
 **Behavioral signals:**
 - A service or client that accepts text and streams or returns audio back to the caller
-- Config values: `tts_provider`, `voice`, `voiceId`, `voice_id`, `speed`, `model` (for TTS models)
 - **Interruption handling:** Logic that stops audio playback when the caller speaks mid-sentence — look for:
   - An interrupt signal that cancels in-flight TTS audio
-  - A flag like `interruptible`, `stop_on_interrupt`, `barge_in`, or `allow_interrupt`
+  - A boolean flag or mode that controls whether the caller can cut off the bot
   - A handler triggered by caller speech that flushes or cancels queued audio
 - Fallback: a secondary voice or TTS provider that activates when the primary fails
 
@@ -94,34 +92,32 @@ Record: **TTS provider**, **whether interruption/barge-in handling is present**,
 Look for these behavioral capabilities — regardless of what they are named in this codebase:
 
 **Idle detection:** Does the bot notice when the caller goes silent for too long and prompt them?
-- Look for: a timer or countdown that starts when the caller stops speaking; a threshold (in seconds) after which the bot says something like "Are you still there?"; a max number of such prompts before the call ends
-- Config signals: `idle_timeout`, `silence_timeout`, `idleTimeoutSeconds`, `silenceTimeoutSeconds`, idle message list, escalation count
+- Look for: a timer or countdown that starts when the caller stops speaking; a silence threshold in seconds after which the bot says something like "Are you still there?"; a configured list of idle prompts; a maximum number of prompts before the call ends
 
 **DTMF processing:** Does the bot handle touch-tone key presses from the caller?
-- Look for: code that receives digit events from the telephony layer and accumulates them; a terminator key that signals the end of input (commonly `#`); a handler that processes the accumulated digits
-- Config signals: `dtmf_enabled`, `sendDtmfEnabled`, terminator character, digit buffer
+- Look for: code that receives digit events from the telephony layer and accumulates them into a buffer; a configured terminator key that signals the end of input (commonly `#`); a handler that acts on the complete digit sequence
 
 **Network simulation:** Can the bot simulate degraded network conditions for testing?
-- Look for: code that introduces artificial latency, jitter, or packet loss into the audio pipeline; config fields like `latency`, `jitter`, `packet_loss`
+- Look for: code that introduces artificial latency, jitter, or packet loss into the audio pipeline during a call
 
 **Call transfer:** Can the bot hand the call off to a human agent or another system?
-- Look for: a transfer action, a function call that triggers a warm or cold transfer, config for a transfer destination (phone number, SIP URI, queue name)
+- Look for: a transfer action or function the LLM can invoke; a configured destination (phone number, SIP URI, queue name) the call is forwarded to
 
 **Bot-initiated hang-up:** Can the bot end the call programmatically?
-- Look for: an end-call function or action the LLM can invoke; a condition (idle timeout, task completion) that triggers automatic hang-up
+- Look for: an end-call function or tool the LLM can invoke; logic that triggers automatic hang-up after task completion or after idle escalation exhausts its prompts
 
-For each capability found, note the **configured values** — timeout seconds, escalation count, DTMF terminator, etc.
+For each capability found, note the **configured values** — the threshold in seconds, the number of escalation prompts, the DTMF terminator character, etc. These values feed directly into the scenario timings in Phase 3.
 
 ---
 
 ## 1f. Bot configuration
 
-Read the main bot config (often `bot.py`, `main.py`, `config.py`, a JSON/YAML file, or the local runner):
+Read the main bot config (often a Python/JS entry point, a JSON/YAML file, or a dedicated local runner script):
 
-- **Does the bot speak first?** Look for a greeting string, `firstMessage`, or a call to send audio/text before waiting for caller input.
-- **Idle timeout value** (seconds until first idle prompt)?
-- **Idle escalation count** (how many idle prompts before hang-up)?
-- **DTMF terminator digit** (usually `#`)?
+- **Does the bot speak first?** Look for a greeting string or a call to send audio/text before waiting for caller input.
+- **Idle timeout value** — how many seconds of silence before the first idle prompt?
+- **Idle escalation count** — how many idle prompts before the call is hung up?
+- **DTMF terminator** — which digit signals end of input (usually `#`)?
 
 ---
 
@@ -129,9 +125,9 @@ Read the main bot config (often `bot.py`, `main.py`, `config.py`, a JSON/YAML fi
 
 Understand how to start the bot locally for CI testing:
 
-- Is there a flag, env var, or config value that switches the bot into local/dev mode? (e.g. `LOCAL_RUN=1`, `ENV=dev`, `--local`)
+- Is there a flag, env var, or config value that switches the bot into local/dev mode?
 - What command starts the bot locally?
-- Where is the outbound call destination configured? (env var, config file, hardcoded value in a local runner)
+- Where is the outbound call destination set — and can it be overridden without changing source code? (env var, config file, CLI arg)
 - Is there an existing CI script, Makefile target, or Docker Compose file for local testing?
 
 Read `CLAUDE.md` and `memory.md` if they exist — they may already document the local run procedure.
