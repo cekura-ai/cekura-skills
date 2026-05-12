@@ -36,7 +36,7 @@ Remove these from the suite regardless of what Phase 1 found:
 | Scenario | Why |
 |---|---|
 | Internal pipeline state | Evaluators see only the call transcript — retry attempts, error flags, validation outcomes, and internal state changes are invisible |
-| STT accuracy or word-level timing | Not observable from a transcript |
+| STT transcription output / word error rate | The raw text the STT engine produced and its accuracy metrics are not visible in the call transcript — only whether the bot responded coherently (which the Full Pipeline E2E already covers). To stress-test STT under noise or accents, use `<background_noise>` or a non-native personality rather than a separate scenario. |
 | Provider fallback activation | Forcing a primary provider to fail from the test side is not reliably reproducible via Cekura tags |
 | SMS received mid-call | Cekura has no mechanism to inject an inbound SMS into an active call session |
 
