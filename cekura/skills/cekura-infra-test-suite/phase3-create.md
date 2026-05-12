@@ -1,5 +1,7 @@
 # Phase 3 — Create Evaluators on Cekura
 
+**All infra test scenarios must use `scenario_type: "conditional_actions"`** — always, without exception. Behavioral instructions are not deterministic enough to reliably trigger specific infra behaviors like idle timers, interruptions, or DTMF. Never use behavioral mode for this suite.
+
 Create a folder, then create each confirmed scenario with a conditional_actions payload and the right metrics. Follow the authoring rules below — they prevent the most common failures.
 
 ---
