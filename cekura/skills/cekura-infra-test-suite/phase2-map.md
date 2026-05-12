@@ -11,7 +11,7 @@ Work through the answers in order. For each answer, add the corresponding scenar
 | Phase 1 answer | → Test scenario | Cekura trigger |
 |---|---|---|
 | Q2 + Q3 + Q4 all answered (always true) | **Full Pipeline E2E** | Multi-turn conditional_actions conversation |
-| Q2: STT accuracy matters (noise, accents, challenging input) | **STT Stress Test** | `<background_noise>` or non-native accent personality; scored via **Transcription Accuracy** metric (requires audio, 1 credit/min) |
+| Q2: STT accuracy matters (noise, accents, challenging input) | **STT Stress Test** | `<background_noise>` or non-native accent personality; scored via **Transcription Accuracy** metric (free for simulations, requires audio) |
 | Q4: interruption supported — caller can cut off bot mid-speech | **Mid-Speech Interruption** | `<interruption time="1s" />` at start of action |
 | Q4: same as above (run a second scenario) | **Repeated Barge-ins** | Two back-to-back `<interruption>` cycles |
 | Q5: bot detects silence at call start and hangs up if caller never speaks | **Call-Start Silence Timeout** | Testing agent stays silent for entire call — `FIRST_MESSAGE action: ""` with no further conditions |
