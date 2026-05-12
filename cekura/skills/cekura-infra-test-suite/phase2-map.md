@@ -13,7 +13,8 @@ Work through the answers in order. For each answer, add the corresponding scenar
 | Q2 + Q3 + Q4 all answered (always true) | **Full Pipeline E2E** | Multi-turn conditional_actions conversation |
 | Q4: interruption supported — caller can cut off bot mid-speech | **Mid-Speech Interruption** | `<interruption time="1s" />` at start of action |
 | Q4: same as above (run a second scenario) | **Repeated Barge-ins** | Two back-to-back `<interruption>` cycles |
-| Q5: idle detection exists — bot prompts on silence | **Mid-Call Idle** | `<hold>` for threshold + 2s |
+| Q5: bot detects silence at call start and hangs up if caller never speaks | **Call-Start Silence Timeout** | Testing agent stays silent for entire call — `FIRST_MESSAGE action: ""` with no further conditions |
+| Q5: idle detection mid-call — bot prompts on silence | **Mid-Call Idle** | `<hold>` for threshold + 2s mid-conversation |
 | Q5: idle escalates — bot prompts N times then hangs up | **Full Idle Escalation to Hang-up** | `<hold>` for (threshold × N) + 5s |
 | Q6: DTMF received — caller sends digits to bot | **DTMF Input Processing** | `<dtmf digits="XXXXX#" />` + spoken text |
 | Q6: DTMF sent — bot dials digits to external system | **DTMF Output to IVR** | Trigger the IVR navigation flow; verify bot sends correct sequence |
@@ -34,7 +35,6 @@ Remove these from the suite regardless of what Phase 1 found:
 
 | Scenario | Why |
 |---|---|
-| Call-start silence timeout | `<hold>` and `<silence>` both produce brief audio artifacts at their boundaries that can trigger voice-activity detection, resetting the timer before it fires |
 | Internal pipeline state | Evaluators see only the call transcript — retry attempts, error flags, validation outcomes, and internal state changes are invisible |
 | STT accuracy or word-level timing | Not observable from a transcript |
 | Provider fallback activation | Forcing a primary provider to fail from the test side is not reliably reproducible via Cekura tags |

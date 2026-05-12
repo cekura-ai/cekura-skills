@@ -150,6 +150,27 @@ Expected outcome: "The bot recovered from two back-to-back interruptions and pro
 
 ---
 
+### Call-Start Silence Timeout
+
+Tests that the bot hangs up when the caller never speaks. No tags needed — the testing agent simply never speaks. The bot's own silence timer fires naturally.
+
+```json
+{
+  "role": "caller",
+  "conditions": [
+    { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false }
+  ]
+}
+```
+
+Expected outcome: "The bot greeted the caller, received no response, and ended the call after the silence timeout expired."
+
+> This is the only scenario that uses `FIRST_MESSAGE action: ""` with **no further conditions**. Every other scenario uses it to wait for the greeting before responding. Here, never responding is the test.
+
+> Do not use `<hold>` or `<silence>` here — `<hold>` plays audio (which is not silence), and `<silence>` has artifacts. The testing agent's natural absence of audio is the correct trigger.
+
+---
+
 ### Mid-Call Idle
 
 Replace `{THRESHOLD}` with the bot's idle timeout in seconds (from Phase 1). Set hold to `{THRESHOLD} + 2`.
