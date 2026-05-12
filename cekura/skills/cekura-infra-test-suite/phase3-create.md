@@ -57,10 +57,6 @@ Every scenario must include:
 { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "Hi, I need help with [domain-relevant request].", "fixed_message": false }
 ```
 
-### Rule: Never use action_followup on condition 0
-
-When a bot's greeting is long, the STT engine may split it across two transcribed utterances. An `action_followup` attached to condition 0 (FIRST_MESSAGE) fires once per STT chunk — which means twice. Use a `standard` condition to match the full greeting before starting any followup chain.
-
 ### Rule: Use `<hold>` for idle timer tests, not `<silence>`
 
 Per the Cekura conditional actions docs:
