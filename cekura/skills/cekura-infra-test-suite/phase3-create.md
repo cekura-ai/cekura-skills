@@ -55,22 +55,9 @@ Every scenario must include:
 
 ### Rule: Use `<hold>` for idle timer tests, not `<silence>`
 
-Per the Cekura conditional actions docs:
+Per the Cekura conditional actions docs, `<hold>` produces dead air (background noise stops) while `<silence>` keeps background noise running — which may register as caller activity on sensitive VAD configurations and prevent the idle timer from firing.
 
-| | `<silence>` | `<hold>` |
-|---|---|---|
-| Interruptible by main agent | Yes | No |
-| Background noise during pause | Continues | Stops (dead air) |
-
-`<hold>` produces dead air — no background noise — which gives the bot's VAD the cleanest silence signal and is the safest choice for triggering idle timers. `<silence>` keeps background noise running, which depending on the bot's VAD sensitivity may register as caller activity and prevent the idle timer from firing.
-
-### Rule: `<interruption>` must be at the start of the action
-
-The `<interruption>` tag must be the first thing in the action string, and `fixed_message: true` is required on that action.
-
-```json
-{ "action": "<interruption time=\"1s\" /> Wait, I have a question.", "fixed_message": true }
-```
+For all other tag constraints (`<interruption>` placement, `<voicemail>` usage, `<dtmf>` syntax, etc.) refer to the **cekura-eval-design** conditional actions reference.
 
 ---
 
