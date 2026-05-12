@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "cekura": {
+      "type": "http",
+      "url": "https://api.cekura.ai/mcp",
+      "headers": {
+        "X-CEKURA-API-KEY": "${CEKURA_API_KEY}"
+      }
+    }
+  }
+}
