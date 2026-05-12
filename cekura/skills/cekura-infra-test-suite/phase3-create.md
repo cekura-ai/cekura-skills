@@ -307,18 +307,41 @@ Expected outcome: "The bot handled a degraded network connection and produced a 
 
 ## 3e. Attach metrics to every scenario
 
-After creating each scenario, attach these four metrics:
+Two activation steps are required — missing either means the metric never fires:
+1. **Toggle on at the project level** — `POST /test_framework/v1/predefined-metrics/<id>/toggle/`
+2. **Add to individual evaluators** — `PATCH /test_framework/v1/scenarios/<id>/` with `metrics: [id, ...]`
 
-| Metric | Purpose |
-|--------|---------|
-| Expected Outcome | Was the target infra behavior visible in the transcript? |
-| Infrastructure Issues | Silent periods, dropped audio, agent non-response |
-| Tool Call Success | Tool invocations completed without error |
-| Latency | Per-turn response time |
+Or bulk-add after creating all scenarios: `POST /test_framework/v1/scenarios/actions/modify-scenarios/`
 
-Use `PATCH /test_framework/v1/scenarios/<id>/` to add metrics, or `POST /test_framework/v1/scenarios/actions/modify-scenarios/` to bulk-add after creating all scenarios.
+### Baseline — attach to every scenario (all free)
 
-**Critical:** Expected Outcome prompts must describe only what is observable in the transcript. Never reference internal processor names (`UserIdleHandler`, `LLMRetryProcessor`) — evaluators cannot observe code internals.
+| Metric | What it catches |
+|--------|----------------|
+| **Expected Outcome** | Did the transcript show the expected infra behavior? Set `expected_outcome_prompt` per scenario. |
+| **Infrastructure Issues** | Main agent goes silent for > N seconds (default 10s, configurable). Catches dropped audio and agent non-response invisible in pass/fail. |
+| **Latency** | Average response time + P25/P50/P75/P90/P95/P99. Under 2000ms is healthy. |
+| **Tool Call Success** | Any tool call returned an error. Free; requires provider integration for tool call data to appear in transcript. |
+
+### Scenario-specific additions
+
+| Scenario | Add these metrics | Why |
+|---|---|---|
+| Full Pipeline E2E | **Detect Silence in Conversation** | Catches both-speaker silence gaps invisible in the transcript |
+| Mid-Speech Interruption | **Stop Time after User Interruption**, **Interruption Score** | Measure how quickly the bot stopped and how cleanly it recovered |
+| Repeated Barge-ins | **Stop Time after User Interruption**, **Interruption Score**, **AI Interrupting User** | Same as above; AI Interrupting User flags if the bot is fighting back |
+| Mid-Call Idle | **Detect Silence in Conversation** (configure threshold to match idle timer) | Confirms the silence period actually registered |
+| Full Idle Escalation | **Appropriate Call Termination by Main Agent** | Verifies the bot ended the call correctly after escalation, not prematurely |
+| DTMF Input | **Mock Tool Call Accuracy** | If DTMF triggers a mock tool, checks correct inputs were passed |
+| Voicemail Handling | **Voicemail Detection** | Built-in classifier — detects if the call reached a voicemail system |
+| Network Degradation | **Voice Tone + Clarity** | Audio quality score; detects jitter and clarity loss from packet loss |
+
+### Expected Outcome prompt rules
+
+The Expected Outcome metric evaluates the transcript text only — it has no access to audio, silences, interruptions, or internal pipeline state. Write prompts that describe only what is visible in the conversation:
+
+**Wrong:** "The LLMRetryProcessor recovered from the timeout and the agent continued"
+
+**Right:** "After a pause, the agent responded coherently and continued the conversation"
 
 ---
 
