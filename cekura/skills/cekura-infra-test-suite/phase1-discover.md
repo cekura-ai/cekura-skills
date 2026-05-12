@@ -1,155 +1,135 @@
 # Phase 1 — Discover the Infrastructure
 
-Read the codebase before asking the user anything. The goal is a complete inventory of every voice pipeline component that could be tested.
+Read the codebase and answer the questions below. Do not ask the user anything yet — find what you can from the code first, then surface only the gaps you couldn't resolve.
 
-For each section below, look for the **behavior** — not just a specific class name. Class names vary across frameworks and teams; the underlying behaviors are consistent. The examples given are illustrative, not exhaustive.
-
----
-
-## 1a. Transport layer
-
-**What to find:** How the bot establishes calls — both inbound (receiving) and outbound (dialing).
-
-**Behavioral signals:**
-- Outbound: code that constructs a destination address (SIP URI, phone number, room URL) and initiates a connection before the conversation starts
-- Inbound: a webhook handler, WebSocket server, or listener that accepts incoming calls
-- Config: wherever the destination address, caller ID, or server endpoint is set — the name of the key doesn't matter, the value format does (`sip:...`, `wss://...`, `+1...`, `https://...`)
-
-**Provider examples to recognize:** Twilio, Vonage, Telnyx, Plivo (SIP/PSTN) · Daily, LiveKit, Agora (WebRTC) · Raw WebSocket servers
-
-Record: **transport type** and **how the bot dials out or receives calls**.
+The questions are technology-neutral. The answers will be different for every stack (LiveKit, Pipecat, VAPI, Retell, Cisco, Exotel, a custom WebSocket server — anything). That's expected. Record what's actually there, not what you expected to find.
 
 ---
 
-## 1b. STT (Speech-to-Text)
+## Q1. How does the bot connect to a call?
 
-**What to find:** Where audio from the caller gets converted to text, and whether the bot uses voice activity detection.
+Find the entry point where a voice session is established — the code that runs when a call starts or when the bot dials out.
 
-**Behavioral signals:**
-- A service or client that accepts an audio stream and emits text transcription results
-- VAD: logic that decides when the caller has started or stopped speaking — look for energy thresholds, silence duration checks, or a dedicated VAD model
-- Fallback: a secondary transcriber that activates when the primary fails or returns an error
-
-**Provider examples to recognize:** Deepgram, Google Speech-to-Text, Azure Cognitive Speech, AssemblyAI, OpenAI Whisper, Groq Whisper, Rev AI
-
-Record: **STT provider**, **whether VAD is present**, **whether a fallback transcriber is configured**.
+Answer:
+- What protocol or platform handles the voice connection? (e.g. SIP, WebRTC, raw WebSocket, a vendor SDK)
+- Does the bot initiate calls (outbound) or receive them (inbound), or both?
+- Where is the call destination (number, URI, room, endpoint) set, and can it be changed without modifying source code?
 
 ---
 
-## 1c. LLM
+## Q2. How does the bot understand what the caller said?
 
-**What to find:** Where the transcript gets sent to a language model, and what resilience logic wraps that call.
+Find where audio from the caller is converted to text.
 
-**Behavioral signals:**
-
-*Provider:* A client or API call that sends a prompt/messages array to a model and receives a text or structured response.
-
-*Retry logic:* Code that re-attempts the LLM call when it fails — look for:
-- Loops with a max attempt count
-- Exponential backoff or sleep between attempts
-- Decorators like `@retry`, `tenacity.retry`, `backoff.on_exception`
-- Try/except blocks that call the same LLM endpoint again
-
-*Output validation:* Code that inspects the LLM's response for errors before using it — look for:
-- Checks for empty or null responses
-- Detection of error strings or refusal phrases in the output
-- Structured output parsing with fallback on parse failure
-- A post-LLM step that decides whether the response is usable
-
-*Timeout handling:* Code that enforces a deadline on the LLM call — look for:
-- `asyncio.wait_for`, `asyncio.timeout`, `concurrent.futures.ThreadPoolExecutor` with a timeout
-- A timeout parameter on the API client
-- A fallback response or recovery action triggered when the deadline is exceeded
-
-*Fallback model:* A secondary model that activates when the primary is unavailable — look for a secondary provider client or a fallback model name in config.
-
-**Provider examples to recognize:** OpenAI, Anthropic, Google Gemini, Groq, Azure OpenAI, Cohere, Mistral, Ollama
-
-Record: **LLM provider**, **retry logic present (yes/no)**, **output validation present (yes/no)**, **timeout handling present (yes/no)**, **fallback model configured (yes/no)**.
+Answer:
+- What service or component does the transcription?
+- Is there logic that detects when the caller starts or stops speaking (voice activity detection)? If so, what triggers it?
+- What happens when transcription fails or returns nothing? Is there a fallback?
 
 ---
 
-## 1d. TTS (Text-to-Speech)
+## Q3. How does the bot decide what to say?
 
-**What to find:** Where the bot's text response gets converted to audio, and whether mid-speech interruption is handled.
+Find where the transcript is sent to a language model and a response is generated.
 
-**Behavioral signals:**
-- A service or client that accepts text and streams or returns audio back to the caller
-- **Interruption handling:** Logic that stops audio playback when the caller speaks mid-sentence — look for:
-  - An interrupt signal that cancels in-flight TTS audio
-  - A boolean flag or mode that controls whether the caller can cut off the bot
-  - A handler triggered by caller speech that flushes or cancels queued audio
-- Fallback: a secondary voice or TTS provider that activates when the primary fails
-
-**Provider examples to recognize:** ElevenLabs, Cartesia, PlayHT, Azure Neural TTS, Google TTS, Amazon Polly, Deepgram TTS, Rime
-
-Record: **TTS provider**, **whether interruption/barge-in handling is present**, **whether a fallback voice is configured**.
+Answer:
+- What model or service generates the response?
+- What happens when the model call fails? Is there retry logic, and if so, how many attempts and with what delay?
+- Is the model's output checked for validity before it's used (e.g. empty response, error string, failed parse)? What happens if the check fails?
+- Is there a deadline enforced on the model call? What happens when it's exceeded?
+- Is there a secondary model or provider that takes over if the primary is unavailable?
 
 ---
 
-## 1e. Pipeline behaviors
+## Q4. How does the bot speak to the caller?
 
-Look for these behavioral capabilities — regardless of what they are named in this codebase:
+Find where the bot's text response is converted to audio and sent to the caller.
 
-**Idle detection:** Does the bot notice when the caller goes silent for too long and prompt them?
-- Look for: a timer or countdown that starts when the caller stops speaking; a silence threshold in seconds after which the bot says something like "Are you still there?"; a configured list of idle prompts; a maximum number of prompts before the call ends
-
-**DTMF processing:** Does the bot handle touch-tone key presses from the caller?
-- Look for: code that receives digit events from the telephony layer and accumulates them into a buffer; a configured terminator key that signals the end of input (commonly `#`); a handler that acts on the complete digit sequence
-
-**Network simulation:** Can the bot simulate degraded network conditions for testing?
-- Look for: code that introduces artificial latency, jitter, or packet loss into the audio pipeline during a call
-
-**Call transfer:** Can the bot hand the call off to a human agent or another system?
-- Look for: a transfer action or function the LLM can invoke; a configured destination (phone number, SIP URI, queue name) the call is forwarded to
-
-**Bot-initiated hang-up:** Can the bot end the call programmatically?
-- Look for: an end-call function or tool the LLM can invoke; logic that triggers automatic hang-up after task completion or after idle escalation exhausts its prompts
-
-For each capability found, note the **configured values** — the threshold in seconds, the number of escalation prompts, the DTMF terminator character, etc. These values feed directly into the scenario timings in Phase 3.
+Answer:
+- What service or component does the audio synthesis?
+- Can the caller interrupt the bot while it is speaking? If so, what stops the audio and resets the conversation?
+- What happens when audio synthesis fails? Is there a fallback voice or provider?
 
 ---
 
-## 1f. Bot configuration
+## Q5. What happens when the caller goes silent?
 
-Read the main bot config (often a Python/JS entry point, a JSON/YAML file, or a dedicated local runner script):
+Find whether the bot detects prolonged caller silence and reacts to it.
 
-- **Does the bot speak first?** Look for a greeting string or a call to send audio/text before waiting for caller input.
-- **Idle timeout value** — how many seconds of silence before the first idle prompt?
-- **Idle escalation count** — how many idle prompts before the call is hung up?
-- **DTMF terminator** — which digit signals end of input (usually `#`)?
+Answer:
+- Is there a timer or mechanism that fires when the caller stops speaking for too long?
+- What does the bot do when it fires — play a prompt, ask if the caller is still there, or hang up?
+- How long is the silence threshold (in seconds)?
+- Does this escalate — does the bot prompt multiple times before ending the call? If so, how many times?
 
 ---
 
-## 1g. Local run mode
+## Q6. Does the bot handle touch-tone (DTMF) input?
 
-Understand how to start the bot locally for CI testing:
+Find whether the bot can receive and process keypad digits from the caller.
 
-- Is there a flag, env var, or config value that switches the bot into local/dev mode?
-- What command starts the bot locally?
-- Where is the outbound call destination set — and can it be overridden without changing source code? (env var, config file, CLI arg)
-- Is there an existing CI script, Makefile target, or Docker Compose file for local testing?
+Answer:
+- Is there code that receives digit events from the telephony layer?
+- Are digits accumulated (buffered) and processed as a group, or handled one at a time?
+- Is there a terminator key that signals end of input?
 
-Read `CLAUDE.md` and `memory.md` if they exist — they may already document the local run procedure.
+---
+
+## Q7. Does the bot support any other testable behaviors?
+
+Look broadly at what else the pipeline can do that could affect a call. Common ones:
+
+- **Network degradation simulation** — can the bot artificially introduce latency, jitter, or packet loss for testing purposes?
+- **Call transfer** — can the bot hand the call off to another destination (human agent, queue, IVR)?
+- **Bot-initiated hang-up** — can the bot end the call on its own (e.g. after task completion, or as an action the LLM can invoke)?
+- **Background noise handling** — is there any filtering or simulation of ambient sound?
+
+For each: does it exist, and what triggers it?
+
+---
+
+## Q8. Does the bot speak first?
+
+Find whether the bot sends audio or text to the caller before waiting for the caller to speak.
+
+Answer:
+- Yes or no?
+- If yes, what is the opening message?
+
+---
+
+## Q9. How do you run the bot locally?
+
+Find everything needed to start the bot in a local dev or test environment.
+
+Answer:
+- What command starts it?
+- Are there env vars, flags, or config values that switch it into local/test mode?
+- How is the call destination overridden for testing — can you change it without touching source code?
+- Is there an existing test script, CI config, or runbook for local testing?
+
+Also check `CLAUDE.md` and `memory.md` if they exist — they may already have this.
 
 ---
 
 ## Phase 1 Gate
 
-Before moving to Phase 2, record a complete inventory:
+Write out your answers in this format before moving on:
 
 ```
-TRANSPORT:    [type — SIP / WebRTC / WebSocket / PSTN; how bot dials/receives]
-STT:          [provider; VAD: yes/no; fallback: yes/no]
-LLM:          [provider; retry: yes/no; output validation: yes/no; timeout: yes/no; fallback: yes/no]
-TTS:          [provider; interruption handling: yes/no; fallback: yes/no]
-BEHAVIORS:    [idle timer: Xs / N prompts; DTMF: yes/no + terminator; transfer: yes/no;
-               network sim: yes/no; bot hang-up: yes/no]
-BOT CONFIG:   [speaks first: yes/no]
-LOCAL RUN:    [start command; config override mechanism]
-GAPS:         [anything you couldn't determine from code alone]
+Q1 — Call connection:    [protocol/platform; inbound/outbound/both; how destination is set]
+Q2 — STT:               [what transcribes; VAD: yes/no + trigger; fallback: yes/no]
+Q3 — LLM:               [what generates response; retry: yes/no; validation: yes/no;
+                          timeout: yes/no; fallback: yes/no]
+Q4 — TTS:               [what synthesizes audio; interruption: yes/no + mechanism; fallback: yes/no]
+Q5 — Caller silence:    [idle detection: yes/no; threshold: Xs; escalation: N prompts then hang-up]
+Q6 — DTMF:              [yes/no; buffered/single; terminator: X]
+Q7 — Other behaviors:   [list each found + what triggers it]
+Q8 — Bot speaks first:  [yes/no; opening message if yes]
+Q9 — Local run:         [start command; how to override call destination; existing CI script: yes/no]
+GAPS:                   [questions you couldn't answer from code alone]
 ```
 
-Note any gaps — you will surface them as open questions during the Phase 2 checkpoint.
+Surface gaps as open questions in the Phase 2 checkpoint — do not guess.
 
 Move to [Phase 2](phase2-map.md).
