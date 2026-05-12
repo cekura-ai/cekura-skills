@@ -57,16 +57,6 @@ Every scenario must include:
 { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "Hi, I need help with [domain-relevant request].", "fixed_message": false }
 ```
 
-### Rule: Conditions are natural language, not keyword filters
-
-Conditions are matched semantically by Cekura's testing agent. They must describe what the bot said in plain English.
-
-**Wrong:** `"condition": "contains 'help' OR contains 'assist'"`
-
-**Right:** `"condition": "The agent greets the caller and asks how it can help"`
-
-Write conditions the way a human would describe the bot's turn to a colleague.
-
 ### Rule: Never use action_followup on condition 0
 
 When a bot's greeting is long, the STT engine may split it across two transcribed utterances. An `action_followup` attached to condition 0 (FIRST_MESSAGE) fires once per STT chunk — which means twice. Use a `standard` condition to match the full greeting before starting any followup chain.
