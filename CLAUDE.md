@@ -114,6 +114,7 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
 | `cekura-fixing-prod-issues` | Debug a production call, write a fix, and verify it with two rounds of evaluator testing before raising a PR |
+| `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
 
 ### Commands
 | Component | Purpose |
