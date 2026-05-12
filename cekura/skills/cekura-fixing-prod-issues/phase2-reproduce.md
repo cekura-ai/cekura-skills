@@ -65,29 +65,36 @@ update_scenario "SCENARIO_ID" '{
 
 ## 2c. Look up how to run the local agent
 
-Before configuring anything, check whether setup instructions for running the local agent and connecting it to Cekura already exist:
+**You MUST physically read the files below using your file reading tool. Do not rely on memory, do not assume, do not skip this step.**
 
-1. Read `memory.md` in the project root
-2. Read `CLAUDE.md` in the project root
+**Step 1 — Actually read these files right now:**
 
-If instructions are found — follow them exactly. They are the source of truth for this project's local run setup.
+```
+Read: <project_root>/memory.md
+Read: <project_root>/CLAUDE.md
+```
 
-**If no instructions are found in either file — you MUST ask the user before proceeding. Do not guess, do not assume, do not try to infer from other files.**
+Use your file reading tool on both files. If a file does not exist, that counts as "not found" — do not treat it as found.
 
-Ask:
-> "I couldn't find local run setup instructions in `memory.md` or `CLAUDE.md`. How do I run the local agent and connect it to a Cekura simulation? (e.g. what command to start it, how to pass the Cekura outbound number, which config file to edit)"
+**Step 2 — Did you find local run setup instructions in either file?**
 
-Once the user explains, **immediately write the instructions to `memory.md`** before doing anything else. Do not proceed to 2d until you have written it.
+**YES** — follow them exactly. They are the source of truth. Skip to 2d.
 
-Write a dedicated section like this to `memory.md` (create the file if it doesn't exist):
+**NO** — you MUST stop and ask the user. Do not infer from other files, do not use the example below, do not guess:
+
+> "I read `memory.md` and `CLAUDE.md` but couldn't find instructions for how to run the local agent. How do I start it and connect it to a Cekura simulation? (e.g. what command, which config file to edit, how to pass the Cekura outbound number)"
+
+**Step 3 — Immediately write what the user tells you to `memory.md`**
+
+Do this before anything else. Create `memory.md` if it doesn't exist:
 
 ```markdown
 ## Local Agent Run Setup
 
-<paste exactly what the user told you — the command to start the agent, which config file to edit, how to pass the Cekura outbound number/connection details, any env vars needed>
+<exactly what the user said — start command, config file, how to pass the outbound number, env vars>
 ```
 
-Confirm the write succeeded, then proceed to 2d.
+Confirm the write succeeded. Only then proceed to 2d.
 
 ---
 
@@ -163,13 +170,19 @@ get_result "RESULT_ID"
 
 ## ⛔ Phase 2 Gate — ABSOLUTE HARD STOP. DO NOT PASS WITHOUT EVIDENCE.
 
-**You MUST NOT move to Phase 3 until the eval definitively fails on Cekura. No exceptions, no shortcuts.**
+**You MUST NOT move to Phase 3 under ANY circumstance until the eval definitively fails on Cekura.**
 
-This gate exists because a fix written without a confirmed reproduction is untestable — you have no way to know if the fix actually worked. Skipping this gate invalidates the entire workflow.
+This is not a suggestion. This is not negotiable. There are no exceptions.
+
+### Errors are NOT a reason to skip this gate
+
+If the simulation errored, the call failed to connect, the bot crashed, or anything else went wrong — **fix the error and retry**. An error is not a reproduction. An error is not a result. Do not proceed to Phase 3 because "it didn't work, so the bug is probably there" — that reasoning is wrong and will produce an untestable fix.
+
+If you cannot get the simulation to run at all, **stop and ask the user for help**. Do not move forward.
 
 ### What "fails" means
 
-"Fails" means the **Cekura metric scores** show failure — not just that the call ended or the transcript looks wrong to you.
+"Fails" means the **Cekura metric scores** show failure — not just that the call ended, errored, or the transcript looks wrong to you.
 
 Check `runs[].evaluation.metrics[]` in the result. The exact metrics that were failing in the prod call must be scoring failure here too.
 
@@ -177,9 +190,10 @@ Check `runs[].evaluation.metrics[]` in the result. The exact metrics that were f
 
 **Read the transcript from this result and compare it turn-by-turn with the original prod call transcript.** The failure mode must be visibly present in the new transcript AND reflected in the metric scores.
 
-### If the metrics pass or the result is ambiguous — stop and diagnose
+### If the metrics pass, the result is ambiguous, or there was an error — stop and diagnose
 
 Do NOT proceed. Work through this checklist:
+- Did the simulation actually complete a full call? If there was an error, fix it and retry.
 - Are the metrics the exact ones that failed in the prod call? If not, go back to 2b.
 - Are the edge conditions (invalid API key, sleep timers, etc.) actually active and strong enough? Check and re-apply.
 - Is the evaluator sending the right turns in the right order? Re-check the conditional actions.
