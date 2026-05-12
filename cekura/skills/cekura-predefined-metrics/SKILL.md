@@ -76,7 +76,7 @@ Use `GET /test_framework/v1/predefined-metrics/` to retrieve the full list of av
 | **Relevancy** | True/False | 0.2 credits | ✓ | ✓ | Checks if agent responses addressed the question asked. Flags off-topic or deflecting replies. |
 | **Response Consistency** | True/False | 0.2 credits | ✓ | ✓ | Detects contradictions — when the agent repeats information incorrectly or contradicts a prior statement. |
 | **Tool Call Success** | True/False | Free | ✓ | ✓ | Checks if any tool call result contains "Error" or "failed". Requires provider integration (assistant ID + API keys) so tool call data appears in the transcript. |
-| **Transcription Accuracy** | 0–100 score | 1 credit/min | ✓ | — | Uses two transcription models for call logs, compares against ground truth for runs. **Requires audio.** Expensive — use selectively. |
+| **Transcription Accuracy** | 0–100 score | Free for simulations / 1 credit/min for call logs | ✓ | — | Uses two transcription models for call logs, compares against ground truth for runs. **Requires audio.** Call log evaluation is expensive — use selectively. |
 | **Voicemail Detection** | True/False | 0.2 credits | ✓ | ✓ | Detects if the call reached a voicemail or automated system. Beta. |
 
 ---
@@ -150,7 +150,8 @@ For full payload examples (including IPA tips and naming guidance) see `referenc
 | **Free (0 credits)** | Expected Outcome, Tool Call Success, Mock Tool Call Accuracy, AI Interrupting User, User Interrupting AI, Stop Time after User Interruption, Latency, Detect Silence, Infrastructure Issues, Interruption Score, Unnecessary Repetition Score, Average Pitch, Talk Ratio, Words Per Minute |
 | **0.2 credits/call** | Hallucination, Relevancy, Response Consistency, Voicemail Detection, Appropriate Call Termination (both), Unnecessary Repetition Count, CSAT, Dropoff Node, Sentiment, Topic of Call, Letterwise Pronunciation, Pronunciation Check, Speaking Rate, Voice Change Detection, Voice Tone + Clarity |
 | **0.3 credits/min** | Gibberish Detection |
-| **1 credit/min** | Transcription Accuracy |
+| **Free (simulations)** | Transcription Accuracy (simulation runs only) |
+| **1 credit/min (call logs)** | Transcription Accuracy (call log evaluation) |
 
 ---
 

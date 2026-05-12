@@ -117,5 +117,5 @@ Every agent type above should also have these enabled. They are the lowest-cost,
 Most predefined metrics are 0.2 credits/call. A typical "rich" set of 10 paid metrics ≈ 2 credits/call. Free metrics (Expected Outcome, Infra Issues, Tool Call Success, Latency, AI/User Interruption counts, Detect Silence, Interruption Score, Repetition Score, Average Pitch, Talk Ratio, WPM) add no cost.
 
 Two metrics are charged per minute, not per call — budget accordingly:
-- **Transcription Accuracy** — 1 credit/min (only enable when investigating ASR quality)
+- **Transcription Accuracy** — Free for simulation runs; 1 credit/min when evaluating call logs (only enable when investigating ASR quality)
 - **Gibberish Detection** — 0.3 credits/min (only enable when debugging audio)
