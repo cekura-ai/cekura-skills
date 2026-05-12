@@ -43,17 +43,19 @@ Every scenario must include:
 
 ## 3c. Authoring rules — read before writing any conditions
 
-### Rule: Always start with FIRST_MESSAGE action: ""
+### Rule: Condition 0 depends on who speaks first (Q8 answer)
 
-The first condition of every scenario must be:
+**If the bot speaks first** (Q8: yes) — the testing agent must wait silently. Set `action: ""` so the testing agent stays quiet until the bot's greeting is complete. If both sides fire a first message simultaneously, the STT picks up both speakers and enters a confused state.
 
 ```json
 { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false }
 ```
 
-**Why:** If the bot has `firstMessage` configured, both sides fire a first message simultaneously. The STT picks up both speakers and enters a confused state. Setting `action: ""` makes the testing agent stay silent until the bot finishes its greeting.
+**If the caller speaks first** (Q8: no) — the testing agent initiates. Give condition 0 a non-empty action with the caller's opening line.
 
-**Exception:** If the bot does NOT speak first (no `firstMessage`, no greeting), the testing agent should initiate — give condition 0 a non-empty action in that case.
+```json
+{ "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "Hi, I need help with [domain-relevant request].", "fixed_message": false }
+```
 
 ### Rule: Conditions are natural language, not keyword filters
 
