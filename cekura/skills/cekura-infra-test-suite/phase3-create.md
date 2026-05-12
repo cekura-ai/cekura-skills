@@ -64,14 +64,6 @@ Per the Cekura conditional actions docs:
 
 `<hold>` produces dead air — no background noise — which gives the bot's VAD the cleanest silence signal and is the safest choice for triggering idle timers. `<silence>` keeps background noise running, which depending on the bot's VAD sensitivity may register as caller activity and prevent the idle timer from firing.
 
-### Rule: Combine `<dtmf>` with spoken text
-
-A pure `<dtmf>` action with no spoken text does not register as a completed testing-agent turn. The condition chain freezes. Always add spoken text after the tag:
-
-```
-"action": "<dtmf digits=\"98765#\" /> I've entered my account number."
-```
-
 ### Rule: `<interruption>` must be at the start of the action
 
 The `<interruption>` tag must be the first thing in the action string, and `fixed_message: true` is required on that action.
