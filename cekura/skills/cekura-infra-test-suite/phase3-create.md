@@ -65,11 +65,16 @@ Write conditions the way a human would describe the bot's turn to a colleague.
 
 When a bot's greeting is long, the STT engine may split it across two transcribed utterances. An `action_followup` attached to condition 0 (FIRST_MESSAGE) fires once per STT chunk — which means twice. Use a `standard` condition to match the full greeting before starting any followup chain.
 
-### Rule: Use `<silence>` for idle timer tests, not `<hold>`
+### Rule: Use `<hold>` for idle timer tests, not `<silence>`
 
-`<silence>` sends no audio from the testing agent's side — true silence that the bot's idle timer will fire on.
+Per the Cekura conditional actions docs:
 
-`<hold>` plays hold music — actual audio content that the bot's VAD may interpret as caller activity, preventing the idle timer from firing. Only use `<hold>` when you want to simulate a caller who put the bot on hold, not when you want the bot to detect silence.
+| | `<silence>` | `<hold>` |
+|---|---|---|
+| Interruptible by main agent | Yes | No |
+| Background noise during pause | Continues | Stops (dead air) |
+
+`<hold>` produces dead air — no background noise — which gives the bot's VAD the cleanest silence signal and is the safest choice for triggering idle timers. `<silence>` keeps background noise running, which depending on the bot's VAD sensitivity may register as caller activity and prevent the idle timer from firing.
 
 ### Rule: Combine `<dtmf>` with spoken text
 
@@ -179,7 +184,7 @@ Replace `{THRESHOLD}` with the bot's idle timeout in seconds (from Phase 1). Set
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
     { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "Hello, I need help with something.", "fixed_message": false },
-    { "id": 2, "type": "standard", "condition": "The agent asks a follow-up question", "action": "<silence time=\"{THRESHOLD+2}s\" />", "fixed_message": true },
+    { "id": 2, "type": "standard", "condition": "The agent asks a follow-up question", "action": "<hold time=\"{THRESHOLD+2}s\" />", "fixed_message": true },
     { "id": 3, "type": "standard", "condition": "The agent asks if the caller is still there", "action": "Yes, sorry. I'm here.", "fixed_message": false }
   ]
 }
@@ -198,7 +203,7 @@ Replace `{TOTAL}` with `{THRESHOLD} × {ESCALATION_COUNT} + 5` (5s buffer past t
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "<silence time=\"{TOTAL}s\" />", "fixed_message": true }
+    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "<hold time=\"{TOTAL}s\" />", "fixed_message": true }
   ]
 }
 ```
