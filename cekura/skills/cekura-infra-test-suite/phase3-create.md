@@ -65,11 +65,11 @@ Write conditions the way a human would describe the bot's turn to a colleague.
 
 When a bot's greeting is long, the STT engine may split it across two transcribed utterances. An `action_followup` attached to condition 0 (FIRST_MESSAGE) fires once per STT chunk — which means twice. Use a `standard` condition to match the full greeting before starting any followup chain.
 
-### Rule: Use `<hold>` not `<silence>` for idle timer tests
+### Rule: Use `<silence>` for idle timer tests, not `<hold>`
 
-`<silence>` produces a brief audio artifact at its end boundary that triggers STT voice-activity detection and resets the idle timer before it fires.
+`<silence>` sends no audio from the testing agent's side — true silence that the bot's idle timer will fire on.
 
-`<hold>` plays real audio (hold music) that does not trigger VAD. Always use `<hold>` when you need the bot's idle timer to fire.
+`<hold>` plays hold music — actual audio content that the bot's VAD may interpret as caller activity, preventing the idle timer from firing. Only use `<hold>` when you want to simulate a caller who put the bot on hold, not when you want the bot to detect silence.
 
 ### Rule: Combine `<dtmf>` with spoken text
 
@@ -152,7 +152,7 @@ Expected outcome: "The bot recovered from two back-to-back interruptions and pro
 
 ### Call-Start Silence Timeout
 
-Tests that the bot hangs up when the caller never speaks. No tags needed — the testing agent simply never speaks. The bot's own silence timer fires naturally.
+Tests that the bot hangs up when the caller never speaks. No tags needed — the testing agent simply has no further conditions after `FIRST_MESSAGE`, so it stays silent for the entire call. The bot's silence timer fires naturally.
 
 ```json
 {
@@ -165,15 +165,13 @@ Tests that the bot hangs up when the caller never speaks. No tags needed — the
 
 Expected outcome: "The bot greeted the caller, received no response, and ended the call after the silence timeout expired."
 
-> This is the only scenario that uses `FIRST_MESSAGE action: ""` with **no further conditions**. Every other scenario uses it to wait for the greeting before responding. Here, never responding is the test.
-
-> Do not use `<hold>` or `<silence>` here — `<hold>` plays audio (which is not silence), and `<silence>` has artifacts. The testing agent's natural absence of audio is the correct trigger.
+> This is the only scenario with `FIRST_MESSAGE action: ""` and **no further conditions**. Every other scenario uses that pattern to wait for the bot's greeting before the first response. Here, never responding is the test itself.
 
 ---
 
 ### Mid-Call Idle
 
-Replace `{THRESHOLD}` with the bot's idle timeout in seconds (from Phase 1). Set hold to `{THRESHOLD} + 2`.
+Replace `{THRESHOLD}` with the bot's idle timeout in seconds (from Phase 1). Set silence to `{THRESHOLD} + 2s` so the timer fires before the silence ends.
 
 ```json
 {
@@ -181,7 +179,7 @@ Replace `{THRESHOLD}` with the bot's idle timeout in seconds (from Phase 1). Set
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
     { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "Hello, I need help with something.", "fixed_message": false },
-    { "id": 2, "type": "standard", "condition": "The agent asks a follow-up question", "action": "<hold time=\"{THRESHOLD+2}s\" />", "fixed_message": true },
+    { "id": 2, "type": "standard", "condition": "The agent asks a follow-up question", "action": "<silence time=\"{THRESHOLD+2}s\" />", "fixed_message": true },
     { "id": 3, "type": "standard", "condition": "The agent asks if the caller is still there", "action": "Yes, sorry. I'm here.", "fixed_message": false }
   ]
 }
@@ -193,14 +191,14 @@ Expected outcome: "After a period of silence mid-call, the bot asked if the call
 
 ### Full Idle Escalation to Hang-up
 
-Replace `{TOTAL}` with `{THRESHOLD} × {ESCALATION_COUNT} + 5` (5s buffer).
+Replace `{TOTAL}` with `{THRESHOLD} × {ESCALATION_COUNT} + 5` (5s buffer past the full escalation budget).
 
 ```json
 {
   "role": "caller",
   "conditions": [
     { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
-    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "<hold time=\"{TOTAL}s\" />", "fixed_message": true }
+    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "<silence time=\"{TOTAL}s\" />", "fixed_message": true }
   ]
 }
 ```
