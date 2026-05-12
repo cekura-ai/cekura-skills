@@ -231,6 +231,26 @@ Expected outcome: "The bot received and processed the DTMF digit sequence."
 
 ---
 
+### Inbound SMS Handling
+
+Use when the bot is expected to react to an SMS sent by the caller. The `<send_sms>` tag makes the testing agent send an SMS mid-call.
+
+```json
+{
+  "role": "caller",
+  "conditions": [
+    { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false },
+    { "id": 1, "type": "standard", "condition": "The agent greets the caller", "action": "I'll send you the details over text.", "fixed_message": false },
+    { "id": 2, "type": "standard", "condition": "The agent responds or waits", "action": "<send_sms text=\"[the SMS content the caller sends]\" />", "fixed_message": true },
+    { "id": 3, "type": "standard", "condition": "The agent acknowledges the SMS or acts on it", "action": "Great, thanks.", "fixed_message": false }
+  ]
+}
+```
+
+Expected outcome: "The bot received the inbound SMS and responded or acted on its contents correctly."
+
+---
+
 ### DTMF Output to IVR
 
 Use when the bot dials into an external IVR and must send digits to navigate it. Drive the conversation to the point where the bot is expected to send DTMF, then verify it did so in the transcript or bot response.

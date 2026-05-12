@@ -19,6 +19,7 @@ Work through the answers in order. For each answer, add the corresponding scenar
 | Q5: idle escalates — bot prompts N times then hangs up | **Full Idle Escalation to Hang-up** | `<hold>` for (threshold × N) + 5s |
 | Q6: DTMF received — caller sends digits to bot | **DTMF Input Processing** | `<dtmf digits="XXXXX#" />` + spoken text |
 | Q6: DTMF sent — bot dials digits to external system | **DTMF Output to IVR** | Trigger the IVR navigation flow; verify bot sends correct sequence |
+| Q6: SMS received — bot reacts to an inbound SMS from the caller | **Inbound SMS Handling** | `<send_sms text="..." />` — testing agent sends an SMS mid-call; verify bot processes it correctly |
 | Q6: SMS sent — bot sends SMS to caller | **Outbound SMS** | Drive conversation to SMS trigger point; verify bot confirms sending |
 | Q6: voicemail detection — bot handles reaching voicemail | **Voicemail Handling** | `<voicemail />` — Cekura plays a voicemail greeting |
 | Q7: network degradation simulation supported | **Network Degradation** | `<network_simulation latency="300ms" packet_loss="15%" />` |
@@ -38,7 +39,7 @@ Remove these from the suite regardless of what Phase 1 found:
 |---|---|
 | Internal pipeline state | Evaluators see only the call transcript — retry attempts, error flags, validation outcomes, and internal state changes are invisible |
 | Provider fallback activation | Forcing a primary provider to fail from the test side is not reliably reproducible via Cekura tags |
-| SMS received mid-call | Cekura has no mechanism to inject an inbound SMS into an active call session |
+
 
 ---
 
