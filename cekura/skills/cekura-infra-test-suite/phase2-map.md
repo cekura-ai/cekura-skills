@@ -39,7 +39,6 @@ Some behaviors cannot be reliably triggered or observed via Cekura evaluators. R
 | STT confidence scores or word-level timing | Not visible in transcripts |
 | Provider fallback activation | Triggering a primary provider failure from the test side is not reliably reproducible via Cekura tags |
 | SMS received mid-call | Cekura has no mechanism to inject an inbound SMS into an active call session |
-| Call recording state | Whether a recording started or its quality cannot be observed from a call transcript |
 
 ---
 

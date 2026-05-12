@@ -80,8 +80,6 @@ Beyond the main voice conversation, find every other communication channel or te
 
 **Voicemail playback / pre-recorded audio:** Can the bot play a pre-recorded audio clip rather than synthesizing speech for certain responses?
 
-**Call recording:** Is the call being recorded? Is recording triggered by the bot, or always-on?
-
 **Any other events or channels** specific to this platform or vendor (e.g. call status webhooks the bot reacts to, mid-call metadata, real-time transcription callbacks used for something other than STT)?
 
 ---
@@ -135,7 +133,7 @@ Q3 — LLM:               [what generates response; retry: yes/no; validation: y
 Q4 — TTS:               [what synthesizes audio; interruption: yes/no + mechanism; fallback: yes/no]
 Q5 — Caller silence:    [idle detection: yes/no; threshold: Xs; escalation: N prompts then hang-up]
 Q6 — Side channels:     [DTMF received: yes/no; DTMF sent: yes/no; SMS in/out: yes/no;
-                          voicemail detection: yes/no; recording: yes/no; other: ...]
+                          voicemail detection: yes/no; other: ...]
 Q7 — Other behaviors:   [list each found + what triggers it]
 Q8 — Bot speaks first:  [yes/no; opening message if yes]
 Q9 — Local run:         [start command; how to override call destination; existing CI script: yes/no]
