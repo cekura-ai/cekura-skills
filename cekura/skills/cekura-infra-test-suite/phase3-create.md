@@ -51,6 +51,8 @@ Every scenario must include:
 { "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "Hi, I need help with [domain-relevant request].", "fixed_message": false }
 ```
 
+**Override for start-of-call interruption tests** — if the scenario is specifically testing whether the bot handles being interrupted immediately as it begins speaking, the testing agent should fire into the bot's first message intentionally, regardless of Q8. Use `<interruption>` in condition 0's action to cut in as soon as the bot starts.
+
 ### Rule: Use `<hold>` for idle timer tests, not `<silence>`
 
 Per the Cekura conditional actions docs:
