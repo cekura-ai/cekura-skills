@@ -33,12 +33,6 @@ Every scenario must include:
 
 **`personality`** — choose based on what the scenario needs to test: accent, language, background noise level, interruption tendency. Use `GET /test_framework/v1/personalities/` to list available options. Do not default to a fixed ID.
 
-**`tool_ids`** — choose based on what the testing agent needs to do:
-- `TOOL_END_CALL` — if the testing agent should hang up after completing its objective
-- `TOOL_END_CALL_ON_TRANSFER` — if the scenario involves a transfer to a human or IVR
-- `TOOL_DTMF` — if the scenario sends touch-tone digits
-- Omit entirely if none of the above apply
-
 ---
 
 ## 3c. Authoring rules — read before writing any conditions
