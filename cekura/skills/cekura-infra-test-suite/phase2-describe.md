@@ -41,10 +41,11 @@ Describe:
 
 Describe:
 - What the bot hears vs. what it transcribes — latency, minimum utterance length, confidence thresholds if found
-- What triggers a new transcription segment (VAD: end-of-speech detection, or turn-taking logic)
-- Under what conditions a transcription might be empty, garbled, or delayed
+- What starts a user turn: is it purely VAD (audio level exceeds threshold), or is there a custom strategy layered on top? If there is a custom turn-start strategy, what is the exact gate — e.g. "turn starts when an interim transcript of ≥N words is received," not just "VAD fires." Record N.
+- What ends a user turn: is it purely VAD silence, or is there a custom stop strategy? If there is a custom stop strategy, what is the exact rule — e.g. "turn ends Xs after VAD stops" or "turn ends immediately when a finalized transcript arrives and VAD is already silent." Record the timeout value.
+- Under what conditions a transcription might be empty, garbled, or delayed — and what the bot does in that case (e.g. a no-transcript timer that fires after Ys and pushes an LLM run anyway)
 - What the test can control: speaking rate (via personality), accent (via personality), noise level (via `<background_noise>`)
-- What is observable: the transcribed text that appears as caller turns in the transcript; NOT the raw audio or VAD events
+- What is observable: the transcribed text that appears as caller turns in the transcript; NOT the raw audio, VAD events, turn strategy state, or interim transcripts
 
 ### Q3 — Language Model (LLM)
 

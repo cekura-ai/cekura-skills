@@ -6,6 +6,18 @@ The questions are technology-neutral. The answers will be different for every st
 
 ---
 
+## Pre-step: Identify the deployment target
+
+Before answering Q1–Q9, determine which bot or entry point is the one being deployed and tested. Many codebases contain multiple bot variants (e.g. one per transport type, one per use case, a legacy variant alongside a current one).
+
+- List every entry point you find (e.g. distinct `bot.py` files, server entry points, or agent classes).
+- Check Dockerfiles, deployment configs (`pcc-deploy.toml`, `fly.toml`, CI workflows), README, and `CLAUDE.md` or `memory.md` to identify which one is deployed to production.
+- If you cannot determine the target from code alone, add it to GAPS and ask the user before answering Q1–Q9.
+
+Answer Q1–Q9 only for the identified deployment target. If a feature exists in one variant but not another, note which variant has it and whether the deployment target is that variant.
+
+---
+
 ## Q1. How does the bot connect to a call?
 
 Find the entry point where a voice session is established — the code that runs when a call starts or when the bot dials out.
@@ -23,7 +35,7 @@ Find where audio from the caller is converted to text.
 
 Answer:
 - What service or component does the transcription?
-- Is there logic that detects when the caller starts or stops speaking (voice activity detection)? If so, what triggers it?
+- Is there a voice activity detection (VAD) layer? If so, what triggers it — and is VAD the only thing that decides when a user turn starts and stops, or is there a custom turn-taking strategy layered on top? Look for classes like `UserTurnStrategy`, `TurnStartStrategy`, `TurnStopStrategy`, or similar. If found: what gates a turn start (e.g. a minimum word count on an interim transcript)? What ends a turn (e.g. a speech timeout after VAD stops, or immediate stop on a finalized transcript)? Record the actual threshold values.
 - What happens when transcription fails or returns nothing? Is there a fallback?
 
 ---
@@ -68,7 +80,9 @@ Answer:
 
 Beyond the main voice conversation, find every other communication channel or telephony event the bot can send or receive. For each one found, answer: what triggers it, what does the bot do with it, and in which direction does it flow (bot → caller, caller → bot, or bot → external system)?
 
-**Touch-tone input (DTMF received):** Can the caller send keypad digits to the bot? Are they accumulated into a buffer or handled one at a time? Is there a terminator key?
+**Important:** Check the full pipeline of the deployment target, not just the most prominent entry point. A feature (e.g. DTMF aggregation, SMS handling) may be present in one pipeline configuration but absent in another variant in the same repo. If a feature is found in a different variant than the deployment target, note that explicitly and mark it as absent for the target rather than absent from the codebase entirely.
+
+**Touch-tone input (DTMF received):** Can the caller send keypad digits to the bot? Are they accumulated into a buffer or handled one at a time? Is there a terminator key? Check whether a DTMF aggregation processor (or equivalent) is wired into the deployment target's pipeline — not just whether such a class exists in the codebase.
 
 **DTMF output (DTMF sent):** Can the bot send keypad digits to an external system — e.g. to navigate an IVR it dialed into?
 
@@ -127,7 +141,9 @@ Write out your answers in this format before moving on:
 
 ```
 Q1 — Call connection:    [protocol/platform; inbound/outbound/both; how destination is set]
-Q2 — STT:               [what transcribes; VAD: yes/no + trigger; fallback: yes/no]
+Q2 — STT:               [what transcribes; VAD: yes/no + trigger; custom turn strategy: yes/no
+                          + turn-start gate (e.g. min N words on interim) + turn-stop rule
+                          (e.g. Xs speech timeout after VAD stops); fallback: yes/no]
 Q3 — LLM:               [what generates response; retry: yes/no; validation: yes/no;
                           timeout: yes/no; fallback: yes/no]
 Q4 — TTS:               [what synthesizes audio; interruption: yes/no + mechanism; fallback: yes/no]
