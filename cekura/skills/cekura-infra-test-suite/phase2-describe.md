@@ -1,6 +1,6 @@
 # Phase 2 — Describe Each Workflow
 
-Take the Q1–Q9 answers from Phase 1 and write a precise, test-focused description of every discovered capability. The goal is not to summarize what the code does — it is to document what a test can actually control, trigger, and observe for each workflow, and what is off-limits.
+Take the Q1–Q10 answers from Phase 1 and write a precise, technical description of every discovered capability. The goal is to document what the stack actually does — how each layer works, what configuration it runs under, and what conditions govern its behavior. Test design comes later (Phase 3). Here, just describe the stack.
 
 Write the output to a temp file at `/tmp/infra-workflow-descriptions.md`. Phase 3 reads from this file before designing any scenarios.
 
@@ -8,19 +8,13 @@ Write the output to a temp file at `/tmp/infra-workflow-descriptions.md`. Phase 
 
 ## How to write each description
 
-For every capability found in Phase 1, answer these four questions:
+For every capability found in Phase 1, answer these two questions:
 
 **What exactly happens?**
 Describe the behavior concretely. Not "handles idle" — instead: "After 8 seconds of caller silence mid-call, the bot asks 'Are you still there?' Up to 3 times. On the fourth timeout it hangs up."
 
 **Under what conditions is it triggered?**
 State the exact conditions. What must be true before this behavior fires? What prevents it from firing? If a capability only activates in a specific call state (e.g. only mid-call, not at call start), say so explicitly.
-
-**What can the test control?**
-List what the test can inject: silence duration, digit sequences, background noise, interruption timing. Be specific. "The test can hold silence for any duration using `<hold>`" is more useful than "the test can simulate silence."
-
-**What is observable in the transcript?**
-List only what actually appears in the call transcript — bot speech, caller speech, DTMF acknowledgements. Name anything that is NOT observable (internal retries, provider switches, flag states) and mark it excluded from test verification.
 
 ---
 
@@ -30,131 +24,291 @@ Work through each Q answer in order. Skip a section entirely if Phase 1 found no
 
 ### Q1 — Call Connection
 
-Describe:
-- The full connection sequence from the moment a call starts to when the bot is ready to speak
-- Who initiates (bot or caller) and what the call destination looks like (phone number, SIP URI, WebSocket URL, room token)
-- Whether the destination is static or dynamic — if dynamic, how it's injected and when the bot reads it
-- Conditions that would cause the connection to fail (wrong credentials, unreachable endpoint, transport mismatch)
-- What is observable: typically nothing in the transcript; connection setup happens before audio begins
+**1. Transport and protocol**
+- What transport layer handles the voice session (SIP, WebRTC, raw WebSocket, vendor SDK such as VAPI, Retell, LiveKit, Pipecat, Twilio, etc.)
+- Whether the bot uses a managed platform that abstracts the transport, or connects directly at the protocol level
+- The audio codec(s) negotiated or configured (PCMU, PCMA, Opus, etc.) and sample rate
+
+**2. Session establishment sequence**
+- Step-by-step: what happens from the moment a call arrives (inbound) or the bot dials (outbound) to the moment the bot is ready to process audio — list each handshake step, webhook, or SDK callback in order
+- Whether inbound and outbound follow different initialization paths
+- What "ready" means: is there an explicit signal (event, log line, callback) or does the bot assume readiness after connection?
+
+**3. Authentication and credentials**
+- What credentials the bot uses to authenticate with the telephony platform or transport layer (API key, SIP digest auth, JWT, OAuth token)
+- Where those credentials are loaded from (env vars, config file, secrets manager) — list the exact env var or config key names
+- Whether credentials are per-call or session-scoped
+
+**4. Destination configuration**
+- What the call destination looks like (E.164 phone number, SIP URI, WebSocket URL, LiveKit room token, etc.)
+- Whether the destination is static (hardcoded in config) or dynamic (injected per-call via webhook payload, env var, or CLI arg)
+- If dynamic: exactly where the destination is read from and when in the startup sequence it is consumed
+
+**5. Session metadata**
+- What metadata is available at call start and injected into the bot's context: caller ID, call ID, custom SIP headers, webhook payload fields, platform metadata
+- Whether any of this metadata reaches the system prompt or LLM context directly
+
+**6. Failure handling**
+- What happens if the transport connection fails mid-call (reconnect attempt, hang-up, silent drop)
+- Whether there is a connection timeout and what value it is set to
+- What happens if required credentials are missing or invalid at startup
+
+---
 
 ### Q2 — Speech-to-Text (STT)
 
-Describe:
-- What the bot hears vs. what it transcribes — latency, minimum utterance length, confidence thresholds if found
-- What starts a user turn: is it purely VAD (audio level exceeds threshold), or is there a custom strategy layered on top? If there is a custom turn-start strategy, what is the exact gate — e.g. "turn starts when an interim transcript of ≥N words is received," not just "VAD fires." Record N.
-- What ends a user turn: is it purely VAD silence, or is there a custom stop strategy? If there is a custom stop strategy, what is the exact rule — e.g. "turn ends Xs after VAD stops" or "turn ends immediately when a finalized transcript arrives and VAD is already silent." Record the timeout value.
-- Under what conditions a transcription might be empty, garbled, or delayed — and what the bot does in that case (e.g. a no-transcript timer that fires after Ys and pushes an LLM run anyway)
-- What the test can control: speaking rate (via personality), accent (via personality), noise level (via `<background_noise>`)
-- What is observable: the transcribed text that appears as caller turns in the transcript; NOT the raw audio, VAD events, turn strategy state, or interim transcripts
+**1. Models and configurations**
+- What provider(s) and model(s) are configured (e.g. Deepgram `nova-2`, Google STT `latest_long`, AssemblyAI `best`, Whisper via OpenAI) — list every one found in config, not just the default in use
+- For each model: list all non-default parameters set — language/locale, encoding, sample rate, endpointing timeout, keyword/keyterm boosting list, confidence cutoff, punctuation, smart formatting, profanity filter, diarization, word timestamps, multichannel. Omit params left at defaults.
+- Whether transcription is streaming (interim + final results) or batch (final only), and whether the bot acts on interim transcripts before a final arrives
 
-### Q3 — Language Model (LLM)
+**2. Custom logic layered on top of transcription**
+- Any post-processing applied to the raw transcript before it reaches the LLM: regex normalization, number-to-word conversion, disfluency removal ("um"/"uh"), PII redaction, punctuation injection
+- Any pre-screening done at the STT layer (keyword match, wake-word detection, intent classification) before the LLM sees the text
+- Any transcript enrichment attached to the turn message: speaker labels, confidence scores, word-level timestamps, utterance metadata
 
-Describe:
-- The request/response cycle: what goes in (system prompt, history, tools) and what comes out (response text, tool calls)
-- Retry behavior if found: how many retries, what delay, what triggers a retry (timeout? error code? empty response?)
-- Timeout enforcement if found: the exact deadline, and what the bot does when it's exceeded (fallback phrase, hang-up, silent failure)
-- Validation if found: what makes a response invalid, and what happens — is the bad response discarded? Replaced with a fallback?
-- What the test can control: the conversation content that reaches the LLM (via bot speech and caller responses); NOT the model's internals
-- What is observable: the bot's spoken response in the transcript; NOT retry attempts, error codes, or internal state
+**3. Fallback logic**
+- Whether a secondary STT provider or model activates on primary failure — exact trigger (error code? timeout? empty result?) and what the secondary model is
+- What happens on an empty or below-confidence transcript: retry the STT call, push an empty turn to the LLM anyway, or start a no-transcript timer — record the timer duration if present
+- Whether a retry cap or maximum wait deadline bounds the fallback sequence
 
-### Q4 — Text-to-Speech (TTS) and Interruption
+**4. Start/stop transcription**
+- When the bot starts transcribing: at call connect (always on), on first VAD event, or another explicit trigger
+- When the bot stops transcribing: at call end only, or muted during bot speech to prevent echo/self-transcription — if muted, exactly when the mute window opens and closes relative to TTS start/end events
+- Whether the STT provider has a built-in endpointing parameter (e.g. Deepgram `endpointing`, AssemblyAI `utterance_end_ms`) and what value it is set to — note if this overlaps with what the VAD layer does
 
-Describe:
-- The synthesis and playback pipeline: when audio starts playing relative to when the LLM finishes
-- Interruption behavior if supported: the exact trigger (VAD detects caller speaking over bot), what gets cancelled (audio stream, pending synthesis, or both), and what the pipeline state looks like after the interrupt
-- Whether partial bot utterances appear in the transcript (truncated mid-sentence) or are suppressed entirely
-- Whether two back-to-back interruptions leave the pipeline in a valid state or produce degraded behavior
-- What the test can control: when to interrupt (via `<interruption time="Xs" />`) and whether to interrupt multiple times
-- What is observable: bot utterances that were completed, truncated utterances if the platform surfaces them, the bot's response after recovering from interruption; NOT audio stream internals
+---
 
-### Q5 — Caller Silence / Idle Timer
+### Q3 — Voice Activity Detection (VAD)
 
-Describe:
-- The exact trigger: how long of caller silence (in seconds) fires the idle timer; whether it fires from call start, mid-call, or both
-- The escalation sequence if present: prompt 1 at T seconds, prompt 2 at 2T seconds, hang-up at 3T seconds — use the actual values found
-- What the bot says at each escalation step (the exact phrases if findable, or the pattern if not)
-- Whether background noise can falsely reset the timer (VAD artifact risk — this determines whether `<hold>` or `<silence>` must be used)
-- Conditions that prevent the timer from firing: does any bot speech reset it? Does caller speech cancel all pending escalations?
-- What the test can control: caller silence duration using `<hold>` (not `<silence>` — see Rule in Phase 4)
-- What is observable: the bot's idle prompts in the transcript; the hang-up event; NOT the timer's internal tick
+**1. Implementation**
+- What VAD implementation is used (e.g. WebRTC VAD, Silero VAD, vendor-built VAD, a named pipeline processor class) and at which layer it runs (transport SDK, pipeline frame processor, custom middleware)
+- Key parameters and their actual configured values: speech probability threshold, silence threshold (ms), minimum speech duration to confirm detection (ms), minimum silence duration before declaring end of speech (ms)
 
-### Q6 — Side Channels
+**2. Turn-start logic**
+- Is VAD alone sufficient to open a user turn, or is there a layered strategy on top (e.g. a minimum interim word count must arrive before the turn is confirmed as real speech)?
+- If layered: what is the exact gate, the class or function that implements it, and the parameter value (e.g. "turn starts when interim transcript of ≥N words is received" — record N)
+- Whether there is a maximum wait before a turn is force-started even without the gate condition being met
 
-For each side channel found, write a separate sub-description:
+**3. Turn-end logic**
+- Is VAD silence alone sufficient to close a user turn, or is there a layered stop strategy?
+- If layered: what is the exact rule — e.g. "speech timeout of Xs fires after VAD goes silent" or "turn ends immediately when a finalized transcript arrives and VAD is already silent" — record the timeout value and the class or config key that sets it
+- Whether there is a hard maximum turn duration that forces an end regardless of VAD state
+
+**4. VAD artifact risks**
+- Whether background noise, DTMF tones, hold music, or bot echo can false-trigger or false-suppress VAD
+- Whether bot audio is excluded from VAD processing via acoustic echo cancellation or a hard mute applied to the VAD input stream during TTS playback
+- Whether the platform documents any known false-positive conditions for its VAD implementation
+
+---
+
+### Q4 — Language Model (LLM)
+
+**1. Models and configurations**
+- What provider(s) and model(s) are configured (e.g. OpenAI `gpt-4o`, Anthropic `claude-3-5-sonnet`, Groq `llama-3.1-70b`, Azure OpenAI) — list every one found in config
+- For each model: list all non-default parameters — temperature, max_tokens, top_p, frequency_penalty, presence_penalty, stop sequences, seed, response_format. Omit defaults.
+- Whether responses are streamed token-by-token or returned as a complete batch, and how streaming affects when TTS synthesis begins
+
+**2. Request structure**
+- The anatomy of the system prompt: is it a static string, a template with runtime-injected variables, or dynamically assembled per call? List what variables are injected and where they come from.
+- How conversation history is managed: full history passed every turn, sliding window (record window size), or summarized after N turns — record the exact strategy and any size limits
+- What tool/function definitions are included in every request — list each tool name, its purpose, and whether it is always present or conditionally included
+
+**3. Response handling**
+- Whether the LLM output is parsed or validated before being passed to TTS: schema check, JSON parse, minimum length, profanity filter
+- What happens to a response that fails validation: discard and retry, substitute a fallback phrase, or pass through as-is
+- Whether tool calls and text responses are handled in the same pipeline pass or separately
+- How tool call results are fed back into the conversation: as a tool result message, injected into the next system prompt, or another mechanism
+
+**4. Retry and timeout logic**
+- Exact retry count and retry delay (fixed or exponential backoff) — record the values
+- What triggers a retry: HTTP error code, timeout, empty content, malformed JSON, specific error strings
+- The LLM call timeout deadline (ms or seconds) and what the bot does when it expires: play a fallback phrase, hang up, silently drop the turn
+- Whether retries are transparent to the caller (bot stays silent) or trigger an audible holding phrase
+
+**5. Fallback and provider switching**
+- Whether a secondary LLM provider or model activates if the primary fails — what triggers the switch and what the fallback model is
+- Whether the fallback uses the same system prompt and context or a stripped-down version
+- Whether there is a circuit-breaker that stops retrying after repeated failures within a time window
+
+---
+
+### Q5 — Text-to-Speech (TTS) and Interruption
+
+**1. Provider and voice configuration**
+- What provider(s) and voice model(s) are configured (e.g. ElevenLabs `eleven_turbo_v2`, Deepgram Aura, Google TTS WaveNet, PlayHT, Azure Neural) — list every one found in config
+- For each voice: list all non-default parameters — voice ID, stability, similarity boost, style, speed, pitch, output audio format, sample rate. Omit defaults.
+- Whether multiple voices are used in the same call (e.g. different voices for different bot personas or escalation states)
+
+**2. Synthesis pipeline**
+- Whether synthesis is streaming (audio chunks begin arriving before the full text is ready) or batch (full audio returned at once)
+- If streaming: what chunking strategy is used — sentence boundaries, punctuation splits, token count, or the provider's own chunking — and whether the first chunk is played before the rest is synthesized
+- The latency model: when does audio playback start relative to when the LLM response text (or first chunk of it) is available
+
+**3. Audio playback**
+- How synthesized audio is buffered and sent to the caller: pushed immediately, queued, or rate-limited
+- Whether there is a pre-buffer or jitter buffer that introduces intentional delay before playback starts
+- How the bot handles a TTS synthesis error mid-utterance: stops speaking, plays silence, or retries from the failed chunk
+
+**4. Interruption mechanism**
+- Whether caller-over-bot interruption is supported and what triggers it: VAD detects speech above threshold during bot playback, a specific interrupt event from the transport layer, or both
+- Exactly what is cancelled when an interruption fires: the in-progress audio chunk, all queued audio, any pending synthesis requests, or all three
+- The pipeline state after cancellation: does the LLM context include the truncated bot utterance, the full planned utterance, or nothing?
+- Whether partial bot utterances (mid-sentence cuts) appear in the conversation transcript or are suppressed
+
+**5. Back-to-back interruption behavior**
+- What happens if the caller interrupts, the bot begins a new response, and the caller interrupts again before the new response is complete
+- Whether the pipeline degrades (queued requests pile up, audio glitch) or handles it cleanly
+
+**6. Fallback**
+- Whether a secondary TTS provider or voice activates if the primary fails — what triggers the switch and what the fallback voice is
+
+---
+
+### Q6 — Caller Silence / Idle Timer
+
+**1. Timer configuration**
+- The exact silence threshold (in seconds) that fires the idle timer
+- Whether the timer starts from call connect (before any exchange) or only after the first bot utterance or first caller turn
+- Whether a separate threshold applies at call start vs. mid-call — record both values if different
+
+**2. Escalation sequence**
+- Whether the bot escalates (multiple prompts before hang-up) or fires a single action
+- The exact escalation sequence: what happens at T=N₁s, T=N₂s, T=N₃s — record the actual values and the exact phrase (or phrase template) spoken at each step
+- What happens at the final escalation: hang-up, transfer, leave voicemail, or something else
+
+**3. Reset and cancellation conditions**
+- What resets the timer: any caller audio above VAD threshold, any finalized transcript, only a finalized non-empty transcript, or something else
+- Whether bot speech resets the timer (bot speaking mid-escalation could restart the silence window)
+- Whether an in-progress escalation is fully cancelled when the caller speaks, or only paused until the next silence window
+
+**4. Timer interactions**
+- Whether the idle timer runs concurrently with other timers (e.g. a call-level max-duration timer) and what happens if both fire
+- Whether DTMF input from the caller counts as "activity" that resets the idle timer
+
+---
+
+### Q7 — Side Channels
+
+For each side channel found, write a separate sub-description. Skip sub-sections for channels not present.
 
 **DTMF received (caller → bot)**
-- How digits are captured: one at a time or buffered into a sequence
-- The terminator character if any (e.g. `#`), or the timeout after which an incomplete sequence is flushed
-- What the bot does with the digits once received: routes the call, passes to LLM, triggers a tool, logs the input
-- Under what conditions DTMF is accepted vs. ignored: during bot speech? During hold? Only at specific IVR menu points?
-- What the test can control: digit sequences via `<dtmf digits="XXXXX#" />` combined with spoken text (pure `<dtmf>` without speech does not advance the condition chain)
-- What is observable: bot acknowledgement of the DTMF input in the transcript; NOT the raw digit buffer contents
+- How digits arrive at the bot: as individual events from the transport layer or pre-aggregated into sequences
+- Whether the bot runs a DTMF aggregation processor — if so: what terminator character ends a sequence (e.g. `#`), and what timeout (ms) flushes an incomplete sequence
+- The complete processing pipeline once digits are received: routed to an IVR handler, injected into the LLM context as a user message, passed to a tool call, or logged only
+- Under what call states DTMF is accepted vs. silently ignored: during bot speech, during hold, only at specific menu prompts, or always
 
 **DTMF sent (bot → external system)**
-- What triggers the bot to send digits outbound: a user request, a tool call, reaching a specific call state
-- What digit sequence is sent and to what destination
-- What the test can control: driving the conversation to the trigger point via spoken conditions
-- What is observable: bot's verbal confirmation that it sent digits, or a tool call result if the platform surfaces it in the transcript
+- What triggers the bot to send digits outbound: a specific user phrase, an LLM tool call, or reaching a defined call state
+- The exact digit sequence sent and the destination (the SIP peer, the phone number dialed)
+- Whether the sequence is hardcoded or dynamic (generated by the LLM or a tool)
 
 **SMS received**
-- What triggers inbound SMS handling: a specific message content, any SMS during the call, or only at certain call stages
-- What the bot does in response: reads it aloud, acknowledges it, passes content to LLM context
-- What the test can control: sending an SMS mid-call via `<send_sms text="..." />`
-- What is observable: bot's verbal response to the SMS content
+- What triggers inbound SMS handling: any SMS arriving during the call, a message matching specific content, or only at certain call stages
+- How the SMS content enters the bot's processing: read aloud to the caller, appended to LLM context as a system event, both, or neither
+- Whether SMS received mid-conversation can interrupt the current bot turn
 
 **SMS sent**
-- What triggers the bot to send an SMS: caller request, task completion, specific phrase
-- What the test can control: driving the conversation to the send trigger
-- What is observable: bot verbally confirming the SMS was sent
+- What triggers the bot to send an SMS: a caller request, completion of a specific task, a named tool call, or a specific LLM output pattern
+- Whether the message content is fixed, templated, or LLM-generated
+- What confirmation the bot receives that the SMS was delivered (webhook, API response, or fire-and-forget)
 
 **Voicemail detection**
-- What signal indicates the call reached voicemail (silence pattern, beep detection, vendor webhook)
-- What the bot does: leaves a message, hangs up immediately, retries the call
-- What the test can control: `<voicemail />` tag simulates a voicemail greeting
-- What is observable: whether the bot responded to the voicemail or hung up
+- What signal indicates the call reached voicemail: an AMD (Answering Machine Detection) result from the platform, a silence-then-beep pattern, a vendor webhook event, or a combination
+- Exactly what the bot does upon detection: starts playing a pre-recorded or synthesized message, hangs up immediately, waits for a beep before speaking, or retries the call
+- The maximum message length if leaving a voicemail, and whether the bot detects when recording has ended
 
-**Any other side channels found** — follow the same pattern: trigger, bot action, test control, observable outcome.
+**Pre-recorded audio / audio injection**
+- Whether the bot can play a pre-recorded audio file instead of synthesizing speech for certain responses
+- What triggers playback (a named intent, a tool call, a specific call state) and how the file is referenced (URL, file path, asset ID)
+- Whether pre-recorded audio and synthesized speech can be interleaved in the same response
 
-### Q7 — Other Behaviors
+**Any other side channels found** — describe trigger, processing pipeline, and direction (bot↔caller, bot↔external).
 
-For each additional behavior found:
+---
+
+### Q8 — Other Behaviors
+
+For each behavior found, write a sub-description. Skip sub-sections for behaviors not present.
 
 **Call transfer**
-- What triggers a transfer: caller request, task completion, escalation threshold
-- What the transfer looks like in the call flow (warm handoff vs. blind transfer)
-- What the test can control: driving the conversation to the transfer trigger
-- What is observable: bot's verbal announcement of the transfer; the call ending (TOOL_END_CALL_ON_TRANSFER)
+- What triggers a transfer: a specific caller phrase, an LLM tool call, an escalation threshold, a business-hours check, or another condition
+- Transfer type: blind (bot drops immediately after initiating) or warm (bot stays on the line until the destination answers)
+- The transfer destination: a hardcoded number or queue, a dynamically determined target, or one chosen by the LLM
+- Whether the bot announces the transfer to the caller before initiating, and if so, the exact phrase or template
+- What happens if the transfer target is unreachable: retry, fall back to a different destination, or return to the bot conversation
 
 **Bot-initiated hang-up**
-- What conditions cause the bot to end the call on its own (task complete, idle timeout exceeded, error state)
-- Whether this is explicit in the transcript (bot says goodbye) or silent
-- What the test can control: driving to the hang-up trigger condition
-- What is observable: bot's closing phrase and the call end event
+- What conditions cause the bot to end the call autonomously: task completion signal from the LLM, max idle escalation exceeded, max call duration reached, unrecoverable error, or another trigger
+- Whether the bot speaks a closing phrase before hanging up and what that phrase is (or its template)
+- Whether there is a grace period between the closing phrase and the actual disconnect
 
-**Network degradation (if simulation supported)**
-- What parameters can be set: latency (ms), packet loss (%), jitter
-- How this affects STT, LLM latency, and TTS delivery
-- What the test can control: `<network_simulation latency="Xms" packet_loss="Y%" />`
-- What is observable: degraded transcript quality, increased response delays; NOT raw network metrics
+**Call recording**
+- Whether the platform or bot records the call audio, and at which layer (transport, pipeline, vendor-side)
+- What triggers recording start and stop: always-on, triggered by a specific event, or consent-gated
+- Where recordings are stored and what format they use
 
-**Any other behaviors found** — same pattern.
+**Network degradation simulation**
+- Whether the bot or its test harness can artificially introduce latency, packet loss, or jitter
+- What parameters are configurable and their ranges
+- Which pipeline layers are affected by each parameter (STT input quality, LLM round-trip, TTS delivery)
 
-### Q8 — Bot Speaks First
+**Background noise handling**
+- Whether the pipeline includes any noise suppression or audio enhancement before STT (Krisp, RNNoise, vendor-built)
+- What noise profiles the suppression is tuned for (HVAC, office, traffic) if documented
+- Whether the suppression is always-on or conditionally applied
 
-Describe:
-- The exact opening message content (copy from code if possible)
-- Whether it is synthesized fresh each call or pre-recorded
-- Whether the caller is expected to be silent during the greeting or may speak over it
-- The implication for test design: if the bot speaks first, condition 0 must use `action: ""` — otherwise both sides fire simultaneously and STT enters a confused state
+**Any other behaviors found** — describe trigger, mechanism, and effect on the call.
 
-### Q9 — Local Run
+---
 
-Describe:
-- The full startup sequence: command, required env vars, config file locations
-- How the bot signals readiness (log line, health endpoint, timeout)
-- How the call destination is injected: env var name, config key, CLI arg — whichever applies
-- Whether a previous CI script exists and what it covers vs. what's missing
-- Known fragile steps: anything that has broken before, requires a specific order, or depends on external services being up
+### Q9 — Bot Speaks First
+
+**1. Opening message**
+- The exact content of the opening message — copy from code or config if possible; if it is a template, copy the template and list all injected variables and where they come from
+- Whether the opening message varies by call context (inbound vs. outbound, time of day, caller ID, campaign) and if so, what drives the variation
+
+**2. Synthesis method**
+- Whether the opening is synthesized live on each call (TTS) or played from a pre-recorded audio file
+- If pre-recorded: what format, where it is stored, and how it is loaded at call start
+
+**3. Timing**
+- How long after call connect the opening message begins playing — is there a deliberate delay, or does it start as soon as the session is established?
+- Whether the delay is configurable and what value it is set to
+
+**4. Interruptibility**
+- Whether the caller can speak over the opening message and have the bot register it as a turn
+- If interruptible: whether the bot processes whatever the caller said during the greeting or discards it
+
+---
+
+### Q10 — Local Run
+
+**1. Startup command**
+- The exact command to start the bot locally (including working directory, interpreter version, and any required flags)
+- Whether a Makefile target, shell script, or Docker Compose file wraps the startup — if so, what it does step by step
+
+**2. Environment variables**
+- Every env var the bot reads at startup — list name, purpose, whether required or optional, and the default if optional
+- Which vars must be set differently for local/test vs. production (e.g. a test phone number, a mock endpoint URL, a reduced timeout)
+
+**3. Config files**
+- Every config file the bot loads (YAML, TOML, JSON, `.env`) — list path, what it controls, and whether it must be created manually or is version-controlled
+
+**4. Readiness signal**
+- How the bot signals it is ready to accept calls: a specific log line, a health endpoint returning 200, a TCP port becoming available, or a fixed sleep after startup
+- The exact string or endpoint to watch for, so a CI script can gate on it
+
+**5. Call destination override**
+- The exact mechanism to point the bot at a test endpoint instead of production: which env var to change, which config key to set, or which CLI flag to pass
+- Whether the override requires a full restart or can be changed without restarting
+
+**6. Existing CI coverage**
+- Whether a CI script, GitHub Actions workflow, or Makefile target already runs the bot in a test mode — what it does, what it does not cover, and where it lives in the repo
+
+**7. Known fragile steps**
+- Any step in the local startup that has broken before, depends on a specific ordering, requires an external service to be up, or is underdocumented in the repo
+- Any known timing issues: race conditions, ports that take time to open, services that must be started in a specific order
 
 ---
 
@@ -178,12 +332,6 @@ Read by Phase 3 before designing test scenarios.
 **Trigger conditions:**
 [what must be true; what prevents it]
 
-**What the test can control:**
-[specific tags, values, or conversation inputs]
-
-**Observable in transcript:**
-[what appears; what does NOT appear and must not be used in verification]
-
 ---
 ```
 
@@ -194,9 +342,9 @@ At the end of the file, add:
 ```markdown
 ## Explicitly Excluded
 
-The following were found but cannot be reliably tested via Cekura:
-- [e.g. LLM retry count — internal state, not transcript-visible]
-- [e.g. provider fallback activation — requires forcing a provider failure, not reproducible]
+The following were found but are outside the scope of this description:
+- [e.g. internal retry counts — observable only in logs, not call behavior]
+- [e.g. provider fallback activation — requires forcing a provider failure]
 ```
 
 ---
