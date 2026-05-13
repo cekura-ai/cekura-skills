@@ -93,6 +93,46 @@ The Phase 3 exclusion list contains items Phase 2 documented as outside testable
 
 ---
 
+## 4f. Self-review the plan before writing the output
+
+After drafting all scenarios in 4d and handling exclusions in 4e, stop and independently review the full plan before writing `/tmp/infra-test-plan.md`. Read it as if you had not written it. For each issue found, fix it in place before proceeding to output.
+
+Check for the following categories of problem:
+
+**Coverage gaps**
+- Is every included TEST-NNN item from Phase 3 covered by at least one scenario? List any that are missing.
+- Does every boundary condition in Phase 3 (threshold-at, threshold-below, threshold-above) have a corresponding scenario step that actually exercises that value? Or was the step written vaguely ("go silent for a while") when the value was known?
+
+**Contradictions within a scenario**
+- Does any scenario include steps that cannot coexist — e.g. the conversation flow expects the bot to hang up mid-call, but later steps assume the call is still active?
+- Do the evaluation pointers contradict the conversation flow — e.g. a pointer says "bot should not interrupt" but the flow deliberately sends an `<interruption>` tag?
+- Does the configuration for a scenario conflict with what that scenario is trying to test — e.g. a scenario testing the LLM timeout fallback but the config override is on the STT layer?
+
+**Contradictions across scenarios**
+- Do two scenarios claim to test the same TEST-NNN item but with conversation flows that would produce opposite results (one would pass, one would fail for the same behavior)?
+- Do two scenarios in the same configuration batch apply contradictory config values?
+
+**Grounding failures**
+- Does any evaluation pointer reference a behavior that Phase 2 did not document — something invented rather than derived from the stack analysis?
+- Does any conversation flow use a timing value (silence duration, interruption offset) that contradicts the actual threshold recorded in Phase 2?
+- Does any scenario test a feature Phase 2 marked as absent?
+
+**Configuration correctness**
+- Does every config-change scenario have a restore value for every override? (Missing a restore means the next batch inherits a corrupted config.)
+- Are the override values actually sufficient to trigger the behavior being tested — e.g. is `LLM_TIMEOUT_MS=50` low enough to reliably fire within a normal call, or should it be lower?
+
+**Evaluation pointer quality**
+- Are any evaluation pointers so vague they could pass regardless of what the bot does (e.g. "bot behaves correctly")? Rewrite them as specific observable signals.
+- Are any pointers checking internal state that cannot appear in a transcript? Remove them.
+
+**Compactness**
+- Are there scenarios that could be safely merged without losing coverage or creating contradictions?
+- Are there scenarios so long that a single failure mid-call would prevent all later steps from being reached, making the scenario effectively untestable as a unit? Consider splitting them.
+
+Write a brief review note at the top of the output file listing issues found and how each was resolved. If no issues were found, write "Self-review: no issues found."
+
+---
+
 ## Phase 4 Output
 
 Write the complete test plan to `/tmp/infra-test-plan.md` using this structure:
@@ -102,6 +142,7 @@ Write the complete test plan to `/tmp/infra-test-plan.md` using this structure:
 
 Source: /tmp/infra-test-list.md
 Config-change tests: [included / excluded per user choice]
+Self-review: [issues found and resolved, or "no issues found"]
 Read by Phase 5 before creating any scenarios.
 
 ---
@@ -164,7 +205,7 @@ Configuration batches: N
 
 ## Phase 4 Gate
 
-`/tmp/infra-test-plan.md` exists. Every included TEST-NNN item from Phase 3 maps to at least one scenario. Every scenario has a configuration context, a conversation flow, and plain-English evaluation pointers. No metric names or expected outcome text — those are Phase 5's job.
+`/tmp/infra-test-plan.md` exists. Self-review (4f) has been completed and its findings recorded in the file header. Every included TEST-NNN item from Phase 3 maps to at least one scenario. Every scenario has a configuration context, a conversation flow, and plain-English evaluation pointers. No metric names or expected outcome text — those are Phase 5's job.
 
 Confirm the plan with the user before moving to Phase 5. Present the summary block and ask whether any scenarios should be adjusted, merged, or split.
 
