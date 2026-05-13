@@ -78,10 +78,12 @@ Each entry must include:
 > 7. Stay silent through two escalation prompts
 > 8. Stay silent until hang-up fires
 
-**Evaluation criteria**:
-- **Predefined metrics to attach**: list each metric by name (use the cekura-predefined-metrics skill to look up which metrics apply). For each metric, note what it is measuring in this scenario.
-- **Expected outcome**: one or two sentences describing what a passing call looks like — what the bot should do, say, or not say. Keep this to observable call behavior, not internal state.
-- **Failure signal**: what a failing result looks like — bot does the wrong thing, says the wrong thing, or the call ends in an unexpected way.
+**Evaluation pointers** — plain English statements of what to check to determine whether this scenario passed or failed. Do not name Cekura metrics or write expected outcome text here — Phase 5 will translate these into the right metrics and outcome fields. Write what a human reviewer would look for when reading the transcript:
+- What should the bot do at each key moment in the conversation?
+- What should the bot NOT do?
+- What signals in the transcript indicate the correct behavior fired (e.g. "bot stops speaking immediately when interrupted", "bot asks 'Are you still there?' after 8 seconds of silence", "bot says goodbye before hanging up")?
+- What signals in the transcript indicate failure (e.g. "bot continues speaking after interrupt", "no idle prompt appears", "bot hangs up without a closing phrase")?
+- Are there timing or sequencing constraints that matter (e.g. "idle prompt must appear before the hang-up", "recovery response must come after the interruption, not before")?
 
 ---
 
@@ -127,10 +129,12 @@ Override: LLM_TIMEOUT_MS=50 (restore to [original value] after batch)
 2. [step]
 ...
 
-**Evaluation criteria:**
-- Metrics: [metric name] — [what it measures here]; [metric name] — [what it measures here]
-- Expected outcome: [plain English description of a passing call]
-- Failure signal: [what a failing call looks like]
+**Evaluation pointers:**
+- [What the bot should do at key moment X]
+- [What the bot should NOT do]
+- [What in the transcript confirms the correct behavior fired]
+- [What in the transcript indicates failure]
+- [Any sequencing or timing constraint that matters]
 
 ---
 
@@ -160,7 +164,7 @@ Configuration batches: N
 
 ## Phase 4 Gate
 
-`/tmp/infra-test-plan.md` exists. Every included TEST-NNN item from Phase 3 maps to at least one scenario. Every scenario has a configuration context, a conversation flow, and evaluation criteria.
+`/tmp/infra-test-plan.md` exists. Every included TEST-NNN item from Phase 3 maps to at least one scenario. Every scenario has a configuration context, a conversation flow, and plain-English evaluation pointers. No metric names or expected outcome text — those are Phase 5's job.
 
 Confirm the plan with the user before moving to Phase 5. Present the summary block and ask whether any scenarios should be adjusted, merged, or split.
 

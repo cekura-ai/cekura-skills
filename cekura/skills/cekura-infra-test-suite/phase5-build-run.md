@@ -58,15 +58,31 @@ Never use `standard` conditions after condition 0.
 
 Use `<hold>` (not `<silence>`) for idle timer tests — `<hold>` produces dead air, `<silence>` keeps background noise running and may prevent the idle timer from firing on sensitive VAD configurations.
 
-**Expected Outcome field**
+**Translating evaluation pointers into metrics and expected outcome**
 
-Translate the "Expected outcome" from the Phase 4 plan directly into the scenario's `expected_outcome` field. Keep it to observable call behavior — what the bot says or does — not internal state. Do not put timing assertions or audio quality checks in Expected Outcome; use dedicated predefined metrics for those.
+Each scenario in Phase 4 has a set of plain-English evaluation pointers — what to check in the transcript to determine pass or fail. Translate those pointers into two things on the Cekura scenario:
 
-### Attach metrics
+1. **Expected Outcome field** — write one or two sentences describing what a passing call looks like, grounded in the Phase 4 pointers. Stick to what appears in the call transcript — what the bot says or does. Do not include timing assertions, audio quality checks, or internal state — those belong in predefined metrics.
 
-For each scenario, attach the metrics listed in the Phase 4 evaluation criteria using `mcp__cekura__scenarios_partial_update` or by including metrics in the create payload.
+2. **Predefined metrics** — use the **cekura-predefined-metrics** skill to identify which metrics best cover what the evaluation pointers are asking for. For each pointer that concerns something beyond transcript content (interruption responsiveness, silence duration, sentiment, transcription accuracy), find the predefined metric that measures it and attach it.
 
-Use the **cekura-predefined-metrics** skill to look up the exact metric IDs and confirm they are active at the project level before attaching them to scenarios.
+Match pointers to metrics systematically:
+- "Bot stops speaking immediately when interrupted" → Interruption Score or AI Interrupting User
+- "Bot responds within N seconds" → Response Latency / Time to First Token
+- "Transcription matches what was said despite background noise" → Transcription Accuracy
+- "Caller sounds satisfied / frustrated" → Caller Sentiment or CSAT
+- "Bot stays on topic and does not hallucinate" → Hallucination / Factual Accuracy
+- "Call ends correctly" → Expected Outcome field (transcript-level assertion)
+
+If no predefined metric covers a pointer, note it in the scenario as a transcript-only check (covered by Expected Outcome).
+
+### Activate and attach metrics
+
+Use `mcp__cekura__scenarios_partial_update` or include metrics in the create payload.
+
+Two activation steps are required — missing either means the metric never fires:
+1. Toggle on at the project level
+2. Add to the individual scenario
 
 Two activation steps are required — missing either means the metric never fires:
 1. Toggle on at the project level
