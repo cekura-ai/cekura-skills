@@ -41,6 +41,28 @@ If the user chose config-change included: list each required config override cle
 
 The goal is the smallest number of Cekura scenarios that gives complete coverage of the included test items. A single scenario (one conversation) can test multiple things — a scenario that tests interruption can also verify pipeline recovery and the next-turn LLM response in the same call.
 
+### Step 1 — Drop ambient tests first
+
+Before grouping anything, identify TEST-NNN items that are **ambient** — behaviors that every scenario exercises as an unavoidable side effect of running. These do not need their own scenario. Creating a dedicated scenario for them wastes a slot and produces a test that tells you nothing a passing scenario from any other component wouldn't already tell you.
+
+**A behavior is ambient if:** it must succeed for any other test to run at all, and its failure would cause every scenario in the suite to fail — not just one.
+
+Common ambient behaviors and the rule for each:
+
+| Behavior | Rule |
+|---|---|
+| Call connection / session establishment (happy path) | Ambient — every scenario connects. Drop the happy-path connection test; connection is implicitly exercised N times where N = number of scenarios. |
+| Bot speaks first / opening message plays | Ambient — every scenario that starts with the bot speaking already exercises this. Drop a dedicated "bot greeting" scenario. |
+| Basic STT — clean speech transcribed correctly | Ambient — every scenario where the caller says anything exercises basic STT. Drop a generic "STT works" scenario; keep STT tests that exercise specific conditions (noise, low confidence, empty transcript, fallback). |
+| Basic LLM response — model returns a response | Ambient — every scenario that reaches the LLM exercises this. Drop a generic "LLM responds" scenario; keep LLM tests that exercise specific conditions (timeout, retry, empty response, tool call, concurrent turns). |
+| Basic TTS — audio synthesised and played | Ambient — every scenario where the bot speaks exercises this. Drop a generic "TTS works" scenario; keep TTS tests that exercise specific conditions (streaming latency, mid-utterance error, fallback voice). |
+
+**What to keep from these components:** only tests for non-default conditions — failure paths, edge cases, boundary values, fallback activation, and configuration-specific variants. The happy path of each layer is implicitly covered by every other scenario passing.
+
+After dropping ambient items, mark them in the Phase 3 list as "covered implicitly — no dedicated scenario needed" and exclude them from the scenario count.
+
+### Step 2 — Group the remaining tests
+
 Group by two dimensions:
 
 **1. Configuration context** — tests that share the same bot configuration run in the same batch. Tests that need different config changes form separate batches. Default-config tests are all one batch. This is the most important grouping because config changes require bot restarts.
@@ -50,9 +72,17 @@ Group by two dimensions:
 Rules for combining:
 - Do not combine tests whose success criteria conflict (e.g. a test that expects the bot to hang up cannot be followed by another test in the same call)
 - Do not combine tests that test the same component in contradictory configurations within the same call
-- Do combine tests that are sequential stages of the same call (call setup → STT → LLM → TTS → interruption → recovery)
+- Do combine tests that are sequential stages of the same call (call setup → STT with noise → LLM response → interruption → idle silence)
+- Do combine tests for adjacent pipeline layers when one flows naturally into the next (e.g. turn-end signal fires → LLM trigger fires → response streamed to TTS)
 
-For each group, write out which TEST-NNN items it covers.
+### Step 3 — Sanity-check the compactness
+
+Before writing the plan, count scenarios and ask: is this number defensible? Signs the plan is still too bloated:
+- Any scenario covers only one TEST-NNN item and that item isn't a destructive endpoint (hang-up, transfer, call end) — it could probably be merged into an adjacent scenario
+- Two scenarios have nearly identical conversation flows that differ only by one step — consider merging with a branch
+- A component has more than three dedicated scenarios in default config — check whether the extras are genuinely distinct or just variations of the same condition
+
+For each group, write out which TEST-NNN items it covers and note any items marked ambient.
 
 ---
 
@@ -187,6 +217,9 @@ End the file with:
 ```markdown
 ## Excluded Tests
 
+### Covered implicitly — no dedicated scenario needed
+- TEST-NNN — [name] — ambient: exercised by every scenario in the suite
+
 ### Config-change tests (excluded per user choice)
 - TEST-NNN — [name] — would require [config change]; excluded because [reason]
 
@@ -196,8 +229,10 @@ End the file with:
 ## Summary
 
 Total scenarios planned: N
-Total TEST-NNN items covered: N / [total from Phase 3]
+Total TEST-NNN items covered by dedicated scenarios: N
+Items covered implicitly (ambient): N
 Items excluded: N ([M] config-change, [K] not testable)
+Total TEST-NNN items accounted for: N / [total from Phase 3]
 Configuration batches: N
 ```
 
