@@ -1,6 +1,6 @@
 # Phase 2 — Describe Each Workflow
 
-Take the Q1–Q10 answers from Phase 1 and write a precise, technical description of every discovered capability. The goal is to document what the stack actually does — how each layer works, what configuration it runs under, and what conditions govern its behavior. Test design comes later (Phase 3). Here, just describe the stack.
+Take the Q1–Q11 answers from Phase 1 and write a precise, technical description of every discovered capability. The goal is to document what the stack actually does — how each layer works, what configuration it runs under, and what conditions govern its behavior. Test design comes later (Phase 3). Here, just describe the stack.
 
 Write the output to a temp file at `/tmp/infra-workflow-descriptions.md`. Phase 3 reads from this file before designing any scenarios.
 
@@ -133,7 +133,7 @@ Work through each Q answer in order. Skip a section entirely if Phase 1 found no
 
 ---
 
-### Q5 — Text-to-Speech (TTS) and Interruption
+### Q5 — Text-to-Speech (TTS)
 
 **1. Provider and voice configuration**
 - What provider(s) and voice model(s) are configured (e.g. ElevenLabs `eleven_turbo_v2`, Deepgram Aura, Google TTS WaveNet, PlayHT, Azure Neural) — list every one found in config
@@ -150,22 +150,37 @@ Work through each Q answer in order. Skip a section entirely if Phase 1 found no
 - Whether there is a pre-buffer or jitter buffer that introduces intentional delay before playback starts
 - How the bot handles a TTS synthesis error mid-utterance: stops speaking, plays silence, or retries from the failed chunk
 
-**4. Interruption mechanism**
-- Whether caller-over-bot interruption is supported and what triggers it: VAD detects speech above threshold during bot playback, a specific interrupt event from the transport layer, or both
-- Exactly what is cancelled when an interruption fires: the in-progress audio chunk, all queued audio, any pending synthesis requests, or all three
-- The pipeline state after cancellation: does the LLM context include the truncated bot utterance, the full planned utterance, or nothing?
-- Whether partial bot utterances (mid-sentence cuts) appear in the conversation transcript or are suppressed
-
-**5. Back-to-back interruption behavior**
-- What happens if the caller interrupts, the bot begins a new response, and the caller interrupts again before the new response is complete
-- Whether the pipeline degrades (queued requests pile up, audio glitch) or handles it cleanly
-
-**6. Fallback**
+**4. Fallback**
 - Whether a secondary TTS provider or voice activates if the primary fails — what triggers the switch and what the fallback voice is
 
 ---
 
-### Q6 — Caller Silence / Idle Timer
+### Q6 — Interruption Handling
+
+**1. Interruption trigger**
+- Whether caller-over-bot interruption is supported and what triggers it: VAD detects caller speech above threshold during bot playback, a specific interrupt event from the transport layer, or both
+- Whether there is a minimum interrupt duration (caller must speak for at least Nms before the interrupt is accepted) — record the value if set
+- Whether interruption can be disabled or suppressed for specific bot utterances (e.g. legal disclaimers, opening greetings)
+
+**2. Cancellation scope**
+- Exactly what is cancelled when an interruption fires: the in-progress audio chunk only, all queued audio, any pending synthesis requests, or all three
+- Whether in-flight LLM requests are also cancelled when an interruption fires, or allowed to complete in the background
+
+**3. Pipeline state after cancellation**
+- What the LLM context contains after an interruption: the truncated bot utterance text, the full planned utterance, or nothing
+- Whether the pipeline immediately opens a new user turn to receive the caller's interrupting speech, or waits for a VAD end-of-turn signal first
+
+**4. Partial utterance handling**
+- Whether partial bot utterances (mid-sentence cuts) appear in the conversation transcript or are suppressed entirely
+- If they appear: what form they take (truncated text, a marker, or the full intended text)
+
+**5. Back-to-back interruption behavior**
+- What happens if the caller interrupts, the bot begins a new response, and the caller interrupts again before the new response completes
+- Whether the pipeline handles this cleanly or degrades (queued synthesis requests pile up, audio artifacts, LLM receives duplicate context)
+
+---
+
+### Q7 — Caller Silence / Idle Timer
 
 **1. Timer configuration**
 - The exact silence threshold (in seconds) that fires the idle timer
@@ -188,7 +203,7 @@ Work through each Q answer in order. Skip a section entirely if Phase 1 found no
 
 ---
 
-### Q7 — Side Channels
+### Q8 — Side Channels
 
 For each side channel found, write a separate sub-description. Skip sub-sections for channels not present.
 
@@ -227,7 +242,7 @@ For each side channel found, write a separate sub-description. Skip sub-sections
 
 ---
 
-### Q8 — Other Behaviors
+### Q9 — Other Behaviors
 
 For each behavior found, write a sub-description. Skip sub-sections for behaviors not present.
 
@@ -262,7 +277,7 @@ For each behavior found, write a sub-description. Skip sub-sections for behavior
 
 ---
 
-### Q9 — Bot Speaks First
+### Q10 — Bot Speaks First
 
 **1. Opening message**
 - The exact content of the opening message — copy from code or config if possible; if it is a template, copy the template and list all injected variables and where they come from
@@ -282,7 +297,7 @@ For each behavior found, write a sub-description. Skip sub-sections for behavior
 
 ---
 
-### Q10 — Local Run
+### Q11 — Local Run
 
 **1. Startup command**
 - The exact command to start the bot locally (including working directory, interpreter version, and any required flags)
