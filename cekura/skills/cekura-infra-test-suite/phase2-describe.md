@@ -79,26 +79,51 @@ Work through each Q answer in order. Skip a section entirely if Phase 1 found no
 
 ---
 
-### Q3 — Voice Activity Detection (VAD)
+### Q3 — Turn Detection (VAD + Transcript Signals)
 
-**1. Implementation**
-- What VAD implementation is used (e.g. WebRTC VAD, Silero VAD, vendor-built VAD, a named pipeline processor class) and at which layer it runs (transport SDK, pipeline frame processor, custom middleware)
-- Key parameters and their actual configured values: speech probability threshold, silence threshold (ms), minimum speech duration to confirm detection (ms), minimum silence duration before declaring end of speech (ms)
+Turn start and turn end are decisions, not single events. Multiple signal sources can feed into each decision — a standalone VAD processor, the STT provider's own built-in VAD/endpointing, interim transcript arrival, and final transcript arrival. Document every signal source the codebase actually uses, then describe exactly how they combine.
+
+**1. Signal sources present in this stack**
+
+For each source found, record what it emits and at what layer:
+
+- **Standalone VAD processor** (e.g. WebRTC VAD, Silero VAD, a named pipeline class): what it emits (`speech_started` / `speech_stopped` events, probability scores, binary flags), its configured parameters (speech probability threshold, min speech duration ms, min silence duration ms), and where in the pipeline it runs
+- **STT provider built-in VAD / endpointing** (e.g. Deepgram `vad_events: true` emits `speech_started` + `utterance_end`; Deepgram `endpointing: Nms` forces a final transcript after Nms silence; AssemblyAI `utterance_end_ms`; Google STT `single_utterance`): list every VAD-related parameter enabled on the STT connection and what event or transcript shape each one produces
+- **Interim transcripts**: whether the STT provider streams partial results before the utterance is finalized, and whether the bot subscribes to them
+- **Final transcripts**: the event or callback that delivers a finalized, non-revisable transcript, and what metadata accompanies it (confidence, duration, word timestamps)
+
+If a signal source is not present (e.g. no standalone VAD, STT-only endpointing), say so explicitly.
 
 **2. Turn-start logic**
-- Is VAD alone sufficient to open a user turn, or is there a layered strategy on top (e.g. a minimum interim word count must arrive before the turn is confirmed as real speech)?
-- If layered: what is the exact gate, the class or function that implements it, and the parameter value (e.g. "turn starts when interim transcript of ≥N words is received" — record N)
-- Whether there is a maximum wait before a turn is force-started even without the gate condition being met
+
+Walk through the exact sequence of events that opens a user turn — from first audio arriving to the moment the pipeline commits to processing this as a caller turn:
+
+- What is the first signal that can open a turn: standalone VAD `speech_started`, STT provider `speech_started` event, first interim transcript word, or raw audio above an amplitude threshold?
+- Is a single signal sufficient, or must multiple conditions be satisfied before the turn is confirmed? (e.g. "VAD fires AND an interim transcript of ≥N words arrives" — record N and where it is configured)
+- If there is a confirmation gate: what happens to audio and interim transcripts that arrive before the gate is satisfied — are they buffered and replayed, or discarded?
+- Is there a maximum wait after the first signal before the turn is force-opened regardless of the gate condition — record the timeout value
+- What state does the pipeline enter while waiting for turn-start confirmation (listening, buffering, ignoring)?
 
 **3. Turn-end logic**
-- Is VAD silence alone sufficient to close a user turn, or is there a layered stop strategy?
-- If layered: what is the exact rule — e.g. "speech timeout of Xs fires after VAD goes silent" or "turn ends immediately when a finalized transcript arrives and VAD is already silent" — record the timeout value and the class or config key that sets it
-- Whether there is a hard maximum turn duration that forces an end regardless of VAD state
 
-**4. VAD artifact risks**
-- Whether background noise, DTMF tones, hold music, or bot echo can false-trigger or false-suppress VAD
-- Whether bot audio is excluded from VAD processing via acoustic echo cancellation or a hard mute applied to the VAD input stream during TTS playback
-- Whether the platform documents any known false-positive conditions for its VAD implementation
+Walk through the exact sequence of events that closes a user turn — from last caller audio to the moment the pipeline commits the transcript to the LLM:
+
+- What is the primary signal that can end a turn: standalone VAD `speech_stopped` after Xms silence, STT provider `utterance_end` event, STT provider endpointing firing a final transcript, a speech timeout timer that the bot manages itself, or receipt of a final transcript?
+- Record the exact timeout or threshold value for every signal that involves a delay (e.g. "standalone VAD fires after 300ms silence", "Deepgram endpointing set to 500ms", "bot-side speech timeout of 1200ms")
+- If multiple signals are present: does the first one to fire win, or must they all agree? Describe the arbitration logic exactly — e.g. "turn ends on whichever comes first: standalone VAD silence for 300ms OR Deepgram `utterance_end` event, but if a new interim transcript arrives the bot-side timer resets"
+- What happens if VAD goes silent but no final transcript arrives — does the bot wait indefinitely, fire a no-transcript timer (record duration), or push an empty turn to the LLM?
+- What happens if a final transcript arrives but VAD is still active (caller still speaking) — is the transcript held until VAD goes silent, or does it immediately close the turn?
+- Is there a hard maximum turn duration that force-closes the turn regardless of VAD or transcript state — record the value
+
+**4. Interaction between signal sources**
+
+- If both a standalone VAD and the STT provider's built-in endpointing are active, can they conflict? (e.g. standalone VAD says silence but STT endpointing hasn't fired yet — which one wins?)
+- Whether the bot disables or ignores the STT provider's built-in endpointing in favour of its own logic, or relies on it entirely
+- Whether interim transcripts can reset a turn-end timer that is already counting down (i.e. new words arriving extend the turn)
+
+**5. VAD artifact risks**
+- Whether background noise, DTMF tones, hold music, or bot echo can false-trigger or false-suppress any of the signal sources above
+- Whether bot audio is excluded from VAD processing via acoustic echo cancellation or a hard mute applied during TTS playback — and whether this mute covers both the standalone VAD and the STT provider's built-in VAD
 
 ---
 
