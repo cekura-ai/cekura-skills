@@ -1,4 +1,4 @@
-# Phase 5 — Create Scenarios and Write the Run Script
+# Phase 5 — Build and Run
 
 Read `/tmp/infra-test-plan.md` (written by Phase 4) before doing anything else. That file has the complete scenario plan — conversation flows, evaluation criteria, and configuration batches. This phase creates the Cekura scenarios from that plan and writes a script that runs them all.
 

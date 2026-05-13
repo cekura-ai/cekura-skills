@@ -1,4 +1,4 @@
-# Phase 1 — Discover the Infrastructure
+# Phase 1 — Explore the Stack
 
 Read the codebase and answer the questions below. Do not ask the user anything yet — find what you can from the code first, then surface only the gaps you couldn't resolve.
 
@@ -158,4 +158,4 @@ GAPS:                   [questions you couldn't answer from code alone]
 
 Surface gaps as open questions in the Phase 2 checkpoint — do not guess.
 
-Move to [Phase 2](phase2-describe.md).
+Move to [Phase 2 — Analyze Each Layer](phase2-analyze.md).

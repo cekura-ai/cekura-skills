@@ -1,4 +1,4 @@
-# Phase 2 — Describe Each Workflow
+# Phase 2 — Analyze Each Layer
 
 Take the Q1–Q11 answers from Phase 1 and write a precise, technical description of every discovered capability. The goal is to document what the stack actually does — how each layer works, what configuration it runs under, and what conditions govern its behavior. Test design comes later (Phase 3). Here, just describe the stack.
 
@@ -429,4 +429,4 @@ documentation:
 
 `/tmp/infra-workflow-descriptions.md` exists and covers every capability Phase 1 found.
 
-Move to [Phase 3](phase3-map.md).
+Move to [Phase 3 — Inventory What to Test](phase3-inventory.md).

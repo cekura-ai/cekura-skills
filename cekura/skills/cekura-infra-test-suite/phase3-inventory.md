@@ -1,4 +1,4 @@
-# Phase 3 — Enumerate Everything That Needs to Be Tested
+# Phase 3 — Inventory What to Test
 
 Read `/tmp/infra-workflow-descriptions.md` (written by Phase 2) before doing anything else. That file is the authoritative source — every test item in this phase must be grounded in what Phase 2 actually documented. Do not add test items for behaviors that Phase 2 did not find.
 
@@ -294,4 +294,4 @@ Not testable (from Phase 2 "Explicitly Excluded"):
 
 Confirm the list with the user before moving to Phase 4. Present the summary block and ask whether any items should be added, removed, or re-prioritized.
 
-Move to [Phase 4](phase4-create.md).
+Move to [Phase 4 — Design the Test Plan](phase4-plan.md).

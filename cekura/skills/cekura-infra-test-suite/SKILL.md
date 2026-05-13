@@ -17,26 +17,27 @@ metadata:
 
 # Cekura Voice AI Infrastructure Test Suite
 
-Discover the stack, describe each workflow, map to tests, confirm, then build — in that order.
+Read the stack, analyze every layer, inventory what to test, design the plan, then build and run — in that order.
 
 ```
-Phase 1        Phase 2        Phase 3        Phase 4        Phase 5
-Discover   →   Describe   →   Map       →   Create     →   Orchestrate
-Read code       Write          Component     Cekura         Run script +
-to find         workflow       → test         evaluators     CI override
-components      descriptions   table          + metrics      for local bot
-               to temp file
+Phase 1          Phase 2          Phase 3          Phase 4          Phase 5
+Explore      →   Analyze      →   Inventory    →   Design       →   Build & Run
+Read code         Deep-dive         Enumerate        Compact          Create Cekura
+to find           each layer,       every test        test plan,       scenarios +
+all              extract exact     item from         evaluation        write CI
+components        values +          the analysis      criteria,         run script
+                  code refs                           get approval
 ```
 
 ## The 5 Phases
 
 | Phase | File | What happens |
 |---|---|---|
-| 1 | [phase1-discover.md](phase1-discover.md) | Read the codebase to identify transport, STT, LLM, TTS, and all pipeline processors |
-| 2 | [phase2-describe.md](phase2-describe.md) | Write a detailed description of each discovered workflow — triggers, constraints, what the test can control, what's observable — to `/tmp/infra-workflow-descriptions.md` |
-| 3 | [phase3-map.md](phase3-map.md) | Read the workflow descriptions, map each to the right Cekura test pattern; confirm suite plan with user |
-| 4 | [phase4-create.md](phase4-create.md) | Create evaluators on Cekura with conditional actions and attach metrics |
-| 5 | [phase5-orchestrate.md](phase5-orchestrate.md) | Generate a run script and CI override mechanism for local bot testing |
+| 1 — Explore the Stack | [phase1-explore.md](phase1-explore.md) | Survey the codebase: identify transport, STT, LLM, TTS, VAD, and all pipeline components; answer Q1–Q11 |
+| 2 — Analyze Each Layer | [phase2-analyze.md](phase2-analyze.md) | Deep-read each layer; extract exact values, class names, config keys, and code refs; write to `/tmp/infra-workflow-descriptions.md` |
+| 3 — Inventory What to Test | [phase3-inventory.md](phase3-inventory.md) | Derive every testable behavior from the analysis — happy paths, boundaries, failures, cross-component interactions; write to `/tmp/infra-test-list.md` |
+| 4 — Design the Test Plan | [phase4-plan.md](phase4-plan.md) | Ask config-change question; group TEST-NNN items into compact scenarios; write evaluation criteria (metrics + expected outcomes) in plain English to `/tmp/infra-test-plan.md` |
+| 5 — Build and Run | [phase5-build-run.md](phase5-build-run.md) | Create Cekura scenarios from the plan; write a CI run script batched by configuration with readiness gating and per-scenario timeout |
 
 ---
 

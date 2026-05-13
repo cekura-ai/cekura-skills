@@ -1,4 +1,4 @@
-# Phase 4 — Plan the Test Set
+# Phase 4 — Design the Test Plan
 
 Read `/tmp/infra-test-list.md` (written by Phase 3) before doing anything else. That is the authoritative list of everything that needs testing. This phase turns that list into a concrete, compact test plan written in plain English. No Cekura scenarios are created here — that is Phase 5.
 
@@ -164,4 +164,4 @@ Configuration batches: N
 
 Confirm the plan with the user before moving to Phase 5. Present the summary block and ask whether any scenarios should be adjusted, merged, or split.
 
-Move to [Phase 5](phase5-orchestrate.md).
+Move to [Phase 5 — Build and Run](phase5-build-run.md).
