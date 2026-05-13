@@ -14,11 +14,13 @@ Use `mcp__cekura__scenarios_folder_create` with name `"Infrastructure Test Suite
 
 ## 5b. Create each scenario
 
-For every scenario in `/tmp/infra-test-plan.md`, create a Cekura evaluator using `mcp__cekura__scenarios_create`.
+For every scenario in `/tmp/infra-test-plan.md`, invoke the **cekura-eval-design** skill to author and create the evaluator. That skill contains the full conditional actions reference — XML tag syntax, placement rules, action_followup chaining, test profile configuration, and the complete anti-pattern list. Use it; do not reconstruct its guidance from memory.
 
 **All scenarios must use `scenario_type: "conditional_actions"`** — always, without exception. Behavioral instructions are not deterministic enough to reliably trigger specific infra behaviors like idle timers, interruptions, or DTMF input. Never use behavioral mode for this suite.
 
 ### Translating the Phase 4 plan into conditional_actions
+
+The cekura-eval-design skill covers all of this in detail. The summary below is a quick reference — defer to the skill for edge cases, tag constraints, and anti-patterns.
 
 **Condition 0 — who speaks first**
 
