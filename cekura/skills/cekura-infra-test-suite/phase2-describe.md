@@ -129,7 +129,14 @@ Walk through the exact sequence of events that closes a user turn — from last 
 
 ### Q4 — Language Model (LLM)
 
-**1. Models and configurations**
+**1. LLM generation trigger**
+- What event causes the bot to fire an LLM request — is it turn-end (VAD silence + final transcript committed), receipt of a final transcript regardless of VAD state, an explicit turn-end event emitted by the turn-detection layer, or something else?
+- Whether the LLM is called once per user turn or can be called mid-turn (e.g. triggered by an interim transcript reaching a word-count threshold, or by a specific keyword detected in an interim result)
+- Whether the bot can generate an LLM response proactively without any caller input (e.g. a timeout-triggered response, a scheduled follow-up, or a re-prompt after silence) — if so, what triggers it and what context is sent
+- If the turn produced an empty or very short transcript (e.g. "um", background noise bleed): does the LLM still get called, does the bot discard the turn silently, or does a minimum-length gate prevent the call?
+- Whether multiple rapid turns can queue up concurrent LLM requests, and how the pipeline handles the responses arriving out of order (cancel stale requests, queue and serialize, or last-write-wins)
+
+**2. Models and configurations**
 - What provider(s) and model(s) are configured (e.g. OpenAI `gpt-4o`, Anthropic `claude-3-5-sonnet`, Groq `llama-3.1-70b`, Azure OpenAI) — list every one found in config
 - For each model: list all non-default parameters — temperature, max_tokens, top_p, frequency_penalty, presence_penalty, stop sequences, seed, response_format. Omit defaults.
 - Whether responses are streamed token-by-token or returned as a complete batch, and how streaming affects when TTS synthesis begins
