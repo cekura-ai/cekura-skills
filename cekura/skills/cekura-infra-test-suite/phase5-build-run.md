@@ -90,11 +90,48 @@ Two activation steps are required — missing either means the metric never fire
 1. Toggle on at the project level
 2. Add to the individual scenario
 
-After creating each scenario, record its ID and which configuration batch it belongs to. This mapping drives the run script in 5c.
+After creating each scenario, record its ID and which configuration batch it belongs to. This mapping drives the run script in 5d.
 
 ---
 
-## 5c. Understand the connection model
+## 5c. Cross-verify every created scenario against the plan
+
+After all scenarios are created, fetch each one from Cekura using `mcp__cekura__scenarios_retrieve` and verify it against its entry in `/tmp/infra-test-plan.md`. Do this one scenario at a time — do not batch or skip any.
+
+For each scenario, check every field listed below. If any field is wrong, patch it immediately before moving to the next scenario.
+
+**Conversation flow fidelity**
+- Does the number of conditions match the number of steps in the Phase 4 conversation flow? A missing condition means a test step was silently dropped.
+- Does each condition's `action` correctly translate the corresponding Phase 4 step — right text, right XML tag, right tag parameters (duration, digit sequence, offset)?
+- Is condition 0 correctly set: `FIRST_MESSAGE`, `type: "standard"`, and `action: ""` if the bot speaks first or the correct opening line if the caller speaks first?
+- Is every condition after 0 using `type: "action_followup"` with `fixed_message: true`? Any `standard` condition after 0 is a bug.
+- Are `<hold>` tags used (not `<silence>`) for all idle-timer steps?
+- Are timing values in the conditions consistent with the values in Phase 4 — not rounded, not approximated?
+
+**Coverage**
+- Does the scenario's `name` and TEST-NNN list match what Phase 4 specified? A renamed or mis-tagged scenario breaks traceability.
+- Is the scenario placed in the correct folder (`Infrastructure Test Suite`)?
+- Is the scenario assigned to the correct configuration batch (as recorded in 5b)?
+
+**Metrics and expected outcome**
+- Are all intended metrics attached and active at the project level?
+- Does the `expected_outcome` field reflect the Phase 4 evaluation pointers — not blank, not generic, not copied from a different scenario?
+
+**What to do when a mismatch is found**
+- Fix it with `mcp__cekura__scenarios_partial_update` immediately.
+- Note the mismatch and the fix in a short verification log written to `/tmp/infra-verification-log.md` (create if it doesn't exist). Format: `SCENARIO-NNN: [field] was [wrong value], patched to [correct value]`.
+- If the mismatch cannot be fixed via PATCH (e.g. a fundamental structural problem requiring recreation), delete the scenario with `mcp__cekura__scenarios_destroy`, recreate it correctly, and update the scenario ID in the batch mapping.
+
+At the end of the verification pass, write a summary line to `/tmp/infra-verification-log.md`:
+```
+Verification complete. N scenarios checked. M mismatches found and fixed. 0 unresolved.
+```
+
+Do not proceed to 5d until every scenario has been verified and the log confirms 0 unresolved issues.
+
+---
+
+## 5d. Understand the connection model
 
 Before writing the script, confirm how Cekura connects to the bot (from Phase 2 Q1 and Q11):
 
@@ -111,7 +148,7 @@ Identify which model applies — it determines the step ordering in the run scri
 
 ---
 
-## 5d. Write the run script
+## 5e. Write the run script
 
 The script runs every scenario from the test plan against the local bot, grouped by configuration batch. Scenarios within the same batch run sequentially against the same bot instance. A new batch triggers a bot restart with the new config applied.
 
@@ -131,6 +168,7 @@ Write the script as `infra_test_run.sh` (or `.py` if the bot's ecosystem is Pyth
 #   - Poll until run status is completed or timeout (use 2× the longest
 #     expected call duration from Phase 2 descriptions)
 #   - Return pass if evaluation_status == "success", fail otherwise
+# Note: scenario IDs were verified in 5c — use those IDs directly
 # Define helper: apply_config(overrides) — writes env overrides to a temp
 #   file or exports them; records what was changed for restore
 # Define helper: restore_config() — undoes overrides applied by apply_config
@@ -174,7 +212,7 @@ exit 0 if all passed, else exit 1
 
 ---
 
-## 5e. Verify end-to-end before committing the script
+## 5f. Verify end-to-end before committing the script
 
 Run one scenario manually before running the full suite:
 
