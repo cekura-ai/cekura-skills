@@ -2,27 +2,25 @@
 
 `self_hosted` is the umbrella mode for any agent whose live runtime is **not** a managed provider that this skill can PATCH directly. The user owns the live agent code; this skill operates on whichever artifact best approximates the system prompt for that runtime.
 
-The only sub-flavor currently supported under this umbrella is **websocket**:
+Self-hosted resolves to a single sub-flavor: **`websocket`** — custom servers the user runs themselves. See `websocket.md` for the full sub-flavor doc.
 
 | Sub-flavor | When to use | Editable surface | Live-agent sync |
 |------------|-------------|------------------|-----------------|
 | **websocket** | The user's agent is a custom websocket server they run themselves (e.g., `wss://...ngrok.io/...` pointing at a Python/Node/Go process). The system prompt lives in the user's source code as a string constant; tool definitions usually live in the same file. Also the fallback for any agent whose prompt the user wants to iterate on offline without a live target. | The user's source file directly, via the `Edit` tool. Tool definitions in the same file are editable the same way. If no live websocket is reachable, the mode degrades to pasted-prompt / pasted-failures (the old "single prompt" behavior). | User restarts their websocket server before re-validation (auto-mode skips the gate; surfaced as a no-change hypothesis after the fact). When no live websocket is reachable, validation is the user re-running their tests externally and pasting new failures back. |
 
-The sub-flavor has its own file:
-
-- `websocket.md` — websocket-mode gate, prompt-file discovery, code-edit apply path via `Edit`, restart-server gate, the pasted-failure degenerate variant, and edge cases.
-
 ## Routing into the sub-flavor (Phase 1.2)
 
-When `assistant_provider` resolves to `self_hosted` (or to `custom` / `agentforce` / similar tags that this skill treats as self-hosted), route directly into the **websocket** sub-flavor — there is no further choice to make.
+When `assistant_provider` resolves to `self_hosted` (either directly or via a confirmation for `custom` / `agentforce` / similar tags), route to the **websocket** sub-flavor. See `websocket.md` for the source-file vs. `offline` distinction.
 
-If there is no live websocket to reach (the user is iterating on a prompt offline, the server is on a different machine, they're iterating in a notebook, etc.), proceed with the **websocket** sub-flavor in its degraded variant — pasted prompt text, pasted failures, no `Edit`, no auto re-validation. See `websocket.md` § "Degenerate variant: no live websocket".
+If the user cannot point at the file (or there is no live websocket to reach), proceed with the **websocket** sub-flavor in its degraded `offline` variant — pasted prompt text, pasted failures, no `Edit`, no auto re-validation. See `websocket.md` § "Degenerate variant: no live websocket".
 
 ## Shared characteristics
 
+Across the self-hosted sub-flavor:
+
 - **Cekura is never the source of truth for the live behavior.** It is at most an entry-point reference (the `websocket_url` field plus an informational `description`).
 - **There is no provider PATCH that pushes the prompt into the running agent.** File-system edits only take effect after the user restarts the live process.
-- **Validation runs through Cekura** when a live agent is reachable (the user's running websocket server). Cekura drives the scenario, captures the transcript, and runs metrics. The skill consumes those results the same way as VAPI mode.
+- **Validation runs through Cekura** when a live agent is reachable (the user's running server). Cekura drives the scenario, captures the transcript, and runs metrics. The skill consumes those results the same way as VAPI mode.
 - **Redeploy is automated when `redeploy_command` is configured** — the skill runs it after each apply step (Phase 4.1) so the live agent is ready before validation. When the command isn't configured, the loop falls back to either the auto-mode "trust and surface no-change after the fact" behavior or the non-auto manual restart gate. See "Redeploy command flow" below.
 
 ## Redeploy command flow
@@ -54,11 +52,11 @@ Skip the collection prompt when:
 
 - `redeploy_command` was passed in the run inputs.
 - The resolved mode is `vapi` (VAPI edits land live; nothing to redeploy).
-- The resolved variant is `websocket` with `websocket_variant: offline` (no live agent at all).
+- The resolved sub-flavor is `websocket` with `websocket_variant: offline` (no live agent at all).
 
 ### Sentinel handling
 
-- `"manual"` (case-insensitive, possibly with whitespace) → record as `redeploy_command: "manual"` and fall through to the manual restart gate at every Phase 4.1.
+- `"manual"` (case-insensitive, possibly with whitespace) → record as `redeploy_command: "manual"` and fall through to the per-sub-flavor manual restart gate at every Phase 4.1.
 - Empty string or "skip" → same as `"manual"` — surface to the user that you've recorded the manual fallback rather than treating empty as "no redeploy needed".
 - Anything else → treat as a shell command. Do not validate the command's correctness in Phase 1; the user owns that.
 
@@ -82,11 +80,11 @@ For SSH-to-remote restarts, the user's SSH config must support non-interactive s
 
 ### What this skill will NOT do
 
-- **Modify the user's deploy infrastructure.** If the systemd unit is misconfigured or the deploy script is broken, that's the user's problem to fix — surface and pause.
+- **Modify the user's deploy infrastructure.** If the systemd unit is misconfigured, that's the user's problem to fix — surface and pause.
 - **Verify the new prompt is actually live.** There's no general-purpose way to check this across runtimes. The Step 4.5 no-change detector is the only signal the skill has; if results look unchanged, surface the "redeploy may not have taken effect" hypothesis.
 - **Run anything destructive without confirmation.** If `redeploy_command` contains `rm -rf`, `DROP`, `--force-push`, or similar, pause and ask before the first execution. Subsequent iterations can reuse the confirmed command.
 
 ## What is NOT in scope for self-hosted mode
 
 - Squad members, `model.toolIds`, spoken `request-start` / `request-complete` / `request-failed` messages, and handoff `destinations` — those are VAPI-only concepts. Do not propose edits to those surfaces.
-- For websocket-mode, tool definitions in the user's source file ARE the live implementation's contract — editing them lands in the running process after a restart.
+- For websocket-mode, tool definitions in the user's source file ARE the live implementation's contract — editing them lands in the running process after a restart, no separate "mock vs. live" reconciliation needed.
