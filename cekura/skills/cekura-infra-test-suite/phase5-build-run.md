@@ -66,25 +66,28 @@ Each scenario in Phase 4 has a set of plain-English evaluation pointers — what
 
 1. **Expected Outcome field** — write one or two sentences describing what a passing call looks like, grounded in the Phase 4 pointers. Stick to what appears in the call transcript — what the bot says or does. Do not include timing assertions, audio quality checks, or internal state — those belong in predefined metrics.
 
-2. **Predefined metrics** — use the **cekura-predefined-metrics** skill to identify which metrics best cover what the evaluation pointers are asking for. For each pointer that concerns something beyond transcript content (interruption responsiveness, silence duration, sentiment, transcription accuracy), find the predefined metric that measures it and attach it.
+2. **Predefined metrics** — **invoke the `cekura-predefined-metrics` skill now, before writing a single metric onto any scenario.** Do not guess metric names, do not use the matching table below as a substitute for the skill, and do not skip this step even if the evaluation pointers seem straightforward. The skill has the full catalog, cost, audio requirements, configuration options, and known constraints for every metric. Using it is mandatory.
 
-Match pointers to metrics systematically:
-- "Bot stops speaking immediately when interrupted" → Interruption Score or AI Interrupting User
-- "Bot responds within N seconds" → Response Latency / Time to First Token
-- "Transcription matches what was said despite background noise" → Transcription Accuracy
-- "Caller sounds satisfied / frustrated" → Caller Sentiment or CSAT
-- "Bot stays on topic and does not hallucinate" → Hallucination / Factual Accuracy
-- "Call ends correctly" → Expected Outcome field (transcript-level assertion)
+   Once the skill has been invoked and you have the current catalog in context, go through every evaluation pointer for every scenario and select the predefined metric that best covers it. The table below is a starting heuristic — the skill's output takes precedence:
 
-If no predefined metric covers a pointer, note it in the scenario as a transcript-only check (covered by Expected Outcome).
+   | Evaluation pointer | Likely predefined metric |
+   |---|---|
+   | Bot stops speaking immediately when interrupted | Interruption Score / AI Interrupting User |
+   | Bot responds within N seconds | Response Latency / Time to First Token |
+   | Transcription matches what was said despite noise | Transcription Accuracy |
+   | Caller sounds satisfied / frustrated | Caller Sentiment / CSAT |
+   | Bot stays on topic / does not hallucinate | Hallucination / Factual Accuracy |
+   | Call ends correctly / task completed | Expected Outcome field (transcript-level) |
+   | No long silences or connection drops | Infrastructure Issues |
+   | Tool call succeeded / returned correct result | Tool Call Success |
+
+   If no predefined metric covers a pointer, note it explicitly in the scenario as a transcript-only check (covered by Expected Outcome only).
 
 ### Activate and attach metrics
 
-Use `mcp__cekura__scenarios_partial_update` or include metrics in the create payload.
+**Before attaching any metric to a scenario, confirm it is toggled on at the project level.** Use `mcp__cekura__metrics_list` to check which metrics are already active. Activate any that are not yet enabled. Missing this step means the metric is attached to the scenario but never fires — runs will return incomplete evaluations silently.
 
-Two activation steps are required — missing either means the metric never fires:
-1. Toggle on at the project level
-2. Add to the individual scenario
+Then attach metrics to each scenario via `mcp__cekura__scenarios_partial_update` or include them in the create payload.
 
 Two activation steps are required — missing either means the metric never fires:
 1. Toggle on at the project level
