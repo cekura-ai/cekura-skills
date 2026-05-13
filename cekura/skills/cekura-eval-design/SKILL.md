@@ -73,7 +73,9 @@ The default authoring mode is **behavioral instructions** (free-form, first-pers
 
 ### Switch immediately, no confirmation, when the user says any of:
 
-"conditional actions", "structured scenario", "scripted scenario", "scripted test", "deterministic test", "unit test", "regression test", "exact flow", "fixed sequence", "compliance test". The user has stated their authoring intent — proceed straight to designing conditional actions (see "Designing Conditional Actions" below).
+"conditional actions", "structured scenario", "scripted scenario", "scripted test", "deterministic test", "unit test", "regression test", "exact flow", "fixed sequence", "compliance test", "infra test", "infrastructure test", "pipeline test", "CI test", "CI gate", "infra scenario". The user has stated their authoring intent — proceed straight to designing conditional actions (see "Designing Conditional Actions" below).
+
+**Infrastructure and pipeline tests always use conditional actions.** If the user is building tests for STT, VAD, LLM, TTS, interruption handling, idle timers, DTMF, or any other pipeline-layer behavior — switch to conditional actions immediately, no confirmation needed. Behavioral instructions are not deterministic enough to reliably trigger specific pipeline behaviors at the right moment. See the **cekura-infra-test-suite** skill for the full workflow.
 
 ### Ask first when the user mentions a tag-supported feature without specifying a mode:
 
@@ -103,6 +105,7 @@ Open-ended persona dialogue, exploratory red-team without specific attack script
 | Network degradation under packet loss | **Ask first** | Mentions network simulation — `<network_simulation>` tag is purpose-built. |
 | Tool failure recovery flow (specific failure + recovery path) | **Conditional actions** | Specific failure trigger + specific recovery step. |
 | General "test my agent's quality" | **Behavioral** | No structural commitment specified. |
+| Infra / pipeline test (STT, VAD, LLM timeout, interruption, idle timer, DTMF) | **Conditional actions** | Pipeline behaviors must be triggered at exact moments with exact timing — behavioral instructions cannot guarantee this. |
 
 ## Test Profiles — Always Use Them
 
