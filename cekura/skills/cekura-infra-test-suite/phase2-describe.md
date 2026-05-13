@@ -6,15 +6,29 @@ Write the output to a temp file at `/tmp/infra-workflow-descriptions.md`. Phase 
 
 ---
 
+## Standard of depth required
+
+**Surface answers are not acceptable.** For every sub-question, go back to the source code and extract the actual answer. The bar is:
+
+- **Exact values, not existence.** Do not write "a timeout is configured." Write "the LLM call timeout is 8 000 ms, set via `LLM_TIMEOUT_MS` in `config.py:34`, defaulting to 5 000 ms if the env var is unset." If you cannot find the value from code, write "value not found in code — must be checked at runtime" and note where you looked.
+- **Class and function names, not categories.** Do not write "a custom turn strategy is used." Write "turn-start is gated by `MinimumWordsTranscriptionStrategy` in `bot/strategies.py:112`, which requires ≥3 words on an interim transcript before opening a turn."
+- **Code paths, not feature flags.** Trace what actually executes at runtime. If a feature is conditionally compiled or gated by an env var, record the condition and both branches.
+- **Every configured item in a list, not 'several'.** If there are four tools defined, list all four by name and purpose. If there are two STT providers, document both.
+- **Gaps are named, not glossed over.** If a sub-question cannot be answered from the code (e.g. the value is only known at runtime, or it depends on a vendor default you cannot inspect), write exactly that: what you could not determine, what you looked for, and what would need to happen to find the answer.
+
+Before writing the description for each Q section, re-read the relevant source files — do not rely solely on Phase 1 notes, which may have been high-level. The description must be grounded in what the code actually does, not what you inferred from file names or comments.
+
+---
+
 ## How to write each description
 
 For every capability found in Phase 1, answer these two questions:
 
 **What exactly happens?**
-Describe the behavior concretely. Not "handles idle" — instead: "After 8 seconds of caller silence mid-call, the bot asks 'Are you still there?' Up to 3 times. On the fourth timeout it hangs up."
+Describe the behavior concretely, with actual values and code references. Not "handles idle" — instead: "After 8 s of caller silence mid-call (`IDLE_TIMEOUT=8` in `config.py:61`), `IdleTimerProcessor.on_silence` fires and the bot synthesises the phrase defined in `IDLE_PROMPT_1` ('Are you still there?'). This repeats up to 3 times (`MAX_IDLE_PROMPTS=3`). On the fourth timeout `IdleTimerProcessor._handle_max_retries` calls `end_call()`."
 
 **Under what conditions is it triggered?**
-State the exact conditions. What must be true before this behavior fires? What prevents it from firing? If a capability only activates in a specific call state (e.g. only mid-call, not at call start), say so explicitly.
+State the exact conditions with code references. What must be true before this behavior fires? What prevents it from firing? If a capability only activates in a specific call state (e.g. only mid-call, not at call start), say so explicitly and cite where that guard lives in the code.
 
 ---
 
@@ -373,11 +387,26 @@ Read by Phase 3 before designing test scenarios.
 
 ## [Workflow Name] (Q[N])
 
-**What exactly happens:**
-[concrete description]
+### [Sub-topic — e.g. "LLM generation trigger", "Turn-end logic", "Idle timer escalation"]
 
-**Trigger conditions:**
-[what must be true; what prevents it]
+[Detailed description with actual values, class/function names, config keys, and file:line
+references. Every numeric threshold must be recorded. Every conditional branch must be named.
+Example level of detail:
+
+"Turn-end is handled by `SpeechTimeoutStrategy` (`bot/turn_strategy.py:88`). After standalone
+VAD reports silence, a 1 200 ms countdown starts (`SPEECH_TIMEOUT_MS=1200`, `config.py:47`).
+If a new interim transcript arrives before the countdown expires, the timer resets. When the
+countdown fires, the strategy emits a `user_turn_ended` event regardless of whether a final
+transcript has arrived. If no final transcript is present at that point, the bot pushes the
+last interim transcript to the LLM. If there is no interim transcript either, the turn is
+discarded silently and no LLM call is made."]
+
+### [Next sub-topic]
+
+[...]
+
+**Unresolved — could not determine from code:**
+- [specific value or behaviour that could not be found, what was searched, what would surface it]
 
 ---
 ```
@@ -389,9 +418,9 @@ At the end of the file, add:
 ```markdown
 ## Explicitly Excluded
 
-The following were found but are outside the scope of this description:
-- [e.g. internal retry counts — observable only in logs, not call behavior]
-- [e.g. provider fallback activation — requires forcing a provider failure]
+The following were found but cannot be fully described without runtime inspection or vendor
+documentation:
+- [name the item, what is known, and what is unknown]
 ```
 
 ---
