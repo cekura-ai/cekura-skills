@@ -69,6 +69,8 @@ The `role` and `conditions[]` fields inside `conditional_actions`:
 - **`standard`** — fires when the conversation context matches the `condition` string. Write the trigger as a natural description of what the main agent will say or do.
 - **`action_followup`** — fires on the **next turn** after the referenced condition, not immediately. Sequence: testing agent sends condition X → main agent replies → this fires. The main agent's reply is received but does not affect whether the followup triggers. `condition` is the integer `id` of the preceding condition. Two uses: (1) multi-part responses across consecutive turns, and (2) **scripted sequences** — chain followups to deliver an exact sequence of messages from the testing agent with no conditions to match at all.
 
+  **Before adding an `action_followup`, ask: will the main agent produce a reply after condition X?** If the main agent is silent after condition X — because the call is on hold, the testing agent is leaving a voicemail sequence, or no agent turn occurs — the followup will never fire. When two testing-agent actions happen back-to-back with no bot reply between them, they must share one `action` string, not be split across two conditions. See "Turn-by-Turn Construction Rules" below for the same-turn-actions rule and examples.
+
 ## Writing the `condition` String (standard conditions, id > 0)
 
 The `condition` field must describe the main agent's observable action from a **third-person observer** perspective. It must never be a verbatim quote or the agent's own words.
@@ -210,6 +212,19 @@ Apply these rules when building the `conditions` array:
   ```json
   { "id": 2, "condition": "The agent asks for your date of birth", "action": "It's May 10th, 1980.", "type": "standard", "fixed_message": true },
   { "id": 3, "condition": 2, "action": "Sorry, I meant {{test_profile.dateOfBirth}}.", "type": "action_followup", "fixed_message": true }
+  ```
+
+- **Same-turn actions must share one condition.** Before adding a new condition, ask: **does the main agent produce a reply between the previous testing-agent action and this one?** If the main agent is silent (e.g., the call is on hold, the testing agent is mid-voicemail sequence, or two caller actions follow immediately), those actions must go in the same `action` string. An `action_followup` only fires after the main agent replies — if the main agent doesn't reply, the followup hangs and the call stalls.
+
+  **Wrong** — `id: 4` will never fire because the main agent is silent during the hold:
+  ```json
+  { "id": 3, "condition": "The agent puts you on hold", "action": "<hold time=\"30s\" />", "type": "standard", "fixed_message": true },
+  { "id": 4, "condition": 3, "action": "Thanks, that's all I needed <endcall />", "type": "action_followup", "fixed_message": true }
+  ```
+
+  **Correct** — hold and goodbye are combined into one action because no bot reply occurs between them:
+  ```json
+  { "id": 3, "condition": "The agent puts you on hold", "action": "<hold time=\"30s\" /> Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
   ```
 
 - **Reproduce specified dialogue exactly.** Do not paraphrase or shorten scripted lines.
@@ -490,6 +505,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - **Text before `<interruption>`.** `<interruption>` must be the very first thing in the action string.
 - **`<interruption>` as `type: "standard"`.** It only works as `action_followup`; on `standard` it has no effect because the timing mechanism needs a preceding action to anchor against.
 - **Expecting `action_followup` to fire in the same turn.** `action_followup` fires on the **next turn** — after the testing agent sends condition X and the main agent replies. It does not fire in the same turn as condition X.
+- **Splitting no-bot-reply actions across conditions.** When the testing agent delivers two actions with no main agent reply between them (e.g., `<hold time="30s" />` followed by saying goodbye, or silence followed by a sign-off), creating a separate `action_followup` for the second action will cause the call to stall — `action_followup` only triggers after the main agent replies to the referenced condition. If the main agent is silent during a hold or the testing agent acts twice in a row, those actions must be combined into a single `action` string. For example, hold + goodbye: `"<hold time=\"30s\" /> Thanks, goodbye <endcall />"` on one condition, not two separate conditions. The practical test: **count the bot replies between the two testing-agent actions. If zero, merge them.**
 - **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored.
 - **Stringly-typed `action_followup` references.** The `condition` field on an `action_followup` must be an **integer** matching a prior condition's `id`. String values like `"1"` are rejected.
 - **Putting the JSON object directly in `instructions`.** Use the `conditional_actions` field on the scenario create/update payload. `instructions` accepts a string only.
@@ -506,6 +522,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - [ ] Every condition has all five fields: `id`, `condition`, `action`, `type`, `fixed_message`
 - [ ] `type` is explicitly `"standard"` or `"action_followup"` on every condition
 - [ ] `action_followup` conditions have an integer (not string) in `condition`
+- [ ] Every `action_followup` references a condition where the main agent produces a reply (if the main agent is silent — hold, voicemail mid-sequence, back-to-back caller actions — the actions are merged into one condition instead)
 - [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
 - [ ] `<network_simulation>` only uses `packet_loss`
@@ -532,6 +549,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 | Call runs to timeout | No `<endcall />` or natural close on the final condition | Add `<endcall />` to the last action, or add a final action that naturally ends the conversation (then enable `TOOL_END_CALL` on the scenario). |
 | `action_followup` doesn't fire when expected | `condition` field contains a string, not the integer `id` of the prior condition | For `type: "action_followup"`, set `condition` to the integer `id` of the preceding condition (e.g., `"condition": 1`, not `"condition": "1"` or `"condition": "previous"`). |
 | `action_followup` fires too early | Expecting it to fire in the same turn as the referenced condition | `action_followup` fires on the **next turn** — after the testing agent sends condition X *and* the main agent replies. It does not fire immediately. |
+| `action_followup` never fires / call stalls after hold or silence | `action_followup` references a condition where the main agent is silent (e.g., during `<hold>`, mid-voicemail, or any back-to-back testing-agent action) — so the "main agent replies" trigger never comes | Merge both testing-agent actions into one `action` string on a single condition. Example: replace a hold condition + followup goodbye with one action `"<hold time=\"30s\" /> Thanks <endcall />"`. Rule of thumb: if zero bot replies occur between two testing-agent actions, they must share one condition. |
 | IVR menu plays twice (once from the main agent, once from the testing agent) | `<ivr>` was used in `id: 0` for an inbound IVR test | Set `id: 0 action: ""`. The main agent plays its own IVR. Reserve the `<ivr>` tag for outbound scenarios where the testing agent simulates the IVR. |
 | Scenario created but behaves like a behavioral evaluator (ignores conditions) | `scenario_type` defaulted to `"instruction"` — the `conditional_actions` payload was dropped silently | Set `scenario_type: "conditional_actions"` explicitly in the create/update request. |
 | `instructions` field type error | JSON object was passed directly to `instructions` instead of `conditional_actions` | Pass the structured payload via the `conditional_actions` field and leave `instructions` unset. |
