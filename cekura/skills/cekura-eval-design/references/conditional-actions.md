@@ -69,7 +69,7 @@ The `role` and `conditions[]` fields inside `conditional_actions`:
 - **`standard`** — fires when the conversation context matches the `condition` string. Write the trigger as a natural description of what the main agent will say or do.
 - **`action_followup`** — fires on the **next turn** after the referenced condition, not immediately. Sequence: testing agent sends condition X → main agent replies → this fires. The main agent's reply is received but does not affect whether the followup triggers. `condition` is the integer `id` of the preceding condition. Two uses: (1) multi-part responses across consecutive turns, and (2) **scripted sequences** — chain followups to deliver an exact sequence of messages from the testing agent with no conditions to match at all.
 
-  **Before adding an `action_followup`, ask: will the main agent produce a reply after condition X?** If the main agent is silent after condition X — because the call is on hold, the testing agent is leaving a voicemail sequence, or no agent turn occurs — the followup will never fire. When two testing-agent actions happen back-to-back with no bot reply between them, they must share one `action` string, not be split across two conditions. See "Turn-by-Turn Construction Rules" below for the same-turn-actions rule and examples.
+  **One action fires per turn. `action_followup` fires at the testing agent's next turn** — the turn after the main agent replies to condition X. If two things must happen within the same testing-agent turn (no main agent reply between them), they belong in one `action` string, not split across two conditions. See "Turn-by-Turn Construction Rules" below for a wrong/correct example.
 
 ## Writing the `condition` String (standard conditions, id > 0)
 
