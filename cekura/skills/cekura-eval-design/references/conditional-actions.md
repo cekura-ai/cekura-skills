@@ -41,7 +41,7 @@ Three fields are load-bearing:
 
 The `role` and `conditions[]` fields inside `conditional_actions`:
 
-- **`role`** — optional one-sentence persona for the testing agent (system-prompt-equivalent).
+- **`role`** — one sentence describing only what the testing agent is pretending to be. Example: `"You are a patient calling to cancel their appointment"`. Do not describe what the main agent is, does, or how it should behave — the role is exclusively the testing agent's persona.
 - **`conditions`** — required, ordered array of condition-action pairs, one per turn.
 
 **Fields not to set independently when using `conditional_actions`:**
