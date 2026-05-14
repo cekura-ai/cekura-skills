@@ -58,3 +58,11 @@ Present the discovery results and proposed suite as a checkpoint. Do not create 
 ### Rule 4 — Test what's observable from the transcript.
 
 Evaluator metrics can only see what appears in the call transcript. Never write expected outcomes that reference internal processor names (`LLMRetryProcessor`, `UserIdleHandler`) or internal code state. If it isn't in the transcript, it can't be evaluated.
+
+### Rule 5 — All scenarios use conditional actions. Always.
+
+Every scenario in this suite must be created using `scenario_type: "conditional_actions"`. Use the **cekura-eval-design** skill to author each one — it has the full XML tag reference, placement rules, and anti-patterns. Never use behavioral instructions for infra tests; they are not deterministic enough to reliably trigger pipeline behaviors at the right moment.
+
+### Rule 6 — All scenarios live in the "Infrastructure Test Suite" folder.
+
+Before creating any scenario, create a folder named `"Infrastructure Test Suite"` using `mcp__cekura__scenarios_folder_create`. Every scenario must be placed in this folder. Never create infra scenarios in the root.
