@@ -30,6 +30,8 @@ For every scenario in `/tmp/infra-test-plan.md`, invoke the **cekura-eval-design
 
 **All scenarios must use `scenario_type: "conditional_actions"`** — always, without exception. Behavioral instructions are not deterministic enough to reliably trigger specific infra behaviors like idle timers, interruptions, or DTMF input. Never use behavioral mode for this suite.
 
+**Use the exact scenario name from the Phase 4 plan — no indexes, no prefixes.** Do not add "Scenario 1:", "Test 3:", or any numeric prefix to the name. The name field must be the descriptive, component-first name written in Phase 4 (e.g. `"Idle-Full-Escalation-to-Hangup"`, `"STT-Empty-Transcript-NoTranscriptTimer"`). Indexes belong in the TEST-NNN tracking system, not in the scenario name visible on Cekura.
+
 ### Set language and personality on every scenario — mandatory before creation
 
 Before creating each scenario, read its **Language** and **Personality** fields from the Phase 4 plan. Both are required — the API returns 400 without a personality, and `scenario_language` is required for `conditional_actions` scenarios.
