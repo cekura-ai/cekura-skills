@@ -70,7 +70,7 @@ Use `GET /test_framework/v1/predefined-metrics/` to retrieve the full list of av
 
 | Metric | Output | Cost | Sim | Obs | Notes |
 |--------|--------|------|-----|-----|-------|
-| **Expected Outcome** | 0–100 score | Free | ✓ | — | Requires `expected_outcome_prompt` set on the evaluator. Scores how well the agent achieved the scenario goal. Without this, runs only pass/fail on call completion. |
+| **Expected Outcome** | 0–100 score | Free | ✓ | — | Requires `expected_outcome_prompt` set on the evaluator. Scores how well the agent achieved the scenario goal. Without this, runs only pass/fail on call completion. **Transcript-only** — cannot evaluate voice characteristics (tone, pronunciation, speech quality). |
 | **Hallucination** | True/False | 0.2 credits | ✓ | ✓ | Compares agent responses against the Knowledge Base to detect unsupported claims. |
 | **Mock Tool Call Accuracy** | 0–100 score | Free | ✓ | — | Scores whether the right mock tools were called with the right inputs. Requires mock tools configured on the agent. |
 | **Relevancy** | True/False | 0.2 credits | ✓ | ✓ | Checks if agent responses addressed the question asked. Flags off-topic or deflecting replies. |
@@ -189,6 +189,7 @@ For agent-type-specific recommended sets (booking, collections, support, healthc
 - Using Detect Silence and Infrastructure Issues interchangeably — they measure different things (both speakers vs agent only)
 - Expecting Transcription Accuracy on observability calls — it's simulation-only
 - Forgetting `expected_outcome_prompt` when using Expected Outcome — without it the metric has nothing to evaluate against
+- Using Expected Outcome to evaluate voice characteristics (tone, pronunciation, speech quality) — it only has access to the transcript; use Speech Quality metrics for audio evaluation
 - Enabling Dropoff Node or Topic of Call without configuring `dropoff_nodes`/`topic_nodes` — results will be meaningless
 - Using Gibberish Detection on mono recordings — it requires stereo audio
 
