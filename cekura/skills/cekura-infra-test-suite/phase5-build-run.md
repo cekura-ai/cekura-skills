@@ -14,7 +14,19 @@ Use `mcp__cekura__scenarios_folder_create` with name `"Infrastructure Test Suite
 
 ## 5b. Create each scenario
 
-For every scenario in `/tmp/infra-test-plan.md`, invoke the **cekura-eval-design** skill to author and create the evaluator. That skill contains the full conditional actions reference — XML tag syntax, placement rules, action_followup chaining, test profile configuration, and the complete anti-pattern list. Use it; do not reconstruct its guidance from memory.
+**Read the conditional actions reference before writing a single scenario.**
+
+Open and read `cekura/skills/cekura-eval-design/references/conditional-actions.md` in full before authoring any scenario payload. This is a one-time read at the start of 5b — not per scenario. It covers:
+
+- What `action_followup` means and when to use it vs `standard` (critical — this is the most commonly misunderstood field)
+- The full `conditions` array structure: required fields (`id`, `type`, `condition`, `action`, `fixed_message`), how `id` chains work, what `FIRST_MESSAGE` means
+- Every XML tag with its exact syntax, placement constraints, and what breaks if the constraint is violated (`<interruption>`, `<hold>`, `<silence>`, `<dtmf>`, `<voicemail>`, `<endcall>`, `<spell>`, `<background_noise>`, `<network_simulation>`)
+- The validation checklist — run this on every scenario before calling the API
+- The full anti-patterns list — what not to do and why
+
+Do not reconstruct this from memory or from the summary below. The reference is the authoritative source.
+
+For every scenario in `/tmp/infra-test-plan.md`, invoke the **cekura-eval-design** skill to author and create the evaluator.
 
 **All scenarios must use `scenario_type: "conditional_actions"`** — always, without exception. Behavioral instructions are not deterministic enough to reliably trigger specific infra behaviors like idle timers, interruptions, or DTMF input. Never use behavioral mode for this suite.
 
