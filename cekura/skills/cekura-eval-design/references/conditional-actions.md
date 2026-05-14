@@ -69,6 +69,8 @@ The `role` and `conditions[]` fields inside `conditional_actions`:
 - **`standard`** — fires when the conversation context matches the `condition` string. Write the trigger as a natural description of what the main agent will say or do.
 - **`action_followup`** — fires on the **next turn** after the referenced condition, not immediately. Sequence: testing agent sends condition X → main agent replies → this fires. The main agent's reply is received but does not affect whether the followup triggers. `condition` is the integer `id` of the preceding condition. Two uses: (1) multi-part responses across consecutive turns, and (2) **scripted sequences** — chain followups to deliver an exact sequence of messages from the testing agent with no conditions to match at all.
 
+  **One action fires per turn. `action_followup` fires at the testing agent's next turn** — the turn after the main agent replies to condition X. If two things must happen within the same testing-agent turn (no main agent reply between them), they belong in one `action` string, not split across two conditions. See "Turn-by-Turn Construction Rules" below for a wrong/correct example.
+
 ## Writing the `condition` String (standard conditions, id > 0)
 
 The `condition` field must describe the main agent's observable action from a **third-person observer** perspective. It must never be a verbatim quote or the agent's own words.
@@ -211,6 +213,8 @@ Apply these rules when building the `conditions` array:
   { "id": 2, "condition": "The agent asks for your date of birth", "action": "It's May 10th, 1980.", "type": "standard", "fixed_message": true },
   { "id": 3, "condition": 2, "action": "Sorry, I meant {{test_profile.dateOfBirth}}.", "type": "action_followup", "fixed_message": true }
   ```
+
+- **Same-turn actions must share one condition.** Before adding a new condition, ask: **does the main agent produce a reply between the previous testing-agent action and this one?** If the main agent is silent (e.g., the call is on hold, the testing agent is mid-voicemail sequence, or two caller actions follow immediately), those actions must go in the same `action` string. An `action_followup` only fires after the main agent replies — if the main agent doesn't reply, the followup hangs and the call stalls.
 
 - **Reproduce specified dialogue exactly.** Do not paraphrase or shorten scripted lines.
 
@@ -490,6 +494,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - **Text before `<interruption>`.** `<interruption>` must be the very first thing in the action string.
 - **`<interruption>` as `type: "standard"`.** It only works as `action_followup`; on `standard` it has no effect because the timing mechanism needs a preceding action to anchor against.
 - **Expecting `action_followup` to fire in the same turn.** `action_followup` fires on the **next turn** — after the testing agent sends condition X and the main agent replies. It does not fire in the same turn as condition X.
+- **Splitting same-turn actions across conditions.** Each condition is one testing-agent turn. If two testing-agent actions must happen without a main agent reply between them, they belong in the same `action` string — not split across a `standard` condition and an `action_followup`. The `action_followup` fires at the next turn (after the main agent replies); if the main agent never replies, the followup never fires and the call stalls.
 - **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored.
 - **Stringly-typed `action_followup` references.** The `condition` field on an `action_followup` must be an **integer** matching a prior condition's `id`. String values like `"1"` are rejected.
 - **Putting the JSON object directly in `instructions`.** Use the `conditional_actions` field on the scenario create/update payload. `instructions` accepts a string only.
@@ -506,6 +511,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - [ ] Every condition has all five fields: `id`, `condition`, `action`, `type`, `fixed_message`
 - [ ] `type` is explicitly `"standard"` or `"action_followup"` on every condition
 - [ ] `action_followup` conditions have an integer (not string) in `condition`
+- [ ] Every `action_followup` references a condition where the main agent produces a reply (if the main agent is silent — hold, voicemail mid-sequence, back-to-back caller actions — the actions are merged into one condition instead)
 - [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
 - [ ] `<network_simulation>` only uses `packet_loss`
@@ -532,6 +538,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 | Call runs to timeout | No `<endcall />` or natural close on the final condition | Add `<endcall />` to the last action, or add a final action that naturally ends the conversation (then enable `TOOL_END_CALL` on the scenario). |
 | `action_followup` doesn't fire when expected | `condition` field contains a string, not the integer `id` of the prior condition | For `type: "action_followup"`, set `condition` to the integer `id` of the preceding condition (e.g., `"condition": 1`, not `"condition": "1"` or `"condition": "previous"`). |
 | `action_followup` fires too early | Expecting it to fire in the same turn as the referenced condition | `action_followup` fires on the **next turn** — after the testing agent sends condition X *and* the main agent replies. It does not fire immediately. |
+| `action_followup` never fires / call stalls | Two testing-agent actions were split across conditions when no main agent reply occurs between them (e.g., during `<hold>`, mid-voicemail, or any back-to-back caller actions) | Merge both actions into one `action` string on the same condition. Each condition is one testing-agent turn; `action_followup` fires at the next turn only after the main agent replies. |
 | IVR menu plays twice (once from the main agent, once from the testing agent) | `<ivr>` was used in `id: 0` for an inbound IVR test | Set `id: 0 action: ""`. The main agent plays its own IVR. Reserve the `<ivr>` tag for outbound scenarios where the testing agent simulates the IVR. |
 | Scenario created but behaves like a behavioral evaluator (ignores conditions) | `scenario_type` defaulted to `"instruction"` — the `conditional_actions` payload was dropped silently | Set `scenario_type: "conditional_actions"` explicitly in the create/update request. |
 | `instructions` field type error | JSON object was passed directly to `instructions` instead of `conditional_actions` | Pass the structured payload via the `conditional_actions` field and leave `instructions` unset. |
