@@ -210,6 +210,19 @@ Work through each component that Phase 2 documented. Skip any component Phase 2 
 - Interruptible opening: caller speech during greeting is processed or discarded per documented behavior
 - Non-interruptible opening: caller speech during greeting is correctly suppressed
 
+### Supported Languages
+
+Generate test items only for languages Phase 2 confirmed are fully configured (STT model + TTS voice + system prompt all present). Skip partial/non-production language configs.
+
+- Full pipeline E2E in each supported non-primary language (one test per language): caller speaks in that language end-to-end, bot responds in the same language
+- STT accuracy in each supported language: clear speech in that language transcribed correctly
+- Language determination: correct language selected per the documented mechanism (locale metadata, speech detection, DTMF selection, fixed config)
+- Mid-call language switch (if supported): caller switches language mid-call; bot detects and switches STT model, LLM prompt, and TTS voice per documented behavior
+- Mid-call switch to unsupported language (if switching is supported): bot falls back per documented behavior
+- Language-specific system prompt: correct prompt/template used for each language variant (if prompts differ per language)
+- Language-specific TTS voice: correct voice model used for each language (one test per language where voice differs)
+- Language-specific STT model: correct model used for each language (one test per language where model differs)
+
 ### Full Pipeline End-to-End
 - A complete call from connect → bot greeting → caller turn → LLM response → TTS playback → caller turn → task completion → hang-up runs without errors
 - This is always the first scenario built; all other scenarios assume this baseline is passing

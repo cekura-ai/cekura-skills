@@ -121,7 +121,20 @@ Answer:
 
 ---
 
-## Q9. How do you run the bot locally?
+## Q9. What languages does the bot support?
+
+Find every language the bot is configured to handle. This drives which language personalities to use in the test suite and whether multilingual scenarios are needed.
+
+Answer:
+- What is the bot's primary/default language?
+- Does it support multiple languages? If so, list all configured languages (e.g. `en`, `es`, `fr`, `hi`, `de`).
+- How is the language determined per call: fixed at deployment, set by caller locale, detected from caller speech, or switched mid-call by the caller?
+- If multilingual: does the bot switch language mid-call (e.g. caller speaks Spanish after starting in English), and if so, what triggers the switch?
+- Are there any languages listed in config or env vars that appear to be partial or non-production (e.g. a language code present but no corresponding TTS voice or STT model configured)?
+
+---
+
+## Q10. How do you run the bot locally?
 
 Find everything needed to start the bot in a local dev or test environment.
 
@@ -152,7 +165,9 @@ Q6 — Side channels:     [DTMF received: yes/no; DTMF sent: yes/no; SMS in/out:
                           voicemail detection: yes/no; other: ...]
 Q7 — Other behaviors:   [list each found + what triggers it]
 Q8 — Bot speaks first:  [yes/no; opening message if yes]
-Q9 — Local run:         [start command; how to override call destination; existing CI script: yes/no]
+Q9 — Languages:         [primary language; all supported languages; how determined per call;
+                          mid-call switching: yes/no; any partial/non-production language configs]
+Q10 — Local run:        [start command; how to override call destination; existing CI script: yes/no]
 GAPS:                   [questions you couldn't answer from code alone]
 ```
 

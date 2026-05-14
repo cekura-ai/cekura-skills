@@ -18,6 +18,16 @@ For every scenario in `/tmp/infra-test-plan.md`, invoke the **cekura-eval-design
 
 **All scenarios must use `scenario_type: "conditional_actions"`** — always, without exception. Behavioral instructions are not deterministic enough to reliably trigger specific infra behaviors like idle timers, interruptions, or DTMF input. Never use behavioral mode for this suite.
 
+### Set language and personality on every scenario — mandatory before creation
+
+Before creating each scenario, read its **Language** and **Personality** fields from the Phase 4 plan. Both are required — the API returns 400 without a personality, and `scenario_language` is required for `conditional_actions` scenarios.
+
+**`scenario_language`** — set to the BCP-47 code from the Phase 4 plan (`"en"`, `"es"`, `"hi"`, etc.). Never omit this field. Never leave it as `"en"` for a non-English scenario.
+
+**`personality`** — use the ID from the Phase 4 plan. If Phase 4 flagged a gap (no personality available for a non-primary language), call `mcp__cekura__personalities_list` filtered by that language code to check whether one exists. If still unavailable, pause and ask the user: create a custom personality, or defer that language's scenarios?
+
+Do not reuse the primary-language personality on non-primary-language scenarios — a mismatched personality produces incorrect TTS pronunciation and invalidates STT accuracy tests for that language.
+
 ### Translating the Phase 4 plan into conditional_actions
 
 The cekura-eval-design skill covers all of this in detail. The summary below is a quick reference — defer to the skill for edge cases, tag constraints, and anti-patterns.
@@ -115,6 +125,10 @@ For each scenario, check every field listed below. If any field is wrong, patch 
 - Does the scenario's `name` and TEST-NNN list match what Phase 4 specified? A renamed or mis-tagged scenario breaks traceability.
 - Is the scenario placed in the correct folder (`Infrastructure Test Suite`)?
 - Is the scenario assigned to the correct configuration batch (as recorded in 5b)?
+
+**Language and personality**
+- Does `scenario_language` match the BCP-47 code from the Phase 4 plan? A missing or wrong language code causes incorrect TTS and invalidates language-specific tests.
+- Does the assigned `personality` ID match the Phase 4 plan? Verify the personality's configured language matches `scenario_language` — a mismatch (English voice on a Spanish scenario) produces wrong pronunciation and unreliable STT.
 
 **Metrics and expected outcome**
 - Are all intended metrics attached and active at the project level?

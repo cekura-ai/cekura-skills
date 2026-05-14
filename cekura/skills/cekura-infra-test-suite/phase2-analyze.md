@@ -1,6 +1,6 @@
 # Phase 2 — Analyze Each Layer
 
-Take the Q1–Q11 answers from Phase 1 and write a precise, technical description of every discovered capability. The goal is to document what the stack actually does — how each layer works, what configuration it runs under, and what conditions govern its behavior. Test design comes later (Phase 3). Here, just describe the stack.
+Take the Q1–Q12 answers from Phase 1 and write a precise, technical description of every discovered capability. The goal is to document what the stack actually does — how each layer works, what configuration it runs under, and what conditions govern its behavior. Test design comes later (Phase 3). Here, just describe the stack.
 
 Write the output to a temp file at `/tmp/infra-workflow-descriptions.md`. Phase 3 reads from this file before designing any scenarios.
 
@@ -343,7 +343,31 @@ For each behavior found, write a sub-description. Skip sub-sections for behavior
 
 ---
 
-### Q11 — Local Run
+### Q11 — Supported Languages
+
+**1. Primary language and full language list**
+- What is the bot's primary/default language (record the BCP-47 code: `en`, `es`, `fr`, `hi`, `de`, etc.)
+- Every language the bot is configured to handle — list each code and where it is configured (env var, config file, STT model parameter, TTS voice ID, system prompt)
+- Whether any language codes appear in config but lack a corresponding STT model, TTS voice, or system prompt — mark those as partial/non-production
+
+**2. Language determination per call**
+- How the active language is decided: fixed at deployment, derived from caller's phone number or locale metadata, detected from the first words the caller speaks, or explicitly selected by the caller ("Press 1 for English, 2 for Spanish")
+- Where in the call lifecycle language selection happens: at connect time, after the first caller turn, or dynamically throughout the call
+
+**3. Mid-call language switching**
+- Whether the bot can switch language mid-call if the caller switches (e.g. caller starts in English, switches to Spanish)
+- What triggers a switch: caller speech in a different language detected by STT, an explicit caller request ("Can we switch to Spanish?"), or a DTMF menu selection
+- What components are affected by a switch: STT model, LLM prompt, TTS voice, or all three
+- Whether there is a fallback if the caller's detected language is not supported
+
+**4. Language-specific behavior differences**
+- Whether the system prompt, response templates, or tool instructions differ per language
+- Whether any pipeline components (STT models, TTS voices, LLM models) are different per language — list the specific model/voice used for each supported language
+- Whether response style, formality, or behavior differs between language variants
+
+---
+
+### Q12 — Local Run
 
 **1. Startup command**
 - The exact command to start the bot locally (including working directory, interpreter version, and any required flags)
