@@ -14,6 +14,7 @@ Write the output to a temp file at `/tmp/infra-workflow-descriptions.md`. Phase 
 - **Class and function names, not categories.** Do not write "a custom turn strategy is used." Write "turn-start is gated by `MinimumWordsTranscriptionStrategy` in `bot/strategies.py:112`, which requires ≥3 words on an interim transcript before opening a turn."
 - **Code paths, not feature flags.** Trace what actually executes at runtime. If a feature is conditionally compiled or gated by an env var, record the condition and both branches.
 - **Every configured item in a list, not 'several'.** If there are four tools defined, list all four by name and purpose. If there are two STT providers, document both.
+- **All mechanisms, not just the first found.** For any capability (SMS sending, DTMF handling, call transfer, hang-up, etc.), do not stop at the first implementation you find. A single capability can be implemented through multiple independent entry points — a pipeline processor, a tool call handler, a webhook endpoint, an event listener, a direct SDK call, a platform-native feature. Search the entire codebase systematically: grep for the capability name, the relevant SDK method names, the relevant event types, and any config keys associated with it. List every distinct mechanism as a separate entry with its own trigger, code path, and behavior description. Treating the first result as the only result is the most common cause of incomplete analysis.
 - **Gaps are named, not glossed over.** If a sub-question cannot be answered from the code (e.g. the value is only known at runtime, or it depends on a vendor default you cannot inspect), write exactly that: what you could not determine, what you looked for, and what would need to happen to find the answer.
 
 Before writing the description for each Q section, re-read the relevant source files — do not rely solely on Phase 1 notes, which may have been high-level. The description must be grounded in what the code actually does, not what you inferred from file names or comments.
@@ -251,6 +252,16 @@ Walk through the exact sequence of events that closes a user turn — from last 
 
 ### Q8 — Side Channels
 
+**Before writing any sub-description here, search the entire codebase exhaustively for every mechanism that implements each side channel.** Do not stop at the first result. For each capability (DTMF, SMS, voicemail, etc.), search for:
+- Pipeline processor classes that handle the event
+- Tool call / function call handlers that trigger it
+- Webhook endpoint handlers
+- SDK callback registrations (e.g. `on_dtmf`, `on_sms`, event listeners)
+- Direct API or SDK method calls (e.g. `client.send_sms(...)`, `call.send_digits(...)`)
+- Platform-native features configured via env vars or config files
+
+If two different code paths can both send an SMS (e.g. a tool call AND a webhook), document both as separate entries under the same sub-section. The same applies to DTMF, voicemail, transfers, and every other side channel.
+
 For each side channel found, write a separate sub-description. Skip sub-sections for channels not present.
 
 **DTMF received (caller → bot)**
@@ -289,6 +300,8 @@ For each side channel found, write a separate sub-description. Skip sub-sections
 ---
 
 ### Q9 — Other Behaviors
+
+**Same exhaustive search rule as Q8.** For call transfer, hang-up, recording, and every other behavior here: grep for every code path that can trigger it — LLM tool calls, pipeline processors, direct SDK calls, webhook handlers, config-driven triggers. If there are three ways the bot can hang up (idle timeout, LLM tool call, max duration timer), document all three separately.
 
 For each behavior found, write a sub-description. Skip sub-sections for behaviors not present.
 
