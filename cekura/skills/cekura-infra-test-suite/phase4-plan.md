@@ -33,7 +33,19 @@ Go through the TEST-NNN list from `/tmp/infra-test-list.md`. For each item, clas
 
 If the user chose default-only: mark all config-change tests as **excluded** and note why. They will appear in the plan's exclusion list but will not be built.
 
-If the user chose config-change included: list each required config override clearly — the env var name, the test value, and which TEST-NNN items it covers.
+If the user chose config-change included: for each required override, read Phase 2 Q12 (Local Run) to find the exact mechanism the bot uses to accept that configuration (env var export, `.env` file write, config file edit, CLI argument, API call to a running bot). Then document the override completely:
+
+| Field | What to record |
+|---|---|
+| Config key | The exact env var name, config file key, or CLI flag (from Phase 2 Q12) |
+| Injection mechanism | How to apply it: `export VAR=val`, write to `config/settings.yaml`, pass `--flag val` at startup, etc. |
+| Test value | The value needed to trigger the behavior being tested |
+| Restore value | The original value from Phase 2 (the value to restore after the batch) |
+| Why it works | One sentence: why this value forces the tested behavior (e.g. "50ms is below any realistic LLM response time, guaranteeing the timeout fires") |
+| Verification | How to confirm the override took effect before running the scenario (e.g. a startup log line, a config endpoint, or a known side effect) |
+| TEST-NNN items covered | Which tests in this batch depend on this override |
+
+**Do not guess the injection mechanism.** If Phase 2 Q12 says the bot reads from env vars, use `export`. If it reads from a `.env` file, write to that file. If it accepts a CLI flag, pass the flag. Using the wrong mechanism means the override silently has no effect and the bot runs with its default config — the test fires, appears to pass, and the failure mode was never actually exercised.
 
 ---
 

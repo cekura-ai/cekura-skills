@@ -238,50 +238,101 @@ Write the script as `infra_test_run.sh` (or `.py` if the bot's ecosystem is Pyth
 
 ### Script structure
 
+Before writing the script, read Phase 4's configuration batch table and for each batch produce a concrete apply/restore block using the exact injection mechanism documented in Phase 4 (env var export, `.env` file write, config YAML edit, CLI flag, etc.). Do not write pseudocode — write the actual shell commands the script will execute.
+
+Example of what a concrete batch block looks like when the bot reads from env vars:
+
+```bash
+# ── Batch B — LLM timeout forced to 50ms ─────────────────────────────────────
+# Phase 4: LLM_TIMEOUT_MS → env var; inject via export; restore to 8000
+echo "=== Batch B: LLM_TIMEOUT_MS=50 ==="
+ORIG_LLM_TIMEOUT_MS="${LLM_TIMEOUT_MS:-8000}"          # save original
+export LLM_TIMEOUT_MS=50                                # apply override
+start_bot                                               # bot starts with override
+# verify override took effect (Phase 4 verification step: bot logs "LLM timeout: 50ms")
+wait_for_log "LLM timeout: 50ms" 10                     # fail-fast if not applied
+run_scenario "LLM-Timeout-Fallback" "websocket"
+stop_bot
+export LLM_TIMEOUT_MS="$ORIG_LLM_TIMEOUT_MS"           # restore
 ```
-# ── Setup ────────────────────────────────────────────────────────────────────
-# Deployment steps from 5d Q2 — exact commands confirmed by user
-# Define helper: start_bot(config_overrides) — applies overrides, starts bot,
-#   waits for the exact readiness signal confirmed in 5d Q2, returns PID
-# Define helper: stop_bot(PID) — graceful stop, fallback to SIGKILL
-# Define helper: run_scenario(scenario_id, connection_type) → pass|fail
-#   - Trigger the Cekura run using the runner for this connection_type
-#   - If bot-calls-Cekura: inject connection details into running bot
-#   - Poll until run status is completed or timeout (use 2× the longest
-#     expected call duration from Phase 2 descriptions)
-#   - Return pass if evaluation_status == "success", fail otherwise
-# Note: scenario IDs were verified in 5c — use those IDs directly
-# Define helper: apply_config(overrides) — writes env overrides, records for restore
-# Define helper: restore_config() — fully undoes apply_config overrides
 
-# ── Connection type: WebSocket ────────────────────────────────────────────────
-echo "=== Running suite over WebSocket ==="
+Example when the bot reads from a `.env` file:
 
-  # ── Batch A — Default configuration ───────────────────────────────────────
-  echo "  Batch A: Default configuration"
-  start_bot({})
-  for scenario_id in [SCENARIO-001-id, SCENARIO-002-id, ...]:
-      result = run_scenario(scenario_id, "websocket")
-      record(scenario_id, "websocket", result)
-  stop_bot()
+```bash
+# ── Batch C — STT confidence threshold set to 1.0 ────────────────────────────
+echo "=== Batch C: STT_CONFIDENCE_THRESHOLD=1.0 ==="
+cp .env .env.backup                                     # save original file
+sed -i 's/STT_CONFIDENCE_THRESHOLD=.*/STT_CONFIDENCE_THRESHOLD=1.0/' .env
+start_bot
+run_scenario "STT-Empty-Transcript-NoTranscriptTimer" "websocket"
+stop_bot
+cp .env.backup .env                                     # restore original file
+rm .env.backup
+```
 
-  # ── Batch B — [Config override] ────────────────────────────────────────────
-  echo "  Batch B: LLM_TIMEOUT_MS=50"
-  apply_config({ LLM_TIMEOUT_MS: 50 })
-  start_bot({})
-  for scenario_id in [SCENARIO-008-id, ...]:
-      result = run_scenario(scenario_id, "websocket")
-      record(scenario_id, "websocket", result)
-  stop_bot()
-  restore_config()
+The full script structure:
 
-# ── Connection type: SIP ──────────────────────────────────────────────────────
-echo "=== Running suite over SIP ==="
-# (same batch structure, run_scenario uses SIP runner)
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ── Baseline configuration (from Phase 2 Q12) ────────────────────────────────
+# These must match the exact values Phase 2 analyzed. Any deviation means
+# the bot's behavior will not match the expected outcomes in the scenarios.
+export LLM_TIMEOUT_MS=8000          # Phase 2 Q4: config.py:34
+export IDLE_TIMEOUT_S=8             # Phase 2 Q7: config.py:61
+export STT_MODEL=nova-2             # Phase 2 Q2: deepgram config
+# ... all config-governing values from Phase 2 ...
+
+# ── Scenario ID map (from 5b, verified in 5c) ────────────────────────────────
+declare -A SCENARIO_IDS=(
+    ["Idle-Full-Escalation-to-Hangup"]="<id>"
+    ["STT-Empty-Transcript-NoTranscriptTimer"]="<id>"
+    ["LLM-Timeout-Fallback"]="<id>"
+    # ...
+)
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+start_bot() {
+    # Exact start command from 5d Q2
+    <start command here> &
+    BOT_PID=$!
+    # Wait for exact readiness signal from Phase 2 Q12
+    wait_for_log "<readiness signal>" 30 || { echo "Bot failed to start"; exit 1; }
+}
+stop_bot() { kill "$BOT_PID" 2>/dev/null; wait "$BOT_PID" 2>/dev/null; }
+trap 'stop_bot; restore_all_configs' SIGINT SIGTERM
+
+run_scenario() {
+    local name=$1 transport=$2
+    local id="${SCENARIO_IDS[$name]}"
+    # Trigger via appropriate Cekura runner for this transport
+    # Poll until completed or 2× max call duration timeout
+    # Return pass/fail based on evaluation_status
+}
+
+# ── Connection type loop ──────────────────────────────────────────────────────
+for TRANSPORT in websocket sip; do   # ← transports selected in Phase 1
+  echo "=== Transport: $TRANSPORT ==="
+
+  # Batch A — Default configuration
+  start_bot
+  run_scenario "Idle-Full-Escalation-to-Hangup" "$TRANSPORT"
+  run_scenario "Interruption-BackToBack" "$TRANSPORT"
+  # ... all default-config scenario names ...
+  stop_bot
+
+  # Batch B — [description from Phase 4, using concrete inject/restore]
+  <concrete apply block here>
+  start_bot
+  run_scenario "LLM-Timeout-Fallback" "$TRANSPORT"
+  stop_bot
+  <concrete restore block here>
+
+done
 
 # ── Results ──────────────────────────────────────────────────────────────────
-print_summary()   # pass/fail per scenario per connection type, total pass rate
-exit 0 if all passed, else exit 1
+print_summary   # pass/fail per scenario per transport, total pass rate
 ```
 
 ### Key implementation requirements
