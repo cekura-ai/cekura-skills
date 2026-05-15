@@ -150,7 +150,7 @@ Also check `CLAUDE.md` and `memory.md` if they exist — they may already have t
 
 ## Phase 1 Gate
 
-Write out your answers in this format before moving on:
+Write out your answers in this format, then ask the user the two questions below before moving on.
 
 ```
 Q1 — Call connection:    [protocol/platform; inbound/outbound/both; how destination is set]
@@ -172,5 +172,38 @@ GAPS:                   [questions you couldn't answer from code alone]
 ```
 
 Surface gaps as open questions in the Phase 2 checkpoint — do not guess.
+
+---
+
+## Phase 1 User Questions
+
+After presenting the gate summary above, ask the user these two questions before proceeding to Phase 2. Record their answers — they shape Phase 2's analysis and are carried forward to Phase 5.
+
+**Question 1 — Which connection types should the test suite run over?**
+
+Based on Q1, list every connection type the bot supports and ask:
+
+> "The codebase supports the following connection types: [list from Q1 — e.g. WebSocket, SIP, VAPI WebRTC].
+> Which of these should the infra test suite run over? You can choose one, several, or all.
+> The run script will execute every scenario once per selected connection type."
+
+Record the answer as: `Selected connection types: [list]`
+
+**Question 2 — What are the deployment steps for local testing?**
+
+If Q10 already captured the start command, readiness signal, and stop mechanism, present what was found and ask for confirmation:
+
+> "For local testing I found: start command `[X]`, readiness signal `[Y]`, stop command `[Z]`. Is this correct, or do I need to update anything?"
+
+If Q10 was incomplete, ask:
+
+> "To run the test suite I need to start and stop the bot automatically. Please provide:
+> 1. The exact command to start the bot (including env vars to set first)
+> 2. How to know when the bot is ready to accept calls (log line, health endpoint, port, or fixed wait)
+> 3. The command to stop the bot after a run"
+
+Record the confirmed deployment steps verbatim.
+
+Write both answers into the Phase 1 gate output before moving on.
 
 Move to [Phase 2 — Analyze Each Layer](phase2-analyze.md).
