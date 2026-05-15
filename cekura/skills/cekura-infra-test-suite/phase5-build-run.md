@@ -195,26 +195,61 @@ Do not proceed to 5d until every scenario has been verified and the log confirms
 
 ---
 
-## 5d. Understand the connection model
+## 5d. Ask the user two questions before writing the script
 
-Before writing the script, confirm how Cekura connects to the bot (from Phase 2 Q1 and Q11):
+Do not write the run script until you have answers to both questions below. Record the answers — they are the inputs the script is built from.
 
-**Cekura calls the bot (inbound to bot)**
-The bot must be reachable at a stable address before the run starts. The script starts the bot, waits for readiness, then triggers the Cekura run.
+### Question 1 — Which connection types should the script run?
 
-**Bot calls Cekura (outbound from bot)**
-Cekura provides a number or endpoint for the bot to dial. The script triggers the Cekura run first to get connection details, then starts the bot with those details injected.
+Phase 2 Q1 documented all connection types the bot supports (e.g. WebSocket, SIP, VAPI WebRTC, plain voice/phone, Pipecat, LiveKit, ElevenLabs). The test suite can be run over any subset of those.
 
-**WebRTC / WebSocket**
-Cekura provides a room URL, token, or WebSocket endpoint. The script extracts connection details from the Cekura run response and passes them to the bot.
+Present the supported connection types found in Phase 2 and ask:
 
-Identify which model applies — it determines the step ordering in the run script.
+> "Phase 2 found that this bot supports the following connection types: [list from Phase 2 Q1].
+> Which of these should the run script execute the test suite over?
+> You can choose one, several, or all. The script will run every scenario once per selected connection type."
+
+Wait for the answer. Record the selected connection types — the script will have one run-loop per connection type, using the appropriate Cekura scenario runner for each:
+
+| Connection type | Cekura runner endpoint |
+|---|---|
+| Plain voice / phone | `mcp__cekura__scenarios_run_voice` |
+| WebSocket | `mcp__cekura__scenarios_run_websocket` |
+| SIP | `mcp__cekura__scenarios_run_sip` |
+| VAPI WebRTC | `mcp__cekura__scenarios_run_vapi_webrtc` |
+| Retell WebRTC | `mcp__cekura__scenarios_run_retell_webrtc` |
+| Pipecat v1 | `mcp__cekura__scenarios_run_pipecat_v1` |
+| Pipecat v2 | `mcp__cekura__scenarios_run_pipecat_v2` |
+| LiveKit v2 | `mcp__cekura__scenarios_run_livekit_v2` |
+| ElevenLabs | `mcp__cekura__scenarios_run_elevenlabs` |
+| Chirp | `mcp__cekura__scenarios_run_chirp` |
+
+### Question 2 — What are the deployment steps?
+
+The script needs to know how to start and stop the bot for each test run. Ask:
+
+> "What are the steps to deploy and start the bot locally for testing? I need:
+> 1. The exact command(s) to start the bot (including any env vars to set first)
+> 2. How to know when the bot is ready to accept calls (a log line, a health endpoint, a port opening, or a fixed wait)
+> 3. The command to stop the bot after a run completes
+> 4. Any environment variables that must be set differently for test vs. production (e.g. a test phone number, a mock endpoint URL)
+>
+> If there is already a startup script or runbook, point me to it and I will read it."
+
+If Phase 2 Q12 (Local Run) already documented this fully, present it to the user for confirmation rather than asking from scratch:
+
+> "Phase 2 documented the following local run steps: [summary from Q12]. Are these still accurate, or do I need to update anything?"
+
+Wait for confirmation or corrections. Record the final deployment steps — they go directly into the script as commented, executable commands.
 
 ---
 
 ## 5e. Write the run script
 
-The script runs every scenario from the test plan against the local bot, grouped by configuration batch. Scenarios within the same batch run sequentially against the same bot instance. A new batch triggers a bot restart with the new config applied.
+The script runs every scenario from the test plan against the local bot. It is structured in two outer loops:
+
+1. **Connection type loop** — one pass per connection type the user selected in 5d Q1. Each pass runs all batches.
+2. **Configuration batch loop** — within each connection type pass, scenarios are grouped by configuration batch. A new batch triggers a bot restart with the new config applied.
 
 Write the script as `infra_test_run.sh` (or `.py` if the bot's ecosystem is Python-first — match the language to what the team already uses for CI).
 
@@ -222,57 +257,63 @@ Write the script as `infra_test_run.sh` (or `.py` if the bot's ecosystem is Pyth
 
 ```
 # ── Setup ────────────────────────────────────────────────────────────────────
-# Load base env vars from Phase 2 Q11 (start command, readiness signal, etc.)
+# Deployment steps from 5d Q2 — exact commands confirmed by user
 # Define helper: start_bot(config_overrides) — applies overrides, starts bot,
-#   waits for readiness signal, returns PID
+#   waits for the exact readiness signal confirmed in 5d Q2, returns PID
 # Define helper: stop_bot(PID) — graceful stop, fallback to SIGKILL
-# Define helper: run_scenario(scenario_id) → pass|fail
-#   - Trigger the Cekura run for this scenario (via API or MCP)
+# Define helper: run_scenario(scenario_id, connection_type) → pass|fail
+#   - Trigger the Cekura run using the runner for this connection_type
 #   - If bot-calls-Cekura: inject connection details into running bot
 #   - Poll until run status is completed or timeout (use 2× the longest
 #     expected call duration from Phase 2 descriptions)
 #   - Return pass if evaluation_status == "success", fail otherwise
 # Note: scenario IDs were verified in 5c — use those IDs directly
-# Define helper: apply_config(overrides) — writes env overrides to a temp
-#   file or exports them; records what was changed for restore
-# Define helper: restore_config() — undoes overrides applied by apply_config
+# Define helper: apply_config(overrides) — writes env overrides, records for restore
+# Define helper: restore_config() — fully undoes apply_config overrides
 
-# ── Batch A — Default configuration ─────────────────────────────────────────
-echo "=== Batch A: Default configuration ==="
-start_bot({})
-for scenario_id in [SCENARIO-001-id, SCENARIO-002-id, ...]:
-    result = run_scenario(scenario_id)
-    record(scenario_id, result)
-stop_bot()
+# ── Connection type: WebSocket ────────────────────────────────────────────────
+echo "=== Running suite over WebSocket ==="
 
-# ── Batch B — [Config override description] ──────────────────────────────────
-echo "=== Batch B: LLM_TIMEOUT_MS=50 ==="
-apply_config({ LLM_TIMEOUT_MS: 50 })
-start_bot({})
-for scenario_id in [SCENARIO-008-id, SCENARIO-009-id, ...]:
-    result = run_scenario(scenario_id)
-    record(scenario_id, result)
-stop_bot()
-restore_config()
+  # ── Batch A — Default configuration ───────────────────────────────────────
+  echo "  Batch A: Default configuration"
+  start_bot({})
+  for scenario_id in [SCENARIO-001-id, SCENARIO-002-id, ...]:
+      result = run_scenario(scenario_id, "websocket")
+      record(scenario_id, "websocket", result)
+  stop_bot()
 
-# (repeat for each batch)
+  # ── Batch B — [Config override] ────────────────────────────────────────────
+  echo "  Batch B: LLM_TIMEOUT_MS=50"
+  apply_config({ LLM_TIMEOUT_MS: 50 })
+  start_bot({})
+  for scenario_id in [SCENARIO-008-id, ...]:
+      result = run_scenario(scenario_id, "websocket")
+      record(scenario_id, "websocket", result)
+  stop_bot()
+  restore_config()
+
+# ── Connection type: SIP ──────────────────────────────────────────────────────
+echo "=== Running suite over SIP ==="
+# (same batch structure, run_scenario uses SIP runner)
 
 # ── Results ──────────────────────────────────────────────────────────────────
-print_summary()   # pass/fail per scenario, total pass rate
+print_summary()   # pass/fail per scenario per connection type, total pass rate
 exit 0 if all passed, else exit 1
 ```
 
 ### Key implementation requirements
 
-**Readiness gating** — after starting the bot, wait for the exact readiness signal documented in Phase 2 Q11 (log line, health endpoint, port open) before triggering any run. Do not use a fixed `sleep`. A timeout that fires a non-functional bot is not a test result — it is a connection error.
+**Deployment steps verbatim** — embed the exact start/stop commands and env vars confirmed in 5d Q2 as executable lines (not comments). Label each block clearly so the user can edit them later.
 
-**Per-scenario timeout** — each run_scenario call must have a deadline. Use 2× the longest expected call duration from the Phase 2 descriptions. A scenario that exceeds its deadline is recorded as a timeout failure, not a pass.
+**Readiness gating** — use the exact readiness signal confirmed in 5d Q2 (log line, health endpoint, port). Do not use a fixed `sleep`.
 
-**Config isolation** — every config override must be fully reversed before the next batch starts. The script must be safe to kill mid-run: use a trap to call restore_config() and stop_bot() on SIGINT/SIGTERM.
+**Per-scenario timeout** — each `run_scenario` call must have a deadline. Use 2× the longest expected call duration from the Phase 2 descriptions. A scenario that exceeds its deadline is recorded as a timeout failure, not a pass.
 
-**Scenario ID mapping** — the script must contain a static mapping of scenario name → Cekura scenario ID (recorded during 5b). Do not look up IDs dynamically at run time.
+**Config isolation** — every override must be fully reversed before the next batch. Trap SIGINT/SIGTERM to call `restore_config()` and `stop_bot()` so the script is safe to kill mid-run.
 
-**Connection detail injection** — if the bot is outbound (bot calls Cekura), use the mechanism documented in Phase 2 Q11 (env var, config file, CLI arg, API endpoint) to inject the Cekura connection details returned by the run trigger. Document the injection point as a comment in the script.
+**Scenario ID mapping** — embed a static mapping of scenario name → Cekura scenario ID (recorded during 5b). Do not look up IDs dynamically at run time.
+
+**Connection detail injection** — if the bot is outbound (bot calls Cekura), inject the Cekura connection details returned by the run trigger using the mechanism confirmed in 5d Q2. Document the injection point as a comment in the script.
 
 ---
 
