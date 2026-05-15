@@ -121,7 +121,14 @@ Use `<hold>` (not `<silence>`) for idle timer tests — `<hold>` produces dead a
 
 Each scenario in Phase 4 has a set of plain-English evaluation pointers — what to check in the transcript to determine pass or fail. Translate those pointers into two things on the Cekura scenario:
 
-1. **Expected Outcome field** — write one or two sentences describing what a passing call looks like, grounded in the Phase 4 pointers. Stick to what appears in the call transcript — what the bot says or does. Do not include timing assertions, audio quality checks, or internal state — those belong in predefined metrics.
+1. **Expected Outcome field** — before writing this field for any scenario, open `/tmp/infra-workflow-descriptions.md` and find the Phase 2 section that describes the behavior being tested. Use the actual bot phrases, actual behavior sequence, and actual configuration values from Phase 2 — not the Phase 4 pointers alone, which are summaries. The expected_outcome must describe what a passing call looks like using the bot's real behavior:
+   - Use the exact phrases the bot says (copied from Phase 2, not paraphrased)
+   - Reference the actual sequence of events as Phase 2 documented them
+   - Do not invent behavior that Phase 2 did not document
+
+   A test expecting "bot asks if you're still there" when Phase 2 says the actual phrase is "I'll give you just a moment — are you still with me?" will produce false failures. Use the exact text.
+
+   Stick to what appears in the call transcript — not timing assertions, audio quality, or internal state.
 
 2. **Predefined metrics** — **invoke the `cekura-predefined-metrics` skill now, before writing a single metric onto any scenario.** Do not guess metric names, do not use the matching table below as a substitute for the skill, and do not skip this step even if the evaluation pointers seem straightforward. The skill has the full catalog, cost, audio requirements, configuration options, and known constraints for every metric. Using it is mandatory.
 
@@ -180,6 +187,8 @@ For each scenario, check every field listed below. If any field is wrong, patch 
 **Metrics and expected outcome**
 - Are all intended metrics attached and active at the project level?
 - Does the `expected_outcome` field reflect the Phase 4 evaluation pointers — not blank, not generic, not copied from a different scenario?
+- Does the `expected_outcome` use the actual bot phrases and behaviors from Phase 2 — not a paraphrase? Open `/tmp/infra-workflow-descriptions.md` and compare: if Phase 2 says the idle prompt is "Are you still with me?" and the expected_outcome says "bot prompts caller about silence", that is a mismatch — patch it with the exact phrase.
+- Do the `action` timing values in the conditions match the Phase 2 values exactly — not rounded, not estimated? A `<hold duration="10s"/>` that should be `<hold duration="12s"/>` based on Phase 2's documented threshold will cause the idle timer test to fail silently.
 
 **What to do when a mismatch is found**
 - Fix it with `mcp__cekura__scenarios_partial_update` immediately.
@@ -276,6 +285,8 @@ exit 0 if all passed, else exit 1
 ```
 
 ### Key implementation requirements
+
+**Base configuration must match Phase 2** — the bot must start with the exact configuration that was analyzed in Phase 2. Before writing the startup block, read Phase 2 Q12 (Local Run) and Q1–Q11 for any configuration values that govern the behaviors being tested (idle timeout, LLM timeout, STT model, etc.). Hardcode these as the baseline env vars in the script. If the bot starts with a different configuration than what Phase 2 analyzed, the expected outcomes will not match and every config-sensitive test will produce a meaningless result.
 
 **Deployment steps verbatim** — embed the exact start/stop commands and env vars confirmed in 5d Q2 as executable lines (not comments). Label each block clearly so the user can edit them later.
 

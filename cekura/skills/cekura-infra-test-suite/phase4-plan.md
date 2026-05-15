@@ -88,7 +88,15 @@ For each group, write out which TEST-NNN items it covers and note any items mark
 
 ## 4d. Write the test plan
 
-For each planned scenario, write a plain-English entry. Be specific — Phase 5 must be able to create a Cekura conditional_actions scenario from this description alone without going back to Phase 3.
+**Before writing any scenario entry, open `/tmp/infra-workflow-descriptions.md` and extract the exact values for that scenario's component.** Do not write a conversation flow or evaluation pointer from memory or inference — every numeric value, every phrase, and every behavior must come directly from Phase 2. This is the single most important rule in this phase: a plan grounded in Phase 2 produces aligned scenarios; a plan written from memory produces mismatches.
+
+For each scenario, extract from Phase 2 before writing:
+- The exact timing values (idle threshold in seconds, interruption offset, hold duration, timeout deadline)
+- The exact phrases the bot says at each relevant stage (idle prompt text, closing phrase, fallback phrase, error message) — copy verbatim from Phase 2, do not paraphrase
+- The exact behavior at each stage (how many retries, what fires on the Nth timeout, whether the bot speaks before hanging up)
+- The exact configuration values that govern the behavior being tested (env var name, current value, what changing it to X would do)
+
+For each planned scenario, write a plain-English entry. Phase 5 must be able to create a Cekura conditional_actions scenario from this description alone without going back to Phase 3.
 
 Each entry must include:
 
@@ -96,24 +104,23 @@ Each entry must include:
 
 **Tests covered** — list the TEST-NNN IDs from Phase 3 this scenario exercises
 
-**Configuration required** — either "Default — no changes" or a list of env vars / config keys to override and their test values. Every override must have a restore value (the original value from Phase 2 descriptions).
+**Configuration required** — either "Default — no changes" or a list of env vars / config keys to override and their test values. Every override must cite the Phase 2 source (file, line, current value) and have a restore value.
 
-**Conversation flow** — step by step, in plain English, what the testing agent does:
-> 1. Wait silently for bot greeting (bot speaks first)
+**Conversation flow** — step by step, using exact values from Phase 2, not placeholders. Every duration, digit sequence, phrase, and timing offset must be the real value, not `[idle threshold + 2s]` or `[the bot's greeting]`:
+> 1. Wait silently — bot speaks first (Phase 2 Q10: opening message is "Hello, how can I help you today?")
 > 2. Say: "I need to reschedule my appointment"
 > 3. Wait for bot to respond
-> 4. Interrupt the bot after 1 second with: "Actually, cancel it"
-> 5. Wait for bot to process the interruption and respond
-> 6. Go silent for [idle threshold + 2s] to trigger idle prompt
-> 7. Stay silent through two escalation prompts
-> 8. Stay silent until hang-up fires
+> 4. Interrupt the bot after 1s with: "Actually, cancel it"  ← 1s from Phase 2 Q6 interruption offset
+> 5. Wait for bot to process interruption and respond
+> 6. Hold for 10s  ← Phase 2 Q7: idle threshold is 8s, so 8+2=10s
+> 7. Bot says: "Are you still there?"  ← Phase 2 Q7: exact idle prompt phrase
+> 8. Hold for another 10s; bot says: "I'll wait a moment longer."  ← Phase 2 Q7: second escalation phrase
+> 9. Hold for another 10s until bot hangs up  ← Phase 2 Q7: 3 prompts then hang-up
 
-**Evaluation pointers** — plain English statements of what to check to determine whether this scenario passed or failed. Do not name Cekura metrics or write expected outcome text here — Phase 5 will translate these into the right metrics and outcome fields. Write what a human reviewer would look for when reading the transcript:
-- What should the bot do at each key moment in the conversation?
-- What should the bot NOT do?
-- What signals in the transcript indicate the correct behavior fired (e.g. "bot stops speaking immediately when interrupted", "bot asks 'Are you still there?' after 8 seconds of silence", "bot says goodbye before hanging up")?
-- What signals in the transcript indicate failure (e.g. "bot continues speaking after interrupt", "no idle prompt appears", "bot hangs up without a closing phrase")?
-- Are there timing or sequencing constraints that matter (e.g. "idle prompt must appear before the hang-up", "recovery response must come after the interruption, not before")?
+**Evaluation pointers** — grounded in Phase 2 actual behavior, not generic descriptions. Each pointer must reference the specific Phase 2 finding it is checking:
+- Quote the actual phrase the bot should say (from Phase 2), not a paraphrase. "Bot says 'Are you still there?'" not "Bot prompts the caller."
+- State the actual timing or count from Phase 2. "Idle prompt fires after 8s (Phase 2 Q7: IDLE_TIMEOUT=8)" not "Bot prompts after a period of silence."
+- Call out the exact failure mode. "If no idle prompt appears in the transcript, or if it appears before 8s, the test fails."
 
 ---
 
@@ -241,16 +248,15 @@ Override: LLM_TIMEOUT_MS=50 (restore to [original value] after batch)
 **Personality:** 693 (Normal Male) — neutral default; no voice challenge needed for this infra test
 
 **Conversation flow:**
-1. [step]
+1. [step with exact value from Phase 2 — e.g. "Hold for 10s (Phase 2 Q7: IDLE_TIMEOUT=8s, +2s buffer)"]
 2. [step]
 ...
 
 **Evaluation pointers:**
-- [What the bot should do at key moment X]
-- [What the bot should NOT do]
-- [What in the transcript confirms the correct behavior fired]
-- [What in the transcript indicates failure]
-- [Any sequencing or timing constraint that matters]
+- [Exact phrase or behavior from Phase 2 — e.g. "Bot says 'Are you still there?' (Phase 2 Q7: IDLE_PROMPT_1 exact text)"]
+- [What the bot should NOT do — grounded in Phase 2]
+- [Exact failure signal — what is missing or wrong in the transcript]
+- [Sequencing constraint with actual values — e.g. "Prompt must appear within 1s of the 8s hold completing"]
 
 ---
 
