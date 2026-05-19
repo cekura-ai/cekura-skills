@@ -11,7 +11,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Cekura Predefined Metrics
@@ -70,13 +70,13 @@ Use `GET /test_framework/v1/predefined-metrics/` to retrieve the full list of av
 
 | Metric | Output | Cost | Sim | Obs | Notes |
 |--------|--------|------|-----|-----|-------|
-| **Expected Outcome** | 0–100 score | Free | ✓ | — | Requires `expected_outcome_prompt` set on the evaluator. Scores how well the agent achieved the scenario goal. Without this, runs only pass/fail on call completion. |
+| **Expected Outcome** | 0–100 score | Free | ✓ | — | Requires `expected_outcome_prompt` set on the evaluator. Scores how well the agent achieved the scenario goal. Without this, runs only pass/fail on call completion. **Transcript-only** — cannot evaluate voice characteristics (tone, pronunciation, speech quality). When writing the prompt, refer to speakers as **"main agent"** and **"testing agent"** — not "user", "assistant", "bot", or "AI". |
 | **Hallucination** | True/False | 0.2 credits | ✓ | ✓ | Compares agent responses against the Knowledge Base to detect unsupported claims. |
 | **Mock Tool Call Accuracy** | 0–100 score | Free | ✓ | — | Scores whether the right mock tools were called with the right inputs. Requires mock tools configured on the agent. |
 | **Relevancy** | True/False | 0.2 credits | ✓ | ✓ | Checks if agent responses addressed the question asked. Flags off-topic or deflecting replies. |
 | **Response Consistency** | True/False | 0.2 credits | ✓ | ✓ | Detects contradictions — when the agent repeats information incorrectly or contradicts a prior statement. |
 | **Tool Call Success** | True/False | Free | ✓ | ✓ | Checks if any tool call result contains "Error" or "failed". Requires provider integration (assistant ID + API keys) so tool call data appears in the transcript. |
-| **Transcription Accuracy** | 0–100 score | 1 credit/min | ✓ | — | Uses two transcription models for call logs, compares against ground truth for runs. **Requires audio.** Expensive — use selectively. |
+| **Transcription Accuracy** | 0–100 score | Free for simulations / 1 credit/min for production call logs | ✓ | — | Uses two transcription models for production call logs, compares against ground truth for runs. **Requires audio.** Production call log evaluation is expensive — use selectively. |
 | **Voicemail Detection** | True/False | 0.2 credits | ✓ | ✓ | Detects if the call reached a voicemail or automated system. Beta. |
 
 ---
@@ -150,7 +150,8 @@ For full payload examples (including IPA tips and naming guidance) see `referenc
 | **Free (0 credits)** | Expected Outcome, Tool Call Success, Mock Tool Call Accuracy, AI Interrupting User, User Interrupting AI, Stop Time after User Interruption, Latency, Detect Silence, Infrastructure Issues, Interruption Score, Unnecessary Repetition Score, Average Pitch, Talk Ratio, Words Per Minute |
 | **0.2 credits/call** | Hallucination, Relevancy, Response Consistency, Voicemail Detection, Appropriate Call Termination (both), Unnecessary Repetition Count, CSAT, Dropoff Node, Sentiment, Topic of Call, Letterwise Pronunciation, Pronunciation Check, Speaking Rate, Voice Change Detection, Voice Tone + Clarity |
 | **0.3 credits/min** | Gibberish Detection |
-| **1 credit/min** | Transcription Accuracy |
+| **Free (simulations)** | Transcription Accuracy (simulation runs only) |
+| **1 credit/min (production call logs)** | Transcription Accuracy (production call log evaluation) |
 
 ---
 
@@ -189,6 +190,8 @@ For agent-type-specific recommended sets (booking, collections, support, healthc
 - Using Detect Silence and Infrastructure Issues interchangeably — they measure different things (both speakers vs agent only)
 - Expecting Transcription Accuracy on observability calls — it's simulation-only
 - Forgetting `expected_outcome_prompt` when using Expected Outcome — without it the metric has nothing to evaluate against
+- Using Expected Outcome to evaluate voice characteristics (tone, pronunciation, speech quality) — it only has access to the transcript; use Speech Quality metrics for audio evaluation
+- Writing `expected_outcome_prompt` with terms like "user", "assistant", "bot", or "AI" — always use "main agent" and "testing agent" to match Cekura's transcript labeling
 - Enabling Dropoff Node or Topic of Call without configuring `dropoff_nodes`/`topic_nodes` — results will be meaningless
 - Using Gibberish Detection on mono recordings — it requires stereo audio
 

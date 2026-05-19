@@ -251,7 +251,7 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the preferred w
 
 3. **Auto-gen may add greetings to `first_message`** — When `extra_instructions` specify exact verbatim questions, some scenarios get a greeting (e.g., "Здравствуйте") as the `first_message` while the actual question is in instructions as a follow-up. PATCH `first_message` after generation.
 
-4. **Language-specific personalities may not be enabled per-project** — Non-English personalities (e.g., ID 4566 for Russian) may return "Personality is not enabled" errors. Workaround: use personality 693 (Normal Male English) and rely on `scenario_language` + instructions to drive the language.
+4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Workaround: use personality 693 (Normal Male English) and rely on `scenario_language` to drive TTS and pronunciation. See "Checking Available Personalities" under the Personality section.
 
 5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.
 
@@ -269,10 +269,40 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the preferred w
 
 Instructions cannot alter actual speaking style — they only affect what the testing agent says, not how it sounds.
 
+### Picking the Right Personality
+
+**For conditional-actions scenarios:** Use the normal personality for the target language (e.g., 693 for English, 362 for Spanish). Conditional actions encode all behavioral logic — interruptions, pacing, silence, hold — directly in the `conditions` array via XML tags. A separate interrupter or edge-case personality adds no value and can interfere with the scripted turn sequence.
+
+**For behavioral scenarios:** Match personality to scenario intent. Recommended suite distribution for full coverage:
+
+| Scenario intent | Personality to use | Example |
+|---|---|---|
+| Happy path / baseline | Normal Male/Female (same language) | ID 693 for English |
+| Urgent / fast-paced caller | Interrupter personality | Scheduling with time pressure |
+| Real-world ambient noise | Background noise personality (street/café) | Mobile caller in public |
+| Non-native / accented speaker | Slow Speaker or language-specific accent | Accessibility testing |
+| Aggressive / frustrated caller | Interrupter + high emotional tone | De-escalation red team |
+
+**Rough distribution for a balanced suite:**
+- ~60% standard (normal male/female in the scenario's language)
+- ~20% challenging (interrupter, fast-paced, background noise)
+- ~10% non-native speakers or accented
+- ~10% edge cases (frustrated, extreme speech rate)
+
 **Recommended defaults:**
 - **English:** 693 (Normal Male, en/American)
 - **Spanish:** 362 (Normal Spanish Male)
-- **Other languages:** Use 693 + set `scenario_language` to the correct code. The platform uses `scenario_language` for TTS, not just personality.
+- **Other languages:** Use 693 + set `scenario_language` to the correct code, OR list personalities via `GET /test_framework/v1/personalities/` and pick the matching language. The platform uses `scenario_language` for TTS, not just personality.
+
+### Checking Available Personalities
+
+Always list available personalities before assigning — what's enabled varies per project:
+
+```
+GET /test_framework/v1/personalities/
+```
+
+Non-English personalities (e.g., Russian, Hindi) may not be enabled for a given project. If a personality returns "Personality is not enabled", use ID 693 and rely on `scenario_language` to drive TTS and pronunciation.
 
 List available personalities with `GET /test_framework/v1/personalities/`.
 
@@ -311,7 +341,7 @@ When in conditional-actions mode (per "Choosing Authoring Mode" above), set `sce
 Follow these steps in order. Skipping any of them is the most common cause of avoidable rework:
 
 1. **Confirm the path** — inbound vs outbound, who speaks first, what the structural test goal is. Especially for IVR, voicemail, and DTMF scenarios — see the inbound vs outbound split in `references/conditional-actions.md`.
-2. **Define the role** — one sentence in the testing agent's voice ("You are a customer calling to..."). The role is the system prompt for the testing agent.
+2. **Define the role** — one sentence describing only what the testing agent is pretending to be ("You are a patient calling to cancel an appointment"). Never describe what the main agent is or does — the role is purely the testing agent's persona.
 3. **Choose the first turn (`id: 0`)** — does the testing agent speak first (`action: "Hi, I need to..."`, `fixed_message: true`) or does the main agent speak first (`action: ""`, e.g., IVR/voicemail)?
 4. **Write standard conditions** — one per agent prompt the testing agent must respond to. Each `condition` is a description of what the agent says; each `action` is the testing agent's response (verbatim with `fixed_message: true`, or behavioral with `false`).
 5. **Add `action_followup` and tags as needed** — multi-part responses, interruptions, DTMF, voicemail, silence/hold, network simulation, background noise. Each tag has placement constraints — see the reference's XML Tags table.
@@ -399,7 +429,7 @@ Present a checkpoint like this before proceeding:
 
 3. **Run mode** — "Default to text/chat for the first pass? It's cheapest, and since tools are mocked the results are the same as voice for logic validation." Recommend text unless the user specifically needs voice testing (latency, interruption handling, TTS quality).
 
-4. **Personality** — "Keep the default English personality (693) for all scenarios?" Note any scenarios that might benefit from a different personality (e.g., red-team scenarios with a more aggressive caller), but don't make that change without asking.
+4. **Personality** — For **conditional-actions** scenarios, default to the normal personality for the target language (e.g., 693 for English) — behavioral logic is in the conditions, not the personality. For **behavioral** scenarios, propose a mix: ~60% normal, ~20% challenging (interrupter/background noise), ~10% non-native, ~10% edge cases. Confirm with the user before using anything other than the normal default. See "Picking the Right Personality" above.
 
 5. **Authoring mode** — Default is **behavioral instructions**. Switch automatically when the user's request used a direct trigger phrase ("conditional actions", "structured", "scripted", "deterministic test", "regression test", "compliance test", "exact flow", "fixed sequence"). Ask the user when the scenario mentions a tag-supported feature (voicemail, IVR, DTMF, hold, interruption, network simulation, background noise) without specifying a mode. See "Choosing Authoring Mode" above.
 

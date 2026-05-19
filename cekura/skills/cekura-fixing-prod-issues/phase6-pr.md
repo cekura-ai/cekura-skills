@@ -38,6 +38,6 @@ The `project_id` is the `project` field from the agent config fetched in Phase 1
 | <Happy path>  | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID ✅ |
 | <Edge case>   | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID ✅ |
 
-Prod call: #CALL_ID
+Prod call: #CALL_ID — https://dashboard.cekura.ai/PROJECT_ID/call-logs/CALL_ID
 Edge conditions used to reproduce: <e.g. invalid API key, 2s sleep in handler>
 ```
