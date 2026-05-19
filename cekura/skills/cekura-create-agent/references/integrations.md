@@ -63,7 +63,7 @@ Set `transcript_provider` to match (controls how call data is ingested):
 
 ### Optional Settings
 - `retell_data`: Additional config JSON
-- `auto_sync_prompt_enabled: true` — Auto-sync prompt from Retell every 30 seconds (works for standard LLM and Conversation Flow agents)
+- `auto_sync_prompt_enabled: true` — Auto-sync prompt every 30 seconds (Retell, VAPI, ElevenLabs). For Retell: works for standard LLM and Conversation Flow agents.
 - `auto_fetch_calls_enabled: true` — Auto-import production calls
 
 ### Chat Setup
@@ -293,8 +293,8 @@ For agents that initiate calls (not receive them):
 | Phone | Yes | Yes | Yes | No | No | Yes | N/A |
 | WebRTC | Yes | Yes | Yes | Yes | Yes | No | No |
 | Chat | Yes | Yes | Yes | No | No | No | Yes |
-| Auto-fetch calls | Yes | Yes | No | No | No | No | N/A |
-| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No | No |
-| Auto-sync prompt | No | Yes | No | No | No | No | No |
+| Auto-fetch calls | Yes | Yes | Yes | No | No | No | N/A |
+| Auto-fetch tools | Yes | Yes | Yes | No | No | No | No |
+| Auto-sync prompt | Yes | Yes | Yes | No | No | No | No |
 | Outbound auto-call | Yes | Yes | No | No | No | No | No |
 | Latency metrics | No | No | No | Yes | No | No | No |
