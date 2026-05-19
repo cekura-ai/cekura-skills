@@ -1,6 +1,8 @@
 # Phase 4 — Agent Description
 
-The description is the **most important field** in the entire setup. Get it right before creating the agent.
+> **Skip this phase** if the provider is VAPI, Retell, or ElevenLabs and the user agreed to use `auto_sync_prompt` in Phase 3. The description will be fetched from the provider within ~30 seconds of agent creation. Go directly to [Phase 5](phase5-create.md) and use a placeholder for the `description` field.
+
+For all other providers, or if the user prefers to paste the prompt manually, continue below.
 
 ---
 

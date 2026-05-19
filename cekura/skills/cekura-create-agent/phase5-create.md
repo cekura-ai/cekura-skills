@@ -74,11 +74,12 @@ Create the agent record using the v2 API with data from Phases 1–4.
 ```json
 {
   "name": "VAPI Sales Agent",
-  "description": "Outbound sales qualification calls",
+  "description": "Auto-syncing from provider",
   "inbound": false,
   "project": 123,
   "phone_number": "+14155551234",
   "language": "en",
+  "auto_sync_prompt": true,
   "provider": {
     "type": "vapi",
     "agent_id": "asst_abc123",
@@ -89,16 +90,18 @@ Create the agent record using the v2 API with data from Phases 1–4.
   }
 }
 ```
+`auto_sync_prompt: true` — Cekura fetches the system message from VAPI within ~30 seconds. Pass a placeholder for `description`.
 
 ### Retell
 ```json
 {
   "name": "Retell Booking Agent",
-  "description": "Schedules dental appointments",
+  "description": "Auto-syncing from provider",
   "inbound": true,
   "project": 123,
   "phone_number": "+14155551234",
   "language": "en",
+  "auto_sync_prompt": true,
   "provider": {
     "type": "retell",
     "agent_id": "retell_voice_agent_abc",
@@ -112,16 +115,18 @@ Create the agent record using the v2 API with data from Phases 1–4.
 ```
 - `agent_id` = Retell agent for **voice/phone** calls
 - `chat_agent_id` = separate Retell agent for **text-mode** test runs (optional — omit if same agent handles both)
+- `auto_sync_prompt: true` — fetches `general_prompt` (retell-llm) or full flow JSON (conversation-flow)
 
 ### ElevenLabs
 ```json
 {
   "name": "ElevenLabs Voice Agent",
-  "description": "...",
+  "description": "Auto-syncing from provider",
   "inbound": true,
   "project": 123,
   "phone_number": "+14155551234",
   "language": "en",
+  "auto_sync_prompt": true,
   "provider": {
     "type": "elevenlabs",
     "agent_id": "el_agent_abc123",
@@ -129,6 +134,7 @@ Create the agent record using the v2 API with data from Phases 1–4.
   }
 }
 ```
+`auto_sync_prompt: true` — fetches from `conversation_config.agent.prompt.prompt`.
 
 ### LiveKit
 ```json
