@@ -1,10 +1,10 @@
-# Phase 3 — Agent Description
+# Phase 4 — Agent Description
 
 The description is the **most important field** in the entire setup. Get it right before creating the agent.
 
 ---
 
-## 3a. Why the description matters
+## 4a. Why the description matters
 
 It powers:
 - Automatic evaluator generation
@@ -16,7 +16,7 @@ It powers:
 
 ---
 
-## 3b. Collect the full prompt
+## 4b. Collect the full prompt
 
 Ask: "Can you paste your agent's full system prompt or exported config?"
 
@@ -31,14 +31,14 @@ Ask: "Can you paste your agent's full system prompt or exported config?"
 
 ---
 
-## 3c. Note dynamic variable patterns
+## 4c. Note dynamic variable patterns
 
 If the description contains `{{variableName}}` placeholders, flag them — Cekura will auto-detect them after agent creation. These are handled in [Phase 9](phase9-dynamic-variables.md).
 
 ---
 
-## Phase 3 Gate
+## Phase 4 Gate
 
 **Do not proceed until you have the full agent description. Do not accept a summary or excerpt — the full text is required.**
 
-Move to [Phase 4 — Create the Agent](phase4-create.md).
+Move to [Phase 5 — Create the Agent](phase5-create.md).
