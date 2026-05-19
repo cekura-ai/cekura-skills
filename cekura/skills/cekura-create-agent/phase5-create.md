@@ -1,19 +1,18 @@
 # Phase 5 — Create the Agent
 
-Create the agent record using the v2 API with the data collected in Phases 1–4.
+Create the agent record using the v2 API with data from Phases 1–4.
 
 ---
 
 ## 5a. v2 API — field names and provider block
 
-The v2 endpoint uses cleaner field names and a **nested `provider` block** instead of flat `{provider}_api_key` fields.
-
+**Endpoint:** `POST /test_framework/v2/aiagents/`  
 **Required fields:** `name`, `description`, `inbound`, `project`
 
-**Field names changed from v1:**
+**Field names changed from v1 → v2:**
 
-| v1 field | v2 field |
-|----------|---------|
+| v1 | v2 |
+|----|----|
 | `agent_name` | `name` |
 | `contact_number` | `phone_number` |
 | `sip_endpoint` | `sip_uri` |
@@ -21,30 +20,44 @@ The v2 endpoint uses cleaner field names and a **nested `provider` block** inste
 | `auto_fetch_calls_enabled` | `auto_import_calls` |
 | `auto_sync_prompt_enabled` | `auto_sync_prompt` |
 | `agent_gives_first_message` | `agent_speaks_first` |
-| `assistant_provider` + flat API key fields | `provider.{type, agent_id, credentials}` |
+| `assistant_provider` + flat `{n}_api_key` fields | `provider.{type, agent_id, credentials}` |
+
+`transcript_provider` defaults to `provider.type` — usually no need to set it separately.
 
 ---
 
-## 5b. Provider block shape
+## 5b. Provider block structure
 
 ```json
 "provider": {
   "type": "<provider_type>",
-  "agent_id": "<assistant_id or chat_assistant_id>",
+  "agent_id": "<voice/phone agent ID>",
+  "chat_agent_id": "<text-mode agent ID — Retell only, optional>",
   "credentials": {
-    "api_key": "<api_key>",
-    "config": { ... provider-specific data ... }
+    "api_key": "<provider API key (write-only)>",
+    "config": { ... provider-specific keys ... }
   }
 }
 ```
 
-`transcript_provider` defaults to `provider.type` when omitted — you usually don't need to set it separately.
+**`credentials.config` keys by provider:**
+
+| Provider | Required config keys | Optional config keys |
+|----------|---------------------|---------------------|
+| `vapi` | — | `public_key`, `trigger_url` |
+| `retell` | — | `trigger_url` |
+| `elevenlabs` | — | `trigger_url` |
+| `bland` | — | `encrypted_key` (Twilio bundle) |
+| `livekit` | `api_secret`, `url` | `tracing_enabled` |
+| `agentforce` | `client_id`, `domain`, `agent_id` | — |
+| `trillet` | `workspace_id` | — |
+| `self_hosted` | `url` (wss://) | `headers` |
 
 ---
 
 ## 5c. Example payloads by provider
 
-### Self-hosted (phone number only — most common)
+### Self-hosted (phone only — most common)
 ```json
 {
   "name": "Support Bot",
@@ -88,17 +101,22 @@ The v2 endpoint uses cleaner field names and a **nested `provider` block** inste
   "language": "en",
   "provider": {
     "type": "retell",
-    "agent_id": "retell_agent_abc123",
-    "credentials": {"api_key": "key_xxx"}
+    "agent_id": "retell_voice_agent_abc",
+    "chat_agent_id": "retell_chat_agent_xyz",
+    "credentials": {
+      "api_key": "key_xxx",
+      "config": {"trigger_url": "https://api.retellai.com/create-phone-call"}
+    }
   }
 }
 ```
-⚠️ Retell maps `provider.agent_id` to `chat_assistant_id` (used for voice too, despite the name).
+- `agent_id` = Retell agent for **voice/phone** calls
+- `chat_agent_id` = separate Retell agent for **text-mode** test runs (optional — omit if same agent handles both)
 
 ### ElevenLabs
 ```json
 {
-  "name": "ElevenLabs Support Agent",
+  "name": "ElevenLabs Voice Agent",
   "description": "...",
   "inbound": true,
   "project": 123,
@@ -124,11 +142,35 @@ The v2 endpoint uses cleaner field names and a **nested `provider` block** inste
     "type": "livekit",
     "credentials": {
       "api_key": "APIxxx",
-      "config": {"api_secret": "secret_xxx", "url": "wss://acme.livekit.cloud"}
+      "config": {
+        "api_secret": "secret_xxx",
+        "url": "wss://acme.livekit.cloud"
+      }
     }
   }
 }
 ```
+
+### Bland
+```json
+{
+  "name": "Bland Support Agent",
+  "description": "...",
+  "inbound": true,
+  "project": 123,
+  "phone_number": "+14155551234",
+  "language": "en",
+  "provider": {
+    "type": "bland",
+    "agent_id": "bland_pathway_xyz",
+    "credentials": {
+      "api_key": "bland_xxx",
+      "config": {"encrypted_key": "twilio_bundle_xxx"}
+    }
+  }
+}
+```
+`provider.agent_id` = Bland pathway_id.
 
 ### Self-hosted via WebSocket (text-mode)
 ```json
@@ -155,15 +197,11 @@ The v2 endpoint uses cleaner field names and a **nested `provider` block** inste
 ## 5d. POST the agent
 
 ### Via MCP (description ≤ 4 KB)
-
 ```
 mcp__cekura__aiagents_create with the payload above
 ```
 
-Note: MCP tools still call the underlying API — use for short descriptions only.
-
-### Via curl (always safe, required for descriptions > 4 KB)
-
+### Via curl (always safe; required for descriptions > 4 KB)
 ```bash
 curl -X POST https://api.cekura.ai/test_framework/v2/aiagents/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
@@ -172,7 +210,6 @@ curl -X POST https://api.cekura.ai/test_framework/v2/aiagents/ \
 ```
 
 Or use the helper:
-
 ```bash
 scripts/upload-agent.sh agent.json          # create new
 scripts/upload-agent.sh agent.json <id>     # update existing
