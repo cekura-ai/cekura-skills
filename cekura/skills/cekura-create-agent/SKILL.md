@@ -104,21 +104,22 @@ Where `agent.json` contains the full payload (including the long `description`).
 
 ## Phase 3: Configure Provider Integration
 
-Ask: "What provider does your agent use? (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP, or custom?)"
+Ask: "What provider does your agent use? (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, or self-hosted/custom?)"
+
+**Provider vs connection mode** — keep these distinct. `assistant_provider` is *where the agent lives* (the platform it's built on). How Cekura dials into it for a test run (PSTN / WebRTC / WebSocket / SIP / chat) is the **connection mode**, picked separately below. Never offer SIP / WebSocket / Voice / Text as a provider choice — they are connection modes for `self_hosted` (or any) agents.
 
 Then collect provider-specific credentials and configure. See `references/integrations.md` for full details on each provider.
 
 ### Quick Reference — Required Fields by Provider
 
-| Provider | Key Fields |
+| Provider (`assistant_provider`) | Key Fields |
 |----------|-----------|
-| **VAPI** | `vapi_api_key`, `assistant_id` |
-| **Retell** | `retell_api_key`, `assistant_id` |
-| **ElevenLabs** | `elevenlabs_api_key`, `assistant_id` |
-| **LiveKit** | `livekit_api_key`, `livekit_data` (JSON with `api_secret`, `url`) |
-| **Pipecat** | `pipecat_api_key`, agent name as `contact_number` |
-| **SIP** | `sip_endpoint`, optionally `sip_auth` |
-| **Custom** | Webhook URL — they push calls to Cekura |
+| **VAPI** (`vapi`) | `vapi_api_key`, `assistant_id` |
+| **Retell** (`retell`) | `retell_api_key`, `assistant_id` |
+| **ElevenLabs** (`elevenlabs`) | `elevenlabs_api_key`, `assistant_id` |
+| **LiveKit** (`livekit`) | `livekit_api_key`, `livekit_data` (JSON with `api_secret`, `url`) |
+| **Pipecat** (`self_hosted`) | `pipecat_api_key`, agent name as `contact_number` |
+| **Self-hosted / Custom** (`self_hosted`) | Webhook URL or WebSocket URL — they push calls to Cekura |
 
 **Apply via** PATCH `/test_framework/v1/aiagents/{id}/`:
 
@@ -131,12 +132,15 @@ Then collect provider-specific credentials and configure. See `references/integr
 }
 ```
 
-### Connection Type
+### Connection Mode
 
-After setting the provider, confirm the connection type:
+After setting the provider, confirm how Cekura should connect to the agent during test runs. This is independent of the provider — a `self_hosted` agent can be reached over SIP, WebSocket, or chat; a VAPI agent over PSTN or VAPI WebRTC; etc.
+
 - **Phone (PSTN)** — Add phone number via `contact_number` field. Simplest.
 - **WebRTC / SDK** — For LiveKit, Pipecat, ElevenLabs WebSocket. Lower latency.
-- **Chat / WebSocket** — Text-based testing. 10x faster, 90% cheaper than voice. Set `chat_assistant_id` and/or `websocket_url`.
+- **WebSocket** — Custom WebSocket URL (typically self-hosted agents). Set `websocket_url`.
+- **SIP** — Direct SIP endpoint. Set `sip_endpoint`, optionally `sip_auth`. Typically used with `self_hosted` provider.
+- **Chat / Text** — Text-based testing. 10x faster, 90% cheaper than voice. Set `chat_assistant_id`.
 
 Recommend chat/text for initial iteration, voice for final validation.
 
@@ -283,7 +287,7 @@ After agent setup, the user typically needs:
 
 ### Reference Files (loaded on demand)
 
-- **`references/integrations.md`** — Full provider integration details (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP, custom) with exact fields, gotchas, and chat setup
+- **`references/integrations.md`** — Full provider integration details (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, self-hosted) plus connection-mode reference (PSTN, WebRTC, WebSocket, SIP, chat)
 - **`references/mock-tool-design.md`** — Per-input branching examples, design questionnaire, append-not-replace pattern
 - **`references/api-reference.md`** — Complete agent API endpoints and schemas
 

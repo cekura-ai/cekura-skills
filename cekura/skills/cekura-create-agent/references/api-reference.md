@@ -36,6 +36,8 @@ POST /test_framework/v1/aiagents/
 
 ## Provider-Specific Fields
 
+These fields go on the agent record alongside `assistant_provider`.
+
 ### VAPI
 ```json
 { "vapi_api_key": "string", "vapi_data": "JSON string" }
@@ -61,12 +63,16 @@ POST /test_framework/v1/aiagents/
 { "pipecat_api_key": "string", "pipecat_data": "JSON string" }
 ```
 
+## Connection-Mode Fields (NOT providers)
+
+These select how Cekura dials into the agent at test-run time. They live on the same agent record but are orthogonal to `assistant_provider` — a `self_hosted` agent can be reached via any combination of these.
+
 ### SIP
 ```json
 { "sip_endpoint": "string (sip:agent@domain.com)", "sip_auth": {"username": "...", "password": "..."} }
 ```
 
-### Chat/WebSocket
+### Chat / WebSocket
 ```json
 { "chat_assistant_id": "string", "websocket_url": "string (wss://...)", "websocket_headers": "object" }
 ```
