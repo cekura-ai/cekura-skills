@@ -178,6 +178,31 @@ Create the agent record using the v2 API with data from Phases 1–4.
 ```
 `provider.agent_id` = Bland pathway_id.
 
+### Pipecat Cloud
+
+```json
+{
+  "name": "Pipecat Support Agent",
+  "description": "Voice agent deployed on Pipecat Cloud handling inbound support calls",
+  "inbound": true,
+  "project": 123,
+  "phone_number": "my-support-agent",
+  "language": "en",
+  "provider": {
+    "type": "pipecat",
+    "credentials": {
+      "api_key": "pipecat_key_xxx",
+      "config": {"webhook_url": "https://your-server.com/webhook"}
+    }
+  }
+}
+```
+
+- `phone_number` = Pipecat **agent name** (not a real phone number) — the name you gave the deployed agent in Pipecat Cloud
+- No `provider.agent_id` needed
+- Run evals using the `scenarios_run_pipecat_v2` endpoint; session config overrides can be passed per-request
+- **Docs:** https://docs.pipecat.ai
+
 ### Self-hosted via WebSocket (text-mode)
 ```json
 {
