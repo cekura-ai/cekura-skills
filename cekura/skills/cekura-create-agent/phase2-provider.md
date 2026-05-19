@@ -83,7 +83,9 @@ Ask: "What provider does your agent run on?"
 | Chat/Text | ✓ | ✓ | ✓ | — | — | — | ✓ |
 | Auto-fetch calls | ✓ | ✓ | — | — | — | — | — |
 | Auto-fetch tools | ✓ | ✓ | ✓ | — | — | — | — |
-| Auto-sync prompt | — | ✓ | — | — | — | — | — |
+| Auto-sync prompt | ? | ✓ | ? | ? | ? | — | — |
+
+> **Auto-sync prompt note:** The API schema (`auto_sync_prompt`) carries no provider restriction — unlike `auto_import_calls` which explicitly says "VAPI/Retell". Retell is the confirmed case (standard LLM and Conversation Flow agents). Whether it works for VAPI or ElevenLabs depends on whether those providers expose a prompt-fetch API. Check Agent Settings in the dashboard to confirm for your provider.
 
 ---
 
