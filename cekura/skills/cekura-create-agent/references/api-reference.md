@@ -96,7 +96,6 @@ POST /test_framework/v2/aiagents/
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `hallucination_metric_kb_files` | array | KB file IDs for hallucination detection |
 | `predefined_metrics` | write-only | Assign predefined metrics on create |
 
 ## Mock Tool Endpoints
@@ -133,8 +132,3 @@ Content-Type: multipart/form-data
 files: <file1>, <file2>
 ```
 
-After upload, link to hallucination detection:
-```json
-PATCH /test_framework/v2/aiagents/{id}/
-{ "hallucination_metric_kb_files": [<file_id_1>, <file_id_2>] }
-```

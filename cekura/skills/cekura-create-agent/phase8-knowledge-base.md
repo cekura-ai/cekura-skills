@@ -27,29 +27,16 @@ Or use `mcp__cekura__aiagents_upload_knowledge_base` if available in the session
 
 ---
 
-## 8c. Link to hallucination detection (optional)
-
-After upload, note the file IDs from the response and link them to the hallucination metric:
-
-```bash
-curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
-  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"hallucination_metric_kb_files": [<file_id_1>, <file_id_2>]}'
-```
-
----
-
-## 8d. What KB files enable
+## 8c. What KB files enable
 
 - More accurate evaluator generation — Cekura knows what the agent should and shouldn't say
-- Hallucination detection — agent responses compared against KB content
+- Hallucination detection — agent responses compared against KB content (configured via the hallucination metric, not the agent)
 - Richer test scenarios that exercise knowledge retrieval
 
 ---
 
 ## Phase 8 Gate
 
-**Confirm files are uploaded (or none needed). If linked to hallucination detection, confirm the PATCH succeeded.**
+**Confirm files are uploaded (or none needed).**
 
 Move to [Phase 9 — Dynamic Variables](phase9-dynamic-variables.md).
