@@ -1,41 +1,40 @@
 # Phase 5 — Create the Agent
 
-Create the agent record using the v2 API with data from Phases 1–4.
+**Endpoint:** `POST https://api.cekura.ai/test_framework/v2/aiagents/`
+
+**Required fields:** `name`, `description`, `project` — everything else is optional.
 
 ---
 
-## 5a. v2 API — field reference
-
-**Endpoint:** `POST https://api.cekura.ai/test_framework/v2/aiagents/`  
-**Required fields:** `name`, `description`, `project`, `inbound`
+## 5a. Top-level fields
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `name` | string (max 255) | Display name |
-| `description` | string | Full system prompt or exported config |
-| `project` | integer | Project ID from Phase 1 |
+| `name` | string (max 255) | **Required** |
+| `description` | string | **Required** — full system prompt or placeholder if using auto-sync |
+| `project` | integer | **Required** — project ID from Phase 1 |
 | `language` | string | BCP-47 locale, default `en` |
-| `agent_speaks_first` | boolean\|null | Agent speaks first; `null` = auto-detect |
-| `telephony` | object | All phone/SIP fields — see below |
-| `provider` | object | Provider block — see 5b |
+| `agent_speaks_first` | boolean\|null | `null` = auto-detect |
+| `telephony` | object (write-only) | Phone/SIP config — all fields optional |
+| `provider` | object (write-only) | Provider credentials and settings |
 
-**`telephony` block:**
+**`telephony` block** (all optional):
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `telephony.phone_number` | string | E.164 format, e.g. `+14155551234` |
-| `telephony.inbound` | boolean | `true` = receives calls, `false` = makes calls |
-| `telephony.sip_uri` | string | SIP URI, e.g. `sip:agent@domain.com` |
-| `telephony.sip_auth` | object | `{"username": "...", "password": "..."}` |
-| `telephony.outbound_numbers` | array | Numbers for outbound webhook validation |
+| Field | Notes |
+|-------|-------|
+| `telephony.phone_number` | E.164, e.g. `+14155551234` |
+| `telephony.inbound` | boolean, default `false` |
+| `telephony.sip_uri` | e.g. `sip:agent@domain.com` |
+| `telephony.sip_auth` | `{"username": "...", "password": "..."}` |
+| `telephony.outbound_numbers` | Array of E.164 numbers for outbound webhook validation |
 
 ---
 
-## 5b. Provider block structure
+## 5b. Provider block
 
 ```json
 "provider": {
-  "type": "<provider_type>",
+  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|chirp|koreai|genesys|trillet|cisco|self_hosted",
   "agent_id": "<voice agent ID on provider platform>",
   "credentials": {
     "api_key": "<provider API key (write-only)>",
@@ -51,52 +50,51 @@ Create the agent record using the v2 API with data from Phases 1–4.
 }
 ```
 
-`auto_sync_prompt`, `auto_import_calls`, and `auto_dial_outbound` live **inside the provider block**, not at the top level.
-
 **`credentials.config` keys by provider:**
 
-| Provider | Required config keys | Optional config keys |
-|----------|---------------------|---------------------|
+| Provider | Required | Optional |
+|----------|---------|---------|
 | `vapi` | — | `public_key`, `trigger_url` |
 | `retell` | — | `trigger_url`, `livekit_server_url` |
 | `elevenlabs` | — | `trigger_url`, `elevenlabs_base_url_override` |
 | `bland` | — | `encrypted_key` (Twilio bundle) |
 | `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
-| `pipecat` | `pipecat_agent_name` | `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
-| `trillet` | `workspace_id` | — |
-| `koreai` | `client_id`, `bot_id` | `host` |
-| `genesys` | `client_id`, `region` | — |
+| `pipecat` | — | `pipecat_agent_name`, `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
 | `synthflow` | — | `synthflow_base_url_override` |
 | `chirp` | `chirp_websocket_url` | `chirp_basic_auth_username`, `chirp_basic_auth_password` |
+| `koreai` | `client_id`, `bot_id` | `host` |
+| `genesys` | `client_id`, `region` | — |
+| `trillet` | `workspace_id` | — |
 | `cisco` | — | — |
 | `self_hosted` | — | `send_post_conversation_metadata` |
 
-**`chat_agent_details.config` keys by provider:**
+**`chat_agent_details.config` by provider:**
 
-| Provider | Config keys |
-|----------|-------------|
-| Retell | `agent_id` (required) |
-| Bland | `agent_id` (required, = pathway_id) |
-| VAPI | `agent_id` |
-| ElevenLabs | `agent_id` |
-| Self-hosted | `url` (required, wss://), `headers` |
+| `type` | Config keys |
+|--------|-------------|
+| `retell` | `agent_id` (required) |
+| `bland` | `agent_id` (required, = pathway_id) |
+| `vapi` | `agent_id` |
+| `elevenlabs` | `agent_id` |
+| `agentforce` | `agent_id`, `client_id`, `client_secret`, `domain` (all required) |
+| `self_hosted` | `url` (required, wss://), `headers` |
 
 ---
 
 ## 5c. Example payloads by provider
 
-### Self-hosted (phone only — most common)
+### Self-hosted (phone — most common)
 ```json
 {
   "name": "Support Bot",
   "description": "Handles inbound support calls for ACME Inc.",
   "project": 123,
+  "language": "en",
+  "provider": {"type": "self_hosted"},
   "telephony": {
     "phone_number": "+14155551234",
     "inbound": true
-  },
-  "language": "en",
-  "provider": {"type": "self_hosted"}
+  }
 }
 ```
 
@@ -106,7 +104,6 @@ Create the agent record using the v2 API with data from Phases 1–4.
   "name": "Internal Test Agent",
   "description": "Staging build of the support flow",
   "project": 123,
-  "telephony": {"inbound": false},
   "language": "en",
   "provider": {
     "type": "self_hosted",
@@ -117,7 +114,8 @@ Create the agent record using the v2 API with data from Phases 1–4.
         "headers": {"Authorization": "Bearer token_xxx"}
       }
     }
-  }
+  },
+  "telephony": {"inbound": false}
 }
 ```
 
@@ -127,10 +125,6 @@ Create the agent record using the v2 API with data from Phases 1–4.
   "name": "VAPI Sales Agent",
   "description": "Auto-syncing from provider",
   "project": 123,
-  "telephony": {
-    "phone_number": "+14155551234",
-    "inbound": false
-  },
   "language": "en",
   "provider": {
     "type": "vapi",
@@ -141,33 +135,16 @@ Create the agent record using the v2 API with data from Phases 1–4.
     },
     "auto_sync_prompt": true,
     "auto_import_calls": true
+  },
+  "telephony": {
+    "phone_number": "+14155551234",
+    "inbound": false
   }
 }
 ```
 
-### VAPI — squad (multi-agent workflow)
-```json
-{
-  "name": "VAPI Multi-Agent Workflow",
-  "description": "Auto-syncing from provider",
-  "project": 123,
-  "telephony": {
-    "phone_number": "+14155551234",
-    "inbound": true
-  },
-  "language": "en",
-  "provider": {
-    "type": "vapi",
-    "agent_id": "squad_abc123",
-    "credentials": {
-      "api_key": "vapi_sk_xxx",
-      "config": {"public_key": "vapi_pk_xxx"}
-    },
-    "auto_sync_prompt": true
-  }
-}
-```
-Squad ID goes in `agent_id`. Auto-sync tries `/assistant/{id}` first, falls back to `/squad/{id}`.
+### VAPI — squad (multi-agent)
+Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first, falls back to `/squad/{id}`.
 
 ### Retell
 ```json
@@ -175,10 +152,6 @@ Squad ID goes in `agent_id`. Auto-sync tries `/assistant/{id}` first, falls back
   "name": "Retell Booking Agent",
   "description": "Auto-syncing from provider",
   "project": 123,
-  "telephony": {
-    "phone_number": "+14155551234",
-    "inbound": true
-  },
   "language": "en",
   "provider": {
     "type": "retell",
@@ -193,11 +166,14 @@ Squad ID goes in `agent_id`. Auto-sync tries `/assistant/{id}` first, falls back
     },
     "auto_sync_prompt": true,
     "auto_import_calls": true
+  },
+  "telephony": {
+    "phone_number": "+14155551234",
+    "inbound": true
   }
 }
 ```
-- `provider.agent_id` = Retell **voice** agent
-- `chat_agent_details.config.agent_id` = Retell **chat/text-mode** agent (optional — omit if same agent handles both)
+`chat_agent_details` is optional — omit if the same agent handles voice and text.
 
 ### ElevenLabs
 ```json
@@ -205,16 +181,16 @@ Squad ID goes in `agent_id`. Auto-sync tries `/assistant/{id}` first, falls back
   "name": "ElevenLabs Voice Agent",
   "description": "Auto-syncing from provider",
   "project": 123,
-  "telephony": {
-    "phone_number": "+14155551234",
-    "inbound": true
-  },
   "language": "en",
   "provider": {
     "type": "elevenlabs",
     "agent_id": "el_agent_abc123",
     "credentials": {"api_key": "el_sk_xxx"},
     "auto_sync_prompt": true
+  },
+  "telephony": {
+    "phone_number": "+14155551234",
+    "inbound": true
   }
 }
 ```
@@ -225,7 +201,6 @@ Squad ID goes in `agent_id`. Auto-sync tries `/assistant/{id}` first, falls back
   "name": "LiveKit Concierge",
   "description": "Multi-modal front-desk agent",
   "project": 123,
-  "telephony": {"inbound": true},
   "language": "en",
   "provider": {
     "type": "livekit",
@@ -236,6 +211,29 @@ Squad ID goes in `agent_id`. Auto-sync tries `/assistant/{id}` first, falls back
         "url": "wss://acme.livekit.cloud"
       }
     }
+  },
+  "telephony": {"inbound": true}
+}
+```
+
+### Bland
+```json
+{
+  "name": "Bland Support Agent",
+  "description": "Handles tier-1 billing questions",
+  "project": 123,
+  "language": "en",
+  "provider": {
+    "type": "bland",
+    "agent_id": "bland_pathway_xyz",
+    "credentials": {
+      "api_key": "bland_xxx",
+      "config": {"encrypted_key": "twilio_bundle_xxx"}
+    }
+  },
+  "telephony": {
+    "phone_number": "+14155551234",
+    "inbound": true
   }
 }
 ```
@@ -246,7 +244,6 @@ Squad ID goes in `agent_id`. Auto-sync tries `/assistant/{id}` first, falls back
   "name": "Pipecat Support Agent",
   "description": "Voice agent deployed on Pipecat Cloud",
   "project": 123,
-  "telephony": {"inbound": true},
   "language": "en",
   "provider": {
     "type": "pipecat",
@@ -257,28 +254,26 @@ Squad ID goes in `agent_id`. Auto-sync tries `/assistant/{id}` first, falls back
         "webhook_url": "https://your-server.com/webhook"
       }
     }
-  }
+  },
+  "telephony": {"inbound": true}
 }
 ```
-Agent name goes in `credentials.config.pipecat_agent_name` — not in `telephony.phone_number`.
 
-### Bland
+### Chirp
 ```json
 {
-  "name": "Bland Support Agent",
-  "description": "Handles tier-1 billing questions",
+  "name": "Chirp Voice Agent",
+  "description": "WebSocket voice agent",
   "project": 123,
-  "telephony": {
-    "phone_number": "+14155551234",
-    "inbound": true
-  },
   "language": "en",
   "provider": {
-    "type": "bland",
-    "agent_id": "bland_pathway_xyz",
+    "type": "chirp",
     "credentials": {
-      "api_key": "bland_xxx",
-      "config": {"encrypted_key": "twilio_bundle_xxx"}
+      "config": {
+        "chirp_websocket_url": "wss://your-host/voice",
+        "chirp_basic_auth_username": "user",
+        "chirp_basic_auth_password": "pass"
+      }
     }
   }
 }
@@ -311,7 +306,7 @@ scripts/upload-agent.sh agent.json <id>     # update existing
 
 ## 5e. Save the agent ID
 
-The response includes an `id` field. **Record it — every subsequent step requires it.**
+The response `id` is needed for all subsequent steps.
 
 ---
 
