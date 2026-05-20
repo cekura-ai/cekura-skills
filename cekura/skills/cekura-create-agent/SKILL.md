@@ -41,9 +41,9 @@ curl                       multi-node              + next steps
 |-------|------|--------------|
 | 1 | [phase1-project.md](phase1-project.md) | List projects, pick `project_id` |
 | 2 | [phase2-provider.md](phase2-provider.md) | Choose provider; collect all credentials upfront |
-| 3 | [phase3-basics.md](phase3-basics.md) | Name, language, inbound/outbound, phone number |
-| 4 | [phase4-description.md](phase4-description.md) | Collect full system prompt or exported config |
-| 5 | [phase5-create.md](phase5-create.md) | POST v2 agent with nested provider block; curl for large descriptions |
+| 3 | [phase3-basics.md](phase3-basics.md) | Required fields (name, project) + auto-fetch from provider API |
+| 4 | [phase4-description.md](phase4-description.md) | Collect full system prompt — detailed, covers all flows and edge cases |
+| 5 | [phase5-create.md](phase5-create.md) | POST v2 agent; full examples for all providers |
 | 6 | [phase6-connection.md](phase6-connection.md) | Pick phone / WebRTC / chat / WebSocket |
 | 7 | [phase7-mock-tools.md](phase7-mock-tools.md) | Auto-fetch or manual curl; mock data design rules |
 | 8 | [phase8-knowledge-base.md](phase8-knowledge-base.md) | Upload KB files |

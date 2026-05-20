@@ -9,8 +9,8 @@ Confirm the agent is fully configured and ready for testing before handing off t
 Run through each item:
 
 1. **Agent exists** — retrieve the agent via the API → confirm `name`, `description`, `telephony.phone_number`
-2. **Provider connected** — `assistant_provider`, API key field, and `assistant_id` are all set
-3. **Connection mode confirmed** — phone number present, OR chat/WebRTC credentials set, OR `websocket_url` set
+2. **Provider connected** — `provider.type`, `provider.credentials.api_key`, and `provider.agent_id` (where applicable) are all set
+3. **Connection mode confirmed** — `telephony.phone_number` present, OR `provider.chat_agent_details` set, OR WebRTC credentials configured
 4. **Mock tools configured** — list mock tools via the API → every tool in the agent description has at least one mapping
 5. **Knowledge base** — `knowledge_base_files` on the agent object matches what was uploaded (or confirmed empty)
 6. **Dynamic variables** — detected variables match the `{{placeholders}}` in the description (or confirmed none)
@@ -25,12 +25,11 @@ Present a summary before handing off:
 ```
 Agent: [name] (ID: [id])
 Project: [project_id]
-Provider: [provider] (assistant: [assistant_id])
+Provider: [provider.type] (agent_id: [provider.agent_id])
 Connection mode: [phone / WebRTC / chat / WebSocket]
 Mock tools: [count] configured
 Knowledge base: [count] files
 Dynamic variables: [list or "none detected"]
-Advanced: [LLM model / topic nodes / etc. — or "defaults"]
 ```
 
 ---
