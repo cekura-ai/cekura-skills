@@ -3,67 +3,89 @@
 ## Authentication
 All requests: `X-CEKURA-API-KEY: <key>` header. Base URL: `https://api.cekura.ai`
 
-Docs: https://docs.cekura.ai/api-reference/test_framework/create-agent
+Docs: https://vocera-v2-agent-api-restructure.mintlify.app/api-reference/test_framework/create-agent
 
 ## Agent CRUD
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | `/test_framework/v1/aiagents/` | Create agent |
-| GET | `/test_framework/v1/aiagents/` | List agents (`?project_id=X`) |
-| GET | `/test_framework/v1/aiagents/{id}/` | Get agent details |
-| PATCH | `/test_framework/v1/aiagents/{id}/` | Partial update (preferred) |
-| PUT | `/test_framework/v1/aiagents/{id}/` | Full update |
-| DELETE | `/test_framework/v1/aiagents/{id}/` | Delete agent |
-| POST | `/test_framework/v1/aiagents/{id}/duplicate/` | Duplicate agent |
+| POST | `/test_framework/v2/aiagents/` | Create agent |
+| GET | `/test_framework/v2/aiagents/` | List agents (`?project_id=X`) |
+| GET | `/test_framework/v2/aiagents/{id}/` | Get agent details |
+| PATCH | `/test_framework/v2/aiagents/{id}/` | Partial update (preferred) |
+| PUT | `/test_framework/v2/aiagents/{id}/` | Full update |
+| DELETE | `/test_framework/v2/aiagents/{id}/` | Delete agent |
+| POST | `/test_framework/v2/aiagents/{id}/duplicate/` | Duplicate agent |
 
-## Create Agent Schema
+## Create Agent Schema (v2)
 
-**Required:** `agent_name`, `description`, `inbound`, `project`, `assistant_provider`
+**Required:** `name`, `description`, `project`
 
 ```json
-POST /test_framework/v1/aiagents/
+POST /test_framework/v2/aiagents/
 {
-  "agent_name": "string (max 255)",
+  "name": "string (max 255)",
   "description": "string (full system prompt)",
-  "inbound": "boolean",
   "project": "integer (project ID)",
-  "assistant_provider": "vapi|retell|elevenlabs|livekit|pipecat|bland|agentforce|trillet|self_hosted|cisco|sms|whatsapp|\"\"",
-  "contact_number": "string (E.164, e.g. '+14155551234')",
   "language": "string (BCP-47, default 'en')",
-  "transcript_provider": "string (usually matches assistant_provider)"
+  "inbound": "boolean",
+  "phone_number": "string (E.164, e.g. '+14155551234')",
+  "sip_uri": "string (e.g. 'sip:agent@domain.com')",
+  "sip_auth": {"username": "...", "password": "..."},
+  "outbound_numbers": ["string"],
+  "agent_speaks_first": "boolean|null",
+  "provider": { ... see below ... },
+  "telephony": { ... alternative to top-level phone/inbound fields ... }
 }
 ```
 
-## Provider Credentials (write-only, flat fields)
+## Provider Block
 
-| Provider | API key field | Data field (JSON) | Agent ID field |
-|----------|--------------|-------------------|----------------|
-| `vapi` | `vapi_api_key` | `vapi_data`: `{public_key, trigger_url}` | `assistant_id` |
-| `retell` | `retell_api_key` | `retell_data`: `{trigger_url}` | `chat_assistant_id` ⚠️ |
-| `elevenlabs` | `elevenlabs_api_key` | `elevenlabs_data` | `assistant_id` |
-| `livekit` | `livekit_api_key` | `livekit_data`: `{api_secret (req), url (req)}` | — |
-| `pipecat` | `pipecat_api_key` | `pipecat_data`: `{webhook_url}` | — (use `contact_number` = agent name) |
-| `bland` | `bland_api_key` | `bland_data`: `{encrypted_key}` | `chat_assistant_id` ⚠️ |
-| `agentforce` | `agentforce_client_secret` | `agentforce_data`: `{client_id, domain, agent_id}` | — |
-| `trillet` | `trillet_api_key` | `trillet_data`: `{workspace_id}` | — |
-| `self_hosted` | — | — | — |
+```json
+"provider": {
+  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|agentforce|trillet|self_hosted|...",
+  "agent_id": "string|null (voice agent ID on provider platform)",
+  "credentials": {
+    "api_key": "string (write-only)",
+    "config": { ... provider-specific ... }
+  },
+  "chat_agent_details": {
+    "type": "string",
+    "config": { ... }
+  },
+  "auto_sync_prompt": "boolean|null",
+  "auto_import_calls": "boolean|null",
+  "auto_dial_outbound": "boolean|null"
+}
+```
 
-⚠️ Retell and Bland use `chat_assistant_id` (NOT `assistant_id`) for their agent ID — this applies to both voice and text-mode.
+## credentials.config Keys by Provider
 
-## Additional Fields
+| Provider | Required | Optional |
+|----------|---------|---------|
+| `vapi` | — | `public_key`, `trigger_url` |
+| `retell` | — | `trigger_url` |
+| `elevenlabs` | — | `trigger_url` |
+| `bland` | — | `encrypted_key` (Twilio bundle) |
+| `livekit` | `api_secret`, `url` | `tracing_enabled` |
+| `agentforce` | `client_id`, `domain`, `agent_id` | — |
+| `trillet` | `workspace_id` | — |
+| `pipecat` | — | `webhook_url` |
+| `self_hosted` | — | `url` (wss://), `headers` |
+
+## chat_agent_details by Provider
+
+| Provider | Structure |
+|----------|-----------|
+| Retell | `{"type": "retell", "config": {"agent_id": "..."}}` |
+| VAPI | `{"type": "vapi", "config": {"agent_id": "..."}}` |
+| ElevenLabs | `{"type": "elevenlabs", "config": {"agent_id": "..."}}` |
+| Self-hosted | `{"type": "self_hosted", "config": {"url": "wss://...", "headers": {...}}}` |
+
+## Additional Top-Level Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `websocket_url` | string | WebSocket endpoint for self-hosted text-mode |
-| `websocket_headers` | object | Headers sent to WebSocket server |
-| `sip_endpoint` | string | SIP URI e.g. `sip:agent@domain.com` |
-| `sip_auth` | object | `{"username": "...", "password": "..."}` |
-| `agent_gives_first_message` | boolean\|null | Agent speaks first; null = auto-detect |
-| `auto_sync_prompt_enabled` | boolean | Sync description from provider every 30s (VAPI/Retell/ElevenLabs) |
-| `auto_fetch_calls_enabled` | boolean | Auto-import calls every 30s (VAPI/Retell/ElevenLabs) |
-| `outbound_auto_call` | boolean | Auto-place outbound calls (VAPI/Retell only) |
-| `outbound_numbers` | array | Phone numbers for outbound webhook validation |
 | `llm_model` | enum | Caller simulation LLM: `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini`, `claude-sonnet-4-5` |
 | `llm_temperature` | float | 0.0–2.0, default 0.0 |
 | `llm_max_tokens` | integer | Default 4096 |
@@ -92,7 +114,7 @@ POST /test_framework/v1/aiagents/
 ```json
 POST /test_framework/v1/aiagents/{agent_id}/tools/
 {
-  "name": "string (required, max 64 chars, alphanumeric + _ + -)",
+  "name": "string (required, max 64 chars)",
   "description": "string",
   "information": [
     {"input": {"param": "value"}, "output": {"result": "value"}}
@@ -101,22 +123,18 @@ POST /test_framework/v1/aiagents/{agent_id}/tools/
 }
 ```
 
-`name` must exactly match the tool name in the agent description. `information` is input→output mappings. **Critical: Append-not-replace** — GET existing data first, merge, then PATCH the full array.
+**Critical: Append-not-replace** — GET existing `information` first, merge, then PATCH the full array.
 
 ## Knowledge Base
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/test_framework/v1/aiagents/{id}/upload_knowledge_base/` | Upload KB files |
-
 ```
-POST /test_framework/v1/aiagents/{id}/upload_knowledge_base/
+POST /test_framework/v2/aiagents/{id}/upload_knowledge_base/
 Content-Type: multipart/form-data
 files: <file1>, <file2>
 ```
 
 After upload, link to hallucination detection:
 ```json
-PATCH /test_framework/v1/aiagents/{id}/
+PATCH /test_framework/v2/aiagents/{id}/
 { "hallucination_metric_kb_files": [<file_id_1>, <file_id_2>] }
 ```
