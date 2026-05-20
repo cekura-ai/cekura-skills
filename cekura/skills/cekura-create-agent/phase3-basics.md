@@ -101,22 +101,21 @@ If yes, ask:
 2. **Does your agent make tool/function calls?** (affects the server skeleton)
 3. **Local development or production?** (`ws://` vs `wss://`)
 
-Then generate the server code from `references/websocket-server-scaffold.md`. The server must:
-- Accept WebSocket connections from Cekura
-- Validate the `X-VOCERA-SECRET` header (= Cekura API key)
-- Handle incoming messages: `{"content": "user message text"}`
-- Reply with: `{"content": "agent response text"}`
-- Send `{"content": "...", "type": "end_call"}` to end the conversation
-- If making tool calls: send `{"role": "Function Call", "data": {...}}` and await the result frame
+Point them to the **official Cekura WebSocket server example repo**:
 
-For local servers, suggest exposing via `ngrok` or Cloudflare Tunnel to get a public `wss://` URL that Cekura can reach.
+> **https://github.com/cekura-ai/llm-websocket-server-example**
 
-After generating the server:
-- Help the user run it
-- Get the public `wss://` URL
-- That URL goes into `provider.chat_agent_details.config.url` on the Cekura agent
+This is a complete, production-ready Python server that already implements the full Cekura protocol (keepalives, tool call reporting, greeting-first flow). Walk the user through adapting it:
 
-Full protocol details and code scaffolds: `references/websocket-server-scaffold.md`
+1. Clone the repo and install dependencies
+2. Update `SYSTEM_PROMPT` with their agent's prompt
+3. Update the LLM credentials
+4. Adapt `TOOLS` and `TOOL_URL` if their agent makes tool calls
+5. Run locally: `python main.py` → `ws://localhost:8765`
+6. Expose publicly: `ngrok http 8765` → `wss://abc123.ngrok.io`
+7. Set that URL as `provider.chat_agent_details.config.url` on the Cekura agent
+
+If the user needs a different language or framework, generate a custom server using the protocol details in `references/websocket-server-scaffold.md`.
 
 ---
 
