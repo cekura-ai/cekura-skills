@@ -10,10 +10,8 @@ Confirm how Cekura will connect to the agent during test runs. The provider chos
 |------|----------|---------------|
 | **Phone (PSTN)** | Any phone-based agent | `phone_number` set in Phase 3 |
 | **WebRTC** | VAPI, Retell, ElevenLabs, LiveKit, Pipecat | Provider-specific — see 6b |
-| **Chat / Text** | Rapid iteration (10× faster, ~90% cheaper) | `provider.chat_agent_details` — see 6c |
+| **Chat / Text** | Text-based testing | `provider.chat_agent_details` — see 6c |
 | **Self-hosted WebSocket** | Custom agents | Set in `provider.chat_agent_details` in Phase 5 |
-
-**Recommendation:** Use chat mode during development for fast iteration. Switch to phone or WebRTC for final validation.
 
 ---
 
