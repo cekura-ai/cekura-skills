@@ -112,6 +112,8 @@ Set `provider.type` to `self_hosted` for the voice side (or omit provider if tex
 
 **Auto-sync/import/dial** are set inside the `provider` block (`provider.auto_sync_prompt`, `provider.auto_import_calls`, `provider.auto_dial_outbound`).
 
+`auto_sync_prompt` is supported for: VAPI, Retell, ElevenLabs, **Synthflow** (not shown in table above as Synthflow is a less common provider).
+
 ---
 
 ## Phase 2 Gate
