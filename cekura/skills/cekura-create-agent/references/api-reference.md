@@ -31,7 +31,6 @@ POST /test_framework/v2/aiagents/
   "agent_speaks_first": "boolean|null",
   "provider": { ... see below ... },
 
-  // All telephony fields live inside the telephony block — not top-level
   "telephony": {
     "phone_number": "string (E.164, e.g. '+14155551234')",
     "inbound": "boolean (default false)",
@@ -41,8 +40,6 @@ POST /test_framework/v2/aiagents/
   }
 }
 ```
-
-> `phone_number`, `inbound`, `sip_uri`, `sip_auth`, and `outbound_numbers` all belong inside `telephony` — none are top-level fields.
 
 ## Provider Block
 

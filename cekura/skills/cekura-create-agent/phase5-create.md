@@ -19,7 +19,7 @@ Create the agent record using the v2 API with data from Phases 1–4.
 | `telephony` | object | All phone/SIP fields — see below |
 | `provider` | object | Provider block — see 5b |
 
-**`telephony` block** — all telephony fields live here, not at top level:
+**`telephony` block:**
 
 | Field | Type | Notes |
 |-------|------|-------|
