@@ -48,7 +48,7 @@ curl           halluc.     multi-node  dropoff,    + next steps
 | 7 | [phase7-mock-tools.md](phase7-mock-tools.md) | Auto-fetch or manual curl; mock data design rules |
 | 8 | [phase8-knowledge-base.md](phase8-knowledge-base.md) | Upload KB files; link to hallucination detection |
 | 9 | [phase9-dynamic-variables.md](phase9-dynamic-variables.md) | `{{var}}` patterns, multi-node agent guidance |
-| 10 | [phase10-advanced.md](phase10-advanced.md) | LLM sim model, topic/dropoff nodes, pronunciation, outbound |
+| 10 | [phase10-advanced.md](phase10-advanced.md) | Outbound config (auto_dial_outbound, outbound_numbers) |
 | 11 | [phase11-verify.md](phase11-verify.md) | Verification checklist + summary + next-skill handoff |
 
 ---

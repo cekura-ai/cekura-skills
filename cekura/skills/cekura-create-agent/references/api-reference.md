@@ -45,7 +45,7 @@ POST /test_framework/v2/aiagents/
 
 ```json
 "provider": {
-  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|agentforce|trillet|self_hosted|...",
+  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|trillet|koreai|genesys|synthflow|chirp|cisco|self_hosted",
   "agent_id": "string|null (voice agent ID on provider platform)",
   "credentials": {
     "api_key": "string (write-only)",
@@ -86,18 +86,16 @@ POST /test_framework/v2/aiagents/
 | Retell | `{"type": "retell", "config": {"agent_id": "..."}}` |
 | VAPI | `{"type": "vapi", "config": {"agent_id": "..."}}` |
 | ElevenLabs | `{"type": "elevenlabs", "config": {"agent_id": "..."}}` |
+| Bland | `{"type": "bland", "config": {"agent_id": "..."}}` (= pathway_id) |
+| Agentforce | `{"type": "agentforce", "config": {"agent_id": "...", "client_id": "...", "client_secret": "...", "domain": "..."}}` |
+| SMS | `{"type": "sms", "config": {...}}` |
+| WhatsApp | `{"type": "whatsapp", "config": {...}}` |
 | Self-hosted | `{"type": "self_hosted", "config": {"url": "wss://...", "headers": {...}}}` |
 
 ## Additional Top-Level Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `pronunciation_words` | array | `[["word", "phoneme"]]` |
-| `spelling_word_types` | array | `["name", "postcode", "email"]` |
-| `topic_nodes` | object | `{"billing": "handle_billing"}` |
-| `dropoff_nodes` | object | `{"timeout": 30}` |
-| `auto_update_topic_nodes` | boolean | Auto-infer topics from description |
-| `auto_update_dropoff_nodes` | boolean | Auto-infer dropoffs from description |
 | `hallucination_metric_kb_files` | array | KB file IDs for hallucination detection |
 | `predefined_metrics` | write-only | Assign predefined metrics on create |
 

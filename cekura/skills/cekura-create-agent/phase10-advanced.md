@@ -1,52 +1,17 @@
 # Phase 10 — Advanced Configuration
 
-Optional settings that improve test quality, observability, and outbound behavior. Ask the user which apply.
+Optional settings for outbound behavior. Ask the user which apply.
 
 ---
 
-## 10a. Topic classification
-
-```json
-{
-  "topic_nodes": {"billing": "handle_billing", "scheduling": "book_appointment"},
-  "auto_update_topic_nodes": true
-}
-```
-
-`auto_update_topic_nodes: true` infers topic nodes from the agent description automatically.
-
----
-
-## 10c. Dropoff detection
-
-```json
-{
-  "dropoff_nodes": {"timeout": 30, "no_response": 15},
-  "auto_update_dropoff_nodes": true
-}
-```
-
----
-
-## 10d. Pronunciation and spelling analysis
-
-```json
-{
-  "pronunciation_words": [["VAPI", "VAY-pee"], ["Cekura", "SEH-kyoo-rah"]],
-  "spelling_word_types": ["name", "postcode", "email"]
-}
-```
-
----
-
-## 10e. Outbound agent config
+## 10a. Outbound agent config
 
 `auto_dial_outbound` is inside the `provider` block; `outbound_numbers` is inside the `telephony` block:
 
 ```json
 {
-  "inbound": false,
   "telephony": {
+    "inbound": false,
     "outbound_numbers": ["+14155551234"]
   },
   "provider": {
@@ -61,7 +26,7 @@ Works with VAPI and Retell only. Test profile fields are forwarded as dynamic va
 
 ---
 
-## 10f. Apply via PATCH
+## 10b. Apply via PATCH
 
 ```bash
 curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \

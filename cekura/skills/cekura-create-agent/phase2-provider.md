@@ -16,7 +16,6 @@ Ask: "What provider does your agent run on?"
 | **LiveKit** | `livekit` | WebRTC only; no phone number needed |
 | **Pipecat Cloud** | `pipecat` | WebRTC; agent name goes in `credentials.config.pipecat_agent_name` |
 | **Bland** | `bland` | `provider.agent_id` = Bland pathway_id |
-| **Agentforce** | `agentforce` | Salesforce Agentforce |
 | **Trillet** | `trillet` | Requires `credentials.config.workspace_id` |
 | **SIP / self-hosted (phone)** | `self_hosted` | Observation-only; phone number required |
 | **Self-hosted (WebSocket)** | `self_hosted` | Text-mode via `chat_agent_details` |
@@ -67,11 +66,20 @@ Ask: "What provider does your agent run on?"
 - **`credentials.config.encrypted_key`** (optional): Twilio credential bundle
 - **Docs:** https://docs.bland.ai/api-v1/get/agents-id
 
-### Agentforce
-- **`credentials.api_key`**: Salesforce client secret
-- **`credentials.config.client_id`** (required)
-- **`credentials.config.domain`** (required)
-- **`credentials.config.agent_id`** (required)
+### Agentforce (text/chat only)
+Agentforce is a **text-mode channel only** — set it in `chat_agent_details`, not as `provider.type`:
+```json
+"chat_agent_details": {
+  "type": "agentforce",
+  "config": {
+    "agent_id": "...",
+    "client_id": "...",
+    "client_secret": "...",
+    "domain": "..."
+  }
+}
+```
+Set `provider.type` to `self_hosted` for the voice side (or omit provider if text-only).
 
 ### Trillet
 - **`credentials.api_key`**: Trillet API Key
