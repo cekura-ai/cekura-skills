@@ -63,17 +63,21 @@ POST /test_framework/v2/aiagents/
 
 ## credentials.config Keys by Provider
 
-| Provider | Required | Optional |
-|----------|---------|---------|
+| Provider | Required config keys | Optional config keys |
+|----------|---------------------|---------------------|
 | `vapi` | — | `public_key`, `trigger_url` |
-| `retell` | — | `trigger_url` |
-| `elevenlabs` | — | `trigger_url` |
+| `retell` | — | `trigger_url`, `livekit_server_url` |
+| `elevenlabs` | — | `trigger_url`, `elevenlabs_base_url_override` |
 | `bland` | — | `encrypted_key` (Twilio bundle) |
-| `livekit` | `api_secret`, `url` | `tracing_enabled` |
-| `agentforce` | `client_id`, `domain`, `agent_id` | — |
+| `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
+| `pipecat` | `pipecat_agent_name` | `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
 | `trillet` | `workspace_id` | — |
-| `pipecat` | `pipecat_agent_name` | `webhook_url`, `config`, `room_properties` |
-| `self_hosted` | — | `url` (wss://), `headers` |
+| `koreai` | `client_id`, `bot_id` | `host` (default: https://bots.kore.ai) |
+| `genesys` | `client_id`, `region` | — |
+| `synthflow` | — | `synthflow_base_url_override` |
+| `chirp` | `chirp_websocket_url` | `chirp_basic_auth_username`, `chirp_basic_auth_password` |
+| `cisco` | — | — (no credentials needed) |
+| `self_hosted` | — | `send_post_conversation_metadata` |
 
 ## chat_agent_details by Provider
 
@@ -88,10 +92,6 @@ POST /test_framework/v2/aiagents/
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `llm_model` | enum | Caller simulation LLM: `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini`, `claude-sonnet-4-5` |
-| `llm_temperature` | float | 0.0–2.0, default 0.0 |
-| `llm_max_tokens` | integer | Default 4096 |
-| `llm_system_prompt` | string | Custom caller persona |
 | `pronunciation_words` | array | `[["word", "phoneme"]]` |
 | `spelling_word_types` | array | `["name", "postcode", "email"]` |
 | `topic_nodes` | object | `{"billing": "handle_billing"}` |

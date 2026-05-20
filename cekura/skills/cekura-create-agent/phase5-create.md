@@ -58,14 +58,18 @@ Create the agent record using the v2 API with data from Phases 1–4.
 | Provider | Required config keys | Optional config keys |
 |----------|---------------------|---------------------|
 | `vapi` | — | `public_key`, `trigger_url` |
-| `retell` | — | `trigger_url` |
-| `elevenlabs` | — | `trigger_url` |
+| `retell` | — | `trigger_url`, `livekit_server_url` |
+| `elevenlabs` | — | `trigger_url`, `elevenlabs_base_url_override` |
 | `bland` | — | `encrypted_key` (Twilio bundle) |
-| `livekit` | `api_secret`, `url` | `tracing_enabled` |
-| `agentforce` | `client_id`, `domain`, `agent_id` | — |
+| `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
+| `pipecat` | `pipecat_agent_name` | `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
 | `trillet` | `workspace_id` | — |
-| `pipecat` | `pipecat_agent_name` | `webhook_url`, `config`, `room_properties` |
-| `self_hosted` | — | — |
+| `koreai` | `client_id`, `bot_id` | `host` |
+| `genesys` | `client_id`, `region` | — |
+| `synthflow` | — | `synthflow_base_url_override` |
+| `chirp` | `chirp_websocket_url` | `chirp_basic_auth_username`, `chirp_basic_auth_password` |
+| `cisco` | — | — |
+| `self_hosted` | — | `send_post_conversation_metadata` |
 
 **`chat_agent_details.config` keys by provider:**
 

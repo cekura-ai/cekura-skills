@@ -4,26 +4,7 @@ Optional settings that improve test quality, observability, and outbound behavio
 
 ---
 
-## 10a. LLM simulation model
-
-Controls which model simulates the caller during text/chat evaluations:
-
-```json
-{
-  "llm_model": "gpt-4o",
-  "llm_temperature": 0.0,
-  "llm_max_tokens": 4096,
-  "llm_system_prompt": "<optional: custom caller persona prompt>"
-}
-```
-
-Options: `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini`, `claude-sonnet-4-5`
-
-Default temperature `0.0` gives consistent, reproducible tests.
-
----
-
-## 10b. Topic classification
+## 10a. Topic classification
 
 ```json
 {
