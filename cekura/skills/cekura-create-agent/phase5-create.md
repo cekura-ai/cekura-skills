@@ -309,4 +309,6 @@ The response `id` is needed for all subsequent steps.
 
 **Do not proceed until the agent is created and you have its `id`.**
 
+**Creating the agent record is NOT the end of setup.** The agent cannot be tested yet — connection type, mock tools, knowledge base, dynamic variables, and verification still remain. Move immediately to the next phase.
+
 Move to [Phase 6 — Connection Type](phase6-connection.md).

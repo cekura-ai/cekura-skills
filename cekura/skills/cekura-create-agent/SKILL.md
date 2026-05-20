@@ -55,15 +55,17 @@ curl                       multi-node              + next steps
 
 ## Ground Rules
 
-**Phases are sequential — do not skip.** Each phase has a gate; a gate is satisfied by evidence, not assumption.
+**All 11 phases must be completed before the skill ends.** Do not stop after Phase 5 just because the agent record exists — that is only the halfway point. The agent is not ready for testing until Phase 11 is complete.
+
+**Mandatory phases (never skip):** 1, 2, 3, 4, 5, 6, 11.
+
+**Optional phases (skip if not applicable):** 7 (mock tools), 8 (knowledge base), 9 (dynamic variables), 10 (advanced/outbound). Always ask the user whether each applies before skipping.
 
 **Phase 2 (provider) comes before basics** — knowing the provider determines what credentials to collect, which connection modes are available, and which auto-fetch capabilities exist.
 
-**The user may have partially completed setup.** Ask what's already done and skip completed phases.
+**The user may have partially completed setup.** Ask what's already done and skip completed phases — but always finish at Phase 11.
 
 **Collect conversationally — never dump a form.** Ask for one thing at a time.
-
-**Phases 7–10 are optional** — skip any that don't apply to this agent.
 
 ---
 
