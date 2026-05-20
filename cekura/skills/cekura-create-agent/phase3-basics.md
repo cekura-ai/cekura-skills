@@ -80,7 +80,9 @@ curl -s https://api.bland.ai/agents/{pathway_id} \
 
 ## 3d. Description — auto-sync for VAPI / Retell / ElevenLabs / Synthflow
 
-Enable `provider.auto_sync_prompt: true` when creating the agent (Phase 5). Cekura fetches the description from the provider within ~30 seconds. Pass a placeholder for the required `description` field on create.
+Enable `provider.auto_sync_prompt: true` when creating the agent (Phase 5). Cekura fetches the full description from the provider within ~30 seconds. Pass a placeholder for the required `description` field on create.
+
+The description is used to generate test scenarios — the more complete it is, the better the scenarios. See [Phase 4](phase4-description.md) for what makes a good description.
 
 ---
 
