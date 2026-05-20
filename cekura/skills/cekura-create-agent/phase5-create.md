@@ -283,12 +283,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 
 ## 5d. POST the agent
 
-### Via MCP (description ≤ 4 KB)
-```
-mcp__cekura__aiagents_create with the payload above
-```
-
-### Via curl (always safe; required for descriptions > 4 KB)
+### Via API (descriptions > 4 KB — always safe)
 ```bash
 curl -X POST https://api.cekura.ai/test_framework/v2/aiagents/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \

@@ -14,11 +14,7 @@ If no → skip to [Phase 10](phase10-advanced.md).
 
 ## 9b. Auto-detection
 
-If the agent description contains `{{variableName}}` patterns, Cekura detects them automatically after agent creation. Check the agent object:
-
-```
-mcp__cekura__aiagents_retrieve → inspect detected dynamic variables
-```
+If the agent description contains `{{variableName}}` patterns, Cekura detects them automatically after agent creation. Retrieve the agent via the API to inspect detected dynamic variables.
 
 ---
 

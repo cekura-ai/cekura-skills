@@ -29,10 +29,10 @@ ID         Credentials   in/out,    exported       block,          chat
 
 Phase 7        Phase 8     Phase 9     Phase 10    Phase 11
 Mock Tools  →  KB      →   Dyn Vars →  Advanced →  Verify
-Auto-fetch     Upload      {{var}}     LLM model,  Checklist
-or manual      docs +      patterns,   topic/      + summary
-curl           halluc.     multi-node  dropoff,    + next steps
-               link        pattern     outbound
+Auto-fetch     Upload      {{var}}     Outbound    Checklist
+or manual      KB docs     patterns,   config      + summary
+curl                       multi-node              + next steps
+                           pattern
 ```
 
 ## The 11 Phases
@@ -67,26 +67,13 @@ curl           halluc.     multi-node  dropoff,    + next steps
 
 ---
 
-## API Access — Cekura MCP Server
+## API Access
 
-Configure MCP:
-```bash
-claude mcp add --transport http cekura --scope user https://api.cekura.ai/mcp
-```
+**Prerequisites:** Cekura account + API key or OAuth.
 
-| Tool | Used in |
-|------|---------|
-| `mcp__cekura__projects_list` | Phase 1 |
-| `mcp__cekura__aiagents_create` | Phase 5 (small descriptions) |
-| `mcp__cekura__aiagents_partial_update` | Phases 6, 8, 10 |
-| `mcp__cekura__aiagents_retrieve` | Phase 11 |
-| `mcp__cekura__aiagents_tools_list` | Phase 11 |
-| `mcp__cekura__aiagents_upload_knowledge_base` | Phase 8 |
-| `Bash` | Phases 5, 7 (curl — MCP limitations below) |
+For Claude Code plugin users, platform tools are auto-configured. If platform operations aren't working, run `/setup-mcp` to configure the connection.
 
-**Known MCP limitations:**
-- `aiagents_create` — 414 URI Too Long on descriptions >4 KB. Use curl / `scripts/upload-agent.sh`.
-- `aiagents_tools_create` — not exposed by MCP. Always use curl for mock tool creation.
+For other clients, use the Cekura dashboard or call the API directly with your API key (`X-CEKURA-API-KEY` header).
 
 ---
 

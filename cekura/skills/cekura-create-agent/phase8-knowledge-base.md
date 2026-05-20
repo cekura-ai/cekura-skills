@@ -23,7 +23,6 @@ curl -X POST https://api.cekura.ai/test_framework/v2/aiagents/{id}/upload_knowle
 
 Supported formats: PDF, text files, documents. Uploaded files appear in Agent Settings → Agent's Knowledge.
 
-Or use `mcp__cekura__aiagents_upload_knowledge_base` if available in the session.
 
 ---
 

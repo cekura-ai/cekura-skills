@@ -8,11 +8,7 @@ Identify which Cekura project the agent should belong to before collecting any o
 
 Ask: "Which Cekura project should this agent live in? I can list your projects if you're not sure."
 
-If they don't know, list projects:
-
-```
-mcp__cekura__projects_list → display names + IDs → ask user to pick one
-```
+If they don't know, list projects via the Cekura API or dashboard → display names + IDs → ask user to pick one.
 
 Note the selected `project_id` — required for agent creation in Phase 4.
 

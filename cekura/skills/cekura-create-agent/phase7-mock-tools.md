@@ -28,7 +28,7 @@ Auto-fetch is UI-only — no direct API equivalent. Manage individual tools via 
 
 Read the agent description to find every tool name. For each tool, create a mock.
 
-**Important:** `mcp__cekura__aiagents_tools_create` is not exposed by MCP — always use curl:
+Create mock tools via the API:
 
 ```bash
 curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tools/ \
