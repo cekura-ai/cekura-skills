@@ -66,52 +66,40 @@ Do not ask broad questions like "anything else?". Ask specific, targeted ones ba
 
 #### Step 3 — Synthesise a complete description
 
-Write the description yourself. Do not ask the user to write it. Structure it to cover everything:
+Write the description yourself. Do not ask the user to write it. The description has exactly **two sections**:
 
-```
-## Agent Purpose
-[One paragraph: who the agent is, what it does, what outcome it drives]
+---
 
-## Tone & Persona
-[Communication style, formality, language rules, persona details]
+**## Workflows**
 
-## Primary Workflows
-[For each major flow:]
-### [Flow Name]
-- Trigger: [what initiates this flow]
-- Steps: [numbered steps the agent takes]
-- Completion: [how this flow ends successfully]
+Cover every single workflow the agent can handle. For each one, write it out in exhaustive detail — do not summarise. A workflow entry must describe:
 
-## Tool Calls
-[For each tool:]
-### [tool_name]
-- Purpose: [what it does]
-- Called when: [trigger condition]
-- Parameters: [key inputs]
-- On success: [what the agent does with the result]
-- On failure/empty: [fallback behaviour]
+- What triggers it (user intent, incoming context, tool result, state transition)
+- Every step the agent takes, in order
+- What the agent says at each step (exact phrasing patterns if deterministic, intent if flexible)
+- Every tool call made — when triggered, what inputs are sent, what the agent does with each possible output (success, empty, error)
+- Every branching condition — what changes the path, what each path leads to
+- How it ends — confirmation, transfer, hang-up, hand-off to another flow
+- What happens if the user goes off-script mid-flow
 
-## Rules & Constraints
-- [Must-do rules]
-- [Must-never rules]
-- [Transfer/escalation conditions]
-- [Timing rules, retry limits, etc.]
+Write each workflow as a detailed narrative + step list. Do not condense. If there are 8 sub-branches, write all 8.
 
-## Edge Cases & Error Handling
-- [What happens when X goes wrong]
-- [How silence/unclear input is handled]
-- [What happens at end of call]
+**## Behavioral Rules**
 
-## Language & Localisation
-- [Supported languages]
-- [Language detection / switching rules]
-- [Any language-specific behaviour differences]
+List every rule that governs the agent's behaviour across all workflows:
 
-## Dynamic Variables
-- [{{variable}} placeholders and what they represent]
-```
+- What the agent must always do (greetings, confirmations, mandatory data collection)
+- What the agent must never do or say
+- Transfer and escalation rules — exact conditions, what is said before transferring
+- Retry and fallback rules — how many times, what changes on each retry
+- Language and tone rules — formality, vocabulary constraints, persona
+- Timing rules — when to wait, when to move on, inactivity handling
+- Data validation rules — what inputs are accepted, how invalid input is handled
+- Any conditional rules (e.g. "only apply rule X if the user is a returning customer")
 
-Do not stop writing until every workflow, every tool, every rule, and every edge case is captured. If something is unclear, ask — then write.
+---
+
+Do not stop writing until every workflow, every branch, every tool path, and every rule is captured. Length is not a concern — completeness is. If something is unclear from the code, ask the user — then write.
 
 #### Step 4 — Confirm with the user
 
