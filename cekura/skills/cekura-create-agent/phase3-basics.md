@@ -52,11 +52,14 @@ The connection type is determined by what you configure — ask the user which t
 | Mode | When | What to set |
 |------|------|-------------|
 | **Phone (PSTN)** | Agent has a phone number | `telephony.phone_number` + `telephony.inbound` |
-| **WebRTC** | Lower latency, no telephony costs | `credentials.config.public_key` for VAPI; other providers work with existing credentials |
-| **Chat / Text** | Text-based testing | `provider.chat_agent_details` — see 3d |
+| **WebRTC** | Lower latency, no telephony costs | Provider-specific — see below |
+| **WebSocket endpoint** | Agent exposes a `wss://` URL that Cekura connects to | `provider.chat_agent_details.type: self_hosted, config.url: wss://...` — see 3d |
+| **Chat / Text (provider)** | Provider has a separate chat agent | `provider.chat_agent_details` with provider type — see 3d |
 | **SIP** | Custom SIP endpoint | `telephony.sip_uri` + optional `telephony.sip_auth` |
 
-A single agent can support multiple connection modes (e.g. phone + chat).
+A single agent can support multiple connection modes (e.g. phone + WebSocket). Ask the user which they want to use.
+
+> **WebSocket endpoint:** If the user's agent (or simulation runner) exposes a `wss://` URL, Cekura connects to it as a client. Ask for the WebSocket URL and any auth headers needed.
 
 ### WebRTC per provider
 
@@ -70,16 +73,16 @@ A single agent can support multiple connection modes (e.g. phone + chat).
 
 ---
 
-## 3d. Chat / text setup
+## 3d. WebSocket / chat setup
 
-Set `provider.chat_agent_details` to enable text-based testing. Apply via PATCH after creating the agent in Phase 5, or include in the create payload.
+Set `provider.chat_agent_details` to configure a WebSocket or text-based connection. Apply via PATCH after creating the agent in Phase 5, or include in the create payload.
 
-| Provider | `chat_agent_details` |
-|----------|---------------------|
-| Retell | `{"type": "retell", "config": {"agent_id": "<chat agent ID>"}}` |
-| VAPI | `{"type": "vapi", "config": {"agent_id": "<chat assistant ID>"}}` |
+| Connection | `chat_agent_details` |
+|------------|---------------------|
+| **Self-hosted WebSocket** (agent exposes `wss://`) | `{"type": "self_hosted", "config": {"url": "wss://your-server/agent", "headers": {"Authorization": "Bearer ..."}}}` |
+| Retell chat agent | `{"type": "retell", "config": {"agent_id": "<chat agent ID>"}}` |
+| VAPI chat assistant | `{"type": "vapi", "config": {"agent_id": "<chat assistant ID>"}}` |
 | ElevenLabs | `{"type": "elevenlabs", "config": {"agent_id": "<agent ID>"}}` |
-| Self-hosted WebSocket | `{"type": "self_hosted", "config": {"url": "wss://...", "headers": {...}}}` |
 
 > **Retell:** In Retell Dashboard, use "Copy as chat agent" to create a separate text-mode agent, then use that agent's ID here.
 
