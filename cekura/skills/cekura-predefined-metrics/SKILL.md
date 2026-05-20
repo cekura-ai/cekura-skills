@@ -71,7 +71,7 @@ Use `GET /test_framework/v1/predefined-metrics/` to retrieve the full list of av
 | Metric | Output | Cost | Sim | Obs | Notes |
 |--------|--------|------|-----|-----|-------|
 | **Expected Outcome** | 0–100 score | Free | ✓ | — | Requires `expected_outcome_prompt` set on the evaluator. Scores how well the agent achieved the scenario goal. Without this, runs only pass/fail on call completion. **Transcript-only** — cannot evaluate voice characteristics (tone, pronunciation, speech quality). When writing the prompt, refer to speakers as **"main agent"** and **"testing agent"** — not "user", "assistant", "bot", or "AI". |
-| **Hallucination** | True/False | 0.2 credits | ✓ | ✓ | Compares agent responses against the Knowledge Base to detect unsupported claims. |
+| **Hallucination** | True/False | 0.6 credits | ✓ | ✓ | Compares agent responses against the Knowledge Base to detect unsupported claims. |
 | **Mock Tool Call Accuracy** | 0–100 score | Free | ✓ | — | Scores whether the right mock tools were called with the right inputs. Requires mock tools configured on the agent. |
 | **Relevancy** | True/False | 0.2 credits | ✓ | ✓ | Checks if agent responses addressed the question asked. Flags off-topic or deflecting replies. |
 | **Response Consistency** | True/False | 0.2 credits | ✓ | ✓ | Detects contradictions — when the agent repeats information incorrectly or contradicts a prior statement. |
@@ -148,7 +148,8 @@ For full payload examples (including IPA tips and naming guidance) see `referenc
 | Cost | Metrics |
 |------|---------|
 | **Free (0 credits)** | Expected Outcome, Tool Call Success, Mock Tool Call Accuracy, AI Interrupting User, User Interrupting AI, Stop Time after User Interruption, Latency, Detect Silence, Infrastructure Issues, Interruption Score, Unnecessary Repetition Score, Average Pitch, Talk Ratio, Words Per Minute |
-| **0.2 credits/call** | Hallucination, Relevancy, Response Consistency, Voicemail Detection, Appropriate Call Termination (both), Unnecessary Repetition Count, CSAT, Dropoff Node, Sentiment, Topic of Call, Letterwise Pronunciation, Pronunciation Check, Speaking Rate, Voice Change Detection, Voice Tone + Clarity |
+| **0.2 credits/call** | Relevancy, Response Consistency, Voicemail Detection, Appropriate Call Termination (both), Unnecessary Repetition Count, CSAT, Dropoff Node, Sentiment, Topic of Call, Letterwise Pronunciation, Pronunciation Check, Speaking Rate, Voice Change Detection, Voice Tone + Clarity |
+| **0.6 credits/call** | Hallucination |
 | **0.3 credits/min** | Gibberish Detection |
 | **Free (simulations)** | Transcription Accuracy (simulation runs only) |
 | **1 credit/min (production call logs)** | Transcription Accuracy (production call log evaluation) |
