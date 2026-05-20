@@ -81,6 +81,7 @@ For other clients, use the Cekura dashboard or call the API directly with your A
 ## Reference Files
 
 - **`references/integrations.md`** — Full per-provider field lists, WebSocket message format, custom webhook payload, provider comparison table
+- **`references/websocket-server-scaffold.md`** — WebSocket server code scaffolds (Python, Node.js/TS, FastAPI) implementing Cekura's protocol; use when user needs a server generated
 - **`references/mock-tool-design.md`** — Per-input branching examples, chain dependency design, append-not-replace pattern
 - **`references/api-reference.md`** — Complete agent API endpoints, all field schemas, mock tool and KB endpoints
 - **`scripts/upload-agent.sh`** — Curl wrapper for creating/updating agents with large system prompts

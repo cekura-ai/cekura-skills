@@ -60,6 +60,8 @@ The connection type is determined by what you configure — ask the user which t
 A single agent can support multiple connection modes (e.g. phone + WebSocket). Ask the user which they want to use.
 
 > **WebSocket endpoint:** If the user's agent (or simulation runner) exposes a `wss://` URL, Cekura connects to it as a client. Ask for the WebSocket URL and any auth headers needed.
+>
+> **Don't have a WebSocket server yet?** Offer to create one. See 3d-ws below.
 
 ### WebRTC per provider
 
@@ -85,6 +87,36 @@ Set `provider.chat_agent_details` to configure a WebSocket or text-based connect
 | ElevenLabs | `{"type": "elevenlabs", "config": {"agent_id": "<agent ID>"}}` |
 
 > **Retell:** In Retell Dashboard, use "Copy as chat agent" to create a separate text-mode agent, then use that agent's ID here.
+
+---
+
+## 3d-ws. Scaffold a WebSocket server (if user doesn't have one)
+
+If the user selects WebSocket endpoint but doesn't have an existing server, **offer to generate one**:
+
+> "Would you like me to write the WebSocket server code for you? It needs to follow Cekura's protocol to accept test connections."
+
+If yes, ask:
+1. **Language / framework?** (Python `websockets`, Python FastAPI, Node.js/TypeScript, Go, other)
+2. **Does your agent make tool/function calls?** (affects the server skeleton)
+3. **Local development or production?** (`ws://` vs `wss://`)
+
+Then generate the server code from `references/websocket-server-scaffold.md`. The server must:
+- Accept WebSocket connections from Cekura
+- Validate the `X-VOCERA-SECRET` header (= Cekura API key)
+- Handle incoming messages: `{"content": "user message text"}`
+- Reply with: `{"content": "agent response text"}`
+- Send `{"content": "...", "type": "end_call"}` to end the conversation
+- If making tool calls: send `{"role": "Function Call", "data": {...}}` and await the result frame
+
+For local servers, suggest exposing via `ngrok` or Cloudflare Tunnel to get a public `wss://` URL that Cekura can reach.
+
+After generating the server:
+- Help the user run it
+- Get the public `wss://` URL
+- That URL goes into `provider.chat_agent_details.config.url` on the Cekura agent
+
+Full protocol details and code scaffolds: `references/websocket-server-scaffold.md`
 
 ---
 
