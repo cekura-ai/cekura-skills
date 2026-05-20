@@ -1,60 +1,98 @@
-# Phase 9 — Dynamic Variables
+# Phase 8 — Dynamic Variables
 
-Configure per-call variable injection for agents that behave differently depending on caller data or call context.
+Dynamic variables are values passed to the agent **at the start of every run** — they make the agent's description (system prompt) different for each call. They are defined as `{{variableName}}` placeholders in the description and populated by test profiles at run time.
 
----
-
-## 9a. Does the agent use per-call variables?
-
-Ask: "Does your agent use per-call variables? (e.g. customer name, account ID, different prompts per call flow)"
-
-If no → skip to [Phase 10](phase10-advanced.md).
+Do not ask the user if they have dynamic variables. Identify them yourself.
 
 ---
 
-## 9b. Auto-detection
+## 8a. Identify dynamic variables from the agent's code and description
 
-If the agent description contains `{{variableName}}` patterns, Cekura detects them automatically after agent creation. Retrieve the agent via the API to inspect detected dynamic variables.
+**For custom code / self-hosted agents**, inspect the code for anything injected into the prompt at runtime:
+
+- Python f-strings: `f"Customer name: {customer_name}"` → `{{customer_name}}`
+- Template rendering: `template.render(account_id=...)` → `{{account_id}}`
+- String replacements: `prompt.replace("{NAME}", caller_name)` → `{{name}}`
+- Variables passed via API/webhook at call start (customer data, CRM fields, session context)
+- Multi-node agents: separate system prompts per node/state stored in variables
+- Feature flags or A/B variants passed per call
+
+**For cloud provider agents (VAPI, Retell, etc.)**, look for:
+- Custom variables or metadata defined in the provider's agent config
+- Fields in the agent's system prompt that use the provider's variable syntax (e.g. `{{first_name}}` in Retell)
+- Dynamic data injected via the provider's API when placing/receiving calls
+
+**Already-detected patterns**: if the description already contains `{{variableName}}` patterns from the pasted/synced prompt, list them all.
 
 ---
 
-## 9c. Usage pattern
+## 8b. For each identified variable, establish:
 
-Add `{{variableName}}` placeholders in the agent description where values should be injected:
+1. **Variable name** — what to call the `{{placeholder}}` (snake_case)
+2. **What it represents** — e.g. "customer's first name from CRM"
+3. **Where it comes from at runtime** — inbound call metadata, CRM lookup, webhook payload, manual input
+4. **Example values** — what real values look like (for test profile setup)
+5. **Whether it affects the prompt or is used in tool calls** — if it's only used in tool inputs, it may not need to be in the description
+
+---
+
+## 8c. Add placeholders to the agent description
+
+For every identified dynamic variable that belongs in the system prompt, ensure the description uses `{{variableName}}` syntax at the right place.
+
+If the description was auto-synced or pasted and already uses native provider syntax (e.g. `{first_name}`), update it to Cekura's `{{first_name}}` format.
+
+**Example — before:**
+```
+You are a scheduling assistant helping the customer with their booking.
+```
+
+**After:**
+```
+You are a scheduling assistant helping {{customer_name}} (account: {{account_id}}, type: {{account_type}}) with their booking.
+```
+
+PATCH the agent description with the updated version if placeholders were added.
+
+---
+
+## 8d. Document variables for test profile setup
+
+For each dynamic variable, tell the user:
+
+> "When running tests, your test profiles will need to supply these variables:"
+
+List each one with:
+- `{{variable_name}}` — description — example value
+
+Example output:
+```
+{{customer_name}}   — caller's first name from CRM        — "Jane Smith"
+{{account_id}}      — customer account identifier          — "ACC-001234"
+{{account_type}}    — customer tier (standard/premium/vip) — "premium"
+{{appointment_date}} — upcoming appointment date           — "2026-05-25"
+```
+
+These become fields in test profiles, which Cekura injects into the description before each test run.
+
+---
+
+## 8e. Multi-node / multi-state agents
+
+For agents with distinct states (e.g. intake → verification → scheduling → billing), store each node's full system prompt as a separate dynamic variable rather than embedding all prompts in the description:
 
 ```
-You are a scheduling assistant. Customer name: {{customer_name}}.
-Account type: {{account_type}}.
+{{intake_prompt}}
+{{verification_prompt}}
+{{scheduling_prompt}}
 ```
 
-At test time, test profiles supply the values:
-
-```json
-{ "customer_name": "Jane Smith", "account_type": "premium" }
-```
+This lets you swap node behaviour per test and lets metrics reference `{{dynamic_variables.intake_prompt}}` to evaluate per-node behaviour independently.
 
 ---
 
-## 9d. What dynamic variables enable
+## Phase 8 Gate
 
-| Use case | Example |
-|----------|---------|
-| Caller-specific data | `{{customer_name}}`, `{{account_id}}`, `{{employment_type}}` |
-| Per-call system prompt injection | Different instructions per caller segment |
-| Multi-node / multi-state agents | One variable per node's system prompt |
-| Feature flags | Enable/disable behaviors per call |
-| Context injection | Prior call summaries, reconnection context |
+**Do not proceed until every runtime-injected variable is identified, documented, and present as `{{placeholder}}` in the agent description.**
 
----
-
-## 9e. Multi-node agent pattern
-
-For agents with distinct states (intake → scheduling → billing), store each node's system prompt as a separate dynamic variable instead of embedding all prompts in the description. Metrics can then reference `{{dynamic_variables.nodeName}}` to evaluate per-node behavior.
-
----
-
-## Phase 9 Gate
-
-**Confirm dynamic variables are detected or confirmed unnecessary.**
-
-Move to [Phase 10 — Advanced Configuration](phase10-advanced.md).
+Move to [Phase 9 — Advanced Configuration](phase10-advanced.md).
