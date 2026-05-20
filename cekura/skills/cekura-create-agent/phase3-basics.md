@@ -1,6 +1,6 @@
 # Phase 3 — Agent Basics
 
-Collect the fields needed to create and identify the agent.
+Collect the fields needed to create and identify the agent. What you need depends on the provider chosen in Phase 2.
 
 ---
 
@@ -11,22 +11,43 @@ Collect the fields needed to create and identify the agent.
 | Field | API field | Notes |
 |-------|-----------|-------|
 | **Agent name** | `name` | Descriptive: "Customer Support Bot", "Scheduling Assistant" (max 255 chars) |
-| **Description** | `description` | Full system prompt or exported config — see Phase 4 |
+| **Description** | `description` | Full system prompt — see Phase 4. Placeholder OK if using auto-sync. |
 | **Project** | `project` | Project ID from Phase 1 |
 
-**Commonly needed** (optional in the API, but needed for most setups):
+**Optional but usually needed:**
 
 | Field | Location | Notes |
 |-------|----------|-------|
 | **Language** | `language` | BCP-47 locale, default `en`. Codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja kn ko ms ml mr multi no pl pa pt ro ru sk es sv th tr tl ta te uk vi` |
-| **Phone number** | `telephony.phone_number` | E.164 format, e.g. `+14155551234`. Skip for WebRTC-only or Pipecat. |
-| **Inbound/Outbound** | `telephony.inbound` | `true` = receives calls (default `false`). |
+| **Phone number** | `telephony.phone_number` | E.164 format, e.g. `+14155551234`. Provider notes in 3c. |
+| **Inbound/Outbound** | `telephony.inbound` | `true` = receives calls, default `false`. |
 
 ---
 
-## 3b. Auto-fetch from provider API
+## 3b. What to collect per provider
 
-For VAPI, Retell, ElevenLabs, Bland — fetch name, description, and language from the provider rather than asking the user to type them:
+| Provider | Phone number? | Description source | Notes |
+|----------|--------------|-------------------|-------|
+| **VAPI** | Yes | Auto-fetch or paste | `agent_id` = assistant or squad ID |
+| **Retell** | Yes | Auto-fetch or paste | Separate `agent_id` (voice) and `chat_agent_id` (text) |
+| **ElevenLabs** | Yes | Auto-fetch or paste | |
+| **Synthflow** | Yes | Auto-fetch or paste | |
+| **Bland** | Yes | Fetch prompt, ask user for name | `agent_id` = pathway_id; name not returned by API |
+| **LiveKit** | No | Ask user | WebRTC only; no phone number |
+| **Pipecat** | No | Ask user | Agent identified by `credentials.config.pipecat_agent_name`; no phone |
+| **Chirp** | No | Ask user | Connects via `chirp_websocket_url`; no phone |
+| **KoreAI** | No | Ask user | Text/chat only |
+| **Genesys** | No | Ask user | Text/chat only |
+| **Trillet** | Yes | Ask user | No provider API to fetch description |
+| **Cisco** | Yes | Ask user | Pre-configured integration; contact Cekura support |
+| **Self-hosted (phone/SIP)** | Yes | Ask user | No provider API to fetch from |
+| **Self-hosted (WebSocket)** | No | Ask user | Text-mode; no phone |
+
+---
+
+## 3c. Auto-fetch from provider API
+
+For providers with an API, fetch name, description, and language directly rather than asking the user:
 
 ### VAPI — assistants and squads
 ```bash
@@ -34,7 +55,7 @@ For VAPI, Retell, ElevenLabs, Bland — fetch name, description, and language fr
 curl -s https://api.vapi.ai/assistant/{assistant_id} \
   -H "Authorization: Bearer {vapi_api_key}" | jq '{name, description: (.model.messages[] | select(.role=="system") | .content), language: .transcriber.language}'
 
-# For squad agents (multi-agent workflows)
+# For squad agents
 curl -s https://api.vapi.ai/squad/{squad_id} \
   -H "Authorization: Bearer {vapi_api_key}" | jq '{name}'
 ```
@@ -44,7 +65,7 @@ curl -s https://api.vapi.ai/squad/{squad_id} \
 ```bash
 curl -s https://api.retellai.com/get-agent/{agent_id} \
   -H "Authorization: Bearer {retell_api_key}" | jq '{agent_name, language, voice_id, response_engine}'
-# Then fetch prompt based on response_engine.type:
+# Fetch prompt based on response_engine.type:
 # retell-llm → GET /get-retell-llm/{llm_id} → .general_prompt
 # conversation-flow → GET /get-conversation-flow/{flow_id} → full JSON
 ```
@@ -62,35 +83,26 @@ curl -s https://api.elevenlabs.io/v1/convai/agents/{agent_id} \
 curl -s https://api.bland.ai/agents/{pathway_id} \
   -H "authorization: {bland_api_key}" | jq '{prompt, language, voice}'
 ```
-`name` is not returned by Bland — ask the user. **Docs:** https://docs.bland.ai/api-v1/get/agents-id
+Returns `prompt` (description), `language`, `voice` — but NOT `name`. Ask the user for a display name.
+**Docs:** https://docs.bland.ai/api-v1/get/agents-id
 
 ---
 
-## 3c. Provider-specific telephony notes
+## 3d. Auto-sync description (VAPI / Retell / ElevenLabs / Synthflow)
 
-| Provider | `telephony.phone_number` |
-|----------|-----------------------|
-| VAPI, Retell, ElevenLabs, Bland, Trillet, Cisco, Synthflow | E.164 phone number, e.g. `+14155551234` |
-| LiveKit | Omit — WebRTC, no phone number needed |
-| Chirp | Omit — connects via `credentials.config.chirp_websocket_url` |
-| Pipecat | Omit — agent identified by `credentials.config.pipecat_agent_name` |
-| Self-hosted (WebSocket only) | Omit |
+Instead of pasting the prompt, enable `provider.auto_sync_prompt: true` at create time (Phase 5). Cekura fetches the description from the provider within ~30 seconds. Pass a placeholder for the required `description` field.
 
----
-
-## 3d. Description — auto-sync for VAPI / Retell / ElevenLabs / Synthflow
-
-Enable `provider.auto_sync_prompt: true` when creating the agent (Phase 5). Cekura fetches the full description from the provider within ~30 seconds. Pass a placeholder for the required `description` field on create.
-
-The description is used to generate test scenarios — the more complete it is, the better the scenarios. See [Phase 4](phase4-description.md) for what makes a good description.
+The description drives scenario generation — the more complete it is, the better the scenarios. See [Phase 4](phase4-description.md).
 
 ---
 
 ## 3e. Outbound agents
 
 If `telephony.inbound: false`, also collect:
-- Auto-dial? (`provider.auto_dial_outbound: true`)
+- Auto-dial? (`provider.auto_dial_outbound: true` — VAPI, Retell, ElevenLabs, LiveKit, Bland)
 - Outbound numbers: `telephony.outbound_numbers: ["+1..."]`
+
+---
 
 ## 3f. Agent speaks first?
 
@@ -100,7 +112,7 @@ Optional. `agent_speaks_first: true / false / null` (null = auto-detect).
 
 ## Phase 3 Gate
 
-**Do not proceed until you have: name, language, and phone number (if applicable). Description can be a placeholder if auto_sync_prompt will be enabled.**
+**Do not proceed until you have: name, language, and phone number (if applicable). Description can be a placeholder if using auto-sync.**
 
-If collecting description manually → [Phase 4 — Agent Description](phase4-description.md).
-If using auto-sync → skip to [Phase 5 — Create the Agent](phase5-create.md).
+Collecting description manually → [Phase 4 — Agent Description](phase4-description.md).
+Using auto-sync → skip to [Phase 5 — Create the Agent](phase5-create.md).
