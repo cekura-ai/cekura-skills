@@ -14,7 +14,7 @@ Ask: "What provider does your agent run on?"
 | **Retell** | `retell` | Auto-sync prompt; separate voice `agent_id` and chat `chat_agent_details` |
 | **ElevenLabs** | `elevenlabs` | Phone + WebSocket + chat |
 | **LiveKit** | `livekit` | WebRTC only; no phone number needed |
-| **Pipecat Cloud** | `pipecat` | WebRTC; `phone_number` = agent name (not a real phone) |
+| **Pipecat Cloud** | `pipecat` | WebRTC; agent name goes in `credentials.config.pipecat_agent_name` |
 | **Bland** | `bland` | `provider.agent_id` = Bland pathway_id |
 | **Agentforce** | `agentforce` | Salesforce Agentforce |
 | **Trillet** | `trillet` | Requires `credentials.config.workspace_id` |
@@ -54,9 +54,11 @@ Ask: "What provider does your agent run on?"
 
 ### Pipecat Cloud
 - **`credentials.api_key`**: pipecat.daily.co → Settings → API Keys
-- **`phone_number`** field = your **Pipecat agent name** (not a real phone number), e.g. `"my-support-agent"`
+- **`credentials.config.pipecat_agent_name`** (required): your Pipecat agent name, e.g. `"my-support-agent"`. This is the name you gave the agent when deploying to Pipecat Cloud.
 - **`credentials.config.webhook_url`** (optional): webhook URL for call events
-- No `agent_id` needed — agent is identified by name in `phone_number`
+- **`credentials.config.config`** (optional): JSON agent configuration
+- **`credentials.config.room_properties`** (optional): Daily.co room properties JSON
+- No `agent_id` or `telephony.phone_number` needed
 - **Docs:** https://docs.pipecat.ai
 
 ### Bland

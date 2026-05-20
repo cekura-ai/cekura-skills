@@ -31,22 +31,18 @@ POST /test_framework/v2/aiagents/
   "agent_speaks_first": "boolean|null",
   "provider": { ... see below ... },
 
-  // Telephony — use telephony block (canonical) or top-level shorthands
+  // All telephony fields live inside the telephony block — not top-level
   "telephony": {
     "phone_number": "string (E.164, e.g. '+14155551234')",
-    "inbound": "boolean",
+    "inbound": "boolean (default false)",
     "sip_uri": "string (e.g. 'sip:agent@domain.com')",
     "sip_auth": {"username": "...", "password": "..."},
     "outbound_numbers": ["string"]
-  },
-
-  // Top-level shorthands (accepted by API, same fields as telephony block)
-  "phone_number": "string",
-  "inbound": "boolean"
+  }
 }
 ```
 
-> **`outbound_numbers`** lives inside the `telephony` block in v2 — it is NOT a top-level field.
+> `phone_number`, `inbound`, `sip_uri`, `sip_auth`, and `outbound_numbers` all belong inside `telephony` — none are top-level fields.
 
 ## Provider Block
 
@@ -79,7 +75,7 @@ POST /test_framework/v2/aiagents/
 | `livekit` | `api_secret`, `url` | `tracing_enabled` |
 | `agentforce` | `client_id`, `domain`, `agent_id` | — |
 | `trillet` | `workspace_id` | — |
-| `pipecat` | — | `webhook_url` |
+| `pipecat` | `pipecat_agent_name` | `webhook_url`, `config`, `room_properties` |
 | `self_hosted` | — | `url` (wss://), `headers` |
 
 ## chat_agent_details by Provider

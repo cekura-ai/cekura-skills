@@ -85,22 +85,23 @@ curl -s https://api.bland.ai/agents/{pathway_id} \
 
 ---
 
-## 3d. Provider-specific `phone_number` notes
+## 3d. Provider-specific `telephony.phone_number` notes
 
-| Provider | `phone_number` value |
-|----------|--------------------|
+| Provider | `telephony.phone_number` value |
+|----------|-----------------------------|
 | VAPI, Retell, ElevenLabs, Bland | Actual E.164 phone number, e.g. `+14155551234` |
-| LiveKit | Not needed for WebRTC — omit |
-| Pipecat | Agent name from Pipecat dashboard (not a phone number), e.g. `"my-agent"` |
-| Self-hosted (WebSocket only) | Omit |
+| LiveKit | Not needed — omit telephony block |
+| Pipecat | No phone number — agent name goes in `credentials.config.pipecat_agent_name` instead |
+| Self-hosted (WebSocket only) | Not needed — omit telephony block |
 
 ---
 
 ## 3e. Pipecat Cloud — no agent config to fetch
 
 Pipecat Cloud is a deployment platform — the agent logic lives in your Python code. What you need:
-- **Agent name**: the name given to the agent in Pipecat Cloud dashboard → goes in `phone_number`
+- **Agent name**: the name given to the agent in Pipecat Cloud dashboard → goes in `credentials.config.pipecat_agent_name`
 - **Description**: ask the user or paste from their Python code
+- No `telephony.phone_number` needed
 - **Docs:** https://docs.pipecat.ai
 
 ---
