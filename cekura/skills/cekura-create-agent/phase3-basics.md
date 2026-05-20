@@ -6,12 +6,12 @@ Collect the identifying fields for the agent. For most cloud providers, name, de
 
 ## 3a. Required fields
 
-| Field | v2 name | Notes |
-|-------|---------|-------|
-| **Agent name** | `name` | Descriptive: "Customer Support Bot", "Scheduling Assistant" |
+| Field | API field | Notes |
+|-------|-----------|-------|
+| **Agent name** | `agent_name` | Descriptive: "Customer Support Bot", "Scheduling Assistant" |
 | **Language** | `language` | Primary language (default `en`). Codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja kn ko ms ml mr multi no pl pa pt ro ru sk es sv th tr tl ta te uk vi` |
 | **Inbound vs Outbound** | `inbound` | Receives calls (`true`, default) or makes calls (`false`)? |
-| **Phone number** | `phone_number` | E.164 format `+1234567890`. See provider notes below. |
+| **Phone number** | `contact_number` | E.164 format `+1234567890`. See provider notes below. |
 
 ---
 
@@ -89,8 +89,8 @@ curl -s https://api.bland.ai/agents/{pathway_id} \
 
 ## 3d. Provider-specific phone number notes
 
-| Provider | `phone_number` value |
-|----------|--------------------|
+| Provider | `contact_number` value |
+|----------|----------------------|
 | VAPI, Retell, ElevenLabs, Bland | Actual E.164 phone number, e.g. `+14155551234` |
 | LiveKit | Not needed for WebRTC — omit |
 | Pipecat | Agent name from Pipecat dashboard (not a phone number), e.g. `"my-agent"` |
@@ -111,7 +111,7 @@ Pipecat Cloud is a deployment platform — the agent logic lives in your code (P
 
 ## 3f. Description — auto-sync option for VAPI / Retell / ElevenLabs
 
-If the user doesn't want to paste the prompt, enable `auto_sync_prompt: true` at create time (Phase 5). Cekura fetches the description from the provider within ~30 seconds. Pass a short placeholder (`"Auto-syncing from provider"`) for the required `description` field on create.
+If the user doesn't want to paste the prompt, enable `auto_sync_prompt_enabled: true` at create time (Phase 5). Cekura fetches the description from the provider within ~30 seconds. Pass a short placeholder (`"Auto-syncing from provider"`) for the required `description` field on create.
 
 This does **not** work for Bland, Pipecat, LiveKit, or self-hosted.
 
@@ -120,13 +120,13 @@ This does **not** work for Bland, Pipecat, LiveKit, or self-hosted.
 ## 3g. Outbound agents
 
 If `inbound: false`, also collect:
-- Auto-dial? (`auto_dial_outbound: true` — VAPI and Retell only)
+- Auto-dial? (`outbound_auto_call: true` — VAPI and Retell only)
 - Outbound numbers: (`outbound_numbers: ["+1..."]` — used for webhook validation)
 
 ## 3h. Agent speaks first?
 
 Optional: "Does your agent speak first when a call connects, or does the caller speak first?"
-- `agent_speaks_first: true` / `false` / `null` (auto-detect from description)
+- `agent_gives_first_message: true` / `false` / `null` (auto-detect from description)
 
 ---
 

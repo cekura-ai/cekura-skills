@@ -36,8 +36,6 @@ Tell Cekura what topics the agent handles so call routing and topic-based metric
 
 `auto_update_topic_nodes: true` infers topic nodes from the agent description automatically — recommended as a starting point.
 
-Note: `topic_nodes` and `dropoff_nodes` are read-only in v2 GET responses; write them via PATCH with the same field names.
-
 ---
 
 ## 10c. Dropoff detection
@@ -71,19 +69,19 @@ For agents that read out words, spell names, or verify postcodes/emails:
 ```json
 {
   "inbound": false,
-  "auto_dial_outbound": true,
+  "outbound_auto_call": true,
   "outbound_numbers": ["+14155551234"]
 }
 ```
 
-`auto_dial_outbound` (v2 name; was `outbound_auto_call` in v1) triggers Cekura to place the call. Test profile fields are forwarded as dynamic variables. Works with VAPI and Retell only.
+`outbound_auto_call: true` triggers Cekura to place the call via the provider. Test profile fields are forwarded as dynamic variables. Works with VAPI and Retell only.
 
 ---
 
 ## 10f. Apply via PATCH
 
 ```bash
-curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
+curl -X PATCH https://api.cekura.ai/test_framework/v1/aiagents/{id}/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{ <fields from above> }'

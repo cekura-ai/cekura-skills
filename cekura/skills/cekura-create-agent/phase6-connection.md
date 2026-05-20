@@ -41,7 +41,7 @@ Confirm how Cekura will connect to the agent during test runs. The provider chos
 Apply `chat_assistant_id` via PATCH:
 
 ```bash
-curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
+curl -X PATCH https://api.cekura.ai/test_framework/v1/aiagents/{id}/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"chat_assistant_id": "<id>"}'

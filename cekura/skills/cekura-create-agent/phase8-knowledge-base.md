@@ -15,7 +15,7 @@ If no → skip to [Phase 9](phase9-dynamic-variables.md).
 ## 8b. Upload files
 
 ```bash
-curl -X POST https://api.cekura.ai/test_framework/v2/aiagents/{id}/upload_knowledge_base/ \
+curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{id}/upload_knowledge_base/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -F "files=@faq.pdf" \
   -F "files=@product-guide.pdf"
@@ -32,7 +32,7 @@ Or use `mcp__cekura__aiagents_upload_knowledge_base` if available in the session
 After upload, note the file IDs from the response and link them to the hallucination metric:
 
 ```bash
-curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
+curl -X PATCH https://api.cekura.ai/test_framework/v1/aiagents/{id}/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"hallucination_metric_kb_files": [<file_id_1>, <file_id_2>]}'

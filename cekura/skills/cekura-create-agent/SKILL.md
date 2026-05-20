@@ -12,7 +12,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.6.0"
+  version: "0.7.0"
 ---
 
 # Cekura Create Agent
@@ -64,25 +64,6 @@ curl           halluc.     multi-node  dropoff,    + next steps
 **Collect conversationally — never dump a form.** Ask for one thing at a time.
 
 **Phases 7–10 are optional** — skip any that don't apply to this agent.
-
----
-
-## v2 API — Key Changes
-
-All agent endpoints now use `/test_framework/v2/aiagents/`. Field name changes vs v1:
-
-| v1 | v2 |
-|----|----|
-| `agent_name` | `name` |
-| `contact_number` | `phone_number` |
-| `sip_endpoint` | `sip_uri` |
-| `outbound_auto_call` | `auto_dial_outbound` |
-| `auto_fetch_calls_enabled` | `auto_import_calls` |
-| `auto_sync_prompt_enabled` | `auto_sync_prompt` |
-| `agent_gives_first_message` | `agent_speaks_first` |
-| `assistant_provider` + flat `{n}_api_key` fields | `provider.{type, agent_id, credentials}` |
-
-`transcript_provider` defaults to `provider.type` — usually no need to set it separately.
 
 ---
 
