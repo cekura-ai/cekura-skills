@@ -1,209 +1,370 @@
 # Provider Integration Reference
 
-## Provider Selection
-
-Set `assistant_provider` on the agent to one of:
-`vapi`, `retell`, `elevenlabs`, `bland`, `pipecat`, `livekit`, `vocera`, `sms`, `whatsapp`, `self_hosted`, `agentforce`, `trillet`, `cisco`
-
-Set `transcript_provider` to match (controls how call data is ingested):
-`vapi`, `retell`, `synthflow`, `elevenlabs`, `bland`, `livekit`, `pipecat`, `koreai`, `custom`, `trillet`, `cisco`
+All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `provider` block.
 
 ---
 
 ## VAPI
 
-### Required Fields
 ```json
 {
-  "assistant_provider": "vapi",
-  "transcript_provider": "vapi",
-  "vapi_api_key": "<VAPI Private API Key>",
-  "assistant_id": "<VAPI Assistant ID (min 10 chars)>",
-  "contact_number": "+14155551234"
+  "name": "VAPI Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
+  "provider": {
+    "type": "vapi",
+    "agent_id": "<VAPI Assistant ID or Squad ID>",
+    "credentials": {
+      "api_key": "<VAPI Private API Key>",
+      "config": {
+        "public_key": "<VAPI Public Key — WebRTC only>",
+        "trigger_url": "<optional — outbound call trigger URL>"
+      }
+    },
+    "auto_sync_prompt": true,
+    "auto_import_calls": true
+  }
 }
 ```
 
-### Where to Find Credentials
-- **API Key:** VAPI Dashboard → Organization Settings → API Keys → Private Key
-- **Assistant ID:** VAPI Dashboard → Assistants → Select assistant → copy ID from URL or settings
+**Credentials:** VAPI Dashboard → Organization Settings → API Keys  
+**Agent ID:** Assistants → Select → copy from URL. For squads, use the squad ID.  
+**Docs:** https://docs.vapi.ai/api-reference/assistants/get | https://docs.vapi.ai/api-reference/squads/get
 
-### Optional Settings
-- `vapi_data`: JSON string with additional config (e.g., `{"trigger_url": "..."}`)
-- `auto_fetch_calls_enabled: true` — Auto-import production calls every 30 seconds
-- `outbound_auto_call: true` — For outbound agents, auto-trigger calls via VAPI
-
-### Chat Setup
-- Set `chat_assistant_id` to the VAPI chat assistant ID (if different from voice)
-
-### Features
-- Auto-fetch calls from production
-- Auto-fetch mock tools
-- Outbound auto-call support
-- Tool call visibility in transcripts
-- Metadata access
+**Chat setup:** Set `chat_agent_details: {"type": "vapi", "config": {"agent_id": "<chat assistant ID>"}}`
 
 ---
 
 ## Retell
 
-### Required Fields
 ```json
 {
-  "assistant_provider": "retell",
-  "transcript_provider": "retell",
-  "retell_api_key": "<Retell API Key>",
-  "assistant_id": "<Retell Agent ID (min 10 chars)>",
-  "contact_number": "+14155551234"
+  "name": "Retell Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
+  "provider": {
+    "type": "retell",
+    "agent_id": "<Retell voice agent ID>",
+    "credentials": {
+      "api_key": "<Retell API Key>",
+      "config": {
+        "trigger_url": "<optional — outbound call trigger URL>",
+        "livekit_server_url": "<optional — override Retell LiveKit server>"
+      }
+    },
+    "chat_agent_details": {
+      "type": "retell",
+      "config": {"agent_id": "<Retell chat agent ID — omit if same agent>"}
+    },
+    "auto_sync_prompt": true,
+    "auto_import_calls": true
+  }
 }
 ```
 
-### Where to Find Credentials
-- **API Key:** Retell Dashboard → Settings → API Keys
-- **Agent ID:** Retell Dashboard → Agents → Select agent → ID in URL
-
-### Optional Settings
-- `retell_data`: Additional config JSON
-- `auto_sync_prompt_enabled: true` — Auto-sync prompt every 30 seconds (Retell, VAPI, ElevenLabs). For Retell: works for standard LLM and Conversation Flow agents.
-- `auto_fetch_calls_enabled: true` — Auto-import production calls
-
-### Chat Setup
-1. In Retell: Copy your voice agent as a chat agent ("Copy as chat agent")
-2. Set `chat_assistant_id` to the chat agent ID on Cekura
-
-### Features
-- Auto-sync prompt (every 30s)
-- Auto-fetch calls
-- Auto-fetch mock tools
-- WebRTC support
-- Chat support via separate chat agent
+**Credentials:** Retell Dashboard → Settings → API Keys  
+**Agent ID:** Agents → Select → ID in URL  
+**Chat agent:** In Retell, use "Copy as chat agent" to create a text-mode version  
+**Auto-sync:** Supports `retell-llm` (fetches `general_prompt`) and `conversation-flow` (fetches full flow JSON)  
+**Docs:** https://docs.retellai.com/api-references/get-agent.md
 
 ---
 
 ## ElevenLabs
 
-### Required Fields
 ```json
 {
-  "assistant_provider": "elevenlabs",
-  "transcript_provider": "elevenlabs",
-  "elevenlabs_api_key": "<ElevenLabs API Key>",
-  "assistant_id": "<ElevenLabs Agent ID>",
-  "contact_number": "+14155551234"
+  "name": "ElevenLabs Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
+  "provider": {
+    "type": "elevenlabs",
+    "agent_id": "<ElevenLabs Agent ID>",
+    "credentials": {
+      "api_key": "<ElevenLabs API Key>",
+      "config": {
+        "trigger_url": "<optional>",
+        "elevenlabs_base_url_override": "<optional>"
+      }
+    },
+    "auto_sync_prompt": true,
+    "auto_import_calls": true
+  }
 }
 ```
 
-### Where to Find Credentials
-- **API Key:** ElevenLabs Dashboard → Profile → API Keys
-- **Agent ID:** ElevenLabs Dashboard → Conversational AI → Select agent → ID in settings
-
-### Optional Settings
-- `elevenlabs_data`: Additional config JSON
-
-### Features
-- Phone, WebSocket, and Chat support
-- Auto-fetch mock tools
+**Credentials:** ElevenLabs Dashboard → Profile → API Keys  
+**Agent ID:** Conversational AI → Select agent → ID in settings  
+**Auto-sync:** Fetches from `conversation_config.agent.prompt.prompt`  
+**Docs:** https://elevenlabs.io/docs/api-reference/conversational-ai/get-agent
 
 ---
 
 ## LiveKit
 
-### Required Fields
 ```json
 {
-  "assistant_provider": "livekit",
-  "transcript_provider": "livekit",
-  "livekit_api_key": "<LiveKit API Key>",
-  "livekit_data": "{\"api_secret\": \"<secret>\", \"url\": \"wss://your-server.livekit.cloud\"}"
-}
-```
-
-**Note:** `livekit_data` is a JSON string (not object) with:
-- `api_secret` (required): LiveKit API Secret
-- `url` (required): LiveKit server URL (wss:// format)
-- `config` (optional): Room metadata accessible via `ctx.room.metadata`
-
-### Where to Find Credentials
-- **API Key + Secret:** LiveKit Cloud Dashboard → Settings → Keys
-- **URL:** LiveKit Cloud Dashboard → your project URL
-
-### Connection
-- WebRTC-based (no phone number needed for WebRTC mode)
-- Automated room and token management by Cekura
-
-### Features
-- `metadata.raw_metrics` with per-component latency (LLM TTFT, TTS TTFB, EOU delay)
-- WebRTC testing with automated room management
-
----
-
-## Pipecat
-
-### Required Fields
-```json
-{
-  "assistant_provider": "pipecat",
-  "transcript_provider": "pipecat",
-  "pipecat_api_key": "<Pipecat Cloud API Key from pipecat.daily.co>",
-  "contact_number": "<agent-name>"
-}
-```
-
-**Note:** `contact_number` is the agent name (not a phone number) for Pipecat.
-
-### Optional Settings
-- `pipecat_data`: JSON string with room properties (see Daily.co Room Configuration API)
-- `assistant_id`: Optional Pipecat assistant ID
-
-### Where to Find Credentials
-- **API Key:** pipecat.daily.co → Dashboard → API Keys
-
----
-
-## SIP — Connection Mode (NOT a provider)
-
-SIP is a **connection mode** used to reach `self_hosted` (or any) agents over a SIP endpoint at test-run time. It is NOT a value for `assistant_provider`. The provider stays whatever platform the agent is built on — most commonly `self_hosted` for agents you reach directly via SIP.
-
-### Required Fields (on the agent record)
-```json
-{
-  "assistant_provider": "self_hosted",
-  "sip_endpoint": "sip:agent@yourdomain.com"
-}
-```
-
-### Optional Auth
-```json
-{
-  "sip_auth": {
-    "username": "user123",
-    "password": "pass456"
+  "name": "LiveKit Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {"inbound": true},
+  "provider": {
+    "type": "livekit",
+    "credentials": {
+      "api_key": "<LiveKit API Key>",
+      "config": {
+        "api_secret": "<LiveKit API Secret — required>",
+        "url": "<wss://your-server.livekit.cloud — required>",
+        "agent_name": "<optional>",
+        "tracing_enabled": false
+      }
+    },
+    "auto_dial_outbound": true
   }
 }
 ```
 
-### Headers
-Cekura automatically injects these SIP headers:
-- `X-Run-Id`: Run identifier
-- `X-Scenario-Id`: Scenario identifier
-- `X-Result-Id`: Result identifier
-- Any test profile field starting with "X-" becomes a custom SIP header
-
-### Format
-`sip_endpoint` accepts:
-- Domain: `sip:agent@yourdomain.com`
-- IP: `sip:192.168.1.100:5060`
-
-### Running scenarios over SIP
-Use the `scenarios_run_sip` tool at run time. The agent's `assistant_provider` is irrelevant to choosing this mode — what matters is that `sip_endpoint` is set.
+**Credentials:** LiveKit Cloud Dashboard → Settings → Keys  
+**Connection:** WebRTC — Cekura manages room creation and token generation automatically  
+**Latency metrics:** `metadata.raw_metrics` with per-component latency (LLM TTFT, TTS TTFB, EOU delay)
 
 ---
 
-## Custom Integration (Webhook)
+## Pipecat Cloud
 
-For providers without first-class integration — the client pushes call data to Cekura.
+```json
+{
+  "name": "Pipecat Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {"inbound": true},
+  "provider": {
+    "type": "pipecat",
+    "credentials": {
+      "api_key": "<Pipecat Cloud API Key>",
+      "config": {
+        "pipecat_agent_name": "<agent name from Pipecat dashboard>",
+        "webhook_url": "<optional>",
+        "config": {},
+        "room_properties": {}
+      }
+    }
+  }
+}
+```
 
-### Setup
-No provider fields needed on the agent. The client sends call data via webhook:
+**Credentials:** pipecat.daily.co → Settings → API Keys  
+**Agent name:** use the name given when deploying to Pipecat Cloud  
+**Docs:** https://docs.pipecat.ai
+
+---
+
+## Bland
+
+```json
+{
+  "name": "Bland Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
+  "provider": {
+    "type": "bland",
+    "agent_id": "<Bland pathway_id>",
+    "credentials": {
+      "api_key": "<Bland API Key>",
+      "config": {
+        "encrypted_key": "<Twilio credential bundle — optional>"
+      }
+    },
+    "auto_dial_outbound": true
+  }
+}
+```
+
+**Credentials:** Bland Dashboard → API Keys  
+**`agent_id`:** Bland pathway_id — Pathways → Select → copy ID  
+**Docs:** https://docs.bland.ai
+
+---
+
+## Synthflow
+
+```json
+{
+  "name": "Synthflow Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
+  "provider": {
+    "type": "synthflow",
+    "credentials": {
+      "api_key": "<Synthflow API Key>",
+      "config": {
+        "synthflow_base_url_override": "<optional>"
+      }
+    },
+    "auto_sync_prompt": true
+  }
+}
+```
+
+---
+
+## Chirp
+
+```json
+{
+  "name": "Chirp Agent",
+  "description": "...",
+  "project": 123,
+  "provider": {
+    "type": "chirp",
+    "credentials": {
+      "config": {
+        "chirp_websocket_url": "<wss://your-host/voice — required, raw PCM 16 kHz>",
+        "chirp_basic_auth_username": "<optional>",
+        "chirp_basic_auth_password": "<optional>"
+      }
+    }
+  }
+}
+```
+
+---
+
+## KoreAI
+
+```json
+{
+  "name": "KoreAI Agent",
+  "description": "...",
+  "project": 123,
+  "provider": {
+    "type": "koreai",
+    "credentials": {
+      "api_key": "<KoreAI client secret>",
+      "config": {
+        "client_id": "<required>",
+        "bot_id": "<required>",
+        "host": "<optional — default: https://bots.kore.ai>"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Genesys
+
+```json
+{
+  "name": "Genesys Agent",
+  "description": "...",
+  "project": 123,
+  "provider": {
+    "type": "genesys",
+    "credentials": {
+      "api_key": "<Genesys client secret>",
+      "config": {
+        "client_id": "<required>",
+        "region": "<required — e.g. us-east-1>"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Trillet
+
+```json
+{
+  "name": "Trillet Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
+  "provider": {
+    "type": "trillet",
+    "credentials": {
+      "api_key": "<Trillet API Key>",
+      "config": {
+        "workspace_id": "<required>"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Cisco
+
+Cisco Webex is a specialized webhook-based integration — Cekura receives a `botDescription` + `userEmail` from Cisco and generates/runs scenarios automatically. It uses a pre-configured agent on the Cekura side rather than user-supplied credentials.
+
+Contact Cekura support to set up the Cisco Webex integration for your organization.
+
+---
+
+## Self-hosted (phone / SIP)
+
+```json
+{
+  "name": "Self-hosted Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {
+    "phone_number": "+14155551234",
+    "inbound": true,
+    "sip_uri": "sip:agent@yourdomain.com",
+    "sip_auth": {"username": "user", "password": "pass"}
+  },
+  "provider": {"type": "self_hosted"}
+}
+```
+
+SIP headers injected by Cekura: `X-Run-Id`, `X-Scenario-Id`, `X-Result-Id`, any test profile field starting with `X-`.
+
+---
+
+## Self-hosted (WebSocket / text-mode)
+
+```json
+{
+  "name": "WebSocket Agent",
+  "description": "...",
+  "project": 123,
+  "telephony": {"inbound": false},
+  "provider": {
+    "type": "self_hosted",
+    "chat_agent_details": {
+      "type": "self_hosted",
+      "config": {
+        "url": "wss://your-server.com/agent",
+        "headers": {"Authorization": "Bearer token"}
+      }
+    }
+  }
+}
+```
+
+**WebSocket message format:**
+- Regular: `{"content": "message"}`
+- Function call: `{"role": "Function Call", "data": {"id": "...", "name": "...", "arguments": "{}"}}`
+- Function result: `{"role": "Function Call Result", "data": {"id": "...", "result": "{}"}}`
+- End call: `{"content": "...", "type": "end_call"}`
+
+**Headers sent by Cekura:** `X-VOCERA-SECRET`, `X-VOCERA-SCENARIO-ID`, `X-VOCERA-RESULT-ID`, `X-VOCERA-RUN-ID`, any test profile fields starting with `X-`.
+
+---
+
+## Custom Integration (Webhook / Observe)
+
+For providers without first-class integration — push call data to Cekura after calls complete.
 
 ```json
 POST https://api.cekura.ai/observability/v1/observe/
@@ -211,83 +372,41 @@ X-CEKURA-API-KEY: <key>
 
 {
   "agent_id": 123,
-  "calls": [
-    {
-      "id": "unique-call-id",
-      "startedAt": "2024-01-01T00:00:00Z",
-      "endedAt": "2024-01-01T00:05:00Z",
-      "to_phone_number": "+14155551234",
-      "from_phone_number": "+14155559876",
-      "messages": [
-        {"role": "bot", "content": "Hello, how can I help?", "start_time": 0, "end_time": 1500},
-        {"role": "user", "content": "I need to book an appointment", "start_time": 2000, "end_time": 3500}
-      ],
-      "metadata": {},
-      "endedReason": "customer-hungup"
-    }
-  ]
+  "calls": [{
+    "id": "unique-call-id",
+    "startedAt": "2024-01-01T00:00:00Z",
+    "endedAt": "2024-01-01T00:05:00Z",
+    "to_phone_number": "+14155551234",
+    "from_phone_number": "+14155559876",
+    "messages": [
+      {"role": "bot", "content": "Hello", "start_time": 0, "end_time": 1500},
+      {"role": "user", "content": "Hi", "start_time": 2000, "end_time": 3500}
+    ],
+    "metadata": {},
+    "endedReason": "customer-hungup"
+  }]
 }
 ```
 
-### Message Roles
-`bot`, `user`, `system`, `function_call`, `function_call_result`
-
-### Timing
-- `start_time` and `end_time` are in milliseconds
-- Must send within 5 minutes after call ends
-
----
-
-## Chat / WebSocket Connection
-
-For text-based testing (10x faster, 90% cheaper than voice).
-
-### Provider-Specific Chat
-Most providers support chat mode separately:
-- **Retell:** Create a "chat agent" copy, set `chat_assistant_id`
-- **VAPI:** Set `chat_assistant_id` to VAPI chat assistant
-- **ElevenLabs:** Set `chat_assistant_id` to ElevenLabs agent ID
-
-### Custom WebSocket
-```json
-{
-  "websocket_url": "wss://api.example.com/ws",
-  "websocket_headers": {
-    "Authorization": "Bearer token",
-    "X-Custom": "value"
-  }
-}
-```
-
-### WebSocket Message Format
-Cekura sends/receives:
-- Regular: `{"content": "message"}`
-- Function call: `{"role": "Function Call", "data": {"id": "...", "name": "...", "arguments": "{}"}}`
-- Function result: `{"role": "Function Call Result", "data": {"id": "...", "result": "{}"}}`
-- End call: `{"content": "...", "type": "end_call"}`
-
-### Headers Sent by Cekura
-- `X-VOCERA-SECRET`: Cekura API key
-- `X-VOCERA-SCENARIO-ID`, `X-VOCERA-RESULT-ID`, `X-VOCERA-RUN-ID`
-- Any test profile fields starting with "X-"
+Message roles: `bot`, `user`, `system`, `function_call`, `function_call_result`  
+`start_time`/`end_time` in milliseconds. Must send within 5 minutes of call end.
 
 ---
 
 ## Outbound Agents
 
-For agents that initiate calls (not receive them):
-
 ```json
 {
-  "inbound": false,
-  "outbound_auto_call": true,
-  "outbound_numbers": ["+14155551234"]
+  "telephony": {"inbound": false, "outbound_numbers": ["+14155551234"]},
+  "provider": {
+    "type": "vapi",
+    "auto_dial_outbound": true,
+    "credentials": {...}
+  }
 }
 ```
 
-- `outbound_auto_call: true` — Cekura triggers the call via the provider API
-- Test profile fields are sent as dynamic variables to the main agent
-- Works with VAPI and Retell
+`auto_dial_outbound` triggers Cekura to place the call via the provider. Test profile fields are forwarded as dynamic variables. Supported for: VAPI, Retell, ElevenLabs, LiveKit, Bland.
 
 ---
 
