@@ -295,13 +295,14 @@ For agents that initiate calls (not receive them):
 
 Provider rows only. Connection modes (SIP, WebSocket, chat, PSTN, WebRTC) are picked independently.
 
-| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Self-hosted / Custom |
-|---------|------|--------|------------|---------|---------|----------------------|
-| Phone (PSTN) | Yes | Yes | Yes | No | No | Yes (via SIP) |
-| WebRTC | Yes | Yes | Yes | Yes | Yes | No |
-| Chat / WebSocket | Yes | Yes | Yes | No | No | Yes |
-| Auto-fetch calls | Yes | Yes | Yes | No | No | N/A |
-| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No |
-| Auto-sync prompt | Yes | Yes | Yes | No | No | No |
-| Outbound auto-call | Yes | Yes | Yes | Yes | No | No |
-| Latency metrics | No | No | No | Yes | No | No |
+| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Trillet | Cisco | Chirp | KoreAI | Genesys | Self-hosted |
+|---------|------|--------|------------|---------|---------|-------|-----------|---------|-------|-------|--------|---------|-------------|
+| Phone (PSTN) | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | No | No | Yes |
+| WebRTC | Yes | Yes | No | Yes | Yes | No | No | No | No | No | No | No | No |
+| WebSocket voice | No | No | No | No | No | No | No | No | No | Yes | No | No | No |
+| Chat / Text | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | Yes | Yes | Yes |
+| Auto-fetch calls | Yes | Yes | Yes | No | No | No | No | No | No | No | No | No | No |
+| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No | No | No |
+| Auto-sync prompt | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No | No |
+| Outbound auto-call | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No | No |
+| Latency metrics | No | No | No | Yes | No | No | No | No | No | No | No | No | No |
