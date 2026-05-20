@@ -159,9 +159,11 @@ Set `transcript_provider` to match (controls how call data is ingested):
 
 ---
 
-## SIP
+## SIP — Connection Mode (NOT a provider)
 
-### Required Fields
+SIP is a **connection mode** used to reach `self_hosted` (or any) agents over a SIP endpoint at test-run time. It is NOT a value for `assistant_provider`. The provider stays whatever platform the agent is built on — most commonly `self_hosted` for agents you reach directly via SIP.
+
+### Required Fields (on the agent record)
 ```json
 {
   "assistant_provider": "self_hosted",
@@ -190,6 +192,9 @@ Cekura automatically injects these SIP headers:
 `sip_endpoint` accepts:
 - Domain: `sip:agent@yourdomain.com`
 - IP: `sip:192.168.1.100:5060`
+
+### Running scenarios over SIP
+Use the `scenarios_run_sip` tool at run time. The agent's `assistant_provider` is irrelevant to choosing this mode — what matters is that `sip_endpoint` is set.
 
 ---
 
@@ -288,13 +293,15 @@ For agents that initiate calls (not receive them):
 
 ## Provider Comparison
 
-| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | SIP | Custom |
-|---------|------|--------|------------|---------|---------|-----|--------|
-| Phone | Yes | Yes | Yes | No | No | Yes | N/A |
-| WebRTC | Yes | Yes | Yes | Yes | Yes | No | No |
-| Chat | Yes | Yes | Yes | No | No | No | Yes |
-| Auto-fetch calls | Yes | Yes | Yes | No | No | No | N/A |
-| Auto-fetch tools | Yes | Yes | Yes | No | No | No | No |
-| Auto-sync prompt | Yes | Yes | Yes | No | No | No | No |
-| Outbound auto-call | Yes | Yes | No | No | No | No | No |
-| Latency metrics | No | No | No | Yes | No | No | No |
+Provider rows only. Connection modes (SIP, WebSocket, chat, PSTN, WebRTC) are picked independently.
+
+| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Self-hosted / Custom |
+|---------|------|--------|------------|---------|---------|----------------------|
+| Phone (PSTN) | Yes | Yes | Yes | No | No | Yes (via SIP) |
+| WebRTC | Yes | Yes | Yes | Yes | Yes | No |
+| Chat / WebSocket | Yes | Yes | Yes | No | No | Yes |
+| Auto-fetch calls | Yes | Yes | Yes | No | No | N/A |
+| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No |
+| Auto-sync prompt | Yes | Yes | Yes | No | No | No |
+| Outbound auto-call | Yes | Yes | Yes | Yes | No | No |
+| Latency metrics | No | No | No | Yes | No | No |

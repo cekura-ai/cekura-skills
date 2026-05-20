@@ -87,9 +87,10 @@ Based on their provider, guide them through connecting:
 - Need: LiveKit agent deployment details
 - Calls include `metadata.raw_metrics` for latency tracking
 
-**Other (SIP, custom WebSocket, chat):**
-- Guide based on their specific setup
-- Refer to https://docs.cekura.ai/documentation/integrations/ for provider-specific docs
+**Self-hosted / Custom (reached via SIP, WebSocket, or chat):**
+- These are `assistant_provider: "self_hosted"` agents — SIP / WebSocket / chat are *connection modes*, not providers.
+- Guide based on their specific setup.
+- Refer to https://docs.cekura.ai/documentation/integrations/ for provider-specific docs.
 
 ### 2.3 Dynamic Variables (if applicable)
 
