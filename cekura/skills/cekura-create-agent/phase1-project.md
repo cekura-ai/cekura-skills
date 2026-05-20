@@ -10,7 +10,7 @@ Ask: "Which Cekura project should this agent live in? I can list your projects i
 
 If they don't know, list projects via the Cekura API or dashboard → display names + IDs → ask user to pick one.
 
-Note the selected `project_id` — required for agent creation in Phase 4.
+Note the selected `project_id` — required for agent creation in Phase 5.
 
 ---
 
@@ -18,4 +18,4 @@ Note the selected `project_id` — required for agent creation in Phase 4.
 
 **Do not proceed until you have a confirmed `project_id`.**
 
-Move to [Phase 2 — Agent Basics](phase2-basics.md).
+Move to [Phase 2 — Provider Selection](phase2-provider.md).

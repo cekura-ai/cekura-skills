@@ -6,13 +6,13 @@ description: >
   "upload knowledge base", "configure integration", "connect VAPI", "connect Retell",
   "connect LiveKit", "connect ElevenLabs", "add dynamic variables", or needs to onboard
   a voice AI agent onto the Cekura platform. Covers the full agent setup flow: project
-  selection, provider selection, basics, description, agent creation, connection type,
+  selection, provider selection, basics and connection type, description, agent creation,
   mock tools, knowledge base, dynamic variables, and advanced configuration.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.8.0"
+  version: "0.9.0"
 ---
 
 # Cekura Create Agent
@@ -20,50 +20,49 @@ metadata:
 Full agent setup flow — **pick provider early, it shapes everything that follows**.
 
 ```
-Phase 1    Phase 2       Phase 3    Phase 4       Phase 5         Phase 6
-Project →  Provider   →  Basics  →  Description →  Create (v2)  →  Connection
-Pick the   Which         Name,      Full system    POST nested     Phone /
-project    provider?     language,  prompt or      provider        WebRTC /
-ID         Credentials   in/out,    exported       block,          chat
-           collected     phone      config         save ID
+Phase 1    Phase 2       Phase 3              Phase 4       Phase 5
+Project →  Provider   →  Basics &          →  Description → Create (v2)
+Pick the   Which         Connection Type      Full system   POST agent,
+project    provider?     Name, phone/WebRTC/  prompt or     save ID
+ID         Credentials   chat, auto-fetch     exported
+           collected     from provider        config
 
-Phase 7        Phase 8     Phase 9     Phase 10    Phase 11
+Phase 6        Phase 7     Phase 8     Phase 9     Phase 10
 Mock Tools  →  KB      →   Dyn Vars →  Advanced →  Verify
 Auto-fetch     Upload      {{var}}     Outbound    Checklist
 or manual      KB docs     patterns,   config      + summary
-curl                       multi-node              + next steps
+               files       multi-node              + next steps
                            pattern
 ```
 
-## The 11 Phases
+## The 10 Phases
 
 | Phase | File | What happens |
 |-------|------|--------------|
 | 1 | [phase1-project.md](phase1-project.md) | List projects, pick `project_id` |
 | 2 | [phase2-provider.md](phase2-provider.md) | Choose provider; collect all credentials upfront |
-| 3 | [phase3-basics.md](phase3-basics.md) | Required fields (name, project) + auto-fetch from provider API |
+| 3 | [phase3-basics.md](phase3-basics.md) | Name, language, connection type (phone/WebRTC/chat/SIP), auto-fetch from provider |
 | 4 | [phase4-description.md](phase4-description.md) | Collect full system prompt — detailed, covers all flows and edge cases |
 | 5 | [phase5-create.md](phase5-create.md) | POST v2 agent; full examples for all providers |
-| 6 | [phase6-connection.md](phase6-connection.md) | Pick phone / WebRTC / chat / WebSocket |
-| 7 | [phase7-mock-tools.md](phase7-mock-tools.md) | Auto-fetch or manual curl; mock data design rules |
-| 8 | [phase8-knowledge-base.md](phase8-knowledge-base.md) | Upload KB files |
-| 9 | [phase9-dynamic-variables.md](phase9-dynamic-variables.md) | `{{var}}` patterns, multi-node agent guidance |
-| 10 | [phase10-advanced.md](phase10-advanced.md) | Outbound config (auto_dial_outbound, outbound_numbers) |
-| 11 | [phase11-verify.md](phase11-verify.md) | Verification checklist + summary + next-skill handoff |
+| 6 | [phase7-mock-tools.md](phase7-mock-tools.md) | Auto-fetch or manual API; mock data design rules |
+| 7 | [phase8-knowledge-base.md](phase8-knowledge-base.md) | Upload KB files |
+| 8 | [phase9-dynamic-variables.md](phase9-dynamic-variables.md) | `{{var}}` patterns, multi-node agent guidance |
+| 9 | [phase10-advanced.md](phase10-advanced.md) | Outbound config (auto_dial_outbound, outbound_numbers) |
+| 10 | [phase11-verify.md](phase11-verify.md) | Verification checklist + summary + next-skill handoff |
 
 ---
 
 ## Ground Rules
 
-**All 11 phases must be completed before the skill ends.** Do not stop after Phase 5 just because the agent record exists — that is only the halfway point. The agent is not ready for testing until Phase 11 is complete.
+**All 10 phases must be completed before the skill ends.** Do not stop after Phase 5 just because the agent record exists — that is only the halfway point. The agent is not ready for testing until Phase 10 is complete.
 
-**Mandatory phases (never skip):** 1, 2, 3, 4, 5, 6, 11.
+**Mandatory phases (never skip):** 1, 2, 3, 4, 5, 10.
 
-**Optional phases (skip if not applicable):** 7 (mock tools), 8 (knowledge base), 9 (dynamic variables), 10 (advanced/outbound). Always ask the user whether each applies before skipping.
+**Optional phases (skip if not applicable):** 6 (mock tools), 7 (knowledge base), 8 (dynamic variables), 9 (advanced/outbound). Always ask the user whether each applies before skipping.
 
 **Phase 2 (provider) comes before basics** — knowing the provider determines what credentials to collect, which connection modes are available, and which auto-fetch capabilities exist.
 
-**The user may have partially completed setup.** Ask what's already done and skip completed phases — but always finish at Phase 11.
+**The user may have partially completed setup.** Ask what's already done and skip completed phases — but always finish at Phase 10.
 
 **Collect conversationally — never dump a form.** Ask for one thing at a time.
 
