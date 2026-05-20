@@ -15,14 +15,13 @@ Create the agent record using the v2 API with data from Phases 1–4.
 | `description` | string | Full system prompt or exported config |
 | `project` | integer | Project ID from Phase 1 |
 | `language` | string | BCP-47 locale, default `en` |
-| `inbound` | boolean | `true` = receives calls, `false` = makes calls |
-| `phone_number` | string | E.164 phone number (or Pipecat agent name) |
-| `sip_uri` | string | SIP URI, e.g. `sip:agent@domain.com` |
-| `sip_auth` | object | `{"username": "...", "password": "..."}` |
-| `outbound_numbers` | array | Numbers for outbound webhook validation |
 | `agent_speaks_first` | boolean\|null | Agent speaks first; `null` = auto-detect |
 | `provider` | object | Provider block — see 5b |
-| `telephony` | object | Alternative telephony block (phone_number, inbound, sip_uri, sip_auth, outbound_numbers) |
+| `inbound` | boolean | Top-level shorthand; or use `telephony.inbound` |
+| `phone_number` | string | Top-level shorthand; or use `telephony.phone_number` |
+| `telephony` | object | Canonical telephony block: `phone_number`, `inbound`, `sip_uri`, `sip_auth`, `outbound_numbers` |
+
+> **`outbound_numbers`** belongs in the `telephony` block — it is not a top-level field in v2.
 
 ---
 

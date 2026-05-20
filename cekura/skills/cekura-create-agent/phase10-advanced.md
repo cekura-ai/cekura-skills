@@ -60,16 +60,18 @@ Default temperature `0.0` gives consistent, reproducible tests.
 
 ## 10e. Outbound agent config
 
-`auto_dial_outbound` lives inside the `provider` block (not top-level):
+`auto_dial_outbound` is inside the `provider` block; `outbound_numbers` is inside the `telephony` block:
 
 ```json
 {
   "inbound": false,
-  "outbound_numbers": ["+14155551234"],
+  "telephony": {
+    "outbound_numbers": ["+14155551234"]
+  },
   "provider": {
     "type": "vapi",
     "auto_dial_outbound": true,
-    "...": "..."
+    "credentials": { "..." : "..." }
   }
 }
 ```

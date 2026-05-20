@@ -117,7 +117,7 @@ Does **not** work for Bland, Pipecat, LiveKit, or self-hosted.
 
 If `inbound: false`, also collect:
 - Auto-dial? (`provider.auto_dial_outbound: true` — VAPI and Retell only)
-- Outbound numbers: (`outbound_numbers: ["+1..."]` — for webhook validation)
+- Outbound numbers: goes in `telephony.outbound_numbers: ["+1..."]` — used for webhook validation (not a top-level field in v2)
 
 ## 3h. Agent speaks first?
 

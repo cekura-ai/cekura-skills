@@ -28,16 +28,25 @@ POST /test_framework/v2/aiagents/
   "description": "string (full system prompt)",
   "project": "integer (project ID)",
   "language": "string (BCP-47, default 'en')",
-  "inbound": "boolean",
-  "phone_number": "string (E.164, e.g. '+14155551234')",
-  "sip_uri": "string (e.g. 'sip:agent@domain.com')",
-  "sip_auth": {"username": "...", "password": "..."},
-  "outbound_numbers": ["string"],
   "agent_speaks_first": "boolean|null",
   "provider": { ... see below ... },
-  "telephony": { ... alternative to top-level phone/inbound fields ... }
+
+  // Telephony — use telephony block (canonical) or top-level shorthands
+  "telephony": {
+    "phone_number": "string (E.164, e.g. '+14155551234')",
+    "inbound": "boolean",
+    "sip_uri": "string (e.g. 'sip:agent@domain.com')",
+    "sip_auth": {"username": "...", "password": "..."},
+    "outbound_numbers": ["string"]
+  },
+
+  // Top-level shorthands (accepted by API, same fields as telephony block)
+  "phone_number": "string",
+  "inbound": "boolean"
 }
 ```
+
+> **`outbound_numbers`** lives inside the `telephony` block in v2 — it is NOT a top-level field.
 
 ## Provider Block
 
