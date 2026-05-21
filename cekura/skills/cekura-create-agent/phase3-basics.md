@@ -41,24 +41,27 @@ Scan the system prompt for language signals:
 
 **Step 2 — Ask the user directly**
 
-> "What language(s) does your agent support? Does it handle only English, or can it respond in multiple languages?"
+Ask two questions:
 
-If they say multiple / it depends on the caller → use `"multi"`.
+1. "What language(s) does your agent support? Does it handle only English, or can it respond in multiple languages?"
+
+2. "Is the language fixed for this agent, or determined at runtime — for example by a personality setting, test profile, or dynamic variable passed in per call?"
+
+If language is determined at runtime (not baked into the agent) → use `"multi"` regardless of what languages are actually supported. The agent's language varies per run, so a fixed code would be wrong.
 
 **Step 3 — Set the correct value**
 
 | Situation | `language` value |
 |-----------|-----------------|
-| Agent only handles English | `en` |
-| Agent only handles Spanish | `es` |
-| Agent only handles Hindi | `hi` |
-| Agent handles any single non-English language | use its BCP-47 code |
+| Agent only handles English, fixed | `en` |
+| Agent only handles one specific language, fixed | BCP-47 code for that language |
 | Agent handles 2+ languages, or detects/switches based on caller | `multi` |
 | Agent has a prompt with language-switching rules | `multi` |
+| Language is determined at runtime (personality, test profile, dynamic variable) | `multi` |
 
 Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja kn ko ms ml mr multi no pl pa pt ro ru sk es sv th tr tl ta te uk vi`
 
-`multi` is correct for any agent that is multilingual, code-switches, or adapts to the caller's language.
+`multi` is the safe default for any agent whose language is not fixed and known at setup time.
 
 ---
 
