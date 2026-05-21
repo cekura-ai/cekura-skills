@@ -97,31 +97,6 @@ Show the user what their test profiles will need to supply:
 
 ---
 
-## 8f. Multi-node / multi-state agents
-
-For agents with distinct states (intake → verification → scheduling → billing), store each node's full system prompt as a separate dynamic variable:
-
-```json
-[
-  {
-    "name": "intake_prompt",
-    "description": "Full system prompt for the intake and greeting state. Covers how the agent introduces itself, confirms the caller is available to talk, and transitions to the next state. String (multi-line). Example: \"You are a senior fertility counsellor from Birla IVF. Begin by introducing yourself and asking if this is a good time to talk.\""
-  },
-  {
-    "name": "verification_prompt",
-    "description": "Full system prompt for the identity verification state. Covers how the agent collects and validates the caller's name, date of birth, and account number before proceeding. String (multi-line)."
-  },
-  {
-    "name": "scheduling_prompt",
-    "description": "Full system prompt for the appointment scheduling state. Covers clinic selection logic, available time slots, confirmation steps, and what to say if the preferred slot is unavailable. String (multi-line)."
-  }
-]
-```
-
-This lets metrics reference `{{dynamic_variables.intake_prompt}}` to evaluate each node independently.
-
----
-
 ## Phase 8 Gate
 
 **Do not proceed until every runtime-injected variable is identified and registered via the API.**
