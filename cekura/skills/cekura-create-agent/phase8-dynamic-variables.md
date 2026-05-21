@@ -44,21 +44,7 @@ Do not ask the user if they have dynamic variables — identify them from the av
 
 ---
 
-## 8c. Optionally add `{{placeholders}}` to the agent description
-
-If a variable belongs in the system prompt (e.g. customer name injected into the greeting), add `{{variableName}}` at the appropriate place. This is optional — dynamic variables do not have to appear in the description.
-
-If the description uses native provider syntax (e.g. `{first_name}`), update it to Cekura's `{{first_name}}` format and PATCH the agent description.
-
-**Example:**
-```
-Before: "You are a scheduling assistant helping the customer."
-After:  "You are a scheduling assistant helping {{customer_name}} (account: {{account_id}}, type: {{account_type}})."
-```
-
----
-
-## 8d. Register variables via the API
+## 8c. Register variables via the API
 
 Once all variables are identified, register them on the agent:
 
