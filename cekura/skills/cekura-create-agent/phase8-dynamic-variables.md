@@ -77,7 +77,7 @@ curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic
 ```
 
 **Key rules:**
-- `name` must exactly match the `{{placeholder}}` in the agent description (without the braces)
+- `name` is the variable identifier — use snake_case (e.g. `customer_name`, `account_id`)
 - `description` should explain what the variable represents and its expected format/type — this helps with scenario generation
 - This is an **upsert** — POST the full array each time; it creates new variables and updates existing ones
 - Returns 201 with the complete variable list after upsert
