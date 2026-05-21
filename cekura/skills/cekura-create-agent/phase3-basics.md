@@ -87,6 +87,8 @@ Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja
 
 `multi` is the safe default for any agent whose language is not fixed and known at setup time.
 
+**Simple rule:** if the agent uses an LLM to generate responses, or if it serves callers across multiple locales — use `multi`.
+
 ---
 
 ## 3b. What to collect per provider
