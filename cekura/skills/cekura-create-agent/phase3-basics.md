@@ -19,8 +19,9 @@ Collect the fields needed to identify the agent and determine how Cekura will co
 | Field | Location | Notes |
 |-------|----------|-------|
 | **Language** | `language` | See 3a-lang below — do not just default to `en` |
-| **Phone number** | `telephony.phone_number` | E.164 format, e.g. `+14155551234`. Determines connection type — see 3c. |
-| **Inbound/Outbound** | `telephony.inbound` | `true` = receives calls, default `false`. |
+| **Phone number** | `telephony.phone_number` | E.164 format, e.g. `+14155551234`. Only set if using phone/SIP — see 3c. |
+
+> **`inbound` is telephony-only.** Only ask inbound vs outbound if the agent uses a phone number or SIP. For WebSocket, WebRTC, or chat-only agents it does not apply.
 
 ### 3a-lang. Language selection — explore properly
 
@@ -84,11 +85,13 @@ The connection type is determined by what you configure — ask the user which t
 
 | Mode | When | What to set |
 |------|------|-------------|
-| **Phone (PSTN)** | Agent has a phone number | `telephony.phone_number` + `telephony.inbound` |
+| **Phone (PSTN)** | Agent receives or makes calls via a phone number | `telephony.phone_number` + `telephony.inbound` (true = receives, false = dials out) |
+| **SIP** | Agent is reachable via a SIP endpoint | `telephony.sip_uri` + optional `telephony.sip_auth` + `telephony.inbound` |
 | **WebRTC** | Lower latency, no telephony costs | Provider-specific — see below |
 | **WebSocket endpoint** | Agent exposes a `wss://` URL that Cekura connects to | `provider.chat_agent_details.type: self_hosted, config.url: wss://...` — see 3d |
 | **Chat / Text (provider)** | Provider has a separate chat agent | `provider.chat_agent_details` with provider type — see 3d |
-| **SIP** | Custom SIP endpoint | `telephony.sip_uri` + optional `telephony.sip_auth` |
+
+> **`telephony.inbound` is only relevant for Phone and SIP modes.** Do not ask about inbound/outbound for WebRTC, WebSocket, or chat-only agents.
 
 A single agent can support multiple connection modes (e.g. phone + WebSocket). Ask the user which they want to use.
 
@@ -197,9 +200,9 @@ See [Phase 4](phase4-description.md) for what makes a good description.
 
 ---
 
-## 3g. Outbound agents
+## 3g. Outbound agents (phone/SIP only)
 
-If `telephony.inbound: false`, also collect:
+Only relevant if using phone or SIP. If `telephony.inbound: false`, also collect:
 - Auto-dial? (`provider.auto_dial_outbound: true` — VAPI, Retell, ElevenLabs, LiveKit, Bland)
 - Outbound numbers: `telephony.outbound_numbers: ["+1..."]`
 

@@ -57,18 +57,15 @@ Read:
 - Transfer/escalation logic — conditions, what is said before transfer, where it goes
 - Language/locale branching — different prompts or behaviours per language
 
-#### Step 2 — Ask probing questions for anything unclear (after reading code)
+#### Step 2 — Fill gaps (after reading code — only ask when code doesn't answer)
 
-After reading, identify gaps and ask targeted questions:
+After reading the code, identify only what is genuinely unclear or missing — things the code doesn't make explicit. Ask targeted questions **only for those gaps**:
 
-- "In the `handle_timeout` branch — what does the agent say?"
-- "What happens if `get_account_info` returns an error?"
-- "Are there any flows not covered in the main prompt — e.g. after-hours, VIP callers, returning customers?"
-- "What should the agent never say or do?"
-- "Are there any rules that only apply in certain situations?"
-- "Does the agent behave differently for inbound vs outbound calls?"
+- If a branch exists but the response text isn't in the code: "In the `handle_timeout` branch — what does the agent say?"
+- If a tool failure path isn't handled: "What should the agent say if `get_account_info` returns an error?"
+- If there are conditional flows not in the main prompt: "Are there flows for after-hours calls, VIP callers, or returning customers?"
 
-Do not ask broad questions like "anything else?". Ask specific, targeted ones based on what you read.
+**Do not ask questions that the code already answers.** If the system prompt is clear, do not re-ask. If error handling is defined, do not ask about it. Only ask when genuinely uncertain.
 
 #### Step 2-fallback — Structured questioning (when no code access)
 
