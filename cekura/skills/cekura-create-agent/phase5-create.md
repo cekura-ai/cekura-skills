@@ -6,6 +6,8 @@
 
 ---
 
+> **Start:** Announce "Starting Phase 5 — Create the Agent" before doing anything in this phase.
+
 ## 5a. Top-level fields
 
 | Field | Type | Notes |
@@ -311,4 +313,4 @@ The response `id` is needed for all subsequent steps.
 
 **Creating the agent record is NOT the end of setup.** The agent cannot be tested yet — mock tools, knowledge base, dynamic variables, and verification still remain. Move immediately to the next phase.
 
-Move to [Phase 6 — Mock Tools](phase6-mock-tools.md).
+Announce: "Phase 5 complete." Then immediately begin [Phase 6 — Mock Tools](phase6-mock-tools.md) without waiting for the user.

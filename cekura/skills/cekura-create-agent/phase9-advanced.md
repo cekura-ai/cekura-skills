@@ -4,6 +4,8 @@ Optional settings for outbound behavior. Ask the user which apply.
 
 ---
 
+> **Start:** Announce "Starting Phase 9 — Advanced Configuration" before doing anything in this phase.
+
 ## 10a. Outbound agent config
 
 `auto_dial_outbound` is inside the `provider` block; `outbound_numbers` is inside the `telephony` block:
@@ -37,8 +39,8 @@ curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
 
 ---
 
-## Phase 10 Gate
+## Phase 9 Gate
 
 **Apply whichever settings are relevant. Skip any that don't apply.**
 
-Move to [Phase 10 — Verify Setup](phase10-verify.md).
+Announce: "Phase 9 complete." Then immediately begin [Phase 10 — Verify Setup](phase10-verify.md) without waiting for the user.

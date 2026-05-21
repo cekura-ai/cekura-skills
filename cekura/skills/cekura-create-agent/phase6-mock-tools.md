@@ -4,6 +4,8 @@ Set up mock responses for any external APIs or tools the agent calls during conv
 
 ---
 
+> **Start:** Announce "Starting Phase 6 — Mock Tools" before doing anything in this phase.
+
 ## 7a. Does the agent use tools?
 
 Ask: "Does your agent call external APIs or tools during calls? (e.g. booking systems, CRMs, payment APIs)"
@@ -66,8 +68,8 @@ Full design guide with examples: `references/mock-tool-design.md`
 
 ---
 
-## Phase 7 Gate
+## Phase 6 Gate
 
 **Confirm all tools referenced in the agent description have mock entries with at least one input/output mapping.**
 
-Move to [Phase 7 — Knowledge Base](phase7-knowledge-base.md).
+Announce: "Phase 6 complete." Then immediately begin [Phase 7 — Knowledge Base](phase7-knowledge-base.md) without waiting for the user.

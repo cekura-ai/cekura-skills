@@ -4,6 +4,8 @@ Identify the provider upfront — it determines what credentials to collect, wha
 
 ---
 
+> **Start:** Announce "Starting Phase 2 — Provider Selection" before doing anything in this phase.
+
 ## 2a. Which provider?
 
 Ask: "What provider does your agent run on?"
@@ -143,4 +145,4 @@ Set in `chat_agent_details`, not `provider.type`:
 
 **Do not proceed until you know the provider and have all required credentials noted.**
 
-Move to [Phase 3 — Agent Basics](phase3-basics.md).
+Announce: "Phase 2 complete." Then immediately begin [Phase 3 — Agent Basics & Connection Type](phase3-basics.md) without waiting for the user.

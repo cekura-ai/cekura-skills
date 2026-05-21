@@ -52,19 +52,31 @@ or manual      KB docs     patterns,   config      + summary
 
 ---
 
-## Ground Rules
+## Execution Model — Read This First
 
-**All 10 phases must be completed before the skill ends.** Do not stop after Phase 5 just because the agent record exists — that is only the halfway point. The agent is not ready for testing until Phase 10 is complete.
+This skill executes **one phase at a time, in order**. Do not plan ahead, do not batch phases, do not jump.
 
-**Mandatory phases (never skip):** 1, 2, 3, 4, 5, 10.
+**How to execute each phase:**
+1. Announce the phase you are starting: "Starting Phase N — [name]"
+2. Complete every task in that phase's file
+3. Satisfy the gate condition
+4. Announce completion: "Phase N complete."
+5. Move immediately to Phase N+1 — do not wait for the user to prompt you
 
-**Optional phases (skip if not applicable):** 6 (mock tools), 7 (knowledge base), 8 (dynamic variables), 9 (advanced/outbound). Always ask the user whether each applies before skipping.
+**Never do this:**
+- Start Phase 4 before Phase 3 is fully complete
+- Skip a mandatory phase because it "seems done"
+- Stop after Phase 5 because the agent was created
+- Bundle multiple phases into one response without completing each
+- Ask the user "shall we continue?" between phases — just continue
 
-**Phase 2 (provider) comes before basics** — knowing the provider determines what credentials to collect, which connection modes are available, and which auto-fetch capabilities exist.
+**Mandatory phases — execute every time, no exceptions:** 1, 2, 3, 4, 5, 10.
 
-**The user may have partially completed setup.** Ask what's already done and skip completed phases — but always finish at Phase 10.
+**Optional phases — ask before skipping, then move on:** 6 (mock tools), 7 (knowledge base), 8 (dynamic variables), 9 (advanced/outbound). For each optional phase: state its name, ask one question to determine if it applies, then either do it or explicitly mark it skipped and continue.
 
-**Collect conversationally — never dump a form.** Ask for one thing at a time.
+**If the user has partially completed setup:** ask at the start which phases are done, mark them complete, then begin from the first incomplete phase — but still end at Phase 10.
+
+**Collect conversationally — ask one thing at a time.** Do not dump all questions at once.
 
 ---
 

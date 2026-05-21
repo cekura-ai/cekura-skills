@@ -6,6 +6,8 @@ For all other providers, or if the user prefers to provide the description manua
 
 ---
 
+> **Start:** Announce "Starting Phase 4 — Agent Description" before doing anything in this phase.
+
 ## 4a. Why the description matters
 
 The description is the **sole input for automatic scenario/evaluator generation**. Cekura reads it to understand every flow, rule, edge case, and constraint — then generates test scenarios from that understanding.
@@ -138,4 +140,4 @@ If the description contains `{{variableName}}` placeholders, flag them — Cekur
 
 **Do not proceed with a vague or incomplete description. The description must cover every workflow, tool, rule, and edge case of the agent — not a summary of it. If in doubt, go deeper.**
 
-Move to [Phase 5 — Create the Agent](phase5-create.md).
+Announce: "Phase 4 complete." Then immediately begin [Phase 5 — Create the Agent](phase5-create.md) without waiting for the user.

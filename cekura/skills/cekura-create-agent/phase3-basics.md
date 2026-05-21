@@ -4,6 +4,8 @@ Collect the fields needed to identify the agent and determine how Cekura will co
 
 ---
 
+> **Start:** Announce "Starting Phase 3 — Agent Basics & Connection Type" before doing anything in this phase.
+
 ## 3a. Fields to collect
 
 **Truly required** (API will reject without these):
@@ -218,5 +220,6 @@ Optional. `agent_speaks_first: true / false / null` (null = auto-detect).
 
 **Do not proceed until you have: name, language, connection type confirmed, and phone number (if using phone/SIP). Description can be a placeholder if using auto-sync.**
 
-Collecting description manually → [Phase 4 — Agent Description](phase4-description.md).
-Using auto-sync → skip to [Phase 5 — Create the Agent](phase5-create.md).
+Announce: "Phase 3 complete." Then immediately begin the next phase without waiting for the user:
+- Collecting description manually → [Phase 4 — Agent Description](phase4-description.md)
+- Using auto-sync → [Phase 5 — Create the Agent](phase5-create.md)

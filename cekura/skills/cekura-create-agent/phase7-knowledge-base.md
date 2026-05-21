@@ -4,6 +4,8 @@ Upload any documents the agent references so Cekura can use them for evaluator g
 
 ---
 
+> **Start:** Announce "Starting Phase 7 — Knowledge Base" before doing anything in this phase.
+
 ## 8a. Does the agent use knowledge base documents?
 
 Ask: "Does your agent reference any knowledge base documents? (FAQs, product guides, policy docs)"
@@ -34,8 +36,8 @@ Supported formats: PDF, text files, documents. Uploaded files appear in Agent Se
 
 ---
 
-## Phase 8 Gate
+## Phase 7 Gate
 
 **Confirm files are uploaded (or none needed).**
 
-Move to [Phase 8 — Dynamic Variables](phase8-dynamic-variables.md).
+Announce: "Phase 7 complete." Then immediately begin [Phase 8 — Dynamic Variables](phase8-dynamic-variables.md) without waiting for the user.

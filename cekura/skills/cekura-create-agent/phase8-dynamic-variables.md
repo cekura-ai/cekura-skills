@@ -6,6 +6,8 @@ Do not ask the user if they have dynamic variables — identify them from the av
 
 ---
 
+> **Start:** Announce "Starting Phase 8 — Dynamic Variables" before doing anything in this phase.
+
 ## 8a. Identify dynamic variables
 
 **If code is available**, inspect it for anything injected into the prompt at runtime:
@@ -138,4 +140,4 @@ This lets metrics reference `{{dynamic_variables.intake_prompt}}` to evaluate ea
 
 **Do not proceed until every runtime-injected variable is identified, registered via the API, and present as `{{placeholder}}` in the agent description.**
 
-Move to [Phase 9 — Advanced Configuration](phase9-advanced.md).
+Announce: "Phase 8 complete." Then immediately begin [Phase 9 — Advanced Configuration](phase9-advanced.md) without waiting for the user.

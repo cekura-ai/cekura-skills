@@ -4,6 +4,8 @@ Identify which Cekura project the agent should belong to before collecting any o
 
 ---
 
+> **Start:** Announce "Starting Phase 1 — Project Selection" before doing anything in this phase.
+
 ## 1a. Always list projects first
 
 **Always fetch the list of projects before asking the user anything.** Do not assume a project or skip this step even if the user mentions a project name.
@@ -29,4 +31,4 @@ Note the selected `project_id` — required for agent creation in Phase 5.
 
 **Do not proceed until the user has explicitly selected a project and you have its `project_id`.**
 
-Move to [Phase 2 — Provider Selection](phase2-provider.md).
+Announce: "Phase 1 complete." Then immediately begin [Phase 2 — Provider Selection](phase2-provider.md) without waiting for the user.
