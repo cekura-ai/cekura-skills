@@ -46,18 +46,22 @@ Ask the user to share their agent code. If they can share it (paste, file path, 
 
 #### Step 1 — Read everything (when code is available)
 
-Read:
+Read only what describes **external, observable behaviour**:
 
-- The main entry point / WebSocket handler
 - The system prompt(s) — including dynamic parts, conditional blocks, language variants
-- Every tool/function definition — name, parameters, what it returns, when it's called
-- Any state machine, workflow engine, or routing logic
-- Prompt templates, Jinja/f-string interpolations, dynamic variable injections
-- Configuration files that affect behaviour (feature flags, A/B variants, per-tenant overrides)
-- Any business rules hardcoded in the call handler (not just in the prompt)
-- Error handling paths — what the agent says/does when a tool fails, times out, returns empty
-- Transfer/escalation logic — conditions, what is said before transfer, where it goes
-- Language/locale branching — different prompts or behaviours per language
+- Every tool/function definition — name, parameters, what it returns, what the agent does with each result
+- Any state machine, workflow engine, or routing logic that changes what the agent says
+- Prompt templates and dynamic variable injections that affect agent responses
+- Business rules hardcoded in the call handler that affect what the agent says or does
+- What the agent says when a tool fails, times out, or returns empty
+- Transfer/escalation conditions and what is said before transferring
+- Language/locale branching — different responses per language
+
+**Skip and ignore:**
+- LLM provider selection, model names, temperature settings, retry logic, fallback chains
+- Session management, keepalive, context window management, token limits
+- Infrastructure code, logging, monitoring, deployment configuration
+- Anything the caller cannot observe or experience
 
 #### Step 2 — Fill gaps (after reading code — only ask when code doesn't answer)
 
@@ -87,7 +91,17 @@ For each answer, ask follow-up questions until you have enough detail to write a
 
 #### Step 3 — Synthesise a complete description
 
-Write the description yourself. Do not ask the user to write it. The description has exactly **two sections**:
+Write the description yourself. Do not ask the user to write it.
+
+**What belongs in the description — external behaviour only:**
+The description captures what the agent does from the caller's perspective — for a given input, what output can be expected. It describes conversational flows, decisions, and rules that are observable from the outside.
+
+**What does NOT belong:**
+- Internal implementation details: LLM selection, model names, retry logic, fallback chains, session management, keepalive mechanics, prompt construction, context window handling
+- Infrastructure concerns: which provider is called, token limits, latency handling
+- Anything the caller cannot observe or experience
+
+The description should read as a specification of observable behaviour, not a code walkthrough.
 
 ---
 
@@ -95,32 +109,30 @@ Write the description yourself. Do not ask the user to write it. The description
 
 Cover every single workflow the agent can handle. For each one, write it out in exhaustive detail — do not summarise. A workflow entry must describe:
 
-- What triggers it (user intent, incoming context, tool result, state transition)
-- Every step the agent takes, in order
-- What the agent says at each step (exact phrasing patterns if deterministic, intent if flexible)
-- Every tool call made — when triggered, what inputs are sent, what the agent does with each possible output (success, empty, error)
-- Every branching condition — what changes the path, what each path leads to
-- How it ends — confirmation, transfer, hang-up, hand-off to another flow
-- What happens if the user goes off-script mid-flow
+- What triggers it — what the caller says or does that starts this flow
+- Every step the agent takes, in order — what it says, what it asks, what it does
+- For each step: what the agent says for each possible caller response (cooperative, uncooperative, ambiguous, silent)
+- Every tool call — what input the agent sends, what each possible result means for what happens next
+- Every branching condition — what causes the path to change, where each path goes
+- How it ends — confirmation given, transfer initiated, call closed, hand-off to another flow
+- What happens when the caller goes off-script mid-flow
 
 Write each workflow as a detailed narrative + step list. Do not condense. If there are 8 sub-branches, write all 8.
 
 **## Behavioral Rules**
 
-List every rule that governs the agent's behaviour across all workflows:
+Every rule that governs the agent's observable behaviour across all workflows:
 
-- What the agent must always do (greetings, confirmations, mandatory data collection)
-- What the agent must never do or say
+- What the agent must always do — greetings, confirmations, mandatory data collection
+- What the agent must never say or do
 - Transfer and escalation rules — exact conditions, what is said before transferring
-- Retry and fallback rules — how many times, what changes on each retry
-- Language and tone rules — formality, vocabulary constraints, persona
-- Timing rules — when to wait, when to move on, inactivity handling
-- Data validation rules — what inputs are accepted, how invalid input is handled
-- Any conditional rules (e.g. "only apply rule X if the user is a returning customer")
+- How the agent handles no-response, unclear input, or repeated misunderstanding
+- Language and tone rules — formality, vocabulary, persona
+- Any conditional rules that apply only in specific situations
 
 ---
 
-Do not stop writing until every workflow, every branch, every tool path, and every rule is captured. Length is not a concern — completeness is. If something is unclear from the code, ask the user — then write.
+Do not stop writing until every workflow, every branch, every observable response, and every rule is captured. Length is not a concern — completeness is. If something is unclear from the code, ask the user — then write.
 
 #### Step 4 — Confirm with the user
 
