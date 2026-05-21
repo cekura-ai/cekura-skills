@@ -1,6 +1,6 @@
 # Phase 8 — Dynamic Variables
 
-Dynamic variables are values passed to the agent **at the start of every run**. They are defined as `{{variableName}}` placeholders in the description and injected into the prompt before each run.
+Dynamic variables are values passed to the agent **at the start of every run**. If `{{variableName}}` placeholders exist in the agent description, they are definitely dynamic variables — Cekura substitutes them before each run. But dynamic variables can also exist without appearing as placeholders in the description; they are simply runtime values registered on the agent and available to the test runner.
 
 Do not ask the user if they have dynamic variables — identify them from the available sources.
 
