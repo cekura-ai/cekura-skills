@@ -44,11 +44,11 @@ or manual      KB docs     patterns,   config      + summary
 | 3 | [phase3-basics.md](phase3-basics.md) | Name, language, connection type (phone/WebRTC/chat/SIP), auto-fetch from provider |
 | 4 | [phase4-description.md](phase4-description.md) | Collect full system prompt — detailed, covers all flows and edge cases |
 | 5 | [phase5-create.md](phase5-create.md) | POST v2 agent; full examples for all providers |
-| 6 | [phase7-mock-tools.md](phase7-mock-tools.md) | Auto-fetch or manual API; mock data design rules |
-| 7 | [phase8-knowledge-base.md](phase8-knowledge-base.md) | Upload KB files |
-| 8 | [phase9-dynamic-variables.md](phase9-dynamic-variables.md) | Identify all runtime-injected variables from code/config, add `{{placeholders}}` to description |
-| 9 | [phase10-advanced.md](phase10-advanced.md) | Outbound config (auto_dial_outbound, outbound_numbers) |
-| 10 | [phase11-verify.md](phase11-verify.md) | Verification checklist + summary + next-skill handoff |
+| 6 | [phase6-mock-tools.md](phase6-mock-tools.md) | Auto-fetch or manual API; mock data design rules |
+| 7 | [phase7-knowledge-base.md](phase7-knowledge-base.md) | Upload KB files |
+| 8 | [phase8-dynamic-variables.md](phase8-dynamic-variables.md) | Identify all runtime-injected variables from code/config, add `{{placeholders}}` to description |
+| 9 | [phase9-advanced.md](phase9-advanced.md) | Outbound config (auto_dial_outbound, outbound_numbers) |
+| 10 | [phase10-verify.md](phase10-verify.md) | Verification checklist + summary + next-skill handoff |
 
 ---
 

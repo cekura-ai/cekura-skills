@@ -1,4 +1,4 @@
-# Phase 11 — Verify Setup
+# Phase 10 — Verify Setup
 
 Confirm the agent is fully configured and ready for testing before handing off to the next skill.
 

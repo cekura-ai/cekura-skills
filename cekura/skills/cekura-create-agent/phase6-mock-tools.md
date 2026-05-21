@@ -1,4 +1,4 @@
-# Phase 7 — Mock Tools
+# Phase 6 — Mock Tools
 
 Set up mock responses for any external APIs or tools the agent calls during conversations.
 
@@ -8,7 +8,7 @@ Set up mock responses for any external APIs or tools the agent calls during conv
 
 Ask: "Does your agent call external APIs or tools during calls? (e.g. booking systems, CRMs, payment APIs)"
 
-If no → skip to [Phase 8](phase8-knowledge-base.md).
+If no → skip to [Phase 7](phase7-knowledge-base.md).
 
 ---
 
@@ -70,4 +70,4 @@ Full design guide with examples: `references/mock-tool-design.md`
 
 **Confirm all tools referenced in the agent description have mock entries with at least one input/output mapping.**
 
-Move to [Phase 8 — Knowledge Base](phase8-knowledge-base.md).
+Move to [Phase 7 — Knowledge Base](phase7-knowledge-base.md).

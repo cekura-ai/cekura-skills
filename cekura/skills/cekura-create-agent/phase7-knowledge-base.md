@@ -1,4 +1,4 @@
-# Phase 8 — Knowledge Base
+# Phase 7 — Knowledge Base
 
 Upload any documents the agent references so Cekura can use them for evaluator generation and hallucination detection.
 
@@ -8,7 +8,7 @@ Upload any documents the agent references so Cekura can use them for evaluator g
 
 Ask: "Does your agent reference any knowledge base documents? (FAQs, product guides, policy docs)"
 
-If no → skip to [Phase 9](phase9-dynamic-variables.md).
+If no → skip to [Phase 8](phase8-dynamic-variables.md).
 
 ---
 
@@ -38,4 +38,4 @@ Supported formats: PDF, text files, documents. Uploaded files appear in Agent Se
 
 **Confirm files are uploaded (or none needed).**
 
-Move to [Phase 9 — Dynamic Variables](phase9-dynamic-variables.md).
+Move to [Phase 8 — Dynamic Variables](phase8-dynamic-variables.md).

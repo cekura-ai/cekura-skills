@@ -111,7 +111,7 @@ Iterate until the user confirms it is complete.
 
 ## 4c. Note dynamic variable patterns
 
-If the description contains `{{variableName}}` placeholders, flag them — Cekura will auto-detect them after agent creation. These are handled in [Phase 8](phase9-dynamic-variables.md).
+If the description contains `{{variableName}}` placeholders, flag them — Cekura will auto-detect them after agent creation. These are handled in [Phase 8](phase8-dynamic-variables.md).
 
 ---
 

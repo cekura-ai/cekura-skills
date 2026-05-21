@@ -1,6 +1,6 @@
 # Phase 8 — Dynamic Variables
 
-Dynamic variables are values passed to the agent **at the start of every run** — they make the agent's description (system prompt) different for each call. They are defined as `{{variableName}}` placeholders in the description and populated by test profiles at run time.
+Dynamic variables are values passed to the agent **at the start of every run**. They are defined as `{{variableName}}` placeholders in the description and injected into the prompt before each run.
 
 Do not ask the user if they have dynamic variables. Identify them yourself.
 
@@ -95,4 +95,4 @@ This lets you swap node behaviour per test and lets metrics reference `{{dynamic
 
 **Do not proceed until every runtime-injected variable is identified, documented, and present as `{{placeholder}}` in the agent description.**
 
-Move to [Phase 9 — Advanced Configuration](phase10-advanced.md).
+Move to [Phase 9 — Advanced Configuration](phase9-advanced.md).

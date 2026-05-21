@@ -1,4 +1,4 @@
-# Phase 10 — Advanced Configuration
+# Phase 9 — Advanced Configuration
 
 Optional settings for outbound behavior. Ask the user which apply.
 
@@ -41,4 +41,4 @@ curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
 
 **Apply whichever settings are relevant. Skip any that don't apply.**
 
-Move to [Phase 11 — Verify Setup](phase11-verify.md).
+Move to [Phase 10 — Verify Setup](phase10-verify.md).
