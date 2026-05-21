@@ -1,49 +1,36 @@
 # Phase 8 — Dynamic Variables
 
-Dynamic variables are all the configuration parameters and runtime values the agent needs to work — identified in Phase 4 while reading the code or questioning the user. This phase ensures both classes are captured and registered.
+**A dynamic variable is any value that changes per run and affects the agent's behavior** — regardless of where or how the substitution happens. Whether it is injected by the agent's own code, by the test scenario, by the runner, or by the Cekura platform, it is a dynamic variable if it varies per run and influences what the agent does.
+
+Do not reason about the substitution mechanism. Reason about what changes.
 
 ---
 
 > **Start:** Announce "Starting Phase 8 — Dynamic Variables" before doing anything in this phase.
 
-## 8a. Two classes of dynamic variables
+## 8a. What counts as a dynamic variable?
 
-There are two distinct classes. Both must be registered.
+Ask one question: **"What is different about this agent from one run to the next?"**
 
-### Class 1 — Description-level variables
+Everything that can differ per run and that the agent reads, uses, or responds to is a dynamic variable:
 
-Values injected into the agent's own prompt or logic at runtime — identified in Phase 4 by tracing the call chain:
+- Caller-specific data (name, account, appointment, preferences)
+- Configuration supplied at run start that changes the agent's behaviour (persona, language, role, instruction set)
+- Any field from a test profile or scenario that the agent reads — whether via its own code, via headers, via a config payload, or via the test runner
+- Feature flags or A/B variants that change per run
+- Scenario instructions or scripts that vary per test
 
-- f-strings, template rendering, string replacements in the prompt construction code
-- Per-call data passed via API/webhook at call start (customer data, account info, session context)
-- Feature flags or per-call overrides baked into the agent's own behaviour
-
-### Class 2 — Platform-injected runtime variables
-
-Values that Cekura resolves and injects per-run before the agent is invoked — **not** placeholders in the agent's own code. These exist for agents whose per-run configuration comes from Cekura rather than being baked into the agent itself.
-
-Ask the user: "When Cekura runs a test against your agent, does Cekura pass any configuration to your agent at the start of each run? For example — the scenario instructions, language, persona, or any test-profile fields your agent reads?"
-
-If yes, these are dynamic variables too. Common examples of this class:
-
-- The scenario or instruction set that changes per test run
-- Language or locale determined by the test run rather than fixed in the agent
-- Persona or role configuration supplied per run
-- Arbitrary key-value fields from test profiles that the agent reads (e.g. from headers, query parameters, or a config payload)
-
-For each platform-injected variable, register it — even if it never appears as a `{{placeholder}}` in the agent's own description.
+The substitution mechanism does not matter — it could happen in the agent's f-string, in the scenario, in the runner, or on the Cekura platform. If it changes per run and affects agent behaviour, register it.
 
 ---
 
 ## 8b. Review what was found in Phase 4
 
-Check the running list built during Phase 4:
+Check the running list built during Phase 4. If nothing was captured, ask the user explicitly:
 
-- Runtime values injected into the prompt (found while tracing the call chain)
-- Per-call configuration passed at call start
-- Any Class 2 variables noted from structured questioning
+> "From one test run to the next, what is different about how your agent behaves or what it knows? Think about the caller data, the scenario being tested, any configuration passed in — anything that isn't identical across all runs."
 
-If nothing was captured, explicitly ask the user about both classes before proceeding. Do not assume there are none.
+Do not assume there are none. Follow up until the answer is clear.
 
 ---
 
@@ -51,8 +38,7 @@ If nothing was captured, explicitly ask the user about both classes before proce
 
 1. **`name`** — variable identifier in snake_case (e.g. `customer_name`, `scenario_language`)
 2. **`description`** — what it represents, its expected format/type, and example values
-3. **Class** — description-level (injected by the agent's own code) or platform-injected (supplied by Cekura per run)
-4. **Where it comes from at runtime** — agent code, inbound call metadata, CRM, test profile, Cekura platform
+3. **Where it comes from at runtime** — agent code, inbound call metadata, CRM, test profile, scenario, Cekura platform
 
 ---
 
