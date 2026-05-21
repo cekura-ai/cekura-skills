@@ -45,13 +45,23 @@ Collect the fields needed to identify the agent and determine how Cekura will co
 
 Do not assume `en`. Actively determine what languages the agent supports:
 
-**Step 1 — Check the description (if available)**
+**Step 1 — Look for explicit language signals only**
 
-Scan the system prompt for language signals:
-- Explicit mentions: "respond in Hindi", "supports English and Spanish", "multilingual"
-- Non-English content in the prompt itself
-- Language rules or switching instructions (e.g. "if user speaks Hindi, respond in Hindi")
-- Character sets: Arabic, Chinese, Devanagari, etc.
+Valid signals — things that directly describe what language the agent uses:
+- Explicit instructions in the system prompt: "respond in Hindi", "always reply in Spanish"
+- A language constant or config value tied to agent behaviour: `LANGUAGE = "hi"`, `agent_language = "es"`
+- Language-switching rules in the prompt: "if the user speaks Hindi, respond in Hindi"
+- Non-English content in the system prompt itself (the prompt text, not code comments)
+
+**Not valid signals — do not use these:**
+- The programming language the codebase is written in
+- English variable names, function names, or log messages
+- English comments in the code
+- The fact that code identifiers are in ASCII
+
+The language of the codebase tells you nothing about the language the agent speaks. Only explicit agent-facing configuration counts.
+
+If no explicit signal is found → skip to Step 2.
 
 **Step 2 — Ask the user directly**
 
