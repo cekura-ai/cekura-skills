@@ -6,21 +6,30 @@ Register all variables the agent requires to run.
 
 > **Start:** Announce "Starting Phase 8 — Dynamic Variables" before doing anything in this phase.
 
-## 8a. What variables does the agent need?
+## 8a. Identify variables
 
-Review the running list from Phase 4. Every variable the agent reads or depends on to function — across all flows, tools, and configurations — should be registered here.
+**If code is available**, determine all variables by tracing the full call chain (already done in Phase 4). Review the running list from Phase 4 and compile the complete set of variables the agent reads at runtime — every value it depends on to function.
 
-If nothing was captured in Phase 4, ask the user:
+Then present them to the user:
+
+> "I found these variables the agent needs to run:
+> - `customer_name` — [what it is]
+> - `account_id` — [what it is]
+> - ...
+>
+> Should I register these?"
+
+Wait for confirmation before proceeding to 8b.
+
+**If no code access**, ask:
 
 > "What variables does your agent need to run? Think about every value it reads at runtime — caller data, account info, configuration, anything that isn't hardcoded."
-
-Do not assume there are none without confirming.
 
 ---
 
 ## 8b. For each variable, establish:
 
-1. **`name`** — identifier in snake_case (e.g. `customer_name`, `account_id`)
+1. **`name`** — identifier in snake_case
 2. **`description`** — what it represents, its expected format/type, and example values
 3. **Where it comes from at runtime** — inbound call metadata, CRM, API, config payload
 
@@ -40,10 +49,6 @@ curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic
   {
     "name": "account_id",
     "description": "Unique customer account identifier. Alphanumeric string prefixed with ACC-. Examples: \"ACC-001234\", \"ACC-987654\"."
-  },
-  {
-    "name": "account_type",
-    "description": "Tier or segment of the customer account. One of: \"standard\", \"premium\", \"vip\". Example: \"premium\"."
   }
 ]'
 ```
@@ -58,6 +63,6 @@ curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic
 
 ## Phase 8 Gate
 
-**Do not proceed until all variables the agent needs to run are registered via the API.**
+**Do not proceed until the user has confirmed the variable list and all variables are registered via the API.**
 
 Announce: "Phase 8 complete." Then immediately begin [Phase 9 — Advanced Configuration](phase9-advanced.md) without waiting for the user.
