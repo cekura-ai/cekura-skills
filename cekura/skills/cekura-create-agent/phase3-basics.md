@@ -255,7 +255,19 @@ Only relevant if using phone or SIP. If `telephony.inbound: false`, also collect
 
 ## 3h. Agent speaks first?
 
-Optional. `agent_speaks_first: true / false / null` (null = auto-detect).
+**Try to determine from code first:**
+
+- If the code sends a message immediately on connection (e.g. a greeting sent before any incoming message is received) → `agent_speaks_first: true`
+- If the code waits for the first incoming message before responding → `agent_speaks_first: false`
+- If the system prompt contains an explicit opening line or greeting → `true`
+
+**If it cannot be determined from code**, ask the user:
+
+> "When a client connects to your agent, does your agent speak first — for example, by sending a greeting immediately — or does it wait for the user to say something first?"
+
+- Agent sends first → `agent_speaks_first: true`
+- Agent waits → `agent_speaks_first: false`
+- Genuinely unclear or varies → `null` (Cekura auto-detects)
 
 ---
 
