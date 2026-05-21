@@ -10,14 +10,20 @@ Do not ask the user if they have dynamic variables — identify them from the av
 
 ## 8a. Identify dynamic variables
 
-**If code is available**, inspect it for anything injected into the prompt at runtime:
+**If code is available**, trace the **full call chain** from the entry point down to where the final LLM prompt string is assembled. Do not stop at the handler level — dynamic variables are often injected several layers deep.
 
-- Python f-strings: `f"Customer name: {customer_name}"` → `{{customer_name}}`
-- Template rendering: `template.render(account_id=...)` → `{{account_id}}`
-- String replacements: `prompt.replace("{NAME}", caller_name)` → `{{name}}`
+Start at the WebSocket handler or main task entry point, then follow every function call that leads to the final prompt string. The injection often happens in a helper called by a helper called by a helper — not in the handler itself.
+
+At each layer, look for:
+
+- Python f-strings: `f"...{variable}..."` → dynamic variable
+- Template rendering: `template.render(key=value)` → dynamic variable
+- String replacements: `prompt.replace("{TAG}", value)` → dynamic variable
+- Concatenation or formatting that inserts runtime data into the prompt
 - Variables passed via API/webhook at call start (customer data, CRM fields, session context)
-- Multi-node agents: separate system prompts per node/state stored in variables
 - Feature flags or A/B variants passed per call
+
+**Do not conclude "no dynamic variables" until you have followed the entire path from entry point to the final string passed to the LLM.** A shallow read of the handler is not sufficient.
 
 **For cloud provider agents (VAPI, Retell, etc.)**, look for:
 - Custom variables or metadata defined in the provider's agent config
