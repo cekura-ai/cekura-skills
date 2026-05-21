@@ -12,7 +12,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.9.0"
+  version: "1.0.0"
 ---
 
 # Cekura Create Agent
