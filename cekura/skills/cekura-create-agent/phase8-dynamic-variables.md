@@ -1,43 +1,32 @@
 # Phase 8 — Dynamic Variables
 
-Dynamic variables are per-run values that the **user supplies** via test profiles to drive the agent's behaviour.
+Register all variables the agent requires to run.
 
 ---
 
 > **Start:** Announce "Starting Phase 8 — Dynamic Variables" before doing anything in this phase.
 
-## 8a. What are user-supplied dynamic variables?
+## 8a. What variables does the agent need?
 
-Ask: **"What data does your agent need per call that you would supply in a test profile — things that change between callers or scenarios?"**
+Review the running list from Phase 4. Every variable the agent reads or depends on to function — across all flows, tools, and configurations — should be registered here.
 
-Examples:
-- Caller-specific data (identity, account state, preferences, history)
-- Per-call configuration the agent uses to personalise its responses
-- Feature flags or A/B variants the user controls per test run
+If nothing was captured in Phase 4, ask the user:
 
-If the answer is none, that is a valid outcome. Do not assume something is missing.
-
----
-
-## 8b. Review what was found in Phase 4
-
-Check the running list built during Phase 4. If nothing was captured, ask the user:
-
-> "Is there any caller-specific data or configuration that you would need to supply per test run — something that changes per caller or per scenario?"
+> "What variables does your agent need to run? Think about every value it reads at runtime — caller data, account info, configuration, anything that isn't hardcoded."
 
 Do not assume there are none without confirming.
 
 ---
 
-## 8c. For each identified variable, establish:
+## 8b. For each variable, establish:
 
-1. **`name`** — variable identifier in snake_case (e.g. `customer_name`, `account_id`)
+1. **`name`** — identifier in snake_case (e.g. `customer_name`, `account_id`)
 2. **`description`** — what it represents, its expected format/type, and example values
-3. **Where it comes from at runtime** — inbound call metadata, CRM, test profile
+3. **Where it comes from at runtime** — inbound call metadata, CRM, API, config payload
 
 ---
 
-## 8d. Register all variables via the API
+## 8c. Register via the API
 
 ```bash
 curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic-variables/ \
@@ -54,33 +43,21 @@ curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic
   },
   {
     "name": "account_type",
-    "description": "Tier or segment of the customer account. Determines which offers, escalation paths, and SLAs apply. One of: \"standard\", \"premium\", \"vip\". Example: \"premium\"."
+    "description": "Tier or segment of the customer account. One of: \"standard\", \"premium\", \"vip\". Example: \"premium\"."
   }
 ]'
 ```
 
 **Key rules:**
-- `name` is the variable identifier — use snake_case
-- `description` should explain what the variable represents, its expected format/type, and example values — this helps with scenario generation
-- This is an **upsert** — POST the full array each time; it creates new variables and updates existing ones
-- Returns 201 with the complete variable list after upsert
-
----
-
-## 8e. Document variables for the user
-
-Show the user what their test profiles will need to supply:
-
-```
-customer_name  — Caller's first name from CRM         — e.g. "Jane Smith"
-account_id     — Customer account identifier          — e.g. "ACC-001234"
-account_type   — Customer tier (standard/premium/vip) — e.g. "premium"
-```
+- `name` — use snake_case
+- `description` — explain what it represents, format/type, and example values
+- This is an **upsert** — POST the full array each time
+- Returns 201 with the complete variable list
 
 ---
 
 ## Phase 8 Gate
 
-**Do not proceed until all user-supplied dynamic variables are identified and registered via the API (or confirmed none are needed).**
+**Do not proceed until all variables the agent needs to run are registered via the API.**
 
 Announce: "Phase 8 complete." Then immediately begin [Phase 9 — Advanced Configuration](phase9-advanced.md) without waiting for the user.
