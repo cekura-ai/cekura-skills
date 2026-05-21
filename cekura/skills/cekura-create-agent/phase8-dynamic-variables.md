@@ -8,6 +8,8 @@ Register all variables the agent requires to run.
 
 ## 8a. Identify variables
 
+**Source is irrelevant.** If a value changes per run and the agent reads it, register it — regardless of where it comes from. Do not exclude a variable because it originates from Cekura's infrastructure, the test runner, the scenario, or any other platform component. The only question is: does the agent read this value at runtime?
+
 **If code is available**, determine all variables by tracing the full call chain (already done in Phase 4). Review the running list from Phase 4 and compile the complete set of variables the agent reads at runtime — every value it depends on to function.
 
 Then present them to the user:
