@@ -255,21 +255,29 @@ Only relevant if using phone or SIP. If `telephony.inbound: false`, also collect
 
 ---
 
-## 3h. Agent speaks first?
+## 3h. Agent speaks first? (`agent_speaks_first`)
+
+This field controls whether the simulated caller waits for the agent to open the conversation or speaks first. **Getting it wrong breaks every scenario** — the simulated caller and the agent will both wait for each other, or both speak at once.
+
+- `true` — agent sends the opening message immediately on connection; simulated caller waits to hear it before responding
+- `false` — simulated caller speaks first; agent waits for the first user message
+- `null` — Cekura auto-detects (use only if genuinely uncertain)
+
+This is especially important for **WebSocket agents**: the connection is bidirectional and Cekura needs to know who initiates so scenarios are written correctly from the start.
 
 **Try to determine from code first:**
 
-- If the code sends a message immediately on connection (e.g. a greeting sent before any incoming message is received) → `agent_speaks_first: true`
-- If the code waits for the first incoming message before responding → `agent_speaks_first: false`
-- If the system prompt contains an explicit opening line or greeting → `true`
+- Code sends a message immediately on connection before any incoming message is received → `true`
+- Code enters a receive loop and waits for the first incoming message before doing anything → `false`
+- System prompt or startup code has an explicit greeting or opening line → `true`
 
 **If it cannot be determined from code**, ask the user:
 
-> "When a client connects to your agent, does your agent speak first — for example, by sending a greeting immediately — or does it wait for the user to say something first?"
+> "When a client connects to your agent, does your agent send a greeting immediately — or does it wait for the user to speak first?"
 
-- Agent sends first → `agent_speaks_first: true`
-- Agent waits → `agent_speaks_first: false`
-- Genuinely unclear or varies → `null` (Cekura auto-detects)
+- Agent opens with a greeting → `true`
+- Agent waits for the user → `false`
+- Varies or unclear → `null`
 
 ---
 
