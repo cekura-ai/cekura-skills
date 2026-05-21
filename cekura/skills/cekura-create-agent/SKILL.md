@@ -78,6 +78,8 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 
 **Collect conversationally — ask one thing at a time.** Do not dump all questions at once.
 
+**Never silently accept a field's default.** When a field has a default value, ask: "does this default make sense for this specific agent's purpose?" before moving on. For example — `language` defaults to `en` but the agent may serve non-English callers; `inbound` defaults to `false` but most agents receive calls; `agent_speaks_first` defaults to null but the agent may always open with a greeting. A default is a fallback, not a recommendation.
+
 ---
 
 ## API Access
