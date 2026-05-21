@@ -16,14 +16,16 @@ Collect the fields needed to identify the agent and determine how Cekura will co
 | **Description** | `description` | Full system prompt — see Phase 4. Placeholder OK if using auto-sync. |
 | **Project** | `project` | Project ID from Phase 1 |
 
-**Optional but usually needed:**
+**Also collect:**
 
-| Field | Location | Notes |
-|-------|----------|-------|
-| **Language** | `language` | See 3a-lang below — do not just default to `en` |
-| **Phone number** | `telephony.phone_number` | E.164 format, e.g. `+14155551234`. Only set if using phone/SIP — see 3c. |
+| Field | Location | When |
+|-------|----------|------|
+| **Language** | `language` | Always — see 3a-lang |
+| **Connection type** | see 3c | Always — decide this first before asking about phone/inbound |
+| **Phone number** | `telephony.phone_number` | Only if connection type is Phone or SIP |
+| **Inbound vs outbound** | `telephony.inbound` | Only if connection type is Phone or SIP |
 
-> **`inbound` is telephony-only.** Only ask inbound vs outbound if the agent uses a phone number or SIP. For WebSocket, WebRTC, or chat-only agents it does not apply.
+**Decide the connection type (3c) before asking about phone number or inbound/outbound.** For WebSocket, WebRTC, or chat-only agents, skip `telephony.phone_number` and `telephony.inbound` entirely — they do not apply.
 
 ### 3a-lang. Language selection — explore properly
 
