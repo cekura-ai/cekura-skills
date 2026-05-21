@@ -61,24 +61,31 @@ After:  "You are a scheduling assistant helping {{customer_name}} (account: {{ac
 Once all variables are identified, register them on the agent:
 
 ```bash
-POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic-variables/
-X-CEKURA-API-KEY: $CEKURA_API_KEY
-Content-Type: application/json
-
-[
+curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic-variables/ \
+  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '[
   {
     "name": "customer_name",
-    "description": "Caller's first name from CRM, string"
+    "description": "Full name of the caller as stored in the CRM. String. Examples: \"Jane Smith\", \"Rahul Verma\", \"María López\"."
   },
   {
     "name": "account_id",
-    "description": "Customer account identifier, e.g. ACC-001234"
+    "description": "Unique customer account identifier used to look up account details. Alphanumeric string prefixed with ACC-. Examples: \"ACC-001234\", \"ACC-987654\"."
   },
   {
     "name": "account_type",
-    "description": "Customer tier: standard, premium, or vip"
+    "description": "Tier or segment of the customer account. Determines which offers, escalation paths, and SLAs apply. One of: \"standard\", \"premium\", \"vip\". Example: \"premium\"."
+  },
+  {
+    "name": "appointment_date",
+    "description": "Date of the customer'\''s upcoming appointment, formatted as YYYY-MM-DD. Used by the agent to confirm or reschedule. Examples: \"2026-05-25\", \"2026-06-03\"."
+  },
+  {
+    "name": "outstanding_balance",
+    "description": "Current outstanding balance on the account in the local currency, as a numeric string. Examples: \"1500.00\", \"0.00\", \"3200.50\"."
   }
-]
+]'
 ```
 
 **Key rules:**
@@ -108,9 +115,18 @@ For agents with distinct states (intake → verification → scheduling → bill
 
 ```json
 [
-  {"name": "intake_prompt",        "description": "System prompt for the intake/greeting state"},
-  {"name": "verification_prompt",  "description": "System prompt for the identity verification state"},
-  {"name": "scheduling_prompt",    "description": "System prompt for the appointment scheduling state"}
+  {
+    "name": "intake_prompt",
+    "description": "Full system prompt for the intake and greeting state. Covers how the agent introduces itself, confirms the caller is available to talk, and transitions to the next state. String (multi-line). Example: \"You are a senior fertility counsellor from Birla IVF. Begin by introducing yourself and asking if this is a good time to talk.\""
+  },
+  {
+    "name": "verification_prompt",
+    "description": "Full system prompt for the identity verification state. Covers how the agent collects and validates the caller's name, date of birth, and account number before proceeding. String (multi-line)."
+  },
+  {
+    "name": "scheduling_prompt",
+    "description": "Full system prompt for the appointment scheduling state. Covers clinic selection logic, available time slots, confirmation steps, and what to say if the preferred slot is unavailable. String (multi-line)."
+  }
 ]
 ```
 
