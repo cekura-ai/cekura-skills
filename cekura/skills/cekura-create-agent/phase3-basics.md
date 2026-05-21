@@ -102,7 +102,21 @@ Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja
 
 ## 3c. Connection type
 
-The connection type is determined by what you configure — ask the user which they want if not obvious from the provider.
+**Infer connection settings from code/config first — only ask the user for what cannot be determined.**
+
+If code is available, look for:
+
+- **WebSocket URL**: environment variables (`WEBSOCKET_URL`, `WS_URL`, `SERVER_URL`), config files, deployment manifests (fly.toml, docker-compose.yml, .env), or the port the server binds to in startup code
+- **Phone number**: config files, environment variables, README, or the number registered with the provider
+- **SIP URI**: config files or environment variables
+- **Connection headers / auth**: any auth tokens or headers the agent requires on the incoming connection
+- **Port / host**: server startup code (e.g. `websockets.serve(host, port)`) — combine with the deployment URL to form the full `wss://` address
+
+The connection type itself is often apparent from the code structure: a WebSocket server suggests WebSocket mode; a phone number in config suggests PSTN; a SIP URI suggests SIP. Only ask the user to confirm or fill gaps.
+
+---
+
+The connection type is determined by what you configure — ask the user to confirm if not clear from code.
 
 | Mode | When | What to set |
 |------|------|-------------|
