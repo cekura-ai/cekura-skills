@@ -152,9 +152,9 @@ If the user needs a different language or framework, generate a custom server us
 
 ---
 
-## 3e. Auto-fetch from provider API
+## 3e. Auto-fetch from provider API (when credentials are available)
 
-For providers with an API, fetch name, description, and language directly:
+For providers with an API, fetch name, description, and language directly. **If credentials are not yet available or the fetch fails**, ask the user for the fields manually (name, language — description is handled in Phase 4).
 
 ### VAPI
 ```bash

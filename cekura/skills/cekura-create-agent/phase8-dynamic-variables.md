@@ -2,13 +2,13 @@
 
 Dynamic variables are values passed to the agent **at the start of every run**. They are defined as `{{variableName}}` placeholders in the description and injected into the prompt before each run.
 
-Do not ask the user if they have dynamic variables. Identify them yourself.
+Do not ask the user if they have dynamic variables — identify them from the available sources.
 
 ---
 
-## 8a. Identify dynamic variables from the agent's code and description
+## 8a. Identify dynamic variables
 
-**For custom code / self-hosted agents**, inspect the code for anything injected into the prompt at runtime:
+**If code is available**, inspect it for anything injected into the prompt at runtime:
 
 - Python f-strings: `f"Customer name: {customer_name}"` → `{{customer_name}}`
 - Template rendering: `template.render(account_id=...)` → `{{account_id}}`
@@ -23,6 +23,15 @@ Do not ask the user if they have dynamic variables. Identify them yourself.
 - Dynamic data injected via the provider's API when placing/receiving calls
 
 **Already-detected patterns**: if the description already contains `{{variableName}}` patterns from the pasted/synced prompt, list them all.
+
+**If no code access**, ask the user these questions directly:
+
+1. "Does anything change about your agent between calls? For example — does the caller's name, account number, appointment date, or any other data get passed in when the call starts?"
+2. "Does your agent behave differently for different customers or call types? What data drives that difference?"
+3. "Are there any placeholders or template variables in your system prompt that get filled in before each call?"
+4. "If you look at how your agent is invoked — what parameters or metadata are sent along with the call?"
+
+For each variable the user identifies, collect: its name, what it represents, where it comes from, and an example value.
 
 ---
 

@@ -36,9 +36,15 @@ Accept the paste as-is. Do not truncate — descriptions >10 KB are fine.
 
 **Do not ask the user to "describe" their agent.** They will produce a summary. Instead, read the code yourself and synthesise the description.
 
-#### Step 1 — Read everything
+#### Step 0 — Get code access
 
-Ask the user to share (or point you to) their agent code. Then read:
+Ask the user to share their agent code. If they can share it (paste, file path, or repo link), proceed to Step 1.
+
+**If no code access is possible** (user can't or won't share code), fall back to structured questioning — skip to Step 2-fallback below.
+
+#### Step 1 — Read everything (when code is available)
+
+Read:
 
 - The main entry point / WebSocket handler
 - The system prompt(s) — including dynamic parts, conditional blocks, language variants
@@ -51,7 +57,7 @@ Ask the user to share (or point you to) their agent code. Then read:
 - Transfer/escalation logic — conditions, what is said before transfer, where it goes
 - Language/locale branching — different prompts or behaviours per language
 
-#### Step 2 — Ask probing questions for anything unclear
+#### Step 2 — Ask probing questions for anything unclear (after reading code)
 
 After reading, identify gaps and ask targeted questions:
 
@@ -63,6 +69,22 @@ After reading, identify gaps and ask targeted questions:
 - "Does the agent behave differently for inbound vs outbound calls?"
 
 Do not ask broad questions like "anything else?". Ask specific, targeted ones based on what you read.
+
+#### Step 2-fallback — Structured questioning (when no code access)
+
+Ask the user these questions one at a time. Do not move to the next until the current one is fully answered:
+
+1. "What is the agent's main purpose — what does it do on a call?"
+2. "Walk me through every type of call it handles, step by step. Start with the most common."
+3. "For each flow: what does the agent say at each step? What does it do if the user says something unexpected?"
+4. "What external tools or APIs does the agent call? For each tool: when is it called, what does it send, what does it do with the result?"
+5. "What are the rules the agent must always follow? What must it never say or do?"
+6. "How does it handle errors — tool failures, silence, unclear input, repeated misunderstandings?"
+7. "Does it transfer calls? When? What does it say before transferring?"
+8. "Are there any special cases — VIP callers, after-hours, returning customers, specific languages?"
+9. "What variables change per call — customer name, account ID, appointment date, anything else passed in at the start?"
+
+For each answer, ask follow-up questions until you have enough detail to write a complete description. Then proceed to Step 3.
 
 #### Step 3 — Synthesise a complete description
 
