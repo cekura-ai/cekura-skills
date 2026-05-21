@@ -1,36 +1,50 @@
 # Phase 8 — Dynamic Variables
 
-**A dynamic variable is any value that changes per run and affects the agent's behavior** — regardless of where or how the substitution happens. Whether it is injected by the agent's own code, by the test scenario, by the runner, or by the Cekura platform, it is a dynamic variable if it varies per run and influences what the agent does.
-
-Do not reason about the substitution mechanism. Reason about what changes.
+Dynamic variables are per-run values that the **user supplies** via test profiles to drive the agent's behaviour. They are not the same as platform-managed runtime inputs.
 
 ---
 
 > **Start:** Announce "Starting Phase 8 — Dynamic Variables" before doing anything in this phase.
 
-## 8a. What counts as a dynamic variable?
+## 8a. The critical distinction: user-supplied vs platform-managed
 
-Ask one question: **"What is different about this agent from one run to the next?"**
+Before identifying dynamic variables, establish this distinction clearly:
 
-Everything that can differ per run and that the agent reads, uses, or responds to is a dynamic variable:
+**User-supplied dynamic variables** — values the user must provide per run via test profiles because they represent caller-specific or scenario-specific data that Cekura cannot know. These must be registered. Examples of the category: caller identity data, account state, per-call configuration the agent needs to personalise its responses.
 
-- Caller-specific data (name, account, appointment, preferences)
-- Configuration supplied at run start that changes the agent's behaviour (persona, language, role, instruction set)
-- Any field from a test profile or scenario that the agent reads — whether via its own code, via headers, via a config payload, or via the test runner
-- Feature flags or A/B variants that change per run
-- Scenario instructions or scripts that vary per test
+**Platform-managed runtime inputs** — values that the Cekura platform resolves and injects automatically per run as part of running a scenario. The user does not supply these; Cekura handles them. They do not need to be registered as dynamic variables.
 
-The substitution mechanism does not matter — it could happen in the agent's f-string, in the scenario, in the runner, or on the Cekura platform. If it changes per run and affects agent behaviour, register it.
+**How to tell the difference:** Ask — "Does the user need to provide this value in a test profile, or does Cekura handle it automatically when running the scenario?"
+
+- User provides it → dynamic variable, register it
+- Cekura handles it automatically → platform-managed, do not register
+
+For agents driven by Cekura's test infrastructure (self-hosted runners, simulation agents), many per-run inputs — such as the test scenario itself, run configuration, or platform settings — are platform-managed. If the agent appears to have no user-supplied variables, that may be correct. Confirm with the user rather than assuming something is missing.
 
 ---
 
-## 8b. Review what was found in Phase 4
+## 8b. What counts as a user-supplied dynamic variable?
 
-Check the running list built during Phase 4. If nothing was captured, ask the user explicitly:
+Ask: **"What data does your agent need per call that changes between callers or scenarios, and that you would need to provide in a test profile?"**
 
-> "From one test run to the next, what is different about how your agent behaves or what it knows? Think about the caller data, the scenario being tested, any configuration passed in — anything that isn't identical across all runs."
+Examples of what this class covers:
+- Caller-specific data (identity, account state, preferences, history)
+- Per-call configuration the agent uses to personalise its responses
+- Feature flags or A/B variants the user controls per test run
 
-Do not assume there are none. Follow up until the answer is clear.
+These are distinct from inputs the platform or runner manages automatically.
+
+---
+
+## 8c. Review what was found in Phase 4
+
+Check the running list built during Phase 4. If nothing was captured, ask the user:
+
+> "From one test run to the next, is there any caller-specific data or configuration that you would need to supply — something that changes per caller or per scenario and that Cekura wouldn't know automatically?"
+
+If the answer is no and the agent is platform-driven (Cekura's infrastructure manages per-run inputs), that is a valid outcome — not a gap. Confirm this with the user and proceed.
+
+Do not assume dynamic variables are missing just because none were found.
 
 ---
 
