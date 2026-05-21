@@ -44,18 +44,22 @@ Ask the user to share their agent code. If they can share it (paste, file path, 
 
 **If no code access is possible** (user can't or won't share code), fall back to structured questioning — skip to Step 2-fallback below.
 
-#### Step 1 — Read everything (when code is available)
+#### Step 1 — Trace the full call chain and read everything
 
-Read only what describes **external, observable behaviour**:
+**Start at the entry point (WebSocket handler, main task, or HTTP endpoint) and follow every function call all the way down to where the final LLM prompt string is assembled.** Do not read only the handler — configuration parameters and injected values are often several layers deep in helper functions.
+
+At each layer, read:
 
 - The system prompt(s) — including dynamic parts, conditional blocks, language variants
 - Every tool/function definition — name, parameters, what it returns, what the agent does with each result
 - Any state machine, workflow engine, or routing logic that changes what the agent says
-- Prompt templates and dynamic variable injections that affect agent responses
+- **Every variable injected into the prompt at runtime** — f-strings, template rendering, string replacements, values passed via API/webhook at call start (these are dynamic variables — note them all as you go)
 - Business rules hardcoded in the call handler that affect what the agent says or does
 - What the agent says when a tool fails, times out, or returns empty
 - Transfer/escalation conditions and what is said before transferring
 - Language/locale branching — different responses per language
+
+**While reading, maintain a running list of dynamic variables** — all the configuration parameters and runtime values the agent needs to work (customer data, session context, feature flags, per-call overrides, etc.). These will be registered in Phase 8.
 
 **Skip and ignore:**
 - LLM provider selection, model names, temperature settings, retry logic, fallback chains
@@ -85,9 +89,9 @@ Ask the user these questions one at a time. Do not move to the next until the cu
 6. "How does it handle errors — tool failures, silence, unclear input, repeated misunderstandings?"
 7. "Does it transfer calls? When? What does it say before transferring?"
 8. "Are there any special cases — VIP callers, after-hours, returning customers, specific languages?"
-9. "What variables change per call — customer name, account ID, appointment date, anything else passed in at the start?"
+9. "What configuration does your agent need at the start of each call to work correctly? For example — caller data, account information, session context, feature flags, or anything else that changes per call or per customer?"
 
-For each answer, ask follow-up questions until you have enough detail to write a complete description. Then proceed to Step 3.
+For each answer, ask follow-up questions until you have enough detail to write a complete description. Note all runtime configuration values from question 9 as dynamic variables — they will be registered in Phase 8. Then proceed to Step 3.
 
 #### Step 3 — Synthesise a complete description
 
