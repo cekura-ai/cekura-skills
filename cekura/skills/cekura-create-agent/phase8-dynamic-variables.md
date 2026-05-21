@@ -44,9 +44,9 @@ Do not ask the user if they have dynamic variables — identify them from the av
 
 ---
 
-## 8c. Add `{{placeholders}}` to the agent description
+## 8c. Optionally add `{{placeholders}}` to the agent description
 
-For every identified variable that belongs in the system prompt, ensure the description uses `{{variableName}}` syntax.
+If a variable belongs in the system prompt (e.g. customer name injected into the greeting), add `{{variableName}}` at the appropriate place. This is optional — dynamic variables do not have to appear in the description.
 
 If the description uses native provider syntax (e.g. `{first_name}`), update it to Cekura's `{{first_name}}` format and PATCH the agent description.
 
@@ -138,6 +138,6 @@ This lets metrics reference `{{dynamic_variables.intake_prompt}}` to evaluate ea
 
 ## Phase 8 Gate
 
-**Do not proceed until every runtime-injected variable is identified, registered via the API, and present as `{{placeholder}}` in the agent description.**
+**Do not proceed until every runtime-injected variable is identified and registered via the API.**
 
 Announce: "Phase 8 complete." Then immediately begin [Phase 9 — Advanced Configuration](phase9-advanced.md) without waiting for the user.

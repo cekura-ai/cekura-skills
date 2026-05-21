@@ -15,7 +15,7 @@ Run through each item:
 3. **Connection mode confirmed** — `telephony.phone_number` present, OR `provider.chat_agent_details` set, OR WebRTC credentials configured
 4. **Mock tools configured** — list mock tools via the API → every tool in the agent description has at least one mapping
 5. **Knowledge base** — `knowledge_base_files` on the agent object matches what was uploaded (or confirmed empty)
-6. **Dynamic variables** — registered variables match the `{{placeholders}}` in the description (or confirmed none)
+6. **Dynamic variables** — all runtime-injected variables are registered via the API (or confirmed none needed)
 7. **Run one test** — suggest running a single simple evaluator to confirm end-to-end connectivity
 
 ---
