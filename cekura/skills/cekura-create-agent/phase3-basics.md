@@ -12,7 +12,7 @@ Collect the fields needed to identify the agent and determine how Cekura will co
 
 | Field | API field | Notes |
 |-------|-----------|-------|
-| **Agent name** | `name` | Descriptive: "Customer Support Bot", "Scheduling Assistant" (max 255 chars) |
+| **Agent name** | `name` | Infer from code/config first — see 3a-name. Only ask the user if it cannot be determined. (max 255 chars) |
 | **Description** | `description` | Full system prompt — see Phase 4. Placeholder OK if using auto-sync. |
 | **Project** | `project` | Project ID from Phase 1 |
 
@@ -26,6 +26,20 @@ Collect the fields needed to identify the agent and determine how Cekura will co
 | **Inbound vs outbound** | `telephony.inbound` | Only if connection type is Phone or SIP |
 
 **Decide the connection type (3c) before asking about phone number or inbound/outbound.** For WebSocket, WebRTC, or chat-only agents, skip `telephony.phone_number` and `telephony.inbound` entirely — they do not apply.
+
+### 3a-name. Agent name — infer first, ask only if needed
+
+**If code is available**, infer the name from:
+- Named constants or variables: `AGENT_NAME`, `BOT_NAME`, `SERVICE_NAME`
+- Config files or environment variables that name the agent
+- The agent's persona in the system prompt (e.g. "You are Alex, a support agent for Acme")
+- README or project documentation
+- The greeting the agent uses to open a call
+- The filename or class name if descriptive
+
+**If using a cloud provider**, the name is returned by the provider's API (see 3e auto-fetch) — use that directly.
+
+**Only ask the user for a name if it cannot be determined from any of the above.** When asking, ask for a descriptive name that reflects what the agent does — not a technical identifier.
 
 ### 3a-lang. Language selection — explore properly
 
