@@ -42,7 +42,7 @@ Wait for confirmation before proceeding to 8b.
 ## 8b. For each variable, establish:
 
 1. **`name`** — identifier in snake_case
-2. **`description`** — what it represents, its expected format/type, and example values
+2. **`description`** — what it represents, its expected format/type, and **the most complete realistic example possible**. For objects: show the full structure with all fields populated. For strings: show a realistic multi-sentence or multi-field value. For enums: list all possible values. Never use trivial placeholders like "example value" or "string"
 3. **Where it comes from at runtime** — inbound call metadata, CRM, API, config payload
 
 ---
@@ -67,7 +67,7 @@ curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic
 
 **Key rules:**
 - `name` — use snake_case
-- `description` — explain what it represents, format/type, and example values
+- `description` — explain what it represents, format/type, and include the most complete realistic example. For objects show full structure; for strings show realistic content; for enums list all values
 - This is an **upsert** — POST the full array each time
 - Returns 201 with the complete variable list
 
