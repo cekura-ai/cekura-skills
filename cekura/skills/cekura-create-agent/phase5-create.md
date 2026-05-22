@@ -247,19 +247,28 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
   "description": "Voice agent deployed on Pipecat Cloud",
   "project": 123,
   "language": "en",
+  "telephony": {"inbound": true},
   "provider": {
     "type": "pipecat",
     "credentials": {
-      "api_key": "pipecat_key_xxx",
+      "api_key": "<Pipecat Cloud API Key from pipecat.daily.co>",
       "config": {
-        "pipecat_agent_name": "my-support-agent",
-        "webhook_url": "https://your-server.com/webhook"
+        "pipecat_agent_name": "<agent name from Pipecat dashboard>",
+        "webhook_url": "<optional — webhook URL for call events>",
+        "config": {},
+        "room_properties": {},
+        "tracing_enabled": false
       }
     }
-  },
-  "telephony": {"inbound": true}
+  }
 }
 ```
+
+- `pipecat_agent_name` — required when `tracing_enabled` is false; the name of the agent as deployed in Pipecat Cloud
+- `config` — additional agent configuration as JSON (optional)
+- `room_properties` — Daily.co room properties configuration as JSON (optional)
+- `webhook_url` — webhook URL for Pipecat call events (optional)
+- `tracing_enabled` — enable Pipecat tracing (optional, default false)
 
 ### Chirp
 ```json

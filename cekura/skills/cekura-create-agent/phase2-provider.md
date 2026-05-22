@@ -61,8 +61,11 @@ Ask: "What provider does your agent run on?"
 
 ### Pipecat Cloud
 - **`credentials.api_key`**: pipecat.daily.co → Settings → API Keys
-- **`credentials.config.pipecat_agent_name`** (required): Pipecat agent name from dashboard
-- **`credentials.config.webhook_url`** (optional)
+- **`credentials.config.pipecat_agent_name`**: Pipecat agent name from dashboard (required when `tracing_enabled` is false)
+- **`credentials.config.webhook_url`** (optional): webhook URL for call events
+- **`credentials.config.config`** (optional): additional agent configuration as JSON object
+- **`credentials.config.room_properties`** (optional): Daily.co room properties as JSON object
+- **`credentials.config.tracing_enabled`** (optional): boolean, default false
 - **Docs:** https://docs.pipecat.ai
 
 ### Bland
