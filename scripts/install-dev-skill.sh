@@ -1,68 +1,51 @@
 #!/usr/bin/env bash
 # install-dev-skill.sh
-# Installs the local cekura-create-agent skill as "cekura-create-agent-dev"
-# so you can test the latest branch without hitting the cached production version.
+# Copies the local cekura-create-agent skill into the EXISTING loaded
+# cekura@cekura-skills plugin cache as "cekura-create-agent-dev".
+#
+# This avoids needing a separate plugin registration — it just adds a
+# new skill to the already-loaded plugin, which Claude Code picks up
+# on the next restart.
 #
 # Usage:
 #   ./scripts/install-dev-skill.sh
 #
-# Run this again any time you want to refresh after new commits.
+# Run again any time you want to refresh after new commits.
 
 set -euo pipefail
 
 SKILL_SRC="$(cd "$(dirname "$0")/.." && pwd)/cekura/skills/cekura-create-agent"
-# Plugin dir name must match the plugin name key registered in installed_plugins.json
-PLUGIN_CACHE="$HOME/.claude/plugins/cache/cekura-skills-dev/cekura-dev/1.0.0"
-SKILL_DST="$PLUGIN_CACHE/skills/cekura-create-agent-dev"
 INSTALLED_PLUGINS="$HOME/.claude/plugins/installed_plugins.json"
 
-echo "→ Copying skill files..."
+# Find the current install path for cekura@cekura-skills
+PLUGIN_INSTALL_PATH=$(python3 - "$INSTALLED_PLUGINS" << 'PY'
+import json, sys
+with open(sys.argv[1]) as f:
+    data = json.load(f)
+entries = data["plugins"].get("cekura@cekura-skills", [])
+if not entries:
+    print("")
+else:
+    print(entries[0]["installPath"])
+PY
+)
+
+if [ -z "$PLUGIN_INSTALL_PATH" ]; then
+  echo "✗ cekura@cekura-skills not found in installed_plugins.json"
+  echo "  Make sure the cekura plugin is installed first."
+  exit 1
+fi
+
+SKILL_DST="$PLUGIN_INSTALL_PATH/skills/cekura-create-agent-dev"
+
+echo "→ Plugin path: $PLUGIN_INSTALL_PATH"
+echo "→ Copying skill to: $SKILL_DST"
+
 mkdir -p "$SKILL_DST"
 cp -r "$SKILL_SRC/." "$SKILL_DST/"
 
 echo "→ Renaming skill to cekura-create-agent-dev..."
 sed -i '' 's/^name: cekura-create-agent$/name: cekura-create-agent-dev/' "$SKILL_DST/SKILL.md"
-
-echo "→ Writing plugin.json..."
-mkdir -p "$PLUGIN_CACHE/.claude-plugin"
-cat > "$PLUGIN_CACHE/.claude-plugin/plugin.json" << 'JSON'
-{
-  "name": "cekura-dev",
-  "version": "1.0.0",
-  "description": "Cekura create-agent skill (local dev build — latest from branch)",
-  "author": {
-    "name": "Cekura",
-    "email": "support@cekura.ai",
-    "url": "https://cekura.ai"
-  },
-  "keywords": ["cekura", "voice-ai", "agent-setup", "dev"]
-}
-JSON
-
-echo "→ Registering in installed_plugins.json..."
-python3 - "$INSTALLED_PLUGINS" "$PLUGIN_CACHE" << 'PY'
-import json, sys
-from datetime import datetime, timezone
-
-path, install_path = sys.argv[1], sys.argv[2]
-
-with open(path) as f:
-    data = json.load(f)
-
-data["plugins"]["cekura-dev@cekura-skills-dev"] = [
-    {
-        "scope": "user",
-        "installPath": install_path,
-        "version": "1.0.0",
-        "installedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-        "lastUpdated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-        "gitCommitSha": "local-dev"
-    }
-]
-
-with open(path, "w") as f:
-    json.dump(data, f, indent=2)
-PY
 
 echo ""
 echo "✓ Done. Restart Claude Code to pick up the skill."
