@@ -142,9 +142,13 @@ The connection type is determined by what you configure — ask the user to conf
 
 A single agent can support multiple connection modes (e.g. phone + WebSocket). Ask the user which they want to use.
 
-> **WebSocket endpoint:** If the user's agent (or simulation runner) exposes a `wss://` URL, Cekura connects to it as a client. Ask for the WebSocket URL and any auth headers needed.
+> **WebSocket endpoint:** When the user selects this mode, ask:
 >
-> **Don't have a WebSocket server yet?** Offer to create one. See 3d-ws below.
+> "Do you have a WebSocket URL ready, or would you like me to help set one up?"
+>
+> - **I have the URL** → ask them to paste it; proceed to 3d
+> - **Use a placeholder for now** → set a dummy URL (e.g. `wss://placeholder.example.com`) and update it before running evals
+> - **Help me create one / set it up** → go to 3d-ws to scaffold the server and expose it via ngrok
 
 ### WebRTC per provider
 
