@@ -27,7 +27,7 @@ If no tools → skip to [Phase 7](phase7-knowledge-base.md).
 
 ---
 
-## 7b. Option A — Auto-Fetch (VAPI, Retell, ElevenLabs, Pipecat)
+## 6b. Option A — Auto-Fetch (VAPI, Retell, ElevenLabs, Pipecat)
 
 If the provider API key and assistant ID are already set:
 
@@ -39,7 +39,7 @@ Auto-fetch is UI-only — no direct API equivalent. Manage individual tools via 
 
 ---
 
-## 7c. Option B — Manual setup (all providers)
+## 6c. Option B — Manual setup (all providers)
 
 Read the agent description to find every tool name. For each tool, create a mock.
 
@@ -68,7 +68,7 @@ curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tools/ 
 
 ---
 
-## 7d. Mock tool design rules
+## 6d. Mock tool design rules
 
 - **`name`** must exactly match the tool name in the agent config (max 64 chars, `[a-z0-9_-]`)
 - **Multiple mappings per tool** — one entry per distinct input (different users, topics, error cases)

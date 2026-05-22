@@ -6,7 +6,7 @@ Optional settings for outbound behavior. Ask the user which apply.
 
 > **Start:** Announce "Starting Phase 9 — Advanced Configuration" before doing anything in this phase.
 
-## 10a. Outbound agent config
+## 9a. Outbound agent config
 
 `auto_dial_outbound` is inside the `provider` block; `outbound_numbers` is inside the `telephony` block:
 
@@ -24,11 +24,11 @@ Optional settings for outbound behavior. Ask the user which apply.
 }
 ```
 
-Works with VAPI and Retell only. Test profile fields are forwarded as dynamic variables when the call is placed.
+Supported for: VAPI, Retell, ElevenLabs, Bland, LiveKit. Test profile fields are forwarded as dynamic variables when the call is placed.
 
 ---
 
-## 10b. Apply via PATCH
+## 9b. Apply via PATCH
 
 ```bash
 curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
