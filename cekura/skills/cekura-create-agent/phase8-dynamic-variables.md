@@ -42,7 +42,7 @@ Wait for confirmation before proceeding to 8b.
 ## 8b. For each variable, establish:
 
 1. **`name`** — identifier in snake_case
-2. **`description`** — what it represents, its expected format/type, and **the most complete realistic example possible**. For objects: show the full structure with all fields populated. For strings: show a realistic multi-sentence or multi-field value. For enums: list all possible values. Never use trivial placeholders like "example value" or "string"
+2. **`description`** — write the most detailed description possible. Cover everything: what the variable represents, its data type, its full structure (every field and sub-field for objects), all constraints (required fields, allowed values, value ranges, format rules), how it is used by the agent, what happens if it is missing or malformed, and the most complete realistic example with all fields populated. Length is not a concern — completeness is. Never use trivial placeholders.
 3. **Where it comes from at runtime** — inbound call metadata, CRM, API, config payload
 
 ---
