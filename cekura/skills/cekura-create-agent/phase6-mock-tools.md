@@ -6,11 +6,24 @@ Set up mock responses for any external APIs or tools the agent calls during conv
 
 > **Start:** Announce "Starting Phase 6 — Mock Tools" before doing anything in this phase.
 
-## 7a. Does the agent use tools?
+## 6a. Determine from code and description first
 
-Ask: "Does your agent call external APIs or tools during calls? (e.g. booking systems, CRMs, payment APIs)"
+**If code or description is available**, determine whether the agent calls any external tools by reading:
 
-If no → skip to [Phase 7](phase7-knowledge-base.md).
+- Tool/function definitions in the code (OpenAI tools array, function schemas, tool registrations)
+- Tool call invocations in the agent logic (any call to external APIs during a conversation)
+- The agent description from Phase 4 — any tools documented there
+- The provider's tool list (if auto-fetched earlier)
+
+Then state your finding and confirm:
+
+> "I [found / did not find] any tool calls in the agent code. [Brief reason — e.g. 'The agent calls `get_account_info` and `book_appointment`' or 'No tool definitions or external API calls are present'.] Should I [set up mock tools / skip this phase]?"
+
+**If no code access**, ask:
+
+> "Does your agent call any external APIs or tools during conversations? (e.g. booking systems, CRMs, payment APIs)"
+
+If no tools → skip to [Phase 7](phase7-knowledge-base.md).
 
 ---
 
