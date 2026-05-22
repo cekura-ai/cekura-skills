@@ -11,7 +11,8 @@
 set -euo pipefail
 
 SKILL_SRC="$(cd "$(dirname "$0")/.." && pwd)/cekura/skills/cekura-create-agent"
-PLUGIN_CACHE="$HOME/.claude/plugins/cache/cekura-skills-dev/cekura/1.0.0"
+# Plugin dir name must match the plugin name key registered in installed_plugins.json
+PLUGIN_CACHE="$HOME/.claude/plugins/cache/cekura-skills-dev/cekura-dev/1.0.0"
 SKILL_DST="$PLUGIN_CACHE/skills/cekura-create-agent-dev"
 INSTALLED_PLUGINS="$HOME/.claude/plugins/installed_plugins.json"
 
