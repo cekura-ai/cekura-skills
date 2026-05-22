@@ -20,18 +20,9 @@ Always ask: does the agent read anything at connection time that is not hardcode
 
 The test: *"If I changed this value between two runs, would the agent behave differently?"* If yes, register it — regardless of how it is delivered.
 
-**If code is available**, determine all variables by tracing the full call chain (already done in Phase 4). Review the running list from Phase 4 and compile the complete set of variables the agent reads at runtime — every value it depends on to function, regardless of how it is consumed.
+**If code is available**, determine all variables by tracing the full call chain (already done in Phase 4). Review the running list from Phase 4 and compile the complete set. Then state your finding and confirm:
 
-Then present them to the user:
-
-> "I found these variables the agent needs to run:
-> - `customer_name` — [what it is]
-> - `account_id` — [what it is]
-> - ...
->
-> Should I register these?"
-
-Wait for confirmation before proceeding to 8b.
+> "I [found / did not find] dynamic variables the agent needs to run. [Brief reason — list them if found, or explain why none e.g. 'The agent reads no runtime-injected values; all configuration is hardcoded'.] Should I [register these / skip this phase]?"
 
 **If no code access**, ask:
 
