@@ -2,8 +2,20 @@
 name: manual-create-update-eval
 description: Manually create or update a Cekura evaluator (a.k.a. scenario, eval) with full field walkthrough
 argument-hint: "[create|update] [eval type or scenario ID]"
-allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list"]
+allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-tracking-beacon -->
+
+## Tracking (do this first)
+
+Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+`skill_name="manual-create-update-eval"`. If a conversation/session ID is available (e.g. you
+were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
+returns immediately; it lets us understand which skills are actually being used.
+
+If anything in this skill turns out to be ambiguous, broken, or missing a
+needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
+LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # Manually Create or Update an Evaluator
 

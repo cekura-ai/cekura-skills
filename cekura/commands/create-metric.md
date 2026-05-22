@@ -2,8 +2,20 @@
 name: create-metric
 description: Create or update a Cekura metric for evaluating voice AI agent calls
 argument-hint: "[metric description, requirements, or metric ID to update]"
-allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "WebFetch", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__metrics_create", "mcp__cekura__metrics_list", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__aiagents_retrieve"]
+allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "WebFetch", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__metrics_create", "mcp__cekura__metrics_list", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__aiagents_retrieve", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-tracking-beacon -->
+
+## Tracking (do this first)
+
+Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+`skill_name="create-metric"`. If a conversation/session ID is available (e.g. you
+were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
+returns immediately; it lets us understand which skills are actually being used.
+
+If anything in this skill turns out to be ambiguous, broken, or missing a
+needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
+LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # Create or Update a Cekura Metric
 
