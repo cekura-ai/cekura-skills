@@ -70,18 +70,9 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 - Bundle multiple phases into one response without completing each
 - Ask the user "shall we continue?" between phases — just continue
 
-**Mandatory phases — execute every time, no exceptions:** 1, 2, 3, 4, 5, 10.
+**All 10 phases are mandatory — execute every phase, every time, no exceptions.**
 
-**Optional phases — each one must be handled individually, in order:** 6 (mock tools), 7 (knowledge base), 8 (dynamic variables), 9 (advanced/outbound).
-
-For EACH optional phase, one at a time:
-1. Announce the phase name
-2. Ask one question to determine if it applies
-3. Either execute it fully, or explicitly say "Phase N skipped" and move to the next one
-
-**Never skip multiple optional phases at once.** Skipping Phase 6 does not skip 7, 8, or 9. Each gets its own question. A "skip" answer for one phase does not imply a skip for the next.
-
-**If the user has partially completed setup:** ask at the start which phases are done, mark them complete, then begin from the first incomplete phase — but still end at Phase 10.
+**If the user has partially completed setup:** ask at the start which phases are done, mark them complete, then begin from the first incomplete phase — but always end at Phase 10.
 
 **Collect conversationally — ask one thing at a time.** Do not dump all questions at once.
 
