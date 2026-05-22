@@ -73,7 +73,7 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `genesys` | `client_id`, `region` | — |
 | `trillet` | `workspace_id` | — |
 | `cisco` | — | — |
-| `self_hosted` | — | `send_post_conversation_metadata` |
+| `self_hosted` | — | — (use `provider.send_post_conversation_metadata` at provider level) |
 
 ## chat_agent_details by type
 

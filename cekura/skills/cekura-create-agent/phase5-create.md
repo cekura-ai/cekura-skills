@@ -68,7 +68,9 @@
 | `genesys` | `client_id`, `region` | — |
 | `trillet` | `workspace_id` | — |
 | `cisco` | — | — |
-| `self_hosted` | — | `send_post_conversation_metadata` |
+| `self_hosted` | — | — |
+
+> **`send_post_conversation_metadata`** for `self_hosted` is set at the **provider level** (not inside `credentials.config`): `"provider": {"type": "self_hosted", "send_post_conversation_metadata": true}`
 
 **`chat_agent_details.config` by provider:**
 
@@ -289,6 +291,103 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
   }
 }
 ```
+
+### Synthflow
+```json
+{
+  "name": "Synthflow Voice Agent",
+  "description": "...",
+  "project": 123,
+  "language": "en",
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
+  "provider": {
+    "type": "synthflow",
+    "credentials": {
+      "api_key": "<Synthflow API Key>",
+      "config": {
+        "synthflow_base_url_override": "<optional — custom base URL for EU or specific regions>"
+      }
+    },
+    "auto_sync_prompt": true
+  }
+}
+```
+
+### KoreAI
+```json
+{
+  "name": "KoreAI Agent",
+  "description": "...",
+  "project": 123,
+  "language": "en",
+  "provider": {
+    "type": "koreai",
+    "credentials": {
+      "api_key": "<KoreAI client secret>",
+      "config": {
+        "client_id": "<OAuth2 Client ID — required>",
+        "bot_id": "<KoreAI Bot ID — required>",
+        "host": "<optional — defaults to https://bots.kore.ai>"
+      }
+    }
+  }
+}
+```
+
+### Genesys
+```json
+{
+  "name": "Genesys Agent",
+  "description": "...",
+  "project": 123,
+  "language": "en",
+  "provider": {
+    "type": "genesys",
+    "credentials": {
+      "api_key": "<Genesys client secret>",
+      "config": {
+        "client_id": "<OAuth2 Client ID — required>",
+        "region": "<Genesys Cloud region, e.g. us-east-1 — required>"
+      }
+    }
+  }
+}
+```
+
+### Trillet
+```json
+{
+  "name": "Trillet Agent",
+  "description": "...",
+  "project": 123,
+  "language": "en",
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
+  "provider": {
+    "type": "trillet",
+    "credentials": {
+      "api_key": "<Trillet API Key>",
+      "config": {
+        "workspace_id": "<Trillet workspace ID — required>"
+      }
+    }
+  }
+}
+```
+
+### Cisco
+```json
+{
+  "name": "Cisco Agent",
+  "description": "...",
+  "project": 123,
+  "language": "en",
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
+  "provider": {
+    "type": "cisco"
+  }
+}
+```
+No credentials needed for Cisco.
 
 ---
 
