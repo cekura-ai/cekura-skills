@@ -14,7 +14,11 @@ Registering a variable tells Cekura's evaluator generator to produce a value for
 
 **Template substitution is just one delivery mechanism.** Do not limit the search to `{{placeholder}}` patterns or string interpolations in prompts. For self-hosted and WebSocket agents especially, runtime inputs are often structural — passed as headers, config payloads, or connection parameters — and they never appear as placeholders anywhere. They are still dynamic variables.
 
-The test for any value is: *"If I changed this value, would the agent behave differently on this call?"* If yes, register it.
+Beyond `{{placeholder}}` substitutions, WebSocket agents commonly receive per-run configuration as structural inputs — headers, connection parameters, or config payloads. These shape the agent's behaviour just as much as template variables but are easy to miss because they never appear as placeholders in any prompt.
+
+Always ask: does the agent read anything at connection time that is not hardcoded? Common categories include how the agent should behave on this run, what model or style parameters it should use, and what context it needs about the caller or session.
+
+The test: *"If I changed this value between two runs, would the agent behave differently?"* If yes, register it — regardless of how it is delivered.
 
 **If code is available**, determine all variables by tracing the full call chain (already done in Phase 4). Review the running list from Phase 4 and compile the complete set of variables the agent reads at runtime — every value it depends on to function, regardless of how it is consumed.
 
