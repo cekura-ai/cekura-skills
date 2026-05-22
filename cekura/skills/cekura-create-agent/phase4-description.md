@@ -59,7 +59,7 @@ At each layer, read:
 - Transfer/escalation conditions and what is said before transferring
 - Language/locale branching — different responses per language
 
-**While reading, maintain a running list of dynamic variables** — all the configuration parameters and runtime values the agent needs to work (customer data, session context, feature flags, per-call overrides, etc.). These will be registered in Phase 8.
+**While reading, maintain a running list of dynamic variable candidates** — flag any per-run input that shapes the agent's observable behaviour, not just string interpolations. Anything supplied at call-start that changes what the agent does qualifies: headers, config payloads, structured parameters, and template variables alike. These will be registered in Phase 8.
 
 **Skip and ignore:**
 - LLM provider selection, model names, temperature settings, retry logic, fallback chains
