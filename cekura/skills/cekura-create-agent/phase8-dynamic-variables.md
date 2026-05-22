@@ -2,6 +2,8 @@
 
 Register all variables the agent requires to run. Cekura uses these to generate appropriate values alongside evaluators, then passes them to the agent at runtime so it runs with the right configuration for each test.
 
+Registering a variable tells Cekura's evaluator generator to produce a value for it. If the agent needs a value generated alongside the evaluator — even if it never appears as a `{{placeholder}}` in a prompt — it must be registered here. The source and the injection mechanism do not matter; what matters is that the agent needs it to run correctly.
+
 ---
 
 > **Start:** Announce "Starting Phase 8 — Dynamic Variables" before doing anything in this phase.
