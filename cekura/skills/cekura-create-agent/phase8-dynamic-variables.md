@@ -1,6 +1,6 @@
 # Phase 8 — Dynamic Variables
 
-Register all variables the agent requires to run.
+Register all variables the agent requires to run. Cekura uses these to generate appropriate values alongside evaluators, then passes them to the agent at runtime so it runs with the right configuration for each test.
 
 ---
 
