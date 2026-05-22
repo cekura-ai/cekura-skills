@@ -119,3 +119,27 @@ POST /test_framework/v2/aiagents/{id}/upload_knowledge_base/
 Content-Type: multipart/form-data
 files: <file1>, <file2>
 ```
+
+## Dynamic Variables
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/test_framework/v1/aiagents/{agent_id}/dynamic-variables/` | Upsert dynamic variables |
+| GET | `/test_framework/v1/aiagents/{agent_id}/dynamic-variables/` | List dynamic variables |
+
+### Upsert Schema
+
+```json
+POST /test_framework/v1/aiagents/{agent_id}/dynamic-variables/
+[
+  {
+    "name": "string (required, snake_case — variable identifier)",
+    "description": "string (required — what it represents, format/type, full structure, constraints, complete example)"
+  }
+]
+```
+
+- **Upsert** — POST the full array each time; creates new variables and updates existing ones
+- Returns 201 with the complete variable list after upsert
+- `name` is the variable identifier — must be unique per agent
+- `description` should be as detailed as possible: full structure, all fields, constraints, example values
