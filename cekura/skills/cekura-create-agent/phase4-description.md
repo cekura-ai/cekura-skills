@@ -38,11 +38,13 @@ Accept the paste as-is. Do not truncate — descriptions >10 KB are fine.
 
 **Do not ask the user to "describe" their agent.** They will produce a summary. Instead, read the code yourself and synthesise the description.
 
+**The system prompt is in the code — not in a running server.** It exists as a constant, config file, or string in the codebase. Whether or not the server is running is irrelevant. If the codebase is accessible in the current session (open files, file paths, repo), read it directly without asking the user.
+
 #### Step 0 — Get code access
 
-Ask the user to share their agent code. If they can share it (paste, file path, or repo link), proceed to Step 1.
+If the codebase is already visible in the current session (e.g. open in the editor, files already read, or the user is working in the repo), proceed directly to Step 1 — do not ask the user to share code you can already see.
 
-**If no code access is possible** (user can't or won't share code), fall back to structured questioning — skip to Step 2-fallback below.
+Only ask the user to share code if it is genuinely not accessible. If no code access is possible at all, fall back to structured questioning — skip to Step 2-fallback below.
 
 #### Step 1 — Trace the full call chain and read everything
 
