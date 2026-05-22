@@ -99,6 +99,8 @@ For each answer, ask follow-up questions until you have enough detail to write a
 
 Write the description yourself. Do not ask the user to write it.
 
+**Minimum length: the description must be long enough to fully specify every workflow and every rule. A short paragraph is always wrong. Aim for at least 100 lines. If the description is shorter than that, you have not gone deep enough.**
+
 **What belongs in the description — external behaviour only:**
 The description captures what the agent does from the caller's perspective — for a given input, what output can be expected. It describes conversational flows, decisions, and rules that are observable from the outside.
 
@@ -123,11 +125,11 @@ Cover every single workflow the agent can handle. For each one, write it out in 
 - How it ends — confirmation given, transfer initiated, call closed, hand-off to another flow
 - What happens when the caller goes off-script mid-flow
 
-Write each workflow as a detailed narrative + step list. Do not condense. If there are 8 sub-branches, write all 8.
+Write each workflow as a detailed narrative + step list. Do not condense. If there are 8 sub-branches, write all 8. If a workflow has sub-states, document each sub-state separately.
 
 **## Behavioral Rules**
 
-Every rule that governs the agent's observable behaviour across all workflows:
+Every rule that governs the agent's observable behaviour across all workflows. Write each rule in full — do not summarise groups of rules into one line:
 
 - What the agent must always do — greetings, confirmations, mandatory data collection
 - What the agent must never say or do
@@ -156,6 +158,6 @@ If the description contains `{{variableName}}` placeholders, flag them — Cekur
 
 ## Phase 4 Gate
 
-**Do not proceed with a vague or incomplete description. The description must cover every workflow, tool, rule, and edge case of the agent — not a summary of it. If in doubt, go deeper.**
+**Do not proceed with a vague or short description.** A few sentences or a short paragraph is always insufficient. The description must cover every workflow in step-by-step detail, every rule written out fully, every edge case documented. If the description is less than ~100 lines, it is not complete — go back and expand every section.
 
 Announce: "Phase 4 complete." Then immediately begin [Phase 5 — Create the Agent](phase5-create.md) without waiting for the user.
