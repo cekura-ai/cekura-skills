@@ -78,7 +78,7 @@ Ask two questions:
 
 1. "What language(s) does your main agent support? Does it handle only English, or can it respond in multiple languages?"
 
-2. "Is the language fixed for this main agent, or determined at runtime — for example by a personality setting, test profile, or dynamic variable passed in per call?"
+2. "Is the language fixed for this main agent, or determined at runtime — for example by a runtime variable, configuration passed at call start, or something that varies per run?"
 
 If language is determined at runtime (not baked into the main agent) → use `"multi"` regardless of what languages are actually supported. The agent's language varies per run, so a fixed code would be wrong.
 
