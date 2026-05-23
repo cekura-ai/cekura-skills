@@ -8,7 +8,7 @@ Identify the provider upfront — it determines what credentials to collect, wha
 
 ## 2a. Which provider?
 
-Ask: "What provider does your agent run on?"
+Ask: "What provider does your main agent run on?"
 
 | Provider | `provider.type` | Notes |
 |----------|----------------|-------|
@@ -139,7 +139,7 @@ Set in `chat_agent_details`, not `provider.type`:
 | Auto-sync prompt | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — | — |
 | Auto-dial outbound | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — |
 | Auto-fetch tools | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — | — |
-| Fetch agent config | ✓ | ✓ | ✓ | — | — | ✓ | — | — | — | — | — | — | — |
+| Fetch main agent config | ✓ | ✓ | ✓ | — | — | ✓ | — | — | — | — | — | — | — |
 | Squads / multi-agent | ✓ | — | — | — | — | — | — | — | — | — | — | — | — |
 
 ---

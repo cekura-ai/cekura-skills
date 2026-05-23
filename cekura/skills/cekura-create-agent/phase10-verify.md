@@ -1,81 +1,82 @@
-# Phase 10 — Verify Setup
+# Phase 10 — Verify Main Agent Setup
 
-Confirm the agent is fully configured and ready for testing before handing off to the next skill.
+Confirm the main agent is fully configured and verify it works end-to-end with a real test run. **This phase does not end until the run succeeds.**
 
 ---
 
-> **Start:** Announce "Starting Phase 10 — Verify Setup" before doing anything in this phase.
+> **Start:** Announce "Starting Phase 10 — Verify Main Agent Setup" before doing anything in this phase.
 
 ## 10a. Verification checklist
 
 Run through each item:
 
-1. **Agent exists** — retrieve the agent via the API → confirm `name`, `description`, `telephony.phone_number`
+1. **Main agent exists** — retrieve the main agent via the API → confirm `name`, `description`, `telephony.phone_number`
 2. **Provider connected** — `provider.type`, `provider.credentials.api_key`, and `provider.agent_id` (where applicable) are all set
 3. **Connection mode confirmed** — `telephony.phone_number` present, OR `provider.chat_agent_details` set, OR WebRTC credentials configured
-4. **Mock tools configured** — list mock tools via the API → every tool in the agent description has at least one mapping
-5. **Knowledge base** — `knowledge_base_files` on the agent object matches what was uploaded (or confirmed empty)
+4. **Mock tools configured** — list mock tools via the API → every tool in the main agent description has at least one mapping
+5. **Knowledge base** — `knowledge_base_files` on the main agent object matches what was uploaded (or confirmed empty)
 6. **Dynamic variables** — all runtime-injected variables are registered via the API (or confirmed none needed)
-7. **End-to-end test** — see 10b below
 
 ---
 
-## 10b. End-to-end verification run
+## 10b. End-to-end verification run (mandatory)
 
-Ask the user:
+**Do not ask permission. Run this automatically using MCP tools.**
 
-> "Would you like me to generate a single test scenario and run it now to verify the agent is working end-to-end?"
+**This step is not complete until the transcript shows a real conversation — both the testing agent and the agent must have exchanged messages.**
 
-If yes, proceed. If no, skip to 10c.
+**Step 1 — Generate one scenario using the MCP generate tool**
 
-**Step 1 — Generate one scenario**
+Use `mcp__cekura__scenarios_generate_bg` to auto-generate a single scenario for the agent. Do not write or create a scenario manually. Pass `agent_id` and `count: 1`. Poll `mcp__cekura__scenarios_generate_progress` until `status` is `completed`, then use the returned scenario ID.
 
-Use the Cekura API to auto-generate a single scenario for the agent:
+**Step 2 — Run the scenario using the MCP run tool**
 
-```bash
-# Start scenario generation
-curl -X POST https://api.cekura.ai/test_framework/v1/scenarios-external/generate/ \
-  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"agent": <agent_id>, "count": 1}'
-```
+Use the appropriate MCP tool based on the main agent's connection mode. Do not construct API calls manually — call the MCP tool directly:
 
-Poll the progress endpoint until `status` is `completed`, then use the returned scenario ID.
+| Connection mode | MCP tool |
+|----------------|----------|
+| WebSocket / text | `mcp__cekura__scenarios_run_text` |
+| Voice / phone | `mcp__cekura__scenarios_run_voice` |
+| SIP | `mcp__cekura__scenarios_run_sip` |
+| WebRTC (VAPI) | `mcp__cekura__scenarios_run_vapi_webrtc` |
+| WebRTC (Retell) | `mcp__cekura__scenarios_run_retell_webrtc` |
+| WebRTC (LiveKit) | `mcp__cekura__scenarios_run_livekit_v2` |
+| WebRTC (Pipecat) | `mcp__cekura__scenarios_run_pipecat_v2` |
+| WebRTC (ElevenLabs) | `mcp__cekura__scenarios_run_elevenlabs` |
 
-**Step 2 — Run the scenario**
-
-Run it using the appropriate connection mode for this agent (websocket, voice, text, etc.):
-
-```bash
-# Example for WebSocket/text mode
-curl -X POST https://api.cekura.ai/test_framework/v1/scenarios-external/run-text/ \
-  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"scenarios": [{"scenario": <scenario_id>}]}'
-```
-
-Wait for the run to complete (poll the result).
+Poll the result using `mcp__cekura__results_retrieve` until the run is complete, then inspect the transcript.
 
 **Step 3 — Check the transcript**
 
-Retrieve the run result and inspect the transcript. **Success criteria:**
+Inspect `transcript_object` in the result — **not** just the run status or `connected_runs`.
 
-- The transcript contains at least 2 turns
-- Both the simulated caller AND the agent have spoken (both sides have messages)
-- Neither side is silent or shows only an error message
+**Success requires ALL of:**
+- `transcript_object` is non-empty and contains real message text
+- At least 2 turns present
+- Both the testing agent AND the agent have messages in the transcript
+- The main agent's messages are non-empty actual responses
 
-If the transcript shows a real back-and-forth conversation → **setup is confirmed working**.
+**A run that is "connected" or "completed" with an empty `transcript_object` is a FAILURE.** Connection alone proves nothing about the main agent working — messages must have actually been exchanged.
 
-If the transcript is empty, one-sided, or contains an error → diagnose and fix before proceeding:
-- Empty transcript: connection failed — check WebSocket URL, credentials, or phone number
-- Only caller messages: agent is not responding — check agent is running and reachable
-- Error in result: check the error message and fix the underlying issue
+**Failure — diagnose and fix, then retry:**
+
+| Symptom | Likely cause | Action |
+|---------|-------------|--------|
+| `transcript_object` empty, run shows as connected | Main agent connected but sent no messages — responses not in Cekura's expected format `{"content": "..."}`, or agent code isn't sending | Fix agent response format and retry |
+| Empty transcript, not connected | Server not reachable — go back to Phase 3, fix URL, retry | — |
+| Only testing agent messages, agent silent | Agent not responding | Check agent is running and sending responses |
+| Only main agent messages, no testing agent | Scenario runner issue | Check dynamic variables, scenario instructions |
+| Tool call errors | Missing mock tools | Go back to Phase 6, add/fix mock tools |
+| Variable substitution errors | Missing dynamic variables | Go back to Phase 8, register the variables |
+| Agent gives empty/wrong responses | Description too vague | Go back to Phase 4, improve the description |
+
+**After fixing any issue, re-run from Step 1.** Do not move to the summary until the run produces a real back-and-forth conversation in the transcript.
 
 ---
 
 ## 10c. Summary for the user
 
-Present a summary before handing off:
+Only present this after the verification run succeeds:
 
 ```
 Agent: [name] (ID: [id])
@@ -85,13 +86,14 @@ Connection mode: [phone / WebRTC / chat / WebSocket]
 Mock tools: [count] configured
 Knowledge base: [count] files
 Dynamic variables: [list or "none"]
+Verification: ✓ Run confirmed — testing agent and main agent exchanged messages
 ```
 
 ---
 
 ## 10d. Next steps
 
-The agent is ready. Point the user to what comes next:
+The main agent is ready. Point you to what comes next:
 
 | Goal | Skill |
 |------|-------|
@@ -104,6 +106,6 @@ The agent is ready. Point the user to what comes next:
 
 ## Phase 10 Gate
 
-**All phases complete. The skill ends here.**
+**The skill does not end until the verification run succeeds.** If the run fails, fix the issue and retry. Do not announce completion until the transcript confirms a real conversation happened.
 
-Announce: "Phase 10 complete. Agent setup is done — the agent is ready for testing."
+Announce: "Phase 10 complete. Verification confirmed — the main agent is working end-to-end."

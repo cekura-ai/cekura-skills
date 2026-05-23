@@ -6,7 +6,7 @@ Optional settings for outbound behavior. Ask the user which apply.
 
 > **Start:** Announce "Starting Phase 9 — Advanced Configuration" before doing anything in this phase.
 
-## 9a. Outbound agent config
+## 9a. Outbound main agent config
 
 `auto_dial_outbound` is inside the `provider` block; `outbound_numbers` is inside the `telephony` block:
 

@@ -1,4 +1,4 @@
-# Phase 5 — Create the Agent
+# Phase 5 — Create the Main Agent
 
 **Endpoint:** `POST https://api.cekura.ai/test_framework/v2/aiagents/`
 
@@ -6,7 +6,7 @@
 
 ---
 
-> **Start:** Announce "Starting Phase 5 — Create the Agent" before doing anything in this phase.
+> **Start:** Announce "Starting Phase 5 — Create the Main Agent" before doing anything in this phase.
 
 ## 5a. Top-level fields
 
@@ -417,8 +417,8 @@ The response `id` is needed for all subsequent steps.
 
 ## Phase 5 Gate
 
-**Do not proceed until the agent is created and you have its `id`.**
+**Do not proceed until the main agent is created and you have its `id`.**
 
-**Creating the agent record is NOT the end of setup.** The agent cannot be tested yet — mock tools, knowledge base, dynamic variables, and verification still remain. Move immediately to the next phase.
+**Creating the main agent record is NOT the end of setup.** The main agent cannot be tested yet — mock tools, knowledge base, dynamic variables, and verification still remain. Move immediately to the next phase.
 
 Announce: "Phase 5 complete." Then immediately begin [Phase 6 — Mock Tools](phase6-mock-tools.md) without waiting for the user.

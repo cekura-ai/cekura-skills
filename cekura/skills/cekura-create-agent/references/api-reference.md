@@ -141,5 +141,5 @@ POST /test_framework/v1/aiagents/{agent_id}/dynamic-variables/
 
 - **Upsert** — POST the full array each time; creates new variables and updates existing ones
 - Returns 201 with the complete variable list after upsert
-- `name` is the variable identifier — must be unique per agent
+- `name` is the variable identifier — must be unique per main agent
 - `description` should be as detailed as possible: full structure, all fields, constraints, example values

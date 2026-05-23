@@ -8,6 +8,16 @@ Clone and adapt this — it is a complete, production-quality WebSocket server t
 
 ---
 
+## Design Principle: One Server, All Scenarios
+
+**The server must be generic — not hardcoded to a single flow.** Every value that varies between test scenarios must be:
+1. Read by the server from per-run context (Cekura headers or connection payload)
+2. Registered as a dynamic variable in Cekura (so Cekura generates and injects the right value per run)
+
+When adapting the server, identify everything that would need to change for a different test scenario — caller state, persona, account data, language, flow type, feature flags — and replace each hardcoded value with a variable read from the connection context. The goal is a single server URL that can exercise every scenario through parameterization, not a separate server or hardcoded path per scenario.
+
+---
+
 ## Quickstart from the Official Repo
 
 ```bash
@@ -19,7 +29,7 @@ pip install -r requirements.txt
 
 Edit `main.py` — update two things:
 1. Your LLM credentials (OpenAI / Azure OpenAI API key)
-2. `SYSTEM_PROMPT` — your agent's system prompt
+2. `SYSTEM_PROMPT` — your main agent's system prompt
 
 ```bash
 python main.py
@@ -119,7 +129,7 @@ keepalive.cancel()
 
 ### 2. Tool call reporting to Cekura
 
-When your agent calls a tool, report it to Cekura so it appears in the transcript:
+When the main agent calls a tool, report it to Cekura so it appears in the transcript:
 
 ```python
 # Report tool call
@@ -176,16 +186,20 @@ if len(chat_histories[session_id]) > 32:  # system prompt + 30 exchanges
 
 ---
 
-## What to Customise
+## What to Customise — Match the Main Agent Exactly
 
-When helping a user adapt the repo, focus on these changes:
+When adapting the repo, every configuration must match the main agent. Do not use defaults:
 
-1. **LLM client** — swap Azure OpenAI for their provider (OpenAI, Anthropic, Gemini, etc.)
-2. **`SYSTEM_PROMPT`** — replace with their agent's full system prompt
-3. **`TOOLS`** — define their agent's tool schemas (OpenAI function calling format)
-4. **`TOOL_URL`** — point to their tool endpoint or Cekura mock tool URL
-5. **`GREETING`** — first message the agent says (or remove if caller speaks first)
-6. **Port** — defaults to 8765; set via `PORT` environment variable
+1. **LLM client** — use the exact same provider the main agent uses (OpenAI, Anthropic, Azure, Gemini, etc.)
+2. **Model name** — exact model the main agent uses (e.g. `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-2.5-flash`) — not a cheaper or default substitute
+3. **Temperature** — exact temperature from the main agent's config, not 0.0 or any assumed default
+4. **Max tokens** — match the main agent's token limit setting
+5. **`SYSTEM_PROMPT`** — the full, unmodified system prompt from Phase 4
+6. **`TOOLS`** — exact tool schemas matching the main agent's tool definitions
+7. **`TOOL_URL`** — Cekura mock tool endpoint so responses are controlled during testing
+8. **`GREETING`** — exact opening message the main agent sends (or omit if testing agent speaks first)
+9. **Dynamic variables** — read them the same way the main agent does (same headers, same keys)
+10. **Port** — set via `PORT` environment variable
 
 ---
 
@@ -228,3 +242,27 @@ async def main():
 
 asyncio.run(main())
 ```
+
+---
+
+## Running the Server and Getting the ngrok URL (do this yourself in Bash)
+
+Start the server in the background:
+```bash
+# Run in background — replace with the actual start command
+python bot.py &
+sleep 2  # give it time to start
+```
+
+Start ngrok and capture the public URL:
+```bash
+# Start ngrok in background, log to file
+ngrok http 8765 --log=stdout > /tmp/ngrok.log 2>&1 &
+sleep 3  # wait for ngrok to establish tunnel
+
+# Extract the wss:// URL from ngrok output
+NGROK_URL=$(grep -o 'https://[a-z0-9-]*.ngrok[a-z.-]*/[a-z0-9]*\|https://[a-z0-9-]*.ngrok-free.app' /tmp/ngrok.log | head -1 | sed 's/https:/wss:/')
+echo "WebSocket URL: $NGROK_URL"
+```
+
+Use `$NGROK_URL` as the `chat_agent_details.config.url` value.

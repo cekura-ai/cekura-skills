@@ -30,7 +30,7 @@ Detailed guidance for setting up mock tools (Phase 4 of the create-agent flow). 
 ```
 
 **When designing mock data, think about:**
-- What different inputs will the agent send to this tool across all test scenarios?
+- What different inputs will the main agent send to this tool across all test scenarios?
 - What should each distinct input return?
 - What error cases matter? (Add a mapping with an error response for tool-failure scenarios)
 
@@ -40,7 +40,7 @@ If you only create one mapping, every tool call — regardless of input — retu
 
 Help the user design mock data by asking:
 1. "What are the main tools and what data do they expect as input?"
-2. "For each tool, what are the different inputs the agent might send?" (different users, topics, actions, error cases)
+2. "For each tool, what are the different inputs the main agent might send?" (different users, topics, actions, error cases)
 3. "What should each distinct input return?"
 4. "Do any tools depend on data from other tools?" (chain dependencies — downstream tool inputs must match upstream tool outputs)
 
@@ -57,7 +57,7 @@ A PATCH with only new mappings **replaces ALL existing mappings**.
 
 ## Key Rules Reminder
 
-- **`name`** must exactly match the tool name in the agent description (max 64 chars, alphanumeric + underscores + hyphens)
+- **`name`** must exactly match the tool name in the main agent description (max 64 chars, alphanumeric + underscores + hyphens)
 - **`information`** is an array of input/output mappings — Cekura matches incoming tool calls to the closest input and returns the corresponding output
 - **`freetext_params`** — Parameter names to skip during mock matching (free-text fields like "notes" or "reason" that vary per call)
 - **Phone format variants** — For phone-based lookups, add mappings for ALL variants: 10-digit, 11-digit with leading 1, and full E.164

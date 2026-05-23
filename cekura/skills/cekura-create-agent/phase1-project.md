@@ -1,6 +1,6 @@
 # Phase 1 — Project Selection
 
-Identify which Cekura project the agent should belong to before collecting any other details.
+Identify which Cekura project the main agent should belong to before collecting any other details.
 
 ---
 
@@ -16,14 +16,14 @@ Fetch the project list via the Cekura API or dashboard.
 
 **If there are multiple projects:** display the full list with names and IDs, and ask the user to pick one:
 
-> "You have the following projects — which one should this agent be created in?"
+> "You have the following projects — which one should this main agent be created in?"
 > 1. [Project Name A] (ID: 123)
 > 2. [Project Name B] (ID: 456)
 > 3. [Project Name C] (ID: 789)
 
 Wait for the user to choose. Do not guess or default to the first one.
 
-Note the selected `project_id` — required for agent creation in Phase 5.
+Note the selected `project_id` — required for main agent creation in Phase 5.
 
 ---
 

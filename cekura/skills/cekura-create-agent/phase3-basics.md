@@ -1,10 +1,10 @@
-# Phase 3 — Agent Basics & Connection Type
+# Phase 3 — Main Agent Basics & Connection Type
 
-Collect the fields needed to identify the agent and determine how Cekura will connect to it. Connection type is part of basics — the phone number itself is a connection choice.
+Collect the fields needed to identify the main agent and determine how Cekura will connect to it. Connection type is part of basics — the phone number itself is a connection choice.
 
 ---
 
-> **Start:** Announce "Starting Phase 3 — Agent Basics & Connection Type" before doing anything in this phase.
+> **Start:** Announce "Starting Phase 3 — Main Agent Basics & Connection Type" before doing anything in this phase.
 
 ## 3a. Fields to collect
 
@@ -25,32 +25,34 @@ Collect the fields needed to identify the agent and determine how Cekura will co
 | **Phone number** | `telephony.phone_number` | Only if connection type is Phone or SIP |
 | **Inbound vs outbound** | `telephony.inbound` | Only if connection type is Phone or SIP |
 
-**Decide the connection type (3c) before asking about phone number or inbound/outbound.** For WebSocket, WebRTC, or chat-only agents, skip `telephony.phone_number` and `telephony.inbound` entirely — they do not apply.
+**Decide the connection type (3c) before asking about phone number or inbound/outbound.**
+
+For **WebSocket, WebRTC, or chat-only** main agents: do NOT set `telephony.phone_number` or `telephony.inbound` — **neither `true` nor `false`**. `inbound: false` is just as wrong as `inbound: true` for these agents. The field does not express "not a phone call" — it does not apply at all. Omit the entire `telephony` block. These fields only exist for phone/SIP agents.
 
 ### 3a-name. Agent name — infer first, ask only if needed
 
 **If code is available**, infer the name from:
 - Named constants or variables: `AGENT_NAME`, `BOT_NAME`, `SERVICE_NAME`
-- Config files or environment variables that name the agent
-- The agent's persona in the system prompt (e.g. "You are Alex, a support agent for Acme")
+- Config files or environment variables that name the main agent
+- The main agent's persona in the system prompt (e.g. "You are Alex, a support agent for Acme")
 - README or project documentation
-- The greeting the agent uses to open a call
+- The greeting the main agent uses to open a call
 - The filename or class name if descriptive
 
 **If using a cloud provider**, the name is returned by the provider's API (see 3e auto-fetch) — use that directly.
 
-**Only ask the user for a name if it cannot be determined from any of the above.** When asking, ask for a descriptive name that reflects what the agent does — not a technical identifier.
+**Only ask the user for a name if it cannot be determined from any of the above.** When asking, ask for a descriptive name that reflects what the main agent does — not a technical identifier.
 
 ### 3a-lang. Language selection — explore properly
 
-Do not assume `en`. Actively determine what languages the agent supports:
+Do not assume `en`. Actively determine what languages the main agent supports:
 
 **Step 1 — Look for explicit language signals only**
 
-Valid signals — things that directly describe what language the agent uses:
+Valid signals — things that directly describe what language the main agent uses:
 - Explicit instructions in the system prompt: "respond in Hindi", "always reply in Spanish"
-- A language constant or config value tied to agent behaviour: `LANGUAGE = "hi"`, `agent_language = "es"`
-- Language-switching rules in the prompt: "if the user speaks Hindi, respond in Hindi"
+- A language constant or config value tied to main agent behaviour: `LANGUAGE = "hi"`, `agent_language = "es"`
+- Language-switching rules in the prompt: "if the testing agent speaks Hindi, respond in Hindi"
 - Non-English content in the system prompt itself (the prompt text, not code comments)
 
 **Not valid signals — do not use these:**
@@ -59,7 +61,7 @@ Valid signals — things that directly describe what language the agent uses:
 - English comments in the code
 - The fact that code identifiers are in ASCII
 
-The language of the codebase tells you nothing about the language the agent speaks. Only explicit agent-facing configuration counts.
+The language of the codebase tells you nothing about the language the main agent speaks. Only explicit agent-facing configuration counts.
 
 If no explicit signal is found → skip to Step 2.
 
@@ -67,11 +69,11 @@ If no explicit signal is found → skip to Step 2.
 
 Ask two questions:
 
-1. "What language(s) does your agent support? Does it handle only English, or can it respond in multiple languages?"
+1. "What language(s) does your main agent support? Does it handle only English, or can it respond in multiple languages?"
 
-2. "Is the language fixed for this agent, or determined at runtime — for example by a personality setting, test profile, or dynamic variable passed in per call?"
+2. "Is the language fixed for this main agent, or determined at runtime — for example by a personality setting, test profile, or dynamic variable passed in per call?"
 
-If language is determined at runtime (not baked into the agent) → use `"multi"` regardless of what languages are actually supported. The agent's language varies per run, so a fixed code would be wrong.
+If language is determined at runtime (not baked into the main agent) → use `"multi"` regardless of what languages are actually supported. The agent's language varies per run, so a fixed code would be wrong.
 
 **Step 3 — Set the correct value**
 
@@ -85,9 +87,9 @@ If language is determined at runtime (not baked into the agent) → use `"multi"
 
 Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja kn ko ms ml mr multi no pl pa pt ro ru sk es sv th tr tl ta te uk vi`
 
-`multi` is the safe default for any agent whose language is not fixed and known at setup time.
+`multi` is the safe default for any main agent whose language is not fixed and known at setup time.
 
-**Simple rule:** if the agent uses an LLM to generate responses, or if it serves callers across multiple locales — use `multi`.
+**Simple rule:** if the main agent uses an LLM to generate responses, or if it serves callers across multiple locales — use `multi`.
 
 ---
 
@@ -119,9 +121,9 @@ Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja
 If code is available, look for:
 
 - **WebSocket URL**: environment variables (`WEBSOCKET_URL`, `WS_URL`, `SERVER_URL`), config files, deployment manifests (fly.toml, docker-compose.yml, .env), or the port the server binds to in startup code
-- **Phone number**: config files, environment variables, README, or the number registered with the provider
+- **Phone number**: config files, environment variables, README, or — for cloud providers — fetch it directly from the provider API (see below)
 - **SIP URI**: config files or environment variables
-- **Connection headers / auth**: any auth tokens or headers the agent requires on the incoming connection
+- **Connection headers / auth**: any auth tokens or headers the main agent requires on the incoming connection
 - **Port / host**: server startup code (e.g. `websockets.serve(host, port)`) — combine with the deployment URL to form the full `wss://` address
 
 The connection type itself is often apparent from the code structure: a WebSocket server suggests WebSocket mode; a phone number in config suggests PSTN; a SIP URI suggests SIP. Only ask the user to confirm or fill gaps.
@@ -138,17 +140,54 @@ The connection type is determined by what you configure — ask the user to conf
 | **WebSocket endpoint** | Agent exposes a `wss://` URL that Cekura connects to | `provider.chat_agent_details.type: self_hosted, config.url: wss://...` — see 3d |
 | **Chat / Text (provider)** | Provider has a separate chat agent | `provider.chat_agent_details` with provider type — see 3d |
 
-> **`telephony.inbound` is only relevant for Phone and SIP modes.** Do not ask about inbound/outbound for WebRTC, WebSocket, or chat-only agents.
+> **For WebSocket, WebRTC, and chat-only modes: `telephony.phone_number`, `telephony.inbound`, and the entire `telephony` block must NOT be set — not even with a placeholder value.** These fields are phone/SIP-only. Setting them for non-telephony main agents is incorrect.
 
-A single agent can support multiple connection modes (e.g. phone + WebSocket). Ask the user which they want to use.
+A single main agent can support multiple connection modes (e.g. phone + WebSocket). Ask the user which they want to use.
 
-> **WebSocket endpoint:** When the user selects this mode, ask:
+> **WebSocket endpoint: the server must be running and publicly reachable before Phase 5.**
 >
-> "Do you have a WebSocket URL ready, or would you like me to help set one up?"
+> There is exactly one path forward: get a working `wss://` URL now. There are no alternatives that involve deferring.
 >
-> - **I have the URL** → ask them to paste it; proceed to 3d
-> - **Use a placeholder for now** → set a dummy URL (e.g. `wss://placeholder.example.com`) and update it before running evals
-> - **Help me create one / set it up** → go to 3d-ws to scaffold the server and expose it via ngrok
+> - **If the user has a running public URL** → verify it is reachable and speaks Cekura's WebSocket protocol (JSON text frames: `{"content": "..."}` in, `{"content": "..."}` out). If it is not reachable or uses a different protocol format, treat it as if no URL exists and fall back to creating a local server with ngrok below.
+> - **If the production URL exists but is broken or incompatible** → do not try to fix the production server. Create a local WebSocket server instead, expose via ngrok, and use that URL for Cekura testing.
+> - **If the server is local only** → run the following yourself using Bash, do not ask the user to do it:
+>   1. Start the server in the background using `run_in_background: true`
+>   2. Start ngrok in the background: `ngrok http <port> --log=stdout` and capture output to parse the forwarding URL
+>   3. Extract the `wss://` URL from ngrok output (the `https://` forwarding URL with `https` replaced by `wss`)
+>   4. Continue with that URL
+> - **If no server exists** → scaffold one, start it in the background, start ngrok, extract URL, continue
+>
+> **Never present "create with placeholder URL" or "fill in later" as an option.** There is no such option in this skill. The setup ends with a live verification run — without a working URL, the whole session is wasted. If the server is local, ngrok solves it immediately. Run it yourself — do not give the user terminal commands to run.
+
+### Phone number and inbound/outbound — fetch from provider API
+
+For any cloud provider with an API, fetch phone number and inbound/outbound direction before asking the user. Every major provider exposes a phone number list endpoint — query it and filter by the main agent/squad ID to find the associated number and its direction configuration.
+
+**General approach for all providers:**
+1. Call the provider's phone number list endpoint with the API key
+2. Filter results by the main agent ID or squad ID
+3. Extract: phone number + whether it's configured for inbound or outbound
+4. Check the agent config itself as a fallback — outbound main agents typically have an explicit `first_message`, `dial` setting, or outbound flag; inbound agents wait for the caller
+
+**Provider-specific endpoints:**
+
+**VAPI:**
+```bash
+curl -s https://api.vapi.ai/phone-number \
+  -H "Authorization: Bearer {vapi_api_key}" | jq '.[] | select(.assistantId=="{id}" or .squadId=="{id}") | {number, inboundEnabled: .inboundPhoneCallEnabled, outboundEnabled: .outboundPhoneCallEnabled}'
+```
+
+**Retell:**
+```bash
+curl -s https://api.retellai.com/v2/list-phone-numbers \
+  -H "Authorization: Bearer {retell_api_key}" | jq '.[] | select(.agent_id=="{agent_id}") | {phone_number, inbound_agent_id, outbound_agent_id}'
+```
+
+**ElevenLabs:** check `conversation_config.phone` in the main agent details response.
+
+**Bland, Trillet, Synthflow, and other providers:** check the provider's phone number or agent API for linked numbers and direction configuration. If the provider docs or API doesn't expose this, check the main agent's config object for inbound/outbound flags.
+
+Only ask the user for phone number or inbound/outbound if the provider API genuinely doesn't return it.
 
 ### WebRTC per provider
 
@@ -173,36 +212,53 @@ Set `provider.chat_agent_details` to configure a WebSocket or text-based connect
 | VAPI chat assistant | `{"type": "vapi", "config": {"agent_id": "<chat assistant ID>"}}` |
 | ElevenLabs | `{"type": "elevenlabs", "config": {"agent_id": "<agent ID>"}}` |
 
-> **Retell:** In Retell Dashboard, use "Copy as chat agent" to create a separate text-mode agent, then use that agent's ID here.
+> **Retell:** In Retell Dashboard, use "Copy as chat agent" to create a separate text-mode agent, then use that main agent's ID here.
 
 ---
 
 ## 3d-ws. Scaffold a WebSocket server (if user doesn't have one)
 
-If the user selects WebSocket endpoint but doesn't have an existing server, **offer to generate one**:
+**The WebSocket server must be an exact behavioural replica of the main agent — no approximations.** When Cekura runs test scenarios against this server, the conversations must behave identically to what a real caller would experience. This means:
 
-> "Would you like me to write the WebSocket server code for you? It needs to follow Cekura's protocol to accept test connections."
+- **Exact system prompt** — use the full, unmodified system prompt from Phase 4, not a summary or simplified version
+- **Exact tools** — every tool the main agent calls must be wired up in the server, calling Cekura's mock tool endpoints so responses match what the main agent expects
+- **Exact greeting** — if the main agent speaks first, the server must send the same opening message
+- **Exact dynamic variable handling** — the server must read and inject dynamic variables exactly as the main agent does
+- **Exact language and model** — use the same LLM, same language settings where possible
 
-If yes, ask:
-1. **Language / framework?** (Python `websockets`, Python FastAPI, Node.js/TypeScript, Go, other)
-2. **Does your agent make tool/function calls?** (affects the server skeleton)
-3. **Local development or production?** (`ws://` vs `wss://`)
+Any approximation here means the test scenarios won't reflect main agent behaviour, and the verification run proves nothing meaningful.
 
-Point them to the **official Cekura WebSocket server example repo**:
+**Design principle: one server, all scenarios.** Everything that varies between scenarios (caller state, account data, flow type, language, feature flags) must be parameterized — the server reads these from Cekura's per-run context and adapts accordingly. Cekura injects the right values per run.
+
+**Step 1 — Extract the exact main agent configuration from Phase 4**
+
+From the description synthesised in Phase 4, extract:
+- The complete, unmodified system prompt
+- Every tool definition (name, parameters, what the main agent sends, what it expects back)
+- The greeting/opening message (if main agent speaks first)
+- Any dynamic variable slots that need to be read per-run
+
+**Step 2 — Build the server as an exact replica**
+
+Use the **official Cekura WebSocket server example repo**:
 
 > **https://github.com/cekura-ai/llm-websocket-server-example**
 
-This is a complete, production-ready Python server that already implements the full Cekura protocol (keepalives, tool call reporting, greeting-first flow). Walk the user through adapting it:
+Wire it up with:
+- The exact system prompt from Phase 4
+- Each tool calling `https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tool/{tool_name}/` (Cekura mock tool endpoint) so responses are controlled
+- Dynamic variable injection matching how the main agent reads them
+- The exact opening message if the main agent speaks first
 
-1. Clone the repo and install dependencies
-2. Update `SYSTEM_PROMPT` with their agent's prompt
-3. Update the LLM credentials
-4. Adapt `TOOLS` and `TOOL_URL` if their agent makes tool calls
-5. Run locally: `python main.py` → `ws://localhost:8765`
-6. Expose publicly: `ngrok http 8765` → `wss://abc123.ngrok.io`
-7. Set that URL as `provider.chat_agent_details.config.url` on the Cekura agent
+**Step 3 — Register all parameters as dynamic variables in Cekura**
 
-If the user needs a different language or framework, generate a custom server using the protocol details in `references/websocket-server-scaffold.md`.
+Every value the server reads per-run that isn't hardcoded must be registered as a dynamic variable (Phase 8). Cekura will generate appropriate values and pass them to the server at the start of each run.
+
+**Step 4 — Expose publicly**
+
+Run locally and expose via ngrok or Cloudflare Tunnel to get a public `wss://` URL. Set that URL as `provider.chat_agent_details.config.url` on the Cekura agent.
+
+See `references/websocket-server-scaffold.md` for protocol details and code scaffolds.
 
 ---
 
@@ -251,7 +307,7 @@ See [Phase 4](phase4-description.md) for what makes a good description.
 
 ---
 
-## 3g. Outbound agents (phone/SIP only)
+## 3g. Outbound main agents (phone/SIP only)
 
 Only relevant if using phone or SIP. If `telephony.inbound: false`, also collect:
 - Auto-dial? (`provider.auto_dial_outbound: true` — VAPI, Retell, ElevenLabs, LiveKit, Bland)
@@ -261,13 +317,13 @@ Only relevant if using phone or SIP. If `telephony.inbound: false`, also collect
 
 ## 3h. Agent speaks first? (`agent_speaks_first`)
 
-This field controls whether the simulated caller waits for the agent to open the conversation or speaks first. **Getting it wrong breaks every scenario** — the simulated caller and the agent will both wait for each other, or both speak at once.
+This field controls whether the testing agent waits for the agent to open the conversation or speaks first. **Getting it wrong breaks every scenario** — the testing agent and the agent will both wait for each other, or both speak at once.
 
-- `true` — agent sends the opening message immediately on connection; simulated caller waits to hear it before responding
-- `false` — simulated caller speaks first; agent waits for the first user message
+- `true` — agent sends the opening message immediately on connection; testing agent waits to hear it before responding
+- `false` — testing agent speaks first; main agent waits for the first testing agent message
 - `null` — Cekura auto-detects (use only if genuinely uncertain)
 
-This is especially important for **WebSocket agents**: the connection is bidirectional and Cekura needs to know who initiates so scenarios are written correctly from the start.
+This is especially important for **WebSocket main agents**: the connection is bidirectional and Cekura needs to know who initiates so scenarios are written correctly from the start.
 
 **Try to determine from code first:**
 
@@ -277,10 +333,10 @@ This is especially important for **WebSocket agents**: the connection is bidirec
 
 **If it cannot be determined from code**, ask the user:
 
-> "When a client connects to your agent, does your agent send a greeting immediately — or does it wait for the user to speak first?"
+> "When a client connects to your main agent, does your main agent send a greeting immediately — or does it wait for the user to speak first?"
 
 - Agent opens with a greeting → `true`
-- Agent waits for the user → `false`
+- Main agent waits for testing agent → `false`
 - Varies or unclear → `null`
 
 ---
