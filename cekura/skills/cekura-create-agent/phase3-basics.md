@@ -30,10 +30,11 @@ Connection type sets what telephony fields to collect:
 | **Phone (PSTN)** | `telephony.phone_number` (E.164) + `telephony.inbound` |
 | **SIP** | `telephony.sip_uri` + `telephony.inbound` + optional `telephony.sip_auth` |
 | **WebRTC** | Provider-specific credential (see 3c) — no telephony block |
-| **WebSocket** | `provider.chat_agent_details` — no telephony block |
+| **WebSocket (voice)** | e.g. Chirp raw PCM, ElevenLabs voice WebSocket — may include `telephony.phone_number` if phone-linked; set `credentials.config` for the WebSocket endpoint |
+| **WebSocket (chat/text)** | `provider.chat_agent_details` — no telephony block |
 | **Chat (provider)** | `provider.chat_agent_details` — no telephony block |
 
-Phone number is the connection itself for PSTN — it is not a separate field to collect after picking a connection type. SIP uses `sip_uri`, not `phone_number`. WebRTC/WebSocket/Chat omit the telephony block entirely.
+Phone number is the connection itself for PSTN — it is not a separate field to collect after picking a connection type. SIP uses `sip_uri`, not `phone_number`. Text/chat WebSocket omits the telephony block entirely. Voice WebSocket may still have a phone number if the provider links one.
 
 ### 3a-name. Agent name — infer first, ask only if needed
 
