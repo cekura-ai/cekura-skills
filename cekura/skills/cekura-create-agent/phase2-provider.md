@@ -140,7 +140,7 @@ Set in `chat_agent_details`, not `provider.type`:
 | Auto-dial outbound | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — |
 | Auto-fetch tools | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — | — |
 | Fetch main agent config | ✓ | ✓ | ✓ | — | — | ✓ | — | — | — | — | — | — | — |
-| Squads / multi-agent | ✓ | — | — | — | — | — | — | — | — | — | — | — | — |
+| Squads / multi-agent | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — | — |
 
 ---
 
