@@ -18,16 +18,22 @@ Collect the fields needed to identify the main agent and determine how Cekura wi
 
 **Also collect:**
 
-| Field | Location | When |
-|-------|----------|------|
-| **Language** | `language` | Always — see 3a-lang |
-| **Connection type** | see 3c | Always — decide this first before asking about phone/inbound |
-| **Phone number** | `telephony.phone_number` | Only if connection type is Phone or SIP |
-| **Inbound vs outbound** | `telephony.inbound` | Only if connection type is Phone or SIP |
+| Field | Notes |
+|-------|-------|
+| **Language** | Always — see 3a-lang |
+| **Connection type** | Decide this first (see 3c) — it determines everything else below |
 
-**Decide the connection type (3c) before asking about phone number or inbound/outbound.**
+Connection type sets what telephony fields to collect:
 
-For **WebSocket, WebRTC, or chat-only** main agents: do NOT set `telephony.phone_number` or `telephony.inbound` — **neither `true` nor `false`**. `inbound: false` is just as wrong as `inbound: true` for these agents. The field does not express "not a phone call" — it does not apply at all. Omit the entire `telephony` block. These fields only exist for phone/SIP agents.
+| Connection type | Fields to set |
+|----------------|--------------|
+| **Phone (PSTN)** | `telephony.phone_number` (E.164) + `telephony.inbound` |
+| **SIP** | `telephony.sip_uri` + `telephony.inbound` + optional `telephony.sip_auth` |
+| **WebRTC** | Provider-specific credential (see 3c) — no telephony block |
+| **WebSocket** | `provider.chat_agent_details` — no telephony block |
+| **Chat (provider)** | `provider.chat_agent_details` — no telephony block |
+
+Phone number is the connection itself for PSTN — it is not a separate field to collect after picking a connection type. SIP uses `sip_uri`, not `phone_number`. WebRTC/WebSocket/Chat omit the telephony block entirely.
 
 ### 3a-name. Agent name — infer first, ask only if needed
 
