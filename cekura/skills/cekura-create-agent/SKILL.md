@@ -93,7 +93,7 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 
 **Collect conversationally — ask one thing at a time.** Do not dump all questions at once.
 
-**Never silently accept a field's default.** When a field has a default value, ask: "does this default make sense for this specific agent's purpose?" before moving on. For example — `language` defaults to `en` but the agent may serve non-English callers; `inbound` defaults to `false` but most agents receive calls; `agent_speaks_first` defaults to null but the agent may always open with a greeting. A default is a fallback, not a recommendation.
+**Never use a field's default value without determining the correct value first.** For every field with a default, actively figure out the right value from code, config, provider API, or context — then confirm it with the user. Only fall back to asking the user directly if it genuinely cannot be determined. Never leave a field at its default because it was easier. A default is a last resort, not a starting point.
 
 **After every inferred decision, explain and confirm.** When you determine a value from code, config, or context — state what you decided, give one line explaining why, and ask the user to confirm before using it. Example: "I'll set language to `multi` — the system prompt contains Hindi-specific instructions alongside English. Does that sound right?" Do not silently commit inferred values.
 
