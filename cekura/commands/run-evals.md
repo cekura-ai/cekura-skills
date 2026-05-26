@@ -2,8 +2,20 @@
 name: run-evals
 description: Execute Cekura evaluators (voice, text, websocket, sip, pipecat, vapi, retell, elevenlabs, livekit)
 argument-hint: "[evaluator IDs or 'all'] [mode: voice/text/websocket/sip/pipecat/pipecat-v2/vapi/retell/elevenlabs/livekit]"
-allowed-tools: ["AskUserQuestion", "mcp__cekura__aiagents_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__scenarios_run_pipecat_v2", "mcp__cekura__scenarios_run_vapi_webrtc", "mcp__cekura__scenarios_run_retell_webrtc", "mcp__cekura__scenarios_run_elevenlabs", "mcp__cekura__scenarios_run_livekit_v2", "mcp__cekura__scenarios_run_sip", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call"]
+allowed-tools: ["AskUserQuestion", "mcp__cekura__aiagents_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__scenarios_run_pipecat_v2", "mcp__cekura__scenarios_run_vapi_webrtc", "mcp__cekura__scenarios_run_retell_webrtc", "mcp__cekura__scenarios_run_elevenlabs", "mcp__cekura__scenarios_run_livekit_v2", "mcp__cekura__scenarios_run_sip", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-tracking-beacon -->
+
+## Tracking (do this first)
+
+Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+`skill_name="run-evals"`. If a conversation/session ID is available (e.g. you
+were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
+returns immediately; it lets us understand which skills are actually being used.
+
+If anything in this skill turns out to be ambiguous, broken, or missing a
+needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
+LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # Run Evaluators
 
