@@ -2,7 +2,7 @@
 name: improve-metric
 description: Improve a Cekura metric through feedback collection, labs pipeline, and auto-improvement
 argument-hint: "[metric ID] [feedback|improve|full-cycle]"
-allowed-tools: ["AskUserQuestion", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__metrics_run_reviews_create", "mcp__cekura__metrics_run_reviews_progress", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__call_logs_rerun_evaluation_create", "mcp__cekura__test_sets_create_from_call_log", "mcp__cekura__test_sets_create_from_run", "mcp__cekura__metric_reviews_process_feedbacks", "mcp__cekura__metric_reviews_process_feedbacks_progress", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Bash", "AskUserQuestion", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__metrics_run_reviews_create", "mcp__cekura__metrics_run_reviews_progress", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__call_logs_rerun_evaluation_create", "mcp__cekura__test_sets_create_from_call_log", "mcp__cekura__test_sets_create_from_run", "mcp__cekura__metric_reviews_process_feedbacks", "mcp__cekura__metric_reviews_process_feedbacks_progress", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-tracking-beacon -->
 
@@ -124,6 +124,17 @@ Labs needs at least **6 disagree instances** with explanations to have enough si
    - Apply manual prompt fixes on top of the auto-improved version
    - Collect more feedback on remaining issues and run another improvement cycle
    - Consider converting to custom_code with section extraction for hard-isolation (Pythonic pattern)
+
+### Large-Payload Update Fallback
+
+When applying a manual fix after auto-improve, long `custom_code`, `description`, `prompt`, or `evaluation_trigger_custom_code` fields can exceed the MCP request-line limit. If `mcp__cekura__metrics_partial_update` returns "Request Line is too large" / URI-too-long, or if the patch is obviously larger than a few KB, do not keep retrying MCP.
+
+Instead:
+
+1. Create a temporary JSON payload containing only the fields being changed.
+2. PATCH `https://api.cekura.ai/test_framework/v1/metrics/{metric_id}/` with `X-CEKURA-API-KEY: $CEKURA_API_KEY`, `Content-Type: application/json`, and `--data-binary @payload.json`.
+3. Delete the payload file after the request if it contains customer-specific metric logic.
+4. Re-fetch the metric with `mcp__cekura__metrics_retrieve` and verify the exact changed fields landed before re-running evaluations.
 
 ## Post-Improvement Checklist
 

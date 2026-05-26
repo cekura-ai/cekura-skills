@@ -2,7 +2,7 @@
 name: create-metric
 description: Create or update a Cekura metric for evaluating voice AI agent calls
 argument-hint: "[metric description, requirements, or metric ID to update]"
-allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "WebFetch", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__metrics_create", "mcp__cekura__metrics_list", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__aiagents_retrieve", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash", "AskUserQuestion", "WebFetch", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__metrics_create", "mcp__cekura__metrics_list", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__aiagents_retrieve", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-tracking-beacon -->
 
@@ -95,7 +95,7 @@ Beyond baseline metrics, these are commonly valuable:
    - Name
    - Observability/simulation enabled
 
-4. **Apply changes**: Confirm with user before updating. Use `mcp__cekura__metrics_partial_update` with only the changed fields.
+4. **Apply changes**: Confirm with user before updating. Use `mcp__cekura__metrics_partial_update` with only the changed fields. If the changed fields include a large `custom_code`, `description`, `prompt`, or `evaluation_trigger_custom_code` value, or if MCP returns "Request Line is too large" / URI-too-long, use the large-payload fallback below.
 
 5. **Verify**: Fetch the metric again to confirm changes applied.
 
@@ -106,6 +106,25 @@ Beyond baseline metrics, these are commonly valuable:
 - If updating the prompt, follow metric design best practices (spirit vs letter, safeguarding, etc.)
 - After prompt changes, consider re-running the metric on recent calls to validate
 - If the metric has copies on other projects, the user may need to update ALL copies — copies are independent objects
+
+## Large-Payload Metric Update Fallback
+
+The MCP server can fail on long metric write fields because some payloads are serialized into the URL/query string instead of the HTTP body. This commonly affects custom-code metrics and long judge prompts.
+
+Use this fallback only after user approval of the exact changes:
+
+1. Build a temporary JSON payload containing only the changed fields. Do not write API keys into the file.
+2. PATCH the metric through REST with a JSON body:
+   ```bash
+   curl -fsS -X PATCH "https://api.cekura.ai/test_framework/v1/metrics/${METRIC_ID}/" \
+     -H "X-CEKURA-API-KEY: ${CEKURA_API_KEY}" \
+     -H "Content-Type: application/json" \
+     --data-binary @payload.json
+   ```
+3. Delete the temporary payload file if it contains customer-specific prompts or code.
+4. Re-fetch with `mcp__cekura__metrics_retrieve` and verify each intended field landed. Do not trust the HTTP 200 alone.
+
+Do not use query parameters for large writes. Do not send the full metric object unless every field was intentionally reviewed.
 
 ## Environment
 

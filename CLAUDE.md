@@ -92,13 +92,15 @@ When writing or updating skills/commands:
 
 ### Known MCP Limitations
 
-Two MCP endpoints have issues that require `curl` workarounds:
+Some MCP endpoints have issues that require `curl` workarounds:
 
-1. **`mcp__cekura__aiagents_create` — 414 URI Too Long on large payloads.** The MCP server encodes params as URL query strings, not JSON bodies. Agent descriptions (10-60KB) exceed nginx's URI limit. **Workaround:** Use `curl -X POST` with a JSON body for any agent creation with a description longer than ~4KB.
+1. **Metric writes with large text/code fields — 400/414 Request Line Too Large.** `mcp__cekura__metrics_create`, `mcp__cekura__metrics_partial_update`, and `mcp__cekura__metrics_bulk_create` can fail when long `custom_code`, `description`, `prompt`, or `evaluation_trigger_custom_code` fields are serialized into the URL/query string. **Workaround:** Use `curl -X POST` / `curl -X PATCH` with a JSON body for large metric writes, then re-fetch through MCP to verify the exact fields changed.
 
-2. **`mcp__cekura__aiagents_tools_create` — Not exposed by MCP.** The tool search doesn't return this endpoint. **Workaround:** Use `curl -X POST` to `https://api.cekura.ai/test_framework/v1/aiagents/{id}/tools/`.
+2. **`mcp__cekura__aiagents_create` — 414 URI Too Long on large payloads.** The MCP server encodes params as URL query strings, not JSON bodies. Agent descriptions (10-60KB) exceed nginx's URI limit. **Workaround:** Use `curl -X POST` with a JSON body for any agent creation with a description longer than ~4KB.
 
-Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the create-agent skill's "Known MCP Limitations & Curl Workarounds" section for full curl examples. Skills that hit these endpoints should include `Bash` in their `allowed-tools` frontmatter.
+3. **`mcp__cekura__aiagents_tools_create` — Not exposed by MCP.** The tool search doesn't return this endpoint. **Workaround:** Use `curl -X POST` to `https://api.cekura.ai/test_framework/v1/aiagents/{id}/tools/`.
+
+All workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the create-agent skill's "Known MCP Limitations & Curl Workarounds" section for full curl examples. Skills that hit these endpoints should include `Bash` in their `allowed-tools` frontmatter.
 
 ## Plugin Overview (single `cekura` plugin)
 
