@@ -148,7 +148,19 @@ The fastest path to first tests — use the scenario auto-generation endpoint:
 }
 ```
 
-Poll progress, then review the generated scenarios.
+Poll progress at `scenarios_generate_progress`, then review the generated scenarios.
+
+**Polling cadence — important.** Between successive `*_progress` calls
+(scenario generation, prompt improvement, evaluation, anything
+returning a `progress_id`), pause briefly via `bash sleep 10` (or
+`bash sleep 5` for fast jobs you expect to finish in seconds). Do NOT
+tight-loop polling — every poll costs an LLM turn and the backend is
+unchanged for ~10s between updates anyway.
+
+After ~5 polls of the same job with no progress, surface the current
+state to the user ("Still in progress — N of M done; you can also
+track progress in the UI") and either pause OR perform one more
+check. Don't poll indefinitely.
 
 **After generation, check:**
 - Are instructions specific and behavioral?
@@ -205,6 +217,26 @@ Guide the user through interpreting results:
 - Review failures to identify: misunderstandings, missing info, technical issues
 - **90-95%** after refinement is the target
 - Don't aim for 100% — real conversations are unpredictable
+
+## Linking to the Cekura UI
+
+When you reference results, runs, agents, or any other resource the
+user can open in the Cekura UI, use the host the runtime gives you in
+the run context (`/app/.context.json` → `frontend_url`). Construct
+links as `{frontend_url}/{project_id}/results/{result_set_id}` (or
+the equivalent path for agents / scenarios).
+
+**Never invent host names.** Do not write `app.cekura.ai`,
+`dashboard.cekura.ai`, or any other guessed URL — those are likely
+wrong (the actual host varies by environment: dev / stage / prod /
+custom domain). If `frontend_url` is not in the context, OMIT the link
+entirely — describe the resource in prose ("result set id `139120`")
+and let the user open it via their normal UI navigation.
+
+The agent runtime post-processes your reply and removes any
+`cekura.ai` URL whose host doesn't match the configured frontend, so
+hallucinated hosts won't reach the user — but you should still avoid
+emitting them in the first place.
 
 ## Phase 6: What's Next
 
