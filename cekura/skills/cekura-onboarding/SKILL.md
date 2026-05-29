@@ -69,20 +69,15 @@ Survey what already exists in the user's project before walking them through any
 - If you were handed an inventory (e.g. the `/cekura-onboarding` command pre-detected project state and passed it in context), trust it — don't re-run the same lookups.
 - Otherwise, list the path-relevant resources yourself: agents and metrics for both paths; plus scenarios and results for **testing**; plus call logs for **observability**.
 
-**A choice the user already made is BINDING — do not re-ask it.** If the user has already told you how to proceed — by selecting an option at a prior confirmation (including the `/cekura-onboarding` command's "Continue / Start fresh" prompt), or by saying "start fresh" / "start over" / "use the existing agent" / naming an agent — that decision is final. Act on it directly. Do NOT follow it with another clarification that re-opens the same question (e.g. after "Start fresh" do NOT ask "use the existing agent or create a new one?" — the user just answered that).
-
-What the common choices mean concretely:
-- **"Start fresh" / "start over" / "start from Phase 1"** → onboard as if the project were empty: **create a NEW agent** (go to Phase 2 and call `aiagents_create`), then build new scenarios/metrics. Do NOT reuse, run, or offer the existing agent or its evaluators. (This creates new resources; it does not delete the old ones.)
-- **"Use existing" / "continue with <agent>"** → proceed with that agent; skip agent creation.
-
-Only when the user has NOT yet expressed a preference do you apply the survey-based decision below:
+**Decision:**
 
 | State of the path's relevant resources | Action |
 |---|---|
 | **Clean slate** — none exist (testing: 0 agents + 0 scenarios + 0 results; observability: 0 agents + 0 call logs + 0 metrics) | Proceed straight to Phase 1 (or Phase 2 if account/project already set up). Don't ask "Resume where?" / "Ready to continue?" — there's nothing to resume. |
-| **Mid-onboarding** — some relevant resources exist but the flow is incomplete, AND the user hasn't said which way to go | Surface ONE concrete clarification: e.g. "Found existing agent **Booking Bot** with 12 scenarios and 1 result. Continue with it, or create a new agent?" — never a generic "Ready to continue?". Then honour whatever they pick — don't ask again. |
+| **Mid-onboarding** — some relevant resources exist but the flow is incomplete | Surface ONE concrete clarification: e.g. "Found existing agent **Booking Bot** with 12 scenarios and 1 result. Continue with it, or create a new agent?" — never a generic "Ready to continue?". |
+| **Obvious from the user's message** — they said "create a new agent" / "start fresh" / named a specific agent | Honour that intent without an extra confirm. |
 
-After deciding, move into the appropriate phase. Confirm at phase boundaries and before destructive operations, but never re-ask a decision the user already made.
+After deciding, move into the appropriate phase. Confirm at phase boundaries and before destructive operations, but never re-ask the state you just surveyed.
 
 ---
 
