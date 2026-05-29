@@ -195,11 +195,13 @@ Prompt format (observability variant):
 
 Options:
 
-1. `Yes, resume at Phase <P>` - proceed to Step 3.
-2. `Start fresh from Phase 1` - override to Phase 1, keep variant.
+1. `Yes, resume at Phase <P>` - proceed to Step 3 with the existing resources.
+2. `Start fresh — create a new agent` - onboard from scratch: a NEW agent is created and new scenarios/metrics built; existing resources are ignored (not deleted). Overrides to Phase 1/2.
 3. `Pick a different phase` - follow up with a phase picker (scoped to the resolved variant).
 4. `Switch variant` - flip testing ↔ observability and redo state detection.
 5. `Pick a different project` - show only if 2+ projects exist.
+
+**The user's selection here is final — do not re-ask it after handoff.** In particular, if they pick "Start fresh", the skill must create a new agent without asking "use the existing agent or a new one?" again; encode the choice in the handoff Decision line below.
 
 If more than one organization was detected, mention which org's projects are listed. If the user needs a different org and MCP does not expose org switching, tell them to use an API key scoped to the desired org/project.
 
@@ -228,11 +230,14 @@ Context already established:
 - Ingested call logs: <count>
 - Latest call_log: <call_log_id> (<status>) - or "none"
 
+Decision (from the confirmation prompt): <RESUME with existing resources | START FRESH — create a new agent, ignore existing resources>
 Resume at: Phase <N> - <title>
 Skip phases 1..<N-1>. For each remaining phase, use MCP tools where available
 (the skill names the primary tool per phase).
 Confirm with the user at phase boundaries and before write/run operations.
-Do not ask known account/project/agent/variant facts again.
+Do not ask known account/project/agent/variant facts again, and do NOT re-open
+the Decision above — if it says START FRESH, create a new agent without asking
+"use existing or new?".
 
 User intent for this session: <short string from arguments, or "default end-to-end onboarding">
 ```
