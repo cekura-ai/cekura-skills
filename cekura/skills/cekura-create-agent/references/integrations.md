@@ -3,7 +3,14 @@
 ## Provider Selection
 
 Set `assistant_provider` on the agent to one of:
-`vapi`, `retell`, `elevenlabs`, `bland`, `pipecat`, `livekit`, `vocera`, `sms`, `whatsapp`, `self_hosted`, `agentforce`, `trillet`, `cisco`
+`vapi`, `retell`, `elevenlabs`, `bland`, `livekit`, `vocera`, `sms`, `whatsapp`, `self_hosted`, `agentforce`, `trillet`, `cisco`, `amazon_connect`
+
+> Note: `pipecat` is **not** a valid `assistant_provider` value — the field is a
+> strict choice set, so sending `assistant_provider: "pipecat"` is rejected. A
+> Pipecat agent leaves `assistant_provider` **blank/default** (or `self_hosted`)
+> and is selected via `transcript_provider: "pipecat"` + `pipecat_api_key` +
+> `pipecat_data.pipecat_agent_name` (see the Pipecat section). `pipecat` is valid
+> only for `transcript_provider`.
 
 Set `transcript_provider` to match (controls how call data is ingested):
 `vapi`, `retell`, `synthflow`, `elevenlabs`, `bland`, `livekit`, `pipecat`, `koreai`, `custom`, `trillet`, `cisco`
@@ -141,14 +148,26 @@ Set `transcript_provider` to match (controls how call data is ingested):
 ### Required Fields
 ```json
 {
-  "assistant_provider": "pipecat",
   "transcript_provider": "pipecat",
   "pipecat_api_key": "<Pipecat Cloud API Key from pipecat.daily.co>",
-  "contact_number": "<agent-name>"
+  "pipecat_data": { "pipecat_agent_name": "<your Pipecat Cloud agent name>" }
 }
 ```
 
-**Note:** `contact_number` is the agent name (not a phone number) for Pipecat.
+**Note:** Pipecat config is driven by `transcript_provider: "pipecat"`.
+- `pipecat_agent_name` MUST go **inside `pipecat_data`** — it is NOT a top-level
+  field. Setting `pipecat_agent_name` at the top level fails validation
+  (the API only reads `pipecat_data.pipecat_agent_name`).
+- `pipecat_api_key` is a top-level field.
+- `assistant_provider` is **not** `pipecat` (the backend has no such value) —
+  leave it default (`""`) or `self_hosted`; the Pipecat path is selected by
+  `transcript_provider`, not `assistant_provider`.
+
+### Test runs (WebRTC)
+Run scenarios against a Pipecat agent with **`scenarios_run_pipecat_v2`**
+(Pipecat Cloud WebRTC) — it uses the agent's `pipecat_api_key`. This is the
+WebRTC path; do not use `scenarios_run_websocket` / `scenarios_run_text` for a
+Pipecat agent.
 
 ### Optional Settings
 - `pipecat_data`: JSON string with room properties (see Daily.co Room Configuration API)
