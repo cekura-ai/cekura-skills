@@ -146,16 +146,20 @@ Set `transcript_provider` to match (controls how call data is ingested):
 ### Required Fields
 ```json
 {
-  "assistant_provider": "self_hosted",
   "transcript_provider": "pipecat",
   "pipecat_api_key": "<Pipecat Cloud API Key from pipecat.daily.co>",
-  "contact_number": "<agent-name>"
+  "pipecat_data": { "pipecat_agent_name": "<your Pipecat Cloud agent name>" }
 }
 ```
 
-**Note:** `assistant_provider` is `self_hosted` (the backend has no `pipecat`
-provider value); `transcript_provider` is `pipecat`. `contact_number` is the
-agent name (not a phone number) for Pipecat.
+**Note:** Pipecat config is driven by `transcript_provider: "pipecat"`.
+- `pipecat_agent_name` MUST go **inside `pipecat_data`** — it is NOT a top-level
+  field. Setting `pipecat_agent_name` at the top level fails validation
+  (the API only reads `pipecat_data.pipecat_agent_name`).
+- `pipecat_api_key` is a top-level field.
+- `assistant_provider` is **not** `pipecat` (the backend has no such value) —
+  leave it default (`""`) or `self_hosted`; the Pipecat path is selected by
+  `transcript_provider`, not `assistant_provider`.
 
 ### Test runs (WebRTC)
 Run scenarios against a Pipecat agent with **`scenarios_run_pipecat_v2`**

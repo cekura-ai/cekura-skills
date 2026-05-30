@@ -149,7 +149,7 @@ Based on their provider, guide them through connecting:
 - Need: ElevenLabs API Key + Agent ID.
 
 **Pipecat:**
-- Pipecat agents use `assistant_provider: "self_hosted"` + `transcript_provider: "pipecat"` + a `pipecat_api_key` (`contact_number` = the agent name). `pipecat` is **not** a valid `assistant_provider` value.
+- Set `transcript_provider: "pipecat"`, a `pipecat_api_key`, and `pipecat_data: {"pipecat_agent_name": "<name>"}`. The agent name goes **inside `pipecat_data`** — it is NOT a top-level field. `assistant_provider` is **not** `pipecat` (leave default/`self_hosted`).
 - Run tests over WebRTC with `scenarios_run_pipecat_v2`.
 - See https://docs.cekura.ai/documentation/integrations/pipecat for the webhook contract.
 
