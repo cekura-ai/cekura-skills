@@ -3,7 +3,12 @@
 ## Provider Selection
 
 Set `assistant_provider` on the agent to one of:
-`vapi`, `retell`, `elevenlabs`, `bland`, `pipecat`, `livekit`, `vocera`, `sms`, `whatsapp`, `self_hosted`, `agentforce`, `trillet`, `cisco`
+`vapi`, `retell`, `elevenlabs`, `bland`, `livekit`, `vocera`, `sms`, `whatsapp`, `self_hosted`, `agentforce`, `trillet`, `cisco`, `amazon_connect`
+
+> Note: `pipecat` is **not** an `assistant_provider` value — a Pipecat agent uses
+> `assistant_provider: "self_hosted"` with `transcript_provider: "pipecat"` and a
+> `pipecat_api_key` (see the Pipecat section). `pipecat` is valid only for
+> `transcript_provider`.
 
 Set `transcript_provider` to match (controls how call data is ingested):
 `vapi`, `retell`, `synthflow`, `elevenlabs`, `bland`, `livekit`, `pipecat`, `koreai`, `custom`, `trillet`, `cisco`
@@ -141,14 +146,22 @@ Set `transcript_provider` to match (controls how call data is ingested):
 ### Required Fields
 ```json
 {
-  "assistant_provider": "pipecat",
+  "assistant_provider": "self_hosted",
   "transcript_provider": "pipecat",
   "pipecat_api_key": "<Pipecat Cloud API Key from pipecat.daily.co>",
   "contact_number": "<agent-name>"
 }
 ```
 
-**Note:** `contact_number` is the agent name (not a phone number) for Pipecat.
+**Note:** `assistant_provider` is `self_hosted` (the backend has no `pipecat`
+provider value); `transcript_provider` is `pipecat`. `contact_number` is the
+agent name (not a phone number) for Pipecat.
+
+### Test runs (WebRTC)
+Run scenarios against a Pipecat agent with **`scenarios_run_pipecat_v2`**
+(Pipecat Cloud WebRTC) — it uses the agent's `pipecat_api_key`. This is the
+WebRTC path; do not use `scenarios_run_websocket` / `scenarios_run_text` for a
+Pipecat agent.
 
 ### Optional Settings
 - `pipecat_data`: JSON string with room properties (see Daily.co Room Configuration API)

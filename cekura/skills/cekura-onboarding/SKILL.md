@@ -149,7 +149,8 @@ Based on their provider, guide them through connecting:
 - Need: ElevenLabs API Key + Agent ID.
 
 **Pipecat:**
-- Self-hosted Pipecat agents — `assistant_provider: "pipecat"`.
+- Pipecat agents use `assistant_provider: "self_hosted"` + `transcript_provider: "pipecat"` + a `pipecat_api_key` (`contact_number` = the agent name). `pipecat` is **not** a valid `assistant_provider` value.
+- Run tests over WebRTC with `scenarios_run_pipecat_v2`.
 - See https://docs.cekura.ai/documentation/integrations/pipecat for the webhook contract.
 
 **Self-hosted / Custom (reached via SIP, WebSocket, or chat):**
@@ -250,7 +251,14 @@ Use bulk-add via `actions → modify scenarios` in the UI.
 
 ## Phase 5 (testing): First Test Run
 
-Run the scenarios with one of the `scenarios_run_*` tools. The exact tool depends on the agent's provider/transport — e.g. `scenarios_run_vapi_webrtc`, `scenarios_run_retell_webrtc`, `scenarios_run_voice`, `scenarios_run_text`, `scenarios_run_websocket`.
+Run the scenarios with one of the `scenarios_run_*` tools. The exact tool depends on the agent's provider/transport:
+- `scenarios_run_pipecat_v2` — Pipecat Cloud, **WebRTC** (uses the agent's `pipecat_api_key`)
+- `scenarios_run_livekit_v2` — LiveKit, WebRTC
+- `scenarios_run_vapi_webrtc` / `scenarios_run_retell_webrtc` — VAPI / Retell WebRTC
+- `scenarios_run_elevenlabs` — ElevenLabs
+- `scenarios_run_websocket` — custom/self-hosted WebSocket agents
+- `scenarios_run_sip` — SIP endpoints
+- `scenarios_run_voice` / `scenarios_run_text` — phone (PSTN) / text
 
 ### 5.1 Execute
 
