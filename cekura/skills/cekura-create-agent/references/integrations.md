@@ -5,10 +5,12 @@
 Set `assistant_provider` on the agent to one of:
 `vapi`, `retell`, `elevenlabs`, `bland`, `livekit`, `vocera`, `sms`, `whatsapp`, `self_hosted`, `agentforce`, `trillet`, `cisco`, `amazon_connect`
 
-> Note: `pipecat` is **not** an `assistant_provider` value — a Pipecat agent uses
-> `assistant_provider: "self_hosted"` with `transcript_provider: "pipecat"` and a
-> `pipecat_api_key` (see the Pipecat section). `pipecat` is valid only for
-> `transcript_provider`.
+> Note: `pipecat` is **not** a valid `assistant_provider` value — the field is a
+> strict choice set, so sending `assistant_provider: "pipecat"` is rejected. A
+> Pipecat agent leaves `assistant_provider` **blank/default** (or `self_hosted`)
+> and is selected via `transcript_provider: "pipecat"` + `pipecat_api_key` +
+> `pipecat_data.pipecat_agent_name` (see the Pipecat section). `pipecat` is valid
+> only for `transcript_provider`.
 
 Set `transcript_provider` to match (controls how call data is ingested):
 `vapi`, `retell`, `synthflow`, `elevenlabs`, `bland`, `livekit`, `pipecat`, `koreai`, `custom`, `trillet`, `cisco`
