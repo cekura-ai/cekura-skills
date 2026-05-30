@@ -218,7 +218,7 @@ The fastest path to first tests — generate scenarios with `scenarios_agent_cre
   "num_scenarios": 10,
   "personalities": [<personality_id>],
   "generate_expected_outcomes": true,
-  "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"]
+  "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ONLY_ON_TRANSFER"]
 }
 ```
 

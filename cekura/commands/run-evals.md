@@ -85,7 +85,7 @@ Execute one or more evaluators against the target agent.
 
 Before running, verify evals are properly configured:
 - **Baseline metrics attached**: Expected Outcome, Infrastructure Issues, Tool Call Success, Latency. Without these, runs report pass/fail based on call completion — not correctness.
-- **Tools enabled**: `TOOL_END_CALL` (testing agent can hang up), `TOOL_END_CALL_ON_TRANSFER` (for transfer scenarios). Missing tools = elongated calls, wasted credits.
+- **Tools enabled**: `TOOL_END_CALL` (testing agent can hang up), `TOOL_END_CALL_ONLY_ON_TRANSFER` (for transfer scenarios). Missing tools = elongated calls, wasted credits.
 - **Test profiles assigned**: Identity data in test profiles, not hardcoded in instructions.
 
 ## Tips
