@@ -312,13 +312,13 @@ Every evaluator should have the right tools enabled for the testing agent. Missi
 
 | Tool | When to Enable | Why |
 |------|---------------|-----|
-| `TOOL_END_CALL` | When the testing agent should terminate the call after completing its objective | Without this, the testing agent can't hang up — calls run until timeout, wasting credits |
-| `TOOL_END_CALL_ON_TRANSFER` | When the main agent transfers to a human/IVR | Without this, the testing agent stays on the line through hold music, voicemail, etc. |
+| `TOOL_END_CALL` | Recommended by default — so the testing agent can hang up after completing its objective | Without this, the testing agent can't hang up — calls run until timeout, wasting credits |
+| `TOOL_END_CALL_ONLY_ON_TRANSFER` | When the main agent transfers to a human/IVR | Without this, the testing agent stays on the line through hold music, voicemail, etc. |
 | `TOOL_DTMF` | When the flow involves IVR/phone menus | Allows the testing agent to send touch-tone inputs |
 
 **Always instruct the testing agent to end the call** after completing its objective if `TOOL_END_CALL` is enabled. Otherwise the call continues unnecessarily.
 
-**Transfer scenarios:** If the expected outcome involves a transfer to a human, enable `TOOL_END_CALL_ON_TRANSFER` to prevent dead call time after the transfer completes.
+**Transfer scenarios:** If the expected outcome involves a transfer to a human, enable `TOOL_END_CALL_ONLY_ON_TRANSFER` to prevent dead call time after the transfer completes.
 
 ## Metrics — Always Attach Baseline Metrics
 

@@ -116,7 +116,7 @@ If non-English: use 693 + set `scenario_language` on each generated scenario aft
 
 **Ask:** "Should the testing agent have end-call and transfer tools enabled?"
 
-Default recommendation: `["TOOL_END_CALL"]`. Add `TOOL_END_CALL_ON_TRANSFER` for agents with transfer flows. Add `TOOL_DTMF` for IVR flows.
+Default recommendation: `["TOOL_END_CALL"]`. Add `TOOL_END_CALL_ONLY_ON_TRANSFER` for agents with transfer flows. Add `TOOL_DTMF` for IVR flows.
 
 **VAPI agents use prefixed names:** `VAPI_TOOL_END_CALL`, etc.
 

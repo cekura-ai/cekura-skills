@@ -551,7 +551,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - **Name**: `"[ID]: [Brief description]"` — e.g. `"CA-01: Appointment verification — success path"`
 - **Expected outcome**: what the main agent should do by the end (LLM-judged — keep behavioral, not over-specific on dates/times)
 - **Personality**: 693 (Normal Male English) is the default; change for non-English or specific voice traits
-- **Tools**: at minimum `TOOL_END_CALL`; add `TOOL_DTMF` for IVR flows, `TOOL_END_CALL_ON_TRANSFER` for transfer scenarios
+- **Tools**: at minimum `TOOL_END_CALL`; add `TOOL_DTMF` for IVR flows, `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer scenarios
 - **Metrics**: attach Expected Outcome, Infrastructure Issues, Tool Call Success, and Latency to every evaluator
 - **Folder**: place in an organized folder (create one first if needed)
 - **Test profile**: pair every conditional-actions evaluator with a test profile for any identity data; prefer template variables (`{{test_profile.field}}`) when exact phrasing AND the real value both matter

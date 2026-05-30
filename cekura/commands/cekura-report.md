@@ -156,7 +156,7 @@ Call `mcp__cekura__scenarios_generate_bg` with:
 | `generate_expected_outcomes` | `true` |
 | `folder_path` | Folder from 3c |
 | `personalities` | `[693]` (Normal Male, en/American) — adjust for non-English agents |
-| `tool_ids` | `["TOOL_END_CALL"]` — add `TOOL_END_CALL_ON_TRANSFER` if the agent has transfer flows |
+| `tool_ids` | `["TOOL_END_CALL"]` — add `TOOL_END_CALL_ONLY_ON_TRANSFER` if the agent has transfer flows |
 | `extra_instructions` | Coverage mix scaled to the count: ~60% core workflow, ~25% edge cases, ~15% adversarial/red-team. Tell the generator about the mock-data choice from 3b so it doesn't generate scenarios that will be skipped. |
 
 Returns `{"progress_id": "<uuid>"}`.

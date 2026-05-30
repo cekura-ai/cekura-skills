@@ -123,15 +123,15 @@ Plus any custom metrics relevant to the scenario's workflow (e.g., booking flow 
 
 | Tool | When to Enable | Why |
 |------|---------------|-----|
-| `TOOL_END_CALL` | Almost always | Testing agent can hang up — without it, calls run until timeout |
-| `TOOL_END_CALL_ON_TRANSFER` | Transfer scenarios | Ends call after transfer instead of sitting through hold music |
+| `TOOL_END_CALL` | Recommended by default | Testing agent can hang up — without it, calls run until timeout |
+| `TOOL_END_CALL_ONLY_ON_TRANSFER` | Transfer scenarios | Ends call after transfer instead of sitting through hold music |
 | `TOOL_DTMF` | IVR/phone menu flows | Send touch-tone inputs |
 | `TOOL_SEND_DTMF` | Same as above (alternate name) | |
 | `TOOL_RECEIVE_DTMF` | Receiving DTMF inputs | |
 
-**VAPI agents use prefixed names:** `VAPI_TOOL_END_CALL`, `VAPI_TOOL_END_CALL_ON_TRANSFER`, etc.
+**VAPI agents use prefixed names:** `VAPI_TOOL_END_CALL`, `VAPI_TOOL_END_CALL_ONLY_ON_TRANSFER`, etc.
 
-Default recommendation: `["TOOL_END_CALL"]` for most scenarios, add `TOOL_END_CALL_ON_TRANSFER` for transfer scenarios.
+Default recommendation: `["TOOL_END_CALL"]` for most scenarios, add `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer scenarios.
 
 ### 11. Max Call Duration
 
