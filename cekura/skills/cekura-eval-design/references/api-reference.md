@@ -183,7 +183,7 @@ POST /test_framework/v1/scenarios/generate-bg/
   "generate_expected_outcomes": true,
   "folder_path": "My Test Folder",
   "tags": ["generated", "cancellation"],
-  "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"]
+  "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ONLY_ON_TRANSFER"]
 }
 ```
 

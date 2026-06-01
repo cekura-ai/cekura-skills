@@ -40,7 +40,7 @@ POST /test_framework/v1/scenarios/generate-bg/
   "personalities": [693],
   "generate_expected_outcomes": true,
   "folder_path": "First Tests",
-  "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"]
+  "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ONLY_ON_TRANSFER"]
 }
 ```
 

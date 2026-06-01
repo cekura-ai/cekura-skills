@@ -312,13 +312,13 @@ Every evaluator should have the right tools enabled for the testing agent. Missi
 
 | Tool | When to Enable | Why |
 |------|---------------|-----|
-| `TOOL_END_CALL` | When the testing agent should terminate the call after completing its objective | Without this, the testing agent can't hang up — calls run until timeout, wasting credits |
-| `TOOL_END_CALL_ON_TRANSFER` | When the main agent transfers to a human/IVR | Without this, the testing agent stays on the line through hold music, voicemail, etc. |
+| `TOOL_END_CALL` | Recommended by default — so the testing agent can hang up after completing its objective | Without this, the testing agent can't hang up — calls run until timeout, wasting credits |
+| `TOOL_END_CALL_ONLY_ON_TRANSFER` | When the main agent transfers to a human/IVR | Without this, the testing agent stays on the line through hold music, voicemail, etc. |
 | `TOOL_DTMF` | When the flow involves IVR/phone menus | Allows the testing agent to send touch-tone inputs |
 
 **Always instruct the testing agent to end the call** after completing its objective if `TOOL_END_CALL` is enabled. Otherwise the call continues unnecessarily.
 
-**Transfer scenarios:** If the expected outcome involves a transfer to a human, enable `TOOL_END_CALL_ON_TRANSFER` to prevent dead call time after the transfer completes.
+**Transfer scenarios:** If the expected outcome involves a transfer to a human, enable `TOOL_END_CALL_ONLY_ON_TRANSFER` to prevent dead call time after the transfer completes.
 
 ## Metrics — Always Attach Baseline Metrics
 
@@ -344,7 +344,7 @@ Follow these steps in order. Skipping any of them is the most common cause of av
 2. **Define the role** — one sentence describing only what the testing agent is pretending to be ("You are a patient calling to cancel an appointment"). Never describe what the main agent is or does — the role is purely the testing agent's persona.
 3. **Choose the first turn (`id: 0`)** — does the testing agent speak first (`action: "Hi, I need to..."`, `fixed_message: true`) or does the main agent speak first (`action: ""`, e.g., IVR/voicemail)?
 4. **Write standard conditions** — one per agent prompt the testing agent must respond to. Each `condition` is a description of what the agent says; each `action` is the testing agent's response (verbatim with `fixed_message: true`, or behavioral with `false`).
-5. **Add `action_followup` and tags as needed** — multi-part responses, interruptions, DTMF, voicemail, silence/hold, network simulation, background noise. Each tag has placement constraints — see the reference's XML Tags table.
+5. **Add `action_followup` and tags as needed** — multi-part responses, interruptions, DTMF, voicemail, silence/hold, network simulation, background noise. Each tag has placement constraints — see the reference's XML Tags table. **Timing:** an `action_followup` fires on the testing agent's **next turn** after its referenced condition — one main-agent reply elapses in between, regardless of the reply's content. It never fires in the same turn as its parent. See `references/conditional-actions.md` for the full rule and worked examples.
 6. **Attach the supporting fields on the scenario** — test profile (for any identity data), tools (`TOOL_END_CALL`, `TOOL_DTMF` for IVR, etc.), metrics (Expected Outcome + Infrastructure Issues + Tool Call Success + Latency), personality (`scenario_language` is inherited from it), folder.
 7. **Run the validation checklist** — from `references/conditional-actions.md` § Validation Checklist. Catches missing FIRST_MESSAGE, missing `type`/`fixed_message`, XML tag misuse, etc., before you hit the API.
 

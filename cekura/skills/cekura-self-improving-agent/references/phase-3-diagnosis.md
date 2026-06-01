@@ -21,7 +21,44 @@ A failure can have both an Upstream/data root AND a Gap/Conflict/Ambiguity compo
 | Conflict | **Edit** or **Remove** the contradictory clause | Resolve in favor of the behavior the failures expect. If both clauses have legitimate use cases, **scope** them with explicit conditions ("if returning customer..." / "if first-time caller..."). |
 | Ambiguity | **Edit** for specificity | Replace vague verbs ("politely", "appropriately") with concrete steps. Add a checklist if there are >2 required actions. |
 
+## Recurring prompt-edit patterns
+
+Failure shapes that recur often enough to standardize the proposed-edit wording. When a failure matches one of these, prefer the canonical shape below over re-inventing — the wording has been validated across multiple agents and modes.
+
+### DTMF / IVR navigation — same-turn digit-announcement pattern
+
+**When it applies.** The agent under test has DTMF capability (VAPI `play_keypad_touch_tone` tool, ElevenLabs `play_keypad_touch_tone` built-in system tool, self-hosted equivalent) AND the failure shape is one of:
+
+- Agent fired `play_keypad_touch_tone` but the transcript at that turn is empty / silent — no human-readable indication of which digit or why.
+- IVR loops the same menu repeatedly; evaluator (which reads transcript, not audio) can't tell what the agent pressed and so can't confirm progress.
+- Agent asked its real conversational opener (e.g. "Hi, does Dr. X still work here?") to the IVR menu instead of pressing a digit — a "spoke to IVR" failure.
+- Debugging an IVR-navigation failure post-hoc is impossible because the transcript shows `[tool: play_keypad_touch_tone]` with no readable context for which digit was intended.
+
+**Canonical edit (prompt).** Require the agent, on the same turn it presses DTMF, to verbally announce the digit in a short standardized phrase carrying NO other content (no questions, no small talk, no opener). Suggested wording (adapt to the agent's existing voice):
+
+> When the IVR menu finishes playing, on the same turn you press the digit: (1) briefly announce the option you are selecting in a short phrase such as "Pressing 1 for administrative staff" or "Selecting option 1" — keep it to that one phrase, do not ask any question — AND (2) call `play_keypad_touch_tone` with that digit. If the same menu plays again because the keypress did not register, immediately announce the option and call the tool again on the next turn — never speak your conversational opener to an IVR.
+
+**Why same-turn (not separate turn).** A separate "first say it, then press it next turn" structure introduces a 1–2 second gap during which the IVR may advance past the menu, making the announcement wrong by the time the DTMF fires. Same-turn only.
+
+**Why the announcement matters even though DTMF is the actual signal.** Three reasons, in order of impact:
+
+1. **Transcript-based evaluators** (Cekura scenario metrics, anything reading the transcript) can confirm "agent intended digit 1" from the announcement when the DTMF tone doesn't render cleanly in the transcript — without this, the same scenario looks indistinguishable from "agent stayed silent."
+2. **The "no question" clause** prevents the most common IVR failure shape: agent asks its real conversational opener to the menu, never reaches a human, scenario fails on "didn't connect to representative."
+3. **Production debug** — the announcement is the canonical place to verify post-hoc "did the agent press what we expected?" without listening to call audio.
+
+**Placement in the prompt.** Pair with the existing "if you hear menu options, do X" / "Initial Audio Triage" guidance so the agent reads them together as one rule. Don't put it in a generic "edge cases" section — that's how the rule gets ignored in practice.
+
+**Per-mode notes:**
+
+- **VAPI / ElevenLabs** — prompt edit only. Edits land live, no orchestration-code change needed.
+- **Self-hosted / pipecat** — prompt edit on the Cekura `description`. If the pipecat code currently routes DTMF *before* the LLM speaks (split paths for tool turns vs. speech turns), surface a paired hand-off telling the user to allow speech + DTMF on the same turn.
+- **Self-hosted / websocket / `file`** — prompt edit. Verify the websocket code allows agent text + DTMF tool invocation on the same turn (some implementations force one OR the other). If it doesn't, add an orchestration-code edit in the same iteration so the prompt-side change can actually take effect.
+- **Self-hosted / websocket / `offline`** — prompt edit only; flag the orchestration-code caveat above as a hand-off the user should verify.
+
 ## Tool-config edit sub-types (VAPI)
+
+> **ElevenLabs analog.** ElevenLabs has the same four sub-types with provider-specific mechanics: edit a standalone tool's `tool_config.description` / `api_schema` / `parameters` via `PATCH /v1/convai/tools/{id}` (or a legacy inline tool in the agent's `prompt.tools`); add a tool via `POST /v1/convai/tools` then PATCH the agent's `prompt.tool_ids`; remove a reference by dropping the id from `prompt.tool_ids` (leave the workspace-scoped definition); delete only after `usage_stats` confirms no other agent references it. ElevenLabs has **no** spoken `messages`, `destinations`, or per-member scoping. See [`../providers/elevenlabs/phase-4-apply.md`](../providers/elevenlabs/phase-4-apply.md). The table below is written for VAPI; read "assistant" as "the single agent" and ignore the squad/destinations rows for ElevenLabs.
+
 
 | Sub-type | When to propose | Mechanics |
 |---|---|---|

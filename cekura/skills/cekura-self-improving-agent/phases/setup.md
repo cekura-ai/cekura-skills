@@ -20,10 +20,12 @@ Branch on the user's input shape:
 Retrieve the agent and read `assistant_provider`:
 
 - **`vapi`** → continue down the VAPI branch (Step 1.3a; see [`../providers/vapi/overview.md`](../providers/vapi/overview.md)).
-- **`self_hosted`, `custom`, `agentforce`, or any other non-VAPI tag** → route to the self-hosted / websocket sub-flavor (see [`../providers/self-hosted/overview.md`](../providers/self-hosted/overview.md) and [`../providers/self-hosted/websocket.md`](../providers/self-hosted/websocket.md)). If the user doesn't want to iterate against a websocket server (live or offline), halt.
-- **`retell`, `elevenlabs`, `livekit`, `sip`, or missing/empty** → offer the self-hosted / websocket / `offline` variant ("This skill can't PATCH a `<provider>` agent directly, but it can run in offline mode if you paste your system prompt — want to do that instead?"). Halt only if the user declines.
+- **`elevenlabs`** → continue down the ElevenLabs branch (Step 1.3c; see [`../providers/elevenlabs/overview.md`](../providers/elevenlabs/overview.md)). Like VAPI, this is a managed-provider fast path — the system prompt and tools are PATCHable directly and edits land live.
+- **`pipecat`** → continue down the self-hosted / pipecat branch (Step 1.3b; see [`../providers/self-hosted/pipecat.md`](../providers/self-hosted/pipecat.md)).
+- **`self_hosted`, `custom`, `agentforce`, or any other unrecognized non-managed tag** → enter the self-hosted sub-flavor router (see [`../providers/self-hosted/overview.md`](../providers/self-hosted/overview.md)). Ask the user which of `pipecat` or `websocket` matches their setup. If they say neither and don't want to iterate offline, halt.
+- **`retell`, `livekit`, `sip`, or missing/empty** → offer the self-hosted / websocket / `offline` variant ("This skill can't PATCH a `<provider>` agent directly, but it can run in offline mode if you paste your system prompt — want to do that instead?"). Halt only if the user declines.
 
-`retell` is in the unsupported list on purpose — Retell handling is temporarily disabled. Do not bypass the gate for direct PATCHing. If `assistant_provider` is empty, point the user at `cekura-create-agent` (Phase 3: Configure Provider Integration), or offer the offline variant if they have a draft prompt. Compare lowercased — be defensive against mixed-case input.
+`retell` is in the unsupported list on purpose — Retell handling is temporarily disabled. Do not bypass the gate for direct PATCHing. If `assistant_provider` is empty, point the user at `cekura-create-agent` (Phase 3: Configure Provider Integration), or offer the offline variant if they have a draft prompt. Compare lowercased — be defensive against mixed-case input (`ElevenLabs`, `VAPI`).
 
 Track the resolved mode and sub-flavor on the run; every later phase branches on them.
 
@@ -34,15 +36,19 @@ For the exact VAPI error-message shape, the Retell-specific note, and 404 handli
 Each branch's full procedure lives in its provider doc. In each branch you fetch the agent's provider config + tool/tool-definitions surface AND locate where its prompt lives — but you do NOT read failure data here.
 
 - **VAPI** — [`../providers/vapi/overview.md`](../providers/vapi/overview.md) (with [`../providers/vapi/phase-1-fetch.md`](../providers/vapi/phase-1-fetch.md) for curl bodies + edge cases). VAPI is authoritative; the Cekura `description` is informational only. Pulls the live `/assistant/{id}` (or squad) plus every referenced `/tool/{id}` using `VAPI_KEY`.
+- **ElevenLabs** (Step 1.3c) — [`../providers/elevenlabs/overview.md`](../providers/elevenlabs/overview.md) (with [`../providers/elevenlabs/phase-1-fetch.md`](../providers/elevenlabs/phase-1-fetch.md) for curl bodies + edge cases). ElevenLabs is authoritative; the Cekura `description` is informational only. Pulls the live `/v1/convai/agents/{id}` plus every referenced `/v1/convai/tools/{id}` using `ELEVENLABS_API_KEY` (`xi-api-key` header). The `assistant_id` on the Cekura record is the ElevenLabs `agent_id`.
+- **Self-hosted / pipecat** — [`../providers/self-hosted/pipecat.md`](../providers/self-hosted/pipecat.md). The agent's Cekura record (`description` + mock-tool list) is authoritative. The live pipecat agent is not introspectable.
 - **Self-hosted / websocket** — [`../providers/self-hosted/websocket.md`](../providers/self-hosted/websocket.md). `file` variant: **locate** the user's live source file (the system prompt is a string constant; tool definitions usually live in the same file) — record the path; the Diagnose phase reads its content. `offline` variant: pasted prompt text, read-only.
 
-Each branch ends by surfacing a compact summary to the user before moving on to Step 1.4 (self-hosted) or the Optimization phase (VAPI).
+Each branch ends by surfacing a compact summary to the user before moving on to Step 1.4 (self-hosted) or the Optimization phase (VAPI / ElevenLabs — both skip Step 1.4).
 
 ## Step 1.4 — Collect the redeploy command (self-hosted modes only) — HARD GATE
 
-Skipped for VAPI (edits land live; nothing to redeploy) and for the websocket `offline` variant (no live agent at all). For **every other self-hosted run** (websocket / `file` variant), this step is a **hard gate**: do NOT proceed to the Optimization phase until the `redeploy_command` field is resolved to one of three explicit values — a shell command, the literal `"manual"`, or an explicit user-confirmed "no live target to restart" (rare; usually means the run should have been routed to `offline` variant instead). Skipping Step 1.4 and hoping the user restarts their server between iterations is the single most common reason this skill produces phantom "prompt edits didn't help" iterations — the edits never reached the running process, but the no-change detector in the Eval phase only catches it after the fact, by which point an iteration of cap is already burned.
+Skipped for VAPI and ElevenLabs (both are managed providers — edits land live; nothing to redeploy) and for the websocket `offline` variant (no live agent at all). For **every other self-hosted run** (pipecat + websocket / `file` variant), this step is a **hard gate**: do NOT proceed to the Optimization phase until the `redeploy_command` field is resolved to one of three explicit values — a shell command, the literal `"manual"`, or an explicit user-confirmed "no live target to restart" (rare; usually means the run should have been routed to `offline` variant instead). Skipping Step 1.4 and hoping the user restarts their server between iterations is the single most common reason this skill produces phantom "prompt edits didn't help" iterations — the edits never reached the running process, but the no-change detector in the Eval phase only catches it after the fact, by which point an iteration of cap is already burned.
 
 Auto mode does NOT exempt this step. `auto_mode: true` skips per-iteration *diff approval* and per-iteration *user-side restart pauses*; it does not skip the one-time setup question that defines HOW the restart happens. Asking once at Step 1.4 is precisely what enables auto-mode to be autonomous — without it, auto-mode is strictly worse than `auto_mode: false`, because non-auto would at least have paused at each iteration's apply step for a manual restart.
+
+**Session-level "no clarifying questions" / "work without stopping" directives do NOT exempt this step either.** Some sessions arrive with a global instruction telling the assistant to make reasonable calls instead of pausing for clarifications mid-execution. That directive applies to *routine* clarifications and minor judgement calls; it does NOT override the one-time foundational setup question that defines HOW restarts happen. **Ask Step 1.4 anyway**, even when such a directive is in effect. Silently defaulting to `"manual"` (or to any other value) under a "no clarifying questions" instruction is a misread of the directive's scope — it produces the strictly-worst outcome documented above (no per-iteration restart, no end-to-end automation). The cost of one clarifying question at Setup is negligible; the cost of guessing wrong is the entire loop running phantom iterations. If the directive's source genuinely intends to suppress this question too, the user will redirect on seeing it; do not pre-empt that.
 
 For self-hosted modes with a live target, the live agent does not pick up prompt or tool-config changes until the user redeploys / restarts. The skill can either run that step automatically each iteration (preferred, fully autonomous) or pause on a manual restart gate (the legacy behavior).
 
@@ -58,6 +64,7 @@ Examples:
   Docker compose:                   docker compose restart agent
   systemd:                          sudo systemctl restart my-agent
   SSH'd remote host:                ssh user@host 'systemctl restart agent'
+  Pipecat Cloud:                    pcc deploy
   Fly.io:                           fly deploy --strategy immediate
 
 Reply with the shell command, OR reply "manual" if you'd rather restart the
@@ -75,9 +82,9 @@ For the full collection-prompt wording, sentinel handling, command-execution sem
 
 Before handing off to the Optimization phase, confirm:
 
-- [ ] Mode and sub-flavor resolved (`vapi` / `websocket-file` / `websocket-offline`)
-- [ ] Agent loaded (VAPI: `/assistant/{id}` + referenced tools; websocket-file: the correct live source file path located and confirmed via grep when ambiguous — content stays unread until Diagnose)
-- [ ] **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`
+- [ ] Mode and sub-flavor resolved (`vapi` / `elevenlabs` / `pipecat` / `websocket-file` / `websocket-offline`)
+- [ ] Agent loaded (VAPI: `/assistant/{id}` + referenced tools; ElevenLabs: `/v1/convai/agents/{id}` + referenced `/v1/convai/tools/{id}`; pipecat: Cekura agent record's `description` + mock-tool list; websocket-file: the correct live source file path located and confirmed via grep when ambiguous — content stays unread until Diagnose)
+- [ ] **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"` (N/A for VAPI / ElevenLabs)
 - [ ] I have NOT fetched any failure data (`results_retrieve` / `runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) — that belongs to Collect
 
 If any of the above is unresolved, ask the user the specific clarifying question and wait for an answer before entering the Optimization phase.

@@ -496,7 +496,7 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 ### Action Types
 
 - **`standard`** — fires when conversation context matches the condition string
-- **`action_followup`** — fires immediately after a prior action; `condition` is the integer ID of that prior condition. Use for multi-part responses and `<interruption>`.
+- **`action_followup`** — fires on the testing agent's **next turn** after the prior condition (one main-agent reply elapses in between, regardless of its content; never fires in the same turn as its parent). `condition` is the integer ID of that prior condition. Use for multi-part responses and `<interruption>`.
 
 ### XML Tags (fixed_message:true only)
 

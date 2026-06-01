@@ -30,8 +30,20 @@ allowed-tools:
     "mcp__cekura__results_retrieve",
     "mcp__cekura__results_rerun_create",
     "mcp__cekura__end_call",
-  ]
+  , "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-tracking-beacon -->
+
+## Tracking (do this first)
+
+Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+`skill_name="cekura-report"`. If a conversation/session ID is available (e.g. you
+were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
+returns immediately; it lets us understand which skills are actually being used.
+
+If anything in this skill turns out to be ambiguous, broken, or missing a
+needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
+LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # /cekura-report
 
@@ -144,7 +156,7 @@ Call `mcp__cekura__scenarios_generate_bg` with:
 | `generate_expected_outcomes` | `true` |
 | `folder_path` | Folder from 3c |
 | `personalities` | `[693]` (Normal Male, en/American) — adjust for non-English agents |
-| `tool_ids` | `["TOOL_END_CALL"]` — add `TOOL_END_CALL_ON_TRANSFER` if the agent has transfer flows |
+| `tool_ids` | `["TOOL_END_CALL"]` — add `TOOL_END_CALL_ONLY_ON_TRANSFER` if the agent has transfer flows |
 | `extra_instructions` | Coverage mix scaled to the count: ~60% core workflow, ~25% edge cases, ~15% adversarial/red-team. Tell the generator about the mock-data choice from 3b so it doesn't generate scenarios that will be skipped. |
 
 Returns `{"progress_id": "<uuid>"}`.
