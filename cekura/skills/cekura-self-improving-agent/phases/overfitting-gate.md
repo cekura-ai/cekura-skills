@@ -41,6 +41,8 @@ When in doubt, **flag it but propose REVISE rather than STRIP** — generalizing
 Pull the diff for this iteration:
 
 - **VAPI** — diff of `/assistant/{id}` (system message changes per squad member, `toolIds` deltas) and every edited `/tool/{id}` (`function.description`, `function.parameters`, `messages[*].content`, `destinations`).
+- **ElevenLabs** — diff of the agent's `conversation_config.agent.prompt.prompt` (system prompt) and `prompt.tool_ids` deltas, plus every edited `/v1/convai/tools/{id}` (`tool_config.description`, `api_schema`, `parameters`).
+- **Self-hosted / pipecat** — diff of the Cekura agent `description` and any mock-tool `description` / `parameters` changes.
 - **Self-hosted / websocket / `file`** — diff of the source file regions Optimization · Apply Step APPLY.1 touched (system prompt string, tool-definition blocks; orchestration-code edits are NOT scored here).
 - **Self-hosted / websocket / `offline`** — diff between the previously-rendered prompt and the just-rendered rewrite.
 
@@ -82,6 +84,8 @@ Walk the flagged rows from Step GATE.2 and choose one outcome per row:
 Convert each REVISE / STRIP decision into a concrete edit:
 
 - **VAPI** — a follow-up assistant PATCH or tool PATCH that overwrites the just-changed field with the cleaned-up version. Bundle all cleanup edits into a single PATCH per artifact (one for the assistant, one per tool) to minimize round-trips.
+- **ElevenLabs** — a follow-up agent PATCH (`conversation_config.agent.prompt.prompt`) or tool PATCH (`/v1/convai/tools/{id}`) overwriting the just-changed field with the cleaned-up version. One PATCH per artifact.
+- **Self-hosted / pipecat** — a follow-up `mcp__cekura__aiagents_partial_update` or `mcp__cekura__aiagents_tool_partial_update` with the cleaned-up `description` / `parameters`.
 - **Self-hosted / websocket / `file`** — `Edit` calls on the source file, each with `old_string` = the overfit fragment that just landed and `new_string` = the cleaned-up version. If REVISE replaces a multi-line block, include 3–5 lines of surrounding context per anchor to keep `old_string` unique.
 - **Self-hosted / websocket / `offline`** — render a SECOND revised prompt and replace the just-shown rendered prompt with it. Tell the user explicitly: "I noticed the previous rendering quoted the failing transcript verbatim; here's a generalized version — apply this instead of the previous one."
 
@@ -104,6 +108,8 @@ Show every cleanup edit as a **before / after** block, with the original Optimiz
 Apply via the same provider-specific apply machinery the Optimization · Apply sub-phase uses in Step APPLY.1. The full apply-order details live in each provider's doc:
 
 - **VAPI** — [`../providers/vapi/phase-4-apply.md`](../providers/vapi/phase-4-apply.md) (tool PATCH → assistant PATCH).
+- **ElevenLabs** — [`../providers/elevenlabs/phase-4-apply.md`](../providers/elevenlabs/phase-4-apply.md) (tool PATCH → agent PATCH). No redeploy step (edits land live).
+- **Self-hosted / pipecat** — [`../providers/self-hosted/pipecat.md`](../providers/self-hosted/pipecat.md) § "Phase 4.1b — apply order".
 - **Self-hosted / websocket / `file`** — [`../providers/self-hosted/websocket.md`](../providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `file`).
 - **Self-hosted / websocket / `offline`** — render the revised prompt; tell the user to apply this version instead of the previous one.
 
@@ -120,6 +126,8 @@ Apply via the same provider-specific apply machinery the Optimization · Apply s
 Re-fetch / re-read the just-cleaned-up artifacts and verify the overfit fragments are gone AND the surrounding rules are intact. Use the same per-mode re-fetch as Optimization · Sync Step SYNC.1:
 
 - **VAPI** — re-fetch `/assistant/{id}` and every edited `/tool/{id}`.
+- **ElevenLabs** — re-fetch `GET /v1/convai/agents/{id}` (confirm `conversation_config.agent.prompt.prompt` shows the cleaned-up text) and every edited `GET /v1/convai/tools/{id}`.
+- **Self-hosted / pipecat** — re-fetch via `mcp__cekura__aiagents_retrieve` and `mcp__cekura__aiagents_tool_retrieve`.
 - **Self-hosted / websocket / `file`** — re-read the source file (Read tool, not cached); verify the cleanup `Edit`s landed where intended.
 - **Self-hosted / websocket / `offline`** — skip; nothing to sync server-side.
 

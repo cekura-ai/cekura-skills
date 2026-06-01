@@ -4,15 +4,15 @@ Provider-gate error shapes, VAPI assistant / squad / tool fetch curl bodies, and
 
 ## Provider-gate error message format
 
-When `assistant_provider` isn't `vapi`, respond with exactly this shape (substitute the actual values):
+When `assistant_provider` is one this skill can't handle (after the Setup Step 1.2 routing has already sent `vapi` / `elevenlabs` / `pipecat` / self-hosted tags down their branches), respond with exactly this shape (substitute the actual values):
 
 ```
-Self-improvement is currently supported only for VAPI agents.
+Self-improvement isn't supported for this agent's provider.
 
 Agent: <agent_name> (id: <agent_id>)
 Provider: <assistant_provider or "not set">
 
-Supported providers: vapi
+Supported providers: vapi, elevenlabs, self_hosted (pipecat / websocket; offline prompt-only fallback also available)
 ```
 
 If the provider is `retell` specifically, append one extra line so the user knows it's a temporary gate, not a permanent decision:
