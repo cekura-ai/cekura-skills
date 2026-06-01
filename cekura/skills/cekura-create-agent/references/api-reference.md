@@ -3,98 +3,90 @@
 ## Authentication
 All requests: `X-CEKURA-API-KEY: <key>` header. Base URL: `https://api.cekura.ai`
 
+Docs: https://vocera-v2-agent-api-restructure.mintlify.app/api-reference/test_framework/create-agent
+
 ## Agent CRUD
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | `/test_framework/v1/aiagents/` | Create agent |
-| GET | `/test_framework/v1/aiagents/` | List agents (`?project_id=X`) |
-| GET | `/test_framework/v1/aiagents/{id}/` | Get agent details |
-| PATCH | `/test_framework/v1/aiagents/{id}/` | Partial update (preferred for config changes) |
-| PUT | `/test_framework/v1/aiagents/{id}/` | Full update |
-| DELETE | `/test_framework/v1/aiagents/{id}/` | Delete agent |
-| POST | `/test_framework/v1/aiagents/{id}/duplicate/` | Duplicate agent |
+| POST | `/test_framework/v2/aiagents/` | Create agent |
+| GET | `/test_framework/v2/aiagents/` | List agents (`?project_id=X`) |
+| GET | `/test_framework/v2/aiagents/{id}/` | Get agent |
+| PATCH | `/test_framework/v2/aiagents/{id}/` | Partial update (preferred) |
+| PUT | `/test_framework/v2/aiagents/{id}/` | Full update |
+| DELETE | `/test_framework/v2/aiagents/{id}/` | Delete agent |
+| POST | `/test_framework/v2/aiagents/{id}/duplicate/` | Duplicate agent |
 
-**Note:** Endpoint is `/aiagents/`, NOT `/agents/`.
+## Create/Update Agent Schema (AIAgentV2)
 
-## Create Agent Schema
+**Required for POST:** `name`, `description`, `project`  
+All other fields are optional. PATCH requires no mandatory fields.
 
-```json
-POST /test_framework/v1/aiagents/
-{
-  "agent_name": "string (required, max 255 chars)",
-  "project": "integer (project ID)",
-  "language": "string (default 'en')",
-  "description": "string (agent system prompt — the most important field)",
-  "contact_number": "string ('+1234567890', 8-30 chars)",
-  "inbound": "boolean (default true)",
-  "assistant_provider": "vapi|retell|elevenlabs|livekit|pipecat|bland|self_hosted|...",
-  "transcript_provider": "vapi|retell|elevenlabs|livekit|pipecat|custom|...",
-  "assistant_id": "string (min 10 chars, provider assistant ID)"
-}
-```
+### Top-level fields
 
-## Provider-Specific Fields
+| Field | Type | Notes |
+|-------|------|-------|
+| `name` | string (max 255) | Agent name |
+| `description` | string | Full system prompt |
+| `project` | integer | Project ID |
+| `language` | string | BCP-47, default `en` |
+| `agent_speaks_first` | boolean\|null | `null` = auto-detect |
+| `telephony` | AgentTelephony (write-only) | Phone/SIP config |
+| `provider` | AgentProvider (write-only) | Provider credentials |
+| `predefined_metrics` | write-only | Assign predefined metrics |
 
-These fields go on the agent record alongside `assistant_provider`.
+### AgentTelephony (all fields optional)
 
-### VAPI
-```json
-{ "vapi_api_key": "string", "vapi_data": "JSON string" }
-```
+| Field | Type | Notes |
+|-------|------|-------|
+| `phone_number` | string | E.164, e.g. `+14155551234` |
+| `inbound` | boolean | Default `false` |
+| `sip_uri` | string\|null | e.g. `sip:user@domain.com` |
+| `sip_auth` | object\|null | `{username, password}` |
+| `outbound_numbers` | string[] | E.164 numbers for outbound webhook validation |
 
-### Retell
-```json
-{ "retell_api_key": "string", "retell_data": "JSON string", "auto_sync_prompt_enabled": "boolean" }
-```
+### AgentProvider
 
-### ElevenLabs
-```json
-{ "elevenlabs_api_key": "string", "elevenlabs_data": "JSON string" }
-```
+| Field | Type | Notes |
+|-------|------|-------|
+| `type` | enum | `vapi\|retell\|elevenlabs\|bland\|livekit\|pipecat\|synthflow\|chirp\|koreai\|genesys\|trillet\|cisco\|self_hosted` |
+| `agent_id` | string\|null | Voice agent ID on provider platform |
+| `credentials` | AgentCredentials\|null | `{api_key (write-only), config}` |
+| `chat_agent_details` | ChatAgentDetails\|null | `{type, config}` |
+| `auto_sync_prompt` | boolean\|null | Sync every 30s (vapi, retell, elevenlabs, synthflow) |
+| `auto_import_calls` | boolean\|null | Import calls every 30s (vapi, retell, elevenlabs) |
+| `auto_dial_outbound` | boolean\|null | Auto-dial outbound (vapi, retell, elevenlabs, bland, livekit) |
 
-### LiveKit
-```json
-{ "livekit_api_key": "string", "livekit_data": "JSON string with api_secret, url, config" }
-```
+## credentials.config Keys by Provider
 
-### Pipecat
-```json
-{ "pipecat_api_key": "string", "pipecat_data": "JSON string" }
-```
+| Provider | Required | Optional |
+|----------|---------|---------|
+| `vapi` | — | `public_key`, `trigger_url` |
+| `retell` | — | `trigger_url`, `livekit_server_url` |
+| `elevenlabs` | — | `trigger_url`, `elevenlabs_base_url_override` |
+| `bland` | — | `encrypted_key` (Twilio bundle) |
+| `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
+| `pipecat` | — | `pipecat_agent_name`, `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
+| `synthflow` | — | `synthflow_base_url_override` |
+| `chirp` | `chirp_websocket_url` | `chirp_basic_auth_username`, `chirp_basic_auth_password` |
+| `koreai` | `client_id`, `bot_id` | `host` (default: https://bots.kore.ai) |
+| `genesys` | `client_id`, `region` | — |
+| `trillet` | `workspace_id` | — |
+| `cisco` | — | — |
+| `self_hosted` | — | — (use `provider.send_post_conversation_metadata` at provider level) |
 
-## Connection-Mode Fields (NOT providers)
+## chat_agent_details by type
 
-These select how Cekura dials into the agent at test-run time. They live on the same agent record but are orthogonal to `assistant_provider` — a `self_hosted` agent can be reached via any combination of these.
-
-### SIP
-```json
-{ "sip_endpoint": "string (sip:agent@domain.com)", "sip_auth": {"username": "...", "password": "..."} }
-```
-
-### Chat / WebSocket
-```json
-{ "chat_assistant_id": "string", "websocket_url": "string (wss://...)", "websocket_headers": "object" }
-```
-
-## Additional Agent Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `auto_fetch_calls_enabled` | boolean | Auto-import production calls (VAPI/Retell) |
-| `outbound_auto_call` | boolean | Auto-trigger outbound calls |
-| `outbound_numbers` | array | List of outbound phone numbers |
-| `llm_model` | enum | Simulation LLM: gpt-4o, gpt-4o-mini, gpt-4.1, gpt-4.1-mini, claude-sonnet-4-5 |
-| `llm_temperature` | float | 0.0-2.0 (default 0.0) |
-| `llm_max_tokens` | integer | Default 4096 |
-| `llm_system_prompt` | string | Custom simulation system prompt |
-| `pronunciation_words` | array | `[["word", "phoneme"]]` for pronunciation analysis |
-| `spelling_word_types` | array | `["name", "postcode", "email"]` for spelling analysis |
-| `topic_nodes` | object | `{"billing": "handle_billing"}` for topic classification |
-| `dropoff_nodes` | object | `{"timeout": 30}` for dropoff detection |
-| `auto_update_topic_nodes` | boolean | Auto-update topics from description |
-| `auto_update_dropoff_nodes` | boolean | Auto-update dropoffs from description |
-| `hallucination_metric_kb_files` | array | KB file IDs for hallucination detection |
+| `type` | Required config | Optional config |
+|--------|----------------|----------------|
+| `retell` | `agent_id` | — |
+| `bland` | `agent_id` (= pathway_id) | — |
+| `vapi` | — | `agent_id` |
+| `elevenlabs` | — | `agent_id` |
+| `agentforce` | `agent_id`, `client_id`, `client_secret`, `domain` | — |
+| `self_hosted` | `url` (wss://) | `headers` |
+| `sms` | — | — |
+| `whatsapp` | — | — |
 
 ## Mock Tool Endpoints
 
@@ -111,44 +103,43 @@ These select how Cekura dials into the agent at test-run time. They live on the 
 ```json
 POST /test_framework/v1/aiagents/{agent_id}/tools/
 {
-  "name": "string (required, max 64 chars, alphanumeric + _ + -)",
-  "description": "string (what the tool does)",
-  "information": [
-    {
-      "input": {"param1": "value1"},
-      "output": {"result1": "value1"}
-    }
-  ],
-  "freetext_params": ["notes", "reason"]
+  "name": "string (required, max 64 chars)",
+  "description": "string",
+  "information": [{"input": {}, "output": {}}],
+  "freetext_params": ["notes"]
 }
 ```
 
-**`name`** must exactly match the tool name in the agent description.
-
-**`information`** is an array of input/output mappings. Each object has `input` (what the agent sends) and `output` (what the mock returns). Cekura matches incoming tool calls to the closest input and returns the corresponding output.
-
-**`freetext_params`** — Parameter names skipped during mock matching. Use for fields that vary per call and shouldn't affect which mock response is selected (e.g., "notes", "reason", "description").
-
-**Critical: Append-not-replace.** When PATCHing `information`, GET existing data first, merge, then PATCH the full array. A PATCH with only new entries replaces all existing ones.
+**Critical: Append-not-replace** — GET existing `information` first, merge, then PATCH the full array.
 
 ## Knowledge Base
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/test_framework/v1/aiagents/{id}/upload_knowledge_base/` | Upload KB files |
-
 ```
-POST /test_framework/v1/aiagents/{id}/upload_knowledge_base/
+POST /test_framework/v2/aiagents/{id}/upload_knowledge_base/
 Content-Type: multipart/form-data
-
 files: <file1>, <file2>
 ```
 
-Supported: PDF, text files, documents. Files appear in agent's `knowledge_base_files` field.
+## Dynamic Variables
 
-After upload, link to hallucination detection:
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/test_framework/v1/aiagents/{agent_id}/dynamic-variables/` | Upsert dynamic variables |
+| GET | `/test_framework/v1/aiagents/{agent_id}/dynamic-variables/` | List dynamic variables |
+
+### Upsert Schema
+
 ```json
-PATCH /test_framework/v1/aiagents/{id}/
-{ "hallucination_metric_kb_files": [<file_id_1>, <file_id_2>] }
+POST /test_framework/v1/aiagents/{agent_id}/dynamic-variables/
+[
+  {
+    "name": "string (required, snake_case — variable identifier)",
+    "description": "string (required — what it represents, format/type, full structure, constraints, complete example)"
+  }
+]
 ```
 
+- **Upsert** — POST the full array each time; creates new variables and updates existing ones
+- Returns 201 with the complete variable list after upsert
+- `name` is the variable identifier — must be unique per main agent
+- `description` should be as detailed as possible: full structure, all fields, constraints, example values
