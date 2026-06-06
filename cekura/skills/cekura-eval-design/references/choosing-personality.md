@@ -75,12 +75,12 @@ When a scenario describes interruptive or impatient behavior, quantify before se
 
 | Description | Personality tier |
 |---|---|
-| 2 or more distinct interruptions described | Interruptive (High) |
+| 4 or more distinct interruptions described | Interruptive (High) |
 | 1 isolated interruption described | Interruptive (Low) |
 | General impatience or "in a hurry" — no specific count | Interruptive (Medium) |
 
 Examples:
-- "Interrupts the agent twice during the call" → Interruptive (High)
+- "Interrupts the agent four or more times during the call" → Interruptive (High)
 - "Cuts in once to ask about the wait time" → Interruptive (Low)
 - "Caller is impatient and wants things done quickly" → Interruptive (Medium)
 
@@ -197,7 +197,7 @@ Is there a sustained behavioral cue?
   Yes → match against personality name and description:
     Interruptive / impatient?
       Count distinct interruptions:
-        2+ → Interruptive (High)
+        4+ → Interruptive (High)
         1  → Interruptive (Low)
         General impatience → Interruptive (Medium)
     Background noise? → background noise personality
