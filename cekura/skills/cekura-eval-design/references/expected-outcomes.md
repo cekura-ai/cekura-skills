@@ -56,10 +56,7 @@ Every statement must be objectively True/False from the transcript. If a reasona
 ### 5. Agent-centric
 Focus on what the **main agent** does — not what the caller experiences, feels, or receives. "The caller will feel helped" is not a valid outcome.
 
-### 6. No silent tool calls
-Outcomes must be verifiable in the transcript. The judge cannot see function call payloads. Never write "The main agent should invoke the transfer_call tool" — write "The main agent should state it is transferring the call."
-
-### 7. No call closing / farewells
+### 6. No call closing / farewells
 Do not test goodbye or farewell statements unless the `extra_instructions` explicitly require testing that behavior. The last testable outcome is the agent's response to the testing agent's final substantive statement.
 
 ---
@@ -131,7 +128,6 @@ This lets the expected outcome stay accurate across different test profiles with
 | `"The main agent should ask for the caller's name, ask for their mother's date of birth, and state no appointment was found."` | `"The main agent should ask for the caller's name and the mother's date of birth."` + `"The main agent should state that no appointment was found for the specified date."` | 3 actions → split into 2 statements |
 | `"The main agent should warmly and professionally handle the request."` | `"The main agent should proceed with the next question without reacting to the user's unprofessional comment."` | Subjective descriptors ("warmly", "professionally") are not verifiable |
 | `"The main agent should provide the caller with a great experience."` | `"The main agent should book the appointment and provide arrival instructions."` | Caller experience is not agent-centric or measurable |
-| `"The main agent should invoke the transfer_call tool."` | `"The main agent should state it is transferring the call."` | Tool calls are not visible in the transcript |
 | `"The main agent should confirm the appointment for Thursday at 2pm."` | `"The main agent should confirm the appointment date and time with the testing agent."` | Hardcoded values cause false failures across different test data |
 
 ---
@@ -166,5 +162,4 @@ The main agent should explain that appointments can be cancelled up to 24 hours 
 - **Exact phrases or hardcoded values** — specifying exact dates, times, or verbatim sentences causes false failures when the agent paraphrases or uses different test data
 - **Subjective descriptors** — "appropriately", "warmly", "professionally" are not verifiable; replace with functional descriptions
 - **Testing call closing** — farewell statements are out of scope unless the test explicitly requires it
-- **Silent tool calls** — the judge only reads the transcript; reference what the agent says, not what tool it calls
 - **3+ actions in one statement** — split into multiple statements, each with max 2 distinct actions
