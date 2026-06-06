@@ -2,15 +2,54 @@
 
 ## What Personality Controls
 
-`personality` is a **required** field on every scenario. It controls the testing agent's voice at the infrastructure level:
+`personality` is a **required** field on every scenario. It controls the testing agent's voice and behavioral defaults at the infrastructure level.
 
-- **Voice model and provider** — ElevenLabs, Cartesia, etc.
-- **Language and accent** — American English, Spanish, Hindi, etc.
-- **Interruption level** — how frequently the caller cuts in
-- **Background noise** — office ambience, street noise, café, etc.
-- **Speech speed and pattern** — slow, fast, mumbling, etc.
+### Personality Prompt
 
-**Instructions cannot change any of these.** Instructions only control what the testing agent says, not how it sounds. If you write "speak in a mumbling voice and interrupt frequently" in instructions, the agent will ignore that phrasing at the voice layer. Use personalities instead.
+Every personality has a `prompt` field — a system prompt given to the **testing/simulated caller agent** that shapes its overall conversational style, tone, and role throughout the call. This is distinct from scenario instructions:
+
+| | Personality prompt | Scenario instructions |
+|---|---|---|
+| **Scope** | Entire call — shapes baseline tone and role | Step-by-step — what to say and do |
+| **Example** | "You are an impatient small business owner who speaks quickly and rarely elaborates" | "Ask about the refund policy. If the agent asks for your order number, provide it." |
+| **Layer** | Infrastructure (baked into the caller agent's system prompt) | Runtime (scripted turn sequence) |
+
+When selecting a personality, check its prompt to understand how the testing agent will behave — the name alone may not tell the full story.
+
+### Voice and Audio Configuration
+
+| Parameter | What it controls |
+|---|---|
+| Voice model / provider | ElevenLabs, Cartesia, etc. |
+| Language and accent | American English, Spanish, Hindi, Brazilian Portuguese, etc. |
+| Gender | Male, female, neutral |
+| Speech speed | 0.8× (slow) to 1.2× (fast) relative to normal |
+| Background noise | Off, office, street, café, etc. |
+| Background sound volume | Base level and reduced level during agent speech (0.0–1.0) |
+
+### Interruption Configuration
+
+| Parameter | What it controls |
+|---|---|
+| Interruption level | Overall aggressiveness: very_low → low → medium → high → very_high |
+| Start speaking delay | Seconds the caller waits before speaking (lower = more interruptive) |
+| Stop speaking plan | How quickly the caller yields when the agent starts talking (num_words, voice_seconds, backoff_seconds) |
+
+These three parameters work together. `interruption_level` applies a preset that sets both the start and stop speaking plans automatically. Fine-grained control is available by configuring `start_speaking_plan` and `stop_speaking_plan` directly — but if both an `interruption_level` and manual plans are set, the `interruption_level` preset overrides the manual values.
+
+### Additional Configurations
+
+| Parameter | What it controls |
+|---|---|
+| Idle timeout | Seconds of silence before the testing agent sends an idle message (default: 10s) |
+| Idle message count | Max times the idle message is repeated before the agent gives up (default: 3) |
+| Network simulation | Simulate packet loss, jitter, and latency (0–100%) for degraded-network testing |
+| Cartesia emotion | Emotional tone applied to Cartesia Sonic-3 voice generation |
+| Cartesia volume | Volume multiplier for Cartesia voice output |
+
+Network simulation is especially useful for testing how the main agent handles real-world call quality degradation — poor mobile connections, VoIP jitter, etc.
+
+**Instructions cannot change any of the above.** Instructions only control what the testing agent says, not how it sounds or behaves at the voice layer. If you write "speak in a mumbling voice and interrupt frequently" in instructions, the agent will ignore that phrasing at the infrastructure level. Use personalities instead.
 
 ---
 
@@ -23,7 +62,6 @@ Only map a **sustained, call-wide behavior** to personality. A temporary state f
 | "Caller is impatient throughout the call" | ✅ Yes | Sustained emotional state |
 | "There is constant background street noise" | ✅ Yes | Persistent environmental condition |
 | "Caller speaks slowly and uses simple language" | ✅ Yes | Consistent speech pattern |
-| "Caller waits silently on hold for 120 seconds" | ✅ Yes | Prolonged state (use Call Hold personality) |
 | `Says in a panicked tone: 'I need this fixed now!'` | ❌ No | Single-utterance emotional tone — use Normal personality |
 | "At step 4, the caller gets frustrated" | ❌ No | Isolated moment — encode in instructions, not personality |
 
@@ -165,7 +203,6 @@ Is there a sustained behavioral cue?
         General impatience → Interruptive (Medium)
     Background noise? → background noise personality
     Slow / fast speech? → speech rate personality
-    Prolonged hold / silence? → Call Hold personality
     Specific accent? → language-specific accent personality
 
 Is the matched personality ENABLED?
