@@ -116,7 +116,7 @@ The exception: use a non-Normal personality when a **call-wide, sustained trait*
 Language must be determined before personality, because personalities are language-specific. Running the wrong language personality against a non-English scenario produces incorrect TTS pronunciation.
 
 1. **Identify the scenario language** from the scenario instructions or agent description.
-2. **List personalities for the project** via `mcp__cekura__personalities_list` and filter by language.
+2. **List personalities for the project** via `GET /test_framework/v1/personalities/` and filter by language.
 3. **Match tone within the language-filtered list** — don't select a personality in the wrong language even if the tone matches better.
 4. **For multilingual agents:** Use semantic matching for mixed-language labels — "Hinglish" matches Hindi + English personalities, "Spanglish" matches Spanish + English. If no exact dialect match exists, use the closest available option.
 
@@ -126,7 +126,7 @@ Language must be determined before personality, because personalities are langua
 
 ## Checking Enabled/Disabled Status
 
-Always call `mcp__cekura__personalities_list` before assigning a personality. Available personalities vary per project — do not guess or invent names.
+Always list available personalities via `GET /test_framework/v1/personalities/` before assigning. Available personalities vary per project — do not guess or invent names.
 
 Rules:
 - **Only assign personalities that are currently enabled for the project.**
@@ -166,7 +166,7 @@ Is it a conditional-actions scenario?
   No ↓
 
 What's the scenario language?
-  → mcp__cekura__personalities_list → filter by language
+  → GET /test_framework/v1/personalities/ → filter by language
 
 Is there a sustained behavioral cue?
   No → Normal (fallback)
