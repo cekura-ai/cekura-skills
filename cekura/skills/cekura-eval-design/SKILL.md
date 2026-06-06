@@ -271,40 +271,7 @@ Instructions cannot alter actual speaking style — they only affect what the te
 
 ### Picking the Right Personality
 
-**For conditional-actions scenarios:** Use the normal personality for the target language (e.g., 693 for English, 362 for Spanish). Conditional actions encode all behavioral logic — interruptions, pacing, silence, hold — directly in the `conditions` array via XML tags. A separate interrupter or edge-case personality adds no value and can interfere with the scripted turn sequence.
-
-**For behavioral scenarios:** Match personality to scenario intent. Recommended suite distribution for full coverage:
-
-| Scenario intent | Personality to use | Example |
-|---|---|---|
-| Happy path / baseline | Normal Male/Female (same language) | ID 693 for English |
-| Urgent / fast-paced caller | Interrupter personality | Scheduling with time pressure |
-| Real-world ambient noise | Background noise personality (street/café) | Mobile caller in public |
-| Non-native / accented speaker | Slow Speaker or language-specific accent | Accessibility testing |
-| Aggressive / frustrated caller | Interrupter + high emotional tone | De-escalation red team |
-
-**Rough distribution for a balanced suite:**
-- ~60% standard (normal male/female in the scenario's language)
-- ~20% challenging (interrupter, fast-paced, background noise)
-- ~10% non-native speakers or accented
-- ~10% edge cases (frustrated, extreme speech rate)
-
-**Recommended defaults:**
-- **English:** 693 (Normal Male, en/American)
-- **Spanish:** 362 (Normal Spanish Male)
-- **Other languages:** Use 693 + set `scenario_language` to the correct code, OR list personalities via `GET /test_framework/v1/personalities/` and pick the matching language. The platform uses `scenario_language` for TTS, not just personality.
-
-### Checking Available Personalities
-
-Always list available personalities before assigning — what's enabled varies per project:
-
-```
-GET /test_framework/v1/personalities/
-```
-
-Non-English personalities (e.g., Russian, Hindi) may not be enabled for a given project. If a personality returns "Personality is not enabled", use ID 693 and rely on `scenario_language` to drive TTS and pronunciation.
-
-List available personalities with `GET /test_framework/v1/personalities/`.
+See **`references/choosing-personality.md`** for full selection logic — sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status checks, fallback defaults, and the first-message field.
 
 ## Tool Enablement — Critical for Credit Efficiency
 
@@ -513,6 +480,7 @@ After completing eval design, the user typically needs:
 
 ### Reference Files (loaded on demand)
 
+- **`references/choosing-personality.md`** — Full personality selection logic: sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status, fallback rules
 - **`references/tool-strategies.md`** — Full workflow for Approaches A/B/C
 - **`references/mock-tool-design.md`** — Per-input branching, append-not-replace, phone-pool gotchas
 - **`references/test-profiles.md`** — Profile creation from real data, template variables
