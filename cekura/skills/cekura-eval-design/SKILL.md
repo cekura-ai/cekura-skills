@@ -271,12 +271,7 @@ Instructions cannot alter actual speaking style — they only affect what the te
 
 ### Picking the Right Personality
 
-**Quick defaults:**
-- **English:** 693 (Normal Male, en/American)
-- **Spanish:** 362 (Normal Spanish Male)
-- **Other languages:** Use 693 + set `scenario_language` to the correct code
-
-Always list available personalities before assigning — enabled personalities vary per project. Match based on the caller's **sustained, call-wide behavior**, not a single-utterance emotional state. For full selection logic — including interruption tiers, multilingual matching, enabled/disabled status checks, and the first-message field — see **`references/choosing-personality.md`**.
+See **`references/choosing-personality.md`** for full selection logic — sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status checks, fallback defaults, and the first-message field.
 
 ## Tool Enablement — Critical for Credit Efficiency
 
