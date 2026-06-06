@@ -29,7 +29,7 @@ Final score:
 | Any statement `no` | **0** — fail |
 | Any statement `blocked`, none `no` | **50** — needs review |
 
-**When to expect "blocked":** Use sparingly. It applies when the condition that would trigger the tested behavior never arose — e.g., `"The main agent should transfer the call when the user asks about prescriptions"` will be blocked if no prescription question was asked. When the testing agent ends the call before the agent can act, that is also blocked, not a failure.
+**When to expect "blocked":** Use sparingly. It applies when the condition that would trigger the tested behavior never arose — e.g., `"The main agent should transfer the call when the testing agent asks about prescriptions"` will be blocked if no prescription question was asked. When the testing agent ends the call before the agent can act, that is also blocked, not a failure.
 
 **Transfer attempts count as success:** If the expected outcome requires a transfer and the agent attempted one (even if the call dropped), the judge marks it `yes`.
 
@@ -80,7 +80,7 @@ When choosing which statements to include, follow this priority order — if you
 3. **The Hard Stop** — the main agent's final verbal action within the test's scope
 4. **Other Key Functional Steps** — other mandatory actions from the agent description that fall within the test's scope
 
-> **Behavioral tests:** If the test goal is to verify how the agent handles a specific caller behavior (e.g., unprofessionalism, confusion, hostility), at least one statement must explicitly test that behavioral reaction — e.g., `"The main agent should proceed with the next question without reacting to the user's unprofessional comment."`
+> **Behavioral tests:** If the test goal is to verify how the agent handles a specific caller behavior (e.g., unprofessionalism, confusion, hostility), at least one statement must explicitly test that behavioral reaction — e.g., `"The main agent should proceed with the next question without reacting to the testing agent's unprofessional comment."`
 
 ---
 
@@ -125,7 +125,7 @@ This lets the expected outcome stay accurate across different test profiles with
 |-----|------|-----|
 | `"The main agent should state the message: 'The best next step would be to call the facility directly.'"` | `"The main agent should advise the testing agent to contact the facility directly."` | Verbatim phrases cause false failures when the agent paraphrases |
 | `"The main agent should ask for the caller's name, ask for their mother's date of birth, and state no appointment was found."` | `"The main agent should ask for the caller's name and the mother's date of birth."` + `"The main agent should state that no appointment was found for the specified date."` | 3 actions → split into 2 statements |
-| `"The main agent should warmly and professionally handle the request."` | `"The main agent should proceed with the next question without reacting to the user's unprofessional comment."` | Subjective descriptors ("warmly", "professionally") are not verifiable |
+| `"The main agent should warmly and professionally handle the request."` | `"The main agent should proceed with the next question without reacting to the testing agent's unprofessional comment."` | Subjective descriptors ("warmly", "professionally") are not verifiable |
 | `"The main agent should provide the caller with a great experience."` | `"The main agent should book the appointment and provide arrival instructions."` | Caller experience is not agent-centric or measurable |
 | `"The main agent should confirm the appointment for Thursday at 2pm."` | `"The main agent should confirm the appointment date and time with the testing agent."` | Hardcoded values cause false failures across different test data |
 
