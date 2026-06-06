@@ -26,7 +26,16 @@ Open and read `cekura/skills/cekura-eval-design/references/conditional-actions.m
 
 Do not reconstruct this from memory or from the summary below. The reference is the authoritative source.
 
-For every scenario in `/tmp/infra-test-plan.md`, invoke the **cekura-eval-design** skill to author and create the evaluator.
+**Create all scenarios in parallel, not sequentially.** Do not create them one at a time — fire all `mcp__cekura__scenarios_create` calls concurrently. The API is stateless per scenario; there is no dependency between scenario creations. Parallel creation is significantly faster for large suites (25+ scenarios).
+
+The workflow:
+1. Read the full scenario list from `/tmp/infra-test-plan.md`
+2. Build the complete payload for every scenario upfront (conditional_actions, language, personality, folder_path, name, expected_outcome, metrics)
+3. Fire all `mcp__cekura__scenarios_create` calls at the same time
+4. Collect all returned IDs and record the scenario name → ID mapping once all calls complete
+5. If any individual creation fails, log the failure and retry that scenario only — do not retry the entire batch
+
+For authoring each scenario's payload, invoke the **cekura-eval-design** skill.
 
 **All scenarios must use `scenario_type: "conditional_actions"`** — always, without exception. Behavioral instructions are not deterministic enough to reliably trigger specific infra behaviors like idle timers, interruptions, or DTMF input. Never use behavioral mode for this suite.
 
