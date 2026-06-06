@@ -99,7 +99,6 @@ Match personality to scenario intent. Recommended suite distribution for full co
 | Real-world ambient noise | Background noise personality (street, café, office) |
 | Non-native / accented speaker | Language-specific accent or Slow Speaker |
 | Frustrated / aggressive caller | Interruptive (High) |
-| Silent hold wait | Call Hold |
 
 **Rough distribution for a balanced suite:**
 - ~60% standard (Normal Male/Female in the scenario's language)
