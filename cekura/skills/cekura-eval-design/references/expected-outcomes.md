@@ -139,7 +139,7 @@ The main agent should explain that appointments can be cancelled up to 24 hours 
 
 **No workflow checks** — skip greetings, "how can I help", transfers, or administrative steps. Focus entirely on whether the agent retrieved and stated the correct information.
 
-**PII exception** — specific names and identifiers ARE necessary here because this is a lookup test. Unlike general workflow outcomes, exact values are required for fact-checking.
+**PII exception** — specific names and identifiers are necessary here because this is a lookup test; exact values are required for fact-checking.
 
 ---
 
