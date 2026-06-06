@@ -72,8 +72,6 @@ When choosing which statements to include, follow this priority order — if you
 
 > **Behavioral tests:** If the test goal is to verify how the agent handles a specific caller behavior (e.g., unprofessionalism, confusion, hostility), at least one statement must explicitly test that behavioral reaction — e.g., `"The main agent should proceed with the next question without reacting to the user's unprofessional comment."`
 
-> **Skip greetings:** Do not generate outcomes for standard greetings or "How can I help you?" openings unless the test is specifically checking that behavior.
-
 ---
 
 ## Metric Variables in Expected Outcome
