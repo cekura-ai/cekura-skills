@@ -44,8 +44,18 @@ Every statement must start with **"The main agent should"**. Beyond that, these 
 ### 1. Max 2 actions per statement
 Each string may describe at most two distinct actions. If a logical step has three or more sub-actions, break it into multiple sequential statements.
 
-### 2. Semantic content only — no exact phrases
+### 2. Semantic content only — except for fact lookups
 Outcomes test functional intent, not verbatim wording. The agent paraphrasing a response is still a pass. Do not quote expected sentences.
+
+**Exception — KB/fact lookups:** When the test is verifying that the agent retrieved and stated a specific piece of data (phone number, address, name, date), the exact value is required. Use backticks to mark the expected data point:
+```
+The main agent should state the office address as `123 Medical Lane, Suite 100`
+```
+For descriptive KB data (policies, how-to explanations), check core meaning — phrasing variation is acceptable:
+```
+The main agent should explain that appointments can be cancelled up to 24 hours in advance
+```
+Specific names and identifiers are acceptable in lookup statements because the fact itself is what's being tested.
 
 ### 3. No subjective descriptors
 Ban: "appropriately", "warmly", "empathetically", "politely", "professionally", "briefly", "clearly", "naturally". Replace with functional descriptions of what the agent says or does.
@@ -118,28 +128,6 @@ This lets the expected outcome stay accurate across different test profiles with
 | `"The main agent should warmly and professionally handle the request."` | `"The main agent should proceed with the next question without reacting to the user's unprofessional comment."` | Subjective descriptors ("warmly", "professionally") are not verifiable |
 | `"The main agent should provide the caller with a great experience."` | `"The main agent should book the appointment and provide arrival instructions."` | Caller experience is not agent-centric or measurable |
 | `"The main agent should confirm the appointment for Thursday at 2pm."` | `"The main agent should confirm the appointment date and time with the testing agent."` | Hardcoded values cause false failures across different test data |
-
----
-
-## Knowledge Base Scenarios (Special Case)
-
-KB evaluators test information accuracy rather than workflow execution. Different rules apply:
-
-**One outcome per question** — identify every distinct question the testing agent asks and write one statement per question.
-
-**Fixed data (phone numbers, addresses, names, dates):** Require the exact value from the KB. Use backticks to mark expected data points:
-```
-The main agent should state the office address as `123 Medical Lane, Suite 100`
-```
-
-**Descriptive data (policies, explanations):** Check core meaning — phrasing variation is acceptable:
-```
-The main agent should explain that appointments can be cancelled up to 24 hours in advance
-```
-
-**No workflow checks** — skip greetings, "how can I help", transfers, or administrative steps. Focus entirely on whether the agent retrieved and stated the correct information.
-
-**PII exception** — specific names and identifiers are necessary here because this is a lookup test; exact values are required for fact-checking.
 
 ---
 
