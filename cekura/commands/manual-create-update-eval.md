@@ -77,10 +77,11 @@ What the main agent should achieve. Agent-centric, specific, measurable, but **c
 **Ask:** "Does this scenario need caller identity data (name, DOB, account info, etc.)?"
 
 If yes:
-1. Check existing profiles first: `mcp__cekura__test_profiles_list`
-2. Only create new ones if nothing suitable exists
-3. Show the full `information` dict for approval before creating
-4. **Never hardcode identity data in instructions** — always put it in the test profile
+1. For Approach B: check existing mock tool entries first — if they fit, find the corresponding profile and reuse it
+2. For Approach A: check existing profiles with `mcp__cekura__test_profiles_list`
+3. **Partial-match rule:** if an existing profile covers only a subset of required fields, create a new complete profile — never use a partial one; the testing agent will improvise missing fields
+4. Show the full `information` dict for approval before creating any new profile
+5. **Never hardcode identity data in instructions** — always put it in the test profile and reference via `{{test_profile.field_name}}`
 
 ### 7. Language
 
