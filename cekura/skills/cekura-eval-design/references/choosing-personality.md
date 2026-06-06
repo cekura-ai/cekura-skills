@@ -161,25 +161,6 @@ When no sustained behavioral cue is present, or no personality matches the descr
 
 ---
 
-## First Message vs. Personality
-
-These are two separate fields with separate logic — don't conflate them.
-
-| Field | Controls | Selection rule |
-|---|---|---|
-| `personality` | Voice characteristics (sound) | Match sustained behavior |
-| `first_message` | Opening utterance (content) | See below |
-
-**`first_message` selection:**
-
-1. **Explicit greeting quote** — if instructions say `Say 'Hi, I need help with my bill'`, use that verbatim. Distinguish a simple greeting from a task-oriented question: "Ask for the account number" is a task, not a `first_message`.
-2. **Initial silence / agent speaks first** — if instructions say the user must be silent from the very start (e.g., "wait for the agent to greet first"), set `first_message` to `""`.
-3. **Default** — if neither applies, use `"Hello"`. Translate to the scenario's primary language if the entire call is in another language (e.g., `"Hola"` for Spanish).
-
-A response or confirmation ("Yes, ...", "No, ...") that presupposes the agent has already spoken cannot be a `first_message`.
-
----
-
 ## Quick-Reference Decision Tree
 
 ```
