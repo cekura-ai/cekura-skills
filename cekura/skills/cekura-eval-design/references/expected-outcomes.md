@@ -88,22 +88,13 @@ When choosing which statements to include, follow this priority order — if you
 | `{{date}}` | Current date as YYYY-MM-DD |
 | `{{timestamp}}` | ISO 8601 timestamp with timezone |
 
-#### Simulation-Only Variables
+#### Simulation Variables
 | Variable | Description |
 |----------|-------------|
 | `{{test_profile.*}}` | Structured test profile data — names, DOB, phone, addresses, etc. |
 | `{{metadata.*}}` | Custom key-value pairs plus system fields like `ringing_duration` |
 | `{{provider_call_data.*}}` | Complete call details from VAPI, Retell, ElevenLabs, etc. |
 | `{{evaluator.*}}` | Evaluator instructions and conditional action details |
-
-#### Observability-Only Variables
-| Variable | Description |
-|----------|-------------|
-| `{{dynamic_variables.*}}` | User-defined fields passed via API for personalizing agent behavior |
-
-#### Shared Variables
-| Variable | Description |
-|----------|-------------|
 | `{{agent.*}}` | Agent configuration — name, description, language code, inbound status, contact number |
 
 Variables are **case-sensitive**. Access nested fields with dot notation: `{{test_profile.caller_name}}` or `{{metadata.customer_id}}`. Not all variables exist in every call context — handle missing values appropriately.

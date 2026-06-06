@@ -482,7 +482,7 @@ Focus on the main agent's behavior, not the caller's experience:
 - **Include follow-up actions**: What happens after the primary action
 - **Keep them concise** — expected outcomes are evaluated by an LLM judge that checks whether each part was satisfied. Overly specific prompts (e.g., specifying exact dates/times) cause false failures. Focus on the behavioral outcome, not exact details.
 
-**See `references/expected-outcomes.md`** for the full writing rules, prioritization hierarchy, metric variable support (`{{test_profile.*}}`, `{{dynamic_variables.*}}`, etc.), good/bad examples, and KB scenario guidance.
+**See `references/expected-outcomes.md`** for the full writing rules, prioritization hierarchy, metric variable support (`{{test_profile.*}}`, `{{agent.*}}`, etc.), good/bad examples, and KB scenario guidance.
 
 ## Create Evaluator from Transcript
 
