@@ -482,6 +482,8 @@ Focus on the main agent's behavior, not the caller's experience:
 - **Include follow-up actions**: What happens after the primary action
 - **Keep them concise** — expected outcomes are evaluated by an LLM judge that checks whether each part was satisfied. Overly specific prompts (e.g., specifying exact dates/times) cause false failures. Focus on the behavioral outcome, not exact details.
 
+**See `references/expected-outcomes.md`** for the full writing rules, prioritization hierarchy, metric variable support (`{{test_profile.*}}`, `{{dynamic_variables.*}}`, etc.), good/bad examples, and KB scenario guidance.
+
 ## Create Evaluator from Transcript
 
 `POST /test_framework/v1/scenarios/create_scenario_from_transcript/` turns a real call (by observability call-log ID) into a replayable evaluator — useful for regression tests from real edge cases. Always review post-creation and attach metrics, profile, folder, tools. **See `references/coverage-patterns.md` § Create Evaluator from Transcript** for the workflow.
@@ -515,6 +517,7 @@ After completing eval design, the user typically needs:
 - **`references/mock-tool-design.md`** — Per-input branching, append-not-replace, phone-pool gotchas
 - **`references/test-profiles.md`** — Profile creation from real data, template variables
 - **`references/conditional-actions.md`** — Conditional actions: field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, quick-reference card
+- **`references/expected-outcomes.md`** — Writing rules, prioritization hierarchy, metric variables, good/bad examples, KB scenario guidance
 - **`references/coverage-patterns.md`** — Test coverage category breakdowns
 - **`references/session-memory.md`** — Multi-session project memory document template
 - **`references/api-reference.md`** — Complete API endpoints: scenarios, profiles, results
