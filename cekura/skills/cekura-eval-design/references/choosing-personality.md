@@ -31,7 +31,7 @@ When selecting a personality, check its prompt to understand how the testing age
 
 | Parameter | What it controls |
 |---|---|
-| Interruption level | Overall aggressiveness: very_low → low → medium → high → very_high |
+| Interruption level | Overall aggressiveness: low → medium → high |
 | Start speaking delay | Seconds the caller waits before speaking (lower = more interruptive) |
 | Stop speaking plan | How quickly the caller yields when the agent starts talking (num_words, voice_seconds, backoff_seconds) |
 
