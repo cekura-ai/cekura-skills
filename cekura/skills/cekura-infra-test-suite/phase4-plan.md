@@ -53,6 +53,26 @@ If the user chose config-change included: for each required override, read Phase
 
 The goal is the smallest number of Cekura scenarios that gives complete coverage of the included test items. A single scenario (one conversation) can test multiple things — a scenario that tests interruption can also verify pipeline recovery and the next-turn LLM response in the same call.
 
+### Step 0 — Map test items to conversation arcs
+
+**Do this before any other grouping.** A **conversation arc** is the complete realistic call flow that exercises a component from start to finish. One arc = one scenario. TEST-NNN items that are stages of the same arc belong in the same scenario — never split them.
+
+Four arc patterns must always be recognised and collapsed:
+
+**Pattern A — Full escalation arc**
+If a component moves through N sequential stages (stage 1 → stage 2 → … → terminal action), all stage-level test items map to a **single scenario** that walks the full sequence. Never create one scenario per stage.
+
+**Pattern B — Full input arc**
+If a component accepts input in multiple forms (single item, multi-item sequence, sequence with a terminator, incomplete sequence that times out), all input-form test items map to a **single scenario** that exercises each form in turn within one call.
+
+**Pattern C — Full state-gating arc**
+If a component behaves differently depending on the current call state (accepted in state X, rejected in state Y, conditionally handled in state Z), all state-variant test items map to a **single scenario** that puts the call into each relevant state and verifies the behavior at each transition.
+
+**Pattern D — Full error/recovery arc**
+If a component has a failure path followed by retry and fallback logic, all items covering that failure path (trigger failure, observe retry, observe fallback) map to a **single scenario** that lets the full recovery sequence play out in one call.
+
+**Before writing a new scenario for any TEST-NNN item, ask:** "Does this item belong to an arc I've already opened for this component?" If yes, add it to that arc's scenario. Only open a new scenario when the item genuinely cannot follow the previous arc's last step in the same call — because the success criteria conflict, the previous step ends the call, or a different bot configuration is required.
+
 ### Step 1 — Drop ambient tests first
 
 Before grouping anything, identify TEST-NNN items that are **ambient** — behaviors that every scenario exercises as an unavoidable side effect of running. These do not need their own scenario. Creating a dedicated scenario for them wastes a slot and produces a test that tells you nothing a passing scenario from any other component wouldn't already tell you.
@@ -89,10 +109,22 @@ Rules for combining:
 
 ### Step 3 — Sanity-check the compactness
 
-Before writing the plan, count scenarios and ask: is this number defensible? Signs the plan is still too bloated:
-- Any scenario covers only one TEST-NNN item and that item isn't a destructive endpoint (hang-up, transfer, call end) — it could probably be merged into an adjacent scenario
-- Two scenarios have nearly identical conversation flows that differ only by one step — consider merging with a branch
-- A component has more than three dedicated scenarios in default config — check whether the extras are genuinely distinct or just variations of the same condition
+Apply the per-component caps below. If a component exceeds its cap, mandatory merge until it fits — exceeding the cap means Step 0 arc mapping was incomplete.
+
+| Component | Max default-config scenarios |
+|---|---|
+| Any single side-channel (DTMF, SMS, voicemail, etc.) | 2 |
+| Idle / silence timer | 2 |
+| Interruption handling | 2 |
+| STT | 3 |
+| TTS | 2 |
+| VAD / turn detection | 2 |
+| LLM | 3 |
+| Call transfer / hang-up | 2 |
+
+Additional signs the plan is still too bloated:
+- Any scenario covers only one TEST-NNN item and that item isn't a destructive endpoint (hang-up, transfer, call end) — it belongs in an adjacent arc
+- Two scenarios have nearly identical conversation flows that differ by only one step — merge with a branch
 
 For each group, write out which TEST-NNN items it covers and note any items marked ambient.
 
