@@ -130,14 +130,18 @@ Use `<hold>` (not `<silence>`) for idle timer tests — `<hold>` produces dead a
 
 Each scenario in Phase 4 has a set of plain-English evaluation pointers — what to check in the transcript to determine pass or fail. Translate those pointers into two things on the Cekura scenario:
 
-1. **Expected Outcome field** — before writing this field for any scenario, open `/tmp/infra-workflow-descriptions.md` and find the Phase 2 section that describes the behavior being tested. Use the actual bot phrases, actual behavior sequence, and actual configuration values from Phase 2 — not the Phase 4 pointers alone, which are summaries. The expected_outcome must describe what a passing call looks like using the bot's real behavior:
-   - Use the exact phrases the bot says (copied from Phase 2, not paraphrased)
-   - Reference the actual sequence of events as Phase 2 documented them
-   - Do not invent behavior that Phase 2 did not document
+1. **Expected Outcome field** — **read `cekura/skills/cekura-eval-design/references/expected-outcomes.md` in full before writing the `expected_outcome_prompt` for any scenario.** That file is the authoritative guide and contains the scoring model, all writing rules, prioritisation hierarchy, good/bad examples, and common pitfalls. Do not write a single expected outcome without having read it.
 
-   A test expecting "bot asks if you're still there" when Phase 2 says the actual phrase is "I'll give you just a moment — are you still with me?" will produce false failures. Use the exact text.
+   Key rules from that reference that apply to every infra scenario:
+   - Every statement must start with **"The main agent should"** — never "bot", "assistant", "AI"
+   - Max 2 actions per statement — split if a step has 3 or more sub-actions
+   - Semantic content only — do not quote verbatim phrases (paraphrasing is a pass); exception: exact values for KB/fact lookups
+   - No subjective descriptors — "appropriately", "warmly", "professionally" are not verifiable; use functional descriptions
+   - Binary verifiable — every statement must be objectively True/False from the transcript
+   - Do not test call closing/farewells unless the test explicitly requires it
+   - Attach the **Expected Outcome** predefined metric — the `expected_outcome_prompt` field alone does nothing without the metric
 
-   Stick to what appears in the call transcript — not timing assertions, audio quality, or internal state.
+   Additionally, before writing the expected outcome, open `/tmp/infra-workflow-descriptions.md` and find the Phase 2 section for the behavior being tested. Use the actual bot behavior documented there — not the Phase 4 pointers alone, which are summaries. If Phase 2 documents an exact phrase, use the meaning (not the verbatim quote) to avoid false failures from paraphrasing.
 
 2. **Predefined metrics** — **invoke the `cekura-predefined-metrics` skill now, before writing a single metric onto any scenario.** Do not guess metric names, do not use the matching table below as a substitute for the skill, and do not skip this step even if the evaluation pointers seem straightforward. The skill has the full catalog, cost, audio requirements, configuration options, and known constraints for every metric. Using it is mandatory.
 
