@@ -104,7 +104,7 @@ Match personality to scenario intent. Recommended suite distribution for full co
 - ~60% standard (Normal Male/Female in the scenario's language)
 - ~20% challenging (interruptive, fast-paced, background noise)
 - ~10% non-native or accented speakers
-- ~10% edge cases (frustrated, extreme speech rate, hold wait)
+- ~10% edge cases (frustrated, extreme speech rate)
 
 ### Conditional-actions scenarios
 
