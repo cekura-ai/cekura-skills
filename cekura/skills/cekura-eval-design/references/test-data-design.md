@@ -86,14 +86,6 @@ Add all three variants pointing to the same output for every user:
 
 Phone format mismatches are the most common cause of "account not found" failures during testing.
 
-### freetext_params
-
-List field names to skip during matching — free-text fields like `"notes"`, `"reason"`, `"message"` that vary per call. Prevents unintended mismatches on fields that aren't used for lookup.
-
-```json
-"freetext_params": ["notes", "reason", "cancellation_message"]
-```
-
 ### Chain Dependencies
 
 If tool B uses an ID returned by tool A, mock data must be consistent across tools. Design the full data graph before configuring anything:
