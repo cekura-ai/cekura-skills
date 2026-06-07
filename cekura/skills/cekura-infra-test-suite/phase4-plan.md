@@ -184,19 +184,9 @@ Record the language assignment for each scenario as a BCP-47 code (e.g. `en`, `e
 
 ### Step 2 — Choose a personality for each scenario
 
-First, call `GET /test_framework/v1/personalities/` (or use `mcp__cekura__personalities_list`) filtered by the scenario's language to see which personalities are available. Do this before assigning any personality — do not guess IDs.
+**Read `cekura/skills/cekura-eval-design/references/choosing-personality.md` before assigning any personality.** That file is the authoritative guide covering what personality controls, the core selection rule (sustained vs. temporary behaviors), the interruption quantification tiers, how to handle conditional-actions scenarios, the language-first selection order, enabled/disabled status checks, fallback logic, and the full decision tree. Do not guess or invent personality names — always list available personalities via `mcp__cekura__personalities_list` filtered by language before assigning.
 
-Then apply these rules:
-
-| What the scenario tests | Personality to use |
-|---|---|
-| Any infra behavior that is NOT voice-quality-dependent (LLM timeout, idle timer, DTMF, STT fallback, VAD logic, interruption, tool calls) | **Neutral default for that language** — calm, clear speech, no background noise, low interruption tendency. For English: Normal Male (693) or equivalent. |
-| STT stress / transcription accuracy under noise | **Background noise personality** (e.g. Normal Male - Bg Noise). The test is specifically exercising noise tolerance so the personality challenge is intentional. |
-| STT stress / accent or speaking pace | **Slow Speaker or non-native accent personality** for that language, if available. |
-| Interruption handling | **Neutral default — not an Interrupter personality.** The `<interruption>` XML tag controls timing precisely; an Interrupter personality adds uncontrolled additional interruptions that pollute the test result. |
-| Idle timer / silence tests | **Neutral default with no background noise.** Ambient noise from a noisy personality can register as caller activity on sensitive VAD configurations and prevent the idle timer from firing. |
-| Non-primary language scenarios | **Personality whose configured language matches the scenario's language.** Filter `mcp__cekura__personalities_list` by language code to find the right one. |
-| Mid-call language switch | Start with the primary language personality; note in the scenario that the caller switches language mid-call — the personality controls the voice, the conversation flow controls the content. |
+The single most important rule for infra scenarios (from that reference): **conditional-actions scenarios strongly prefer Normal for the scenario's language.** Behavioral logic is encoded in `conditions[]`, not in personality. Use a non-Normal personality only when a call-wide, sustained trait is needed alongside the scripted conditions (e.g. persistent background noise, a specific accent throughout). Never pick an Interruptive personality just to simulate one interruption — encode it in a `conditions[]` entry instead.
 
 If no personality exists for a supported non-primary language, note it as a gap — Phase 5 will need to create a custom personality or ask the user.
 

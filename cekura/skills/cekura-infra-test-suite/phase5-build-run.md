@@ -45,6 +45,8 @@ For authoring each scenario's payload, invoke the **cekura-eval-design** skill.
 
 Before creating each scenario, read its **Language** and **Personality** fields from the Phase 4 plan. Both are required — the API returns 400 without a personality, and `scenario_language` is required for `conditional_actions` scenarios.
 
+If personality was not assigned in Phase 4, or you need to verify the choice is correct: read `cekura/skills/cekura-eval-design/references/choosing-personality.md` and follow its decision tree. Key rules for infra scenarios: strongly prefer Normal for the scenario's language; only deviate for a call-wide sustained trait (persistent noise, specific accent). Always verify the personality is enabled for the project via `mcp__cekura__personalities_list` before using it.
+
 **`scenario_language`** — set to the BCP-47 code from the Phase 4 plan (`"en"`, `"es"`, `"hi"`, etc.). Never omit this field. Never leave it as `"en"` for a non-English scenario.
 
 **`personality`** — use the ID from the Phase 4 plan. If Phase 4 flagged a gap (no personality available for a non-primary language), call `mcp__cekura__personalities_list` filtered by that language code to check whether one exists. If still unavailable, pause and ask the user: create a custom personality, or defer that language's scenarios?
