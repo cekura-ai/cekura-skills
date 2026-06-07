@@ -50,19 +50,17 @@ The agent doesn't use external tools, or tools aren't relevant to what you're te
 
 ## Step 2 — Design Mock Tool Data (Approach B only)
 
-### Per-Input Branching
+### One Entry Per Tool Per Evaluator
 
-A single input/output mapping per tool is not enough. Each distinct input the agent might send needs its own entry.
+When setting up mock data for a new evaluator, add exactly one input/output entry per tool — the mapping for this scenario's test user. Do not add multiple entries for the same user.
 
 ```json
 "information": [
-  {"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}},
-  {"input": {"phone": "18645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}},
-  {"input": {"phone": "+18645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}},
-  {"input": {"phone": "5559274103"}, "output": {"id": "B109", "name": "Priya Mehta", "dob": "11/07/1995"}},
-  {"input": {"phone": "0000000000"}, "output": {"error": "not_found"}}
+  {"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
 ]
 ```
+
+The total `information` array across all evaluators will accumulate one entry per test user per tool. Each new evaluator contributes one new entry (append-not-replace — see below).
 
 ### Generating Sufficient Variation for Precise Fuzzy Matching
 
@@ -72,20 +70,6 @@ Cekura finds the **closest** input in the `information` array. If entries are to
 - **IDs:** use non-overlapping ranges (B001–B009 for one user cluster, B100–B109 for another) or different prefixes entirely.
 - **Names:** avoid near-matches like "John Doe" and "Jane Doe" — the fuzzy matcher sees these as close.
 - **Dates of birth:** span different decades to prevent partial collisions.
-### Phone Format Variants (same user)
-
-The agent receives the caller's phone number and passes it to a lookup tool — but it may reformat the number before the call (strip the country code, add `+1`, etc.). If the mock only has one format and the agent sends another, the lookup silently fails even though the number is correct.
-
-Add all three variants pointing to the same output for every user:
-
-```json
-{"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}},
-{"input": {"phone": "18645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}},
-{"input": {"phone": "+18645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
-```
-
-Phone format mismatches are the most common cause of "account not found" failures during testing.
-
 ### Chain Dependencies
 
 If tool B uses an ID returned by tool A, mock data must be consistent across tools. Design the full data graph before configuring anything:
