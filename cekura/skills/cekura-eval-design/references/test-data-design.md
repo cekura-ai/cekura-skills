@@ -250,11 +250,8 @@ Append a new entry to the tool's `information` array (GET first → merge → PA
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | `/test_framework/v1/test-profiles/` | Create profile |
 | GET | `/test_framework/v1/test-profiles/` | List profiles (`?project_id=<id>`) |
-| GET | `/test_framework/v1/test-profiles/{id}/` | Get profile |
-| PATCH | `/test_framework/v1/test-profiles/{id}/` | Update profile |
-| DELETE | `/test_framework/v1/test-profiles/{id}/` | Delete profile |
+| POST | `/test_framework/v1/test-profiles/` | Create profile |
 
 ### Phone Number Pool (Approach B Inbound)
 
