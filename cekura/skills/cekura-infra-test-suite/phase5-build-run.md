@@ -59,6 +59,17 @@ Design test profile + mock tool entries + dynamic variable values as one synchro
 - **No partial profiles** — never assign a profile that is missing a field the scenario needs; the testing agent will improvise the missing value silently, breaking verification flows
 - **Consistency** — the same fact must be the identical string in the test profile, the dynamic variable value, and the mock tool input; the only deliberate exception is the validation-failure pattern
 
+### Register configurable parameters as Cekura dynamic variables
+
+Before building any scenario payload, register every parameter identified in Phase 4 4a as a Cekura dynamic variable on the agent. Follow `cekura/skills/cekura-create-agent/phase8-dynamic-variables.md` for the registration workflow, naming conventions, and how to write detailed descriptions.
+
+For each parameter from the Phase 4 plan:
+1. Register it as a dynamic variable via `POST /test_framework/v1/aiagents/{agent_id}/dynamic-variables/` with a detailed description (data type, valid range, how the bot uses it, what happens if missing, realistic example value)
+2. When building each scenario's payload, set the `dynamic_variables` field with the specific values for that scenario — use the test-specific values from the Phase 4 "Dynamic variable values" field
+3. Scenarios that use only baseline values may omit the `dynamic_variables` field or set the defaults explicitly
+
+This replaces any need for bot-side configuration changes. Cekura passes these values to the bot at connection time; the bot reads them and configures itself for that call.
+
 For authoring each scenario's payload, invoke the **cekura-eval-design** skill.
 
 **All scenarios must use `scenario_type: "conditional_actions"`** — always, without exception. Behavioral instructions are not deterministic enough to reliably trigger specific infra behaviors like idle timers, interruptions, or DTMF input. Never use behavioral mode for this suite.
@@ -199,60 +210,15 @@ The answers to both of these were collected in Phase 1 before Phase 2 began. Rea
 
 ## 5e. Write the run script
 
-The script runs every scenario from the test plan against the local bot. It is structured in two outer loops:
-
-1. **Connection type loop** — one pass per connection type the user selected in Phase 1. Each pass runs all batches.
-2. **Configuration batch loop** — within each connection type pass, scenarios are grouped by configuration batch. A new batch triggers a bot restart with the new config applied.
+The script starts the bot once and runs all scenarios sequentially per connection type. Per-scenario configuration variations are handled by the Cekura dynamic variables set on each evaluator — there is no need to restart the bot or change its environment between scenarios.
 
 Write the script as `infra_test_run.sh` (or `.py` if the bot's ecosystem is Python-first — match the language to what the team already uses for CI).
 
 ### Script structure
 
-Before writing the script, read Phase 4's configuration batch table and for each batch produce a concrete apply/restore block using the exact injection mechanism documented in Phase 4 (env var export, `.env` file write, config YAML edit, CLI flag, etc.). Do not write pseudocode — write the actual shell commands the script will execute.
-
-Example of what a concrete batch block looks like when the bot reads from env vars:
-
-```bash
-# ── Batch B — LLM timeout forced to 50ms ─────────────────────────────────────
-# Phase 4: LLM_TIMEOUT_MS → env var; inject via export; restore to 8000
-echo "=== Batch B: LLM_TIMEOUT_MS=50 ==="
-ORIG_LLM_TIMEOUT_MS="${LLM_TIMEOUT_MS:-8000}"          # save original
-export LLM_TIMEOUT_MS=50                                # apply override
-start_bot                                               # bot starts with override
-# verify override took effect (Phase 4 verification step: bot logs "LLM timeout: 50ms")
-wait_for_log "LLM timeout: 50ms" 10                     # fail-fast if not applied
-run_scenario "LLM-Timeout-Fallback" "websocket"
-stop_bot
-export LLM_TIMEOUT_MS="$ORIG_LLM_TIMEOUT_MS"           # restore
-```
-
-Example when the bot reads from a `.env` file:
-
-```bash
-# ── Batch C — STT confidence threshold set to 1.0 ────────────────────────────
-echo "=== Batch C: STT_CONFIDENCE_THRESHOLD=1.0 ==="
-cp .env .env.backup                                     # save original file
-sed -i 's/STT_CONFIDENCE_THRESHOLD=.*/STT_CONFIDENCE_THRESHOLD=1.0/' .env
-start_bot
-run_scenario "STT-Empty-Transcript-NoTranscriptTimer" "websocket"
-stop_bot
-cp .env.backup .env                                     # restore original file
-rm .env.backup
-```
-
-The full script structure:
-
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-
-# ── Baseline configuration (from Phase 2 Q12) ────────────────────────────────
-# These must match the exact values Phase 2 analyzed. Any deviation means
-# the bot's behavior will not match the expected outcomes in the scenarios.
-export LLM_TIMEOUT_MS=8000          # Phase 2 Q4: config.py:34
-export IDLE_TIMEOUT_S=8             # Phase 2 Q7: config.py:61
-export STT_MODEL=nova-2             # Phase 2 Q2: deepgram config
-# ... all config-governing values from Phase 2 ...
 
 # ── Scenario ID map (from 5b, verified in 5c) ────────────────────────────────
 declare -A SCENARIO_IDS=(
@@ -264,19 +230,20 @@ declare -A SCENARIO_IDS=(
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 start_bot() {
-    # Exact start command from 5d Q2
+    # Exact start command from 5d deployment steps
     <start command here> &
     BOT_PID=$!
     # Wait for exact readiness signal from Phase 2 Q12
     wait_for_log "<readiness signal>" 30 || { echo "Bot failed to start"; exit 1; }
 }
 stop_bot() { kill "$BOT_PID" 2>/dev/null; wait "$BOT_PID" 2>/dev/null; }
-trap 'stop_bot; restore_all_configs' SIGINT SIGTERM
+trap 'stop_bot' SIGINT SIGTERM
 
 run_scenario() {
     local name=$1 transport=$2
     local id="${SCENARIO_IDS[$name]}"
     # Trigger via appropriate Cekura runner for this transport
+    # Cekura passes each scenario's dynamic variable values to the bot at connection time
     # Poll until completed or 2× max call duration timeout
     # Return pass/fail based on evaluation_status
 }
@@ -284,21 +251,11 @@ run_scenario() {
 # ── Connection type loop ──────────────────────────────────────────────────────
 for TRANSPORT in websocket sip; do   # ← transports selected in Phase 1
   echo "=== Transport: $TRANSPORT ==="
-
-  # Batch A — Default configuration
   start_bot
-  run_scenario "Idle-Full-Escalation-to-Hangup" "$TRANSPORT"
-  run_scenario "Interruption-BackToBack" "$TRANSPORT"
-  # ... all default-config scenario names ...
+  for scenario_name in "${!SCENARIO_IDS[@]}"; do
+      run_scenario "$scenario_name" "$TRANSPORT"
+  done
   stop_bot
-
-  # Batch B — [description from Phase 4, using concrete inject/restore]
-  <concrete apply block here>
-  start_bot
-  run_scenario "LLM-Timeout-Fallback" "$TRANSPORT"
-  stop_bot
-  <concrete restore block here>
-
 done
 
 # ── Results ──────────────────────────────────────────────────────────────────
@@ -307,15 +264,13 @@ print_summary   # pass/fail per scenario per transport, total pass rate
 
 ### Key implementation requirements
 
-**Base configuration must match Phase 2** — the bot must start with the exact configuration that was analyzed in Phase 2. Before writing the startup block, read Phase 2 Q12 (Local Run) and Q1–Q11 for any configuration values that govern the behaviors being tested (idle timeout, LLM timeout, STT model, etc.). Hardcode these as the baseline env vars in the script. If the bot starts with a different configuration than what Phase 2 analyzed, the expected outcomes will not match and every config-sensitive test will produce a meaningless result.
+**Default bot configuration** — the bot must start with its normal default configuration. Per-scenario variations are handled by the Cekura dynamic variables set on each evaluator; the script does not need to manage any configuration state.
 
-**Deployment steps verbatim** — embed the exact start/stop commands and env vars confirmed in 5d Q2 as executable lines (not comments). Label each block clearly so the user can edit them later.
+**Deployment steps verbatim** — embed the exact start/stop commands and env vars confirmed in 5d as executable lines (not comments). Label each block clearly so the user can edit them later.
 
-**Readiness gating** — use the exact readiness signal confirmed in 5d Q2 (log line, health endpoint, port). Do not use a fixed `sleep`.
+**Readiness gating** — use the exact readiness signal confirmed in 5d (log line, health endpoint, port). Do not use a fixed `sleep`.
 
 **Per-scenario timeout** — each `run_scenario` call must have a deadline. Use 2× the longest expected call duration from the Phase 2 descriptions. A scenario that exceeds its deadline is recorded as a timeout failure, not a pass.
-
-**Config isolation** — every override must be fully reversed before the next batch. Trap SIGINT/SIGTERM to call `restore_config()` and `stop_bot()` so the script is safe to kill mid-run.
 
 **Scenario ID mapping** — embed a static mapping of scenario name → Cekura scenario ID (recorded during 5b). Do not look up IDs dynamically at run time.
 

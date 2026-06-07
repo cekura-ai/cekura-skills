@@ -4,48 +4,26 @@ Read `/tmp/infra-test-list.md` (written by Phase 3) before doing anything else. 
 
 ---
 
-## 4a. Ask the user one question before planning anything
+## 4a. Identify dynamic variable values per scenario
 
-Some test items from Phase 3 require temporarily changing the bot's configuration to create the condition being tested — for example, reducing `LLM_TIMEOUT_MS` to 50ms to reliably trigger the timeout path, or setting a mock STT endpoint to return empty transcripts. Other items can be exercised with the bot running at its default configuration.
+Every test item that requires a specific parameter value to trigger the behavior — a timeout short enough to fire, a threshold pushed to an extreme, a flag that forces a fallback path — will be handled via **Cekura dynamic variables** set on the evaluator. Cekura passes these values to the bot at connection time. The bot reads them and configures itself for that call. No env var overrides, no bot restarts, nothing saved on the bot side.
 
-Ask the user:
+Go through the TEST-NNN list from `/tmp/infra-test-list.md`. For each item, identify whether it needs a non-default parameter value to trigger reliably:
 
-> "Some tests require temporarily changing the bot's configuration to force a specific failure path (for example, reducing the LLM timeout to trigger the timeout handler, or setting the STT confidence threshold to 1.0 to force empty transcripts). Should I include these config-change tests in the plan, or only tests that run against the bot's default configuration?
->
-> - **Default-only**: the test suite runs entirely against the bot's normal config. Simulated failure paths are excluded. Faster to set up, but some failure-handling code will not be exercised.
-> - **Config-change included**: the script temporarily applies env var or config overrides per test group, then restores defaults. Full coverage, but requires that each override is safe to apply in a local/CI environment."
+- **No special value needed** — the behavior can be triggered by what the testing agent says or does (speaking, staying silent, interrupting, sending DTMF) with the bot running at its normal defaults.
+- **Specific value needed** — the behavior only fires reliably if a specific parameter (timeout duration, threshold, flag) is set to a test-specific value. This value will be passed as a Cekura dynamic variable on the evaluator.
 
-Wait for the user's answer before proceeding. Record the choice — it determines which TEST-NNN items from Phase 3 are included in the plan.
-
----
-
-## 4b. Decide which tests require config changes
-
-Go through the TEST-NNN list from `/tmp/infra-test-list.md`. For each item, classify it:
-
-**Default-config test** — the behavior can be triggered by what the testing agent says or does (speaking, staying silent, interrupting, sending DTMF) without any change to the bot's configuration.
-
-**Config-change test** — the behavior can only be triggered reliably by temporarily changing a bot configuration value. Examples:
-- Reducing a timeout value so it fires within a short test call
-- Setting a threshold (confidence, word count) to an extreme value to force a specific branch
-- Pointing the bot at a mock provider endpoint that returns an error or empty result
-- Disabling a fallback to test the primary's failure behavior in isolation
-
-If the user chose default-only: mark all config-change tests as **excluded** and note why. They will appear in the plan's exclusion list but will not be built.
-
-If the user chose config-change included: for each required override, read Phase 2 Q12 (Local Run) to find the exact mechanism the bot uses to accept that configuration (env var export, `.env` file write, config file edit, CLI argument, API call to a running bot). Then document the override completely:
+For each parameter that needs a test-specific value, document:
 
 | Field | What to record |
 |---|---|
-| Config key | The exact env var name, config file key, or CLI flag (from Phase 2 Q12) |
-| Injection mechanism | How to apply it: `export VAR=val`, write to `config/settings.yaml`, pass `--flag val` at startup, etc. |
-| Test value | The value needed to trigger the behavior being tested |
-| Restore value | The original value from Phase 2 (the value to restore after the batch) |
-| Why it works | One sentence: why this value forces the tested behavior (e.g. "50ms is below any realistic LLM response time, guaranteeing the timeout fires") |
-| Verification | How to confirm the override took effect before running the scenario (e.g. a startup log line, a config endpoint, or a known side effect) |
-| TEST-NNN items covered | Which tests in this batch depend on this override |
+| Variable name | snake_case identifier that will be registered as a Cekura dynamic variable |
+| Test value | The value needed to reliably trigger the behavior being tested |
+| Default/baseline value | The value the bot uses when the variable is not set (from Phase 2) |
+| Why it works | One sentence: why this value triggers the behavior |
+| TEST-NNN items covered | Which test items use this variable value |
 
-**Do not guess the injection mechanism.** If Phase 2 Q12 says the bot reads from env vars, use `export`. If it reads from a `.env` file, write to that file. If it accepts a CLI flag, pass the flag. Using the wrong mechanism means the override silently has no effect and the bot runs with its default config — the test fires, appears to pass, and the failure mode was never actually exercised.
+These variable names and values feed directly into Phase 5: they are registered as Cekura dynamic variables on the agent, and each evaluator that needs a non-default value sets it in its `dynamic_variables` payload.
 
 ---
 
@@ -71,7 +49,7 @@ If a component behaves differently depending on the current call state (accepted
 **Pattern D — Full error/recovery arc**
 If a component has a failure path followed by retry and fallback logic, all items covering that failure path (trigger failure, observe retry, observe fallback) map to a **single scenario** that lets the full recovery sequence play out in one call.
 
-**Before writing a new scenario for any TEST-NNN item, ask:** "Does this item belong to an arc I've already opened for this component?" If yes, add it to that arc's scenario. Only open a new scenario when the item genuinely cannot follow the previous arc's last step in the same call — because the success criteria conflict, the previous step ends the call, or a different bot configuration is required.
+**Before writing a new scenario for any TEST-NNN item, ask:** "Does this item belong to an arc I've already opened for this component?" If yes, add it to that arc's scenario. Only open a new scenario when the item genuinely cannot follow the previous arc's last step in the same call — because the success criteria conflict or the previous step ends the call.
 
 ### Step 1 — Drop ambient tests first
 
@@ -95,15 +73,12 @@ After dropping ambient items, mark them in the Phase 3 list as "covered implicit
 
 ### Step 2 — Group the remaining tests
 
-Group by two dimensions:
+Group by conversation structure — combine tests that naturally follow each other in a single call. A scenario might cover: normal turn → interruption → recovery → second turn → idle silence → escalation prompt. That is four TEST-NNN items in one scenario.
 
-**1. Configuration context** — tests that share the same bot configuration run in the same batch. Tests that need different config changes form separate batches. Default-config tests are all one batch. This is the most important grouping because config changes require bot restarts.
-
-**2. Conversation structure** — within a configuration batch, combine tests that naturally follow each other in a single call. A scenario might cover: normal turn → interruption → recovery → second turn → idle silence → escalation prompt. That is four TEST-NNN items in one scenario.
+Configuration differences between scenarios are no longer a grouping constraint — each scenario carries its own parameter values as Cekura dynamic variables, so scenarios with different parameter needs can run in any order against the same bot instance.
 
 Rules for combining:
 - Do not combine tests whose success criteria conflict (e.g. a test that expects the bot to hang up cannot be followed by another test in the same call)
-- Do not combine tests that test the same component in contradictory configurations within the same call
 - Do combine tests that are sequential stages of the same call (call setup → STT with noise → LLM response → interruption → idle silence)
 - Do combine tests for adjacent pipeline layers when one flows naturally into the next (e.g. turn-end signal fires → LLM trigger fires → response streamed to TTS)
 
@@ -148,7 +123,8 @@ Each entry must include:
 
 **Tests covered** — list the TEST-NNN IDs from Phase 3 this scenario exercises
 
-**Configuration required** — either "Default — no changes" or a list of env vars / config keys to override and their test values. Every override must cite the Phase 2 source (file, line, current value) and have a restore value.
+**Dynamic variable values** — either "All variables use baseline values" or a list of variable names with their test-specific values and the reason. These values will be set on the Cekura evaluator and passed to the bot at connection time:
+- `variable_name`: `test_value` (default: `baseline_value`) — why this value triggers the behavior being tested
 
 **Conversation flow** — step by step, using exact values from Phase 2, not placeholders. Every duration, digit sequence, phrase, and timing offset must be the real value, not `[idle threshold + 2s]` or `[the bot's greeting]`:
 > 1. Wait silently — bot speaks first (Phase 2 Q10: opening message is "Hello, how can I help you today?")
@@ -231,9 +207,9 @@ Check for the following categories of problem:
 - Does any conversation flow use a timing value (silence duration, interruption offset) that contradicts the actual threshold recorded in Phase 2?
 - Does any scenario test a feature Phase 2 marked as absent?
 
-**Configuration correctness**
-- Does every config-change scenario have a restore value for every override? (Missing a restore means the next batch inherits a corrupted config.)
-- Are the override values actually sufficient to trigger the behavior being tested — e.g. is `LLM_TIMEOUT_MS=50` low enough to reliably fire within a normal call, or should it be lower?
+**Dynamic variable correctness**
+- Does every scenario that needs a non-default parameter value have it documented in its "Dynamic variable values" field?
+- Are the test values actually sufficient to trigger the behavior — e.g. is the timeout value low enough to reliably fire within a normal call?
 
 **Evaluation pointer quality**
 - Are any evaluation pointers so vague they could pass regardless of what the bot does (e.g. "bot behaves correctly")? Rewrite them as specific observable signals.
@@ -255,20 +231,8 @@ Write the complete test plan to `/tmp/infra-test-plan.md` using this structure:
 # Infra Test Plan
 
 Source: /tmp/infra-test-list.md
-Config-change tests: [included / excluded per user choice]
 Self-review: [issues found and resolved, or "no issues found"]
 Read by Phase 5 before creating any scenarios.
-
----
-
-## Configuration Batches
-
-### Batch A — Default configuration
-Scenarios: [list scenario names]
-
-### Batch B — [Config override description, e.g. "LLM_TIMEOUT_MS=50"]
-Scenarios: [list scenario names]
-Override: LLM_TIMEOUT_MS=50 (restore to [original value] after batch)
 
 ---
 
@@ -277,7 +241,7 @@ Override: LLM_TIMEOUT_MS=50 (restore to [original value] after batch)
 ### [SCENARIO-001] Scenario Name
 
 **Tests covered:** TEST-004, TEST-007, TEST-012
-**Configuration:** Default — no changes
+**Dynamic variable values:** All variables use baseline values
 **Language:** en
 **Personality:** 693 (Normal Male) — neutral default; no voice challenge needed for this infra test
 
@@ -316,16 +280,15 @@ End the file with:
 Total scenarios planned: N
 Total TEST-NNN items covered by dedicated scenarios: N
 Items covered implicitly (ambient): N
-Items excluded: N ([M] config-change, [K] not testable)
+Items excluded: N (not testable)
 Total TEST-NNN items accounted for: N / [total from Phase 3]
-Configuration batches: N
 ```
 
 ---
 
 ## Phase 4 Gate
 
-`/tmp/infra-test-plan.md` exists. Self-review (4h) has been completed and its findings recorded in the file header. Every included TEST-NNN item from Phase 3 maps to at least one scenario. Every scenario has a configuration context, a conversation flow, and plain-English evaluation pointers. No metric names or expected outcome text — those are Phase 5's job.
+`/tmp/infra-test-plan.md` exists. Self-review (4h) has been completed and its findings recorded in the file header. Every included TEST-NNN item from Phase 3 maps to at least one scenario. Every scenario has a "Dynamic variable values" field, a conversation flow, and plain-English evaluation pointers. No metric names or expected outcome text — those are Phase 5's job.
 
 Confirm the plan with the user before moving to Phase 5. Present the summary block and ask whether any scenarios should be adjusted, merged, or split.
 
