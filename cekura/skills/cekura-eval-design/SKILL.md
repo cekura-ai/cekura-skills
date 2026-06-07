@@ -65,7 +65,7 @@ When this skill suggests creating, listing, updating, or evaluating something on
 
 **Critical rule for Approach B**: derive test profile values FROM mock outputs (same format, same values). Creating them independently guarantees mismatches.
 
-**See `references/tool-strategies.md`** for full workflow, key questions to ask, and validation guidance for each approach.
+**See `references/test-data-design.md`** for full workflow, key questions to ask, and validation guidance for each approach.
 
 ## Choosing Authoring Mode
 
@@ -125,7 +125,7 @@ This ensures test profiles work against production tools.
 
 **Template variables in instructions:** Use `{{test_profile.field_name}}` or `{{test_profile['key']}}` for dynamic injection. For nested data: `{{test_profile.address.city}}`. Note: in voice scenarios, the simulated caller reads from the instruction text directly — the profile data is there for the caller to reference, not injected as hidden context.
 
-See `references/test-profiles.md` for full details and the data-extraction workflow.
+See `references/test-data-design.md` for the full profile creation guide, decision matrix for new vs. reuse, and the data-extraction workflow.
 
 ## Writing Instructions
 
@@ -392,7 +392,7 @@ Present a checkpoint like this before proceeding:
    - **B) Cekura mock tools** — Cekura intercepts tool calls and returns mock responses; I'll set up the mappings
    - **C) No mock data** — Tools aren't relevant to these tests; we'll focus on conversational behavior
 
-2. **Test profile** — "Want me to create `<profile-name>` with these fields?" Show the full `information` dict. For Approach A: fields must match client's staging data formats. For Approach B: fields must match Cekura mock tool outputs exactly (derive FROM mock data). For Approach C: only caller identity fields needed.
+2. **Test profile** — "Want me to create `<profile-name>` with these fields?" Show the full `information` dict. For Approach A: check existing profiles first; fields must match staging data formats exactly. For Approach B: check existing mock entries first — if they fit, find the corresponding profile; if the profile is missing fields, create a new complete one; if no mock data fits, design new entries then derive the profile from those outputs. For Approach C: only caller identity fields needed. Never use a partial profile — missing fields cause the testing agent to improvise.
 
 3. **Run mode** — "Default to text/chat for the first pass? It's cheapest, and since tools are mocked the results are the same as voice for logic validation." Recommend text unless the user specifically needs voice testing (latency, interruption handling, TTS quality).
 
@@ -426,16 +426,18 @@ A complete suite covers: **Workflow** (happy path), **Deterministic/Unit Test** 
 
 **Practical guidance:** use **text/chat** for development iteration (fast, cheap, tests logic), **voice** for final validation before deployment. **WebSocket** for agents built on WebSocket providers, **Pipecat** for Pipecat framework agents. Test profile data is passed to the main agent in chat and websocket runs, enabling tool verification without voice calls. Full speed/cost comparison table in `references/coverage-patterns.md`.
 
-## Mock Tool Data Design
+## Mock Tool Data, Test Profiles, and Dynamic Variables
 
-When using Approach B (Cekura mock tools), the mock-tool data design is critical and load-bearing. Key principles:
+These three form one cohesive test data set and must be designed together. Key principles for Approach B:
 
+- **Mock data first**: design mock tool entries before creating the test profile; derive all profile values from mock outputs
 - **Per-input branching**: one mapping per distinct input the agent might send; not one mapping per tool
 - **Phone format variants**: always add 10-digit, 11-digit-with-1, and E.164 forms (mismatches cause 404s)
 - **Append-not-replace**: PATCHing `information` REPLACES the array; always GET → merge → PATCH
-- **Test profile alignment**: derive profile values FROM mock outputs, not independently
+- **Fuzzy match variation**: new mock entries must be sufficiently distinct from existing ones so Cekura's closest-match lookup doesn't return the wrong user
+- **Test profile completeness**: if an existing profile covers only a subset of required fields, create a new complete profile — never use a partial one
 
-**See `references/mock-tool-design.md`** for full guidance, examples, the backup-phone pattern, and the phone pool workflow.
+**See `references/test-data-design.md`** for the full approach-selection guide, decision matrix for new vs. reuse, fuzzy-match variation rules, chain dependency design, dynamic variable wiring, and API reference.
 
 ## Tagging Strategy
 
@@ -481,9 +483,7 @@ After completing eval design, the user typically needs:
 ### Reference Files (loaded on demand)
 
 - **`references/choosing-personality.md`** — Full personality selection logic: sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status, fallback rules
-- **`references/tool-strategies.md`** — Full workflow for Approaches A/B/C
-- **`references/mock-tool-design.md`** — Per-input branching, append-not-replace, phone-pool gotchas
-- **`references/test-profiles.md`** — Profile creation from real data, template variables
+- **`references/test-data-design.md`** — Approach selection (A/B/C), mock tool data design (per-input branching, fuzzy-match variation, phone format variants, chain dependencies, append-not-replace), test profile creation and reuse decision matrix, dynamic variable wiring, data flow by mode, API reference
 - **`references/conditional-actions.md`** — Conditional actions: field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, quick-reference card
 - **`references/expected-outcomes.md`** — Writing rules, prioritization hierarchy, metric variables, good/bad examples
 - **`references/coverage-patterns.md`** — Test coverage category breakdowns

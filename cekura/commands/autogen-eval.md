@@ -192,7 +192,10 @@ mcp__cekura__scenarios_partial_update:
 ```
 
 ### 4. Test Profile Assignment
-Check if generated scenarios need test profiles. For scenarios involving identity verification, booking, or account lookup — create/assign profiles. Check existing profiles first with `mcp__cekura__test_profiles_list`.
+Check if generated scenarios need test profiles. For scenarios involving identity verification, booking, or account lookup:
+- For Approach B: check existing mock tool entries first — if they fit, find the corresponding profile and reuse it
+- For Approach A: check existing profiles first with `mcp__cekura__test_profiles_list`
+- **Partial-match rule:** if an existing profile covers only a subset of required fields, create a new complete one — never use a partial profile
 
 ### 5. Quality Review
 Review each generated evaluator:
