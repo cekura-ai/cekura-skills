@@ -195,36 +195,30 @@ For Approach A or when you need realistic data:
 
 ---
 
-## Step 4 — Dynamic Variables (Outbound/WebSocket)
+## Step 4 — Dynamic Variables
 
-In **outbound voice** and **WebSocket** runs, test profile fields are forwarded to the main agent as dynamic caller variables at call start. The main agent receives them as runtime context without additional setup.
+Dynamic variables are values the main agent reads at the start of each call — caller identity, account context, or per-run configuration. When a scenario runs, Cekura reads each variable's registered description and generates a concrete value for that run using the scenario instructions and agent description as context.
 
-In **inbound voice** and **text/chat** runs, the main agent does not automatically receive test profile data — it arrives via the caller (testing agent) during the conversation.
+**The description is what drives value generation.** Cekura's generator reads the description to decide what value to produce. If the description is vague, the generated value will be generic and likely won't match your mock tool data.
 
-Register variables via the API so Cekura's eval generator knows what values to produce for each scenario:
+### Writing Descriptions That Produce Correct Values
 
-```bash
-curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic-variables/ \
-  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '[
-    {"name": "customer_name", "description": "Full name of the caller. String. Example: \"John Carter\"."},
-    {"name": "account_id", "description": "Customer account ID. Alphanumeric, prefixed with B. Example: \"B001\"."}
-  ]'
-```
+**What to include in a description:**
+- Data type and exact format: `"String in MM/DD/YYYY format"`, `"10-digit US phone number, no dashes"`
+- For IDs: reference the prefix and structure: `"Alphanumeric string prefixed with 'B', e.g. 'B001'"` — not just `"Customer ID"`
+- For objects: list every field with type: `"Object with fields: id (string, B-prefixed), balance (float), status (active|suspended|closed)"`
+- A realistic example that matches actual mock data: `"Example: \"B001\""`, `"Example: \"03/14/1982\""`
+- For flags/booleans: describe the condition precisely: `"true if the customer has an active payment plan, false otherwise"`
 
-This is an upsert — POST the full array each time. Returns 201 with the complete variable list.
+**Bad vs. good:**
 
----
+Bad: `"The customer's account ID"` → Cekura generates something like `"ACCT-12345"` which won't match any mock entry.
 
-## Data Flow by Mode
+Good: `"Account ID as returned by get_user_info. Alphanumeric string prefixed with 'B', followed by 3 digits. Example: \"B001\"."` → Cekura generates `"B001"` which matches the mock output.
 
-| Mode | Testing agent gets profile via | Main agent gets profile data via |
-|------|-------------------------------|----------------------------------|
-| Voice inbound | `{{test_profile.*}}` in instructions (reads at call time) | Inbound phone lookup → mock tool response |
-| Voice outbound | `{{test_profile.*}}` in instructions | Dynamic variables forwarded at call start |
-| Text/chat | `{{test_profile.*}}` in instructions | Not automatically received |
-| WebSocket | `{{test_profile.*}}` in instructions | Dynamic variables forwarded at connection start |
+### Consistency: Same Fact in Profile and Variables
+
+If a value appears in both the test profile and a dynamic variable (e.g., `customer_name` in both), they must be identical strings. The generator enforces this, but descriptions must make the expected format clear in both places so the generated values align.
 
 ---
 
@@ -246,8 +240,7 @@ Mock tool schema:
   "description": "Retrieves user data by phone number",
   "information": [
     {"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
-  ],
-  "freetext_params": ["notes"]
+  ]
 }
 ```
 
