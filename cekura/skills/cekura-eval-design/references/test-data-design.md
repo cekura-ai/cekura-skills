@@ -44,7 +44,7 @@ The agent doesn't use external tools, or tools aren't relevant to what you're te
 
 **When to use:** Agent is conversational-only, testing tone/adherence rather than tool-dependent workflows, or tools are optional.
 
-**Workflow:** Create test profiles with caller identity data (name, DOB, etc.). Write scenarios focused on conversational behavior. Don't include tool results in expected outcomes.
+**Workflow:** Check existing profiles first — if one has the caller identity fields this scenario needs, reuse it. Otherwise create a new profile with caller identity data (name, DOB, etc.). Write scenarios focused on conversational behavior. Don't include tool results in expected outcomes.
 
 ---
 
