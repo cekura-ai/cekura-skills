@@ -30,10 +30,34 @@ Do not reconstruct this from memory or from the summary below. The reference is 
 
 The workflow:
 1. Read the full scenario list from `/tmp/infra-test-plan.md`
-2. Build the complete payload for every scenario upfront (conditional_actions, language, personality, folder_path, name, expected_outcome, metrics)
-3. Fire all `mcp__cekura__scenarios_create` calls at the same time
-4. Collect all returned IDs and record the scenario name → ID mapping once all calls complete
-5. If any individual creation fails, log the failure and retry that scenario only — do not retry the entire batch
+2. Set up test profiles, mock tool data, and dynamic variables (see subsection below — do this before building any payload)
+3. Build the complete payload for every scenario upfront (conditional_actions, language, personality, folder_path, name, expected_outcome, metrics, test_profile)
+4. Fire all `mcp__cekura__scenarios_create` calls at the same time
+5. Collect all returned IDs and record the scenario name → ID mapping once all calls complete
+6. If any individual creation fails, log the failure and retry that scenario only — do not retry the entire batch
+
+### Set up test profiles, mock tool data, and dynamic variables
+
+**Read `cekura/skills/cekura-eval-design/references/test-data-design.md` in full before configuring any of these.** That file is the authoritative guide for designing mock tools, test profiles, and dynamic variables as a cohesive trio. Do not design them independently — inconsistencies between them cause silent test failures.
+
+**Step 1 — Determine what data the bot needs (from Phase 2):**
+- **Q4 (LLM tools)**: does the bot define and call external tools? If yes, mock tool data may be needed. List the tools, their input fields, and what outputs they return.
+- **Q1 (Call Connection) and Q4**: does the bot read dynamic variables at call start (caller ID, account context, inbound number)? List all registered variables via `GET /test_framework/v1/aiagents/{agent_id}/dynamic-variables/` and read each variable's description for expected format.
+- **Q1 session metadata**: what caller context does the bot expect to be present (phone number, caller name, account ID)?
+
+**Step 2 — Choose an approach (per test-data-design.md):**
+- **Approach C (most infra scenarios)**: the scenario tests pipeline behavior (idle timer, interruption, VAD, LLM timeout, STT), not a business-logic workflow. The bot's tools are not exercised. A minimal test profile with caller identity is sufficient.
+- **Approach B**: the bot's tools are exercised during the scenario (e.g. a tool call is part of the LLM response being tested). Mock tool entries must be configured — follow the full Approach B workflow in test-data-design.md.
+- **Approach A**: the bot hits a real staging backend. Align test profile fields with the staging data formats.
+
+**Step 3 — Generate the data trio together:**
+Design test profile + mock tool entries + dynamic variable values as one synchronized unit. The same fact (e.g. caller phone number) must be an identical string across all three. Never design them independently.
+
+**Four rules that must be followed (from the reference):**
+- **Template variables only** — every data value used in scenario instructions must come from `{{test_profile.field_name}}`, never hardcoded inline
+- **Append-not-replace** — when adding mock tool entries, always GET the existing `information` array → merge → PATCH the full combined array; PATCHing with new entries only wipes existing mappings
+- **No partial profiles** — never assign a profile that is missing a field the scenario needs; the testing agent will improvise the missing value silently, breaking verification flows
+- **Consistency** — the same fact must be the identical string in the test profile, the dynamic variable value, and the mock tool input; the only deliberate exception is the validation-failure pattern
 
 For authoring each scenario's payload, invoke the **cekura-eval-design** skill.
 
