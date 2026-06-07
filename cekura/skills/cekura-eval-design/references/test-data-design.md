@@ -37,15 +37,6 @@ Cekura intercepts tool calls and returns pre-configured mock responses. The agen
 1. Check existing mock tool entries — if they fit the scenario, reuse them and find the corresponding profile (see Step 3)
 2. If not, design the full data graph (see Step 2), configure new mock entries, then derive the profile from outputs
 3. New entries must be sufficiently distinct from existing ones — fuzzy matching must discriminate between users
-4. Enable mock mode per tool in Agent Settings → Mock Tools
-5. Use auto-gen: when mock tools are enabled, the generate endpoint creates tool-aware scenarios automatically
-
-**Auto-fetch (VAPI, Retell, ElevenLabs, Pipecat):** Agent Settings → Mock Tools → Auto-Fetch pulls tool definitions and generates sample I/O. Review and toggle mock mode per tool. This creates illustrative examples — add scenario-specific mappings afterward.
-
-**Key questions:**
-- "Can I auto-fetch your tools, or do we set up manually?"
-- "For each tool, what are the different inputs the agent might send?"
-- "Do any tools depend on data from other tools?"
 
 ### Approach C: Conversational Only
 
