@@ -181,28 +181,50 @@ For Approach A or when you need realistic data:
 
 ## Step 4 — Dynamic Variables
 
-Dynamic variables are values the main agent reads at the start of each call — caller identity, account context, or per-run configuration. When a scenario runs, Cekura reads each variable's registered description and generates a concrete value for that run using the scenario instructions and agent description as context.
+Dynamic variables are values the main agent reads at the start of each call — caller identity, account context, or per-run configuration.
 
-**The description is what drives value generation.** Cekura's generator reads the description to decide what value to produce. If the description is vague, the generated value will be generic and likely won't match your mock tool data.
+### Generating Values for Dynamic Variables
 
-### Writing Descriptions That Produce Correct Values
+List all registered variables before generating data:
 
-**What to include in a description:**
-- Data type and exact format: `"String in MM/DD/YYYY format"`, `"10-digit US phone number, no dashes"`
-- For IDs: reference the prefix and structure: `"Alphanumeric string prefixed with 'B', e.g. 'B001'"` — not just `"Customer ID"`
-- For objects: list every field with type: `"Object with fields: id (string, B-prefixed), balance (float), status (active|suspended|closed)"`
-- A realistic example that matches actual mock data: `"Example: \"B001\""`, `"Example: \"03/14/1982\""`
-- For flags/booleans: describe the condition precisely: `"true if the customer has an active payment plan, false otherwise"`
+```
+GET /test_framework/v1/aiagents/{agent_id}/dynamic-variables/
+```
 
-**Bad vs. good:**
+For each variable, read its description — this specifies the expected format, type, and structure. Then:
 
-Bad: `"The customer's account ID"` → Cekura generates something like `"ACCT-12345"` which won't match any mock entry.
+- **If the variable maps to a fact in the mock tool output** (e.g., `account_id` corresponds to `id` in `get_user_info`): use the exact same value from the mock output.
+- **If the variable is not exercised by this scenario**: use a sensible default (`null`, `false`, `[]`) — never omit a variable.
+- **Format must match the description exactly**: if the description says "MM/DD/YYYY", the value must be in that format — not "YYYY-MM-DD". If existing mock data uses a specific format, match it.
 
-Good: `"Account ID as returned by get_user_info. Alphanumeric string prefixed with 'B', followed by 3 digits. Example: \"B001\"."` → Cekura generates `"B001"` which matches the mock output.
+Every registered variable must have a value — never skip a key.
+
+### Generating the Data Trio
+
+For each evaluator, generate mock tool entries, test profile, and dynamic variable values as one synchronized unit. Follow this process:
+
+**Step 1 — Try to reuse existing mock data (all-or-nothing)**
+Scan existing mock tool entries. If a single identity can satisfy **every** step of the scenario across all tools, reuse those entries. You cannot mix identities — if identity A covers tool 1 but not tool 2, skip to Step 2.
+
+Exception: if the scenario instructions explicitly name a person or identifier, only reuse existing data if it matches those exact values.
+
+**Step 2 — Generate a new identity if needed**
+If no existing identity fulfills the full scenario, generate a completely new identity (ID, name, phone, etc.) that does not appear anywhere in the existing mock data. Follow the variation rules from "Generating Sufficient Variation" to ensure it is distinct enough for fuzzy matching.
+
+**Scope rule:** Only generate entries for tools the scenario actually calls. If the agent has 4 tools but the scenario exercises 2, output entries for those 2 only.
+
+**Pattern recognition — identify which patterns apply before generating outputs:**
+
+| Pattern | When | Required behavior |
+|---------|------|-------------------|
+| Cardinality | Scenario needs the caller to choose between options | Tool output must return ≥2 distinct items; the chosen ID must be in the test profile |
+| Branching | Scenario follows "new user" or "not found" path | Tool output must return a NotFound/Empty/failure status |
+| Validation failure | Scenario requires a verification check to fail, triggering a fallback | **Deliberately mismatch**: test profile value ≠ mock tool "stored" value for that field |
+| Logic-first PII | Agent description requires data the scenario instructions don't mention | Include it in the test profile and variables anyway |
 
 ### Consistency: Same Fact in Profile and Variables
 
-If a value appears in both the test profile and a dynamic variable (e.g., `customer_name` in both), they must be identical strings. The generator enforces this, but descriptions must make the expected format clear in both places so the generated values align.
+Test profile value == variable value == tool input value — they must be identical strings for the same fact across all three. The only exception is the validation failure pattern, where the mismatch is intentional.
 
 ---
 
