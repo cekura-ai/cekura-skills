@@ -232,18 +232,14 @@ Test profile value == variable value == tool input value — they must be identi
 
 ### Mock Tool Endpoints
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/test_framework/v1/aiagents/{agent_id}/tools/` | Create mock tool |
-| GET | `/test_framework/v1/aiagents/{agent_id}/tools/` | List mock tools on agent |
-| PATCH | `/test_framework/v1/mock-tools/{tool_id}/` | Update mock tool (append-not-replace) |
-| DELETE | `/test_framework/v1/mock-tools/{tool_id}/` | Delete mock tool |
+```
+PATCH /test_framework/v1/mock-tools/{tool_id}/
+```
 
-Mock tool schema:
+Append a new entry to the tool's `information` array (GET first → merge → PATCH full array).
+
 ```json
 {
-  "name": "get_user_info",
-  "description": "Retrieves user data by phone number",
   "information": [
     {"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
   ]
