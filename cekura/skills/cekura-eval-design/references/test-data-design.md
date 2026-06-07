@@ -72,13 +72,19 @@ Cekura finds the **closest** input in the `information` array. If entries are to
 - **IDs:** use non-overlapping ranges (B001–B009 for one user cluster, B100–B109 for another) or different prefixes entirely.
 - **Names:** avoid near-matches like "John Doe" and "Jane Doe" — the fuzzy matcher sees these as close.
 - **Dates of birth:** span different decades to prevent partial collisions.
-- **Always add phone format variants** for the same user: 10-digit (`8645239892`), 11-digit with leading 1 (`18645239892`), E.164 (`+18645239892`). Format mismatches are the most common cause of "account not found" failures.
-- **Add one not-found entry** (e.g., an obviously fake phone → `{"error": "not_found"}`). This enables the backup-phone pattern.
+### Phone Format Variants (same user)
 
-**Backup-phone pattern:** when the primary inbound phone doesn't match, add a fallback:
-1. Add a `555-XXX-XXXX` backup phone to mock mappings pointing to the same user data
-2. Add instruction: "If the agent can't find your account, provide the alternate number XXX-XXX-XXXX"
-3. Put both numbers in the test profile (`customer_phone_number` and `backup_phone_number`)
+The agent receives the caller's phone number and passes it to a lookup tool — but it may reformat the number before the call (strip the country code, add `+1`, etc.). If the mock only has one format and the agent sends another, the lookup silently fails even though the number is correct.
+
+Add all three variants pointing to the same output for every user:
+
+```json
+{"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}},
+{"input": {"phone": "18645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}},
+{"input": {"phone": "+18645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
+```
+
+Phone format mismatches are the most common cause of "account not found" failures during testing.
 
 ### freetext_params
 
