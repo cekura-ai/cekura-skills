@@ -204,6 +204,16 @@ If Q10 was incomplete, ask:
 
 Record the confirmed deployment steps verbatim.
 
-Write both answers into the Phase 1 gate output before moving on.
+**Question 3 — What is the Cekura agent ID for this bot?**
+
+Ask:
+
+> "What is the ID of the Cekura agent configured to connect with this bot? I need it to attach all scenarios and dynamic variables to the right agent.
+>
+> If you're not sure, I can list agents in this project via `mcp__cekura__aiagents_list` — just tell me the project ID and I'll look it up."
+
+Record the confirmed agent ID as: `Agent ID: [id]`
+
+Write all three answers into the Phase 1 gate output before moving on.
 
 Move to [Phase 2 — Analyze Each Layer](phase2-analyze.md).

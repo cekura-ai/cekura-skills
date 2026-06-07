@@ -26,15 +26,18 @@ Open and read `cekura/skills/cekura-eval-design/references/conditional-actions.m
 
 Do not reconstruct this from memory or from the summary below. The reference is the authoritative source.
 
+**Every scenario must be attached to the Cekura agent ID recorded in Phase 1.** Include `"agent": <agent_id>` on every `mcp__cekura__scenarios_create` payload. Do not create scenarios without an agent — they cannot be run.
+
 **Create all scenarios in parallel, not sequentially.** Do not create them one at a time — fire all `mcp__cekura__scenarios_create` calls concurrently. The API is stateless per scenario; there is no dependency between scenario creations. Parallel creation is significantly faster for large suites (25+ scenarios).
 
 The workflow:
-1. Read the full scenario list from `/tmp/infra-test-plan.md`
-2. Set up test profiles, mock tool data, and dynamic variables (see subsection below — do this before building any payload)
-3. Build the complete payload for every scenario upfront (conditional_actions, language, personality, folder_path, name, expected_outcome, metrics, test_profile)
-4. Fire all `mcp__cekura__scenarios_create` calls at the same time
-5. Collect all returned IDs and record the scenario name → ID mapping once all calls complete
-6. If any individual creation fails, log the failure and retry that scenario only — do not retry the entire batch
+1. Read the agent ID from the Phase 1 gate output
+2. Read the full scenario list from `/tmp/infra-test-plan.md`
+3. Set up test profiles, mock tool data, and dynamic variables (see subsection below — do this before building any payload)
+4. Build the complete payload for every scenario upfront (agent, conditional_actions, language, personality, folder_path, name, expected_outcome, metrics, test_profile)
+5. Fire all `mcp__cekura__scenarios_create` calls at the same time
+6. Collect all returned IDs and record the scenario name → ID mapping once all calls complete
+7. If any individual creation fails, log the failure and retry that scenario only — do not retry the entire batch
 
 ### Set up test profiles, mock tool data, and dynamic variables
 
