@@ -79,78 +79,9 @@ Do not reuse the primary-language personality on non-primary-language scenarios 
 
 ### Translating the Phase 4 plan into conditional_actions
 
-The cekura-eval-design skill covers all of this in detail. The summary below is a quick reference — defer to the skill for edge cases, tag constraints, and anti-patterns.
+Read `cekura/skills/cekura-eval-design/references/conditional-actions.md` before writing any condition. That file is the authoritative source for the full conditions array structure, every field's semantics (`id`, `type`, `condition`, `action`, `fixed_message`), when to use `action_followup` vs `standard`, XML tag syntax and placement constraints, the validation checklist, and the anti-patterns list.
 
-**Condition 0 — who speaks first**
-
-If the bot speaks first (recorded in Phase 2 Q10): the testing agent must wait silently.
-```json
-{ "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "", "fixed_message": false }
-```
-
-If the caller speaks first: the testing agent opens with the first line from the Phase 4 conversation flow.
-```json
-{ "id": 0, "type": "standard", "condition": "FIRST_MESSAGE", "action": "[opening line]", "fixed_message": false }
-```
-
-**The cardinal rule of action_followup — one condition per bot turn, not one condition per conversation step**
-
-`action_followup` fires **after the bot produces a turn**. This is not the same as "after each step in the Phase 4 conversation flow." Before mapping any step to a condition, ask: *does the bot speak between the previous step and this step?*
-
-- **Bot speaks between steps → new condition.** The testing agent waits for the bot's turn, then fires the next action.
-- **Bot does NOT speak between steps → combine into one action.** Both steps happen within the same testing-agent turn. Combine them into a single action string (multiple XML tags, or text followed by a hold, etc.).
-
-Getting this wrong produces conditions that never fire: the testing agent waits for a bot turn that never comes, and the scenario stalls or times out.
-
-**Wrong — one condition per step regardless of bot turns:**
-```json
-{ "id": 3, "condition": "action_followup of 2", "action": "<hold duration=\"10s\" />", "type": "action_followup", "fixed_message": true },
-{ "id": 4, "condition": "action_followup of 3", "action": "Goodbye", "type": "action_followup", "fixed_message": true }
-```
-This breaks if the bot does not speak after the hold — condition 4 waits for a bot turn that never arrives.
-
-**Right — combine steps that have no bot turn between them:**
-```json
-{ "id": 3, "condition": "action_followup of 2", "action": "<hold duration=\"10s\" />Goodbye", "type": "action_followup", "fixed_message": true }
-```
-The hold and the goodbye are one action because the testing agent does both without waiting for the bot.
-
-**Before writing each condition, explicitly verify:** look at the Phase 4 conversation flow and ask "after the previous step, does the bot produce a response before the next step?" If no → merge. If yes → new condition.
-
-Common infra patterns where steps must be merged (no bot turn in between):
-- Hold followed immediately by another hold (multiple silence windows)
-- Hold followed by a closing phrase (bot is silent during hold, never responds)
-- DTMF send followed by spoken text (sent together in one testing-agent action)
-- Interruption tag followed by what to say after the interrupt (same action string)
-
----
-
-**All subsequent conditions — always `action_followup` with `fixed_message: true`**
-
-Every condition after 0 must be `type: "action_followup"` with `fixed_message: true`. This delivers a scripted sequence regardless of the bot's exact phrasing. Infra tests have no business depending on what the bot says — only on triggering a specific pipeline behavior.
-
-```
-Condition 0 → FIRST_MESSAGE (standard)
-Condition 1 → action_followup of 0, fixed_message: true
-Condition 2 → action_followup of 1, fixed_message: true
-...
-```
-
-Never use `standard` conditions after condition 0.
-
-**Translating conversation steps into condition actions**
-
-| Phase 4 step | Condition action |
-|---|---|
-| Say: "[text]" | `"action": "[text]"` |
-| Stay silent for Ns (bot expected to respond after) | `"action": "<hold duration=\"Ns\" />"` — new condition |
-| Stay silent for Ns (bot NOT expected to respond) | merge with next step into one action |
-| Interrupt bot after Xs | `"action": "<interruption time=\"Xs\" />[what to say after]"` — one action, not two |
-| Send DTMF sequence | `"action": "<dtmf digits=\"XXXXX#\" />[spoken text to advance chain]"` |
-| Simulate voicemail | `"action": "<voicemail />"` |
-| Send SMS mid-call | `"action": "<send_sms text=\"...\" />[spoken text]"` |
-
-Use `<hold>` (not `<silence>`) for idle timer tests — `<hold>` produces dead air, `<silence>` keeps background noise running and may prevent the idle timer from firing on sensitive VAD configurations.
+One infra-specific rule not in that reference: **use `<hold>` (not `<silence>`) for idle timer tests**. `<hold>` produces dead air; `<silence>` keeps background noise running and may register as caller activity on sensitive VAD configurations, preventing the idle timer from firing.
 
 **Translating evaluation pointers into metrics and expected outcome**
 
