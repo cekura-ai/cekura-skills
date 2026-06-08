@@ -41,6 +41,21 @@ Final score:
 
 Every statement must start with **"The main agent should"**. Beyond that, these rules apply:
 
+### 0. One statement per line
+Write each statement on its own line. Separate multiple statements with a newline — do NOT concatenate them into a single paragraph separated by ". ".
+
+✅ Correct:
+```
+The main agent should respond to the DTMF input 123 sent with the hash terminator.
+The main agent should respond to DTMF input 45 sent without a terminator after the 2 second timeout flush.
+The main agent should respond to DTMF input 7 as a single digit flushed after 2 seconds.
+```
+
+❌ Wrong:
+```
+The main agent should respond to the DTMF input 123 sent with the hash terminator. The main agent should respond to DTMF input 45 sent without a terminator after the 2 second timeout flush. The main agent should respond to DTMF input 7 as a single digit flushed after 2 seconds.
+```
+
 ### 1. Max 2 actions per statement
 Each string may describe at most two distinct actions. If a logical step has three or more sub-actions, break it into multiple sequential statements.
 
