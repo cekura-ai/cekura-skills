@@ -20,35 +20,33 @@ metadata:
 Full main agent setup flow — **pick provider early, it shapes everything that follows**.
 
 ```
-Phase 1    Phase 2       Phase 3              Phase 4       Phase 5
-Project →  Provider   →  Basics &          →  Description → Create main
-Pick the   Which         Connection Type      Full system   POST main agent,
-project    provider?     Name, phone/WebRTC/  prompt or     save ID
-ID         Credentials   chat, auto-fetch     exported
-           collected     from provider        config
+Standard path (LiveKit, Pipecat, Bland, Chirp, KoreAI, Genesys, Cisco, self-hosted):
+Phase 1  → Phase 2  → Phase 3  → Phase 4  → Phase 5  → Phase 6  → Phase 7  → Phase 8  → Phase 9  → Phase 10
+Project    Provider   Basics &   Description  Create     Mock       KB         Dyn Vars   Advanced   Verify
+                      Conn Type               agent      Tools
 
-Phase 6        Phase 7     Phase 8     Phase 9     Phase 10
-Mock Tools  →  KB      →   Dyn Vars →  Advanced →  Verify
-Auto-fetch     Upload      {{var}}     Outbound    Checklist
-or manual      KB docs     patterns,   config      + summary
-               files       multi-node              + next steps
-                           pattern
+Auto-import path (VAPI / Retell / ElevenLabs / Synthflow — configure_from_provider: true):
+Phase 1  → Phase 2  → Phase 5  → Phase 9  → Phase 10
+Project    Provider   Create     Advanced   Verify
+           (api_key   (import,   config
+           + agent_id) poll
+                      progress)
 ```
 
 ## The 10 Phases
 
-| Phase | File | What happens |
-|-------|------|--------------|
-| 1 | [phase1-project.md](phase1-project.md) | List projects, pick `project_id` |
-| 2 | [phase2-provider.md](phase2-provider.md) | Choose provider; collect all credentials upfront |
-| 3 | [phase3-basics.md](phase3-basics.md) | Main agent name, language, connection type (phone/WebRTC/chat/SIP), auto-fetch from provider |
-| 4 | [phase4-description.md](phase4-description.md) | Collect main agent description — the full system prompt that defines its behaviour |
-| 5 | [phase5-create.md](phase5-create.md) | Create the main agent — POST v2, full provider examples |
-| 6 | [phase6-mock-tools.md](phase6-mock-tools.md) | Main agent mock tools — auto-fetch or manual |
-| 7 | [phase7-knowledge-base.md](phase7-knowledge-base.md) | Main agent knowledge base — upload KB files |
-| 8 | [phase8-dynamic-variables.md](phase8-dynamic-variables.md) | Main agent dynamic variables — register via API (identified during Phase 4) |
-| 9 | [phase9-advanced.md](phase9-advanced.md) | Outbound config (auto_dial_outbound, outbound_numbers) |
-| 10 | [phase10-verify.md](phase10-verify.md) | Verify main agent setup — checklist + summary + next-skill handoff |
+| Phase | File | What happens | Auto-import providers? |
+|-------|------|--------------|----------------------|
+| 1 | [phase1-project.md](phase1-project.md) | List projects, pick `project_id` | ✓ required |
+| 2 | [phase2-provider.md](phase2-provider.md) | Choose provider; collect all credentials upfront | ✓ required (api_key + agent_id) |
+| 3 | [phase3-basics.md](phase3-basics.md) | Main agent name, language, connection type (phone/WebRTC/chat/SIP), auto-fetch from provider | **skipped** — auto-imported |
+| 4 | [phase4-description.md](phase4-description.md) | Collect main agent description — the full system prompt that defines its behaviour | **skipped** — auto-imported |
+| 5 | [phase5-create.md](phase5-create.md) | Create the main agent — POST v2, full provider examples | ✓ required (uses auto-import path) |
+| 6 | [phase6-mock-tools.md](phase6-mock-tools.md) | Main agent mock tools — auto-fetch or manual | **skipped** — auto-imported |
+| 7 | [phase7-knowledge-base.md](phase7-knowledge-base.md) | Main agent knowledge base — upload KB files | **skipped** — auto-imported |
+| 8 | [phase8-dynamic-variables.md](phase8-dynamic-variables.md) | Main agent dynamic variables — register via API (identified during Phase 4) | **skipped** — auto-imported |
+| 9 | [phase9-advanced.md](phase9-advanced.md) | Outbound config (auto_dial_outbound, outbound_numbers) | ✓ required |
+| 10 | [phase10-verify.md](phase10-verify.md) | Verify main agent setup — checklist + summary + next-skill handoff | ✓ required |
 
 ---
 
@@ -72,10 +70,10 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 
 **Never do this:**
 - Start Phase 4 before Phase 3 is fully complete
-- Skip a mandatory phase because it "seems done"
+- Skip a phase for a non-auto-import provider because it "seems done"
 - Stop after Phase 5 because the main agent was created
 - Bundle multiple phases into one response without completing each
-- Dismiss multiple phases together (e.g. "phases 6–9 not needed") — each phase must be read and executed individually
+- Skip phases for non-auto-import providers (e.g. "phases 6–9 not needed" for LiveKit) — for these providers every phase is mandatory
 - Make decisions about a phase without first reading its phase file
 - Ask the user "shall we continue?" between phases — just continue
 - Give the user a list of steps to do manually — execute them yourself using Bash and API calls
@@ -85,7 +83,7 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 
 **Use MCP tools, not raw API calls.** The Cekura MCP server is configured and authenticated. Use it directly for all Cekura platform operations — listing projects, creating agents, registering variables, running scenarios, fetching results. Do not generate curl commands for operations that the MCP server can perform. Raw curl is only a fallback when a specific operation is not available via MCP.
 
-**All 10 phases are mandatory — execute every phase, every time, no exceptions.**
+**All 10 phases are mandatory for non-auto-import providers — execute every phase, every time, no exceptions.** For VAPI, Retell, ElevenLabs, and Synthflow using `configure_from_provider`, phases 3, 4, 6, 7, and 8 are skipped (the backend imports all of that automatically). The phase files for those phases contain explicit skip instructions — follow them.
 
 **The skill does not end until Phase 10's verification run succeeds.** If the run reveals issues (missing dynamic variables, broken mock tools, wrong connection settings, silent agent), go back to the relevant phase, fix the issue, and retry the run. Never exit before a real conversation is confirmed in the transcript.
 
