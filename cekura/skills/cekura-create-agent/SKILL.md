@@ -35,18 +35,18 @@ Project    Provider   Create     Advanced   Verify
 
 ## The 10 Phases
 
-| Phase | File | What happens | Auto-import providers? |
-|-------|------|--------------|----------------------|
-| 1 | [phase1-project.md](phase1-project.md) | List projects, pick `project_id` | ✓ required |
-| 2 | [phase2-provider.md](phase2-provider.md) | Choose provider; collect all credentials upfront | ✓ required (api_key + agent_id) |
-| 3 | [phase3-basics.md](phase3-basics.md) | Main agent name, language, connection type (phone/WebRTC/chat/SIP), auto-fetch from provider | **skipped** — auto-imported |
-| 4 | [phase4-description.md](phase4-description.md) | Collect main agent description — the full system prompt that defines its behaviour | **skipped** — auto-imported |
-| 5 | [phase5-create.md](phase5-create.md) | Create the main agent — POST v2, full provider examples | ✓ required (uses auto-import path) |
-| 6 | [phase6-mock-tools.md](phase6-mock-tools.md) | Main agent mock tools — auto-fetch or manual | **skipped** — auto-imported |
-| 7 | [phase7-knowledge-base.md](phase7-knowledge-base.md) | Main agent knowledge base — upload KB files | **skipped** — auto-imported |
-| 8 | [phase8-dynamic-variables.md](phase8-dynamic-variables.md) | Main agent dynamic variables — register via API (identified during Phase 4) | **skipped** — auto-imported |
-| 9 | [phase9-advanced.md](phase9-advanced.md) | Outbound config (auto_dial_outbound, outbound_numbers) | ✓ required |
-| 10 | [phase10-verify.md](phase10-verify.md) | Verify main agent setup — checklist + summary + next-skill handoff | ✓ required |
+| Phase | File | What happens | Standard providers | Auto-import providers (VAPI/Retell/ElevenLabs/Synthflow) |
+|-------|------|--------------|-------------------|----------------------------------------------------------|
+| 1 | [phase1-project.md](phase1-project.md) | List projects, pick `project_id` | **✓ required** | **✓ required** |
+| 2 | [phase2-provider.md](phase2-provider.md) | Choose provider; collect all credentials upfront | **✓ required** | **✓ required** (api_key + agent_id only) |
+| 3 | [phase3-basics.md](phase3-basics.md) | Main agent name, language, connection type (phone/WebRTC/chat/SIP) | **✓ required** | skipped — auto-imported |
+| 4 | [phase4-description.md](phase4-description.md) | Collect main agent description — the full system prompt | **✓ required** | skipped — auto-imported |
+| 5 | [phase5-create.md](phase5-create.md) | Create the main agent — POST v2, full provider examples | **✓ required** | **✓ required** (auto-import path) |
+| 6 | [phase6-mock-tools.md](phase6-mock-tools.md) | Main agent mock tools — auto-fetch or manual | **✓ required** | skipped — auto-imported |
+| 7 | [phase7-knowledge-base.md](phase7-knowledge-base.md) | Main agent knowledge base — upload KB files | **✓ required** | skipped — auto-imported |
+| 8 | [phase8-dynamic-variables.md](phase8-dynamic-variables.md) | Main agent dynamic variables — register via API | **✓ required** | skipped — auto-imported |
+| 9 | [phase9-advanced.md](phase9-advanced.md) | Auto-sync, auto-import calls, outbound config | **✓ required** | **✓ required** |
+| 10 | [phase10-verify.md](phase10-verify.md) | Verify main agent setup — checklist + summary + next-skill handoff | **✓ required** | **✓ required** |
 
 ---
 

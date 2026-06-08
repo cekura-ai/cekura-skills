@@ -111,7 +111,7 @@ Keep polling until `status` is `completed`. The response at `finalize` includes 
 }
 ```
 
-After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_retrieve` to confirm name, description, phone number, and provider settings were populated. Then skip directly to [Phase 9 — Advanced Configuration](phase9-advanced.md).
+After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_retrieve` to confirm name, description, phone number, and provider settings were populated. Save the `id` — it is needed for all subsequent steps.
 
 ---
 
