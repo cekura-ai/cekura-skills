@@ -446,6 +446,7 @@ Format: `tags: ["Category", "priority-level", "scenario-ID"]`. Category codes: S
 ## Expected Outcomes
 
 Focus on the main agent's behavior, not the caller's experience:
+- **One statement per line** — write each "The main agent should…" statement on its own line; do not concatenate multiple statements into a single paragraph
 - **Agent-centric**: "Agent books appointment and provides arrival instructions" — not "the caller has a great experience"
 - **Specific and measurable**: Include concrete actions (book, transfer, cancel, inform)
 - **Include follow-up actions**: What happens after the primary action

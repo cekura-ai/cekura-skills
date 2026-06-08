@@ -72,6 +72,8 @@ Key rules:
 
 What the main agent should achieve. Agent-centric, specific, measurable, but **concise** — overly specific prompts (exact dates/times) cause false failures. Focus on behavioral outcomes.
 
+Write each "The main agent should…" statement on its own line (newline-separated). Do not merge multiple statements into a single paragraph.
+
 ### 6. Test Profile
 
 **Ask:** "Does this scenario need caller identity data (name, DOB, account info, etc.)?"
