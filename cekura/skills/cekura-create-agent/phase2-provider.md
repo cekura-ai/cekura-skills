@@ -140,7 +140,7 @@ Set in `chat_agent_details`, not `provider.type`:
 | WebSocket voice | — | — | — | — | — | — | — | — | ✓ | — | — | — |
 | Chat/Text | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | ✓ | ✓ | ✓ |
 | **Auto-import agent** | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — |
-| Auto-import calls | ✓ | ✓ | ✓ | — | — | — | — | — | — | — | — | — |
+| Auto-import calls | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — |
 | Auto-sync prompt | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — |
 | Auto-dial outbound | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — |
 | Auto-fetch tools | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — |

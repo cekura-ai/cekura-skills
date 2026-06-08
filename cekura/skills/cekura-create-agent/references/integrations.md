@@ -442,7 +442,7 @@ Provider rows only. Connection modes (SIP, WebSocket, chat, PSTN, WebRTC) are pi
 | WebSocket voice | No | No | No | No | No | No | No | No | Yes | No | No | No |
 | Chat / Text | Yes | Yes | Yes | Yes | No | Yes | No | No | No | Yes | Yes | Yes |
 | **Auto-import agent** | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
-| Auto-fetch calls | Yes | Yes | Yes | No | No | No | No | No | No | No | No | No |
+| Auto-fetch calls | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
 | Auto-fetch tools | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No | No |
 | Auto-sync prompt | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
 | Outbound auto-call | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No |

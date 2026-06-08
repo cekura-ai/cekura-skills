@@ -1,6 +1,6 @@
 # Phase 9 — Advanced Configuration
 
-Optional settings for outbound behavior. Ask the user which apply.
+Optional provider settings. Work through each section in order — apply what's relevant, skip what isn't.
 
 ---
 
@@ -28,14 +28,67 @@ Supported for: VAPI, Retell, ElevenLabs, Bland, LiveKit. Test profile fields are
 
 ---
 
-## 9b. Apply via PATCH
+## 9b. Auto-sync prompt (VAPI / Retell / ElevenLabs / Synthflow only)
+
+**Skip this section for all other providers.**
+
+`auto_sync_prompt: true` tells Cekura to periodically re-fetch the agent's system prompt from the provider so the Cekura description stays in sync whenever the prompt is updated on the provider side.
+
+**Auto-import path** (`configure_from_provider: true`): `auto_sync_prompt` is **enabled automatically** after the import completes. Confirm it is on — no action needed unless the user explicitly wants to disable it.
+
+**Manually-configured agents**: ask:
+> "Would you like Cekura to automatically keep the agent description in sync with your provider? Cekura will re-fetch the system prompt on a schedule whenever you update it."
+
+If yes, include in the PATCH:
+```json
+{
+  "provider": {
+    "auto_sync_prompt": true
+  }
+}
+```
+
+---
+
+## 9c. Auto-import production calls (VAPI / Retell / ElevenLabs / Synthflow only)
+
+**Skip this section for all other providers.**
+
+`auto_import_calls: true` tells Cekura to fetch real production calls from the provider every 30 seconds. Imported calls appear in the Cekura dashboard for evaluation, observability, and scenario generation from real traffic.
+
+**Off by default** — including after `configure_from_provider`. Always ask:
+> "Would you like Cekura to automatically import your production calls for monitoring and analysis? This pulls real calls from your provider every 30 seconds."
+
+Recommend enabling. If yes, include in the PATCH:
+```json
+{
+  "provider": {
+    "auto_import_calls": true
+  }
+}
+```
+
+---
+
+## 9d. Apply via PATCH
+
+Combine all relevant fields from 9a–9c into a single PATCH call:
 
 ```bash
 curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{ <fields from above> }'
+  -d '{
+    "telephony": { "inbound": false, "outbound_numbers": ["+1..."] },
+    "provider": {
+      "auto_dial_outbound": true,
+      "auto_sync_prompt": true,
+      "auto_import_calls": true
+    }
+  }'
 ```
+
+Only include fields that apply — omit any section the user declined or that doesn't apply to their provider.
 
 ---
 
