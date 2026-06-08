@@ -2,6 +2,8 @@
 
 Upload any documents the main agent references so Cekura can use them for evaluator generation.
 
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — knowledge base files were imported automatically. Go directly to [Phase 8](phase8-dynamic-variables.md).
+
 **Rule: if the main agent reads any documents during a conversation, upload them. No exceptions.**
 
 The reason for uploading is so Cekura can generate better test scenarios — not for the main agent's runtime retrieval. The agent's retrieval mechanism (filesystem, vector DB, API, hardcoded) is completely irrelevant to this decision. Do not use the retrieval mechanism as a reason to skip. Do not reason about whether the files "belong" in Cekura's KB system. The only question is: does the agent read documents? If yes, upload them.

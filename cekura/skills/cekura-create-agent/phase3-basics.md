@@ -4,6 +4,8 @@ Collect the fields needed to identify the main agent and determine how Cekura wi
 
 ---
 
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** Skip this phase entirely. All fields — name, language, description, phone number, connection type — are fetched automatically by `configure_from_provider` during agent creation. Go directly to [Phase 5 — Create the Agent](phase5-create.md).
+
 > **Start:** Announce "Starting Phase 3 — Main Agent Basics & Connection Type" before doing anything in this phase.
 
 ## 3a. Fields to collect
@@ -107,14 +109,13 @@ Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja
 | **VAPI** | Yes | Auto-fetch or paste | `agent_id` = assistant or squad ID |
 | **Retell** | Yes | Auto-fetch or paste | Separate `agent_id` (voice) and `chat_agent_id` (text) |
 | **ElevenLabs** | Yes | Auto-fetch or paste | |
-| **Synthflow** | Yes | Auto-fetch or paste | |
+| **Synthflow** | Yes | Auto-fetch or paste | `agent_id` required for auto-import |
 | **Bland** | Yes | Fetch prompt, ask user for name | `agent_id` = pathway_id; name not returned by API |
 | **LiveKit** | No | Ask user | WebRTC only |
 | **Pipecat** | No | Ask user | Agent identified by `credentials.config.pipecat_agent_name` |
 | **Chirp** | No | Ask user | Connects via `chirp_websocket_url` |
 | **KoreAI** | No | Ask user | Text/chat only |
 | **Genesys** | No | Ask user | Text/chat only |
-| **Trillet** | Yes | Ask user | |
 | **Cisco** | Yes | Ask user | Pre-configured integration |
 | **Self-hosted (phone/SIP)** | Yes | Ask user | |
 | **Self-hosted (WebSocket)** | No | Ask user | Text-mode only |
@@ -192,7 +193,7 @@ curl -s https://api.retellai.com/v2/list-phone-numbers \
 
 **ElevenLabs:** check `conversation_config.phone` in the main agent details response.
 
-**Bland, Trillet, Synthflow, and other providers:** check the provider's phone number or agent API for linked numbers and direction configuration. If the provider docs or API doesn't expose this, check the main agent's config object for inbound/outbound flags.
+**Bland, Synthflow, and other providers:** check the provider's phone number or agent API for linked numbers and direction configuration. If the provider docs or API doesn't expose this, check the main agent's config object for inbound/outbound flags.
 
 Only ask the user for phone number or inbound/outbound if the provider API genuinely doesn't return it.
 

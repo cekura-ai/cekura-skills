@@ -4,6 +4,8 @@ Set up mock responses for any external APIs or tools the main agent calls during
 
 ---
 
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — tools were auto-fetched during import. Go directly to [Phase 7](phase7-knowledge-base.md).
+
 > **Start:** Announce "Starting Phase 6 — Main Agent Mock Tools" before doing anything in this phase.
 
 ## 6a. Determine from code and description first
