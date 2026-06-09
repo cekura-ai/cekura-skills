@@ -506,7 +506,7 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible + beep at end. **Must be entire action.** `text` optional (silent voicemail allowed). Post-beep message goes in a separate action_followup. |
 | `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`) |
 | `<endcall />` | Terminate call. **May be combined with surrounding text** (only "communication-class" tag that allows this). |
-| `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues |
+| `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues. Supports decimal seconds (`"0.5s"`) for sub-second precision. |
 | `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell letter-by-letter |
 | `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be action_followup AND at start of action string.** |
