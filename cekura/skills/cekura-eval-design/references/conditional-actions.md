@@ -121,7 +121,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<silence time="Xs" />` or `<silence time="Xms" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues; condition matching restarts after an interrupt. Time unit can be seconds (`2s`) or milliseconds (`500ms`) for precise control. | Embeddable mid-action |
+| `<silence time="Xs" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues; condition matching restarts after an interrupt. Supports decimal seconds for sub-second precision (e.g., `time="0.5s"`). | Embeddable mid-action |
 | `<hold time="Xs" />` | Dead air — **not interruptible**; background noise stops | Multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell text letter-by-letter (no attributes) | Wrap target text |
 | `<speed ratio="N" />` | Speech rate; ratio range **0.8–1.2** (0.8 = 20% slower, 1.2 = 20% faster) | **Must start the action** |
@@ -133,7 +133,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 |---|---|---|
 | Interruptible by main agent | ✅ Yes | ❌ No |
 | Background noise during pause | ✅ Continues | ❌ Stops |
-| Time precision | Seconds (`2s`) or milliseconds (`500ms`) | Seconds only (`2s`) |
+| Time precision | Decimal seconds — `"0.5s"`, `"2s"`, `"2.5s"` | Seconds — `"2s"`, `"10s"` |
 
 ### Interaction
 
@@ -147,8 +147,8 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<background_noise sound="NAME" volume="0.x">spoken text</background_noise>` | Continuous ambient sound behind the caller's voice | Wraps the spoken text. `volume` optional. |
-| `<noise sound="NAME" volume="N" time="Xms" />` | One-shot sound effect at a point in the action | `volume` and `time` (milliseconds) are optional |
+| `<background_noise sound="NAME" volume="N">spoken text</background_noise>` | Continuous ambient sound behind the caller's voice | Wraps the spoken text. `volume` optional; multiplier range **0.5–2** (1 = normal). |
+| `<noise sound="NAME" volume="N" time="Xs" />` | One-shot sound effect at a point in the action | `volume` (multiplier **0.5–2**, optional) and `time` (seconds e.g. `"1.1s"`, optional) |
 | `<network_simulation packet_loss="N" />` | Simulate degraded connection (percentage value, e.g. `packet_loss="5"`) | **Only `packet_loss` is supported.** |
 
 #### `<background_noise>` sound names
@@ -481,7 +481,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 ### Hold / silence behavior
 
 - `<hold time="Xs" />` for guaranteed dead air (not interruptible; background noise stops; multiple per action allowed).
-- `<silence time="Xs" />` (or `time="Xms"` for millisecond precision) for natural-feeling pauses (interruptible by the main agent; background noise continues; condition matching restarts after an interrupt).
+- `<silence time="Xs" />` for natural-feeling pauses (interruptible by the main agent; background noise continues; condition matching restarts after an interrupt). Supports decimal seconds (`"0.5s"`) for sub-second precision.
 
 ## Anti-Patterns
 
@@ -575,8 +575,8 @@ XML tags (fixed_message:true only):
    or <voicemail />                  use action_followup for the post-beep message
   <dtmf digits="..." />             Touch-tone input; supports digits, # and *
   <endcall />                       Terminate call — combinable with surrounding text
-  <silence time="Xs|Xms" />         Pause on caller's turn — interruptible; bg noise continues
-                                     Supports seconds (2s) or milliseconds (500ms) for precise control
+  <silence time="Xs" />             Pause on caller's turn — interruptible; bg noise continues
+                                     Supports decimal seconds (0.5s) for sub-second precision
   <hold time="Xs" />                Dead air — NOT interruptible; bg noise stops; multiple per action
   <spell>TEXT</spell>               Spell text letter-by-letter
   <interruption time="Xs" />        Cut in Xs after agent starts speaking — MUST be action_followup
@@ -585,8 +585,8 @@ XML tags (fixed_message:true only):
   <volume ratio="N" />              Volume 0–2; must start the action; Cartesia only
   <send_sms text="..." />           Trigger SMS for SMS workflows
   <network_simulation packet_loss="N" />   Only packet_loss supported (% value)
-  <background_noise sound="NAME" volume="0.x">spoken text</background_noise>
-  <noise sound="NAME" volume="N" time="Xms" />   One-shot: office | beep | cough1 | cough2
+  <background_noise sound="NAME" volume="N">spoken text</background_noise>   volume multiplier 0.5–2 (optional)
+  <noise sound="NAME" volume="N" time="Xs" />   One-shot: office | beep | cough1 | cough2; volume 0.5–2 (optional)
 
 Background noise sounds:
   office-ambience, coffee-shop, kitchen-noise, home-chatter, restaurant, shopping-mall,
