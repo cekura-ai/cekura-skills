@@ -71,7 +71,11 @@ For each parameter from the Phase 4 plan:
 2. When building each scenario's payload, set the `dynamic_variables` field with the specific values for that scenario — use the test-specific values from the Phase 4 "Dynamic variable values" field
 3. Scenarios that use only baseline values may omit the `dynamic_variables` field or set the defaults explicitly
 
+**If Phase 2 Q10 (Bot Speaks First) is yes**, check how the bot receives its opening message at connection time — it may be hardcoded, loaded from a config file, or injected via a dynamic variable. If the opening message is passed via a dynamic variable, register it on the agent and set it in each scenario's `dynamic_variable_values` using the exact phrase documented in Phase 2. If it is hardcoded or config-driven, no dynamic variable is needed — the Phase 2 phrase is what will play and must match the scenario's `expected_outcome`.
+
 **Dynamic variable values must be set in the CREATE payload — not as a note, not as a manual follow-up, not via the UI.** If Phase 4 specifies non-default values for a scenario, those values go into the `dynamic_variables` field of the `mcp__cekura__scenarios_create` call for that scenario. A scenario whose `dynamic_variables` field is missing or wrong will run with the bot's defaults and the test will not exercise the intended behavior. Never leave a comment like "set this manually later" or "configure this via the UI" — set it in the payload now.
+
+Additionally: the MCP `scenarios_partial_update` tool may not expose `dynamic_variable_values` in its schema, making it impossible to patch this field via MCP after creation. This is another reason the values must be in the CREATE payload — do not count on being able to set them post-creation.
 
 This replaces any need for bot-side configuration changes. Cekura passes these values to the bot at connection time; the bot reads them and configures itself for that call.
 
@@ -135,13 +139,15 @@ Each scenario in Phase 4 has a set of plain-English evaluation pointers — what
 
 ### Activate and attach metrics
 
-**Before attaching any metric to a scenario, confirm it is toggled on at the project level.** Use `mcp__cekura__metrics_list` to check which metrics are already active. Activate any that are not yet enabled. Missing this step means the metric is attached to the scenario but never fires — runs will return incomplete evaluations silently.
+**Predefined metrics require project-level activation before use — global IDs will not work.** Passing a global predefined metric ID (e.g. from `mcp__cekura__predefined_metrics_list`) directly to `scenarios_create` returns an "Invalid pk" error. You must first activate the metric for this project to get a project-scoped copy ID. The **cekura-predefined-metrics** skill covers the exact activation steps — follow it. Use only the project-level metric IDs returned after activation.
+
+**Before attaching any metric to a scenario, confirm it is activated at the project level.** Use `mcp__cekura__metrics_list` to check which metrics are already active for this project. Activate any that are not yet enabled — missing this step means the metric is attached to the scenario but never fires, and runs return incomplete evaluations silently.
 
 Then attach metrics to each scenario via `mcp__cekura__scenarios_partial_update` or include them in the create payload.
 
 Two activation steps are required — missing either means the metric never fires:
-1. Toggle on at the project level
-2. Add to the individual scenario
+1. Activate at the project level (get project-scoped ID)
+2. Add to the individual scenario using the project-scoped ID
 
 After creating each scenario, record its ID and which configuration batch it belongs to. This mapping drives the run script in 5d.
 
