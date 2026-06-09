@@ -55,7 +55,31 @@ For every pair of adjacent components in the pipeline (STT→VAD, VAD→LLM, LLM
 
 ---
 
+## What "not testable" means — narrow definition
+
+Before generating any items, read this definition. It is the only valid reason to exclude a test item.
+
+**A test item is NOT testable if and only if: the call transcript is byte-for-byte identical regardless of whether the behavior fired correctly or incorrectly.** The bot's audio and speech output are exactly the same either way.
+
+**Genuinely not testable (narrow list):**
+- An internal retry counter incremented (no speech or behavior change)
+- A memory flag was set to `true` (no observable side effect)
+- A log line was written (log does not appear in the transcript)
+- A metric was emitted internally (no call-visible effect)
+
+**NOT a valid reason to exclude:**
+- **"Sub-second timing"** — if the difference crosses a threshold boundary, behavior differs (prompt fires vs. doesn't fire). That difference IS in the transcript. `7.9s silence → no prompt` vs. `8.0s silence → prompt fires` are two distinct observable outcomes.
+- **"Internal state"** — if the internal state change produces ANY observable output (bot speaks, bot pauses, bot hangs up, call ends), it is testable.
+- **"Hard to time precisely"** — if the behavior is deterministic at the boundary value, it is testable even if the exact trigger moment varies slightly in practice.
+- **"Not directly visible"** — if the behavior is visible through its downstream effect on the bot's speech or action, it is testable.
+
+**When in doubt, include the test item.** Phase 4 will decide whether it can be grouped with others or is genuinely unreachable in a scenario. Do not make that decision here.
+
+---
+
 ## How to enumerate
+
+**Before generating items for any component:** any behavior that produces a different observable output (different bot speech, different bot action, different call outcome) under different conditions is testable. Do not exclude it.
 
 For every stack component documented in Phase 2, work through these categories in order. Apply the mandatory rules above to each category to generate individual items.
 
@@ -366,8 +390,13 @@ Not testable (from Phase 2 "Explicitly Excluded"):
 
 ## Phase 3 Gate
 
-`/tmp/infra-test-list.md` exists, every capability Phase 2 documented has at least one test item, and every boundary condition with a numeric value from Phase 2 has a test at that value.
+**This is a hard stop. All four conditions must be true before moving to Phase 4:**
 
-Confirm the list with the user before moving to Phase 4. Present the summary block and ask whether any items should be added, removed, or re-prioritized.
+1. `/tmp/infra-test-list.md` exists and every capability Phase 2 documented has at least one test item.
+2. Every numeric threshold from Phase 2 has three test items (BelowThreshold, AtThreshold, AboveThreshold).
+3. **Total actionable items (excluding only genuinely not-testable items per the narrow definition above) ≥ 200.** Count the items in the "Not testable" section separately — they do not count toward the 200. If 58 items were classified as not testable, the generated items must total ≥ 258 so that actionable items ≥ 200. If actionable count is below 200: **do not proceed**. Go back, re-apply Rule 1 and Rule 2 to every component section, and expand until the count reaches ≥ 200. Review every "not testable" classification against the narrow definition — most "sub-second timing" and "internal state" items should be reclassified as testable.
+4. User has confirmed the list.
+
+Present the summary block and ask whether any items should be added, removed, or re-prioritized.
 
 Move to [Phase 4 — Design the Test Plan](phase4-plan.md).
