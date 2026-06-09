@@ -6,15 +6,58 @@ Read `/tmp/infra-workflow-descriptions.md` (written by Phase 2) before doing any
 
 ## Goal
 
-Produce an exhaustive list of everything the test suite must cover. This list can be 10 items or 1 000 items — there is no target count. The bar is completeness: every behavior, boundary condition, failure path, and cross-component interaction described in Phase 2 must appear as at least one test item.
+Produce an exhaustive list of every testable case. For a non-trivial voice agent this list should be at least 200 items — often 500–1000+. If your total is below 200, you have collapsed categories into single items and must go back and expand. Phase 4 then compresses this list into a compact set of evaluators.
 
-Write the list to `/tmp/infra-test-list.md`. Phase 4 reads this file and creates one Cekura scenario per item (or groups closely related items into one scenario where it makes engineering sense).
+Write the list to `/tmp/infra-test-list.md`. Phase 4 reads this file and groups items into evaluators using arc patterns.
+
+---
+
+## How to enumerate — mandatory rules
+
+These rules apply before you write a single TEST-NNN item. Breaking any of them produces an under-counted list.
+
+### Rule 1 — One item per instance, not one item per category
+
+"Test all STT parameters" is a category, not a test item. For every list Phase 2 documented — STT parameters, LLM tools, TTS voices, idle escalation steps, DTMF call states, supported languages, configured error codes, fallback paths — generate **one TEST-NNN item per list entry**.
+
+Example: Phase 2 documents 8 non-default STT parameters (`endpointing_ms`, `confidence_cutoff`, `diarization`, `smart_formatting`, `profanity_filter`, `keywords`, `utterance_end_ms`, `encoding`) → 8 separate TEST-NNN items, one per parameter.
+
+### Rule 2 — Three items per numeric threshold
+
+Every numeric value Phase 2 documented (silence timeout, word count gate, retry count, idle threshold, speech timeout, buffer flush timeout, confidence cutoff, minimum speech duration, maximum turn duration, etc.) generates **exactly three TEST-NNN items**:
+- `[Component]-[Param]-BelowThreshold` — value is just below threshold; expected behavior X
+- `[Component]-[Param]-AtThreshold` — value is exactly at threshold; expected behavior Y
+- `[Component]-[Param]-AboveThreshold` — value is just above threshold; expected behavior Z
+
+Example: Phase 2 documents `IDLE_TIMEOUT=8s` → TEST-NNN: idle fires at exactly 8s; TEST-NNN: caller speaks at 7.9s (no idle); TEST-NNN: caller speaks at 8.1s (idle fires).
+
+### Rule 3 — Estimate before you write
+
+Before writing any TEST-NNN items, open `/tmp/infra-workflow-descriptions.md` and count:
+- Number of non-default parameters across all components: P
+- Number of numeric thresholds × 3: T
+- Number of configured tools: L
+- Number of supported languages: G
+- Number of escalation/state stages: S
+- Number of adjacent component pairs: I
+
+Expected minimum item count = P + T + L + G×2 + S + I + happy paths + error paths
+
+Write this estimate at the top of the output file. If your final count is less than 80% of the estimate, you collapsed something — go back and expand.
+
+### Rule 4 — Iterate through Phase 2 after drafting
+
+After writing items for every component section, re-read `/tmp/infra-workflow-descriptions.md` from start to finish. For every documented value, parameter, behavior, or code path that does not yet have a corresponding TEST-NNN item, add one. Do not stop until no uncovered items remain.
+
+### Rule 5 — Exhaustive cross-component pairs, not 6 examples
+
+For every pair of adjacent components in the pipeline (STT→VAD, VAD→LLM, LLM→TTS, TTS→Interruption, Interruption→VAD, Idle→LLM, DTMF→VAD, SMS→LLM, Voicemail→TTS, STT-fallback→turn-detection, etc.), generate at least one interaction test item. Do not sample — cover all pairs.
 
 ---
 
 ## How to enumerate
 
-For every stack component documented in Phase 2, work through these categories in order. Generate a separate test item for each distinct behavior you can identify.
+For every stack component documented in Phase 2, work through these categories in order. Apply the mandatory rules above to each category to generate individual items.
 
 **1. Happy path / normal operation**
 The component behaves correctly under ideal conditions. This is always the first item for every component.
@@ -231,16 +274,24 @@ Generate test items only for languages Phase 2 confirmed are fully configured (S
 
 ## Cross-component interaction tests
 
-After enumerating per-component tests, go back and identify interactions between adjacent components that could produce failure modes not covered above. Common pairs to check:
+Apply **Rule 5**: generate a test item for every adjacent component pair — do not sample. List all pairs systematically, not just the most obvious ones.
 
-- **VAD fires while TTS is playing**: does the interrupt path activate? Does the turn-start gate suppress it?
-- **LLM timeout during interruption recovery**: what does the bot do when the LLM is still running when a second interrupt arrives?
-- **Idle timer fires while LLM is generating**: does the LLM response cancel the escalation, or does the escalation cancel the LLM response?
-- **STT fallback fires during mid-turn**: does the transcript produced by the secondary provider still close the turn correctly?
-- **No-transcript timer and idle timer both running**: which fires first; what does each one do to the other?
-- **Back-to-back tool calls**: LLM returns tool call, result comes back, LLM returns another tool call — does the pipeline serialize these correctly?
+For each pair, ask: "If component A is in state X when component B fires, does an unexpected or untested code path activate?" If yes, that is a test item.
 
-For each interaction pair found in Phase 2 descriptions, decide whether the interaction creates a distinct failure mode that justifies its own test item.
+Common pairs to check (not an exhaustive list — derive yours from the actual Phase 2 pipeline):
+
+- **VAD fires while TTS is playing** — interrupt path activation vs. turn-start gate suppression
+- **LLM timeout during interruption recovery** — second interrupt arrives while LLM still running
+- **Idle timer fires while LLM is generating** — which cancels which
+- **STT fallback fires during mid-turn** — does secondary provider transcript still close the turn correctly
+- **No-transcript timer and idle timer both running** — which fires first; what does each do to the other
+- **Back-to-back tool calls** — LLM serialization of consecutive tool results
+- **DTMF received during bot speech** — accepted or gated
+- **SMS received during idle escalation** — does it reset the timer or is it independent
+- **Voicemail detection during TTS playback** — does bot stop speaking and handle voicemail
+- **STT endpointing and standalone VAD both active** — which signal wins the turn-end decision
+
+For each pair found in Phase 2, generate a separate TEST-NNN item. Do not merge multiple pairs into one item.
 
 ---
 
@@ -254,6 +305,16 @@ Write the complete test list to `/tmp/infra-test-list.md` using this structure:
 Generated by Phase 3 of cekura-infra-test-suite.
 Source: /tmp/infra-workflow-descriptions.md
 Read by Phase 4 before creating any scenarios.
+
+Expected item count estimate:
+  Parameters (P): N  →  N items
+  Thresholds × 3 (T): N × 3 = N items
+  Tools (L): N items
+  Languages × 2 (G): N items
+  Escalation stages (S): N items
+  Interaction pairs (I): N items
+  Happy paths + error paths: N items
+  TOTAL ESTIMATE: N items
 
 ---
 
@@ -275,6 +336,8 @@ Read by Phase 4 before creating any scenarios.
 ```
 
 Number tests sequentially across all components (TEST-001, TEST-002, ...). The total count at the end of the file is the authoritative number of things to test.
+
+**If total < 200 for a non-trivial agent: stop, flag as incomplete, and go back to expand.** A count below 200 means categories were collapsed into single items. Apply Rule 1 and Rule 2 again until every parameter and threshold has its own entries.
 
 After all test items, add:
 
