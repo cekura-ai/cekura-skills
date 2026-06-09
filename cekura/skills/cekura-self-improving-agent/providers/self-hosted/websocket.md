@@ -70,8 +70,8 @@ Orchestration code (history management, message wiring, conversation state, keep
 
 ```
 Self-hosted (websocket / file) agent: <agent_name> (id: <agent_id>)
-  Provider tag: <assistant_provider>
-  Websocket URL: <wss://...>           # informational; live target for validation
+  Provider tag: <provider.type>
+  Websocket URL: <wss://...>           # informational; live target for validation (telephony.websocket_url)
   Source file: <abs path>
   System prompt: <N> chars at <file>:<start_line>-<end_line>
   Tool definitions: <M> tools at <file>:<start_line>-<end_line>
