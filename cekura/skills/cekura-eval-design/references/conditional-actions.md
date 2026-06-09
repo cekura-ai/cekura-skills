@@ -121,7 +121,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<silence time="Xs" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues; condition matching restarts after an interrupt | Embeddable mid-action |
+| `<silence time="Xs" />` or `<silence time="Xms" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues; condition matching restarts after an interrupt. Time unit can be seconds (`2s`) or milliseconds (`500ms`) for precise control. | Embeddable mid-action |
 | `<hold time="Xs" />` | Dead air — **not interruptible**; background noise stops | Multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell text letter-by-letter (no attributes) | Wrap target text |
 | `<speed ratio="N" />` | Speech rate; ratio range **0.8–1.2** (0.8 = 20% slower, 1.2 = 20% faster) | **Must start the action** |
@@ -133,6 +133,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 |---|---|---|
 | Interruptible by main agent | ✅ Yes | ❌ No |
 | Background noise during pause | ✅ Continues | ❌ Stops |
+| Time precision | Seconds (`2s`) or milliseconds (`500ms`) | Seconds only (`2s`) |
 
 ### Interaction
 
@@ -480,7 +481,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 ### Hold / silence behavior
 
 - `<hold time="Xs" />` for guaranteed dead air (not interruptible; background noise stops; multiple per action allowed).
-- `<silence time="Xs" />` for natural-feeling pauses (interruptible by the main agent; background noise continues; condition matching restarts after an interrupt).
+- `<silence time="Xs" />` (or `time="Xms"` for millisecond precision) for natural-feeling pauses (interruptible by the main agent; background noise continues; condition matching restarts after an interrupt).
 
 ## Anti-Patterns
 
@@ -574,7 +575,8 @@ XML tags (fixed_message:true only):
    or <voicemail />                  use action_followup for the post-beep message
   <dtmf digits="..." />             Touch-tone input; supports digits, # and *
   <endcall />                       Terminate call — combinable with surrounding text
-  <silence time="Xs" />             Pause on caller's turn — interruptible; bg noise continues
+  <silence time="Xs|Xms" />         Pause on caller's turn — interruptible; bg noise continues
+                                     Supports seconds (2s) or milliseconds (500ms) for precise control
   <hold time="Xs" />                Dead air — NOT interruptible; bg noise stops; multiple per action
   <spell>TEXT</spell>               Spell text letter-by-letter
   <interruption time="Xs" />        Cut in Xs after agent starts speaking — MUST be action_followup
