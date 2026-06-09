@@ -8,6 +8,113 @@
 
 > **Start:** Announce "Starting Phase 5 — Create the Main Agent" before doing anything in this phase.
 
+## Auto-import path (VAPI / Retell / ElevenLabs / Synthflow)
+
+For these four providers, use `configure_from_provider: true`. The backend imports name, description (system prompt), language, phone number, connection type, tools, knowledge base, and dynamic variables automatically. Phases 3, 4, 6, 7, and 8 are all skipped.
+
+**Minimal payload:**
+```json
+{
+  "project": 123,
+  "provider": {
+    "type": "vapi|retell|elevenlabs|synthflow",
+    "agent_id": "<assistant/agent ID on provider platform>",
+    "credentials": {
+      "api_key": "<provider API key>"
+    },
+    "configure_from_provider": true
+  }
+}
+```
+
+**POST** `https://api.cekura.ai/test_framework/v2/aiagents/`  
+Response: **202 Accepted** — `{ "progress_id": "abc123..." }`
+
+**Poll progress:**
+```bash
+curl -s "https://api.cekura.ai/test_framework/v2/aiagents/import-progress/?progress_id=<progress_id>" \
+  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY"
+```
+
+Import stages (in order):
+
+| Stage | What happens |
+|-------|-------------|
+| `validate` | Connecting to provider, validating credentials |
+| `prompt` | Importing system prompt / description |
+| `settings` | Importing name, language, and call settings |
+| `phone` | Importing phone number and inbound/outbound direction |
+| `tools` | Fetching tool definitions and generating mock data |
+| `dynamic_variables` | Extracting dynamic variable slots |
+| `kb` | Importing knowledge base files |
+| `finalize` | Finalising agent record — returns `agent_id` |
+
+Keep polling until `status` is `completed`. The response at `finalize` includes the created agent's `id` — save it for all subsequent steps.
+
+**Example: VAPI auto-import**
+```json
+{
+  "project": 123,
+  "provider": {
+    "type": "vapi",
+    "agent_id": "asst_abc123",
+    "credentials": {
+      "api_key": "vapi_sk_xxx"
+    },
+    "configure_from_provider": true
+  }
+}
+```
+
+**Example: Retell auto-import**
+```json
+{
+  "project": 123,
+  "provider": {
+    "type": "retell",
+    "agent_id": "retell_voice_agent_abc",
+    "credentials": {
+      "api_key": "key_xxx"
+    },
+    "configure_from_provider": true
+  }
+}
+```
+
+**Example: ElevenLabs auto-import**
+```json
+{
+  "project": 123,
+  "provider": {
+    "type": "elevenlabs",
+    "agent_id": "el_agent_abc123",
+    "credentials": {
+      "api_key": "el_sk_xxx"
+    },
+    "configure_from_provider": true
+  }
+}
+```
+
+**Example: Synthflow auto-import**
+```json
+{
+  "project": 123,
+  "provider": {
+    "type": "synthflow",
+    "agent_id": "synthflow_agent_abc",
+    "credentials": {
+      "api_key": "synthflow_sk_xxx"
+    },
+    "configure_from_provider": true
+  }
+}
+```
+
+After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_retrieve` to confirm name, description, phone number, and provider settings were populated. Save the `id` — it is needed for all subsequent steps.
+
+---
+
 ## 5a. Top-level fields
 
 | Field | Type | Notes |
@@ -36,7 +143,7 @@
 
 ```json
 "provider": {
-  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|chirp|koreai|genesys|trillet|cisco|self_hosted",
+  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|chirp|koreai|genesys|cisco|self_hosted",
   "agent_id": "<voice agent ID on provider platform>",
   "credentials": {
     "api_key": "<provider API key (write-only)>",
@@ -62,11 +169,10 @@
 | `bland` | — | `encrypted_key` (Twilio bundle) |
 | `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
 | `pipecat` | — | `pipecat_agent_name`, `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
-| `synthflow` | — | `synthflow_base_url_override` |
+| `synthflow` | `agent_id` (top-level `provider.agent_id`) | `synthflow_base_url_override` |
 | `chirp` | `chirp_websocket_url` | `chirp_basic_auth_username`, `chirp_basic_auth_password` |
 | `koreai` | `client_id`, `bot_id` | `host` |
 | `genesys` | `client_id`, `region` | — |
-| `trillet` | `workspace_id` | — |
 | `cisco` | — | — |
 | `self_hosted` | — | — |
 
@@ -124,6 +230,8 @@
 ```
 
 ### VAPI — assistant
+> **Recommended:** use the auto-import path at the top of this phase instead. The examples below are for manual / advanced setup only.
+
 ```json
 {
   "name": "VAPI Sales Agent",
@@ -151,6 +259,8 @@
 Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first, falls back to `/squad/{id}`.
 
 ### Retell
+> **Recommended:** use the auto-import path at the top of this phase instead. The example below is for manual / advanced setup only.
+
 ```json
 {
   "name": "Retell Booking Agent",
@@ -180,6 +290,8 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 `chat_agent_details` is optional — omit if the same agent handles voice and text.
 
 ### ElevenLabs
+> **Recommended:** use the auto-import path at the top of this phase instead. The example below is for manual / advanced setup only.
+
 ```json
 {
   "name": "ElevenLabs Voice Agent",
@@ -295,20 +407,17 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ### Synthflow
 ```json
 {
-  "name": "Synthflow Voice Agent",
-  "description": "...",
   "project": 123,
-  "language": "en",
-  "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "synthflow",
+    "agent_id": "<Synthflow agent ID>",
     "credentials": {
       "api_key": "<Synthflow API Key>",
       "config": {
         "synthflow_base_url_override": "<optional — custom base URL for EU or specific regions>"
       }
     },
-    "auto_sync_prompt": true
+    "configure_from_provider": true
   }
 }
 ```
@@ -348,26 +457,6 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
       "config": {
         "client_id": "<OAuth2 Client ID — required>",
         "region": "<Genesys Cloud region, e.g. us-east-1 — required>"
-      }
-    }
-  }
-}
-```
-
-### Trillet
-```json
-{
-  "name": "Trillet Agent",
-  "description": "...",
-  "project": 123,
-  "language": "en",
-  "telephony": {"phone_number": "+14155551234", "inbound": true},
-  "provider": {
-    "type": "trillet",
-    "credentials": {
-      "api_key": "<Trillet API Key>",
-      "config": {
-        "workspace_id": "<Trillet workspace ID — required>"
       }
     }
   }
@@ -419,6 +508,9 @@ The response `id` is needed for all subsequent steps.
 
 **Do not proceed until the main agent is created and you have its `id`.**
 
-**Creating the main agent record is NOT the end of setup.** The main agent cannot be tested yet — mock tools, knowledge base, dynamic variables, and verification still remain. Move immediately to the next phase.
+**Creating the main agent record is NOT the end of setup.** Move immediately to the next phase.
 
-Announce: "Phase 5 complete." Then immediately begin [Phase 6 — Mock Tools](phase6-mock-tools.md) without waiting for the user.
+- **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** Tools, KB, and dynamic variables were auto-populated. Skip Phases 6, 7, and 8. Go directly to [Phase 9 — Advanced Configuration](phase9-advanced.md).
+- **All other providers:** Mock tools, knowledge base, and dynamic variables still need manual setup. Proceed to [Phase 6 — Mock Tools](phase6-mock-tools.md).
+
+Announce: "Phase 5 complete." Then immediately begin the next applicable phase without waiting for the user.

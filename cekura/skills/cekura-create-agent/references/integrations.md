@@ -6,6 +6,20 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 
 ## VAPI
 
+**Auto-import (recommended):**
+```json
+{
+  "project": 123,
+  "provider": {
+    "type": "vapi",
+    "agent_id": "<VAPI Assistant ID or Squad ID>",
+    "credentials": {"api_key": "<VAPI Private API Key>"},
+    "configure_from_provider": true
+  }
+}
+```
+
+**Manual setup:**
 ```json
 {
   "name": "VAPI Agent",
@@ -38,6 +52,20 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 
 ## Retell
 
+**Auto-import (recommended):**
+```json
+{
+  "project": 123,
+  "provider": {
+    "type": "retell",
+    "agent_id": "<Retell voice agent ID>",
+    "credentials": {"api_key": "<Retell API Key>"},
+    "configure_from_provider": true
+  }
+}
+```
+
+**Manual setup:**
 ```json
 {
   "name": "Retell Agent",
@@ -74,6 +102,20 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 
 ## ElevenLabs
 
+**Auto-import (recommended):**
+```json
+{
+  "project": 123,
+  "provider": {
+    "type": "elevenlabs",
+    "agent_id": "<ElevenLabs Agent ID>",
+    "credentials": {"api_key": "<ElevenLabs API Key>"},
+    "configure_from_provider": true
+  }
+}
+```
+
+**Manual setup:**
 ```json
 {
   "name": "ElevenLabs Agent",
@@ -194,22 +236,23 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 
 ```json
 {
-  "name": "Synthflow Agent",
-  "description": "...",
   "project": 123,
-  "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "synthflow",
+    "agent_id": "<Synthflow Agent ID>",
     "credentials": {
       "api_key": "<Synthflow API Key>",
       "config": {
         "synthflow_base_url_override": "<optional>"
       }
     },
-    "auto_sync_prompt": true
+    "configure_from_provider": true
   }
 }
 ```
+
+**Agent ID:** Synthflow Dashboard → Select agent → copy ID  
+**Auto-import:** Imports name, prompt, phone, tools, KB, and dynamic variables automatically.
 
 ---
 
@@ -272,28 +315,6 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
       "config": {
         "client_id": "<required>",
         "region": "<required — e.g. us-east-1>"
-      }
-    }
-  }
-}
-```
-
----
-
-## Trillet
-
-```json
-{
-  "name": "Trillet Agent",
-  "description": "...",
-  "project": 123,
-  "telephony": {"phone_number": "+14155551234", "inbound": true},
-  "provider": {
-    "type": "trillet",
-    "credentials": {
-      "api_key": "<Trillet API Key>",
-      "config": {
-        "workspace_id": "<required>"
       }
     }
   }
@@ -414,14 +435,15 @@ Message roles: `bot`, `user`, `system`, `function_call`, `function_call_result`
 
 Provider rows only. Connection modes (SIP, WebSocket, chat, PSTN, WebRTC) are picked independently.
 
-| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Trillet | Cisco | Chirp | KoreAI | Genesys | Self-hosted |
-|---------|------|--------|------------|---------|---------|-------|-----------|---------|-------|-------|--------|---------|-------------|
-| Phone (PSTN) | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | No | No | Yes |
-| WebRTC | Yes | Yes | No | Yes | Yes | No | No | No | No | No | No | No | No |
-| WebSocket voice | No | No | No | No | No | No | No | No | No | Yes | No | No | No |
-| Chat / Text | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | Yes | Yes | Yes |
-| Auto-fetch calls | Yes | Yes | Yes | No | No | No | No | No | No | No | No | No | No |
-| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No | No | No |
-| Auto-sync prompt | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No | No |
-| Outbound auto-call | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No | No |
-| Latency metrics | No | No | No | Yes | No | No | No | No | No | No | No | No | No |
+| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Cisco | Chirp | KoreAI | Genesys | Self-hosted |
+|---------|------|--------|------------|---------|---------|-------|-----------|-------|-------|--------|---------|-------------|
+| Phone (PSTN) | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | No | No | Yes |
+| WebRTC | Yes | Yes | No | Yes | Yes | No | No | No | No | No | No | No |
+| WebSocket voice | No | No | No | No | No | No | No | No | Yes | No | No | No |
+| Chat / Text | Yes | Yes | Yes | Yes | No | Yes | No | No | No | Yes | Yes | Yes |
+| **Auto-import agent** | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
+| Auto-fetch calls | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
+| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No | No |
+| Auto-sync prompt | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
+| Outbound auto-call | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No |
+| Latency metrics | No | No | No | Yes | No | No | No | No | No | No | No | No |

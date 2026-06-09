@@ -22,7 +22,6 @@ Ask: "What provider does your main agent run on?"
 | **Chirp** | `chirp` | WebSocket voice (raw PCM 16 kHz) |
 | **KoreAI** | `koreai` | Chat/text only |
 | **Genesys** | `genesys` | Chat/text only |
-| **Trillet** | `trillet` | Phone |
 | **Cisco** | `cisco` | Phone; no credentials needed |
 | **SIP / self-hosted (phone)** | `self_hosted` | Observation-only; phone number required |
 | **Self-hosted (WebSocket)** | `self_hosted` | Text-mode via `chat_agent_details` |
@@ -40,6 +39,8 @@ Ask: "What provider does your main agent run on?"
 - **`credentials.config.trigger_url`** (optional)
 - **Docs:** https://docs.vapi.ai/api-reference/assistants/get | https://docs.vapi.ai/api-reference/squads/get
 
+> **Fast path:** VAPI supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
+
 ### Retell
 - **`credentials.api_key`**: Retell Dashboard → Settings → API Keys
 - **`provider.agent_id`**: Retell voice agent ID — Agents → Select → ID in URL
@@ -47,11 +48,15 @@ Ask: "What provider does your main agent run on?"
 - **`credentials.config.trigger_url`** (optional)
 - **Docs:** https://docs.retellai.com/api-references/get-agent.md
 
+> **Fast path:** Retell supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
+
 ### ElevenLabs
 - **`credentials.api_key`**: Profile → API Keys
 - **`provider.agent_id`**: Conversational AI → Select agent → ID in settings
 - **`credentials.config.trigger_url`** (optional)
 - **Docs:** https://elevenlabs.io/docs/api-reference/conversational-ai/get-agent
+
+> **Fast path:** ElevenLabs supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
 
 ### LiveKit
 - **`credentials.api_key`**: LiveKit Cloud Dashboard → Settings → Keys
@@ -76,7 +81,10 @@ Ask: "What provider does your main agent run on?"
 
 ### Synthflow
 - **`credentials.api_key`**: Synthflow API Key
+- **`provider.agent_id`**: Synthflow Dashboard → Select agent → copy ID
 - **`credentials.config.synthflow_base_url_override`** (optional)
+
+> **Fast path:** Synthflow supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
 
 ### Chirp
 - **`credentials.config.chirp_websocket_url`** (required): Raw PCM 16 kHz endpoint
@@ -93,10 +101,6 @@ Ask: "What provider does your main agent run on?"
 - **`credentials.api_key`**: Genesys client secret
 - **`credentials.config.client_id`** (required)
 - **`credentials.config.region`** (required)
-
-### Trillet
-- **`credentials.api_key`**: Trillet API Key
-- **`credentials.config.workspace_id`** (required)
 
 ### Cisco
 - No credentials needed
@@ -129,18 +133,18 @@ Set in `chat_agent_details`, not `provider.type`:
 
 ## 2c. Provider capabilities quick reference
 
-| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Trillet | Cisco | Chirp | KoreAI | Genesys | Self-hosted |
-|---------|------|--------|------------|---------|---------|-------|-----------|---------|-------|-------|--------|---------|-------------|
-| Phone | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ |
-| WebRTC | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — | — | — | — |
-| WebSocket voice | — | — | — | — | — | — | — | — | — | ✓ | — | — | — |
-| Chat/Text | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | ✓ | ✓ | ✓ |
-| Auto-import calls | ✓ | ✓ | ✓ | — | — | — | — | — | — | — | — | — | — |
-| Auto-sync prompt | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — | — |
-| Auto-dial outbound | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — |
-| Auto-fetch tools | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — | — |
-| Fetch main agent config | ✓ | ✓ | ✓ | — | — | ✓ | — | — | — | — | — | — | — |
-| Squads / multi-agent | ✓ | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — | — | — |
+| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Cisco | Chirp | KoreAI | Genesys | Self-hosted |
+|---------|------|--------|------------|---------|---------|-------|-----------|-------|-------|--------|---------|-------------|
+| Phone | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ |
+| WebRTC | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — | — | — |
+| WebSocket voice | — | — | — | — | — | — | — | — | ✓ | — | — | — |
+| Chat/Text | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | ✓ | ✓ | ✓ |
+| **Auto-import agent** | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — |
+| Auto-import calls | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — |
+| Auto-sync prompt | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — |
+| Auto-dial outbound | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — |
+| Auto-fetch tools | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — |
+| Squads / multi-agent | ✓ | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — | — |
 
 ---
 
