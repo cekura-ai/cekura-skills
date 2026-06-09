@@ -84,6 +84,19 @@ Focus on what the **main agent** does — not what the caller experiences, feels
 ### 6. No call closing / farewells
 Do not test goodbye or farewell statements unless the `extra_instructions` explicitly require testing that behavior. The last testable outcome is the agent's response to the testing agent's final substantive statement.
 
+### 7. No test-setup rationale
+The expected outcome describes only what the judge should observe in the transcript. Do not explain how or why the test is structured — dynamic variable values, timeout thresholds, hold durations, or any other test-design context belong in the scenario **Instructions**, not the expected outcome.
+
+✅ Correct:
+```
+The main agent should confirm the booking and provide a reference number.
+```
+
+❌ Wrong:
+```
+The main agent should confirm the booking. retryCount=3 is set via dynamic variable so the retry loop reliably exercises the fallback path.
+```
+
 ---
 
 ## Prioritization Hierarchy
@@ -143,6 +156,7 @@ This lets the expected outcome stay accurate across different test profiles with
 | `"The main agent should warmly and professionally handle the request."` | `"The main agent should proceed with the next question without reacting to the testing agent's unprofessional comment."` | Subjective descriptors ("warmly", "professionally") are not verifiable |
 | `"The main agent should provide the caller with a great experience."` | `"The main agent should book the appointment and provide arrival instructions."` | Caller experience is not agent-centric or measurable |
 | `"The main agent should confirm the appointment for Thursday at 2pm."` | `"The main agent should confirm the appointment date and time with the testing agent."` | Hardcoded values cause false failures across different test data |
+| `"The main agent should collect the caller's details. timeout=30 is passed as a dynamic variable so the silence window reliably triggers the fallback."` | `"The main agent should collect the caller's name and date of birth."` | Test-setup rationale (dynamic variable values, timeout thresholds) is not observable behavior; it belongs in the scenario Instructions |
 
 ---
 
@@ -155,3 +169,4 @@ This lets the expected outcome stay accurate across different test profiles with
 - **Subjective descriptors** — "appropriately", "warmly", "professionally" are not verifiable; replace with functional descriptions
 - **Testing call closing** — farewell statements are out of scope unless the test explicitly requires it
 - **3+ actions in one statement** — split into multiple statements, each with max 2 distinct actions
+- **Test-setup rationale in expected outcome** — dynamic variable values, timeout thresholds, hold durations, and explanations of why the test is structured a certain way are not observable behavior; move them to the scenario Instructions field
