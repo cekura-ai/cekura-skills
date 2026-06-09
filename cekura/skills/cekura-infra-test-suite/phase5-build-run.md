@@ -71,6 +71,8 @@ For each parameter from the Phase 4 plan:
 2. When building each scenario's payload, set the `dynamic_variables` field with the specific values for that scenario — use the test-specific values from the Phase 4 "Dynamic variable values" field
 3. Scenarios that use only baseline values may omit the `dynamic_variables` field or set the defaults explicitly
 
+**Dynamic variable values must be set in the CREATE payload — not as a note, not as a manual follow-up, not via the UI.** If Phase 4 specifies non-default values for a scenario, those values go into the `dynamic_variables` field of the `mcp__cekura__scenarios_create` call for that scenario. A scenario whose `dynamic_variables` field is missing or wrong will run with the bot's defaults and the test will not exercise the intended behavior. Never leave a comment like "set this manually later" or "configure this via the UI" — set it in the payload now.
+
 This replaces any need for bot-side configuration changes. Cekura passes these values to the bot at connection time; the bot reads them and configures itself for that call.
 
 For authoring each scenario's payload, invoke the **cekura-eval-design** skill.
@@ -173,6 +175,10 @@ For each scenario, check every field listed below. If any field is wrong, patch 
 - Does the `expected_outcome` field reflect the Phase 4 evaluation pointers — not blank, not generic, not copied from a different scenario?
 - Does the `expected_outcome` use the actual bot phrases and behaviors from Phase 2 — not a paraphrase? Open `/tmp/infra-workflow-descriptions.md` and compare: if Phase 2 says the idle prompt is "Are you still with me?" and the expected_outcome says "bot prompts caller about silence", that is a mismatch — patch it with the exact phrase.
 - Do the `action` timing values in the conditions match the Phase 2 values exactly — not rounded, not estimated? A `<hold duration="10s"/>` that should be `<hold duration="12s"/>` based on Phase 2's documented threshold will cause the idle timer test to fail silently.
+
+**Dynamic variable values**
+- Does the scenario's `dynamic_variables` field contain the values specified in the Phase 4 "Dynamic variable values" field? If Phase 4 specifies non-default values and the field is missing or empty on the created scenario, patch it immediately via `mcp__cekura__scenarios_partial_update` — do NOT leave this as a note or a follow-up task.
+- If the field is present, do the values match exactly what Phase 4 specified (correct variable names, correct test values)?
 
 **What to do when a mismatch is found**
 - Fix it with `mcp__cekura__scenarios_partial_update` immediately.
