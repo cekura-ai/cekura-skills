@@ -30,17 +30,17 @@ Execute one or more evaluators against the target agent.
 
    If the user passed `[mode]` as an argument, honor it (skip detection).
 
-   Otherwise, fetch the agent with `mcp__cekura__aiagents_retrieve(id=<agent_id>)` and inspect `assistant_provider`, `contact_number`, `websocket_url`, `chat_assistant_id`, `sip_endpoint`. Derive candidate modes:
+   Otherwise, fetch the agent with `mcp__cekura__aiagents_retrieve(id=<agent_id>)` and inspect `provider.type`, `telephony.phone_number`, `telephony.websocket_url`, `provider.chat_agent_details`, `telephony.sip_uri`. Derive candidate modes:
 
-   - **`voice`** = PSTN. Valid whenever `contact_number` is set. Note: a bare phone number is `voice`, never `sip`.
-   - **`sip`** = only when `sip_endpoint` is set (e.g. `sip:agent@host`).
-   - **`text`** = when `chat_assistant_id` is set.
-   - **`websocket`** = when `websocket_url` is set and no other provider.
-   - **WebRTC** (`vapi`, `retell`, `elevenlabs`, `livekit`) = when `assistant_provider` matches.
-   - **`pipecat-v2` / `pipecat`** = when `assistant_provider: pipecat`.
+   - **`voice`** = PSTN. Valid whenever `telephony.phone_number` is set. Note: a bare phone number is `voice`, never `sip`.
+   - **`sip`** = only when `telephony.sip_uri` is set (e.g. `sip:agent@host`).
+   - **`text`** = when `provider.chat_agent_details` is set.
+   - **`websocket`** = when `telephony.websocket_url` is set and no other provider.
+   - **WebRTC** (`vapi`, `retell`, `elevenlabs`, `livekit`) = when `provider.type` matches.
+   - **`pipecat-v2` / `pipecat`** = when `provider.type: pipecat`.
 
    Selection rule:
-   - **0 candidates** → STOP. Surface: *"Agent has no provider, phone number, sip_endpoint, or websocket_url configured — can't run evals."*
+   - **0 candidates** → STOP. Surface: *"Agent has no provider, phone number, SIP endpoint, or websocket URL configured — can't run evals."*
    - **1 candidate** → auto-pick. Announce: *"Auto-selected `<mode>` — only configured connection on this agent."*
    - **2+ candidates** → use `AskUserQuestion` with **only the configured options**, never the full list. One-line hint: text fastest/cheapest, WebRTC moderate, PSTN voice realistic but slowest.
 
@@ -74,12 +74,12 @@ Execute one or more evaluators against the target agent.
 
 | Mode | Speed | Cost | Best For |
 |------|-------|------|----------|
-| text | Fast | Low | Logic testing, rapid iteration (requires `chat_assistant_id`) |
-| websocket | Medium | Medium | Custom websocket agents (requires `websocket_url`) |
+| text | Fast | Low | Logic testing, rapid iteration (requires `provider.chat_agent_details`) |
+| websocket | Medium | Medium | Custom websocket agents (requires `telephony.websocket_url`) |
 | pipecat / pipecat-v2 | Medium | Medium | Pipecat-based agents |
 | vapi / retell / elevenlabs / livekit (WebRTC) | Medium | Medium | Provider-native browser/SDK testing |
-| voice (PSTN) | Slow | High | Realistic phone-call validation (requires `contact_number`) |
-| sip | Slow | High | Self-hosted SIP endpoints (requires `sip_endpoint`) |
+| voice (PSTN) | Slow | High | Realistic phone-call validation (requires `telephony.phone_number`) |
+| sip | Slow | High | Self-hosted SIP endpoints (requires `telephony.sip_uri`) |
 
 ## Pre-Run Checklist
 
