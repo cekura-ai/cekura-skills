@@ -2,36 +2,45 @@
 
 `self_hosted` is the umbrella mode for any agent whose live runtime is **not** a managed provider that this skill can PATCH directly. The user owns the live agent code; this skill operates on whichever artifact best approximates the system prompt for that runtime.
 
-Two sub-flavors live under this mode. Pick the one that matches how the user's agent runs:
+Three sub-flavors live under this mode. Pick the one that matches how the user's agent runs:
 
 | Sub-flavor | When to use | Editable surface | Live-agent sync |
 |------------|-------------|------------------|-----------------|
 | **pipecat** | The user's agent is a pipecat pipeline (Pipecat Cloud or self-hosted infrastructure). The system prompt is stored on the Cekura agent record's `description`; mock tools are attached to the Cekura agent. | Cekura `description` + mock tools, via Cekura platform tools. | User redeploys their pipecat agent before re-validation (auto-mode skips the gate; surfaced as a no-change hypothesis after the fact). |
 | **websocket** | The user's agent is a custom websocket server they run themselves (e.g., `wss://...ngrok.io/...` pointing at a Python/Node/Go process). The system prompt lives in the user's source code as a string constant; tool definitions usually live in the same file. Also the fallback for any agent whose prompt the user wants to iterate on offline without a live target. | The user's source file directly, via the `Edit` tool. Tool definitions in the same file are editable the same way. If no live websocket is reachable, the mode degrades to pasted-prompt / pasted-failures (the old "single prompt" behavior). | User restarts their websocket server before re-validation (auto-mode skips the gate; surfaced as a no-change hypothesis after the fact). When no live websocket is reachable, validation is the user re-running their tests externally and pasting new failures back. |
+| **database** | The user's agent reads its system prompt from a row in a database (Postgres / MySQL / MariaDB / SQLite / MSSQL / MongoDB / etc.) at request time or on a refresh cadence. | The DB row directly, via the user-provided fetch + write SQL (or Mongo equivalent) executed through the relevant CLI client (psql / mysql / sqlite3 / sqlcmd / mongosh). If the user does not provide a write query, the sub-flavor degrades to render-only (the skill prints the new prompt and the user updates the DB themselves). | If the live agent re-reads on every request, the prompt is live the moment the UPDATE commits (`redeploy_command: "noop"`); if it caches, the user restarts the agent or hits a "reload prompts" endpoint. |
 
 Each sub-flavor has its own file:
 
 - `pipecat.md` — pipecat-mode gate, Phase 1.3 summary, Cekura-side PATCH bodies, redeploy gate, edge cases.
 - `websocket.md` — websocket-mode gate, prompt-file discovery, code-edit apply path via `Edit`, restart-server gate, the pasted-failure degenerate variant, and edge cases.
+- `database.md` — database-mode gate, DB type / credentials / fetch query collection, CLI-based read + write apply path, sync re-fetch, render-only fallback, edge cases.
 
 ## Routing into a sub-flavor (Phase 1.2)
 
 When `assistant_provider` resolves to `self_hosted` (either directly or via the "is your live agent built on pipecat?" confirmation for `custom` / `agentforce` / similar tags), ask exactly one question to pick the sub-flavor:
 
 ```
-Self-hosted agent confirmed. Two sub-flavors apply — which matches your setup?
+Self-hosted agent confirmed. Three sub-flavors apply — which matches your setup?
 
   • "pipecat"   → Your agent is a pipecat pipeline. The skill edits the Cekura
                   description + mock tools; you redeploy your pipecat agent.
   • "websocket" → Your agent is a custom websocket server (e.g., Python/Node).
                   The skill edits your source file directly; you restart your server.
+  • "database"  → Your prompt lives as a row in a database (Postgres / MySQL /
+                  Mongo / etc.) and your runtime reads it from there. The skill
+                  reads via your SELECT query and (if you provide one) writes via
+                  your UPDATE query.
 
 If the prompt lives in a file on disk and the live agent runs from that file,
 pick "websocket". If your prompt is stored on the Cekura agent record and
 your live code reads it from there (or you only paste-iterate prompts), pick "pipecat".
+If the prompt is fetched from a DB row at runtime, pick "database".
 ```
 
 If the user says **websocket** but cannot point at the file (or there is no live websocket to reach), proceed with the **websocket** sub-flavor in its degraded variant — pasted prompt text, pasted failures, no `Edit`, no auto re-validation. See `websocket.md` § "Degenerate variant: no live websocket".
+
+If the user says **database**, continue to `database.md` § "Database setup questions" to collect DB type, credentials, and the fetch query (and optionally a write query) before any read attempt.
 
 ## Shared characteristics
 
