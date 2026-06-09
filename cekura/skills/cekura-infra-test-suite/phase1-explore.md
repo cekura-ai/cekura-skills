@@ -210,7 +210,7 @@ Ask:
 
 > "What is the ID of the Cekura agent configured to connect with this bot? I need it to attach all scenarios and dynamic variables to the right agent.
 >
-> If you're not sure, I can list agents in this project via `mcp__cekura__aiagents_list` — just tell me the project ID and I'll look it up."
+> If you're not sure, share the agent name or description and I'll find it via `mcp__cekura__aiagents_list`."
 
 Record the confirmed agent ID as: `Agent ID: [id]`
 
