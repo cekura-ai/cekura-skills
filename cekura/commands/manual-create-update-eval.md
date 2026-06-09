@@ -80,7 +80,7 @@ If yes:
 1. For Approach B: check existing mock tool entries first — if they fit, find the corresponding profile and reuse it
 2. For Approach A: check existing profiles with `mcp__cekura__test_profiles_list`
 3. **Partial-match rule:** if an existing profile covers only a subset of required fields, create a new complete profile — never use a partial one; the testing agent will improvise missing fields
-4. Show the full `information` dict for approval before creating any new profile. New profiles use the sectioned shape: `{"main_agent_variables": {...}, "testing_agent_variables": {...}}`. Put values the agent under test should receive as dynamic variables in `main_agent_variables`; put persona/context for the simulated caller in `testing_agent_variables`. Legacy flat dicts still work but should be migrated when edited.
+4. Show the full `information` dict for approval before creating any new profile. Use the sectioned shape: `{"main_agent_variables": {...}, "testing_agent_variables": {...}}`. Put values the agent under test should receive as dynamic variables in `main_agent_variables`; put persona/context for the simulated caller in `testing_agent_variables`. Either section may be omitted when not needed.
 5. **Never hardcode identity data in instructions** — always put it in the test profile and reference via `{{test_profile.field_name}}`
 
 ### 7. Language

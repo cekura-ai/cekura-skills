@@ -146,10 +146,6 @@ Profiles are project-level — always set `project`, not `agent`.
 - If the scenario only needs dynamic-variable values and the simulator doesn't need a separate persona, populate `main_agent_variables` and leave `testing_agent_variables` out (or `{}`).
 - A profile with both sections empty is still valid for attaching to a scenario for naming.
 
-**Legacy flat profiles** (no section keys) still work — at call time the flat dict is delivered to both the agent under test and the testing agent (preserving pre-sectioning behavior). New profiles should use the sectioned shape.
-
-**Deprecated:** `Scenario.dynamic_variable_values` is deprecated and no longer populated for new scenarios. Values supplied to it on `POST`/`PATCH` are bridged into the attached (or auto-created) test profile's `main_agent_variables` section. Write new code against `test_profile.information.main_agent_variables` directly.
-
 ### Template Variable Syntax
 
 - `{{test_profile.field_name}}` — standard dot access
