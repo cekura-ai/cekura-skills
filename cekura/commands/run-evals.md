@@ -74,12 +74,12 @@ Execute one or more evaluators against the target agent.
 
 | Mode | Speed | Cost | Best For |
 |------|-------|------|----------|
-| text | Fast | Low | Logic testing, rapid iteration (requires `provider.chat_agent_details`) |
-| websocket | Medium | Medium | Custom websocket agents (requires `telephony.websocket_url`) |
+| text | Fast | Low | Logic testing, rapid iteration (requires a configured chat agent) |
+| websocket | Medium | Medium | Custom websocket agents (requires a websocket URL) |
 | pipecat / pipecat-v2 | Medium | Medium | Pipecat-based agents |
 | vapi / retell / elevenlabs / livekit (WebRTC) | Medium | Medium | Provider-native browser/SDK testing |
-| voice (PSTN) | Slow | High | Realistic phone-call validation (requires `telephony.phone_number`) |
-| sip | Slow | High | Self-hosted SIP endpoints (requires `telephony.sip_uri`) |
+| voice (PSTN) | Slow | High | Realistic phone-call validation (requires a phone number) |
+| sip | Slow | High | Self-hosted SIP endpoints (requires a SIP endpoint) |
 
 ## Pre-Run Checklist
 
