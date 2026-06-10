@@ -445,13 +445,38 @@ Not testable (from Phase 2 "Explicitly Excluded"):
 
 ## Phase 3 Gate
 
-**This is a hard stop. All four conditions must be true before moving to Phase 4:**
+**Before writing this gate, count your actionable test items. The count determines what you write here — there is no user question that can override it.**
 
-1. `/tmp/infra-test-list.md` exists and every capability Phase 2 documented has at least one test item.
-2. Every numeric threshold from Phase 2 has three test items (BelowThreshold, AtThreshold, AboveThreshold).
-3. **Total actionable items (excluding only genuinely not-testable items per the narrow definition above) ≥ 200.** Count the items in the "Not testable" section separately — they do not count toward the 200. If 58 items were classified as not testable, the generated items must total ≥ 258 so that actionable items ≥ 200. If actionable count is below 200: **do not proceed**. Go back, re-apply Rule 1 and Rule 2 to every component section, and expand until the count reaches ≥ 200. Review every "not testable" classification against the narrow definition — most "sub-second timing" and "internal state" items should be reclassified as testable.
-4. User has confirmed the list.
+Write the following check output before anything else in this section:
 
-Present the summary block and ask whether any items should be added, removed, or re-prioritized.
+```
+PHASE 3 COUNT CHECK
+Total TEST-NNN items generated: [X]
+Not-testable items (excluded): [Y]
+Actionable items: [X - Y]
+Required minimum: 200
+Status: PASS / FAIL
+```
 
-Move to [Phase 4 — Design the Test Plan](phase4-plan.md).
+**If actionable items < 200 → Status = FAIL. Do NOT write "Move to Phase 4." Do NOT ask the user if you should proceed. Instead write:**
+
+```
+PHASE 3 INCOMPLETE — [X] actionable items, need [200 - X] more.
+
+Returning to expand. Applying:
+- Rule 1 to every component section (one item per instance, not per category)
+- Rule 2 to every numeric threshold (3 items per threshold)
+- Agent Workflow Tests section (7 paths per tool × N tools)
+- Multi-language section (full test set per language)
+- Reviewing all "not testable" classifications against the narrow definition
+```
+
+Then actually go back and expand — add the missing items to `/tmp/infra-test-list.md`, recount, and re-run this gate check.
+
+**If actionable items ≥ 200 → Status = PASS. Then:**
+
+1. Present the summary block.
+2. Ask the user whether any items should be added, removed, or re-prioritized.
+3. Wait for user confirmation before proceeding.
+
+Move to [Phase 4 — Design the Test Plan](phase4-plan.md) **only after Status = PASS and user confirmation.**
