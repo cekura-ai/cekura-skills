@@ -124,7 +124,8 @@ Work through each component that Phase 2 documented. Skip any component Phase 2 
 - Normal inbound call establishes and bot reaches ready state
 - Normal outbound call connects to correct destination
 - Static vs. dynamic destination: destination injected correctly at call start
-- Session metadata propagated correctly into bot context
+- Session metadata propagated correctly into bot context — each field from Phase 2 Q1 that feeds into the system prompt or LLM context gets its own test
+- Call context variation: if Phase 2 documents different bot behavior for inbound vs. outbound, or based on time-of-day, caller ID, or campaign — one test per documented variation
 - Connection failure: wrong credentials, unreachable endpoint, transport mismatch
 - Mid-call transport drop: reconnect, hang-up, or silent drop per documented behavior
 - Connection timeout: fires at correct threshold
@@ -149,7 +150,8 @@ Work through each component that Phase 2 documented. Skip any component Phase 2 
 - Turn opens correctly on speech (standalone VAD if present)
 - Turn opens correctly on STT provider speech_started event (if used)
 - Turn-start gate: turn does not open until confirmation condition is met (e.g. ≥N words on interim transcript — use actual N from Phase 2)
-- Turn-start gate: audio arriving before gate is satisfied is buffered or discarded per documented behavior
+- Turn-start gate: audio arriving before gate is satisfied is buffered vs. discarded — verify per documented behavior
+- Signal arbitration: when standalone VAD and STT provider endpointing both fire simultaneously, the documented winner takes effect (one test per arbitration rule found in Phase 2 Q3)
 - Force-open timeout: turn opens even if gate was never satisfied (fires at correct deadline)
 - Background noise below threshold: turn does not open falsely
 - Turn ends correctly on standalone VAD silence (at exact configured threshold)
@@ -175,7 +177,7 @@ Work through each component that Phase 2 documented. Skip any component Phase 2 
 - System prompt template: all injected variables populated correctly at call start
 - Conversation history: sliding window drops oldest turns at correct size; summarisation fires at correct N (per documented strategy)
 - Tool call: correct tool invoked for a known trigger phrase; result fed back into conversation via documented mechanism
-- Each tool defined in Phase 2 gets at least one test for its trigger condition
+- Each tool defined in Phase 2 gets at least one test for its trigger condition — but see "Agent Workflow Tests" below for the full per-tool test matrix
 - LLM returns empty response: retry fires; fallback phrase used if retry cap reached
 - LLM returns malformed response (if validation is documented): discard/retry/fallback per documented rule
 - LLM timeout: fires at correct deadline; bot takes documented action (fallback phrase, hang-up, silent drop)
@@ -221,6 +223,8 @@ Work through each component that Phase 2 documented. Skip any component Phase 2 
 
 ### Side Channels
 
+**Multiple mechanisms per side channel — Rule 1 applies.** Phase 2 Q8 may have found multiple independent code paths for the same behavior (e.g., SMS can be sent via a tool call AND via a webhook handler AND via a direct SDK call). Each mechanism is a separate test item. If Phase 2 documented 3 ways to send SMS, generate 3 separate test items — one per mechanism. Do not collapse them into "SMS sent works."
+
 **DTMF received**
 - Single digit captured and processed
 - Sequence buffered correctly until terminator character (use actual terminator from Phase 2)
@@ -256,6 +260,8 @@ Work through each component that Phase 2 documented. Skip any component Phase 2 
 **Any other side channels from Phase 2** — enumerate all testable behaviors using the same pattern.
 
 ### Other Behaviors
+
+**Multiple trigger paths per behavior — Rule 1 applies.** Phase 2 Q9 may have found multiple independent code paths that trigger the same behavior (e.g., hang-up can be triggered by: idle timeout, LLM tool call, max duration timer, unrecoverable error). Each trigger path is a separate test item. If Phase 2 documented 4 hang-up triggers, generate 4 test items. Do not collapse them into "hang-up works."
 
 **Call transfer** (if present)
 - Transfer triggered by correct condition (phrase, tool call, escalation)
@@ -294,18 +300,54 @@ Work through each component that Phase 2 documented. Skip any component Phase 2 
 
 Generate test items only for languages Phase 2 confirmed are fully configured (STT model + TTS voice + system prompt all present). Skip partial/non-production language configs.
 
-- Full pipeline E2E in each supported non-primary language (one test per language): caller speaks in that language end-to-end, bot responds in the same language
-- STT accuracy in each supported language: clear speech in that language transcribed correctly
-- Language determination: correct language selected per the documented mechanism (locale metadata, speech detection, DTMF selection, fixed config)
-- Mid-call language switch (if supported): caller switches language mid-call; bot detects and switches STT model, LLM prompt, and TTS voice per documented behavior
-- Mid-call switch to unsupported language (if switching is supported): bot falls back per documented behavior
-- Language-specific system prompt: correct prompt/template used for each language variant (if prompts differ per language)
-- Language-specific TTS voice: correct voice model used for each language (one test per language where voice differs)
-- Language-specific STT model: correct model used for each language (one test per language where model differs)
+**Every supported non-primary language must be tested as thoroughly as the primary language.** A behavior that works in the primary language but not in a secondary language is a bug. Apply Rule 1: for every test item in every other section, check whether Phase 2 Q11 documents language-specific behavior differences — if so, that test item generates one variant per language.
+
+**Per-language infrastructure tests (one set per fully-configured non-primary language):**
+- Full pipeline E2E: caller speaks end-to-end in that language, bot responds correctly
+- STT accuracy: clear speech transcribed correctly in that language
+- Idle timer: escalation prompts delivered in correct language with correct phrases
+- Interruption: pipeline recovers correctly when caller interrupts in that language
+- LLM response: bot responds in the correct language when caller speaks in it
+- TTS: correct voice/model used for that language
+- DTMF (if applicable): accepted and processed correctly during a call in that language
+- Tool calls: tools invoked correctly when the trigger phrase is in that language
+
+**Language determination tests:**
+- Correct language selected per documented mechanism (locale metadata, speech detection, DTMF selection, fixed config) — one test per mechanism
+- Wrong/ambiguous locale metadata: bot falls back per documented behavior
+
+**Mid-call language switching tests (one per trigger type × language pair):**
+- Each documented trigger (DTMF, speech detection, explicit caller request) × each language pair the bot supports
+- Switch to unsupported language: bot falls back per documented behavior
+- Components switch correctly: STT model, LLM prompt, AND TTS voice all switch (not just one)
+
+**Language-specific behavior differences (if Phase 2 documented them):**
+- Response style, formality, or behavior differs between language variants — one test per documented difference
 
 ### Full Pipeline End-to-End
 - A complete call from connect → bot greeting → caller turn → LLM response → TTS playback → caller turn → task completion → hang-up runs without errors
 - This is always the first scenario built; all other scenarios assume this baseline is passing
+
+### Agent Workflow Tests
+
+These tests come from the agent's actual business logic — the tools it calls, the conversation flows it implements, and the decisions it makes. They are derived from Phase 2 Q4 (LLM tool definitions, system prompt workflows) and are separate from the pipeline infrastructure tests above.
+
+**For every LLM tool documented in Phase 2 Q4, generate all of the following test items (applying Rule 1 — one item per path):**
+- **Happy path**: tool triggered by the documented caller input, returns valid result, bot uses result correctly in its response
+- **Tool not triggered**: caller says something adjacent but should NOT trigger the tool; bot does not call it
+- **Tool called with missing inputs**: caller provides incomplete information; bot asks for missing fields before calling the tool
+- **Tool returns error**: tool call fails or returns an error code; bot responds with documented fallback
+- **Tool returns not-found**: tool returns empty or no-match result; bot responds with documented not-found handling
+- **Tool call timeout**: tool takes too long to respond; bot takes documented timeout action
+- **Consecutive tool calls**: first tool result triggers a second tool call; pipeline serializes correctly and both results are used
+
+**For every documented conversation flow branch in the system prompt:**
+- The correct branch activates when the documented trigger condition is met
+- Ambiguous caller input at a decision point: bot clarifies or defaults per documented behavior
+- Caller goes off-script mid-flow: bot recovers and re-anchors to the flow per documented behavior
+- Caller refuses to provide required information: bot handles the refusal per documented behavior
+
+Apply Rule 1 throughout: each tool × each path = one test item. A bot with 5 tools × 7 paths = 35 tool workflow items before any branching or flow tests.
 
 ---
 
