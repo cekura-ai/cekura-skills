@@ -141,10 +141,7 @@ Each scenario in Phase 4 has a set of plain-English evaluation pointers — what
 
    Key rules from that reference that apply to every infra scenario:
    - Every statement must start with **"The main agent should"** — never "bot", "assistant", "AI"
-   - **Each statement must be on its own line, separated by `\n`.** Do not write the expected outcome as one long paragraph. Write one statement per line:
-     ```
-     The main agent should respond to the caller's initial message.\nThe main agent should terminate the call without a farewell phrase.\nThe main agent should not say goodbye or thank you before hanging up.
-     ```
+   - **Each statement on its own line — actual line breaks, not the literal text `\n`.** Do not write the expected outcome as one long paragraph. Each "The main agent should..." statement must be a separate line with a real newline character between them. When setting this field via MCP JSON payload, use `\n` inside the JSON string to produce a real newline (e.g. `"statement 1.\nstatement 2."`) — the result stored must be a real newline, not the two visible characters backslash-n. **If the Cekura UI shows `\n` as visible text between statements, the value was set wrong — patch it.**
      Never: `"The main agent should respond... The call should terminate... The main agent should not say..."`
    - Max 2 actions per statement — split if a step has 3 or more sub-actions
    - Semantic content only — do not quote verbatim phrases (paraphrasing is a pass); exception: exact values for KB/fact lookups
