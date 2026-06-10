@@ -1,8 +1,26 @@
 # Phase 2 — Analyze Each Layer
 
+> **ANNOUNCE FIRST:** Before reading any file or taking any action, output this exact line to the user:
+> `**Phase 2 — Analyze Each Layer: starting**`
+
 Take the Q1–Q12 answers from Phase 1 and write a precise, technical description of every discovered capability. The goal is to document what the stack actually does — how each layer works, what configuration it runs under, and what conditions govern its behavior. Test design comes later (Phase 3). Here, just describe the stack.
 
-Write the output to a temp file at `/tmp/infra-workflow-descriptions.md`. Phase 3 reads from this file before designing any scenarios.
+**Mandatory intermediate output — surface findings to chat before writing the file.**
+
+For every Q section (Q1–Q12), after reading the relevant source files, write a brief chat output in this format BEFORE compiling into `/tmp/`:
+
+```
+Q[N] — [Section Name]: ANALYZED
+Key findings:
+- [exact value / class name / config key found, with file:line]
+- [exact value / class name / config key found, with file:line]
+Source files read for this section: [list]
+Gaps (values not found in code): [list or "none"]
+```
+
+This surfaces your work so the user can confirm depth before the file is written. If a section is shallow, the user can ask for more depth here rather than after Phase 3 is already running.
+
+After all Q1–Q12 findings are surfaced to chat, compile the full descriptions into `/tmp/infra-workflow-descriptions.md`. Phase 3 reads this file before designing any scenarios.
 
 ---
 

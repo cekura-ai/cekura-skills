@@ -1,5 +1,8 @@
 # Phase 1 — Explore the Stack
 
+> **ANNOUNCE FIRST:** Before reading any file or taking any action, output this exact line to the user:
+> `**Phase 1 — Explore the Stack: starting**`
+
 Read the codebase and answer the questions below. Do not ask the user anything yet — find what you can from the code first, then surface only the gaps you couldn't resolve.
 
 The questions are technology-neutral. The answers will be different for every stack (LiveKit, Pipecat, VAPI, Retell, Cisco, Exotel, a custom WebSocket server — anything). That's expected. Record what's actually there, not what you expected to find.
@@ -150,7 +153,7 @@ Also check `CLAUDE.md` and `memory.md` if they exist — they may already have t
 
 ## Phase 1 Gate
 
-Write out your answers in this format, then ask the user the two questions below before moving on.
+**Write out your answers IN THE CHAT in this format — do not write to any /tmp/ file during Phase 1.** The gate output must appear in the conversation and be confirmed by the user before Phase 2 begins. Do not skip or abbreviate any Q answer.
 
 ```
 Q1 — Call connection:    [protocol/platform; inbound/outbound/both; how destination is set]

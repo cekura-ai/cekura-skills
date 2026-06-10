@@ -1,5 +1,8 @@
 # Phase 3 — Inventory What to Test
 
+> **ANNOUNCE FIRST:** Before reading any file or taking any action, output this exact line to the user:
+> `**Phase 3 — Inventory What to Test: starting**`
+
 Read `/tmp/infra-workflow-descriptions.md` (written by Phase 2) before doing anything else. That file is the authoritative source — every test item in this phase must be grounded in what Phase 2 actually documented. Do not add test items for behaviors that Phase 2 did not find.
 
 ---

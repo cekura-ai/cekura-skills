@@ -1,5 +1,8 @@
 # Phase 5 — Build and Run
 
+> **ANNOUNCE FIRST:** Before reading any file or taking any action, output this exact line to the user:
+> `**Phase 5 — Build and Run: starting**`
+
 Read `/tmp/infra-test-plan.md` (written by Phase 4) before doing anything else. That file has the complete scenario plan — conversation flows, evaluation criteria, and configuration batches. This phase creates the Cekura scenarios from that plan and writes a script that runs them all.
 
 ---

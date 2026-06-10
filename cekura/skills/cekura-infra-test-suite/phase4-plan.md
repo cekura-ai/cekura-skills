@@ -1,5 +1,8 @@
 # Phase 4 — Design the Test Plan
 
+> **ANNOUNCE FIRST:** Before reading any file or taking any action, output this exact line to the user:
+> `**Phase 4 — Design the Test Plan: starting**`
+
 Read `/tmp/infra-test-list.md` (written by Phase 3) before doing anything else. That is the authoritative list of everything that needs testing. This phase turns that list into a concrete, compact test plan written in plain English. No Cekura scenarios are created here — that is Phase 5.
 
 ---
