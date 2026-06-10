@@ -49,6 +49,10 @@ These variable names and values feed directly into Phase 5: they are registered 
 
 The goal is the smallest number of Cekura scenarios that gives complete coverage of the included test items. A single scenario (one conversation) can test multiple things — a scenario that tests interruption can also verify pipeline recovery and the next-turn LLM response in the same call.
 
+**HARD RULE — read before grouping anything:**
+
+Every actionable TEST-NNN item from Phase 3 must appear in at least one scenario's "Tests covered" field. Zero items may be dropped. If an item doesn't fit any arc pattern, it gets its own standalone scenario. "Doesn't fit neatly" is not a reason to exclude an item. A single-item scenario is valid and expected — do not force items into a scenario they don't belong in just to avoid creating a new one.
+
 ### Step 0 — Map test items to conversation arcs
 
 **Do this before any other grouping.** A **conversation arc** is the complete realistic call flow that exercises a component from start to finish. One arc = one scenario. TEST-NNN items that are stages of the same arc belong in the same scenario — never split them.
@@ -99,23 +103,29 @@ Rules for combining:
 - Do not combine tests whose success criteria conflict (e.g. a test that expects the bot to hang up cannot be followed by another test in the same call)
 - Do combine tests that are sequential stages of the same call (call setup → STT with noise → LLM response → interruption → idle silence)
 - Do combine tests for adjacent pipeline layers when one flows naturally into the next (e.g. turn-end signal fires → LLM trigger fires → response streamed to TTS)
+- **If an item cannot be combined with any other item without conflict, give it its own standalone scenario.** Do not drop it. A standalone scenario is a valid output of Phase 4.
 
-### Step 2b — Verify every actionable item has a scenario home
+### Step 2b — Produce the complete item mapping (BLOCKING output)
 
-**After grouping, before writing anything to the test plan file:** go through the Phase 3 test list (`/tmp/infra-test-list.md`) and produce a complete mapping:
+**Before writing a single scenario entry to `/tmp/infra-test-plan.md`**, output this mapping IN THE CHAT:
 
 ```
-TEST-001 → Scenario: Full-Pipeline-E2E
-TEST-002 → Scenario: Full-Pipeline-E2E
-TEST-031 → Scenario: Interruption-and-Recovery
-TEST-042 → Scenario: Idle-Full-Escalation-to-Hangup
-... (every actionable item)
-UNMAPPED: TEST-XXX, TEST-YYY, TEST-ZZZ
+ITEM MAPPING — complete before any scenario is written
+Total Phase 3 actionable items: [N]
+Mapped: 0 so far
+
+TEST-001 → [scenario name]
+TEST-002 → [scenario name]
+TEST-003 → NEW STANDALONE SCENARIO: [name]
+... (every item, one per line)
+
+Unmapped: 0
+All [N] items accounted for. ✓
 ```
 
-For every item in the UNMAPPED list: either add it to the most appropriate existing scenario's "Tests covered" field, or create a new scenario for it. **No actionable item may be left without a scenario home.** Dropping an item silently is not valid.
+This mapping must appear in the chat in full before writing the test plan file. If any item is still "Unmapped" after the first pass, create a new scenario for it and update the mapping line. Do not finalize the mapping until the "Unmapped" count is 0.
 
-Only after the UNMAPPED list is empty, proceed to write the test plan.
+Every item that doesn't fit an existing scenario gets a new standalone scenario. A single-item scenario is valid. Never leave an item without a home.
 
 ### Step 3 — Sanity-check the compactness
 
