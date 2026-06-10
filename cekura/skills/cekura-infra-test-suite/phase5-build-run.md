@@ -111,6 +111,11 @@ Each scenario in Phase 4 has a set of plain-English evaluation pointers — what
 
    Key rules from that reference that apply to every infra scenario:
    - Every statement must start with **"The main agent should"** — never "bot", "assistant", "AI"
+   - **Each statement must be on its own line, separated by `\n`.** Do not write the expected outcome as one long paragraph. Write one statement per line:
+     ```
+     The main agent should respond to the caller's initial message.\nThe main agent should terminate the call without a farewell phrase.\nThe main agent should not say goodbye or thank you before hanging up.
+     ```
+     Never: `"The main agent should respond... The call should terminate... The main agent should not say..."`
    - Max 2 actions per statement — split if a step has 3 or more sub-actions
    - Semantic content only — do not quote verbatim phrases (paraphrasing is a pass); exception: exact values for KB/fact lookups
    - No subjective descriptors — "appropriately", "warmly", "professionally" are not verifiable; use functional descriptions
