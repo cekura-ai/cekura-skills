@@ -34,10 +34,11 @@ The workflow:
 1. Read the agent ID from the Phase 1 gate output
 2. Read the full scenario list from `/tmp/infra-test-plan.md`
 3. Set up test profiles, mock tool data, and dynamic variables (see subsection below — do this before building any payload)
-4. Build the complete payload for every scenario upfront (agent, conditional_actions, language, personality, folder_path, name, expected_outcome, metrics, test_profile)
-5. Fire all `mcp__cekura__scenarios_create` calls at the same time
-6. Collect all returned IDs and record the scenario name → ID mapping once all calls complete
-7. If any individual creation fails, log the failure and retry that scenario only — do not retry the entire batch
+4. Create a test profile per scenario via `mcp__cekura__test_profiles_create` with `information.main_agent_variables` containing all dynamic variable values from Phase 4
+5. Build the complete payload for every scenario upfront (agent, conditional_actions, language, personality, folder_path, name, expected_outcome, metrics, test_profile ID)
+6. Fire all `mcp__cekura__scenarios_create` calls at the same time
+7. Collect all returned IDs and record the scenario name → ID mapping once all calls complete
+8. If any individual creation fails, log the failure and retry that scenario only — do not retry the entire batch
 
 ### Set up test profiles, mock tool data, and dynamic variables
 
@@ -66,18 +67,26 @@ Design test profile + mock tool entries + dynamic variable values as one synchro
 
 Before building any scenario payload, register every parameter identified in Phase 4 4a as a Cekura dynamic variable on the agent. Follow `cekura/skills/cekura-create-agent/phase8-dynamic-variables.md` for the registration workflow, naming conventions, and how to write detailed descriptions.
 
-For each parameter from the Phase 4 plan:
-1. Register it as a dynamic variable via `POST /test_framework/v1/aiagents/{agent_id}/dynamic-variables/` with a detailed description (data type, valid range, how the bot uses it, what happens if missing, realistic example value)
-2. When building each scenario's payload, set the `dynamic_variables` field with the specific values for that scenario — use the test-specific values from the Phase 4 "Dynamic variable values" field
-3. **Every scenario must include `dynamic_variables` in the payload with values for every registered variable — baseline values must be set explicitly, never omitted.** A scenario that omits a variable leaves the bot receiving no value for it, which may cause unpredictable behavior or the bot's own default (which may differ from what Phase 2 analyzed).
+Use `mcp__cekura__aiagents_partial_update` or the dynamic-variables endpoint to register each parameter with a detailed description (data type, valid range, how the bot uses it, what happens if missing, realistic example value).
 
-**If Phase 2 Q10 (Bot Speaks First) is yes**, check how the bot receives its opening message at connection time — it may be hardcoded, loaded from a config file, or injected via a dynamic variable. If the opening message is passed via a dynamic variable, register it on the agent and set it in each scenario's `dynamic_variable_values` using the exact phrase documented in Phase 2. If it is hardcoded or config-driven, no dynamic variable is needed — the Phase 2 phrase is what will play and must match the scenario's `expected_outcome`.
+### Set dynamic variable values via test profile — not on the scenario directly
 
-**Dynamic variable values must be set in the CREATE payload — not as a note, not as a manual follow-up, not via the UI.** If Phase 4 specifies non-default values for a scenario, those values go into the `dynamic_variables` field of the `mcp__cekura__scenarios_create` call for that scenario. A scenario whose `dynamic_variables` field is missing or wrong will run with the bot's defaults and the test will not exercise the intended behavior. Never leave a comment like "set this manually later" or "configure this via the UI" — set it in the payload now.
+**Dynamic variable values for the main agent go into the test profile's `main_agent_variables` dict, not into a `dynamic_variables` field on the scenario.** The scenario references the test profile via a `test_profile` integer ID field.
 
-Additionally: the MCP `scenarios_partial_update` tool may not expose `dynamic_variable_values` in its schema, making it impossible to patch this field via MCP after creation. This is another reason the values must be in the CREATE payload — do not count on being able to set them post-creation.
+For each scenario:
+1. Create a test profile using `mcp__cekura__test_profiles_create` with the `information.main_agent_variables` dict containing every registered dynamic variable and its value for this scenario
+2. Set the `test_profile` field on the `mcp__cekura__scenarios_create` payload to the returned test profile ID
+3. **Every registered variable must appear in `main_agent_variables` — baseline values must be set explicitly, never omitted.** A missing variable leaves the bot with no value for it, which may cause unpredictable behavior.
 
-This replaces any need for bot-side configuration changes. Cekura passes these values to the bot at connection time; the bot reads them and configures itself for that call.
+The `information` object in a test profile has two sections:
+- `main_agent_variables` — delivered to the main agent at connection time as its dynamic variable values
+- `testing_agent_variables` (optional) — persona/context data for the testing agent only; never sent to the main agent
+
+Follow `cekura/skills/cekura-eval-design/references/test-data-design.md` (Step 4 — Dynamic Variables) for the full workflow, consistency rules, and how to handle the data trio (mock tools + test profile + dynamic variables).
+
+**If Phase 2 Q10 (Bot Speaks First) is yes**, check how the bot receives its opening message at connection time. If it is passed via a dynamic variable, include it in `main_agent_variables` in the test profile using the exact phrase from Phase 2. If it is hardcoded or config-driven, no entry is needed — but the Phase 2 phrase must match the scenario's `expected_outcome`.
+
+This replaces any need for bot-side configuration changes. Cekura passes `main_agent_variables` to the bot at connection time; the bot reads them and configures itself for that call.
 
 For authoring each scenario's payload, invoke the **cekura-eval-design** skill.
 
@@ -187,9 +196,9 @@ For each scenario, check every field listed below. If any field is wrong, patch 
 - Does the `expected_outcome` use the actual bot phrases and behaviors from Phase 2 — not a paraphrase? Open `/tmp/infra-workflow-descriptions.md` and compare: if Phase 2 says the idle prompt is "Are you still with me?" and the expected_outcome says "bot prompts caller about silence", that is a mismatch — patch it with the exact phrase.
 - Do the `action` timing values in the conditions match the Phase 2 values exactly — not rounded, not estimated? A `<hold duration="10s"/>` that should be `<hold duration="12s"/>` based on Phase 2's documented threshold will cause the idle timer test to fail silently.
 
-**Dynamic variable values**
-- Does the scenario's `dynamic_variables` field contain the values specified in the Phase 4 "Dynamic variable values" field? If Phase 4 specifies non-default values and the field is missing or empty on the created scenario, patch it immediately via `mcp__cekura__scenarios_partial_update` — do NOT leave this as a note or a follow-up task.
-- If the field is present, do the values match exactly what Phase 4 specified (correct variable names, correct test values)?
+**Dynamic variable values via test profile**
+- Does the scenario have a `test_profile` attached? If not, create one via `mcp__cekura__test_profiles_create` and patch the scenario immediately.
+- Does `test_profile.information.main_agent_variables` contain every registered dynamic variable with the values from the Phase 4 "Dynamic variable values" field? Fetch the test profile and verify each variable is present and correct. Patch via `mcp__cekura__test_profiles_partial_update` if any value is missing or wrong — do NOT leave this as a note or follow-up task.
 
 **What to do when a mismatch is found**
 - Fix it with `mcp__cekura__scenarios_partial_update` immediately.

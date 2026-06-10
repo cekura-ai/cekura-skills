@@ -23,7 +23,7 @@ For each parameter that needs a test-specific value, document:
 | Why it works | One sentence: why this value triggers the behavior |
 | TEST-NNN items covered | Which test items use this variable value |
 
-These variable names and values feed directly into Phase 5: they are registered as Cekura dynamic variables on the agent, and each evaluator that needs a non-default value sets it in its `dynamic_variables` payload.
+These variable names and values feed directly into Phase 5: they are registered as Cekura dynamic variables on the agent, and each evaluator receives them via its **test profile's `main_agent_variables`** dict — not via a `dynamic_variables` field on the scenario itself.
 
 ---
 
@@ -123,7 +123,7 @@ Each entry must include:
 
 **Tests covered** — list the TEST-NNN IDs from Phase 3 this scenario exercises
 
-**Dynamic variable values** — list every registered dynamic variable with its value for this scenario. All variables must be listed, including those using baseline values. These values will be set on the Cekura evaluator and passed to the bot at connection time:
+**Dynamic variable values** — list every registered dynamic variable with its value for this scenario. All variables must be listed, including those using baseline values. These values will go into the test profile's `main_agent_variables` dict, which is attached to the scenario. The bot receives them at connection time.
 - `variable_name`: `value` (baseline: `baseline_value`) — note if this is a test-specific override and why, or "baseline" if using the default
 
 **Conversation flow** — step by step, using exact values from Phase 2, not placeholders. Every duration, digit sequence, phrase, and timing offset must be the real value, not `[idle threshold + 2s]` or `[the bot's greeting]`:
