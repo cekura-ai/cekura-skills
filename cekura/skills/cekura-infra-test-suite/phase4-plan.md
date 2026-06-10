@@ -16,14 +16,29 @@ Go through the TEST-NNN list from `/tmp/infra-test-list.md`. For each item, iden
 - **No special value needed** — the behavior can be triggered by what the testing agent says or does (speaking, staying silent, interrupting, sending DTMF) with the bot running at its normal defaults.
 - **Specific value needed** — the behavior only fires reliably if a specific parameter (timeout duration, threshold, flag) is set to a test-specific value. This value will be passed as a Cekura dynamic variable on the evaluator.
 
+**Before planning any variable value, do both of the following — in this order:**
+
+**Step A — Fetch the variable description from the Cekura API:**
+Call `mcp__cekura__aiagents_retrieve` for agent ID from Phase 1, then fetch registered dynamic variables via `GET /test_framework/v1/aiagents/{agent_id}/dynamic-variables/`. For each variable, read the `description` field carefully. It specifies the data type, expected format, valid range, and a realistic example value. A variable described as `"ISO 8601 datetime string e.g. 2024-01-15T10:30:00Z"` must receive a value in that exact format — not a timestamp integer, not a date-only string. A variable described as `"Integer between 10 and 300 representing timeout in seconds"` must receive an integer, not a string.
+
+**Step B — Find how the variable is consumed in the codebase:**
+Grep the bot source code for the variable name (e.g., search for `"variable_name"` or `variable_name` in Python files). Find the exact line where it is read at runtime. Read the surrounding code:
+- What type does the consuming code cast or expect it to be?
+- What happens if it receives null, empty string, or a wrong format?
+- What value would trigger the specific behavior being tested, and what value is the safe default?
+
+Only after completing both steps, plan the value for each test scenario.
+
 For each parameter that needs a test-specific value, document:
 
 | Field | What to record |
 |---|---|
-| Variable name | snake_case identifier that will be registered as a Cekura dynamic variable |
-| Test value | The value needed to reliably trigger the behavior being tested |
-| Default/baseline value | The value the bot uses when the variable is not set (from Phase 2) |
-| Why it works | One sentence: why this value triggers the behavior |
+| Variable name | The exact name as registered on the agent (from Step A) |
+| Description | The full description from the API (copy verbatim — do not paraphrase) |
+| Codebase consumption | file:line where it is read, type expected, what the code does with it (from Step B) |
+| Test value | The value needed to reliably trigger the behavior — must match the format in the description |
+| Default/baseline value | The value the bot uses when the variable is not set (from Phase 2 or description example) |
+| Why it works | One sentence: why this specific value triggers the behavior |
 | TEST-NNN items covered | Which test items use this variable value |
 
 These variable names and values feed directly into Phase 5: they are registered as Cekura dynamic variables on the agent, and each evaluator receives them via its **test profile's `main_agent_variables`** dict — not via a `dynamic_variables` field on the scenario itself.

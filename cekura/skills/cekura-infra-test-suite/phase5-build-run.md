@@ -72,12 +72,30 @@ Before building any scenario payload, register every parameter identified in Pha
 
 Use `mcp__cekura__aiagents_partial_update` or the dynamic-variables endpoint to register each parameter with a detailed description (data type, valid range, how the bot uses it, what happens if missing, realistic example value).
 
+### Understand each variable before generating its value — mandatory
+
+Before creating any test profile, do these three steps for every registered dynamic variable:
+
+**Step 1a — Fetch descriptions from the Cekura API:**
+`GET /test_framework/v1/aiagents/{agent_id}/dynamic-variables/` — for each variable, read the `description` field in full. It specifies the exact data type, format, valid range, and example. The value you set in the test profile MUST match this format. A description saying `"Integer seconds, 10–300"` means the value must be an integer like `45`, not a string like `"45"` or `"45s"`.
+
+**Step 1b — Find the consumption point in the codebase:**
+Grep the bot source for the variable name. Find the exact line where it is read at runtime (e.g., `dyn.get("variable_name")`, `config["variable_name"]`, `os.environ["VARIABLE_NAME"]`). Read the surrounding code to understand:
+- What Python/JS type does the code cast or expect?
+- What does it do with the value (LLM system prompt injection, timeout parameter, feature flag, etc.)?
+- What would be a valid test value for the specific behavior being tested, vs. a safe baseline?
+
+**Step 1c — Document the reasoning before setting the value:**
+For every variable in every test profile, record: `variable_name = X because: description says [format], code at [file:line] reads it as [type] and uses it for [purpose], this value will trigger [behavior]`.
+
+This is not optional documentation — it prevents wrong values from being silently set and causing the test to exercise the wrong behavior.
+
 ### Set dynamic variable values via test profile — not on the scenario directly
 
 **Dynamic variable values for the main agent go into the test profile's `main_agent_variables` dict, not into a `dynamic_variables` field on the scenario.** The scenario references the test profile via a `test_profile` integer ID field.
 
 For each scenario:
-1. Create a test profile using `mcp__cekura__test_profiles_create` with the `information.main_agent_variables` dict containing every registered dynamic variable and its value for this scenario
+1. Create a test profile using `mcp__cekura__test_profiles_create` with the `information.main_agent_variables` dict containing every registered dynamic variable and its value for this scenario — values determined via Steps 1a–1c above
 2. Set the `test_profile` field on the `mcp__cekura__scenarios_create` payload to the returned test profile ID
 3. **Every registered variable must appear in `main_agent_variables` — baseline values must be set explicitly, never omitted.** A missing variable leaves the bot with no value for it, which may cause unpredictable behavior.
 
