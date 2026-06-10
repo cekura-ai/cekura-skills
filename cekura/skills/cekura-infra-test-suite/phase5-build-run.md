@@ -341,6 +341,46 @@ Fix any connection or timing issues before running the full suite. A timeout or 
 
 ---
 
+## 5g. Final traceability summary
+
+Output the following two tables to the chat after all scenarios are created and verified. This is the authoritative record of what is tested and how.
+
+**Table 1 — Scenario coverage (scenario → TEST items):**
+
+```
+## Test Coverage Summary
+
+| Scenario | Scenario ID | TEST-NNN Items Covered |
+|---|---|---|
+| Idle-Full-Escalation-to-Hangup | <id> | TEST-042, TEST-043, TEST-044, TEST-045 |
+| Interruption-BackToBack | <id> | TEST-067, TEST-068, TEST-069 |
+| ... | ... | ... |
+
+Total scenarios created: N
+Total TEST-NNN items covered by dedicated scenarios: N
+Items covered implicitly (ambient): N
+Items excluded (not testable): N
+All TEST-NNN items accounted for: N / [total from Phase 3]
+```
+
+**Table 2 — Test item index (TEST item → scenario):**
+
+```
+## Test Item Index
+
+| TEST-NNN | Description | Covered by Scenario |
+|---|---|---|
+| TEST-001 | [one full sentence describing exactly what is being tested] | Full-Pipeline-E2E |
+| TEST-042 | [one full sentence describing exactly what is being tested] | Idle-Full-Escalation-to-Hangup |
+| ... | ... | ... |
+```
+
+The description must be a complete sentence, not a label. "Idle timer fires" is not a description. "Idle timer fires at the configured threshold (8s) after caller silence mid-call and the first escalation prompt plays" is.
+
+**After outputting both tables:** check whether any TEST-NNN item from Phase 3 (excluding ambient and explicitly excluded items) is absent from Table 2. If any are missing, list them and ask the user whether to create additional scenarios to cover them before closing Phase 5.
+
+---
+
 ## Phase 5 Complete
 
 The suite is ready as a CI gate. The run script is the entry point — run it before merging any PR that touches the pipeline stack. Every scenario must pass.
