@@ -113,22 +113,38 @@ curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tools/ 
 
 ### Profile Structure
 
+Test profile `information` is split into two sections so each value reaches only the right consumer:
+
+| Section | Sent to | Examples |
+|---|---|---|
+| `main_agent_variables` | The **agent under test** as dynamic variables at call time (VAPI `assistantOverrides.variableValues`, Retell `retell_llm_dynamic_variables`, Bland `request_data`, etc.) | `account_id`, `user_id`, `member_number`, signed customer tokens — anything the agent reads as a registered dynamic variable |
+| `testing_agent_variables` | The **testing agent** (Cekura's simulated caller) — persona / context for the simulator only; never reaches the agent under test | `customer_name`, `date_of_birth`, story details, situational facts |
+
 ```json
 {
   "name": "John Carter — Loan Payoff",
   "project": 2998,
   "information": {
-    "customer_name": "John Carter",
-    "date_of_birth": "03/14/1982",
-    "customer_phone_number": "8645239892",
-    "backup_phone_number": "5551234567",
-    "account_id": "B001",
-    "loan_balance": "12,450.00"
+    "main_agent_variables": {
+      "account_id": "B001",
+      "customer_phone_number": "8645239892"
+    },
+    "testing_agent_variables": {
+      "customer_name": "John Carter",
+      "date_of_birth": "03/14/1982",
+      "backup_phone_number": "5551234567",
+      "loan_balance": "12,450.00"
+    }
   }
 }
 ```
 
 Profiles are project-level — always set `project`, not `agent`.
+
+**Both sections are optional.** Set only what the scenario actually needs:
+- If the agent has no registered dynamic variables, omit `main_agent_variables` (or leave it `{}`) — nothing to deliver. Put persona/context in `testing_agent_variables` only.
+- If the scenario only needs dynamic-variable values and the simulator doesn't need a separate persona, populate `main_agent_variables` and leave `testing_agent_variables` out (or `{}`).
+- A profile with both sections empty is still valid for attaching to a scenario for naming.
 
 ### Template Variable Syntax
 

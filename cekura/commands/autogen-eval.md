@@ -197,6 +197,8 @@ Check if generated scenarios need test profiles. For scenarios involving identit
 - For Approach A: check existing profiles first with `mcp__cekura__test_profiles_list`
 - **Partial-match rule:** if an existing profile covers only a subset of required fields, create a new complete one — never use a partial profile
 
+Test profile `information` uses the sectioned shape `{"main_agent_variables": {...}, "testing_agent_variables": {...}}`. The auto-generation flow populates both sections — `main_agent_variables` carries the values that reach the agent under test as dynamic variables, `testing_agent_variables` carries persona/context for the simulator.
+
 ### 5. Quality Review
 Review each generated evaluator:
 - Does it have meaningful, multi-step instructions (not 1-line stubs)?
