@@ -461,7 +461,18 @@ Required minimum: 200
 Status: PASS / FAIL
 ```
 
-**If actionable items < 200 → Status = FAIL. Do NOT write "Move to Phase 4." If you find yourself about to write "Move to Phase 4" — STOP, delete it, write "BLOCKED" instead. Do NOT ask the user if you should proceed. Instead write:**
+**If actionable items < 200 → Status = FAIL.**
+
+**ANTI-REASONING RULE — read this before doing anything else:**
+Do NOT argue that 200 is the wrong threshold for this specific agent. Do NOT write "this agent only has X behaviors" or "200 is unrealistic for this scope." Do NOT produce a justification table for why fewer items is acceptable. Do NOT proceed to Phase 4 based on your own reasoning about this agent's complexity. The threshold is not negotiable and cannot be overridden by analysis.
+
+If you have genuinely exhausted every enumeration rule (Rule 1–5, all Q sections in Phase 2, Agent Workflow Tests for every documented tool, multi-language tests for every supported language, cross-component pairs for every adjacent component) and still cannot reach 200 actionable items, then — and only then — ask the user:
+
+> "Phase 3 count check: [X] actionable items found. The required minimum is 200. I have applied all enumeration rules and cannot find more items. Should I proceed with [X] items, or would you like me to look harder in a specific area?"
+
+Wait for the user's explicit answer. Do not proceed unilaterally.
+
+If you have NOT exhausted every enumeration rule, do NOT write the above question. Instead write:
 
 ```
 PHASE 3 INCOMPLETE — [X] actionable items, need [200 - X] more.
