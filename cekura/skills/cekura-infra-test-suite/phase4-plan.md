@@ -100,6 +100,23 @@ Rules for combining:
 - Do combine tests that are sequential stages of the same call (call setup → STT with noise → LLM response → interruption → idle silence)
 - Do combine tests for adjacent pipeline layers when one flows naturally into the next (e.g. turn-end signal fires → LLM trigger fires → response streamed to TTS)
 
+### Step 2b — Verify every actionable item has a scenario home
+
+**After grouping, before writing anything to the test plan file:** go through the Phase 3 test list (`/tmp/infra-test-list.md`) and produce a complete mapping:
+
+```
+TEST-001 → Scenario: Full-Pipeline-E2E
+TEST-002 → Scenario: Full-Pipeline-E2E
+TEST-031 → Scenario: Interruption-and-Recovery
+TEST-042 → Scenario: Idle-Full-Escalation-to-Hangup
+... (every actionable item)
+UNMAPPED: TEST-XXX, TEST-YYY, TEST-ZZZ
+```
+
+For every item in the UNMAPPED list: either add it to the most appropriate existing scenario's "Tests covered" field, or create a new scenario for it. **No actionable item may be left without a scenario home.** Dropping an item silently is not valid.
+
+Only after the UNMAPPED list is empty, proceed to write the test plan.
+
 ### Step 3 — Sanity-check the compactness
 
 Apply the per-component caps below. If a component exceeds its cap, mandatory merge until it fits — exceeding the cap means Step 0 arc mapping was incomplete.
@@ -207,8 +224,9 @@ After drafting all scenarios in 4d and handling exclusions in 4e, stop and indep
 
 Check for the following categories of problem:
 
-**Coverage gaps**
-- Is every included TEST-NNN item from Phase 3 covered by at least one scenario? List any that are missing.
+**Coverage gaps — MUST fix before proceeding**
+- Count the total TEST-NNN items in all scenarios' "Tests covered" fields. Compare to the actionable item count from Phase 3. If these numbers differ, items are missing. List every missing TEST-NNN item by name and add it to a scenario before continuing.
+- Is every actionable TEST-NNN item from Phase 3 covered by at least one scenario? This is not optional — if even one item is missing, the plan is incomplete.
 - Does every boundary condition in Phase 3 (threshold-at, threshold-below, threshold-above) have a corresponding scenario step that actually exercises that value? Or was the step written vaguely ("go silent for a while") when the value was known?
 
 **Contradictions within a scenario**
@@ -309,7 +327,13 @@ Total TEST-NNN items accounted for: N / [total from Phase 3]
 
 ## Phase 4 Gate
 
-`/tmp/infra-test-plan.md` exists. Self-review (4h) has been completed and its findings recorded in the file header. Every included TEST-NNN item from Phase 3 maps to at least one scenario. Every scenario has a "Dynamic variable values" field, a conversation flow, and plain-English evaluation pointers. No metric names or expected outcome text — those are Phase 5's job.
+Before writing "Move to Phase 5", verify these three conditions. If any fails, fix it first — do not proceed.
+
+**Condition 1:** `/tmp/infra-test-plan.md` exists and every scenario has a "Dynamic variable values" field, a conversation flow, and plain-English evaluation pointers.
+
+**Condition 2:** Every actionable TEST-NNN item from Phase 3 maps to at least one scenario. To verify: count the total TEST-NNN IDs listed across all scenarios' "Tests covered" fields and compare to the actionable item count from Phase 3. If the counts differ, the plan is incomplete — find the missing items and add them.
+
+**Condition 3:** Self-review (4h) has been completed and its findings recorded in the file header.
 
 Confirm the plan with the user before moving to Phase 5. Present the summary block and ask whether any scenarios should be adjusted, merged, or split.
 

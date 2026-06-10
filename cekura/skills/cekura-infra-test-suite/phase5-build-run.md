@@ -375,9 +375,9 @@ All TEST-NNN items accounted for: N / [total from Phase 3]
 | ... | ... | ... |
 ```
 
-The description must be a complete sentence, not a label. "Idle timer fires" is not a description. "Idle timer fires at the configured threshold (8s) after caller silence mid-call and the first escalation prompt plays" is.
+**This table must contain EVERY TEST-NNN item from Phase 3 — not a selection, not "key items", not a sample.** Every single actionable item must appear. The description must be a complete sentence: "Idle timer fires" is not a description; "Idle timer fires at the configured threshold (8s) after caller silence mid-call and the first escalation prompt plays" is.
 
-**After outputting both tables:** check whether any TEST-NNN item from Phase 3 (excluding ambient and explicitly excluded items) is absent from Table 2. If any are missing, list them and ask the user whether to create additional scenarios to cover them before closing Phase 5.
+**After outputting both tables:** count the rows in Table 2. If the count is less than the number of actionable items from Phase 3, items are missing — list every missing item explicitly and ask the user whether to create additional scenarios before closing Phase 5.
 
 ---
 

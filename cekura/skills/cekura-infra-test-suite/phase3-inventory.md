@@ -461,7 +461,7 @@ Required minimum: 200
 Status: PASS / FAIL
 ```
 
-**If actionable items < 200 → Status = FAIL. Do NOT write "Move to Phase 4." Do NOT ask the user if you should proceed. Instead write:**
+**If actionable items < 200 → Status = FAIL. Do NOT write "Move to Phase 4." If you find yourself about to write "Move to Phase 4" — STOP, delete it, write "BLOCKED" instead. Do NOT ask the user if you should proceed. Instead write:**
 
 ```
 PHASE 3 INCOMPLETE — [X] actionable items, need [200 - X] more.
