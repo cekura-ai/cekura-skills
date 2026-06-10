@@ -108,8 +108,8 @@ Open-ended persona dialogue, exploratory red-team without specific attack script
 
 **Test profiles are the backbone of reliable evals.** They serve three critical purposes:
 1. **Memory persistence** — The testing agent reliably uses profile data during calls. Data in instructions often leads to hallucinations.
-2. **Dynamic variables** — For outbound and websocket runs, test profile fields are sent to the main agent as caller context, mimicking what production systems provide. This lets you test the full end-to-end flow.
-3. **Single source of truth** — No risk of name in test profile saying "Sarah" while instructions say "John", which causes the testing agent to hallucinate.
+2. **Dynamic variables** — For outbound and websocket runs, the profile's `main_agent_variables` section is sent to the agent under test as dynamic variables (mimicking production); the `testing_agent_variables` section stays with Cekura's simulator as persona/context only.
+3. **Single source of truth** — No risk of name in test profile saying "Sarah" while instructions say "John", which causes the testing agent to hallucinate. `test_profile.information.main_agent_variables` is the single source of truth for dynamic variables at call time.
 
 **Always use test profiles.** Never hardcode identity data (names, DOBs, account IDs, addresses, phone numbers, service addresses, discrepancy amounts — anything persona-related) in scenario instructions. Instead, create a test profile with the data and let the instructions reference it generically (e.g., "State your name when asked").
 
@@ -349,7 +349,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 - **All XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text.
 - **`<ivr text="..." />` and `<voicemail text="..." />`** (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags. Use a separate `action_followup` for post-IVR / post-beep content.
 - **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
-- **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
+- **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. Supports decimal seconds (`"0.5s"`) for sub-second precision. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
 - **`<dtmf digits="..." />`** supports `0–9`, `#`, `*`; combinable with surrounding text.
 - **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
 - **`<spell>TEXT</spell>`** wraps text to spell letter by letter (good for IDs, account numbers).
