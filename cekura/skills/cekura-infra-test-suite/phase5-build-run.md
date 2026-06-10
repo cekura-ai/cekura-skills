@@ -69,7 +69,7 @@ Before building any scenario payload, register every parameter identified in Pha
 For each parameter from the Phase 4 plan:
 1. Register it as a dynamic variable via `POST /test_framework/v1/aiagents/{agent_id}/dynamic-variables/` with a detailed description (data type, valid range, how the bot uses it, what happens if missing, realistic example value)
 2. When building each scenario's payload, set the `dynamic_variables` field with the specific values for that scenario — use the test-specific values from the Phase 4 "Dynamic variable values" field
-3. Scenarios that use only baseline values may omit the `dynamic_variables` field or set the defaults explicitly
+3. **Every scenario must include `dynamic_variables` in the payload with values for every registered variable — baseline values must be set explicitly, never omitted.** A scenario that omits a variable leaves the bot receiving no value for it, which may cause unpredictable behavior or the bot's own default (which may differ from what Phase 2 analyzed).
 
 **If Phase 2 Q10 (Bot Speaks First) is yes**, check how the bot receives its opening message at connection time — it may be hardcoded, loaded from a config file, or injected via a dynamic variable. If the opening message is passed via a dynamic variable, register it on the agent and set it in each scenario's `dynamic_variable_values` using the exact phrase documented in Phase 2. If it is hardcoded or config-driven, no dynamic variable is needed — the Phase 2 phrase is what will play and must match the scenario's `expected_outcome`.
 

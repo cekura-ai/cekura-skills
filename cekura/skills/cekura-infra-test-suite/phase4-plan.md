@@ -123,8 +123,8 @@ Each entry must include:
 
 **Tests covered** — list the TEST-NNN IDs from Phase 3 this scenario exercises
 
-**Dynamic variable values** — either "All variables use baseline values" or a list of variable names with their test-specific values and the reason. These values will be set on the Cekura evaluator and passed to the bot at connection time:
-- `variable_name`: `test_value` (default: `baseline_value`) — why this value triggers the behavior being tested
+**Dynamic variable values** — list every registered dynamic variable with its value for this scenario. All variables must be listed, including those using baseline values. These values will be set on the Cekura evaluator and passed to the bot at connection time:
+- `variable_name`: `value` (baseline: `baseline_value`) — note if this is a test-specific override and why, or "baseline" if using the default
 
 **Conversation flow** — step by step, using exact values from Phase 2, not placeholders. Every duration, digit sequence, phrase, and timing offset must be the real value, not `[idle threshold + 2s]` or `[the bot's greeting]`:
 > 1. Wait silently — bot speaks first (Phase 2 Q10: opening message is "Hello, how can I help you today?")
@@ -241,7 +241,10 @@ Read by Phase 5 before creating any scenarios.
 ### [SCENARIO-001] Scenario Name
 
 **Tests covered:** TEST-004, TEST-007, TEST-012
-**Dynamic variable values:** All variables use baseline values
+**Dynamic variable values:**
+- `variable_name_1`: `baseline_value` (baseline)
+- `variable_name_2`: `baseline_value` (baseline)
+- *(list every registered variable — never omit any)*
 **Language:** en
 **Personality:** 693 (Normal Male) — neutral default; no voice challenge needed for this infra test
 
