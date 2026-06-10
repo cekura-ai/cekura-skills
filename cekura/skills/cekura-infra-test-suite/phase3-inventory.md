@@ -68,12 +68,25 @@ Before generating any items, read this definition. It is the only valid reason t
 - A metric was emitted internally (no call-visible effect)
 
 **NOT a valid reason to exclude:**
-- **"Sub-second timing"** — if the difference crosses a threshold boundary, behavior differs (prompt fires vs. doesn't fire). That difference IS in the transcript. `7.9s silence → no prompt` vs. `8.0s silence → prompt fires` are two distinct observable outcomes.
+- **"Sub-second timing"** — if the difference crosses a threshold boundary, behavior differs (prompt fires vs. doesn't fire). That difference IS in the transcript. Use comfortable margins: BelowThreshold = threshold−2s (behavior clearly should NOT fire), AboveThreshold = threshold+2s (behavior clearly SHOULD fire). You do not need millisecond precision.
 - **"Internal state"** — if the internal state change produces ANY observable output (bot speaks, bot pauses, bot hangs up, call ends), it is testable.
-- **"Hard to time precisely"** — if the behavior is deterministic at the boundary value, it is testable even if the exact trigger moment varies slightly in practice.
+- **"Nothing happened"** — absence of behavior IS observable. "No idle prompt appeared" is a transcript fact. "Bot did not hang up" is observable. "Interruption did not fire" is observable (bot speech was not truncated). If you can check the transcript and confirm something was absent, it is testable.
+- **"Hard to time precisely"** — boundary tests check whether behavior fires at all, not the exact millisecond. A 6s hold with an 8s threshold reliably produces no idle prompt; a 10s hold reliably does produce one. Both are deterministic.
 - **"Not directly visible"** — if the behavior is visible through its downstream effect on the bot's speech or action, it is testable.
 
-**When in doubt, include the test item.** Phase 4 will decide whether it can be grouped with others or is genuinely unreachable in a scenario. Do not make that decision here.
+**Worked example — absence of behavior is testable:**
+- `Idle-BelowThreshold`: hold 6s (threshold=8s) → transcript shows NO idle prompt → verifiable pass/fail
+- `Idle-AtThreshold`: hold 9s (threshold=8s) → transcript shows idle prompt → verifiable pass/fail
+- Both are transcript-verifiable. Neither requires sub-second precision.
+
+**Worked example — what NOT to exclude:**
+- "VAD suppressed during TTS" → observable: no spurious user turn opened during bot speech
+- "STT confidence below threshold" → observable: bot processed or discarded the transcript (behavior differs)
+- "Retry count reached" → observable: bot speaks a fallback phrase or hangs up after last retry
+
+**The only truly unobservable case:** BOTH the pass case and the fail case produce exactly the same transcript — same words, same call outcome, same sequence. If you can describe how a passing transcript differs from a failing transcript, it is observable.
+
+**When in doubt, include the test item.** Phase 4 will decide whether it can be grouped or is genuinely unreachable. Do not make that decision here.
 
 ---
 
