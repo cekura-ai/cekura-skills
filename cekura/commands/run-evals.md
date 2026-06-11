@@ -35,8 +35,9 @@ Execute one or more evaluators against the target agent.
    - **`voice`** = PSTN. Valid whenever `telephony.phone_number` is set. Note: a bare phone number is `voice`, never `sip`.
    - **`sip`** = only when `telephony.sip_uri` is set (e.g. `sip:agent@host`).
    - **`text`** = when `provider.chat_agent_details` is set.
-   - **`websocket`** = when `telephony.websocket_url` is set and no other provider.
-   - **WebRTC** (`vapi`, `retell`, `elevenlabs`, `livekit`) = when `provider.type` matches.
+   - **`websocket`** = when `telephony.websocket_url` is set and no other provider (JSON/text protocol).
+   - **`chirp`** = when `telephony.websocket_url` is set on a voice agent (raw-PCM audio websocket).
+   - **WebRTC** (`vapi`, `retell`, `elevenlabs`, `livekit`, `agora`) = when `provider.type` matches.
    - **`pipecat-v2` / `pipecat`** = when `provider.type: pipecat`.
 
    Selection rule:
@@ -62,6 +63,8 @@ Execute one or more evaluators against the target agent.
    | retell | `mcp__cekura__scenarios_run_retell_webrtc` |
    | elevenlabs | `mcp__cekura__scenarios_run_elevenlabs` |
    | livekit | `mcp__cekura__scenarios_run_livekit_v2` |
+   | agora | `mcp__cekura__scenarios_run_agora` |
+   | chirp | `mcp__cekura__scenarios_run_chirp` |
    | sip | `mcp__cekura__scenarios_run_sip` |
 
 5. **Monitor**: Check run status:

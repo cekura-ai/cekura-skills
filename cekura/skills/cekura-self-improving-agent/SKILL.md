@@ -16,7 +16,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.24.0"
+  version: "0.25.0"
 ---
 
 # Cekura Self-Improving Agent
@@ -31,7 +31,7 @@ Currently supported for **VAPI**, **ElevenLabs**, and **self-hosted** (pipecat +
 
 ## Architecture — orchestrator over a sequence of focused sub-phases
 
-This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases living in `phases/optimization/`, with Setup, Overfitting Gate, and Eval as standalone phases on either side:
+This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases living in `phases/optimization/`, with Setup, Clone (VAPI / ElevenLabs only), Overfitting Gate, and Eval as standalone phases on either side:
 
 ```
                   ┌────────────────┐
@@ -39,6 +39,14 @@ This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases
                   │  runs once     │
                   └───────┬────────┘
                           │  (mode, sub-flavor, agent, redeploy_command)
+                          ▼
+                  ┌────────────────────────────┐
+                  │  Clone phase (runs once)   │  (phases/clone.md)
+                  │  VAPI / ElevenLabs ONLY    │  — every other mode passes
+                  │  clone provider agent +    │    straight through
+                  │  copy Cekura agent; rebind │
+                  └───────┬────────────────────┘
+                          │  (run rebound to the clone; live agent untouched)
                           ▼
               ┌───  ┌───────────────────────────┐
               │     │ Optimization · Collect    │  (phases/optimization/collect.md)
@@ -101,7 +109,9 @@ This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases
                                            (surface + pause for user)
 ```
 
-**Setup runs once.** It resolves the run mode and sub-flavor, loads the agent (its config and prompt source), and (for self-hosted live targets) collects the `redeploy_command`. Setup is a hard gate — Optimization · Collect will not start until Setup is complete.
+**Setup runs once.** It resolves the run mode and sub-flavor, loads the agent (its config and prompt source), and (for self-hosted live targets) collects the `redeploy_command`. Setup is a hard gate — the Clone phase (or, for non-managed modes, Optimization · Collect) will not start until Setup is complete.
+
+**Clone runs once — VAPI and ElevenLabs only.** Before any failure data is fetched, the skill stands up a disposable copy of the agent **in the same provider org** (same `VAPI_KEY` / `ELEVENLABS_API_KEY`) and a copy Cekura agent **in the same project** (`aiagents_duplicate_create` with `copy_scenarios=true`), repoints the Cekura copy at the cloned provider assistant, and rebinds the run to the clone. Every later phase — Diagnose, Apply, Sync, Eval validation — then operates on the clone, so the user's **production agent is never touched**. On exit the validated cumulative diff is surfaced for the user to promote to the live agent deliberately (never automatic). Tool definitions are id-referenced shared resources on both providers, so the clone includes fresh copies of every referenced tool with the assistant repointed at them — otherwise Apply's tool PATCHes would still hit production tools. **All other modes** (`pipecat`, `websocket`, `database`, websocket `offline`) skip this phase: the user owns the live runtime, there is no managed provider to clone into, and the `redeploy_command` gate already governs what reaches production. Full procedure: [`phases/clone.md`](phases/clone.md).
 
 **Optimization is five sub-phases that run in series, each with one job:**
 
@@ -118,7 +128,8 @@ This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases
 **Run phases strictly sequentially — never parallelize across phase boundaries.** Each phase consumes the previous phase's outputs as hard pre-conditions (Diagnose reads Collect's kept-failure set + Signal 5; Apply reads Diagnose's approved combined proposal; Sync reads Apply's written artifacts; Eval reads the gate-cleaned live state). Pre-fetching artifacts from a later phase "to save round-trips" — e.g., fetching the `result_id` payload during Setup, reading the source file before Diagnose has classified failures, or running validation before Sync has verified the writes landed — produces work against premature assumptions, conflates phase responsibilities, and makes failures harder to localize. The orchestrator enters phase N+1 only after phase N's hand-off conditions are met. Parallelizing tool calls *within* a single phase step is fine when those calls are genuinely independent (e.g., fetching multiple referenced tools during Setup Step 1.3); the rule is about phase boundaries, not intra-phase tool batching.
 
 **Loop hand-off rules:**
-- **Setup → Collect** when mode + sub-flavor + agent + `redeploy_command` are all resolved.
+- **Setup → Clone** (VAPI / ElevenLabs) when mode + agent are resolved. **Setup → Collect** directly for every other mode (no clone), once mode + sub-flavor + agent + `redeploy_command` are all resolved.
+- **Clone → Collect** when the provider clone + copy Cekura agent are stood up, the Cekura copy is repointed at the cloned provider id (verified by re-fetch), and the run is rebound to the clone. A failed clone POST halts here — never fall through to editing the original.
 - **Collect → Early-End-Call Diagnose** when the kept failure set is populated and Signal 5 (end-of-call attribution) is recorded for every kept failure. If kept = 0, skip the rest of Optimization (and the Gate, and Eval) — surface the funnel summary and stop.
 - **Early-End-Call Diagnose → Diagnose** always (whether or not any failures were flagged as early-end; the pass-through case is the no-edit branch).
 - **Diagnose → Apply** when the combined proposal is non-empty AND the user has approved it (in `auto_mode: false`) or auto-mode auto-accepted it. If the combined proposal is empty (all-Upstream or all-KEEP-on-low-confidence), skip Apply / Sync / Gate / Eval — surface upstream hand-offs and stop.
@@ -190,6 +201,7 @@ When in doubt, ask. A short clarifying question costs less than a wrong PATCH ag
 The orchestrator runs the referenced files in sequence, with the loop point at Eval handing back to Optimization · Collect:
 
 1. **Setup** — load [`phases/setup.md`](phases/setup.md) and walk through Steps 1.1–1.4. On completion, verify the Setup completion checklist before continuing.
+1a. **Clone (VAPI / ElevenLabs only, runs once)** — load [`phases/clone.md`](phases/clone.md) and walk through Steps CLONE.1–4. Clone the provider agent + every referenced tool in the same provider org, duplicate the Cekura agent (`copy_scenarios=true`) in the same project, repoint it at the cloned provider id, and rebind the run to the clone. Skipped for `pipecat` / `websocket` / `database` / `offline`. A failed clone halts the run — never edit the original.
 2. **Optimization · Collect (iteration N)** — load [`phases/optimization/collect.md`](phases/optimization/collect.md) and walk through Steps COLLECT.1–5. On iteration 1, reads the raw input (`scenario_ids` / `result_id` / `run_ids` / `call_ids` / pasted failures). On iteration 2+, reads the failure set Eval handed back. Produces the kept failure set + Signal-5 end-of-call attribution per failure.
 3. **Optimization · Early-End-Call Diagnose (iteration N)** — load [`phases/optimization/early-end-call-diagnose.md`](phases/optimization/early-end-call-diagnose.md) and walk through Steps EARLY.1–3. Flags failures matching the early-end pattern, diagnoses the responsible layer (prompt closure rules / orchestration-code end-of-call detection / VAPI handoff), proposes minimal fixes. Pass-through if zero failures match.
 4. **Optimization · Diagnose (iteration N)** — load [`phases/optimization/diagnose.md`](phases/optimization/diagnose.md) and walk through Steps DIAGNOSE.1–5. Classifies every non-early-end failure (Gap / Conflict / Ambiguity / non-early-end CodeBug / Upstream), proposes minimal edits, de-conflicts with early-end proposals, and presents the combined diff to the user. If the combined proposal is empty (all-Upstream or all-KEEP), stop the loop here — skip Apply / Sync / Gate / Eval and surface upstream hand-offs.
@@ -270,6 +282,7 @@ cekura-self-improving-agent/
 ├── SKILL.md                                  # this file — orchestrator (loop point: Eval → Optimization · Collect)
 ├── phases/
 │   ├── setup.md                              # Resolve mode, fetch agent, collect redeploy_command
+│   ├── clone.md                              # VAPI/ElevenLabs only: clone provider agent + copy Cekura agent; rebind run
 │   ├── optimization/
 │   │   ├── collect.md                        # Fetch + filter failures + inspect provider call state (incl. Signal 5)
 │   │   ├── early-end-call-diagnose.md        # Triage main-agent-ended-early failures → closure-rule / code edits
@@ -302,6 +315,7 @@ cekura-self-improving-agent/
 ### Phase Files (loaded on demand)
 
 - **[`phases/setup.md`](phases/setup.md)** — Mode and sub-flavor resolution, agent fetch per provider, `redeploy_command` hard gate, Setup completion checklist.
+- **[`phases/clone.md`](phases/clone.md)** — VAPI / ElevenLabs only. Clone the provider agent + every referenced tool in the same provider org, duplicate the Cekura agent (`copy_scenarios=true`) in the same project, repoint it at the cloned provider id, rebind the run to the clone (scenario + tool id maps), and surface the clone summary. On-exit promotion-to-production guidance. Skipped for all self-hosted sub-flavors.
 - **[`phases/optimization/collect.md`](phases/optimization/collect.md)** — Scenario execution wait, fetch runs / call logs, verdict pre-filter (per-run `evaluation_status`), voice-channel filter, accumulate, provider call-state inspection with Signals 1–5 (including end-of-call attribution), failure summary.
 - **[`phases/optimization/early-end-call-diagnose.md`](phases/optimization/early-end-call-diagnose.md)** — Two-check verdict-first triage ({main-agent-ended + scenario-incomplete in expected-outcome bullets}; no rationale, no borderline cases), diagnose responsible layer (closure rules / orchestration code / VAPI handoff), propose minimal early-end fixes. Pass-through if no matches.
 - **[`phases/optimization/diagnose.md`](phases/optimization/diagnose.md)** — Re-read the agent's prompt + tool config, map non-early-end failures to those artifacts + variable state, classify (Gap / Conflict / Ambiguity / non-early-end CodeBug / Upstream), propose minimal scoped edits, de-conflict with early-end proposals, present the combined diff.
