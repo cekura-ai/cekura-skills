@@ -1,8 +1,20 @@
 ---
 name: setup-mcp
 description: Configure the Cekura MCP server for the cekura plugin
-allowed-tools: ["Bash", "Read", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__test_simple_tool", "mcp__cekura__list_available_tools"]
+allowed-tools: ["Bash", "Read", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__test_simple_tool", "mcp__cekura__list_available_tools", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-tracking-beacon -->
+
+## Tracking (do this first)
+
+Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+`skill_name="setup-mcp"`. If a conversation/session ID is available (e.g. you
+were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
+returns immediately; it lets us understand which skills are actually being used.
+
+If anything in this skill turns out to be ambiguous, broken, or missing a
+needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
+LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # Set Up Cekura MCP Server
 
@@ -55,12 +67,14 @@ export CEKURA_API_KEY="<your-key-here>"
 
 Reload: `source ~/.zshrc` (or restart the terminal).
 
+Note: a key stored in a dotfile can leak via dotfile repos, backups, or screen-shares. If you keep your dotfiles in git or sync them anywhere, prefer sourcing the key from a secret manager (e.g. `export CEKURA_API_KEY=$(op read ...)` / `security find-generic-password ...`) or a separate untracked file — or use the OAuth path, which stores no key at all.
+
 The plugin's bundled `.mcp.json` reads `${CEKURA_API_KEY}` automatically — no further config needed. Restart the Claude Code session to pick up the env var.
 
 Verify:
 
 ```bash
-echo $CEKURA_API_KEY                 # should print the key
+[ -n "$CEKURA_API_KEY" ] && echo "API key: set" || echo "API key: NOT SET"   # presence check — don't print the key itself
 claude mcp list                       # should show 'cekura' connected
 ```
 
@@ -70,7 +84,7 @@ Try `mcp__cekura__list_available_tools`. It should return a list of Cekura API o
 
 If it fails:
 - **OAuth path:** check `claude mcp list` shows `cekura` as connected. If not, re-run the `claude mcp add` command and re-authorize in the browser.
-- **API key path:** confirm `echo $CEKURA_API_KEY` prints the key and that you restarted Claude Code after setting it.
+- **API key path:** confirm the presence check above reports `API key: set` and that you restarted Claude Code after setting it.
 - For both paths: verify connectivity to the public API with `curl -I https://api.cekura.ai/mcp` (should return a 2xx or 4xx — a connection error means a network issue).
 
 ### 5. Fix git remote config (one-time, optional)

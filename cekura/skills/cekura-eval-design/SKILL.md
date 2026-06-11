@@ -65,7 +65,7 @@ When this skill suggests creating, listing, updating, or evaluating something on
 
 **Critical rule for Approach B**: derive test profile values FROM mock outputs (same format, same values). Creating them independently guarantees mismatches.
 
-**See `references/tool-strategies.md`** for full workflow, key questions to ask, and validation guidance for each approach.
+**See `references/test-data-design.md`** for full workflow, key questions to ask, and validation guidance for each approach.
 
 ## Choosing Authoring Mode
 
@@ -111,8 +111,8 @@ Open-ended persona dialogue, exploratory red-team without specific attack script
 
 **Test profiles are the backbone of reliable evals.** They serve three critical purposes:
 1. **Memory persistence** — The testing agent reliably uses profile data during calls. Data in instructions often leads to hallucinations.
-2. **Dynamic variables** — For outbound and websocket runs, test profile fields are sent to the main agent as caller context, mimicking what production systems provide. This lets you test the full end-to-end flow.
-3. **Single source of truth** — No risk of name in test profile saying "Sarah" while instructions say "John", which causes the testing agent to hallucinate.
+2. **Dynamic variables** — For outbound and websocket runs, the profile's `main_agent_variables` section is sent to the agent under test as dynamic variables (mimicking production); the `testing_agent_variables` section stays with Cekura's simulator as persona/context only.
+3. **Single source of truth** — No risk of name in test profile saying "Sarah" while instructions say "John", which causes the testing agent to hallucinate. `test_profile.information.main_agent_variables` is the single source of truth for dynamic variables at call time.
 
 **Always use test profiles.** Never hardcode identity data (names, DOBs, account IDs, addresses, phone numbers, service addresses, discrepancy amounts — anything persona-related) in scenario instructions. Instead, create a test profile with the data and let the instructions reference it generically (e.g., "State your name when asked").
 
@@ -128,7 +128,7 @@ This ensures test profiles work against production tools.
 
 **Template variables in instructions:** Use `{{test_profile.field_name}}` or `{{test_profile['key']}}` for dynamic injection. For nested data: `{{test_profile.address.city}}`. Note: in voice scenarios, the simulated caller reads from the instruction text directly — the profile data is there for the caller to reference, not injected as hidden context.
 
-See `references/test-profiles.md` for full details and the data-extraction workflow.
+See `references/test-data-design.md` for the full profile creation guide, decision matrix for new vs. reuse, and the data-extraction workflow.
 
 ## Writing Instructions
 
@@ -254,7 +254,7 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the preferred w
 
 3. **Auto-gen may add greetings to `first_message`** — When `extra_instructions` specify exact verbatim questions, some scenarios get a greeting (e.g., "Здравствуйте") as the `first_message` while the actual question is in instructions as a follow-up. PATCH `first_message` after generation.
 
-4. **Language-specific personalities may not be enabled per-project** — Non-English personalities (e.g., ID 4566 for Russian) may return "Personality is not enabled" errors. Workaround: use personality 693 (Normal Male English) and rely on `scenario_language` + instructions to drive the language.
+4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Workaround: use personality 693 (Normal Male English) and rely on `scenario_language` to drive TTS and pronunciation. See "Checking Available Personalities" under the Personality section.
 
 5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.
 
@@ -272,12 +272,9 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the preferred w
 
 Instructions cannot alter actual speaking style — they only affect what the testing agent says, not how it sounds.
 
-**Recommended defaults:**
-- **English:** 693 (Normal Male, en/American)
-- **Spanish:** 362 (Normal Spanish Male)
-- **Other languages:** Use 693 + set `scenario_language` to the correct code. The platform uses `scenario_language` for TTS, not just personality.
+### Picking the Right Personality
 
-List available personalities with `GET /test_framework/v1/personalities/`.
+See **`references/choosing-personality.md`** for full selection logic — sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status checks, fallback defaults, and the first-message field.
 
 ## Tool Enablement — Critical for Credit Efficiency
 
@@ -285,13 +282,13 @@ Every evaluator should have the right tools enabled for the testing agent. Missi
 
 | Tool | When to Enable | Why |
 |------|---------------|-----|
-| `TOOL_END_CALL` | When the testing agent should terminate the call after completing its objective | Without this, the testing agent can't hang up — calls run until timeout, wasting credits |
-| `TOOL_END_CALL_ON_TRANSFER` | When the main agent transfers to a human/IVR | Without this, the testing agent stays on the line through hold music, voicemail, etc. |
+| `TOOL_END_CALL` | Recommended by default — so the testing agent can hang up after completing its objective | Without this, the testing agent can't hang up — calls run until timeout, wasting credits |
+| `TOOL_END_CALL_ONLY_ON_TRANSFER` | When the main agent transfers to a human/IVR | Without this, the testing agent stays on the line through hold music, voicemail, etc. |
 | `TOOL_DTMF` | When the flow involves IVR/phone menus | Allows the testing agent to send touch-tone inputs |
 
 **Always instruct the testing agent to end the call** after completing its objective if `TOOL_END_CALL` is enabled. Otherwise the call continues unnecessarily.
 
-**Transfer scenarios:** If the expected outcome involves a transfer to a human, enable `TOOL_END_CALL_ON_TRANSFER` to prevent dead call time after the transfer completes.
+**Transfer scenarios:** If the expected outcome involves a transfer to a human, enable `TOOL_END_CALL_ONLY_ON_TRANSFER` to prevent dead call time after the transfer completes.
 
 ## Metrics — Always Attach Baseline Metrics
 
@@ -314,10 +311,10 @@ When in conditional-actions mode (per "Choosing Authoring Mode" above), set `sce
 Follow these steps in order. Skipping any of them is the most common cause of avoidable rework:
 
 1. **Confirm the path** — inbound vs outbound, who speaks first, what the structural test goal is. Especially for IVR, voicemail, and DTMF scenarios — see the inbound vs outbound split in `references/conditional-actions.md`.
-2. **Define the role** — one sentence in the testing agent's voice ("You are a customer calling to..."). The role is the system prompt for the testing agent.
+2. **Define the role** — one sentence describing only what the testing agent is pretending to be ("You are a patient calling to cancel an appointment"). Never describe what the main agent is or does — the role is purely the testing agent's persona.
 3. **Choose the first turn (`id: 0`)** — does the testing agent speak first (`action: "Hi, I need to..."`, `fixed_message: true`) or does the main agent speak first (`action: ""`, e.g., IVR/voicemail)?
 4. **Write standard conditions** — one per agent prompt the testing agent must respond to. Each `condition` is a description of what the agent says; each `action` is the testing agent's response (verbatim with `fixed_message: true`, or behavioral with `false`).
-5. **Add `action_followup` and tags as needed** — multi-part responses, interruptions, DTMF, voicemail, silence/hold, network simulation, background noise. Each tag has placement constraints — see the reference's XML Tags table.
+5. **Add `action_followup` and tags as needed** — multi-part responses, interruptions, DTMF, voicemail, silence/hold, network simulation, background noise. Each tag has placement constraints — see the reference's XML Tags table. **Timing:** an `action_followup` fires on the testing agent's **next turn** after its referenced condition — one main-agent reply elapses in between, regardless of the reply's content. It never fires in the same turn as its parent. See `references/conditional-actions.md` for the full rule and worked examples.
 6. **Attach the supporting fields on the scenario** — test profile (for any identity data), tools (`TOOL_END_CALL`, `TOOL_DTMF` for IVR, etc.), metrics (Expected Outcome + Infrastructure Issues + Tool Call Success + Latency), personality (`scenario_language` is inherited from it), folder.
 7. **Run the validation checklist** — from `references/conditional-actions.md` § Validation Checklist. Catches missing FIRST_MESSAGE, missing `type`/`fixed_message`, XML tag misuse, etc., before you hit the API.
 
@@ -355,7 +352,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 - **All XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text.
 - **`<ivr text="..." />` and `<voicemail text="..." />`** (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags. Use a separate `action_followup` for post-IVR / post-beep content.
 - **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
-- **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
+- **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. Supports decimal seconds (`"0.5s"`) for sub-second precision. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
 - **`<dtmf digits="..." />`** supports `0–9`, `#`, `*`; combinable with surrounding text.
 - **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
 - **`<spell>TEXT</spell>`** wraps text to spell letter by letter (good for IDs, account numbers).
@@ -398,11 +395,11 @@ Present a checkpoint like this before proceeding:
    - **B) Cekura mock tools** — Cekura intercepts tool calls and returns mock responses; I'll set up the mappings
    - **C) No mock data** — Tools aren't relevant to these tests; we'll focus on conversational behavior
 
-2. **Test profile** — "Want me to create `<profile-name>` with these fields?" Show the full `information` dict. For Approach A: fields must match client's staging data formats. For Approach B: fields must match Cekura mock tool outputs exactly (derive FROM mock data). For Approach C: only caller identity fields needed.
+2. **Test profile** — "Want me to create `<profile-name>` with these fields?" Show the full `information` dict. For Approach A: check existing profiles first; fields must match staging data formats exactly. For Approach B: check existing mock entries first — if they fit, find the corresponding profile; if the profile is missing fields, create a new complete one; if no mock data fits, design new entries then derive the profile from those outputs. For Approach C: only caller identity fields needed. Never use a partial profile — missing fields cause the testing agent to improvise.
 
 3. **Run mode** — "Default to text/chat for the first pass? It's cheapest, and since tools are mocked the results are the same as voice for logic validation." Recommend text unless the user specifically needs voice testing (latency, interruption handling, TTS quality).
 
-4. **Personality** — "Keep the default English personality (693) for all scenarios?" Note any scenarios that might benefit from a different personality (e.g., red-team scenarios with a more aggressive caller), but don't make that change without asking.
+4. **Personality** — For **conditional-actions** scenarios, default to the normal personality for the target language (e.g., 693 for English) — behavioral logic is in the conditions, not the personality. For **behavioral** scenarios, propose a mix: ~60% normal, ~20% challenging (interrupter/background noise), ~10% non-native, ~10% edge cases. Confirm with the user before using anything other than the normal default. See "Picking the Right Personality" above.
 
 5. **Authoring mode** — Default is **behavioral instructions**. Switch automatically when the user's request used a direct trigger phrase ("conditional actions", "structured", "scripted", "deterministic test", "regression test", "compliance test", "exact flow", "fixed sequence"). Ask the user when the scenario mentions a tag-supported feature (voicemail, IVR, DTMF, hold, interruption, network simulation, background noise) without specifying a mode. See "Choosing Authoring Mode" above.
 
@@ -432,16 +429,18 @@ A complete suite covers: **Workflow** (happy path), **Deterministic/Unit Test** 
 
 **Practical guidance:** use **text/chat** for development iteration (fast, cheap, tests logic), **voice** for final validation before deployment. **WebSocket** for agents built on WebSocket providers, **Pipecat** for Pipecat framework agents. Test profile data is passed to the main agent in chat and websocket runs, enabling tool verification without voice calls. Full speed/cost comparison table in `references/coverage-patterns.md`.
 
-## Mock Tool Data Design
+## Mock Tool Data, Test Profiles, and Dynamic Variables
 
-When using Approach B (Cekura mock tools), the mock-tool data design is critical and load-bearing. Key principles:
+These three form one cohesive test data set and must be designed together. Key principles for Approach B:
 
+- **Mock data first**: design mock tool entries before creating the test profile; derive all profile values from mock outputs
 - **Per-input branching**: one mapping per distinct input the agent might send; not one mapping per tool
 - **Phone format variants**: always add 10-digit, 11-digit-with-1, and E.164 forms (mismatches cause 404s)
 - **Append-not-replace**: PATCHing `information` REPLACES the array; always GET → merge → PATCH
-- **Test profile alignment**: derive profile values FROM mock outputs, not independently
+- **Fuzzy match variation**: new mock entries must be sufficiently distinct from existing ones so Cekura's closest-match lookup doesn't return the wrong user
+- **Test profile completeness**: if an existing profile covers only a subset of required fields, create a new complete profile — never use a partial one
 
-**See `references/mock-tool-design.md`** for full guidance, examples, the backup-phone pattern, and the phone pool workflow.
+**See `references/test-data-design.md`** for the full approach-selection guide, decision matrix for new vs. reuse, fuzzy-match variation rules, chain dependency design, dynamic variable wiring, and API reference.
 
 ## Tagging Strategy
 
@@ -450,10 +449,13 @@ Format: `tags: ["Category", "priority-level", "scenario-ID"]`. Category codes: S
 ## Expected Outcomes
 
 Focus on the main agent's behavior, not the caller's experience:
+- **One statement per line** — write each "The main agent should…" statement on its own line; do not concatenate multiple statements into a single paragraph
 - **Agent-centric**: "Agent books appointment and provides arrival instructions" — not "the caller has a great experience"
 - **Specific and measurable**: Include concrete actions (book, transfer, cancel, inform)
 - **Include follow-up actions**: What happens after the primary action
 - **Keep them concise** — expected outcomes are evaluated by an LLM judge that checks whether each part was satisfied. Overly specific prompts (e.g., specifying exact dates/times) cause false failures. Focus on the behavioral outcome, not exact details.
+
+**See `references/expected-outcomes.md`** for the full writing rules, prioritization hierarchy, metric variable support (`{{test_profile.*}}`, `{{agent.*}}`, etc.), and good/bad examples.
 
 ## Create Evaluator from Transcript
 
@@ -484,10 +486,10 @@ After completing eval design, the user typically needs:
 
 ### Reference Files (loaded on demand)
 
-- **`references/tool-strategies.md`** — Full workflow for Approaches A/B/C
-- **`references/mock-tool-design.md`** — Per-input branching, append-not-replace, phone-pool gotchas
-- **`references/test-profiles.md`** — Profile creation from real data, template variables
+- **`references/choosing-personality.md`** — Full personality selection logic: sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status, fallback rules
+- **`references/test-data-design.md`** — Approach selection (A/B/C), mock tool data design (per-input branching, fuzzy-match variation, phone format variants, chain dependencies, append-not-replace), test profile creation and reuse decision matrix, dynamic variable wiring, data flow by mode, API reference
 - **`references/conditional-actions.md`** — Conditional actions: field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, quick-reference card
+- **`references/expected-outcomes.md`** — Writing rules, prioritization hierarchy, metric variables, good/bad examples
 - **`references/coverage-patterns.md`** — Test coverage category breakdowns
 - **`references/session-memory.md`** — Multi-session project memory document template
 - **`references/api-reference.md`** — Complete API endpoints: scenarios, profiles, results

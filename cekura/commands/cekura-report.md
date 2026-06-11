@@ -30,8 +30,20 @@ allowed-tools:
     "mcp__cekura__results_retrieve",
     "mcp__cekura__results_rerun_create",
     "mcp__cekura__end_call",
-  ]
+  , "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-tracking-beacon -->
+
+## Tracking (do this first)
+
+Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+`skill_name="cekura-report"`. If a conversation/session ID is available (e.g. you
+were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
+returns immediately; it lets us understand which skills are actually being used.
+
+If anything in this skill turns out to be ambiguous, broken, or missing a
+needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
+LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # /cekura-report
 
@@ -144,7 +156,7 @@ Call `mcp__cekura__scenarios_generate_bg` with:
 | `generate_expected_outcomes` | `true` |
 | `folder_path` | Folder from 3c |
 | `personalities` | `[693]` (Normal Male, en/American) — adjust for non-English agents |
-| `tool_ids` | `["TOOL_END_CALL"]` — add `TOOL_END_CALL_ON_TRANSFER` if the agent has transfer flows |
+| `tool_ids` | `["TOOL_END_CALL"]` — add `TOOL_END_CALL_ONLY_ON_TRANSFER` if the agent has transfer flows |
 | `extra_instructions` | Coverage mix scaled to the count: ~60% core workflow, ~25% edge cases, ~15% adversarial/red-team. Tell the generator about the mock-data choice from 3b so it doesn't generate scenarios that will be skipped. |
 
 Returns `{"progress_id": "<uuid>"}`.
@@ -168,36 +180,37 @@ Now execute whichever option the user picked in 3b:
 
 ### 4a. Derive candidate modes from the agent record
 
-Use the agent record from Step 2 (`assistant_provider`, `contact_number`, `websocket_url`, `chat_assistant_id`, `sip_endpoint`, `inbound`) to compute the set of **valid** modes. **Do not** present modes the agent isn't configured for.
+Use the agent record from Step 2 (`provider.type`, `telephony.phone_number`, `telephony.websocket_url`, `provider.chat_agent_details`, `telephony.sip_uri`, `telephony.inbound`) to compute the set of **valid** modes. **Do not** present modes the agent isn't configured for.
 
 The three telephony-style modes are distinct:
-- **`voice`** = generic PSTN call to a `contact_number`. Works with any provider that publishes a phone number.
-- **`sip`** = only when `sip_endpoint` is present (e.g., `sip:agent@yourdomain.com`). Not PSTN — a bare phone number is `voice`, never `sip`.
-- **WebRTC modes** (`vapi`, `retell`, `elevenlabs`, `livekit`) = provider-specific browser/SDK connection, not phone.
+- **`voice`** = generic PSTN call to a `telephony.phone_number`. Works with any provider that publishes a phone number.
+- **`sip`** = only when `telephony.sip_uri` is present (e.g., `sip:agent@yourdomain.com`). Not PSTN — a bare phone number is `voice`, never `sip`.
+- **WebRTC modes** (`vapi`, `retell`, `elevenlabs`, `livekit`, `agora`) = provider-specific browser/SDK connection, not phone.
 
 Mapping:
 
 | Agent config signal | Candidate modes |
 |---|---|
-| `assistant_provider: vapi` + `contact_number` | `vapi`, `voice`; add `text` if `chat_assistant_id` set |
-| `assistant_provider: vapi`, no phone | `vapi`; add `text` if `chat_assistant_id` set |
-| `assistant_provider: retell` (analogous) | `retell`; add `voice` if `contact_number`; add `text` if `chat_assistant_id` |
-| `assistant_provider: elevenlabs` (analogous) | `elevenlabs`; add `voice` if `contact_number`; add `text` if `chat_assistant_id` |
-| `assistant_provider: livekit` | `livekit`; add `voice` if `contact_number` |
-| `assistant_provider: pipecat` | `pipecat-v2` (preferred), `pipecat`; add `voice` if `contact_number` |
-| `assistant_provider: self_hosted` + `sip_endpoint` | `sip` |
-| `assistant_provider: self_hosted` + `websocket_url` (no sip) | `websocket` |
-| `assistant_provider: self_hosted` + only `contact_number` | `voice` |
-| No provider, only `contact_number` | `voice` |
-| `websocket_url` set, no provider | `websocket` |
-| `chat_assistant_id` set, nothing else | `text` |
+| `provider.type: vapi` + `telephony.phone_number` | `vapi`, `voice`; add `text` if `provider.chat_agent_details` set |
+| `provider.type: vapi`, no phone | `vapi`; add `text` if `provider.chat_agent_details` set |
+| `provider.type: retell` (analogous) | `retell`; add `voice` if `telephony.phone_number`; add `text` if `provider.chat_agent_details` |
+| `provider.type: elevenlabs` (analogous) | `elevenlabs`; add `voice` if `telephony.phone_number`; add `text` if `provider.chat_agent_details` |
+| `provider.type: livekit` | `livekit`; add `voice` if `telephony.phone_number` |
+| `provider.type: agora` | `agora` |
+| `provider.type: pipecat` | `pipecat-v2` (preferred), `pipecat`; add `voice` if `telephony.phone_number` |
+| `provider.type: self_hosted` + `telephony.sip_uri` | `sip` |
+| `provider.type: self_hosted` + `telephony.websocket_url` (no sip) | `chirp` (raw-PCM voice) or `websocket` (JSON/text) |
+| `provider.type: self_hosted` + only `telephony.phone_number` | `voice` |
+| No provider, only `telephony.phone_number` | `voice` |
+| `telephony.websocket_url` set, no provider | `websocket` |
+| `provider.chat_agent_details` set, nothing else | `text` |
 
 ### 4b. Auto-pick or ask — only when there's genuine choice
 
 **Principle:** auto-pick when obvious; ask only when ambiguous; never list modes the agent isn't configured for.
 
 - **Zero candidates** — STOP and surface the gap:
-  > ⚠️ Agent has no provider, phone number, sip_endpoint, or websocket_url configured. Can't run evals. Configure a connection on the agent first.
+  > ⚠️ Agent has no provider, phone number, SIP endpoint, or websocket URL configured. Can't run evals. Configure a connection on the agent first.
 - **Exactly one candidate** — **auto-pick** it. Announce:
   > Auto-selected `<mode>` — only configured connection on this agent.
   Skip `AskUserQuestion`.
@@ -218,6 +231,8 @@ The user can still override by passing a mode explicitly in their initial comman
 | vapi | `mcp__cekura__scenarios_run_vapi_webrtc` |
 | livekit | `mcp__cekura__scenarios_run_livekit_v2` |
 | elevenlabs | `mcp__cekura__scenarios_run_elevenlabs` |
+| agora | `mcp__cekura__scenarios_run_agora` |
+| chirp | `mcp__cekura__scenarios_run_chirp` |
 | sip | `mcp__cekura__scenarios_run_sip` |
 
 Pass `agent_id` and `scenarios` (array of IDs). Capture the returned `result_id`.

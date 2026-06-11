@@ -16,7 +16,7 @@ Three IDs appear in simulation workflows — don't confuse them:
 |------|------|-----------|
 | `result_id` | integer | A **Result** — one batch execution grouping multiple runs. `GET /test_framework/v1/results/{result_id}/` |
 | `run_id` | integer | A **Run** — one scenario execution inside a result. `GET /test_framework/v1/runs/{run_id}/`. In the result detail response, `runs` is a dict keyed by run_id. |
-| `run.call_id` | string | The provider's call identifier (e.g. `"patronus_xyz123"`) — a field on the run object, not an endpoint ID. Do not use this where `run_id` is expected. |
+| `run.call_id` | string | The provider's call identifier (a provider-issued string) — a field on the run object, not an endpoint ID. Do not use this where `run_id` is expected. |
 | CallLog ID | integer | A production call log (observability only). `GET /observability/v1/call-logs-external/{id}/`. Simulations do NOT create call logs. |
 
 **Dashboard URL convention:** `https://dashboard.cekura.ai/{project}/results/{result_id}?call_id={run_id}`
@@ -183,7 +183,7 @@ POST /test_framework/v1/scenarios/generate-bg/
   "generate_expected_outcomes": true,
   "folder_path": "My Test Folder",
   "tags": ["generated", "cancellation"],
-  "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"]
+  "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ONLY_ON_TRANSFER"]
 }
 ```
 

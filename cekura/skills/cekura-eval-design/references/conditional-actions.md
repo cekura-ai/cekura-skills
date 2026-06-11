@@ -41,7 +41,7 @@ Three fields are load-bearing:
 
 The `role` and `conditions[]` fields inside `conditional_actions`:
 
-- **`role`** — optional one-sentence persona for the testing agent (system-prompt-equivalent).
+- **`role`** — one sentence describing only what the testing agent is pretending to be. Example: `"You are a patient calling to cancel their appointment"`. Do not describe what the main agent is, does, or how it should behave — the role is exclusively the testing agent's persona.
 - **`conditions`** — required, ordered array of condition-action pairs, one per turn.
 
 **Fields not to set independently when using `conditional_actions`:**
@@ -68,6 +68,8 @@ The `role` and `conditions[]` fields inside `conditional_actions`:
 
 - **`standard`** — fires when the conversation context matches the `condition` string. Write the trigger as a natural description of what the main agent will say or do.
 - **`action_followup`** — fires on the **next turn** after the referenced condition, not immediately. Sequence: testing agent sends condition X → main agent replies → this fires. The main agent's reply is received but does not affect whether the followup triggers. `condition` is the integer `id` of the preceding condition. Two uses: (1) multi-part responses across consecutive turns, and (2) **scripted sequences** — chain followups to deliver an exact sequence of messages from the testing agent with no conditions to match at all.
+
+  **One action fires per turn. `action_followup` fires at the testing agent's next turn** — the turn after the main agent replies to condition X. If two things must happen within the same testing-agent turn (no main agent reply between them), they belong in one `action` string, not split across two conditions. See "Turn-by-Turn Construction Rules" below for a wrong/correct example.
 
 ## Writing the `condition` String (standard conditions, id > 0)
 
@@ -111,7 +113,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<ivr text="..." />` | Uninterruptible IVR menu played **by the testing agent**. Use only when the testing agent simulates a third-party IVR the **main agent** will encounter (typically outbound scenarios). **Do NOT use for inbound IVR testing where the main agent IS the IVR** — leave `id:0 action:""` and use `<dtmf>` on later conditions instead. | **Must be the entire action.** No surrounding text or other tags. |
+| `<ivr text="..." />` | Uninterruptible IVR menu played **by the testing agent**. Can appear in any condition. **When the scenario contains the `<ivr>` tag, any DTMF digits pressed by the main agent appear in the transcript** — use this to write conditions that detect which digit the main agent pressed (e.g., `"The main agent pressed 1"`). | **Must be the entire action.** No surrounding text or other tags. |
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible voicemail greeting + auto-beep at end. `text` is optional (silent voicemail allowed). | **Must be the entire action.** Post-beep message goes in a separate `action_followup` condition. |
 | `<endcall />` | Terminates the call | **May be combined with surrounding text** (the only "communication-class" tag that allows this — useful for natural sign-offs like `Thanks, that's all I needed <endcall />`). |
 
@@ -119,7 +121,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<silence time="Xs" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues; condition matching restarts after an interrupt | Embeddable mid-action |
+| `<silence time="Xs" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues; condition matching restarts after an interrupt. Supports decimal seconds for sub-second precision (e.g., `time="0.5s"`). | Embeddable mid-action |
 | `<hold time="Xs" />` | Dead air — **not interruptible**; background noise stops | Multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell text letter-by-letter (no attributes) | Wrap target text |
 | `<speed ratio="N" />` | Speech rate; ratio range **0.8–1.2** (0.8 = 20% slower, 1.2 = 20% faster) | **Must start the action** |
@@ -131,6 +133,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 |---|---|---|
 | Interruptible by main agent | ✅ Yes | ❌ No |
 | Background noise during pause | ✅ Continues | ❌ Stops |
+| Time precision | Decimal seconds — `"0.5s"`, `"2s"`, `"2.5s"` | Seconds — `"2s"`, `"10s"` |
 
 ### Interaction
 
@@ -144,8 +147,8 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<background_noise sound="NAME" volume="0.x">spoken text</background_noise>` | Continuous ambient sound behind the caller's voice | Wraps the spoken text. `volume` optional. |
-| `<noise sound="NAME" volume="N" time="Xms" />` | One-shot sound effect at a point in the action | `volume` and `time` (milliseconds) are optional |
+| `<background_noise sound="NAME" volume="N">spoken text</background_noise>` | Continuous ambient sound behind the caller's voice | Wraps the spoken text. `volume` optional; multiplier range **0.5–2** (1 = normal). |
+| `<noise sound="NAME" volume="N" time="Xs" />` | One-shot sound effect at a point in the action | `volume` (multiplier **0.5–2**, optional) and `time` (seconds e.g. `"1.1s"`, optional) |
 | `<network_simulation packet_loss="N" />` | Simulate degraded connection (percentage value, e.g. `packet_loss="5"`) | **Only `packet_loss` is supported.** |
 
 #### `<background_noise>` sound names
@@ -212,6 +215,8 @@ Apply these rules when building the `conditions` array:
   { "id": 3, "condition": 2, "action": "Sorry, I meant {{test_profile.dateOfBirth}}.", "type": "action_followup", "fixed_message": true }
   ```
 
+- **Same-turn actions must share one condition.** Before adding a new condition, ask: **does the main agent produce a reply between the previous testing-agent action and this one?** If the main agent is silent (e.g., the call is on hold, the testing agent is mid-voicemail sequence, or two caller actions follow immediately), those actions must go in the same `action` string. An `action_followup` only fires after the main agent replies — if the main agent doesn't reply, the followup hangs and the call stalls.
+
 - **Reproduce specified dialogue exactly.** Do not paraphrase or shorten scripted lines.
 
 ## Worked Examples
@@ -253,12 +258,14 @@ For the less-common case where the testing agent simulates an external IVR for t
 
 Use this pattern only when the **main agent makes outbound calls** and the scenario simulates a third-party IVR the main agent must navigate. The `<ivr>` tag goes in the testing agent's action because the testing agent plays the IVR audio.
 
+**DTMF transcript visibility:** When the scenario contains an `<ivr>` tag, any DTMF digits pressed by the main agent appear in the transcript. This lets you write precise conditions based on which digit was pressed — for example `"The main agent pressed 1"` instead of the vague `"The agent presses or speaks a menu option"`.
+
 ```json
 {
   "role": "You are simulating a third-party IVR system that the agent will encounter when calling out",
   "conditions": [
     { "id": 0, "condition": "FIRST_MESSAGE", "action": "<ivr text=\"Thank you for calling Acme Corp. Press 1 for sales, press 2 for support.\" />", "type": "standard", "fixed_message": true },
-    { "id": 1, "condition": "The agent presses or speaks a menu option", "action": "Connecting you to the requested department now", "type": "standard", "fixed_message": true },
+    { "id": 1, "condition": "The main agent pressed 1", "action": "Connecting you to sales now", "type": "standard", "fixed_message": true },
     { "id": 2, "condition": "The agent states their reason for calling", "action": "I'll route your call. Thank you. <endcall />", "type": "standard", "fixed_message": true }
   ]
 }
@@ -437,11 +444,11 @@ Same shape as any other evaluator — set `scenario_language` to the target code
 
 ### IVR navigation — inbound (main agent is the IVR)
 
-Most common IVR test. The main agent plays its own IVR menu; the caller (testing agent) waits silent at `id: 0` and uses `<dtmf>` to navigate. **Do not use the `<ivr>` tag.** See "Worked Example 2: IVR Navigation (Inbound)" above.
+Most common IVR test. The main agent plays its own IVR menu; the testing agent uses `<dtmf>` to navigate — `<dtmf>` can appear in any condition. See "Worked Example 2: IVR Navigation (Inbound)" above.
 
 ### IVR simulation — outbound (testing agent plays an external IVR)
 
-Less common. The main agent makes an outbound call and the scenario simulates the receiving end's IVR. The testing agent's `id: 0` action plays the IVR menu via `<ivr text="..." />` (entire action). Subsequent conditions react to the main agent's DTMF or speech. See "Worked Example 2b: IVR Simulation (Outbound)" above.
+Less common. The main agent makes an outbound call and the scenario simulates the receiving end's IVR. The testing agent's `id: 0` action plays the IVR menu via `<ivr text="..." />` (entire action). Subsequent conditions react to the main agent's DTMF or speech. **When the scenario contains an `<ivr>` tag, DTMF digits pressed by the main agent appear in the transcript** — write conditions using the digit directly (e.g., `"The main agent pressed 2"`) rather than relying on speech detection. See "Worked Example 2b: IVR Simulation (Outbound)" above.
 
 ### Voicemail with post-beep message
 
@@ -474,7 +481,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 ### Hold / silence behavior
 
 - `<hold time="Xs" />` for guaranteed dead air (not interruptible; background noise stops; multiple per action allowed).
-- `<silence time="Xs" />` for natural-feeling pauses (interruptible by the main agent; background noise continues; condition matching restarts after an interrupt).
+- `<silence time="Xs" />` for natural-feeling pauses (interruptible by the main agent; background noise continues; condition matching restarts after an interrupt). Supports decimal seconds (`"0.5s"`) for sub-second precision.
 
 ## Anti-Patterns
 
@@ -488,6 +495,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - **Text before `<interruption>`.** `<interruption>` must be the very first thing in the action string.
 - **`<interruption>` as `type: "standard"`.** It only works as `action_followup`; on `standard` it has no effect because the timing mechanism needs a preceding action to anchor against.
 - **Expecting `action_followup` to fire in the same turn.** `action_followup` fires on the **next turn** — after the testing agent sends condition X and the main agent replies. It does not fire in the same turn as condition X.
+- **Splitting same-turn actions across conditions.** Each condition is one testing-agent turn. If two testing-agent actions must happen without a main agent reply between them, they belong in the same `action` string — not split across a `standard` condition and an `action_followup`. The `action_followup` fires at the next turn (after the main agent replies); if the main agent never replies, the followup never fires and the call stalls.
 - **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored.
 - **Stringly-typed `action_followup` references.** The `condition` field on an `action_followup` must be an **integer** matching a prior condition's `id`. String values like `"1"` are rejected.
 - **Putting the JSON object directly in `instructions`.** Use the `conditional_actions` field on the scenario create/update payload. `instructions` accepts a string only.
@@ -504,6 +512,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - [ ] Every condition has all five fields: `id`, `condition`, `action`, `type`, `fixed_message`
 - [ ] `type` is explicitly `"standard"` or `"action_followup"` on every condition
 - [ ] `action_followup` conditions have an integer (not string) in `condition`
+- [ ] Every `action_followup` references a condition where the main agent produces a reply (if the main agent is silent — hold, voicemail mid-sequence, back-to-back caller actions — the actions are merged into one condition instead)
 - [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
 - [ ] `<network_simulation>` only uses `packet_loss`
@@ -530,6 +539,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 | Call runs to timeout | No `<endcall />` or natural close on the final condition | Add `<endcall />` to the last action, or add a final action that naturally ends the conversation (then enable `TOOL_END_CALL` on the scenario). |
 | `action_followup` doesn't fire when expected | `condition` field contains a string, not the integer `id` of the prior condition | For `type: "action_followup"`, set `condition` to the integer `id` of the preceding condition (e.g., `"condition": 1`, not `"condition": "1"` or `"condition": "previous"`). |
 | `action_followup` fires too early | Expecting it to fire in the same turn as the referenced condition | `action_followup` fires on the **next turn** — after the testing agent sends condition X *and* the main agent replies. It does not fire immediately. |
+| `action_followup` never fires / call stalls | Two testing-agent actions were split across conditions when no main agent reply occurs between them (e.g., during `<hold>`, mid-voicemail, or any back-to-back caller actions) | Merge both actions into one `action` string on the same condition. Each condition is one testing-agent turn; `action_followup` fires at the next turn only after the main agent replies. |
 | IVR menu plays twice (once from the main agent, once from the testing agent) | `<ivr>` was used in `id: 0` for an inbound IVR test | Set `id: 0 action: ""`. The main agent plays its own IVR. Reserve the `<ivr>` tag for outbound scenarios where the testing agent simulates the IVR. |
 | Scenario created but behaves like a behavioral evaluator (ignores conditions) | `scenario_type` defaulted to `"instruction"` — the `conditional_actions` payload was dropped silently | Set `scenario_type: "conditional_actions"` explicitly in the create/update request. |
 | `instructions` field type error | JSON object was passed directly to `instructions` instead of `conditional_actions` | Pass the structured payload via the `conditional_actions` field and leave `instructions` unset. |
@@ -542,7 +552,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - **Name**: `"[ID]: [Brief description]"` — e.g. `"CA-01: Appointment verification — success path"`
 - **Expected outcome**: what the main agent should do by the end (LLM-judged — keep behavioral, not over-specific on dates/times)
 - **Personality**: 693 (Normal Male English) is the default; change for non-English or specific voice traits
-- **Tools**: at minimum `TOOL_END_CALL`; add `TOOL_DTMF` for IVR flows, `TOOL_END_CALL_ON_TRANSFER` for transfer scenarios
+- **Tools**: at minimum `TOOL_END_CALL`; add `TOOL_DTMF` for IVR flows, `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer scenarios
 - **Metrics**: attach Expected Outcome, Infrastructure Issues, Tool Call Success, and Latency to every evaluator
 - **Folder**: place in an organized folder (create one first if needed)
 - **Test profile**: pair every conditional-actions evaluator with a test profile for any identity data; prefer template variables (`{{test_profile.field}}`) when exact phrasing AND the real value both matter
@@ -566,6 +576,7 @@ XML tags (fixed_message:true only):
   <dtmf digits="..." />             Touch-tone input; supports digits, # and *
   <endcall />                       Terminate call — combinable with surrounding text
   <silence time="Xs" />             Pause on caller's turn — interruptible; bg noise continues
+                                     Supports decimal seconds (0.5s) for sub-second precision
   <hold time="Xs" />                Dead air — NOT interruptible; bg noise stops; multiple per action
   <spell>TEXT</spell>               Spell text letter-by-letter
   <interruption time="Xs" />        Cut in Xs after agent starts speaking — MUST be action_followup
@@ -574,8 +585,8 @@ XML tags (fixed_message:true only):
   <volume ratio="N" />              Volume 0–2; must start the action; Cartesia only
   <send_sms text="..." />           Trigger SMS for SMS workflows
   <network_simulation packet_loss="N" />   Only packet_loss supported (% value)
-  <background_noise sound="NAME" volume="0.x">spoken text</background_noise>
-  <noise sound="NAME" volume="N" time="Xms" />   One-shot: office | beep | cough1 | cough2
+  <background_noise sound="NAME" volume="N">spoken text</background_noise>   volume multiplier 0.5–2 (optional)
+  <noise sound="NAME" volume="N" time="Xs" />   One-shot: office | beep | cough1 | cough2; volume 0.5–2 (optional)
 
 Background noise sounds:
   office-ambience, coffee-shop, kitchen-noise, home-chatter, restaurant, shopping-mall,

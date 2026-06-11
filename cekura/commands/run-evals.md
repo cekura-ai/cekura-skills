@@ -2,8 +2,20 @@
 name: run-evals
 description: Execute Cekura evaluators (voice, text, websocket, sip, pipecat, vapi, retell, elevenlabs, livekit)
 argument-hint: "[evaluator IDs or 'all'] [mode: voice/text/websocket/sip/pipecat/pipecat-v2/vapi/retell/elevenlabs/livekit]"
-allowed-tools: ["AskUserQuestion", "mcp__cekura__aiagents_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__scenarios_run_pipecat_v2", "mcp__cekura__scenarios_run_vapi_webrtc", "mcp__cekura__scenarios_run_retell_webrtc", "mcp__cekura__scenarios_run_elevenlabs", "mcp__cekura__scenarios_run_livekit_v2", "mcp__cekura__scenarios_run_sip", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call"]
+allowed-tools: ["AskUserQuestion", "mcp__cekura__aiagents_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__scenarios_run_pipecat_v2", "mcp__cekura__scenarios_run_vapi_webrtc", "mcp__cekura__scenarios_run_retell_webrtc", "mcp__cekura__scenarios_run_elevenlabs", "mcp__cekura__scenarios_run_livekit_v2", "mcp__cekura__scenarios_run_sip", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-tracking-beacon -->
+
+## Tracking (do this first)
+
+Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+`skill_name="run-evals"`. If a conversation/session ID is available (e.g. you
+were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
+returns immediately; it lets us understand which skills are actually being used.
+
+If anything in this skill turns out to be ambiguous, broken, or missing a
+needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
+LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # Run Evaluators
 
@@ -18,17 +30,18 @@ Execute one or more evaluators against the target agent.
 
    If the user passed `[mode]` as an argument, honor it (skip detection).
 
-   Otherwise, fetch the agent with `mcp__cekura__aiagents_retrieve(id=<agent_id>)` and inspect `assistant_provider`, `contact_number`, `websocket_url`, `chat_assistant_id`, `sip_endpoint`. Derive candidate modes:
+   Otherwise, fetch the agent with `mcp__cekura__aiagents_retrieve(id=<agent_id>)` and inspect `provider.type`, `telephony.phone_number`, `telephony.websocket_url`, `provider.chat_agent_details`, `telephony.sip_uri`. Derive candidate modes:
 
-   - **`voice`** = PSTN. Valid whenever `contact_number` is set. Note: a bare phone number is `voice`, never `sip`.
-   - **`sip`** = only when `sip_endpoint` is set (e.g. `sip:agent@host`).
-   - **`text`** = when `chat_assistant_id` is set.
-   - **`websocket`** = when `websocket_url` is set and no other provider.
-   - **WebRTC** (`vapi`, `retell`, `elevenlabs`, `livekit`) = when `assistant_provider` matches.
-   - **`pipecat-v2` / `pipecat`** = when `assistant_provider: pipecat`.
+   - **`voice`** = PSTN. Valid whenever `telephony.phone_number` is set. Note: a bare phone number is `voice`, never `sip`.
+   - **`sip`** = only when `telephony.sip_uri` is set (e.g. `sip:agent@host`).
+   - **`text`** = when `provider.chat_agent_details` is set.
+   - **`websocket`** = when `telephony.websocket_url` is set and no other provider (JSON/text protocol).
+   - **`chirp`** = when `telephony.websocket_url` is set on a voice agent (raw-PCM audio websocket).
+   - **WebRTC** (`vapi`, `retell`, `elevenlabs`, `livekit`, `agora`) = when `provider.type` matches.
+   - **`pipecat-v2` / `pipecat`** = when `provider.type: pipecat`.
 
    Selection rule:
-   - **0 candidates** → STOP. Surface: *"Agent has no provider, phone number, sip_endpoint, or websocket_url configured — can't run evals."*
+   - **0 candidates** → STOP. Surface: *"Agent has no provider, phone number, SIP endpoint, or websocket URL configured — can't run evals."*
    - **1 candidate** → auto-pick. Announce: *"Auto-selected `<mode>` — only configured connection on this agent."*
    - **2+ candidates** → use `AskUserQuestion` with **only the configured options**, never the full list. One-line hint: text fastest/cheapest, WebRTC moderate, PSTN voice realistic but slowest.
 
@@ -50,6 +63,8 @@ Execute one or more evaluators against the target agent.
    | retell | `mcp__cekura__scenarios_run_retell_webrtc` |
    | elevenlabs | `mcp__cekura__scenarios_run_elevenlabs` |
    | livekit | `mcp__cekura__scenarios_run_livekit_v2` |
+   | agora | `mcp__cekura__scenarios_run_agora` |
+   | chirp | `mcp__cekura__scenarios_run_chirp` |
    | sip | `mcp__cekura__scenarios_run_sip` |
 
 5. **Monitor**: Check run status:
@@ -62,18 +77,18 @@ Execute one or more evaluators against the target agent.
 
 | Mode | Speed | Cost | Best For |
 |------|-------|------|----------|
-| text | Fast | Low | Logic testing, rapid iteration (requires `chat_assistant_id`) |
-| websocket | Medium | Medium | Custom websocket agents (requires `websocket_url`) |
+| text | Fast | Low | Logic testing, rapid iteration (requires a configured chat agent) |
+| websocket | Medium | Medium | Custom websocket agents (requires a websocket URL) |
 | pipecat / pipecat-v2 | Medium | Medium | Pipecat-based agents |
 | vapi / retell / elevenlabs / livekit (WebRTC) | Medium | Medium | Provider-native browser/SDK testing |
-| voice (PSTN) | Slow | High | Realistic phone-call validation (requires `contact_number`) |
-| sip | Slow | High | Self-hosted SIP endpoints (requires `sip_endpoint`) |
+| voice (PSTN) | Slow | High | Realistic phone-call validation (requires a phone number) |
+| sip | Slow | High | Self-hosted SIP endpoints (requires a SIP endpoint) |
 
 ## Pre-Run Checklist
 
 Before running, verify evals are properly configured:
 - **Baseline metrics attached**: Expected Outcome, Infrastructure Issues, Tool Call Success, Latency. Without these, runs report pass/fail based on call completion — not correctness.
-- **Tools enabled**: `TOOL_END_CALL` (testing agent can hang up), `TOOL_END_CALL_ON_TRANSFER` (for transfer scenarios). Missing tools = elongated calls, wasted credits.
+- **Tools enabled**: `TOOL_END_CALL` (testing agent can hang up), `TOOL_END_CALL_ONLY_ON_TRANSFER` (for transfer scenarios). Missing tools = elongated calls, wasted credits.
 - **Test profiles assigned**: Identity data in test profiles, not hardcoded in instructions.
 
 ## Tips

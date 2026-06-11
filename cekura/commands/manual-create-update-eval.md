@@ -2,8 +2,20 @@
 name: manual-create-update-eval
 description: Manually create or update a Cekura evaluator (a.k.a. scenario, eval) with full field walkthrough
 argument-hint: "[create|update] [eval type or scenario ID]"
-allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list"]
+allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-tracking-beacon -->
+
+## Tracking (do this first)
+
+Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+`skill_name="manual-create-update-eval"`. If a conversation/session ID is available (e.g. you
+were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
+returns immediately; it lets us understand which skills are actually being used.
+
+If anything in this skill turns out to be ambiguous, broken, or missing a
+needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
+LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # Manually Create or Update an Evaluator
 
@@ -60,15 +72,18 @@ Key rules:
 
 What the main agent should achieve. Agent-centric, specific, measurable, but **concise** — overly specific prompts (exact dates/times) cause false failures. Focus on behavioral outcomes.
 
+Write each "The main agent should…" statement on its own line (newline-separated). Do not merge multiple statements into a single paragraph.
+
 ### 6. Test Profile
 
 **Ask:** "Does this scenario need caller identity data (name, DOB, account info, etc.)?"
 
 If yes:
-1. Check existing profiles first: `mcp__cekura__test_profiles_list`
-2. Only create new ones if nothing suitable exists
-3. Show the full `information` dict for approval before creating
-4. **Never hardcode identity data in instructions** — always put it in the test profile
+1. For Approach B: check existing mock tool entries first — if they fit, find the corresponding profile and reuse it
+2. For Approach A: check existing profiles with `mcp__cekura__test_profiles_list`
+3. **Partial-match rule:** if an existing profile covers only a subset of required fields, create a new complete profile — never use a partial one; the testing agent will improvise missing fields
+4. Show the full `information` dict for approval before creating any new profile. Use the sectioned shape: `{"main_agent_variables": {...}, "testing_agent_variables": {...}}`. Put values the agent under test should receive as dynamic variables in `main_agent_variables`; put persona/context for the simulated caller in `testing_agent_variables`. Either section may be omitted when not needed.
+5. **Never hardcode identity data in instructions** — always put it in the test profile and reference via `{{test_profile.field_name}}`
 
 ### 7. Language
 
@@ -111,15 +126,15 @@ Plus any custom metrics relevant to the scenario's workflow (e.g., booking flow 
 
 | Tool | When to Enable | Why |
 |------|---------------|-----|
-| `TOOL_END_CALL` | Almost always | Testing agent can hang up — without it, calls run until timeout |
-| `TOOL_END_CALL_ON_TRANSFER` | Transfer scenarios | Ends call after transfer instead of sitting through hold music |
+| `TOOL_END_CALL` | Recommended by default | Testing agent can hang up — without it, calls run until timeout |
+| `TOOL_END_CALL_ONLY_ON_TRANSFER` | Transfer scenarios | Ends call after transfer instead of sitting through hold music |
 | `TOOL_DTMF` | IVR/phone menu flows | Send touch-tone inputs |
 | `TOOL_SEND_DTMF` | Same as above (alternate name) | |
 | `TOOL_RECEIVE_DTMF` | Receiving DTMF inputs | |
 
-**VAPI agents use prefixed names:** `VAPI_TOOL_END_CALL`, `VAPI_TOOL_END_CALL_ON_TRANSFER`, etc.
+**VAPI agents use prefixed names:** `VAPI_TOOL_END_CALL`, `VAPI_TOOL_END_CALL_ONLY_ON_TRANSFER`, etc.
 
-Default recommendation: `["TOOL_END_CALL"]` for most scenarios, add `TOOL_END_CALL_ON_TRANSFER` for transfer scenarios.
+Default recommendation: `["TOOL_END_CALL"]` for most scenarios, add `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer scenarios.
 
 ### 11. Max Call Duration
 

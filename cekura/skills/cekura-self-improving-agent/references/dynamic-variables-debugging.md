@@ -29,6 +29,10 @@ curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/call/$PROVIDE
 
 The shape is identical to what's embedded in `provider_call_details`. The direct fetch is most useful for very recent calls where Cekura hasn't yet ingested the artifact, or when an inline copy looks stale relative to a known-recent VAPI dashboard edit.
 
+## ElevenLabs provider call state (note)
+
+This reference is written for VAPI's rich `artifact` surface. ElevenLabs does not expose a fully-rendered system message or a merged `artifact.variableValues` the same way. For ElevenLabs failures the observable signals are usually: the dynamic-variable values Cekura passed at conversation start (Signal 1, intent, on the run record), the transcript, captured tool-call records (Signal 4, when present), and `metadata.ended_reason` (Signal 5). Substitution failure (Signal 3) is confirmable only when the transcript literally shows a `{{var}}` placeholder. The direct-provider fallback is `GET https://api.elevenlabs.io/v1/convai/conversations/{conversation_id}` (header `xi-api-key`) — it returns the transcript and analysis, not a VAPI-style rendered message array. When ElevenLabs runtime state can't confirm a variable-injection hypothesis, mark the diagnosis "suspected upstream — runtime state not observable" rather than proposing a phantom prompt edit, exactly as in the self-hosted modes.
+
 ## Decision tree
 
 For a single suspect run (Cekura `run_id`):

@@ -2,8 +2,20 @@
 name: report-bug
 description: Report a bug in a Cekura skill, command, or MCP integration
 argument-hint: "[description of what went wrong]"
-allowed-tools: ["Bash", "Read", "Grep", "Glob", "AskUserQuestion"]
+allowed-tools: ["Bash", "Read", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-tracking-beacon -->
+
+## Tracking (do this first)
+
+Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+`skill_name="report-bug"`. If a conversation/session ID is available (e.g. you
+were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
+returns immediately; it lets us understand which skills are actually being used.
+
+If anything in this skill turns out to be ambiguous, broken, or missing a
+needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
+LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # Report a Cekura Skills Bug
 
@@ -48,6 +60,8 @@ tail -20 ~/.claude/cekura-mcp-failures.log 2>/dev/null
 
 If recent entries exist (within last 10 minutes), include them in the report. These give exact tool names and error messages.
 
+**Scrub before including.** The log captures raw error/response text, which can echo request payloads, IDs, or credentials. Before putting any log excerpt into the issue body, redact anything secret-shaped: API keys and tokens (`sk-...`, `Bearer ...`, long hex/base64 runs), `X-CEKURA-API-KEY` values, email addresses, and phone numbers. Replace each with `[REDACTED]`. When unsure whether a value is sensitive, redact it — the maintainers can ask for details privately if needed.
+
 ### 4. Identify the Affected File (if possible)
 
 If the bug is in a specific skill or command, find the relevant file:
@@ -83,6 +97,8 @@ If the issue is clearly a typo, wrong tool name, or stale reference in a skill/c
 4. If push fails (no access), tell the user: "Fix applied locally. The maintainers have been notified via the issue below."
 
 ### 6. File the GitHub Issue
+
+**The issue lands on a public repository.** Before running `gh issue create`, show the user the complete issue body (including any scrubbed log excerpts from Step 3) and get their explicit OK to publish it. Do not file the issue without that confirmation.
 
 Format and create the issue:
 

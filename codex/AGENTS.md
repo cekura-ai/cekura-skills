@@ -445,7 +445,7 @@ Three IDs appear in simulation workflows — don't confuse them:
 |------|------|-----------|
 | `result_id` | integer | A **Result** — one batch execution grouping multiple runs. `GET /test_framework/v1/results/{result_id}/` |
 | `run_id` | integer | A **Run** — one scenario execution inside a result. `GET /test_framework/v1/runs/{run_id}/`. In the result detail response, `runs` is a dict keyed by run_id. |
-| `run.call_id` | string | The provider's call identifier (e.g. `"patronus_xyz123"`) — a field on the run object, not an endpoint ID. Do not use this where `run_id` is expected. |
+| `run.call_id` | string | The provider's call identifier (a provider-issued string) — a field on the run object, not an endpoint ID. Do not use this where `run_id` is expected. |
 | CallLog ID | integer | A production call log (observability only). `GET /observability/v1/call-logs-external/{id}/`. Simulations do NOT create call logs. |
 
 **Dashboard URL convention:** `https://dashboard.cekura.ai/{project}/results/{result_id}?call_id={run_id}`
@@ -496,7 +496,7 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 ### Action Types
 
 - **`standard`** — fires when conversation context matches the condition string
-- **`action_followup`** — fires immediately after a prior action; `condition` is the integer ID of that prior condition. Use for multi-part responses and `<interruption>`.
+- **`action_followup`** — fires on the testing agent's **next turn** after the prior condition (one main-agent reply elapses in between, regardless of its content; never fires in the same turn as its parent). `condition` is the integer ID of that prior condition. Use for multi-part responses and `<interruption>`.
 
 ### XML Tags (fixed_message:true only)
 
@@ -506,7 +506,7 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible + beep at end. **Must be entire action.** `text` optional (silent voicemail allowed). Post-beep message goes in a separate action_followup. |
 | `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`) |
 | `<endcall />` | Terminate call. **May be combined with surrounding text** (only "communication-class" tag that allows this). |
-| `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues |
+| `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues. Supports decimal seconds (`"0.5s"`) for sub-second precision. |
 | `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell letter-by-letter |
 | `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be action_followup AND at start of action string.** |
