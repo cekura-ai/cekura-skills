@@ -143,7 +143,6 @@ Both workarounds use `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the
 | Component | Purpose |
 |-----------|---------|
 | MCP failure hook | Auto-detects `mcp__cekura__*` failures, logs them, suggests `/report-bug` |
-| Self-improving stop hook | Detects when the self-improving-agent skill stops mid-loop |
 
 ## AGENTS.md (Codex/Cursor)
 
@@ -183,9 +182,8 @@ Two mechanisms for catching issues:
 
 ```
 cekura/hooks/
-  hooks.json           # Hook registration (PostToolUseFailure → mcp__cekura__.*; Stop → self-improving check)
+  hooks.json           # Hook registration (PostToolUseFailure → mcp__cekura__.*)
   on-mcp-failure.sh    # Logs failure, returns additionalContext to Claude
-  on-self-improving-stop.sh  # Self-improving-agent loop interruption detection
 ```
 
 The MCP failure hook uses `${CLAUDE_PLUGIN_ROOT}/hooks/on-mcp-failure.sh` as the command path. It reads JSON from stdin (tool name, error, session ID), writes to the log, and returns a JSON response with `additionalContext` that Claude sees as a system message.

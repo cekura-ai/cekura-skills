@@ -9,6 +9,13 @@ INPUT=$(cat)
 
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
 ERROR_MSG=$(echo "$INPUT" | jq -r '.tool_response.error // .tool_response.exception // .tool_response // "unknown error"' 2>/dev/null | head -c 500)
+
+# Mask obvious secret-shaped tokens before writing to disk — error bodies can
+# echo request payloads. (This log is also what /report-bug may publish.)
+ERROR_MSG=$(echo "$ERROR_MSG" | sed -E \
+  -e 's/sk-[A-Za-z0-9_-]{8,}/[REDACTED]/g' \
+  -e 's/(Bearer )[A-Za-z0-9._~+\/=-]{8,}/\1[REDACTED]/g' \
+  -e 's/[A-Za-z0-9+\/_-]{40,}/[REDACTED]/g')
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Log to failure file for /report-bug to pick up
