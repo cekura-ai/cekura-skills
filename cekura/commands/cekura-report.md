@@ -185,7 +185,7 @@ Use the agent record from Step 2 (`provider.type`, `telephony.phone_number`, `te
 The three telephony-style modes are distinct:
 - **`voice`** = generic PSTN call to a `telephony.phone_number`. Works with any provider that publishes a phone number.
 - **`sip`** = only when `telephony.sip_uri` is present (e.g., `sip:agent@yourdomain.com`). Not PSTN — a bare phone number is `voice`, never `sip`.
-- **WebRTC modes** (`vapi`, `retell`, `elevenlabs`, `livekit`) = provider-specific browser/SDK connection, not phone.
+- **WebRTC modes** (`vapi`, `retell`, `elevenlabs`, `livekit`, `agora`) = provider-specific browser/SDK connection, not phone.
 
 Mapping:
 
@@ -196,9 +196,10 @@ Mapping:
 | `provider.type: retell` (analogous) | `retell`; add `voice` if `telephony.phone_number`; add `text` if `provider.chat_agent_details` |
 | `provider.type: elevenlabs` (analogous) | `elevenlabs`; add `voice` if `telephony.phone_number`; add `text` if `provider.chat_agent_details` |
 | `provider.type: livekit` | `livekit`; add `voice` if `telephony.phone_number` |
+| `provider.type: agora` | `agora` |
 | `provider.type: pipecat` | `pipecat-v2` (preferred), `pipecat`; add `voice` if `telephony.phone_number` |
 | `provider.type: self_hosted` + `telephony.sip_uri` | `sip` |
-| `provider.type: self_hosted` + `telephony.websocket_url` (no sip) | `websocket` |
+| `provider.type: self_hosted` + `telephony.websocket_url` (no sip) | `chirp` (raw-PCM voice) or `websocket` (JSON/text) |
 | `provider.type: self_hosted` + only `telephony.phone_number` | `voice` |
 | No provider, only `telephony.phone_number` | `voice` |
 | `telephony.websocket_url` set, no provider | `websocket` |
@@ -230,6 +231,8 @@ The user can still override by passing a mode explicitly in their initial comman
 | vapi | `mcp__cekura__scenarios_run_vapi_webrtc` |
 | livekit | `mcp__cekura__scenarios_run_livekit_v2` |
 | elevenlabs | `mcp__cekura__scenarios_run_elevenlabs` |
+| agora | `mcp__cekura__scenarios_run_agora` |
+| chirp | `mcp__cekura__scenarios_run_chirp` |
 | sip | `mcp__cekura__scenarios_run_sip` |
 
 Pass `agent_id` and `scenarios` (array of IDs). Capture the returned `result_id`.
