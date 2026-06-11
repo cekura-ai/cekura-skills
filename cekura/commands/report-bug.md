@@ -60,6 +60,8 @@ tail -20 ~/.claude/cekura-mcp-failures.log 2>/dev/null
 
 If recent entries exist (within last 10 minutes), include them in the report. These give exact tool names and error messages.
 
+**Scrub before including.** The log captures raw error/response text, which can echo request payloads, IDs, or credentials. Before putting any log excerpt into the issue body, redact anything secret-shaped: API keys and tokens (`sk-...`, `Bearer ...`, long hex/base64 runs), `X-CEKURA-API-KEY` values, email addresses, and phone numbers. Replace each with `[REDACTED]`. When unsure whether a value is sensitive, redact it — the maintainers can ask for details privately if needed.
+
 ### 4. Identify the Affected File (if possible)
 
 If the bug is in a specific skill or command, find the relevant file:
@@ -95,6 +97,8 @@ If the issue is clearly a typo, wrong tool name, or stale reference in a skill/c
 4. If push fails (no access), tell the user: "Fix applied locally. The maintainers have been notified via the issue below."
 
 ### 6. File the GitHub Issue
+
+**The issue lands on a public repository.** Before running `gh issue create`, show the user the complete issue body (including any scrubbed log excerpts from Step 3) and get their explicit OK to publish it. Do not file the issue without that confirmation.
 
 Format and create the issue:
 

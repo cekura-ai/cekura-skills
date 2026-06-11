@@ -42,6 +42,8 @@ ngrok http 8765
 # → wss://abc123.ngrok.io
 ```
 
+> **The tunnel is publicly reachable.** The server has no authentication — anyone who learns the ngrok URL can connect and drive your LLM with your API key (cost abuse, prompt extraction). The random ngrok subdomain is the only secret, so treat the URL like a credential: don't share or log it, and shut the tunnel down as soon as you're done testing.
+
 Set that URL as `provider.chat_agent_details.config.url` on the Cekura agent.
 
 ---
@@ -265,4 +267,4 @@ NGROK_URL=$(grep -o 'https://[a-z0-9-]*.ngrok[a-z.-]*/[a-z0-9]*\|https://[a-z0-9
 echo "WebSocket URL: $NGROK_URL"
 ```
 
-Use `$NGROK_URL` as the `chat_agent_details.config.url` value.
+Use `$NGROK_URL` as the `chat_agent_details.config.url` value. Remember the tunnel is open to the internet while it's up — kill the ngrok process when testing is done.
