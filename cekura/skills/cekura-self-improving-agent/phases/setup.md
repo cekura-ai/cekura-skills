@@ -41,7 +41,7 @@ Each branch's full procedure lives in its provider doc. In each branch you fetch
 - **Self-hosted / websocket** — [`../providers/self-hosted/websocket.md`](../providers/self-hosted/websocket.md). `file` variant: **locate** the user's live source file (the system prompt is a string constant; tool definitions usually live in the same file) — record the path; the Diagnose phase reads its content. `offline` variant: pasted prompt text, read-only.
 - **Self-hosted / database** (Step 1.3d) — [`../providers/self-hosted/database.md`](../providers/self-hosted/database.md). Collect DB type, credentials, fetch query (and optional write query) per the setup questions in that file, then run the fetch query and record the current prompt + tool definitions (if also in the DB). The user's DB row is authoritative; the Cekura record is informational only. Credentials are in-memory for the run only — never echoed back, persisted, or logged.
 
-Each branch ends by surfacing a compact summary to the user before moving on to Step 1.4 (self-hosted) or the Optimization phase (VAPI / ElevenLabs — both skip Step 1.4).
+Each branch ends by surfacing a compact summary to the user before moving on to Step 1.4 (self-hosted) or the **Clone phase** ([`clone.md`](clone.md)) (VAPI / ElevenLabs — both skip Step 1.4 and clone the agent before Collect, so all edits land on a disposable copy rather than the live agent).
 
 ## Step 1.4 — Collect the redeploy command (self-hosted modes only) — HARD GATE
 
@@ -81,11 +81,11 @@ For the full collection-prompt wording, sentinel handling, command-execution sem
 
 ## Setup completion checklist
 
-Before handing off to the Optimization phase, confirm:
+Before handing off to the Clone phase (VAPI / ElevenLabs) or the Optimization phase (all other modes), confirm:
 
 - [ ] Mode and sub-flavor resolved (`vapi` / `elevenlabs` / `pipecat` / `websocket-file` / `websocket-offline` / `database`)
 - [ ] Agent loaded (VAPI: `/assistant/{id}` + referenced tools; ElevenLabs: `/v1/convai/agents/{id}` + referenced `/v1/convai/tools/{id}`; pipecat: Cekura agent record's `description` + mock-tool list; websocket-file: the correct live source file path located and confirmed via grep when ambiguous — content stays unread until Diagnose; database: `db_type` + `db_connection` (env var or inline) + `db_fetch_query` recorded, fetch query executed, current prompt captured)
 - [ ] **Self-hosted live target**: `redeploy_command` resolved to a shell command, `"manual"`, or — database sub-flavor only — `"noop"` when the live agent re-reads on every request (N/A for VAPI / ElevenLabs)
 - [ ] I have NOT fetched any failure data (`results_retrieve` / `runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) — that belongs to Collect
 
-If any of the above is unresolved, ask the user the specific clarifying question and wait for an answer before entering the Optimization phase.
+If any of the above is unresolved, ask the user the specific clarifying question and wait for an answer before entering the Clone phase (VAPI / ElevenLabs) or the Optimization phase (all other modes).
