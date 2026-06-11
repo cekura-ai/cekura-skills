@@ -218,6 +218,14 @@ Walk through the exact sequence of events that closes a user turn — from last 
 **4. Fallback**
 - Whether a secondary TTS provider or voice activates if the primary fails — what triggers the switch and what the fallback voice is
 
+**5. Inline TTS modifier tags**
+- Does the bot support any XML or special tags embedded in TTS action strings or bot speech output? Search the codebase for tag processing functions (e.g., `tag_helpers.py`, `conditional_actions_processor.py`, any TTS output post-processing). For each tag found (`<silence>`, `<speed>`, `<volume>`, `<spell>`, or others):
+  - What does the tag do at runtime?
+  - Which function processes it and at what file:line?
+  - Is behavior provider-specific? (e.g., converted to SSML for some providers, passed raw to others, stripped entirely)
+  - What happens when the tag is used with a provider that doesn't support it?
+- List every tag found, even if behavior is identical across providers.
+
 ---
 
 ### Q6 — Interruption Handling
@@ -425,6 +433,29 @@ For each behavior found, write a sub-description. Skip sub-sections for behavior
 **7. Known fragile steps**
 - Any step in the local startup that has broken before, depends on a specific ordering, requires an external service to be up, or is underdocumented in the repo
 - Any known timing issues: race conditions, ports that take time to open, services that must be started in a specific order
+
+### Q13 — Gap Sweep
+
+After completing Q1–Q12, do one additional pass through the codebase to surface behaviors that fall between the standard Q sections. These are behaviors that are testable but don't fit neatly into any category above.
+
+Search for each of the following patterns:
+
+**Transformation and conversion functions**
+Any function that converts, transforms, or adapts data at a pipeline stage boundary — tag-to-SSML converters, codec converters, format normalizers, text post-processors. For each one: function name (file:line), input format, output format, and any conditional behavior based on provider or config.
+
+**Provider-specific branches**
+Grep for `if provider ==`, `if voice_id ==`, `if model ==`, `isinstance(..., SpecificProvider)`, or similar conditionals in processor and helper files. Each branch that takes a different code path for different providers is a gap behavior. Document: which providers trigger which path, what the behavior difference is.
+
+**Inline modifier tags or markers**
+Any XML/HTML-like tags that can appear inside text strings flowing through the pipeline — in system prompts, TTS action strings, LLM responses, CA condition text, or bot speech. Include tags already documented in Q5, but also look for others. For each: what does it do, which stage processes it, provider-specific behavior.
+
+**Post-processors and middleware**
+Any function applied to LLM output or TTS input in between the core operation and the next stage — output validators, content filters, language detectors, response formatters.
+
+**Undocumented feature flags and conditional behaviors**
+Any env var, config key, or feature flag that changes behavior but wasn't surfaced in Q1-Q12. Check `.env.example`, config files, and code that reads os.environ or config for keys not yet documented.
+
+For every gap behavior found, document: function name (file:line), what it does, conditions under which behavior changes, and which standard Q section it most closely resembles. These will become test items in Phase 3's "Gap Behaviors" section.
 
 ---
 

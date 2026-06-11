@@ -352,6 +352,28 @@ These tests come from the agent's actual business logic — the tools it calls, 
 
 Apply Rule 1 throughout: each tool × each path = one test item. A bot with 5 tools × 7 paths = 35 tool workflow items before any branching or flow tests.
 
+### CA Inline Tag Behaviors
+
+For each inline modifier tag documented in Phase 2 Q5 (sub-section 5) and Q13 (`<silence>`, `<speed>`, `<volume>`, `<spell>`, or any other found):
+
+- **Apply Rule 2 to every numeric parameter**: `<silence time="Xs"/>` → BelowThreshold (tag value below minimum meaningful silence, e.g., 0s), AtThreshold, AboveThreshold test items
+- **Provider-variant test for each supported provider**: tag embedded in bot speech on a supported provider — verify correct conversion and behavior
+- **"Tag on unsupported provider" test**: bot uses tag but the current provider doesn't support it — verify graceful degradation (tag stripped, error handled) vs. crash
+- **Tag with invalid value**: numeric out of range, missing required attribute, malformed XML — verify the bot handles it without failing the call
+
+### Gap Behaviors (from Phase 2 Q13)
+
+For every behavior documented in Phase 2 Q13 (transformation functions, provider-specific branches, post-processors, undocumented feature flags), apply the standard 6-category enumeration:
+
+1. Happy path — behavior works correctly under normal conditions
+2. Boundary conditions — for any numeric parameter, 3 test items (below/at/above)
+3. Error/failure path — what happens when the transformation fails or the flag is wrong
+4. Recovery — does the pipeline recover after a gap-behavior failure
+5. Cross-component interaction — does the gap behavior interact with any standard component (e.g., inline tag in TTS output while interruption is pending)
+6. Configuration-specific — if behavior differs by provider, model, or flag value, one test per variant
+
+These are bot-specific behaviors that no generic skill template would have discovered. Enumerating them here ensures they receive the same thorough coverage as standard pipeline components.
+
 ---
 
 ## Cross-component interaction tests
