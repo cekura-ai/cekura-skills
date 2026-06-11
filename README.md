@@ -22,7 +22,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 9 Skills, 14 Commands in one plugin
+### 10 Skills, 14 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
@@ -35,6 +35,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
 | `cekura-fixing-prod-issues` | |
+| `cekura-infra-test-suite` | |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
@@ -82,7 +83,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Nine skills, scoped to specific Cekura workflows:
+Ten skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
@@ -95,6 +96,7 @@ Nine skills, scoped to specific Cekura workflows:
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
 | `cekura-fixing-prod-issues` | "Fix a production call bug / reproduce and test a fix before raising a PR" |
+| `cekura-infra-test-suite` | "Create CI/CD tests for my voice bot / test my voice AI infrastructure / E2E test my pipecat bot" |
 
 ### Want full functionality?
 
@@ -192,7 +194,8 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-metric-improvement \
          cekura/skills/cekura-predefined-metrics \
          cekura/skills/cekura-eval-design \
-         cekura/skills/cekura-fixing-prod-issues
+         cekura/skills/cekura-fixing-prod-issues \
+         cekura/skills/cekura-infra-test-suite
 ```
 
 Restart Codex after install.
@@ -225,7 +228,8 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-metric-improvement \
          cekura/skills/cekura-predefined-metrics \
          cekura/skills/cekura-eval-design \
-         cekura/skills/cekura-fixing-prod-issues
+         cekura/skills/cekura-fixing-prod-issues \
+         cekura/skills/cekura-infra-test-suite
 ```
 
 ---
@@ -329,6 +333,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
 | `cekura-fixing-prod-issues` | Fixing a production call bug — debug, reproduce, fix, verify, regression test, PR |
+| `cekura-infra-test-suite` | Generating a CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
 
 ### Getting Started Flow
 
