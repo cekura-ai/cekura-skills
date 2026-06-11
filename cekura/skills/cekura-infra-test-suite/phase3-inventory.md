@@ -327,9 +327,13 @@ Generate test items only for languages Phase 2 confirmed are fully configured (S
 **Language-specific behavior differences (if Phase 2 documented them):**
 - Response style, formality, or behavior differs between language variants — one test per documented difference
 
-### Full Pipeline End-to-End
-- A complete call from connect → bot greeting → caller turn → LLM response → TTS playback → caller turn → task completion → hang-up runs without errors
-- This is always the first scenario built; all other scenarios assume this baseline is passing
+### Full Pipeline End-to-End (Smoke Test — does not count toward 200)
+
+This is ambient — exercised by every other scenario in the suite. It does **not** count toward the 200-item minimum.
+
+Keep exactly ONE E2E scenario. Its only purpose is a fast smoke test: if the basic connection → greeting → caller turn → LLM response → TTS → hang-up path fails, it stops the full suite from running against a broken baseline.
+
+If any of the 200+ detailed test scenarios already covers this path (which most do), this dedicated E2E scenario may be omitted entirely. Its presence is optional.
 
 ### Agent Workflow Tests
 
