@@ -24,15 +24,17 @@ Apply-order details, gate wording, and edge cases live in each provider's doc:
 - **Self-hosted / pipecat** — [`../../providers/self-hosted/pipecat.md`](../../providers/self-hosted/pipecat.md) § "Phase 4.1b — apply order": mock-tool PATCH → new mock-tool POST → description PATCH → redeploy step (Step APPLY.2).
 - **Self-hosted / websocket / `file`** — [`../../providers/self-hosted/websocket.md`](../../providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `file`): tool-definition `Edit`s → new-tool `Edit` → system-prompt `Edit` → optional Cekura description sync → redeploy step (Step APPLY.2).
 - **Self-hosted / websocket / `offline`** — [`../../providers/self-hosted/websocket.md`](../../providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `offline`): render the rewritten prompt; auto-mode asks once for new pasted failures concisely; non-auto fires the full manual-apply gate. No redeploy step (no live agent; skip Step APPLY.2).
+- **Self-hosted / database** — [`../../providers/self-hosted/database.md`](../../providers/self-hosted/database.md) § "Phase 4.1e — Apply (DB write)": write-query variant runs the user's UPDATE / `updateOne` via the appropriate CLI client (psql / mysql / sqlite3 / sqlcmd / mongosh), passing the new prompt via env var or stdin (never a positional arg), then runs `redeploy_command` (Step APPLY.2) — `"noop"` skips the pause when the live agent re-reads the row on every request. Render-only variant (no write query supplied) prints the new prompt and waits for the user to update the DB themselves; no redeploy step.
 
 Apply early-end-call edits and diagnose edits as a single batch in the order above (per-mode). They were already de-conflicted in Step DIAGNOSE.4, so order between the two diagnose sub-phases' edits doesn't matter — only the per-mode apply order (tools before prompt, or per-doc instructions) matters.
 
 ## Step APPLY.2 — Redeploy step (self-hosted with live target only)
 
-Skip entirely for VAPI, for ElevenLabs, and for the websocket `offline` variant. For pipecat and websocket / `file`, branch on `redeploy_command`:
+Skip entirely for VAPI, for ElevenLabs, and for the websocket `offline` variant. For pipecat, websocket / `file`, and database (write-query variant), branch on `redeploy_command`:
 
 - **Command provided** → run it via the Bash tool. Capture exit code and stderr. On non-zero exit, surface the failure to the user, do NOT proceed to [`sync.md`](sync.md), and ask whether to retry the redeploy or abort. On success (or success-with-warnings), proceed to Sync.
-- **`redeploy_command == "manual"` (or unset and `auto_mode: false`)** → fire the per-sub-flavor manual restart gate (pipecat redeploy gate, websocket restart gate). Wait for explicit user confirmation (`done` / `restarted` / `redeployed` / `yes`).
+- **`redeploy_command == "manual"` (or unset and `auto_mode: false`)** → fire the per-sub-flavor manual restart gate (pipecat redeploy gate, websocket restart gate, database restart-or-reload gate). Wait for explicit user confirmation (`done` / `restarted` / `redeployed` / `yes`).
+- **`redeploy_command == "noop"` (database sub-flavor, live agent re-reads the row on every request)** → skip the pause and proceed straight to Sync. The UPDATE has already made the new prompt live.
 - **Unset and `auto_mode: true`** → proceed straight to Sync without pausing. The Eval phase's no-change detector surfaces stale-state hypotheses after the fact.
 
 Treat the redeploy step as a critical path: a failed redeploy means validation will reflect the pre-edit live state. Never silently swallow a non-zero exit code and proceed to Sync — that produces results indistinguishable from "the prompt edit didn't help" and burns iteration cap.

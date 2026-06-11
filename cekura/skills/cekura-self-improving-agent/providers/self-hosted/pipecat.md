@@ -8,8 +8,8 @@ Use this reference together with the main SKILL.md and `providers/self-hosted/ov
 
 The user reaches this sub-flavor either by:
 
-- `provider.type == "pipecat"` — proceed straight in.
-- `provider.type` is `self_hosted` / `custom` (or a chat-only agent, e.g. `agentforce` under `chat_agent_details.type`) and the user picked `pipecat` at the self-hosted sub-flavor router (see `overview.md`).
+- `assistant_provider == pipecat` — proceed straight in.
+- `assistant_provider` is `self_hosted` / `custom` / `agentforce` and the user picked `pipecat` at the self-hosted sub-flavor router (see `overview.md`).
 
 If the user is unsure whether their setup is pipecat or websocket, the disambiguating question is "Is your live agent a pipecat pipeline?" If no, route to `websocket.md` instead. If they declined every self-hosted sub-flavor, the workflow halts — see the main SKILL.md "unsupported provider" error wording (mirrored in `providers/vapi/phase-1-fetch.md`).
 
@@ -32,7 +32,7 @@ All pipecat-mode work uses Cekura platform tools (not VAPI's API). Confirm the M
 
 ```
 Pipecat agent: <agent_name> (id: <agent_id>)
-  Provider tag: <provider.type>      # pipecat, or the custom tag confirmed pipecat-backed
+  Provider tag: <assistant_provider>      # pipecat, or the custom tag confirmed pipecat-backed
   Description (system prompt): <length> chars
   Mock tools: <N>
     - <tool_name> — <description first 80 chars>
@@ -66,7 +66,7 @@ curl -X PATCH \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
   -d @/tmp/agent_patch.json \
-  https://api.cekura.ai/test_framework/v2/aiagents/<agent_id>/
+  https://api.cekura.ai/test_framework/v1/aiagents/<agent_id>/
 ```
 
 where `/tmp/agent_patch.json` contains `{"description": "<new prompt>"}`.
@@ -150,4 +150,4 @@ before continuing.
 - **Rendering the redeploy gate in auto mode.** In `auto_mode: true` (the default), the gate is intentionally skipped — the skill runs validation immediately after PATCH. Rendering the multi-step "before continuing, redeploy your server" block breaks the autonomous loop. The Step 4.5 no-change detector handles stale-state cases after the fact. (In `auto_mode: false`, the gate fires on every iteration including the first — that's the trade-off the user explicitly opted into.)
 - **Treating mock-tool edits as live-tool edits.** The agent's real tool implementations live in pipecat code. A mock-tool description change tells future test runs what the contract should be; it does not change the agent's behavior on its own. When a mock-tool change matters for Phase 3 reasoning, also surface a hand-off asking the user to update the pipecat tool implementation to match.
 - **Proposing VAPI-shaped edits in pipecat mode.** Spoken `messages` (`request-start`, `request-complete`, `request-failed`), handoff `destinations`, squad `model.toolIds` — none of these exist in pipecat. Phase 3 must filter these edit candidates out before presenting to the user.
-- **Diagnosing "literal `{{variable}}` survived" without confirming it.** Pipecat doesn't expose the rendered system message the way VAPI does. If a failure transcript shows the agent saying `{{customerName}}`, that's clear evidence; if you're inferring it from indirect signals, mark the diagnosis as "suspected upstream — runtime state not observable" rather than presenting it as confirmed.
+- **Diagnosing "literal `{{variable}}` survived" without confirming it.** Pipecat transcript_provider doesn't expose the rendered system message the way VAPI does. If a failure transcript shows the agent saying `{{customerName}}`, that's clear evidence; if you're inferring it from indirect signals, mark the diagnosis as "suspected upstream — runtime state not observable" rather than presenting it as confirmed.
