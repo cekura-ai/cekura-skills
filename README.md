@@ -114,13 +114,12 @@ Full plugin support — skills, slash commands, MCP tools, and auto-configured A
 2. Click **Manage Plugins** > **Marketplaces** tab
 3. Paste `https://github.com/cekura-ai/cekura-skills.git` and click **Add**
 4. Switch to the **Plugins** tab > search for `cekura` > install the plugin
-5. Set your API key:
+5. In the Claude Code chat, run `/setup-mcp` to connect the MCP server. The default is OAuth — a browser opens for one-click sign-in; no API key or restart needed.
+6. (Optional) For the API-key auth path or curl-based skill fallbacks, set your key and restart VS Code:
    ```bash
    # Add to ~/.zshrc or ~/.bashrc
    export CEKURA_API_KEY="your-key-here"
    ```
-6. Restart VS Code to pick up the environment variable
-7. In the Claude Code chat, run `/setup-mcp` to configure the MCP server
 
 ### Get Started
 
@@ -149,13 +148,12 @@ Same full plugin support as VS Code.
 2. Go to the **Marketplaces** tab > select **Add Marketplace**
 3. Paste `https://github.com/cekura-ai/cekura-skills.git` and confirm
 4. Go to the **Discover** tab > search for `cekura` > install the plugin
-5. Set your API key:
+5. Run `/setup-mcp` to connect the MCP server. The default is OAuth — a browser opens for one-click sign-in; no API key or restart needed.
+6. (Optional) For the API-key auth path or curl-based skill fallbacks, set your key and restart your terminal + Claude Code session:
    ```bash
    # Add to ~/.zshrc or ~/.bashrc
    export CEKURA_API_KEY="your-key-here"
    ```
-6. Restart your terminal and Claude Code session
-7. Run `/setup-mcp` to configure the MCP server
 
 > **Tip:** If you've already cloned the repo locally, you can paste the local path instead of the GitHub URL.
 
@@ -295,7 +293,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 **For other platforms:** The MCP server is optional. The `AGENTS.md` behavior preset includes API reference with curl examples as a fallback.
 
-**How it works:** The plugin ships a single `.mcp.json` file at the marketplace root that auto-configures the connection. When Claude Code starts, it reads the file and connects to the Cekura MCP server at `https://api.cekura.ai/mcp`. With `CEKURA_API_KEY` in your environment, all `mcp__cekura__*` tools become available automatically. Or use OAuth via `claude mcp add` for a key-free, one-click browser sign-in — see the [MCP overview](https://docs.cekura.ai/mcp/overview).
+**How it works:** The plugin ships a single `.mcp.json` file at the marketplace root that auto-configures the connection to the Cekura MCP server at `https://api.cekura.ai/mcp`. By default it authenticates via OAuth — on first use Claude Code opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
 
 ---
 

@@ -82,7 +82,7 @@ Once installed, npx users have three ways to stay current:
 
 ## MCP Integration
 
-The plugin uses the Cekura MCP server as the **primary** API access path. The plugin's `cekura/.mcp.json` auto-configures an MCP server pointing at `https://api.cekura.ai/mcp` and reads `${CEKURA_API_KEY}` for auth (or users can run `claude mcp add` for OAuth instead — see the [MCP overview docs](https://docs.cekura.ai/mcp/overview)).
+The plugin uses the Cekura MCP server as the **primary** API access path. The plugin's `cekura/.mcp.json` auto-configures an MCP server pointing at `https://api.cekura.ai/mcp`, authenticating via OAuth by default (one-click browser sign-in, no key stored). For an API-key credential instead, register the server with `claude mcp add --header "X-CEKURA-API-KEY: <key>"` — see `/setup-mcp` and the [MCP overview docs](https://docs.cekura.ai/mcp/overview).
 
 MCP is the default. If MCP tools aren't available, users run `/setup-mcp` to configure the server.
 
