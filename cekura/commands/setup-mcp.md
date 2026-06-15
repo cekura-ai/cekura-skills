@@ -58,23 +58,21 @@ This is for users who need a project-scoped credential or want to share access v
 
 Ask: "What's your Cekura API key? Find it at https://dashboard.cekura.ai → Settings → API Keys."
 
-Set the env var (persistent — add to shell profile):
+Register the server with the key sent as a header, at `local` scope so this entry overrides the plugin's bundled (OAuth) `cekura` entry:
 
 ```bash
-# In ~/.zshrc or ~/.bashrc
-export CEKURA_API_KEY="<your-key-here>"
+claude mcp add --transport http cekura --scope local \
+  --header "X-CEKURA-API-KEY: <your-key-here>" \
+  https://api.cekura.ai/mcp
 ```
 
-Reload: `source ~/.zshrc` (or restart the terminal).
+Pass the **actual key value**, not a `${CEKURA_API_KEY}` reference — header values in an HTTP MCP entry are sent verbatim, so a placeholder would be transmitted literally and rejected as an invalid key.
 
-Note: a key stored in a dotfile can leak via dotfile repos, backups, or screen-shares. If you keep your dotfiles in git or sync them anywhere, prefer sourcing the key from a secret manager (e.g. `export CEKURA_API_KEY=$(op read ...)` / `security find-generic-password ...`) or a separate untracked file — or use the OAuth path, which stores no key at all.
-
-The plugin's bundled `.mcp.json` reads `${CEKURA_API_KEY}` automatically — no further config needed. Restart the Claude Code session to pick up the env var.
+Note: a key embedded in a config file can leak via dotfile repos, backups, or screen-shares. If you sync your config anywhere, prefer the OAuth path, which stores no key at all.
 
 Verify:
 
 ```bash
-[ -n "$CEKURA_API_KEY" ] && echo "API key: set" || echo "API key: NOT SET"   # presence check — don't print the key itself
 claude mcp list                       # should show 'cekura' connected
 ```
 
@@ -84,7 +82,7 @@ Try `mcp__cekura__list_available_tools`. It should return a list of Cekura API o
 
 If it fails:
 - **OAuth path:** check `claude mcp list` shows `cekura` as connected. If not, re-run the `claude mcp add` command and re-authorize in the browser.
-- **API key path:** confirm the presence check above reports `API key: set` and that you restarted Claude Code after setting it.
+- **API key path:** run `claude mcp list` and confirm the `cekura` entry shows `connected`. If you get an "invalid API key" error, re-run the `claude mcp add` command with the literal key value (not a `${...}` placeholder).
 - For both paths: verify connectivity to the public API with `curl -I https://api.cekura.ai/mcp` (should return a 2xx or 4xx — a connection error means a network issue).
 
 ### 5. Fix git remote config (one-time, optional)
