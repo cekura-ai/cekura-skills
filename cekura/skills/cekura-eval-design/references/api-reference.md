@@ -30,8 +30,8 @@ Use `?call_id=` only when constructing a dashboard UI link to a specific run. In
 |--------|------|---------|
 | GET | `/test_framework/v1/aiagents/` | List agents (filter by `project_id`) |
 | GET | `/test_framework/v1/aiagents/{id}/` | Get agent (includes `description` field) |
-| GET | `/test_framework/v1/aiagents/{id}/tools/` | List mock tools on agent |
-| PATCH | `/test_framework/v1/aiagents/{id}/tools/{tool_id}/` | Update mock tool mappings |
+| GET | `/test_framework/v2/aiagents/{id}/?ql={mock_tools}` | List mock tools on agent |
+| PATCH | `/test_framework/v2/aiagents/{id}/` | Update mock tools via `mock_tools` field (full list replace) |
 
 ## Evaluator/Scenario Endpoints
 
