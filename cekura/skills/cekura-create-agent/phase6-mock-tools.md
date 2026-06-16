@@ -37,7 +37,22 @@ If the provider API key and assistant ID are already set:
 2. Cekura fetches all tool definitions from the provider and generates sample I/O data
 3. Review and toggle mock mode per tool
 
-Auto-fetch is UI-only — no direct API equivalent. Manage individual tools via API afterward.
+**Via API — new agents:** set `provider.configure_from_provider: true` inside the `provider` block when calling `POST /v2/aiagents/`. Requires `provider.agent_id` (the assistant ID on the provider) and `provider.credentials.api_key`. The create response includes a `progress_id` to poll `GET /v2/aiagents/{id}/auto-fetch-progress/?progress_id=...`.
+
+```json
+{
+  "name": "My Agent",
+  "project": 123,
+  "provider": {
+    "type": "retell",
+    "agent_id": "agent_abc123",
+    "credentials": { "api_key": "..." },
+    "configure_from_provider": true
+  }
+}
+```
+
+**Via API — existing agents:** use `POST /v2/aiagents/{id}/auto-fetch/` which returns a `progress_id`; poll `GET /v2/aiagents/{id}/auto-fetch-progress/?progress_id=...` until completed.
 
 ---
 
@@ -45,26 +60,35 @@ Auto-fetch is UI-only — no direct API equivalent. Manage individual tools via 
 
 Read the main agent description to find every tool name. For each tool, create a mock.
 
-Create mock tools via the API:
+Mock tools are managed via the `mock_tools` field on the agent. **Always pass the full list** — a PATCH replaces the entire set. To add tools without losing existing ones, fetch current tools first then include them.
 
 ```bash
-curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tools/ \
+# Fetch current tools first
+curl https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/?ql={mock_tools} \
+  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY"
+
+# PATCH with full list (existing + new)
+curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "get_user_info",
-    "description": "Retrieves user data based on phone number",
-    "information": [
+    "mock_tools": [
       {
-        "input": {"phone_number": "8645239892"},
-        "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
-      },
-      {
-        "input": {"phone_number": "18645239892"},
-        "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
+        "name": "get_user_info",
+        "description": "Retrieves user data based on phone number",
+        "mock_data": [
+          {
+            "input": {"phone_number": "8645239892"},
+            "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
+          },
+          {
+            "input": {"phone_number": "18645239892"},
+            "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
+          }
+        ],
+        "freetext_params": ["notes", "reason"]
       }
-    ],
-    "freetext_params": ["notes", "reason"]
+    ]
   }'
 ```
 
