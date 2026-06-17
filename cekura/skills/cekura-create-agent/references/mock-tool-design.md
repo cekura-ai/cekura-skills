@@ -48,12 +48,13 @@ For each scenario the user wants to test, they'll need a matching set of mock da
 
 ## Critical: Append-Not-Replace
 
-When updating a tool's `information` array to add new scenario data:
-1. GET the existing tool to get current mappings
-2. Append new mappings to the existing array
-3. PATCH with the full combined array
+Mock tools are managed via `PATCH /v2/aiagents/{id}/` using the `mock_tools` field. The entire list is replaced on each PATCH. To add or update mappings without losing existing ones:
 
-A PATCH with only new mappings **replaces ALL existing mappings**.
+1. `GET /v2/aiagents/{id}/?ql={mock_tools}` to fetch current tools and their `id` values
+2. Merge new mappings into the existing `mock_data` arrays
+3. `PATCH /v2/aiagents/{id}/` with the full `mock_tools` list (include `id` for existing tools)
+
+A PATCH that omits an existing tool **removes it entirely**.
 
 ## Key Rules Reminder
 

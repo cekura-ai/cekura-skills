@@ -85,7 +85,7 @@ Convert each REVISE / STRIP decision into a concrete edit:
 
 - **VAPI** — a follow-up assistant PATCH or tool PATCH that overwrites the just-changed field with the cleaned-up version. Bundle all cleanup edits into a single PATCH per artifact (one for the assistant, one per tool) to minimize round-trips.
 - **ElevenLabs** — a follow-up agent PATCH (`conversation_config.agent.prompt.prompt`) or tool PATCH (`/v1/convai/tools/{id}`) overwriting the just-changed field with the cleaned-up version. One PATCH per artifact.
-- **Self-hosted / pipecat** — a follow-up `mcp__cekura__aiagents_partial_update` or `mcp__cekura__aiagents_tool_partial_update` with the cleaned-up `description` / `parameters`.
+- **Self-hosted / pipecat** — a follow-up `mcp__cekura__aiagents_partial_update` with the updated `mock_tools` list (include all tools; pass updated `description` / `mock_data` for the changed one).
 - **Self-hosted / websocket / `file`** — `Edit` calls on the source file, each with `old_string` = the overfit fragment that just landed and `new_string` = the cleaned-up version. If REVISE replaces a multi-line block, include 3–5 lines of surrounding context per anchor to keep `old_string` unique.
 - **Self-hosted / websocket / `offline`** — render a SECOND revised prompt and replace the just-shown rendered prompt with it. Tell the user explicitly: "I noticed the previous rendering quoted the failing transcript verbatim; here's a generalized version — apply this instead of the previous one."
 

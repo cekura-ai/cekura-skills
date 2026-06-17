@@ -87,24 +87,24 @@ All cross-tool references (user IDs, account numbers, booking references) must b
 When adding entries to an existing tool, always GET first → merge → PATCH the full combined array. A PATCH with only new entries **replaces all existing mappings**.
 
 ```bash
-# Wrong — wipes existing mappings:
-PATCH /test_framework/v1/mock-tools/{id}/ -d '{"information": [<new entries only>]}'
+# Wrong — wipes existing tools:
+PATCH /test_framework/v2/aiagents/{id}/ -d '{"mock_tools": [<new tool only>]}'
 
 # Right:
-GET /test_framework/v1/aiagents/{agent_id}/tools/  # get current information array
-# append new entries to existing array, then:
-PATCH /test_framework/v1/mock-tools/{id}/ -d '{"information": [<full merged array>]}'
+GET /test_framework/v2/aiagents/{id}/?ql={mock_tools}  # fetch current tools with their ids
+# merge new mock_data entries into existing tools, then:
+PATCH /test_framework/v2/aiagents/{id}/ -d '{"mock_tools": [<full merged list>]}'
 ```
 
 ### Large Payload Workaround
 
-For tools with large `information` arrays (many mappings or large output objects), use curl with a file — MCP URL-encodes parameters and can hit nginx's URI limit:
+For tools with large `mock_data` arrays, use curl with a file — MCP URL-encodes parameters and can hit nginx's URI limit:
 
 ```bash
-curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/tools/ \
+curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
-  -d @tool.json
+  -d @tools.json
 ```
 
 ---
@@ -249,10 +249,10 @@ Test profile value == variable value == tool input value — they must be identi
 ### Mock Tool Endpoints
 
 ```
-PATCH /test_framework/v1/mock-tools/{tool_id}/
+PATCH /test_framework/v2/aiagents/{agent_id}/
 ```
 
-Append a new entry to the tool's `information` array (GET first → merge → PATCH full array).
+Update mock tools via the `mock_tools` field (GET full list first → merge → PATCH full list).
 
 ```json
 {

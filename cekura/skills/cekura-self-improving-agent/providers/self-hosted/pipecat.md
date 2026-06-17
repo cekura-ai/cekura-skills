@@ -19,14 +19,12 @@ All pipecat-mode work uses Cekura platform tools (not VAPI's API). Confirm the M
 
 | Operation | Tool |
 |-----------|------|
-| Fetch agent record (description + provider config) | `mcp__cekura__aiagents_retrieve` |
-| List mock tools attached to the agent | `mcp__cekura__aiagents_tools_list` |
-| Read a single mock tool | `mcp__cekura__aiagents_tool_retrieve` |
+| Fetch agent record (description + provider config + mock tools) | `mcp__cekura__aiagents_retrieve` with `ql={mock_tools}` |
 | Update agent description | `mcp__cekura__aiagents_partial_update` |
-| Update a mock tool's description / parameters | `mcp__cekura__aiagents_tool_partial_update` |
-| Create a new mock tool | `mcp__cekura__aiagents_tools_create` |
+| Create / update / delete mock tools | `mcp__cekura__aiagents_partial_update` with full `mock_tools` list (GET first → merge → PATCH) |
+| Enable / disable mock mode | `mcp__cekura__aiagents_toggle_mock_tools_create` |
 
-`aiagents_create` and `aiagents_tools_create` have known MCP URI-length limits for large payloads (>4 KB). For long descriptions, fall back to direct API calls — see `cekura-create-agent`'s `scripts/upload-agent.sh` and the "Known MCP Limitations" section in this repo's CLAUDE.md.
+`aiagents_create` has a known MCP URI-length limit for large payloads (>4 KB). For long descriptions, fall back to direct API calls — see `cekura-create-agent`'s `scripts/upload-agent.sh` and the "Known MCP Limitations" section in this repo's CLAUDE.md.
 
 ## Phase 1.3b — compact summary template
 
@@ -57,9 +55,8 @@ surfaces a "redeploy may not have happened" hypothesis after the fact.
 
 ## Phase 4.1b — apply order
 
-1. Mock-tool edits via `mcp__cekura__aiagents_tool_partial_update` (one call per edited tool).
-2. New mock-tool creation via `mcp__cekura__aiagents_tools_create` (one call per new tool).
-3. Description edit via `mcp__cekura__aiagents_partial_update` (one call). For descriptions over ~4 KB, fall back to direct API:
+1. Mock-tool edits/additions via `mcp__cekura__aiagents_partial_update` with full `mock_tools` list (one call: GET current list → merge all changes → PATCH).
+2. Description edit via `mcp__cekura__aiagents_partial_update` (one call). For descriptions over ~4 KB, fall back to direct API:
 
 ```
 curl -X PATCH \
@@ -116,7 +113,7 @@ Proceed straight to Step 4.2 sync verification and Step 4.4 validation without p
 Re-fetch and verify:
 
 - `mcp__cekura__aiagents_retrieve` → confirm `description` matches the patched value (compare lengths and first/last 200 chars; full-text compare for short descriptions).
-- For each edited / created tool: `mcp__cekura__aiagents_tool_retrieve` → confirm `description` and `parameters` match.
+- Re-fetch `mcp__cekura__aiagents_retrieve` with `ql={mock_tools}` → confirm the updated `mock_tools` list matches what was patched (check `description` and `mock_data` for changed tools).
 
 There is no "is the live agent running the new prompt?" check available from Cekura. In auto mode (the default), the skill simply runs validation and relies on the Step 4.5 no-change detector to flag stale-state hypotheses after the fact. In `auto_mode: false`, the redeploy gate is the only pre-validation mechanism; if the user replied `"skip"`, carry that flag through Step 4.6 framing.
 

@@ -90,27 +90,32 @@ All other fields are optional. PATCH requires no mandatory fields.
 
 ## Mock Tool Endpoints
 
+Mock tools are managed via the agent's `mock_tools` field:
+
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | `/test_framework/v1/aiagents/{agent_id}/tools/` | Create mock tool |
-| GET | `/test_framework/v1/aiagents/{agent_id}/tools/` | List mock tools |
-| GET | `/test_framework/v1/mock-tools/{tool_id}/` | Get mock tool |
-| PATCH | `/test_framework/v1/mock-tools/{tool_id}/` | Update mock tool |
-| DELETE | `/test_framework/v1/mock-tools/{tool_id}/` | Delete mock tool |
+| GET | `/test_framework/v2/aiagents/{id}/?ql={mock_tools}` | List mock tools |
+| PATCH | `/test_framework/v2/aiagents/{id}/` | Create / update / delete mock tools (via `mock_tools` field) |
+| POST | `/test_framework/v2/aiagents/{id}/auto-fetch/` | Auto-fetch tools from provider |
+| POST | `/test_framework/v2/aiagents/{id}/toggle-mock-tools/` | Enable / disable mock mode |
 
-### Create Mock Tool Schema
+### Update Mock Tools Schema
 
 ```json
-POST /test_framework/v1/aiagents/{agent_id}/tools/
+PATCH /test_framework/v2/aiagents/{agent_id}/
 {
-  "name": "string (required, max 64 chars)",
-  "description": "string",
-  "information": [{"input": {}, "output": {}}],
-  "freetext_params": ["notes"]
+  "mock_tools": [
+    {
+      "name": "string (required, max 64 chars)",
+      "description": "string",
+      "mock_data": [{"input": {}, "output": {}}],
+      "freetext_params": ["notes"]
+    }
+  ]
 }
 ```
 
-**Critical: Append-not-replace** — GET existing `information` first, merge, then PATCH the full array.
+**Critical: Full-list replace** — always include all tools; omitting a tool removes it. GET existing `mock_tools` first, merge, then PATCH the full list.
 
 ## Knowledge Base
 

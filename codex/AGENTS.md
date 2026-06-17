@@ -458,8 +458,8 @@ The `?call_id=` query param holds a `run_id` — use that format only when const
 | GET | `/test_framework/v1/aiagents/` | List agents |
 | GET | `/test_framework/v1/aiagents/{id}/` | Get agent |
 | PATCH | `/test_framework/v1/aiagents/{id}/` | Update agent |
-| POST | `/test_framework/v1/aiagents/{id}/tools/` | Create mock tool |
-| GET | `/test_framework/v1/aiagents/{id}/tools/` | List mock tools |
+| GET | `/test_framework/v2/aiagents/{id}/?ql={mock_tools}` | List mock tools |
+| PATCH | `/test_framework/v2/aiagents/{id}/` | Create / update / delete mock tools via `mock_tools` field |
 
 ## Conditional Actions — Deterministic Evaluators
 
