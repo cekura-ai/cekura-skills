@@ -23,7 +23,7 @@ LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 Use Cekura's background generation API to create evaluators from an agent's description. The generator reads the agent's full workflow context (description, language, tools, personalities enabled on the project) and picks sensible defaults for everything that isn't passed in.
 
-**Pass only `agent_id` and `num_scenarios` to the generate call.** Every other parameter is optional, and forcing one risks overriding the agent's own configuration (e.g. hard-coding a personality that doesn't match the agent's language). Let the backend infer the rest from the agent.
+**Pass `agent_id` and `num_scenarios` to the generate call.** Also pass `extra_instructions` and `tags` if (and only if) the user explicitly provided them. Every other parameter is optional and should be omitted, since forcing one risks overriding the agent's own configuration (e.g. hard-coding a personality that doesn't match the agent's language). Let the backend infer the rest from the agent.
 
 ## Configuration Walkthrough
 
@@ -39,6 +39,15 @@ Use `mcp__cekura__aiagents_list` to help find agents. Then read the agent descri
 
 Recommend 5–15 based on agent complexity. The generator will produce coverage based on the agent description.
 
+### 3. Extra Instructions and Tags (only when the user asks)
+
+These two fields are optional and should be passed **only when the user explicitly provides them** — never as defaults the skill invents.
+
+- **`extra_instructions`** — pass when the user has specific scenario descriptions, focus areas, or category-level guidance they want the generator to follow. Skip this prompt entirely if they just said "generate N scenarios" without further detail. Don't ask for guidance the user didn't volunteer.
+- **`tags`** — pass when the user wants the batch labeled for filtering/grouping later (e.g. `["2026-q2-regression"]`, `["onboarding-flow"]`). Skip if they don't bring up tags.
+
+If the user does provide either, include them in the trigger call alongside `agent_id` and `num_scenarios`. Do not ask leading questions to coax these values out — the goal is to keep the call minimal unless the user has a real reason to override defaults.
+
 ## Pre-Generation Checkpoint
 
 Present the configuration for approval:
@@ -46,20 +55,24 @@ Present the configuration for approval:
 ```
 Agent: [agent_id] ([agent_name])
 Count: [num_scenarios]
+Extra instructions: [first few lines, or "—" if none]
+Tags: [list, or "—" if none]
 
 Proceed with generation?
 ```
 
 ## Trigger Generation
 
-Use `mcp__cekura__scenarios_generate_bg` with exactly these two fields:
+Use `mcp__cekura__scenarios_generate_bg` with:
 
-| Field | Value |
-|-------|-------|
-| `agent_id` | Agent ID |
-| `num_scenarios` | Count from step 2 |
+| Field | Value | When to pass |
+|-------|-------|--------------|
+| `agent_id` | Agent ID | Always |
+| `num_scenarios` | Count from step 2 | Always |
+| `extra_instructions` | From step 3 | Only if the user provided guidance |
+| `tags` | From step 3 | Only if the user provided tags |
 
-Do not pass `personalities`, `tool_ids`, `tags`, `folder_path`, `extra_instructions`, `generate_expected_outcomes`, `scenario_type`, or any other optional field — let the backend derive defaults from the agent. Forcing a value here is how you end up with English scenarios for an Arabic agent, or with the wrong tool set enabled.
+Do not pass `personalities`, `tool_ids`, `folder_path`, `generate_expected_outcomes`, `scenario_type`, or any other optional field — let the backend derive defaults from the agent. Forcing a value here is how you end up with English scenarios for an Arabic agent, or with the wrong tool set enabled.
 
 Returns `{"progress_id": "<uuid>"}`.
 
@@ -134,7 +147,7 @@ Post-generation adjustments applied (if any):
 
 ## Key Reminders
 
-- **Pass only `agent_id` and `num_scenarios`** to `scenarios_generate_bg`. Forcing optional fields overrides the agent's own configuration and is the most common source of "wrong language" / "wrong tools" / "wrong personality" bugs.
+- **Pass `agent_id` and `num_scenarios`** to `scenarios_generate_bg`. Add `extra_instructions` and `tags` only if the user explicitly provided them — never as skill-invented defaults. Skip every other optional field; forcing it overrides the agent's own configuration and is the most common source of "wrong language" / "wrong tools" / "wrong personality" bugs.
 - **Generation can partially complete** — check after 2 minutes, re-run for the remainder if needed.
 - **Adjust after generation, not before** — patch `scenario_language`, `metrics`, `first_message`, test profiles on individual scenarios via `scenarios_partial_update` when review reveals they're needed.
 - Consider running `/manual-create-update-eval` for edge cases and red-team scenarios that the generator doesn't cover.
