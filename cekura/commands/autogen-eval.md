@@ -2,7 +2,7 @@
 name: autogen-eval
 description: Auto-generate Cekura evaluators using the generate API with full configuration
 argument-hint: "[agent ID] [count] [scenario type]"
-allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 
 <!-- cekura-tracking-beacon -->
@@ -200,14 +200,20 @@ ID,Category,Name,Instructions,Expected Outcome,Priority
 S-01,Scheduling,New adult patient,Calls as new patient...,Agent books appointment...,must-have
 ```
 
+This is a post-generation create path — it uses `mcp__cekura__scenarios_create` to write each row of the user's CSV/JSON into a scenario directly. The Auto-Generate flow above does not apply here, and unlike that flow, `scenarios_create` needs `personalities` and `tool_ids` as explicit per-scenario fields (they aren't inferred from the agent).
+
 ### Process
-1. Parse the input file into a list of rows (preserve order).
-2. For each row, render one numbered paragraph that bundles its `Name`, `Instructions`, and `Expected Outcome` into a complete per-scenario brief. Concatenate the paragraphs (blank-line separated) into a single `extra_instructions` string — the same pattern described in step 5 of the main walkthrough, just produced from the CSV instead of typed by hand.
-3. Walk through the same configuration (agent, metrics, tags, folder).
-4. Present a summary grouped by category. Get confirmation: "Ready to generate [N] evaluators?"
-5. Call `mcp__cekura__scenarios_generate_bg` with `agent_id`, `num_scenarios` = row count, `extra_instructions` = the string from step 2, plus `folder_path` and `tags` from the walkthrough if provided.
-6. Poll with `mcp__cekura__scenarios_generate_progress` until done. Report results: generated vs missed, with any unmatched rows surfaced for follow-up.
-7. Apply the same post-generation fixup as the main flow (metrics via `scenarios_partial_update`, language / first message patches when needed).
+1. Parse the input file
+2. Walk through the same configuration (agent, personality, metrics, tools, tags, folder)
+3. Present a summary grouped by category
+4. Get confirmation: "Ready to create [N] evaluators?"
+5. Create sequentially with `mcp__cekura__scenarios_create`, including `metrics` and `tool_ids`
+6. Report results: created vs failed with error details
+
+**Gathering personality and tools for this path** (the main walkthrough above does not cover these — they belong only to the bulk-create path):
+
+- **Personality:** ask which personality the bulk scenarios should use. Default `693` (Normal Male, en/American) for English agents. Use `mcp__cekura__personalities_list` to surface other options when language or persona needs to differ. (The Auto-Generate flow above intentionally does *not* pass a personality — it lets the backend infer one from the agent. Only the bulk-create path needs this explicit.)
+- **Tools:** ask which tools the testing agent should have enabled. Default `["TOOL_END_CALL"]`; add `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows and `TOOL_DTMF` for IVR. VAPI agents use prefixed names (`VAPI_TOOL_END_CALL`, etc.).
 
 ## Summary Report
 
