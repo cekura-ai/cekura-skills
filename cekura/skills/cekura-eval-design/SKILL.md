@@ -15,7 +15,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # Cekura Eval Design
@@ -315,6 +315,8 @@ Follow these steps in order. Skipping any of them is the most common cause of av
 3. **Choose the first turn (`id: 0`)** — does the testing agent speak first (`action: "Hi, I need to..."`, `fixed_message: true`) or does the main agent speak first (`action: ""`, e.g., IVR/voicemail)?
 4. **Write standard conditions** — one per agent prompt the testing agent must respond to. Each `condition` is a description of what the agent says; each `action` is the testing agent's response (verbatim with `fixed_message: true`, or behavioral with `false`).
 5. **Add `action_followup` and tags as needed** — multi-part responses, interruptions, DTMF, voicemail, silence/hold, network simulation, background noise. Each tag has placement constraints — see the reference's XML Tags table. **Timing:** an `action_followup` fires on the testing agent's **next turn** after its referenced condition — one main-agent reply elapses in between, regardless of the reply's content. It never fires in the same turn as its parent. See `references/conditional-actions.md` for the full rule and worked examples.
+
+   **Always end with a standalone `<endcall />` `action_followup`** as the final condition (`action: "<endcall />"`, `type: "action_followup"`, `fixed_message: true`, `condition` = the prior condition's integer `id`). Append it by default even when the closing line already contains an inline `<endcall />` — the inline tag stays, the standalone terminator is added after it. Skip this only when the user has asked that the call not be ended (e.g. "never end the call", "let it run to timeout"). See `references/conditional-actions.md` § Ending the Call.
 6. **Attach the supporting fields on the scenario** — test profile (for any identity data), tools (`TOOL_END_CALL`, `TOOL_DTMF` for IVR, etc.), metrics (Expected Outcome + Infrastructure Issues + Tool Call Success + Latency), personality (`scenario_language` is inherited from it), folder.
 7. **Run the validation checklist** — from `references/conditional-actions.md` § Validation Checklist. Catches missing FIRST_MESSAGE, missing `type`/`fixed_message`, XML tag misuse, etc., before you hit the API.
 
@@ -332,7 +334,8 @@ Follow these steps in order. Skipping any of them is the most common cause of av
     "conditions": [
       { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I need to ...", "type": "standard", "fixed_message": true },
       { "id": 1, "condition": "The agent asks for X", "action": "Provide X", "type": "standard", "fixed_message": false },
-      { "id": 2, "condition": "The agent confirms", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
+      { "id": 2, "condition": "The agent confirms", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true },
+      { "id": 3, "condition": 2, "action": "<endcall />", "type": "action_followup", "fixed_message": true }
     ]
   }
 }
@@ -354,7 +357,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 - **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
 - **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. Supports decimal seconds (`"0.5s"`) for sub-second precision. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
 - **`<dtmf digits="..." />`** supports `0–9`, `#`, `*`; combinable with surrounding text.
-- **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
+- **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work. **By default, also append a standalone `<endcall />` `action_followup` as the final condition** (added even when an inline `<endcall />` is already on the closing line; skip only if the user asked that the call not be ended). See `references/conditional-actions.md` § Ending the Call.
 - **`<spell>TEXT</spell>`** wraps text to spell letter by letter (good for IDs, account numbers).
 - **`<speed ratio="N" />`** range **0.8–1.2**; **`<volume ratio="N" />`** range **0–2** (Cartesia voices only) — both must be at the **start** of the action.
 - **`<network_simulation packet_loss="N" />`** — only `packet_loss` is supported.
@@ -369,7 +372,8 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
     { "id": 1, "condition": "The agent asks for your name", "action": "My name is {{test_profile.first_name}} {{test_profile.last_name}}", "type": "standard", "fixed_message": true },
     { "id": 2, "condition": "The agent asks for your date of birth", "action": "Provide your date of birth", "type": "standard", "fixed_message": false },
     { "id": 3, "condition": "The agent asks for your account number", "action": "My account number is <spell>{{test_profile.account_number}}</spell>", "type": "standard", "fixed_message": true },
-    { "id": 4, "condition": "The agent confirms your identity and provides appointment details", "action": "Thank you, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
+    { "id": 4, "condition": "The agent confirms your identity and provides appointment details", "action": "Thank you, that's all I needed <endcall />", "type": "standard", "fixed_message": true },
+    { "id": 5, "condition": 4, "action": "<endcall />", "type": "action_followup", "fixed_message": true }
   ]
 }
 ```

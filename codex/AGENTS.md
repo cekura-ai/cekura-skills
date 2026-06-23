@@ -498,6 +498,8 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 - **`standard`** — fires when conversation context matches the condition string
 - **`action_followup`** — fires on the testing agent's **next turn** after the prior condition (one main-agent reply elapses in between, regardless of its content; never fires in the same turn as its parent). `condition` is the integer ID of that prior condition. Use for multi-part responses and `<interruption>`.
 
+**Ending the call (default):** Every conditional-actions evaluator ends with a standalone `<endcall />` `action_followup` as its final condition — `{ "id": N+1, "condition": N, "action": "<endcall />", "type": "action_followup", "fixed_message": true }`. Append it even when the closing line already contains an inline `<endcall />`. Skip only when the user asked that the call not be ended (e.g. "never end the call", "let it run to timeout"). Requires `end_call` in `tool_ids`.
+
 ### XML Tags (fixed_message:true only)
 
 | Tag | Behavior |
@@ -505,7 +507,7 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 | `<ivr text="..." />` | Uninterruptible IVR message. **Must be entire action.** |
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible + beep at end. **Must be entire action.** `text` optional (silent voicemail allowed). Post-beep message goes in a separate action_followup. |
 | `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`) |
-| `<endcall />` | Terminate call. **May be combined with surrounding text** (only "communication-class" tag that allows this). |
+| `<endcall />` | Terminate call. **May be combined with surrounding text** (only "communication-class" tag that allows this). **By default, also append a standalone `<endcall />` `action_followup` as the final condition** (see Action Types). |
 | `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues. Supports decimal seconds (`"0.5s"`) for sub-second precision. |
 | `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell letter-by-letter |
@@ -529,7 +531,7 @@ Inject test profile data into verbatim text: `"My name is {{test_profile.first_n
 - **`<interruption>` not at start of action or not as `action_followup`** — Both constraints required
 - **`<network_simulation>` with `jitter`/`latency`** — Only `packet_loss` is supported
 - **Missing `type` field** — Required on every condition, no default
-- **No `<endcall />` at end** — Calls run to timeout without it
+- **No standalone `<endcall />` `action_followup` at end** — Every evaluator must end with a standalone `<endcall />` `action_followup` as its final condition by default (even when the closing line has an inline `<endcall />`), unless the user asked that the call not be ended. Calls run to timeout without it.
 
 ---
 

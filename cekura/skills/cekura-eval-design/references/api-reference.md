@@ -144,11 +144,14 @@ Set `scenario_type` to `"conditional_actions"` and pass the structured payload v
     "conditions": [
       { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I'd like to check on my upcoming appointment", "type": "standard", "fixed_message": true },
       { "id": 1, "condition": "The agent asks for your name", "action": "Provide your name", "type": "standard", "fixed_message": false },
-      { "id": 2, "condition": "The agent confirms your identity", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
+      { "id": 2, "condition": "The agent confirms your identity", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true },
+      { "id": 3, "condition": 2, "action": "<endcall />", "type": "action_followup", "fixed_message": true }
     ]
   }
 }
 ```
+
+The flow ends with a standalone `<endcall />` `action_followup` as its final condition — the default for every conditional-actions evaluator (added even when the closing line already has an inline `<endcall />`; omit only if the user asked that the call not be ended). See `references/conditional-actions.md` § Ending the Call.
 
 Do not set `first_message` or `instructions` when using `conditional_actions` — they are managed for you.
 
