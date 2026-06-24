@@ -8,7 +8,7 @@ description: |
   scenarios", "simulate the failures we saw in prod", "replay these bad
   calls as tests", "regression-test the agent on prod issues", or hands over
   a set of flagged call IDs to harden the agent against. The flagged set
-  normally comes from `cekura-internal:flag-call-logs` (which triages recent
+  normally comes from `cekura-internal:flag-call-log-failures` (which triages recent
   calls against specified issues/goals and applies attribution rules); if
   the user hasn't triaged yet, run that skill first. This skill takes the
   flagged calls as given — it does NOT re-mine or re-triage — clusters by
@@ -84,10 +84,10 @@ Use `AskUserQuestion` if not already supplied:
 1. **Agent ID** on Cekura (numeric, e.g. `16937`). If unknown, use `mcp__cekura__aiagents_list` to help find it.
 2. (Optional) **Project ID**, if the user manages multiple projects.
 3. **The flagged call set** — the calls these scenarios should reproduce. This skill does **not** mine or triage call logs itself; it expects a flagged set, normally one of:
-   - The output of **`cekura-internal:flag-call-logs`** — a list of `{call_log_id, issue/mode, severity, evidence_quote, expected_behavior}`. Each entry already has the per-call failure record this skill needs; go straight to clustering (Step 4).
+   - The output of **`cekura-internal:flag-call-log-failures`** — a list of `{call_log_id, issue/mode, severity, evidence_quote, expected_behavior}`. Each entry already has the per-call failure record this skill needs; go straight to clustering (Step 4).
    - A **user-supplied list of call IDs** ("build scenarios from calls 801, 802, 803"). Retrieve each with `mcp__cekura__call_logs_retrieve` and read its transcript to recover the same per-call record before clustering.
 
-   **If the user wants scenarios from "the failures in prod" but hasn't triaged yet, run `cekura-internal:flag-call-logs` first** to produce the flagged set, then continue here. Don't re-implement triage.
+   **If the user wants scenarios from "the failures in prod" but hasn't triaged yet, run `cekura-internal:flag-call-log-failures` first** to produce the flagged set, then continue here. Don't re-implement triage.
 
 Do not proceed until the agent ID is confirmed. If the user pasted a `dashboard.cekura.ai/<project>/observe/<call_log_id>` URL for a single call, use the single-call fast path below.
 
@@ -105,7 +105,7 @@ Use this when the user wants a scenario reproduced from **one specific call** (n
 
 ### B. Pin the focal failure
 
-Identify the **failure point** — the turn where the agent did the wrong thing — using the failure-mode taxonomy in `cekura-internal:flag-call-logs` (or the user-stated issue). Record the verbatim `evidence_quote` and a one-sentence `expected_behavior` (→ becomes `expected_outcome_prompt`). If the call clearly contains several distinct failures, ask the user which one to target; don't silently fold them into one scenario.
+Identify the **failure point** — the turn where the agent did the wrong thing — using the failure-mode taxonomy in `cekura-internal:flag-call-log-failures` (or the user-stated issue). Record the verbatim `evidence_quote` and a one-sentence `expected_behavior` (→ becomes `expected_outcome_prompt`). If the call clearly contains several distinct failures, ask the user which one to target; don't silently fold them into one scenario.
 
 ### C. Build a faithful replay (`conditional_actions`)
 
@@ -188,14 +188,14 @@ Only continue once description issues are resolved or the user explicitly opts t
 
 ## Step 3 — The flagged call set (input)
 
-This skill does **not** classify or triage calls — that is `cekura-internal:flag-call-logs`' job. By the time you reach this step you have a **flagged set**, each entry carrying:
+This skill does **not** classify or triage calls — that is `cekura-internal:flag-call-log-failures`' job. By the time you reach this step you have a **flagged set**, each entry carrying:
 
 `{ call_log_id, mode/issue, severity, evidence_quote, expected_behavior }`
 
-- **From `flag-call-logs`:** use the records as-is. That skill has already applied the attribution rules (caller-side endings, recovered calls, and legitimate early exits are excluded), so every flagged call is an agent-attributable failure — don't re-filter or second-guess the set.
-- **From a user-supplied list of call IDs:** fetch each with `mcp__cekura__call_logs_retrieve(id=...)`, read the transcript, and build the same record yourself — pin the failure turn, capture a **verbatim** `evidence_quote` (no paraphrasing — if you can't quote it, it isn't a failure), and a one-sentence `expected_behavior` grounded in `agent_description`. Apply the same attribution sanity-check: if a "failure" was really the caller hanging up, or a call the agent recovered from, drop it. (If the user wants this done at scale across a window rather than a hand-picked list, that's `flag-call-logs` — run it first.)
+- **From `flag-call-log-failures`:** use the records as-is. That skill has already applied the attribution rules (caller-side endings, recovered calls, and legitimate early exits are excluded), so every flagged call is an agent-attributable failure — don't re-filter or second-guess the set.
+- **From a user-supplied list of call IDs:** fetch each with `mcp__cekura__call_logs_retrieve(id=...)`, read the transcript, and build the same record yourself — pin the failure turn, capture a **verbatim** `evidence_quote` (no paraphrasing — if you can't quote it, it isn't a failure), and a one-sentence `expected_behavior` grounded in `agent_description`. Apply the same attribution sanity-check: if a "failure" was really the caller hanging up, or a call the agent recovered from, drop it. (If the user wants this done at scale across a window rather than a hand-picked list, that's `flag-call-log-failures` — run it first.)
 
-`expected_behavior` becomes the scenario's `expected_outcome_prompt`; `mode` drives `scenario_type` + personality (see the **Quick reference — failure modes** at the bottom, and `flag-call-logs` for the full taxonomy + detection signals). A single call may carry several flagged issues — treat each as its own record going into clustering.
+`expected_behavior` becomes the scenario's `expected_outcome_prompt`; `mode` drives `scenario_type` + personality (see the **Quick reference — failure modes** at the bottom, and `flag-call-log-failures` for the full taxonomy + detection signals). A single call may carry several flagged issues — treat each as its own record going into clustering.
 
 ---
 
@@ -511,7 +511,7 @@ Don't create scenarios (and say so) if any of these are true:
 
 ## Quick reference — failure modes → scenario construction
 
-The authoritative failure taxonomy + detection signals live in `cekura-internal:flag-call-logs` (the skill that classifies). This table is the **construction map** — given a flagged call's `mode`, how to build its scenario:
+The authoritative failure taxonomy + detection signals live in `cekura-internal:flag-call-log-failures` (the skill that classifies). This table is the **construction map** — given a flagged call's `mode`, how to build its scenario:
 
 | Emoji | Code | Typical scenario_type | Cluster signal |
 |---|---|---|---|
