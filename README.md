@@ -177,15 +177,35 @@ Restart Claude Code and your terminal after upgrading.
 
 ## Codex
 
-Native plugin support — skills **and** MCP tools. (Codex plugins don't carry slash commands; the skills cover those workflows.)
+Native plugin support — skills **and** MCP tools. (Codex plugins don't carry slash commands; the skills cover those workflows — they activate by context or when you invoke one with `@`.)
 
 ### Install (recommended)
 
+Three steps — add the marketplace, install the plugin, then authenticate the MCP:
+
 ```bash
+# 1. Add the marketplace
 codex plugin marketplace add cekura-ai/cekura-skills
+
+# 2. Install the plugin (cekura plugin from the cekura marketplace)
+codex plugin add cekura@cekura
+
+# 3. Authenticate the Cekura MCP — opens a browser for OAuth sign-in (no API key)
+codex mcp login cekura
 ```
 
-Then run `codex`, open `/plugins`, and install **cekura**. On first use of a Cekura MCP tool, Codex opens a browser for one-click OAuth sign-in — no API key stored.
+Prefer the TUI? Run `codex`, open `/plugins` to install **cekura**, then `/mcp` to authenticate.
+
+Verify it worked:
+
+```bash
+codex plugin list   # cekura should be listed as installed
+codex mcp list      # cekura should show as connected after login
+```
+
+> If you added the marketplace before a recent release, refresh it first so the latest manifest is picked up: `codex plugin marketplace upgrade cekura`.
+>
+> **API-key alternative:** the bundled MCP config is OAuth-only. To use a key instead, add the server to `~/.codex/config.toml` with `http_headers = { "X-CEKURA-API-KEY" = "your-key" }` (or `env_http_headers` to read it from an env var).
 
 ### Fallbacks (no MCP)
 
@@ -213,11 +233,16 @@ curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main
 
 ### Get Started
 
-Ask Codex to help with Cekura metrics or evals — skills load automatically when the conversation matches.
+Ask Codex to help with Cekura metrics or evals — skills load automatically when the conversation matches, or invoke one explicitly with `@`.
 
 ### Upgrade
 
-Re-run `codex plugin marketplace add cekura-ai/cekura-skills` (or, for the fallbacks, re-run the skill installer / re-download `AGENTS.md`).
+```bash
+codex plugin marketplace upgrade cekura   # pull the latest commit
+codex plugin add cekura@cekura            # re-install if prompted
+```
+
+For the fallbacks, re-run the skill installer / re-download `AGENTS.md`.
 
 ---
 
@@ -308,7 +333,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 2. Starting the MCP server
 3. Verifying connectivity
 
-**For Codex, Cursor, and Gemini CLI:** the MCP server is wired up natively through each platform's plugin/extension manifest — OAuth sign-in happens on first tool use, no key stored. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
+**For Codex, Cursor, and Gemini CLI:** the MCP server is wired up natively through each platform's plugin/extension manifest, authenticating via OAuth (no API key stored). The sign-in step differs per platform — in **Codex** run `codex mcp login cekura`; **Cursor** prompts for OAuth when you connect the server; **Gemini** runs the OAuth flow on first tool use. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
 
 **How it works:** Claude, Codex, and Cursor read the bundled `cekura/.mcp.json`, which points at the Cekura MCP server at `https://api.cekura.ai/mcp`; Gemini declares the same remote endpoint inline in `gemini-extension.json`. By default it authenticates via OAuth — on first use the client opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
 
