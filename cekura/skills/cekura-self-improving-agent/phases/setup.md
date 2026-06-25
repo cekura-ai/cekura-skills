@@ -55,7 +55,7 @@ Auto mode does NOT exempt this step. `auto_mode: true` skips per-iteration *diff
 
 For self-hosted modes with a live target, the live agent does not pick up prompt or tool-config changes until the user redeploys / restarts. The skill can either run that step automatically each iteration (preferred, fully autonomous) or pause on a manual restart gate (the legacy behavior).
 
-If `redeploy_command` is already provided in the run inputs, use it. Otherwise, ask the user exactly once:
+**Before asking, check project memory.** If `redeploy_command` is already provided in the run inputs, use it. Otherwise, **read `memory.md` and `CLAUDE.md` at the project root** (and the current sub-directory, if different) and look for a `## Cekura Agent Run Setup` block (or equivalent) recording how to restart / redeploy the live agent and — for self-hosted live targets — how to launch the main-agent simulation and connect it to a Cekura run. If such a block exists, load it and use it instead of re-asking; confirm it back to the user in one line ("Using the run setup saved in `memory.md`: …") so a stale entry can be corrected. Only if no saved setup is found, ask the user exactly once:
 
 ```
 For end-to-end automation, I can run your redeployment automatically after each
@@ -81,6 +81,25 @@ When the user provides a real command, treat it as a contract: the skill will ex
 
 For the full collection-prompt wording, sentinel handling, command-execution semantics, and how to handle "the command is multi-step or interactive" edge cases, see [`../providers/self-hosted/overview.md`](../providers/self-hosted/overview.md) § "Redeploy command flow".
 
+### Step 1.4a — Persist the run setup to project memory (self-hosted modes) — do this BEFORE proceeding
+
+Whenever the run setup was **collected from the user** this session (i.e., not already loaded from a saved memory block above), **write it to `memory.md` at the project root before entering the next phase** so future invocations don't re-ask. Create `memory.md` if it doesn't exist; if the user prefers it in `CLAUDE.md`, write there instead (ask once if unclear which). Append (or update in place) a single clearly-headed block:
+
+```markdown
+## Cekura Agent Run Setup
+
+- redeploy_command: <the exact shell command, or "manual" / "noop">
+<!-- self-hosted live targets — how to run the main-agent simulation and wire it to a Cekura run: -->
+- Launch the main agent: <start command(s) / which config file to edit / env vars>
+- Connect to a Cekura simulation: <how the Cekura connection details are passed to the agent —
+  e.g. the outbound number / SIP URI for telephony, or the WebRTC token, and where it goes>
+- Notes: <role-swap quirks, ports, anything else needed to reproduce a run>
+```
+
+Capture the **simulation-launch** lines (how to start the live/main agent and pass it the per-run connection details Cekura returns) in addition to the redeploy command — the Reproduce and Eval phases both need them to run a simulation against a self-hosted agent. If the user only gave a redeploy command and the simulation-launch steps are still unknown when the first run is about to happen, that's a clarifying question to ask (and then persist) at that point, not a silent guess.
+
+**Confirm the write succeeded** before continuing. Do NOT echo or persist secrets — for `database` mode, credentials stay in-memory for the run only (never written to `memory.md` / `CLAUDE.md`); persist only the non-secret launch/redeploy steps, referencing credentials by env-var name. This step is part of the Step 1.4 hard gate: a self-hosted run should not enter Optimization with run setup that was collected but not saved.
+
 ## Setup completion checklist
 
 Before handing off to the Clone phase (VAPI / ElevenLabs) or the Optimization phase (all other modes), confirm:
@@ -88,6 +107,7 @@ Before handing off to the Clone phase (VAPI / ElevenLabs) or the Optimization ph
 - [ ] Mode and sub-flavor resolved (`vapi` / `elevenlabs` / `pipecat` / `websocket-file` / `websocket-offline` / `database`)
 - [ ] Agent loaded (VAPI: `/assistant/{id}` + referenced tools; ElevenLabs: `/v1/convai/agents/{id}` + referenced `/v1/convai/tools/{id}`; pipecat: Cekura agent record's `description` + mock-tool list; websocket-file: the correct live source file path located and confirmed via grep when ambiguous — content stays unread until Diagnose; database: `db_type` + `db_connection` (env var or inline) + `db_fetch_query` recorded, fetch query executed, current prompt captured)
 - [ ] **Self-hosted live target**: `redeploy_command` resolved to a shell command, `"manual"`, or — database sub-flavor only — `"noop"` when the live agent re-reads on every request (N/A for VAPI / ElevenLabs)
+- [ ] **Self-hosted live target**: run setup was either loaded from a saved `## Cekura Agent Run Setup` block, OR — if collected this session — **persisted to `memory.md` / `CLAUDE.md`** (Step 1.4a), with the write confirmed and no secrets written
 - [ ] I have NOT fetched any failure data (`results_retrieve` / `runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) — that belongs to Collect
 
 If any of the above is unresolved, ask the user the specific clarifying question and wait for an answer before entering the Clone phase (VAPI / ElevenLabs) or the Optimization phase (all other modes).

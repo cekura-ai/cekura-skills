@@ -131,6 +131,8 @@ run_voice "SCENARIO_ID" '{"agent_number": "<caller_id>"}'   # ×N
 get_result "RESULT_ID"                                        # poll each to terminal
 ```
 
+**Self-hosted live targets:** launch the main agent and pass it the per-run Cekura connection details using the steps saved in the `## Cekura Agent Run Setup` block (Setup Step 1.4a, in `memory.md` / `CLAUDE.md`). If those launch steps weren't captured at Setup, ask the user now and persist them to that block before the first run — don't guess how to start the agent.
+
 ### What "fails" means
 
 Failure means the **Cekura metric / expected-outcome scores** show failure — not that the call merely ended, errored, or the transcript "looks wrong." Read `runs[].evaluation.metrics[]` (or expected-outcome verdict) on each result. The same failure mode the prod call showed must be present in the replay transcript **and** reflected in the scores. Compare the replay transcript turn-by-turn with the prod transcript.
