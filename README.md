@@ -306,7 +306,14 @@ Add the Cekura MCP server to your OpenCode config — `~/.config/opencode/openco
 }
 ```
 
-OpenCode handles OAuth automatically — on first use of a Cekura tool it opens a browser for sign-in, no API key stored. (To use an API key instead, add `"headers": { "X-CEKURA-API-KEY": "{env:CEKURA_API_KEY}" }` to the server entry.)
+Then authenticate (OpenCode also prompts on first tool use, but you can complete it explicitly):
+
+```bash
+opencode mcp auth cekura   # opens a browser for OAuth sign-in
+opencode mcp list          # confirm cekura shows as connected
+```
+
+OAuth tokens are stored in `~/.local/share/opencode/mcp-auth.json` — no API key needed. (To use an API key instead, add `"headers": { "X-CEKURA-API-KEY": "{env:CEKURA_API_KEY}" }` to the server entry.) If sign-in fails, `opencode mcp debug cekura` surfaces the OAuth error.
 
 ### Behavior preset (optional)
 
