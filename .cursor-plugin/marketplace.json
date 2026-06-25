@@ -1,0 +1,15 @@
+{
+  "name": "cekura-skills",
+  "owner": {
+    "name": "Cekura",
+    "email": "support@cekura.ai"
+  },
+  "plugins": [
+    {
+      "name": "cekura",
+      "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals — skills plus MCP tools.",
+      "source": "./cekura",
+      "category": "development"
+    }
+  ]
+}

@@ -7,11 +7,21 @@ This is a Claude Code **marketplace** that doubles as an **Agent Skills package*
 ```
 cekura-skills/
   .claude-plugin/
-    marketplace.json             # Marketplace registry (single plugin entry, source: "./cekura")
-  cekura/                        # The plugin lives here (marketplace.json points to this dir)
+    marketplace.json             # Claude Code marketplace registry (source: "./cekura")
+  .cursor-plugin/
+    marketplace.json             # Cursor marketplace registry (source: "./cekura")
+  .agents/plugins/
+    marketplace.json             # Codex/generic registry (git-subdir → ./cekura)
+  gemini-extension.json          # Gemini CLI extension manifest (inline MCP + GEMINI.md)
+  GEMINI.md                      # Gemini context file — kept identical to codex/AGENTS.md
+  cekura/                        # The plugin lives here (the manifests above point to this dir)
     .claude-plugin/
-      plugin.json                # Plugin manifest
-    .mcp.json                    # MCP auto-config
+      plugin.json                # Claude plugin manifest
+    .codex-plugin/
+      plugin.json                # Codex plugin manifest (skills: ./skills/, mcpServers: ./.mcp.json)
+    .cursor-plugin/
+      plugin.json                # Cursor plugin manifest (mcpServers: ./.mcp.json)
+    .mcp.json                    # MCP auto-config (shared by all platforms)
     skills/                      # Single source of truth for skills
       cekura-coordinator/
       cekura-onboarding/
@@ -35,6 +45,8 @@ cekura-skills/
 ```
 
 > **Note on the `cekura/` subdir:** Claude Code's marketplace validator rejects `"source": "."`, so the plugin contents live under `cekura/` and `marketplace.json` points to `"./cekura"`. The `.claude-plugin/marketplace.json` itself stays at the repo root; everything else (plugin.json, .mcp.json, skills/, commands/, agents/, hooks/) travels with the plugin root under `cekura/`.
+>
+> **Other platforms follow the same root-registry → `cekura/` pattern.** Cursor (`.cursor-plugin/marketplace.json`), Codex/generic (`.agents/plugins/marketplace.json`, via `source: "git-subdir"` + `path: "./cekura"`), and Gemini (`gemini-extension.json`) all live at the repo root and resolve into `cekura/`. They reuse `cekura/.mcp.json` (Cursor/Codex) or declare MCP inline (Gemini). These are purely additive — they don't touch `.claude-plugin/marketplace.json`, the `cekura/` assets, or the `npx skills add` path, so existing Claude + npx users are unaffected. See "Multi-platform plugin manifests" below.
 
 ### Two install paths, one source of truth
 
@@ -146,11 +158,31 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 |-----------|---------|
 | MCP failure hook | Auto-detects `mcp__cekura__*` failures, logs them, suggests `/report-bug` |
 
-## AGENTS.md (Codex/Cursor)
+## AGENTS.md (behavior preset)
 
-`codex/AGENTS.md` is a single-file distillation of the plugin's domain knowledge — metric design, eval design, anti-patterns, and API reference. It's designed for agents that don't support the Claude Code plugin system (Codex, Cursor, Windsurf, etc.).
+`codex/AGENTS.md` is a single-file distillation of the plugin's domain knowledge — metric design, eval design, anti-patterns, and API reference. It's the no-MCP fallback for agents using only a context/rules file (Windsurf, the Cursor rules-file fallback, etc.).
 
 When updating skills, keep AGENTS.md in sync with major changes (new patterns, API changes, new anti-patterns). It doesn't need every detail — just the core guidance that makes a meaningful difference in output quality.
+
+## Multi-platform plugin manifests
+
+Beyond the Claude Code plugin, the repo ships native plugin/extension manifests for **Codex, Cursor, and Gemini CLI** (Grok is not supported — its marketplace schema has no documented subdirectory source, so the `cekura/` layout can't be targeted). All manifests are additive root siblings that point into the existing `cekura/` plugin root; none modify the Claude or `npx skills add` paths.
+
+| Platform | Files | What it delivers | MCP |
+|----------|-------|------------------|-----|
+| Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` | Skills + MCP (no slash commands — Codex plugins have no `commands` field) | reuses `cekura/.mcp.json` (`type: http`, OAuth on first use) |
+| Cursor | `.cursor-plugin/marketplace.json` (root) + `cekura/.cursor-plugin/plugin.json` | Skills + MCP | `mcpServers` override → `./.mcp.json` (Cursor's default discovery looks for `mcp.json`, ours is `.mcp.json`) |
+| Gemini CLI | `gemini-extension.json` (root) + `GEMINI.md` (root) | MCP + context file only — Gemini discovers skills from a root `skills/` dir, so the nested `cekura/skills/` isn't bundled; native skill bundling deferred | declared inline via `httpUrl` (native remote MCP + OAuth; no `mcp-remote` shim) |
+
+**`GEMINI.md` is a verbatim copy of `codex/AGENTS.md`** (Gemini loads it via `contextFileName`). Keep them identical. Before any release, run:
+
+```bash
+diff codex/AGENTS.md GEMINI.md   # must report no differences
+```
+
+When you edit `codex/AGENTS.md`, re-copy it: `cp codex/AGENTS.md GEMINI.md`.
+
+Bump the `version` in `cekura/.codex-plugin/plugin.json`, `cekura/.cursor-plugin/plugin.json`, and `gemini-extension.json` alongside the Claude plugin/marketplace version when cutting a release.
 
 ## Conventions
 
