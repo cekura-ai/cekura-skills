@@ -245,7 +245,15 @@ Ask Cursor to help with Cekura metrics or evals — skills load automatically wh
 
 ### Upgrade
 
-Re-import the marketplace (or re-download the rules-file fallback).
+**Manual:** re-import the marketplace from **Settings > Plugins > Team Marketplaces** (or re-download the rules-file fallback).
+
+**Auto Refresh (optional)** — have Cursor pull new versions automatically:
+
+1. Install the **Cursor GitHub App** on the `cekura-ai/cekura-skills` repository (Cursor prompts for this; it's required for Auto Refresh).
+2. Go to **Settings > Plugins > Team Marketplaces** and locate the imported Cekura marketplace.
+3. Toggle on **Auto Refresh** and save.
+
+Cursor then re-indexes the marketplace at most once every ~10 minutes, picking up pushed updates to the installed plugin. Note: Auto Refresh updates the *existing* plugin only — if a brand-new plugin is added to the repo later, re-import the marketplace to pick it up.
 
 ---
 
