@@ -251,7 +251,7 @@ Re-import the marketplace (or re-download the rules-file fallback).
 
 ## Gemini CLI
 
-Extension support — MCP tools plus the Cekura context file. (Gemini extensions don't consume the `SKILL.md` skills; native skill bundling is deferred — it would require relocating the skills to the repo root.)
+Extension support — MCP tools plus the Cekura context file. (Gemini discovers extension skills from a root `skills/` directory, so this extension doesn't bundle the nested `cekura/skills/`; native Gemini skill bundling is deferred.)
 
 ### Install
 
@@ -302,7 +302,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 **For Codex, Cursor, and Gemini CLI:** the MCP server is wired up natively through each platform's plugin/extension manifest — OAuth sign-in happens on first tool use, no key stored. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
 
-**How it works:** The plugin ships a single `.mcp.json` file at the marketplace root that auto-configures the connection to the Cekura MCP server at `https://api.cekura.ai/mcp`. By default it authenticates via OAuth — on first use Claude Code opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
+**How it works:** Claude, Codex, and Cursor read the bundled `cekura/.mcp.json`, which points at the Cekura MCP server at `https://api.cekura.ai/mcp`; Gemini declares the same remote endpoint inline in `gemini-extension.json`. By default it authenticates via OAuth — on first use the client opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
 
 ---
 

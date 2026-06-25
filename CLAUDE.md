@@ -172,7 +172,7 @@ Beyond the Claude Code plugin, the repo ships native plugin/extension manifests 
 |----------|-------|------------------|-----|
 | Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` | Skills + MCP (no slash commands — Codex plugins have no `commands` field) | reuses `cekura/.mcp.json` (`type: http`, OAuth on first use) |
 | Cursor | `.cursor-plugin/marketplace.json` (root) + `cekura/.cursor-plugin/plugin.json` | Skills + MCP | `mcpServers` override → `./.mcp.json` (Cursor's default discovery looks for `mcp.json`, ours is `.mcp.json`) |
-| Gemini CLI | `gemini-extension.json` (root) + `GEMINI.md` (root) | MCP + context file only — Gemini extensions don't consume `SKILL.md` skills (would require relocating skills to repo root) | declared inline via `httpUrl` (native remote MCP + OAuth; no `mcp-remote` shim) |
+| Gemini CLI | `gemini-extension.json` (root) + `GEMINI.md` (root) | MCP + context file only — Gemini discovers skills from a root `skills/` dir, so the nested `cekura/skills/` isn't bundled; native skill bundling deferred | declared inline via `httpUrl` (native remote MCP + OAuth; no `mcp-remote` shim) |
 
 **`GEMINI.md` is a verbatim copy of `codex/AGENTS.md`** (Gemini loads it via `contextFileName`). Keep them identical. Before any release, run:
 
