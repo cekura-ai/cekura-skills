@@ -4,6 +4,8 @@ First sub-phase of optimization. Reads the iteration's input (raw input on itera
 
 This sub-phase produces no edits. Its output is the kept failure summary + provider call state observations, both consumed by the next sub-phase ([`early-end-call-diagnose.md`](early-end-call-diagnose.md)).
 
+**Prod-call inputs arrive here as reproduction scenario IDs.** When the original input was a production call (`call_ids` / prod `result_id`), the [Reproduce phase](../reproduce.md) has already replaced the raw input with the reproduction scenario IDs (the N-scenario dataset for LLM-based failures, or the single repro scenario for infra) and proven they fail the must-fail-first gate. From Collect's perspective these are ordinary `scenario_ids` — execute them per Step COLLECT.1. The mock tools and dynamic variables the replay needs are already set on the agent (Reproduce REPRO.3); do not re-derive them. The recorded **failure class** (LLM-based / infra) and **full set** travel on the run state and are read by Eval for its must-pass re-run policy — do not widen the full set here.
+
 ## Pre-flight check (fail closed)
 
 Before any Step COLLECT.x work, verify that the Setup phase is complete:

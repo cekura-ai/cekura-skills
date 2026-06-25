@@ -6,17 +6,25 @@ description: >
   on test results", "close the loop on agent quality", "auto-improve agent
   prompt", "use eval results to improve agent", "optimize my prompt based
   on failures", "rewrite my prompt", or describes agent self-improvement,
-  prompt iteration from run results, or automated agent quality loops.
-  Covers the full diagnose → propose → apply → re-validate loop for VAPI
-  agents (squads + tool definitions), ElevenLabs Conversational AI agents
-  (system prompt + tool definitions), and for self-hosted agents (pipecat
-  pipelines and custom websocket servers, including the offline / pasted-
-  prompt degenerate variant).
+  prompt iteration from run results, or automated agent quality loops. ALSO
+  use for production-call bug fixing: "fix this prod call issue", "debug and
+  fix call ID", "investigate a failing prod call", "reproduce this production
+  bug", "test my fix against prod scenarios", "regression test before raising
+  PR", or "fix the bug from this call and open a PR" — the skill auto-builds a
+  faithful reproduction harness from the prod call (mock tools, expected tool
+  returns, dynamic variables), gates on a definitive must-fail-first
+  reproduction, iterates to a fix, verifies with stochastic re-runs, runs a
+  regression sweep, and either raises a PR or emits a PR-ready summary. Covers
+  the full reproduce → diagnose → propose → apply → re-validate → regression →
+  PR loop for VAPI agents (squads + tool definitions), ElevenLabs
+  Conversational AI agents (system prompt + tool definitions), and self-hosted
+  agents (pipecat pipelines and custom websocket servers, including the
+  offline / pasted-prompt degenerate variant).
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.25.0"
+  version: "1.0.0"
 ---
 
 # Cekura Self-Improving Agent
@@ -25,20 +33,24 @@ metadata:
 
 Close the loop on agent prompt and tool-config quality. Ingest evaluation signal (scenario IDs to run, completed runs, a result batch, or production call logs), classify failures, diagnose where the prompt or tool config has gaps / conflicts / ambiguities, propose targeted edits, apply them, and re-run validation — iterating until the agent reaches **100% pass rate on the validation set** or the iteration cap is reached.
 
+**This skill is the merge of the former `cekura-self-improving-agent` (auto-loop tuner) and `cekura-fixing-prod-issues` (strict 6-phase prod-call workflow).** It keeps the auto-loop's ergonomics — autonomous diagnose → apply → re-validate with overfitting protection — and adopts the prod-call workflow's strict gates: a faithful reproduction harness auto-built from the prod call, a **must-fail-first** reproduction gate before any edit, a **must-pass** verification gate with stochastic re-runs, a regression sweep, and a PR / summary step. `cekura-fixing-prod-issues` now redirects here.
+
+**The prod-call fast path.** Given a single `call_id`, the skill runs end-to-end with **no manual mock/variable setup from the user**: it debugs the call, auto-populates mock tools + expected returns + dynamic variables from the call's own trace, reproduces the bug (gating on a definitive FAIL), iterates to a fix, verifies it (gating on a definitive PASS over 5–10 stochastic re-runs for probabilistic failures), runs a regression sweep, and either raises the PR or prints a PR-ready summary.
+
 **Exit gate.** The voice/channel/infra filter informs *what to fix* (the Optimization phase only proposes edits for prompt-following failures), not *when to stop*. Any remaining failure of any class keeps the loop alive. Only the iteration cap or a genuine 100% pass ends the loop.
 
 Currently supported for **VAPI**, **ElevenLabs**, and **self-hosted** (pipecat + websocket). Retell support is intentionally disabled and will be re-enabled in a future revision.
 
 ## Architecture — orchestrator over a sequence of focused sub-phases
 
-This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases living in `phases/optimization/`, with Setup, Clone (VAPI / ElevenLabs only), Overfitting Gate, and Eval as standalone phases on either side:
+This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases living in `phases/optimization/`, with Setup, Clone (VAPI / ElevenLabs only), and Reproduce as standalone phases before the loop, Overfitting Gate and Eval inside it, and Regression + PR after a successful exit:
 
 ```
                   ┌────────────────┐
    user input ─→  │  Setup phase   │  (phases/setup.md)
                   │  runs once     │
                   └───────┬────────┘
-                          │  (mode, sub-flavor, agent, redeploy_command)
+                          │  (mode, sub-flavor, agent, redeploy_command, input_is_prod_call)
                           ▼
                   ┌────────────────────────────┐
                   │  Clone phase (runs once)   │  (phases/clone.md)
@@ -47,6 +59,19 @@ This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases
                   │  copy Cekura agent; rebind │
                   └───────┬────────────────────┘
                           │  (run rebound to the clone; live agent untouched)
+                          ▼
+                  ┌────────────────────────────────────┐
+                  │  Reproduce phase (runs once)        │  (phases/reproduce.md)
+                  │  PROD-CALL inputs: debug → auto-     │  — scenario / sim-run
+                  │  build harness (mocks + expected     │    inputs pass through
+                  │  returns + dyn vars + testing-agent  │    (no harness build);
+                  │  vars) → build evaluator (prefer     │    offline skips entirely
+                  │  expected_outcome) → LLM/infra split │
+                  │  → MUST-FAIL-FIRST gate (≥M/N for    │
+                  │  LLM, 1× for infra)                  │
+                  └───────┬────────────────────────────┘
+                          │  (reproduction scenario IDs + failure class + full set;
+                          │   bug PROVEN to fail before any edit)
                           ▼
               ┌───  ┌───────────────────────────┐
               │     │ Optimization · Collect    │  (phases/optimization/collect.md)
@@ -94,24 +119,46 @@ This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases
               │             ▼
               │     ┌───────────────────────────┐
               │     │ Eval phase                │  (phases/eval.md)
-              │     │ validate → re-collect →   │
-              │     │ decide                    │
+              │     │ validate (MUST-PASS gate: │
+              │     │ ≥M/N for LLM, 1× infra) → │
+              │     │ re-collect → decide       │
               │     └───────┬───────────────────┘
               │             │
               │     ┌───────┴────────────────────┐
               │     │                            │
-   hand back  │     ▼                            ▼  exit
-   to Collect │  failure set < 100%        full set = 100% (success)
+   hand back  │     ▼                            ▼  converged / stop
+   to Collect │  failure set < 100%        full set = 100%
               │  OR regression             OR iteration cap
               │  OR mitigation edits       OR all-Upstream
               │                            OR oscillation / no-change
               └────  (loop)                OR 3× same-shape failure
-                                           (surface + pause for user)
+                                                  │
+                                                  ▼  (on full-set 100% success only)
+                                    ┌───────────────────────────┐
+                                    │ Regression phase          │  (phases/regression.md)
+                                    │ happy-path + edge-case     │
+                                    │ sweep on the affected      │
+                                    │ surface; regression →      │
+                                    │ hand back to Collect       │
+                                    └───────┬───────────────────┘
+                                            │  (no collateral damage)
+                                            ▼
+                                    ┌───────────────────────────┐
+                                    │ PR phase                  │  (phases/pr.md)
+                                    │ detect runtime → raise PR  │
+                                    │ (code modes) OR emit a     │
+                                    │ PR-ready / promotion       │
+                                    │ summary with result URLs   │
+                                    └────────────────────────────┘
+   (stop conditions other than success — cap / oscillation / all-Upstream / 3×
+    same-shape — surface + pause for the user; they do NOT reach Regression/PR)
 ```
 
 **Setup runs once.** It resolves the run mode and sub-flavor, loads the agent (its config and prompt source), and (for self-hosted live targets) collects the `redeploy_command`. Setup is a hard gate — the Clone phase (or, for non-managed modes, Optimization · Collect) will not start until Setup is complete.
 
 **Clone runs once — VAPI and ElevenLabs only.** Before any failure data is fetched, the skill stands up a disposable copy of the agent **in the same provider org** (same `VAPI_KEY` / `ELEVENLABS_API_KEY`) and a copy Cekura agent **in the same project** (`aiagents_duplicate_create` with `copy_scenarios=true`), repoints the Cekura copy at the cloned provider assistant, and rebinds the run to the clone. Every later phase — Diagnose, Apply, Sync, Eval validation — then operates on the clone, so the user's **production agent is never touched**. On exit the validated cumulative diff is surfaced for the user to promote to the live agent deliberately (never automatic). Tool definitions are id-referenced shared resources on both providers, so the clone includes fresh copies of every referenced tool with the assistant repointed at them — otherwise Apply's tool PATCHes would still hit production tools. **All other modes** (`pipecat`, `websocket`, `database`, websocket `offline`) skip this phase: the user owns the live runtime, there is no managed provider to clone into, and the `redeploy_command` gate already governs what reaches production. Full procedure: [`phases/clone.md`](phases/clone.md).
+
+**Reproduce runs once — the must-fail-first gate before the loop.** For **prod-call inputs** (`call_ids`, or a `result_id` / `run_ids` pointing at production call logs) it does the work the auto-loop was previously missing: (1) debug the prod call + logs and confirm the root cause; (2) classify the failure as **LLM-based** (Gap/Conflict/Ambiguity — probabilistic) or **infra** (CodeBug/Upstream-infra — deterministic); (3) **auto-build the reproduction harness from the call's own trace** — mock-tool entries for every tool the call invoked, their **expected return values derived from the prod request→response pairs** (not prompt-guessed), the main agent's `dynamic_variables` copied verbatim, and testing-agent variables (persona + verbatim caller turns) so the simulated caller mirrors the real one; (4) **construct the evaluator preferring `expected_outcome` bullets, falling back to the prod metric only when the failure is out of scope for behavioral bullets** (latency / sentiment / interruption / infra metrics); (5) **branch the harness shape** — LLM-based builds a **dataset of N scenarios** (default 8, range 5–10) so the loop can tell a real fix from a lucky sample, infra builds a **single evaluator**; (6) run the **must-fail-first gate** — auto-trigger 5–10 runs for LLM-based and require the bug to fail in **≥ M of N** (default ≥⌈N/2⌉), a single run for infra. If it does NOT reproduce, stop and surface (likely a mock/variable mismatch or a stale fix) rather than iterating against an unmeasurable failure. **Scenario / simulation-run inputs** pass through the harness-building steps (their scenarios already exist) but still classify LLM-vs-infra and run the must-fail gate; the **offline variant** skips Reproduce entirely. Full procedure: [`phases/reproduce.md`](phases/reproduce.md).
 
 **Optimization is five sub-phases that run in series, each with one job:**
 
@@ -123,21 +170,28 @@ This SKILL.md is a thin orchestrator. Optimization is split into five sub-phases
 
 **Overfitting Gate is the "scrub the just-applied edits" phase.** Because the diagnose sub-phases read failing transcripts, they sometimes leak transcript-specific phrasing into proposals — verbatim quotes, scenario IDs / names, hardcoded test data, hyper-narrow case clauses, transcript-cloned few-shot examples. The gate re-reads what was just synced, scores each edit against five overfitting signatures, and emits cleanup edits (REVISE to a generalized form, or STRIP entirely) before Eval validates. On clean iterations the gate is a one-line pass-through. Full procedure: [`phases/overfitting-gate.md`](phases/overfitting-gate.md).
 
-**Eval is the "verify and decide" phase.** It builds the validation set, runs it against the gate-cleaned live agent, re-collects failures with the same logic Collect uses, and decides: hand back to Collect with a new failure summary, trigger a final regression sweep, declare success, or surface a stop condition (oscillation / no-change / 3× same-shape / iteration cap / all-Upstream). Full procedure: [`phases/eval.md`](phases/eval.md).
+**Eval is the "verify and decide" phase — now with the must-pass gate.** It builds the validation set, runs it against the gate-cleaned live agent, re-collects failures with the same logic Collect uses, and decides: hand back to Collect with a new failure summary, trigger the in-loop full-set sweep, converge, or surface a stop condition (oscillation / no-change / 3× same-shape / iteration cap / all-Upstream). The verification mirror of Reproduce's must-fail gate lives here: a fix is **verified for a scenario only if it passes the must-pass stochastic gate** — for LLM-based failures the skill **auto-triggers 5–10 verification runs** and requires a pass in **≥ M of N** (default ≥⌈0.8·N⌉, allowing a small number of stochastic flakes); for infra failures a single clean pass suffices. Single-shot verification is the source of most "looked good in dev, regressed in prod" miscalls — the stochastic gate closes it. Full procedure: [`phases/eval.md`](phases/eval.md).
+
+**Regression and PR run once, only after a full-set 100% success.** When Eval converges (not when it hits a stop condition), the orchestrator runs two final phases. **Regression** ([`phases/regression.md`](phases/regression.md)) widens coverage beyond the reproduction dataset to the happy-path + edge-case flows that touch the surface the fix changed — if any regress, it hands back to Collect with the regressed cases as the new failure set (so Diagnose can scope the fix more narrowly). **PR** ([`phases/pr.md`](phases/pr.md)) ships the verified fix: it **auto-detects the runtime** — when the edits are source code in a git checkout with `gh` available and push access, it raises the PR automatically with all Cekura result URLs (reproduction fail-runs + verification pass-runs + regression pass-runs) in the body; otherwise (no repo, no `gh`, headless, read-only, or managed-provider config edits with no code diff) it emits a structured PR-ready / promotion summary in-panel. The choice is detected, not asked — it only asks when detection is genuinely ambiguous (e.g. repo present but `gh` missing).
 
 **Run phases strictly sequentially — never parallelize across phase boundaries.** Each phase consumes the previous phase's outputs as hard pre-conditions (Diagnose reads Collect's kept-failure set + Signal 5; Apply reads Diagnose's approved combined proposal; Sync reads Apply's written artifacts; Eval reads the gate-cleaned live state). Pre-fetching artifacts from a later phase "to save round-trips" — e.g., fetching the `result_id` payload during Setup, reading the source file before Diagnose has classified failures, or running validation before Sync has verified the writes landed — produces work against premature assumptions, conflates phase responsibilities, and makes failures harder to localize. The orchestrator enters phase N+1 only after phase N's hand-off conditions are met. Parallelizing tool calls *within* a single phase step is fine when those calls are genuinely independent (e.g., fetching multiple referenced tools during Setup Step 1.3); the rule is about phase boundaries, not intra-phase tool batching.
 
 **Loop hand-off rules:**
-- **Setup → Clone** (VAPI / ElevenLabs) when mode + agent are resolved. **Setup → Collect** directly for every other mode (no clone), once mode + sub-flavor + agent + `redeploy_command` are all resolved.
-- **Clone → Collect** when the provider clone + copy Cekura agent are stood up, the Cekura copy is repointed at the cloned provider id (verified by re-fetch), and the run is rebound to the clone. A failed clone POST halts here — never fall through to editing the original.
+- **Setup → Clone** (VAPI / ElevenLabs) when mode + agent are resolved. **Setup → Reproduce** directly for every other mode (no clone), once mode + sub-flavor + agent + `redeploy_command` + `input_is_prod_call` are all resolved.
+- **Clone → Reproduce** when the provider clone + copy Cekura agent are stood up, the Cekura copy is repointed at the cloned provider id (verified by re-fetch), and the run is rebound to the clone. A failed clone POST halts here — never fall through to editing the original.
+- **Reproduce → Collect** when the must-fail-first gate is satisfied — a definitive FAIL ≥ M of N for LLM-based inputs, or a single FAIL for infra. Reproduce hands forward the reproduction scenario IDs (now the loop input), the failure class, the full set, and the reproduction fail-run result URLs. If the bug does NOT reproduce (passes, or fails fewer than M of N), DO NOT enter the loop — surface the mock/variable-mismatch-or-stale-fix hypothesis and stop. The offline variant and simulation-run inputs that already have failing scenarios pass straight through once their (lighter) Reproduce steps complete.
 - **Collect → Early-End-Call Diagnose** when the kept failure set is populated and Signal 5 (end-of-call attribution) is recorded for every kept failure. If kept = 0, skip the rest of Optimization (and the Gate, and Eval) — surface the funnel summary and stop.
 - **Early-End-Call Diagnose → Diagnose** always (whether or not any failures were flagged as early-end; the pass-through case is the no-edit branch).
 - **Diagnose → Apply** when the combined proposal is non-empty AND the user has approved it (in `auto_mode: false`) or auto-mode auto-accepted it. If the combined proposal is empty (all-Upstream or all-KEEP-on-low-confidence), skip Apply / Sync / Gate / Eval — surface upstream hand-offs and stop.
 - **Apply → Sync** after writes lands and the redeploy step (for self-hosted live targets) completes successfully. A non-zero `redeploy_command` exit halts the loop here; the user decides retry vs. abort.
 - **Sync → Overfitting Gate** after every changed field is verified. Drift detection rolls back to Apply rather than proceeding to the Gate.
 - **Overfitting Gate → Eval** after gate scoring finishes. If cleanup edits were needed, after Step GATE.7 sync confirms; if no flags were found, straight to Eval as a pass-through.
-- **Eval → Collect** when the failure set is non-empty AND none of the stop conditions fire (oscillation, no-change, 3× same-shape, iteration cap, all-Upstream, all-voice-with-no-mitigation). Each Eval → Collect hand-back counts toward `max_iterations`.
-- **Eval → Exit** on 100% pass on the full set (after the regression sweep), or on any stop condition (surfaced to user, loop halted).
+- **Eval → Collect** when the failure set is non-empty AND none of the stop conditions fire (oscillation, no-change, 3× same-shape, iteration cap, all-Upstream, all-voice-with-no-mitigation). Each Eval → Collect hand-back counts toward `max_iterations`. "Failure set non-empty" now respects the must-pass gate: a scenario that passes fewer than M of N stochastic runs stays in the failure set.
+- **Eval → Regression** on 100% pass on the full set (after the in-loop sweep) — convergence, NOT exit. Regression then sweeps the happy-path + edge-case flows.
+- **Regression → Collect** if any regression case fails (collateral damage) — the regressed cases become the new failure set; counts toward `max_iterations`.
+- **Regression → PR** when every regression case passes its must-pass gate.
+- **PR → Exit** after the PR is raised (code modes with a writable repo + `gh`) or the PR-ready / promotion summary is emitted (everything else). This is the success exit.
+- **Eval → Exit (stop condition)** on any stop condition (iteration cap, oscillation, no-change, 3× same-shape, all-Upstream) — surfaced to the user, loop halted. Stop conditions do NOT reach Regression / PR.
 
 ## Modes and providers (resolved during Setup)
 
@@ -167,9 +221,15 @@ When this skill suggests creating, listing, updating, or evaluating something on
 This is an **interactive, multi-iteration workflow**. The user supplies one of:
 
 - **VAPI / ElevenLabs / self-hosted modes (any live target)** — an `agent_id` plus exactly one of: `scenario_ids`, `result_id`, `run_ids`, or `call_ids`.
+- **Prod-call fast path** — just a `call_id` (the `agent_id` is read from `metadata.agent_id` on the call). The skill runs end-to-end with no manual mock/variable setup: Reproduce auto-builds the harness, gates on must-fail, the loop fixes, Eval gates on must-pass, Regression sweeps, and PR ships. This is the merged-in `cekura-fixing-prod-issues` behavior.
 - **Self-hosted / websocket / offline variant** — a `prompt` (pasted text or read-only file path) plus pasted `{transcript, expected_outcome, verdict}` blocks. No live agent required.
 
 Optionally:
+
+- `dataset_size` (default 8, range 5–10) — number of reproduction scenarios built for **LLM-based** failures (Reproduce REPRO.5). Infra failures ignore this (single evaluator).
+- `stochastic_runs` (default 8, range 5–10) — how many times the skill auto-runs the evaluator for **LLM-based** reproduction (REPRO.6) and verification (Eval EVAL.2). The skill fires these itself; it does not ask the user to trigger each run.
+- `repro_threshold` (default ⌈stochastic_runs/2⌉) — minimum failing runs for the bug to count as reproduced (must-fail-first gate).
+- `verify_threshold` (default ⌈0.8·stochastic_runs⌉) — minimum passing runs for a fix to count as verified (must-pass gate).
 
 - `max_iterations` (default 10) — caps the loop. Each Eval → Optimization hand-back counts as one iteration.
 - `mode` (`vapi` / `elevenlabs` / `self_hosted`) — explicit override if the resolution would otherwise be ambiguous.
@@ -193,6 +253,9 @@ Optionally:
 - Most kept failures cluster on one or two metrics whose explanations look subjective — hand off to `cekura-metric-improvement` instead of iterating blindly.
 - All kept failures classify as Upstream/data — surface the hand-off and stop the loop early; do not propose phantom prompt edits.
 - A diagnosis is low-confidence ("could be Conflict or Ambiguity, depending on intent") — ask the user to disambiguate rather than guessing.
+- **The bug did not reproduce in the Reproduce phase** (the must-fail-first gate failed — the evaluator passed, or failed fewer than M of N times). Surface the replay transcript + scores side-by-side with prod and ask whether the harness is wrong (mock/variable mismatch) or the bug was already fixed (stale fix). Do NOT enter the loop on an unreproduced failure.
+- **PR-path runtime detection is ambiguous** (PR phase) — a repo is present and committable but `gh` / push access can't be confirmed. Ask whether to attempt the PR or emit a PR-ready summary. When detection is unambiguous (clearly yes or clearly no), do NOT ask — the absence is the answer.
+- Reproduce's root cause is genuinely uncertain, or REPRO.4's evaluator-construction choice (`expected_outcome` vs. prod metric) is genuinely ambiguous — confirm rather than guessing.
 
 When in doubt, ask. A short clarifying question costs less than a wrong PATCH against a live agent or a wasted iteration. The "don't pre-emptively pause" rule applies to *per-iteration* user-side gates only — auto mode runs validation directly after each apply without asking "have you restarted?" each time, because the one-time `redeploy_command` collected at Setup Step 1.4 either handles the restart automatically (real command) or has explicit user buy-in to a manual cadence (`"manual"` sentinel). Do NOT use this rule to skip Setup Step 1.4 itself, or to skip clarifying which file is the live source — those are one-time setup questions, not per-iteration pauses.
 
@@ -200,18 +263,21 @@ When in doubt, ask. A short clarifying question costs less than a wrong PATCH ag
 
 The orchestrator runs the referenced files in sequence, with the loop point at Eval handing back to Optimization · Collect:
 
-1. **Setup** — load [`phases/setup.md`](phases/setup.md) and walk through Steps 1.1–1.4. On completion, verify the Setup completion checklist before continuing.
+1. **Setup** — load [`phases/setup.md`](phases/setup.md) and walk through Steps 1.1–1.4. On completion, verify the Setup completion checklist before continuing. Record `input_is_prod_call`.
 1a. **Clone (VAPI / ElevenLabs only, runs once)** — load [`phases/clone.md`](phases/clone.md) and walk through Steps CLONE.1–4. Clone the provider agent + every referenced tool in the same provider org, duplicate the Cekura agent (`copy_scenarios=true`) in the same project, repoint it at the cloned provider id, and rebind the run to the clone. Skipped for `pipecat` / `websocket` / `database` / `offline`. A failed clone halts the run — never edit the original.
-2. **Optimization · Collect (iteration N)** — load [`phases/optimization/collect.md`](phases/optimization/collect.md) and walk through Steps COLLECT.1–5. On iteration 1, reads the raw input (`scenario_ids` / `result_id` / `run_ids` / `call_ids` / pasted failures). On iteration 2+, reads the failure set Eval handed back. Produces the kept failure set + Signal-5 end-of-call attribution per failure.
+1b. **Reproduce (runs once)** — load [`phases/reproduce.md`](phases/reproduce.md) and walk through Steps REPRO.1–6. For prod-call inputs: debug + root-cause, classify LLM-vs-infra, auto-build the harness (mock tools + expected returns + dynamic variables + testing-agent vars), construct the evaluator (prefer `expected_outcome`), branch dataset-vs-single, and **gate on a definitive must-fail-first reproduction** (auto-run ≥M/N for LLM-based, single for infra). If the bug does not reproduce, surface and stop — do NOT enter the loop. Scenario / simulation-run inputs pass through the harness-building steps; the offline variant skips this phase. Hands the reproduction scenario IDs + failure class + full set to Collect.
+2. **Optimization · Collect (iteration N)** — load [`phases/optimization/collect.md`](phases/optimization/collect.md) and walk through Steps COLLECT.1–5. On iteration 1, reads the loop input — for prod-call inputs this is the **reproduction scenario IDs** handed over by Reproduce (not the raw `call_ids`); for other inputs the raw `scenario_ids` / `result_id` / `run_ids` / pasted failures. On iteration 2+, reads the failure set Eval handed back. Produces the kept failure set + Signal-5 end-of-call attribution per failure.
 3. **Optimization · Early-End-Call Diagnose (iteration N)** — load [`phases/optimization/early-end-call-diagnose.md`](phases/optimization/early-end-call-diagnose.md) and walk through Steps EARLY.1–3. Flags failures matching the early-end pattern, diagnoses the responsible layer (prompt closure rules / orchestration-code end-of-call detection / VAPI handoff), proposes minimal fixes. Pass-through if zero failures match.
 4. **Optimization · Diagnose (iteration N)** — load [`phases/optimization/diagnose.md`](phases/optimization/diagnose.md) and walk through Steps DIAGNOSE.1–5. Classifies every non-early-end failure (Gap / Conflict / Ambiguity / non-early-end CodeBug / Upstream), proposes minimal edits, de-conflicts with early-end proposals, and presents the combined diff to the user. If the combined proposal is empty (all-Upstream or all-KEEP), stop the loop here — skip Apply / Sync / Gate / Eval and surface upstream hand-offs.
 5. **Optimization · Apply (iteration N)** — load [`phases/optimization/apply.md`](phases/optimization/apply.md) and walk through Steps APPLY.1–2. Lands the combined edit set per-provider; runs `redeploy_command` (or fires manual restart gate) for self-hosted live targets. A non-zero `redeploy_command` exit halts here for user decision.
 6. **Optimization · Sync (iteration N)** — load [`phases/optimization/sync.md`](phases/optimization/sync.md) and walk through Step SYNC.1. Re-fetches the just-edited artifacts and verifies each changed field landed. Drift rolls back to Apply.
 7. **Overfitting Gate (iteration N)** — load [`phases/overfitting-gate.md`](phases/overfitting-gate.md) and walk through Steps GATE.1–7. Inventories this iteration's edits, scores them against five overfitting signatures (verbatim transcript quote, scenario-specific identifier, hardcoded test-data value, hyper-narrow case clause, transcript-cloned few-shot example), decides REVISE / STRIP / KEEP per flagged edit, and applies cleanup edits if needed. On no-flag iterations the gate is a one-line pass-through to Eval (no extra apply round-trip). Code-stream edits (websocket / `file` orchestration code) and pure-deletion edits are not scored by the gate.
-8. **Eval (iteration N)** — load [`phases/eval.md`](phases/eval.md) and walk through Steps EVAL.1–4. Eval's Step EVAL.4 emits exactly one of these decisions:
-   - **Exit (success)** — 100% pass on the full set (after the regression sweep, when applicable). Report cumulative diff + iterations used. Stop.
-   - **Exit (stop condition)** — iteration cap hit, oscillation detected, no-change signature for the second time, 3× same-shape failure, all-Upstream re-classified, or stochastic flake. Surface to the user and stop.
-   - **Hand back to Optimization · Collect** — failure set still has failures (post-iteration or post-regression-sweep). Re-enter step 2 above with the new failure summary as input. Increment iteration counter.
+8. **Eval (iteration N)** — load [`phases/eval.md`](phases/eval.md) and walk through Steps EVAL.1–4. Validation runs apply the **must-pass stochastic gate** (LLM-based: ≥M/N runs; infra: a single clean run). Eval's Step EVAL.4 emits exactly one of these decisions:
+   - **Converged → Regression (then PR)** — 100% pass on the full set (after the in-loop sweep). This is NOT the exit; control flows to step 9. Carry forward the cumulative diff, iterations used, and all result URLs.
+   - **Exit (stop condition)** — iteration cap hit, oscillation detected, no-change signature for the second time, 3× same-shape failure, all-Upstream re-classified, or stochastic flake. Surface to the user and stop. Stop conditions do NOT reach Regression / PR.
+   - **Hand back to Optimization · Collect** — failure set still has failures (post-iteration or post-regression-sweep), respecting the must-pass gate (a scenario passing < M/N stays failing). Re-enter step 2 above with the new failure summary as input. Increment iteration counter.
+9. **Regression (runs once, on success only)** — load [`phases/regression.md`](phases/regression.md) and walk through Steps REGRESS.1–2. Identify the happy-path + edge-case flows that touch the surface the fix changed, build + run them (must-pass gate applies), and confirm none regressed. If any regress, hand back to Optimization · Collect with the regressed cases as the new failure set (counts toward the iteration cap). On all-pass, hand off to PR.
+10. **PR (runs once, after Regression passes)** — load [`phases/pr.md`](phases/pr.md) and walk through Steps PR.1–5. Detect the runtime: raise the PR automatically (source-code edits in a writable git checkout with `gh`), or emit a PR-ready / promotion summary in-panel (no repo, no `gh`, headless, read-only, or managed-provider config edits). Include all Cekura result URLs (reproduction fail-runs + verification pass-runs + regression pass-runs). Then report the final outcome and stop. **This is the success exit.**
 
 When `auto_mode: false`, every Step DIAGNOSE.5 (combined proposal approval) AND every Step GATE.5 (gate cleanup approval) is a user-gated decision. All other phase boundaries happen automatically once their phase completes.
 
@@ -257,6 +323,13 @@ When `auto_mode: true`, the routine diff-approval gate at Step DIAGNOSE.5 and th
 - **Skipping the Overfitting Gate or treating it as a one-shot pre-flight.** The gate runs every iteration where Optimization produced non-zero edits. On no-flag iterations it's a one-line pass-through; on iterations where the LLM diagnosing pulled phrasing directly from the failing transcripts, it's the only thing standing between a memorized fix and a passing-but-non-generalizing agent. Do not short-circuit the gate to "save time" — its cost when there's nothing to scrub is negligible. **The drift is most likely on iter 2+** when later edits feel incremental, the previous-iter Gate was a pass-through, and the orchestrator is tempted to apply-and-validate without re-walking the full pipeline — that is exactly when transcript-leak risk compounds (the LLM has now seen the failing transcripts on multiple diagnoses). The countermeasure is the phase-announcement rule in the Orchestration flow section above: if you can't point to the line in your output where you said "Iteration N · Overfitting Gate", you skipped it. Also: a new or revised system-prompt string literal embedded in a source file (e.g., a `SYSTEM_PROMPT = {...}` or an `OVERRIDE_PROMPT = {...}` block) is a prompt edit and MUST be scored — only orchestration-control-flow code is skipped within the Gate.
 - **Treating expected-outcome failures and metric failures the same.** Expected-outcome failures are first-class signal about agent behavior; metric failures may reflect either the agent or the metric.
 - **Mass-deleting "unused"-looking tools.** A tool with no references in this agent's squad members may still be referenced elsewhere. Prefer reference removal over delete.
+- **Entering the loop without a reproduced bug (skipping the must-fail-first gate).** For prod-call inputs, the Reproduce phase MUST produce a definitive FAIL (≥ M of N for LLM-based; one for infra) before any edit. If the replay passes, the bug is NOT reproduced — iterating anyway means the loop is chasing a failure it can't measure, and "100% pass" is meaningless because the start state was already green. Stop and diagnose the harness (mock returns, dynamic variables, verbatim caller turns) or confirm a stale fix. The old auto-loop trusted the input failure set and never re-ran a controlled reproduction — that gap is exactly what this gate closes.
+- **Deriving mock returns / variables from the prompt instead of the prod trace.** The reproduction harness's mock-tool return values, dynamic variables, and testing-agent turns must come from the prod call's own request→response trace and metadata — never from what the prompt says "should" happen. A plausible-but-different mock value will not reproduce the bug and produces a false PASS at the must-fail gate.
+- **Single-shot reproduction or verification on an LLM-based failure.** Probabilistic agent behavior needs a sample. Running the evaluator once (and declaring the bug reproduced or the fix verified on that one run) is the dominant source of "looked good in dev, regressed in prod" miscalls. For LLM-based failures the skill auto-runs 5–10× and gates on ≥ M of N (fail for reproduction, pass for verification). Only deterministic infra failures get a single run.
+- **Defaulting the evaluator to the prod metric when `expected_outcome` could express the failure.** `expected_outcome` bullets are higher-signal and align with how Diagnose classifies; the prod metric drags in metric-judge noise as a confounder. Use the prod metric only when the failure is genuinely out of scope for behavioral bullets (latency / sentiment / interruption / infra metrics). When unsure, prefer `expected_outcome`.
+- **Building a dataset for an infra failure, or a single evaluator for an LLM failure.** The harness shape is driven by the LLM-vs-infra classification (REPRO.2): LLM-based → dataset of N (so a real fix is distinguishable from a lucky sample); infra → single evaluator (deterministic, no sample needed). Getting this backwards either wastes runs on a deterministic bug or under-samples a probabilistic one.
+- **Asking the user which PR path to take when detection is unambiguous.** The PR phase *detects* the runtime (repo + `gh` + push access → raise; otherwise summarize). Only ask when detection is genuinely ambiguous (repo present but `gh`/push unconfirmable). Asking when the answer is clear is noise; silently emitting a summary when a real PR was possible is a missed deliverable.
+- **Declaring success without the Regression phase.** Full-set 100% on the reproduction dataset is convergence, not the finish line — the dedicated Regression phase (happy-path + edge-case sweep on the affected surface) is what catches a fix that resolved the bug but broke an adjacent flow. Only after Regression passes does PR run and the skill report success.
 
 ## Next Steps
 
@@ -281,8 +354,9 @@ After this skill, the user typically needs:
 cekura-self-improving-agent/
 ├── SKILL.md                                  # this file — orchestrator (loop point: Eval → Optimization · Collect)
 ├── phases/
-│   ├── setup.md                              # Resolve mode, fetch agent, collect redeploy_command
+│   ├── setup.md                              # Resolve mode, fetch agent, collect redeploy_command, record input_is_prod_call
 │   ├── clone.md                              # VAPI/ElevenLabs only: clone provider agent + copy Cekura agent; rebind run
+│   ├── reproduce.md                          # Prod-call: debug → auto-build harness → evaluator → LLM/infra split → MUST-FAIL-FIRST gate
 │   ├── optimization/
 │   │   ├── collect.md                        # Fetch + filter failures + inspect provider call state (incl. Signal 5)
 │   │   ├── early-end-call-diagnose.md        # Triage main-agent-ended-early failures → closure-rule / code edits
@@ -290,7 +364,9 @@ cekura-self-improving-agent/
 │   │   ├── apply.md                          # Land combined edit set → redeploy
 │   │   └── sync.md                           # Re-fetch + verify; drift rolls back to apply
 │   ├── overfitting-gate.md                   # Scrub the just-applied edits for transcript/scenario overfitting
-│   └── eval.md                               # Build validation set → run → re-collect → decide loop/exit/sweep
+│   ├── eval.md                               # Build validation set → run (MUST-PASS gate) → re-collect → decide loop/converge/stop
+│   ├── regression.md                         # On success: happy-path + edge-case sweep on the affected surface
+│   └── pr.md                                 # Detect runtime → raise PR or emit PR-ready/promotion summary w/ result URLs
 ├── agents/                                   # MCP-agnostic helpers
 └── providers/
     ├── vapi/
@@ -316,13 +392,16 @@ cekura-self-improving-agent/
 
 - **[`phases/setup.md`](phases/setup.md)** — Mode and sub-flavor resolution, agent fetch per provider, `redeploy_command` hard gate, Setup completion checklist.
 - **[`phases/clone.md`](phases/clone.md)** — VAPI / ElevenLabs only. Clone the provider agent + every referenced tool in the same provider org, duplicate the Cekura agent (`copy_scenarios=true`) in the same project, repoint it at the cloned provider id, rebind the run to the clone (scenario + tool id maps), and surface the clone summary. On-exit promotion-to-production guidance. Skipped for all self-hosted sub-flavors.
-- **[`phases/optimization/collect.md`](phases/optimization/collect.md)** — Scenario execution wait, fetch runs / call logs, verdict pre-filter (per-run `evaluation_status`), voice-channel filter, accumulate, provider call-state inspection with Signals 1–5 (including end-of-call attribution), failure summary.
+- **[`phases/reproduce.md`](phases/reproduce.md)** — Runs once before the loop. Prod-call inputs: debug + root-cause (REPRO.1), LLM-vs-infra classification (REPRO.2), auto-build the reproduction harness from the prod trace — mock tools + expected returns + main-agent dynamic variables + testing-agent vars (REPRO.3), construct the evaluator preferring `expected_outcome` over the prod metric (REPRO.4), branch dataset-vs-single on failure class (REPRO.5), and the **must-fail-first gate** with auto-fired stochastic re-runs (REPRO.6). Scenario / sim-run inputs pass through harness construction; offline variant skips the phase.
+- **[`phases/optimization/collect.md`](phases/optimization/collect.md)** — Scenario execution wait, fetch runs / call logs, verdict pre-filter (per-run `evaluation_status`), voice-channel filter, accumulate, provider call-state inspection with Signals 1–5 (including end-of-call attribution), failure summary. For prod-call inputs the loop input is the reproduction scenario IDs handed over by Reproduce.
 - **[`phases/optimization/early-end-call-diagnose.md`](phases/optimization/early-end-call-diagnose.md)** — Two-check verdict-first triage ({main-agent-ended + scenario-incomplete in expected-outcome bullets}; no rationale, no borderline cases), diagnose responsible layer (closure rules / orchestration code / VAPI handoff), propose minimal early-end fixes. Pass-through if no matches.
 - **[`phases/optimization/diagnose.md`](phases/optimization/diagnose.md)** — Re-read the agent's prompt + tool config, map non-early-end failures to those artifacts + variable state, classify (Gap / Conflict / Ambiguity / non-early-end CodeBug / Upstream), propose minimal scoped edits, de-conflict with early-end proposals, present the combined diff.
 - **[`phases/optimization/apply.md`](phases/optimization/apply.md)** — Apply the combined edit set per-provider machinery, then run `redeploy_command` (or fire manual restart gate). Non-zero exit halts.
 - **[`phases/optimization/sync.md`](phases/optimization/sync.md)** — Re-fetch / re-read just-edited artifacts, verify each changed field landed. Drift handling per failure mode; rolls back to apply on drift.
 - **[`phases/overfitting-gate.md`](phases/overfitting-gate.md)** — Inventory the just-applied edits, score against five overfitting signatures (verbatim transcript quote, scenario-specific identifier, hardcoded test-data value, hyper-narrow case clause, transcript-cloned few-shot example), decide REVISE / STRIP / KEEP, apply + sync cleanup edits when needed; pass-through when no flags.
-- **[`phases/eval.md`](phases/eval.md)** — Validation-set construction (failure set vs. full set), validation execution, failure re-collection, decision tree (loop / sweep / exit / stop condition), iteration cap.
+- **[`phases/eval.md`](phases/eval.md)** — Validation-set construction (failure set vs. full set), validation execution with the **must-pass stochastic gate** (≥M/N for LLM-based, single run for infra), failure re-collection, decision tree (loop / in-loop sweep / converge → Regression / stop condition), iteration cap.
+- **[`phases/regression.md`](phases/regression.md)** — Runs once on full-set 100% success. Identify happy-path + edge-case flows touching the changed surface, build + run them under the must-pass gate, hand back to Collect on any regression, hand off to PR when all pass.
+- **[`phases/pr.md`](phases/pr.md)** — Final phase. Determine change kind (code vs. managed-config), detect the runtime (repo + `gh` + push access), raise the PR automatically or emit a PR-ready / promotion summary in-panel with all Cekura result URLs (reproduction fail-runs + verification pass-runs + regression pass-runs).
 
 ### Reference Files (loaded on demand)
 

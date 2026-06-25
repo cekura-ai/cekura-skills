@@ -1,6 +1,8 @@
 # Setup Phase — Verify Agent and Provider Support
 
-This phase runs **once per invocation**, before any optimization sub-phase or the Eval phase. It resolves the run mode, loads the agent the loop will edit against (its provider config and where its prompt lives), and (for self-hosted live targets) collects the `redeploy_command` that lets auto-mode run end-to-end.
+This phase runs **once per invocation**, before the Reproduce phase, any optimization sub-phase, or the Eval phase. It resolves the run mode, loads the agent the loop will edit against (its provider config and where its prompt lives), records whether the input is a **production call** (which routes through the Reproduce phase), and (for self-hosted live targets) collects the `redeploy_command` that lets auto-mode run end-to-end.
+
+**Prod-call inputs route through Reproduce.** When the input is `call_ids`, or a `result_id` / `run_ids` that point at **production call logs** rather than Cekura simulation runs, record `input_is_prod_call = true` on the run. After Setup (and Clone, for VAPI / ElevenLabs), the orchestrator enters the [`reproduce.md`](reproduce.md) phase, which auto-builds the reproduction harness and gates on a definitive FAIL before the Optimization loop begins. Scenario / simulation-run inputs and the offline variant skip the harness-building parts of Reproduce (see that file's "when this phase does real work vs. passes through"). Setup does NOT itself fetch the call log — that's Reproduce's job; Setup only records the input shape.
 
 **Setup's fetch surface is the agent only — prompt + tool config.** Do NOT fetch failure data (`results_retrieve` / `runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) here, even if the user supplied `result_id` / `run_ids` / `call_ids` / `scenario_ids`. Failure data is Collect's job — fetching it in Setup produces work against premature assumptions and conflates phase responsibilities.
 
