@@ -1,6 +1,6 @@
 # Cekura AI Skills
 
-AI-powered skills for building and improving voice agent tests and metrics on the [Cekura](https://cekura.ai) platform. Works with Claude Code, Codex, Cursor, and other AI coding assistants.
+AI-powered skills for building and improving voice agent tests and metrics on the [Cekura](https://cekura.ai) platform. Works with Claude Code, Codex, Cursor, Gemini CLI, and other AI coding assistants.
 
 ## Table of Contents
 
@@ -11,6 +11,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 - [Claude Code (Terminal CLI)](#claude-code-terminal-cli)
 - [Codex](#codex)
 - [Cursor](#cursor)
+- [Gemini CLI](#gemini-cli)
 - [Windsurf / Other Agents](#windsurf--other-agents)
 - [MCP Server](#mcp-server)
 - [Quick Reference](#quick-reference)
@@ -176,11 +177,19 @@ Restart Claude Code and your terminal after upgrading.
 
 ## Codex
 
-Codex doesn't support Claude Code plugins directly. Skills are loaded automatically based on conversation context. No slash commands or MCP tools — uses curl-based API reference instead.
+Native plugin support — skills **and** MCP tools. (Codex plugins don't carry slash commands; the skills cover those workflows.)
 
-### Install
+### Install (recommended)
 
-**Option A: Install skills (recommended)**
+```bash
+codex plugin marketplace add cekura-ai/cekura-skills
+```
+
+Then run `codex`, open `/plugins`, and install **cekura**. On first use of a Cekura MCP tool, Codex opens a browser for one-click OAuth sign-in — no API key stored.
+
+### Fallbacks (no MCP)
+
+**Skills only** — install the skill files directly:
 
 ```bash
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
@@ -196,17 +205,11 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-infra-test-suite
 ```
 
-Restart Codex after install.
-
-**Option B: Behavior preset (quick start)**
-
-Copy the single-file behavior preset into your repo:
+**Behavior preset** — single-file domain knowledge (metric design, eval design, API reference, anti-patterns):
 
 ```bash
 curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
 ```
-
-This gives Codex all the domain knowledge (metric design, eval design, API reference, anti-patterns) in one file.
 
 ### Get Started
 
@@ -214,31 +217,21 @@ Ask Codex to help with Cekura metrics or evals — skills load automatically whe
 
 ### Upgrade
 
-Re-run the skill installer:
-
-```bash
-python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo cekura-ai/cekura-skills \
-  --path cekura/skills/cekura-onboarding \
-         cekura/skills/cekura-create-agent \
-         cekura/skills/cekura-self-improving-agent \
-         cekura/skills/cekura-metric-design \
-         cekura/skills/cekura-metric-improvement \
-         cekura/skills/cekura-predefined-metrics \
-         cekura/skills/cekura-eval-design \
-         cekura/skills/cekura-fixing-prod-issues \
-         cekura/skills/cekura-infra-test-suite
-```
+Re-run `codex plugin marketplace add cekura-ai/cekura-skills` (or, for the fallbacks, re-run the skill installer / re-download `AGENTS.md`).
 
 ---
 
 ## Cursor
 
-Uses the behavior preset as a rules file. No slash commands or MCP tools — all domain knowledge is embedded in the rules file.
+Native plugin support — skills **and** MCP tools. (Cursor plugins don't carry Claude-style slash commands; the skills cover those workflows.)
 
-### Install
+### Install (recommended)
 
-Copy the behavior preset into your project:
+In Cursor, go to **Settings > Plugins > Team Marketplaces > Add Marketplace > Import from Repo**, point it at `https://github.com/cekura-ai/cekura-skills`, then install **cekura**. Authenticate the Cekura MCP via OAuth when prompted.
+
+### Fallback (no MCP)
+
+Use the behavior preset as a rules file:
 
 ```bash
 curl -o .cursor/rules/cekura.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
@@ -248,14 +241,30 @@ Or add it as a global rule in Cursor Settings > Rules.
 
 ### Get Started
 
-Ask Cursor to help with Cekura metrics or evals — the rules file provides all the domain context.
+Ask Cursor to help with Cekura metrics or evals — skills load automatically when the conversation matches.
 
 ### Upgrade
 
-Re-download the behavior preset:
+Re-import the marketplace (or re-download the rules-file fallback).
+
+---
+
+## Gemini CLI
+
+Extension support — MCP tools plus the Cekura context file. (Gemini extensions don't consume the `SKILL.md` skills; native skill bundling is deferred — it would require relocating the skills to the repo root.)
+
+### Install
 
 ```bash
-curl -o .cursor/rules/cekura.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
+gemini extensions install https://github.com/cekura-ai/cekura-skills
+```
+
+On first use of a Cekura MCP tool, Gemini runs an OAuth sign-in flow. The extension loads `GEMINI.md` — all Cekura domain knowledge (metric design, eval design, API reference, anti-patterns) — as context.
+
+### Upgrade
+
+```bash
+gemini extensions update cekura
 ```
 
 ---
@@ -291,7 +300,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 2. Starting the MCP server
 3. Verifying connectivity
 
-**For other platforms:** The MCP server is optional. The `AGENTS.md` behavior preset includes API reference with curl examples as a fallback.
+**For Codex, Cursor, and Gemini CLI:** the MCP server is wired up natively through each platform's plugin/extension manifest — OAuth sign-in happens on first tool use, no key stored. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
 
 **How it works:** The plugin ships a single `.mcp.json` file at the marketplace root that auto-configures the connection to the Cekura MCP server at `https://api.cekura.ai/mcp`. By default it authenticates via OAuth — on first use Claude Code opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
 
@@ -347,13 +356,14 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 ## Platform Compatibility
 
-| Platform | Method | Full Plugin Support | MCP Tools | Slash Commands |
-|----------|--------|-------------------|-----------|---------------|
-| **Any Agent Skills client** | `npx skills add` | Skills only | No | No |
+| Platform | Recommended method | Skills | MCP Tools | Slash Commands |
+|----------|--------|--------|-----------|---------------|
+| **Any Agent Skills client** | `npx skills add` | Yes | No | No |
 | **Claude Code (VS Code)** | Marketplace install | Yes | Yes | Yes |
 | **Claude Code (CLI)** | `/plugins` install | Yes | Yes | Yes |
-| **Codex** | Skill installer | Skills only | No | No |
-| **Cursor** | Rules file | Behavior preset | No | No |
+| **Codex** | `codex plugin marketplace add` | Yes | Yes | No |
+| **Cursor** | Plugin marketplace install | Yes | Yes | No |
+| **Gemini CLI** | `gemini extensions install` | Context file only | Yes | No |
 | **Windsurf** | Rules file | Behavior preset | No | No |
 | **Other agents** | Copy AGENTS.md | Behavior preset | No | No |
 

@@ -14,4 +14,9 @@ npm-debug.log*
 
 # Local skills CLI test artifacts
 skills-lock.json
-.agents/
+# Ignore the skills-CLI's local .agents/ artifacts, but keep our committed
+# Codex/generic plugin marketplace registry tracked.
+.agents/*
+!.agents/plugins/
+.agents/plugins/*
+!.agents/plugins/marketplace.json
