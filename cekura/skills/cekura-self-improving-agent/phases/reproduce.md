@@ -5,7 +5,7 @@ This phase runs **once per invocation**, after Setup (and Clone, for VAPI / Elev
 **When this phase does real work vs. passes through:**
 
 - **Prod-call inputs (`call_ids`, or a `result_id` / `run_ids` that point at production call logs rather than simulation runs)** → full procedure below. The skill auto-builds the reproduction harness from the prod call's own trace (mock tools, expected tool returns, main-agent dynamic variables, testing-agent variables), constructs the evaluator, branches the harness shape on the failure class, and runs the must-fail-first gate.
-- **Simulation-run inputs (`scenario_ids`, or a `result_id` / `run_ids` from a Cekura simulation)** → the reproduction artifacts already exist as scenarios. Skip harness construction (REPRO.3) and evaluator construction (REPRO.4); still run REPRO.1 (debug / root-cause) lightly, REPRO.2 (LLM-vs-infra classification, which drives the dataset-vs-single branch and the stochastic re-run policy), and REPRO.6 (must-fail-first gate against the existing scenarios). A scenario that doesn't fail on re-run is not a reproduction — surface and stop, same as the prod-call path.
+- **Simulation-run inputs (`scenario_ids`, or a `result_id` / `run_ids` from a Cekura simulation)** → the reproduction artifacts already exist as scenarios. Skip harness construction (REPRO.3) and evaluator construction (REPRO.4); still run REPRO.1 (debug / root-cause) lightly, REPRO.2 (LLM-vs-infra classification, which drives the dataset-vs-single harness-shape branch; the stochastic re-run policy is now the same 5–10× ≥M/N gate for both classes), and REPRO.6 (must-fail-first gate against the existing scenarios). A scenario that doesn't fail on re-run is not a reproduction — surface and stop, same as the prod-call path.
 - **Offline variant (pasted prompt + pasted failures)** → no live target to replay against. Skip this phase entirely; the pasted `{transcript, expected_outcome, verdict}` blocks are the only available failure signal. The must-fail-first and must-pass gates degrade to "the user re-pastes failures each iteration" (handled in Eval).
 
 > ## ⚠️ SAME CONNECTION MEDIUM AS THE PROD CALL — NO EXCEPTIONS
@@ -45,14 +45,16 @@ Then pull logs and traces around the call timestamp using whatever observability
 
 ## Step REPRO.2 — Classify the failure: LLM-based vs. infra
 
-This classification drives two later decisions — the harness shape (REPRO.5) and the stochastic re-run policy (REPRO.6, Eval) — so it is not optional. It falls directly out of the existing Diagnose taxonomy (see [`optimization/diagnose.md`](optimization/diagnose.md) Step DIAGNOSE.3):
+This classification drives **one** later decision — the harness shape (REPRO.5: a dataset of N varied scenarios for LLM-based vs. a single evaluator for infra). The stochastic re-run policy (REPRO.6, Eval) is now the **same for both classes** — auto re-run 5–10× and gate on ≥ M of N. The classification still falls directly out of the existing Diagnose taxonomy (see [`optimization/diagnose.md`](optimization/diagnose.md) Step DIAGNOSE.3):
 
 | Class | Diagnose buckets | Nature | Harness shape | Re-run policy |
 |---|---|---|---|---|
 | **LLM-based** | Gap / Conflict / Ambiguity (and over-eager-transfer / premature-exit prompt patterns) | Probabilistic agent behavior — the model *sometimes* gets it wrong | **dataset** of N scenarios (REPRO.5) | auto re-run 5–10× (REPRO.6) |
-| **Infra** | CodeBug (websocket history truncation, broken state, missing tool-result forwarding) / Upstream-infra (mock-tool wiring, idle timer, DTMF parsing, telephony) | Deterministic — fails the same way every time | **single** evaluator (REPRO.5) | single run is enough |
+| **Infra** | CodeBug (websocket history truncation, broken state, missing tool-result forwarding) / Upstream-infra (mock-tool wiring, idle timer, DTMF parsing, telephony) | Deterministic in *cause*, but over a real transport (telephony / SIP / WebRTC) the manifestation is often intermittent — timing, audio, latency, and interruption races don't fire on every run | **single** evaluator (REPRO.5) | auto re-run 5–10× (REPRO.6) |
 
-This is a *preview* classification from the prod call's evidence, not the authoritative Diagnose verdict (that's still produced inside the loop, per failure). It only needs to be good enough to pick the harness shape and re-run count. When the prod call shows symptoms of both (e.g., a prompt gap that only triggers when a mock returns a specific shape), default to **LLM-based + dataset** — the larger sample is the safe error.
+> **Why infra also re-runs 5–10× (not once).** Earlier revisions ran infra a single time on the theory that a deterministic bug fails identically every time. Over a real transport that assumption breaks: timing/audio/latency/interruption-collision failures are intermittent even when their root cause is fixed code, so a single run routinely *misses* the bug and produces a false PASS at the must-fail gate. Running 5–10× and gating on ≥ M of N is robust to both — a truly deterministic infra bug simply fails all N (clearing the gate trivially), while an intermittent one is still caught as long as it fails in ≥ M of N. The only thing the LLM-vs-infra split still drives is the **harness shape** (dataset of N *varied* scenarios for LLM-based vs. one evaluator for infra), not the re-run count.
+
+This is a *preview* classification from the prod call's evidence, not the authoritative Diagnose verdict (that's still produced inside the loop, per failure). It only needs to be good enough to pick the harness shape (the re-run count is the same either way). When the prod call shows symptoms of both (e.g., a prompt gap that only triggers when a mock returns a specific shape), default to **LLM-based + dataset** — the larger sample is the safe error.
 
 ---
 
@@ -110,7 +112,7 @@ create_scenario '{
 From REPRO.2:
 
 - **LLM-based → build a dataset of N scenarios.** One reproduction scenario alone gives the loop too little signal to tell a real fix from a lucky sample. Build `N` scenarios (default `N = 8`, configurable via `dataset_size`, range 5–10) that all exercise the *same* failure mode with light variation — vary the caller's phrasing / order / incidental details while keeping the trigger condition (the thing that broke) constant. The prod replay is scenario 1; the rest are near-variants. This dataset is the **full set** for the rest of the loop (Eval, regression).
-- **Infra → a single evaluator is enough.** Deterministic failures don't need a sample — one faithful replay reproduces them every time. The single repro scenario is the full set.
+- **Infra → a single evaluator (but still run it N times).** Infra failures don't need a *dataset* of varied scenarios — the trigger is fixed, so one faithful replay is the right harness. But that single evaluator is still re-run 5–10× at the gate (REPRO.6), because over a real transport the failure may be intermittent. The single repro scenario is the full set.
 
 ---
 
@@ -123,10 +125,10 @@ Run the reproduction evaluator(s) on Cekura over the agent's transport and **req
 ### Re-run policy (from REPRO.2)
 
 - **LLM-based (dataset):** the skill **auto-triggers the runs itself** — do NOT ask the user to trigger each one. Run the evaluator(s) **5–10 times** (default `N = 8`, configurable via `stochastic_runs`). Because agent behavior is probabilistic, a single failing run is not proof the bug is real and reproducible. **The bug counts as reproduced only if it fails in ≥ M of N runs** (default `M = ⌈N/2⌉`, e.g. ≥4/8 or ≥5/10 or ≥3/5 — tune via `repro_threshold`). Fewer than M fails → the bug is not reliably reproducible from this harness; surface and stop (see "If it passes" below).
-- **Infra (single):** one run is sufficient. A deterministic failure that shows up once will show up every time.
+- **Infra (single evaluator, also re-run):** auto-trigger the **same single evaluator 5–10 times** (same `stochastic_runs` default and `repro_threshold` ≥ M of N as LLM-based) — do NOT settle for one run. A real-transport infra failure (timing / audio / latency / interruption collision) is frequently intermittent even though its cause is deterministic code; a single run can silently miss it and produce a false PASS. A genuinely deterministic infra bug will fail all N and clear the gate trivially; an intermittent one clears it as long as it fails in ≥ M of N. The difference from LLM-based is only the harness shape (one evaluator, not a dataset of N varied scenarios), not the run count.
 
 ```bash
-# LLM-based: the skill fires N runs without prompting the user between them
+# Both classes: the skill fires N runs without prompting the user between them
 run_voice "SCENARIO_ID" '{"agent_number": "<caller_id>"}'   # ×N
 get_result "RESULT_ID"                                        # poll each to terminal
 ```
@@ -155,7 +157,7 @@ Show the user the replay transcript + scores side-by-side with prod and ask: "th
 
 ## Hand-off to the Optimization loop
 
-When the must-fail gate is satisfied (definitive FAIL ≥ M of N for LLM-based, or a single FAIL for infra), hand off to [`optimization/collect.md`](optimization/collect.md) with:
+When the must-fail gate is satisfied (a definitive FAIL in ≥ M of N runs — for both LLM-based and infra), hand off to [`optimization/collect.md`](optimization/collect.md) with:
 
 - The **reproduction scenario IDs** as the loop's input (replacing the raw `call_ids` — from here on the loop iterates against the controlled replay, not the raw prod log).
 - The recorded **full set** (the N-scenario dataset for LLM-based; the single scenario for infra) and the **failure class** (LLM-based / infra), which Eval reads for its must-pass re-run policy.

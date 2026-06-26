@@ -38,7 +38,7 @@ create_scenario '{
 }'
 ```
 
-Run each case over the agent's transport, work through them one at a time (restore any modified conditions between cases), and poll all results. Apply the same **must-pass stochastic policy** as Eval Step EVAL.2: LLM-based cases must pass in ≥ M of N runs; infra cases need a single clean pass.
+Run each case over the agent's transport, work through them one at a time (restore any modified conditions between cases), and poll all results. Apply the same **must-pass stochastic policy** as Eval Step EVAL.2: every case — LLM-based and infra alike — must pass in ≥ M of N runs (a single clean pass is not enough for either class).
 
 Build a summary:
 

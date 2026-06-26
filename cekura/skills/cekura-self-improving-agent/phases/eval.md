@@ -45,7 +45,7 @@ Execute the validation set in voice mode for VAPI and ElevenLabs (both are voice
 **Stochastic re-run policy — mirror Reproduce REPRO.6 on the verification side.** A single passing run no longer ends the iteration; that single-shot pass is the source of most "looked good in dev, regressed in prod" miscalls. Branch on the **failure class** recorded in the Reproduce phase (or, for simulation-run inputs that skipped harness construction, the REPRO.2 LLM-vs-infra classification):
 
 - **LLM-based failures →** the skill **auto-triggers the verification runs itself** (do NOT ask the user to fire each one). Run the failure-set evaluator(s) **5–10 times** (default `N = 8`, `stochastic_runs`). **The fix counts as verified for a scenario only if it passes in ≥ M of N runs** (default `M = ⌈0.8·N⌉` — e.g. ≥7/8 or ≥4/5, allowing at most a small number of stochastic flakes; tune via `verify_threshold`). A scenario that passes fewer than M of N is NOT fixed — it stays in the failure set and the loop continues. Report the pass-rate per scenario (`7/8 pass`), not a single verdict.
-- **Infra failures →** a single run is sufficient (deterministic). One clean pass verifies the fix.
+- **Infra failures →** also **auto-trigger 5–10 verification runs** of the single evaluator (same `stochastic_runs` / `verify_threshold` ≥ M of N as LLM-based) — do NOT verify on one clean pass. This mirrors Reproduce REPRO.6: over a real transport an infra failure (timing / audio / latency / interruption collision) is often intermittent, so a single post-fix pass can be luck rather than a fix. Require a pass in ≥ M of N before counting the scenario verified; a genuinely deterministic fix passes all N. The only difference from LLM-based remains the harness shape (one evaluator vs. a dataset of N varied scenarios), not the run count.
 
 For self-hosted live targets, launch the main agent and pass it the per-run Cekura connection details using the saved run setup in `memory.md` / `CLAUDE.md` (Setup Step 1.4a) — the same steps the Reproduce phase used.
 
@@ -61,7 +61,7 @@ In **VAPI and ElevenLabs modes** the edit always lands live (no redeploy), so a 
 
 ## Step EVAL.4 — Decide: exit, sweep, or loop
 
-The final exit criterion is **100% pass rate on the full set** (not just the failure set) — zero failures of any class on every scenario in the validation set (the reproduction dataset for prod-call inputs; the original input batch otherwise). "Pass" here means a scenario cleared its **must-pass stochastic gate** from Step EVAL.2 (LLM-based: ≥ M of N runs; infra: a single clean run), not a single lucky pass. Reaching 100% on the failure set is a necessary but not sufficient milestone; the regression sweep and the dedicated Regression phase are what close the loop.
+The final exit criterion is **100% pass rate on the full set** (not just the failure set) — zero failures of any class on every scenario in the validation set (the reproduction dataset for prod-call inputs; the original input batch otherwise). "Pass" here means a scenario cleared its **must-pass stochastic gate** from Step EVAL.2 (≥ M of N runs — for both LLM-based and infra), not a single lucky pass. Reaching 100% on the failure set is a necessary but not sufficient milestone; the regression sweep and the dedicated Regression phase are what close the loop.
 
 Decision tree, in order:
 
