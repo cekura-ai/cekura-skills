@@ -8,7 +8,7 @@ Group failures by **scenario** (for runs) or by **metric** (for call logs), sinc
 
 ```
 Failure Summary
-  Agent: <name> (<id>) — provider <vapi | elevenlabs | pipecat | websocket>
+  Agent: <name> (<id>) — provider <vapi | elevenlabs | self_hosted>
   Source: <input type> — <N items inspected>
   Verdict filter:
     - kept: <K> (failure: <F>, reviewed_failure: <R>)

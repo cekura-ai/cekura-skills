@@ -6,7 +6,7 @@ This phase runs **once per invocation**, after Setup (and Clone, for VAPI / Elev
 
 - **Prod-call inputs (`call_ids`, or a `result_id` / `run_ids` that point at production call logs rather than simulation runs)** → full procedure below. The skill auto-builds the reproduction harness from the prod call's own trace (mock tools, expected tool returns, main-agent dynamic variables, testing-agent variables), constructs the evaluator, branches the harness shape on the failure class, and runs the must-fail-first gate.
 - **Simulation-run inputs (`scenario_ids`, or a `result_id` / `run_ids` from a Cekura simulation)** → the reproduction artifacts already exist as scenarios. Skip harness construction (REPRO.3) and evaluator construction (REPRO.4); still run REPRO.1 (debug / root-cause) lightly, REPRO.2 (LLM-vs-infra classification, which drives the dataset-vs-single harness-shape branch; the stochastic re-run policy is now the same 5–10× ≥M/N gate for both classes), and REPRO.6 (must-fail-first gate against the existing scenarios). A scenario that doesn't fail on re-run is not a reproduction — surface and stop, same as the prod-call path.
-- **Offline variant (pasted prompt + pasted failures)** → no live target to replay against. Skip this phase entirely; the pasted `{transcript, expected_outcome, verdict}` blocks are the only available failure signal. The must-fail-first and must-pass gates degrade to "the user re-pastes failures each iteration" (handled in Eval).
+- **Render-only run (pasted prompt + pasted failures, no reachable live target)** → no live target to replay against. Skip this phase entirely; the pasted `{transcript, expected_outcome, verdict}` blocks are the only available failure signal. The must-fail-first and must-pass gates degrade to "the user re-pastes failures each iteration" (handled in Eval).
 
 > ## ⚠️ SAME CONNECTION MEDIUM AS THE PROD CALL — NO EXCEPTIONS
 >
@@ -50,7 +50,7 @@ This classification drives **one** later decision — the harness shape (REPRO.5
 | Class | Diagnose buckets | Nature | Harness shape | Re-run policy |
 |---|---|---|---|---|
 | **LLM-based** | Gap / Conflict / Ambiguity (and over-eager-transfer / premature-exit prompt patterns) | Probabilistic agent behavior — the model *sometimes* gets it wrong | **dataset** of N scenarios (REPRO.5) | auto re-run 5–10× (REPRO.6) |
-| **Infra** | CodeBug (websocket history truncation, broken state, missing tool-result forwarding) / Upstream-infra (mock-tool wiring, idle timer, DTMF parsing, telephony) | Deterministic in *cause*, but over a real transport (telephony / SIP / WebRTC) the manifestation is often intermittent — timing, audio, latency, and interruption races don't fire on every run | **single** evaluator (REPRO.5) | auto re-run 5–10× (REPRO.6) |
+| **Infra** | CodeBug (source-code history truncation, broken state, missing tool-result forwarding) / Upstream-infra (mock-tool wiring, idle timer, DTMF parsing, telephony) | Deterministic in *cause*, but over a real transport (telephony / SIP / WebRTC) the manifestation is often intermittent — timing, audio, latency, and interruption races don't fire on every run | **single** evaluator (REPRO.5) | auto re-run 5–10× (REPRO.6) |
 
 > **Why infra also re-runs 5–10× (not once).** Earlier revisions ran infra a single time on the theory that a deterministic bug fails identically every time. Over a real transport that assumption breaks: timing/audio/latency/interruption-collision failures are intermittent even when their root cause is fixed code, so a single run routinely *misses* the bug and produces a false PASS at the must-fail gate. Running 5–10× and gating on ≥ M of N is robust to both — a truly deterministic infra bug simply fails all N (clearing the gate trivially), while an intermittent one is still caught as long as it fails in ≥ M of N. The only thing the LLM-vs-infra split still drives is the **harness shape** (dataset of N *varied* scenarios for LLM-based vs. one evaluator for infra), not the re-run count.
 
@@ -66,7 +66,7 @@ The whole point of this phase: **replay the prod call faithfully with zero manua
 
 Every tool the prod call invoked must appear in the Cekura agent's mock-tool JSON. Walk the tool-call trace from REPRO.1 and, for each distinct tool the agent called, ensure a mock-tool entry exists (name + parameter schema matching what the agent actually sent).
 
-For self-hosted / pipecat and websocket agents, mock tools are the Cekura testing contract — set them on the agent record (the full desired `mock_tools` list: fetch current → merge → write back). For VAPI / ElevenLabs, the referenced tools already exist on the cloned agent (Clone phase copied them); here you set their *mock return values* (next step) so the replay is deterministic.
+For self-hosted agents, mock tools are the Cekura testing contract — set them on the agent record (the full desired `mock_tools` list: fetch current → merge → write back). For VAPI / ElevenLabs, the referenced tools already exist on the cloned agent (Clone phase copied them); here you set their *mock return values* (next step) so the replay is deterministic.
 
 ### REPRO.3b — Expected mock tool return values
 

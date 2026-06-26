@@ -1,6 +1,6 @@
 # Eval Phase — Validate, Re-collect, Decide
 
-The Eval phase is the "verify the change and decide" half of the loop. It builds the validation set, runs it against the live agent (or asks for pasted failures in the offline variant), re-collects failures with the same logic the Optimization phase used, and decides whether to exit the loop (success / oscillation / cap / all-upstream), trigger a regression sweep, or hand back to the Optimization phase with a fresh failure summary.
+The Eval phase is the "verify the change and decide" half of the loop. It builds the validation set, runs it against the live agent (or asks for pasted failures when there's no reachable live target), re-collects failures with the same logic the Optimization phase used, and decides whether to exit the loop (success / oscillation / cap / all-upstream), trigger a regression sweep, or hand back to the Optimization phase with a fresh failure summary.
 
 The Eval phase never edits the agent. Its outputs are decisions: **exit**, **hand back to Optimization**, or **pause for the user**.
 
@@ -8,7 +8,7 @@ The Eval phase never edits the agent. Its outputs are decisions: **exit**, **han
 
 Before any Step EVAL.x work, verify the upstream Overfitting Gate phase is complete:
 
-- Optimization edits were applied (Optimization · Apply Step APPLY.1) AND sync was confirmed (Optimization · Sync Step SYNC.1), OR — for the offline variant — the rewritten prompt was rendered and the user has been asked for new pasted failures.
+- Optimization edits were applied (Optimization · Apply Step APPLY.1) AND sync was confirmed (Optimization · Sync Step SYNC.1), OR — for a render-only run (no live target) — the rewritten prompt was rendered and the user has been asked for new pasted failures.
 - The Overfitting Gate phase ran (Steps GATE.1–GATE.7). Either the gate found nothing and was a pass-through, OR cleanup edits were applied + synced. Either way the live state Eval is about to validate against is the gate-cleaned state, not the raw Optimization output.
 - The failure set and full set are recorded on the run state (handed forward through Collect → diagnose sub-phases → Apply → Sync → Gate → Eval).
 - The current iteration number is known (for cap tracking and oscillation detection).
@@ -25,7 +25,7 @@ Pick the validation set based on the **original input type** (recorded on iterat
 | `scenario_ids` | Reuse the same scenario IDs. |
 | `result_id` / `run_ids` | Extract `scenario_id` from every run (already fetched in Optimization · Collect Step COLLECT.2). De-duplicate. |
 | `call_ids` | Synthesize one scenario per call from its transcript. Cache new scenario IDs on the first iteration so subsequent iterations reuse them. |
-| Pasted failures (offline variant) | The validation set is whatever the user re-runs after applying the prompt — Step EVAL.3 collects new pasted failures (or zero, if everything passed). Record on iteration 1 which scenarios the user is testing against and ask before letting them silently widen the set. |
+| Pasted failures (render-only, no live target) | The validation set is whatever the user re-runs after applying the prompt — Step EVAL.3 collects new pasted failures (or zero, if everything passed). Record on iteration 1 which scenarios the user is testing against and ask before letting them silently widen the set. |
 
 The skill tracks **two distinct sets** derived from the table above:
 
@@ -40,7 +40,7 @@ Never widen the failure set or the full set mid-loop without telling the user �
 
 ## Step EVAL.2 — Run validation (with the must-pass stochastic gate)
 
-Execute the validation set in voice mode for VAPI and ElevenLabs (both are voice agents whose edits already landed live). Capture `result_id`, poll until terminal (same 30s cadence and 15-min cap as Optimization · Collect Step COLLECT.1). For self-hosted / pipecat and self-hosted / websocket / `file`, the same Cekura-driven execution applies — the validation runs hit the live agent the user just (hopefully) redeployed / restarted.
+Execute the validation set in voice mode for VAPI and ElevenLabs (both are voice agents whose edits already landed live). Capture `result_id`, poll until terminal (same 30s cadence and 15-min cap as Optimization · Collect Step COLLECT.1). For every self-hosted run with a live target, the same Cekura-driven execution applies — the validation runs hit the live agent the user just (hopefully) redeployed / restarted.
 
 **Stochastic re-run policy — mirror Reproduce REPRO.6 on the verification side.** A single passing run no longer ends the iteration; that single-shot pass is the source of most "looked good in dev, regressed in prod" miscalls. Branch on the **failure class** recorded in the Reproduce phase (or, for simulation-run inputs that skipped harness construction, the REPRO.2 LLM-vs-infra classification):
 
@@ -49,13 +49,13 @@ Execute the validation set in voice mode for VAPI and ElevenLabs (both are voice
 
 For self-hosted live targets, launch the main agent and pass it the per-run Cekura connection details using the saved run setup in `memory.md` / `CLAUDE.md` (Setup Step 1.4a) — the same steps the Reproduce phase used.
 
-In **self-hosted / websocket / `offline` variant**, the skill does not run validation itself. Step EVAL.2 collapses into "ask the user for the new failure set" — a fresh batch of pasted `{transcript, expected_outcome, verdict}` blocks. Treat zero new failures as a 100% pass. The stochastic gate degrades to whatever the user re-pastes.
+In a **render-only run (no reachable live target)**, the skill does not run validation itself. Step EVAL.2 collapses into "ask the user for the new failure set" — a fresh batch of pasted `{transcript, expected_outcome, verdict}` blocks. Treat zero new failures as a 100% pass. The stochastic gate degrades to whatever the user re-pastes.
 
 ## Step EVAL.3 — Re-collect failures with the same Optimization-phase logic
 
 Run the new result through Optimization · Collect end to end — verdict pre-filter (keep `failure` + `reviewed_failure`, drop `success` + `reviewed_success`), accumulate, voice filter, **and re-run Step COLLECT.4 provider-call-state inspection** against the new runs. Re-running Step COLLECT.4 each iteration matters: a Step APPLY.1 edit only changes prompts and tool definitions; it cannot change variable injection. If iteration N-1's failures were rooted upstream, iteration N's variable state should look identical — that's the signal the upstream issue is unresolved (and the loop should stop and surface, not iterate further). Re-running COLLECT.4 also re-captures Signal 5 (end-of-call attribution) so the early-end-call-diagnose sub-phase can detect whether the iteration's edits actually closed the early-end pattern.
 
-In **self-hosted modes**, also watch for the "no-change" signature: if the new failures look identical to the prior iteration's (same scenarios fail with same transcript shapes), the most likely cause is that the live agent didn't pick up the new state — pipecat redeploy didn't happen, websocket server wasn't restarted, or (offline variant) the rewritten prompt didn't land in the user's system. Surface this hypothesis explicitly in Step EVAL.4 before iterating further. Self-hosted / websocket / `offline` is the most prone to this — the user has to apply the rewritten prompt to *their* system manually.
+In **self-hosted runs**, also watch for the "no-change" signature: if the new failures look identical to the prior iteration's (same scenarios fail with same transcript shapes), the most likely cause is that the live agent didn't pick up the new state — the redeploy didn't happen, the server wasn't restarted, or (render-only) the rewritten prompt didn't land in the user's system. Surface this hypothesis explicitly in Step EVAL.4 before iterating further. Render-only runs are the most prone to this — the user has to apply the rewritten prompt to *their* system manually.
 
 In **VAPI and ElevenLabs modes** the edit always lands live (no redeploy), so a no-change signature does NOT point at a stale deploy. For ElevenLabs specifically, an identical-failures repeat most often means the prompt PATCH silently no-op'd at the wrong JSON path — verify the Sync re-fetch (Step SYNC.1) actually showed the new `conversation_config.agent.prompt.prompt` value before concluding the edit "didn't help". If the re-fetch confirmed the new prompt is live, treat the no-change signature as a genuine "this edit didn't address the root cause" signal and follow the normal oscillation / 3×-same-shape handling.
 
