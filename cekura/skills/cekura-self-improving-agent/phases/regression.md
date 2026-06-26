@@ -29,7 +29,7 @@ Evaluator construction follows the same rule as REPRO.4: **prefer `expected_outc
 
 ```bash
 create_scenario '{
-  "agent": METADATA_AGENT_ID,
+  "agent": AGENT_ID,
   "personality": PERSONALITY_ID,
   "name": "Regression: <case name>",
   "instructions": "...",

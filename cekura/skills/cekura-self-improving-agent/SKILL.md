@@ -221,7 +221,7 @@ When this skill suggests creating, listing, updating, or evaluating something on
 This is an **interactive, multi-iteration workflow**. The user supplies one of:
 
 - **VAPI / ElevenLabs / self-hosted modes (any live target)** — an `agent_id` plus exactly one of: `scenario_ids`, `result_id`, `run_ids`, or `call_ids`.
-- **Prod-call fast path** — just a `call_id` (the `agent_id` is read from `metadata.agent_id` on the call). The skill runs end-to-end with no manual mock/variable setup: Reproduce auto-builds the harness, gates on must-fail, the loop fixes, Eval gates on must-pass, Regression sweeps, and PR ships. This is the merged-in `cekura-fixing-prod-issues` behavior.
+- **Prod-call fast path** — just a `call_id` (the agent under test is resolved from the call record). The skill runs end-to-end with no manual mock/variable setup: Reproduce auto-builds the harness, gates on must-fail, the loop fixes, Eval gates on must-pass, Regression sweeps, and PR ships. This is the merged-in `cekura-fixing-prod-issues` behavior.
 - **Self-hosted / websocket / offline variant** — a `prompt` (pasted text or read-only file path) plus pasted `{transcript, expected_outcome, verdict}` blocks. No live agent required.
 
 Optionally:

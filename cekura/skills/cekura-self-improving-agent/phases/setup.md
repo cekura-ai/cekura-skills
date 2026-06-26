@@ -93,7 +93,7 @@ Whenever the run setup was **collected from the user** this session (i.e., not a
 - Launch the main agent: <start command(s) / which config file to edit / env vars>
 - Connect to a Cekura simulation: <how the Cekura connection details are passed to the agent —
   e.g. the outbound number / SIP URI for telephony, or the WebRTC token, and where it goes>
-- Notes: <role-swap quirks, ports, anything else needed to reproduce a run>
+- Notes: <ports, env vars, anything else needed to reproduce a run>
 ```
 
 Capture the **simulation-launch** lines (how to start the live/main agent and pass it the per-run connection details Cekura returns) in addition to the redeploy command — the Reproduce and Eval phases both need them to run a simulation against a self-hosted agent. If the user only gave a redeploy command and the simulation-launch steps are still unknown when the first run is about to happen, that's a clarifying question to ask (and then persist) at that point, not a silent guess.

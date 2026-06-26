@@ -26,7 +26,7 @@ Extract and record:
 
 | Field | Path | Why it matters downstream |
 |---|---|---|
-| Real agent ID | `metadata.agent_id` (NOT top-level `agent_id`, which may be a monitoring agent) | every reproduction artifact is created under this agent |
+| Agent under test | the agent that handled this call (the call record's agent reference) | every reproduction artifact is created under this agent |
 | Personality ID | `metadata.personality_id` | testing-agent persona for the replay |
 | Project ID | `project` on the agent record | result URLs in the PR / summary |
 | Main-agent dynamic variables | `dynamic_variables` (call metadata) | REPRO.3 copies these onto the agent |
@@ -88,11 +88,11 @@ Wherever the testing-agent / scenario layer accepts variables — caller persona
 
 If you're unsure whether `expected_outcome` can express the failure, prefer `expected_outcome` and add the prod metric as a secondary check — but do not silently drop to metric-only. When the choice is genuinely ambiguous, ask the user.
 
-Create the scenario(s) under `metadata.agent_id` (the agent that handled the failing call) so the replay runs against the correct configuration:
+Create the scenario(s) under the agent that handled the failing call so the replay runs against the correct configuration:
 
 ```bash
 create_scenario '{
-  "agent": METADATA_AGENT_ID,
+  "agent": AGENT_ID,
   "personality": PERSONALITY_ID,
   "name": "Bug repro: <brief issue description>",
   "instructions": "Replay the production call that caused <issue>.",
