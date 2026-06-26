@@ -10,7 +10,7 @@ This phase runs **once per invocation**, after Setup (and Clone, for VAPI / Elev
 
 > ## ⚠️ SAME CONNECTION MEDIUM AS THE PROD CALL — NO EXCEPTIONS
 >
-> Every reproduction, verification, and regression run MUST be a full end-to-end simulation on Cekura over the **same transport the agent is configured for**. Read the agent record (already fetched in Setup) to confirm transport — telephony / SIP (most common) → `run_voice`; WebRTC → the provider's WebRTC run endpoint. **Text mode is never a valid substitute, and you must not switch transports between phases.** The bug lives in the real call path; only a simulation over the same medium confirms it.
+> Every reproduction, verification, and regression run MUST be a full end-to-end simulation on Cekura over the **same transport the agent is configured for**. Read the agent record (already fetched in Setup) to confirm transport — telephony / SIP (most common) → `run_voice`; WebRTC → the provider's WebRTC run endpoint. **Text mode, unit tests, pytest, frame-level or any other code-level test harness you author, or any reproduction outside a Cekura end-to-end simulation are never valid substitutes, and you must not switch transports between phases.** This holds even when the failure is a timing/race condition that a live simulation can't force on demand — a code-level test is still not a sanctioned reproduction; if the live sim can't reproduce it, STOP and surface (REPRO.6 "If it PASSES"), do not author a test to stand in for the gate. The bug lives in the real call path; only a simulation over the same medium confirms it.
 
 ---
 
@@ -131,7 +131,7 @@ run_voice "SCENARIO_ID" '{"agent_number": "<caller_id>"}'   # ×N
 get_result "RESULT_ID"                                        # poll each to terminal
 ```
 
-**Self-hosted live targets:** launch the main agent and pass it the per-run Cekura connection details using the steps saved in the `## Cekura Agent Run Setup` block (Setup Step 1.4a, in `memory.md` / `CLAUDE.md`). If those launch steps weren't captured at Setup, ask the user now and persist them to that block before the first run — don't guess how to start the agent.
+**Self-hosted live targets:** launch the main agent and pass it the per-run Cekura connection details using the run-setup steps saved in `memory.md` / `CLAUDE.md` (Setup Step 1.4a). If those launch steps weren't captured at Setup, ask the user now and persist them to `memory.md` / `CLAUDE.md` before the first run — don't guess how to start the agent.
 
 ### What "fails" means
 

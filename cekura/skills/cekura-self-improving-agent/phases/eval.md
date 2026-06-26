@@ -47,7 +47,7 @@ Execute the validation set in voice mode for VAPI and ElevenLabs (both are voice
 - **LLM-based failures →** the skill **auto-triggers the verification runs itself** (do NOT ask the user to fire each one). Run the failure-set evaluator(s) **5–10 times** (default `N = 8`, `stochastic_runs`). **The fix counts as verified for a scenario only if it passes in ≥ M of N runs** (default `M = ⌈0.8·N⌉` — e.g. ≥7/8 or ≥4/5, allowing at most a small number of stochastic flakes; tune via `verify_threshold`). A scenario that passes fewer than M of N is NOT fixed — it stays in the failure set and the loop continues. Report the pass-rate per scenario (`7/8 pass`), not a single verdict.
 - **Infra failures →** a single run is sufficient (deterministic). One clean pass verifies the fix.
 
-For self-hosted live targets, launch the main agent and pass it the per-run Cekura connection details using the saved `## Cekura Agent Run Setup` block (Setup Step 1.4a, in `memory.md` / `CLAUDE.md`) — the same steps the Reproduce phase used.
+For self-hosted live targets, launch the main agent and pass it the per-run Cekura connection details using the saved run setup in `memory.md` / `CLAUDE.md` (Setup Step 1.4a) — the same steps the Reproduce phase used.
 
 In **self-hosted / websocket / `offline` variant**, the skill does not run validation itself. Step EVAL.2 collapses into "ask the user for the new failure set" — a fresh batch of pasted `{transcript, expected_outcome, verdict}` blocks. Treat zero new failures as a 100% pass. The stochastic gate degrades to whatever the user re-pastes.
 

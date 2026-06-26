@@ -9,7 +9,7 @@ Final phase. Runs once, after the Regression phase passes. It packages the verif
 The two managed-provider modes and the self-hosted modes ship differently:
 
 - **Edits live in the user's source repo (self-hosted / websocket / `file`)** → the fix is real code changes on disk. This is the PR path: there is a diff to commit and review. Continue to PR.2.
-- **Edits live on a managed provider or in Cekura config (VAPI / ElevenLabs clone, pipecat description + mock tools, database row)** → there is no code diff in a repo to open a PR against. Skip straight to PR.4 and emit a **promotion summary** instead: the validated cumulative config diff plus the instruction to promote it to production (for VAPI / ElevenLabs, that's promoting the clone's diff to the live agent — never automatic; see [`clone.md`](clone.md)), with all the same Cekura result URLs.
+- **Edits live on a managed provider or in Cekura config (VAPI / ElevenLabs clone, pipecat mock tools, database row)** → there is no code diff in a repo to open a PR against. Skip straight to PR.4 and emit a **promotion summary** instead: the validated cumulative config diff plus the instruction to promote it to production (for VAPI / ElevenLabs, that's promoting the clone's diff to the live agent — never automatic; see [`clone.md`](clone.md)), with all the same Cekura result URLs.
 - **Offline variant** → no repo, no live target. Emit the PR-ready summary (PR.4) with the rendered prompt diff and result URLs; the user applies it themselves.
 
 ---

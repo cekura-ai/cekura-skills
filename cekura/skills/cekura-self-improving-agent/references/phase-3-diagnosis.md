@@ -68,7 +68,7 @@ Failure shapes that recur often enough to standardize the proposed-edit wording.
 **Per-mode notes:**
 
 - **VAPI / ElevenLabs** — prompt edit only. Edits land live, no orchestration-code change needed.
-- **Self-hosted / pipecat** — prompt edit on the Cekura `description`. If the pipecat code currently routes DTMF *before* the LLM speaks (split paths for tool turns vs. speech turns), surface a paired hand-off telling the user to allow speech + DTMF on the same turn.
+- **Self-hosted / pipecat** — prompt edit applied per the run setup. If the pipecat code currently routes DTMF *before* the LLM speaks (split paths for tool turns vs. speech turns), surface a paired hand-off telling the user to allow speech + DTMF on the same turn.
 - **Self-hosted / websocket / `file`** — prompt edit. Verify the websocket code allows agent text + DTMF tool invocation on the same turn (some implementations force one OR the other). If it doesn't, add an orchestration-code edit in the same iteration so the prompt-side change can actually take effect.
 - **Self-hosted / websocket / `offline`** — prompt edit only; flag the orchestration-code caveat above as a hand-off the user should verify.
 

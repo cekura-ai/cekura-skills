@@ -42,7 +42,7 @@ Pull the diff for this iteration:
 
 - **VAPI** — diff of `/assistant/{id}` (system message changes per squad member, `toolIds` deltas) and every edited `/tool/{id}` (`function.description`, `function.parameters`, `messages[*].content`, `destinations`).
 - **ElevenLabs** — diff of the agent's `conversation_config.agent.prompt.prompt` (system prompt) and `prompt.tool_ids` deltas, plus every edited `/v1/convai/tools/{id}` (`tool_config.description`, `api_schema`, `parameters`).
-- **Self-hosted / pipecat** — diff of the Cekura agent `description` and any mock-tool `description` / `parameters` changes.
+- **Self-hosted / pipecat** — diff of the prompt edit applied per the run setup and any mock-tool `description` / `parameters` changes.
 - **Self-hosted / websocket / `file`** — diff of the source file regions Optimization · Apply Step APPLY.1 touched (system prompt string, tool-definition blocks; orchestration-code edits are NOT scored here).
 - **Self-hosted / websocket / `offline`** — diff between the previously-rendered prompt and the just-rendered rewrite.
 

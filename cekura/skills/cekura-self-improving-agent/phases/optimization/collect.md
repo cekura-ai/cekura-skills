@@ -11,7 +11,7 @@ This sub-phase produces no edits. Its output is the kept failure summary + provi
 Before any Step COLLECT.x work, verify that the Setup phase is complete:
 
 - Mode and sub-flavor resolved? (`vapi` / `elevenlabs` / `pipecat` / `websocket-file` / `websocket-offline`)
-- Source-of-truth artifacts loaded? (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + referenced `/v1/convai/tools/{id}`; pipecat: Cekura `description` + mock tools; websocket-file: the correct live source file, confirmed via grep when ambiguous)
+- Source-of-truth artifacts loaded? (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + referenced `/v1/convai/tools/{id}`; pipecat: Cekura mock tools, prompt per run setup; websocket-file: the correct live source file, confirmed when ambiguous)
 - **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`? If not, return to [`../setup.md`](../setup.md) § Step 1.4 — do NOT begin Optimization. (N/A for VAPI / ElevenLabs — both land edits live.)
 
 If any of the above is unresolved, ask the user the specific clarifying question and wait for an answer. Skipping this pre-flight is the foot-gun documented in the orchestrator's Common Pitfalls; the rest of the loop assumes all three are settled.

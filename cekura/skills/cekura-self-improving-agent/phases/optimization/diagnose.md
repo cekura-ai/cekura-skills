@@ -37,7 +37,7 @@ Re-fetch the source-of-truth artifacts if more than a few minutes have passed si
 
 - *VAPI:* `/assistant/{id}` and every referenced `/tool/{id}` — VAPI dashboard edits don't notify Cekura, and a stale local copy will produce a wrong PATCH body.
 - *ElevenLabs:* `GET /v1/convai/agents/{id}` and every referenced `GET /v1/convai/tools/{id}` — ElevenLabs dashboard edits don't notify Cekura, and a stale local copy will produce a wrong PATCH body (especially the prompt-path nesting).
-- *Self-hosted / pipecat:* `mcp__cekura__aiagents_retrieve` (description) and `mcp__cekura__aiagents_tools_list` (mock tools) — Cekura dashboard edits between iterations would otherwise be overwritten.
+- *Self-hosted / pipecat:* `mcp__cekura__aiagents_tools_list` (mock tools), and re-read the prompt from where the run setup points — edits between iterations would otherwise be overwritten.
 - *Self-hosted / websocket / `file`:* re-read the source file with the Read tool. The user may have edited the file between iterations (manually, in their IDE).
 - *Self-hosted / websocket / `offline`:* re-read the prompt only if its source was a file path; pasted prompts don't change between iterations unless the user explicitly pastes a new one.
 
