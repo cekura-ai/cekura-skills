@@ -1,6 +1,6 @@
 # Clone Phase — Work on a Disposable Copy, Never the Live Agent
 
-This phase runs **once per invocation**, immediately after Setup and before Optimization · Collect, and **only for the managed-provider fast paths: `vapi` and `elevenlabs`**. Every other mode (`pipecat`, `websocket`, `database`, websocket `offline`) skips this phase entirely — there is no managed provider to clone into, the user owns the live runtime, and the redeploy gate already controls what reaches production.
+This phase runs **once per invocation**, immediately after Setup and before Optimization · Collect, and **only for the managed-provider fast paths: `vapi` and `elevenlabs`**. Every `self_hosted` run skips this phase entirely — there is no managed provider to clone into, the user owns the live runtime, and the redeploy gate already controls what reaches production.
 
 ## Why clone
 

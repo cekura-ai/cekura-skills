@@ -10,7 +10,7 @@ The gate is a no-op pass-through on iterations where no overfitting is detected 
 
 Before any Step GATE.x work, verify that the Optimization phase completed cleanly this iteration:
 
-- Edits were applied (Optimization · Apply Step APPLY.1) AND sync was confirmed (Optimization · Sync Step SYNC.1), OR — for the offline variant — the rewritten prompt was rendered and the user has been asked for new pasted failures.
+- Edits were applied (Optimization · Apply Step APPLY.1) AND sync was confirmed (Optimization · Sync Step SYNC.1), OR — for a render-only run (no live target) — the rewritten prompt was rendered and the user has been asked for new pasted failures.
 - The iteration's edit set is known (which fields/files/sections changed, and what the old + new text was) — handed up from [`optimization/sync.md`](optimization/sync.md). This includes both early-end-call edits (from [`optimization/early-end-call-diagnose.md`](optimization/early-end-call-diagnose.md)) and diagnose edits (from [`optimization/diagnose.md`](optimization/diagnose.md)).
 - The iteration's failure summary is available (the source failures the edits were meant to address — needed to score "did this edit just copy the failing utterance verbatim?"). This includes the failing transcripts handed up from [`optimization/collect.md`](optimization/collect.md).
 
@@ -32,7 +32,7 @@ The gate looks for five concrete signatures. Score each Optimization edit agains
 - **General behavioral rules with concrete examples constructed by the LLM** — e.g., "When the user mentions a billing issue, first verify the account is active. Example: if the user reports an incorrect charge, look up the transaction before discussing the dispute." Leave it only when BOTH conditions hold: (a) the example reads as a plausible LLM-constructed illustration, AND (b) the example's sentence frame does not match any failing transcript by the procedure in the **Verbatim transcript quote** signature row above (replace nouns/numbers/dates with placeholders, then grep failing transcripts for any ≥4-word contiguous substring of the remaining frame). If (a) but not (b), it's still a transcript clone — flag it.
 - **Tool-schema specificity** — narrowing a parameter `enum` to a closed set, tightening a `description` with concrete units, etc., is desirable, not overfitting.
 - **Adding a step that was missing** — if the diagnosis was Gap and the fix adds "ask for the order date before quoting return policy", that is general and not overfitting even if the failing scenario was about order dates.
-- **Edits to orchestration code** (websocket / `file` only) — code edits are evaluated by their own correctness, not by the overfitting lens. Skip code-stream edits in the gate.
+- **Edits to orchestration code** (self-hosted source-file edits only) — code edits are evaluated by their own correctness, not by the overfitting lens. Skip code-stream edits in the gate.
 
 When in doubt, **flag it but propose REVISE rather than STRIP** — generalizing a borderline edit is cheap; stripping a useful fix is expensive.
 
@@ -42,9 +42,7 @@ Pull the diff for this iteration:
 
 - **VAPI** — diff of `/assistant/{id}` (system message changes per squad member, `toolIds` deltas) and every edited `/tool/{id}` (`function.description`, `function.parameters`, `messages[*].content`, `destinations`).
 - **ElevenLabs** — diff of the agent's `conversation_config.agent.prompt.prompt` (system prompt) and `prompt.tool_ids` deltas, plus every edited `/v1/convai/tools/{id}` (`tool_config.description`, `api_schema`, `parameters`).
-- **Self-hosted / pipecat** — diff of the Cekura agent `description` and any mock-tool `description` / `parameters` changes.
-- **Self-hosted / websocket / `file`** — diff of the source file regions Optimization · Apply Step APPLY.1 touched (system prompt string, tool-definition blocks; orchestration-code edits are NOT scored here).
-- **Self-hosted / websocket / `offline`** — diff between the previously-rendered prompt and the just-rendered rewrite.
+- **Self-hosted** — diff of whatever was edited per the run-setup: the source file regions Optimization · Apply Step APPLY.1 touched (system prompt string, tool-definition blocks — orchestration-code edits are NOT scored here), the database-row prompt, the mock-tool `description` / `mock_data` changes, OR (render-only) the diff between the previously-rendered prompt and the just-rendered rewrite.
 
 Each inventoried edit becomes one row to score. Cluster edits that touch the same logical section (one row per `Edit` call, not per added line) so the gate's verdict aligns with how the user reviewed the diff in Optimization · Diagnose Step DIAGNOSE.5.
 
@@ -60,7 +58,7 @@ For every inventoried edit, walk the five signatures in the table above. For eac
   - *low* (KEEP, flag in summary) — a single short word/phrase that also happens to be in the transcript but is plausible general language (e.g., "refund" — common term, not unique to the failing run).
 
 Skip the scoring entirely for an edit if:
-- It is an orchestration-code edit (websocket / `file` only) — different evaluation regime.
+- It is an orchestration-code edit (self-hosted source-file edits only) — different evaluation regime.
 - It is a pure deletion (removing a contradictory clause, removing a stale tool reference) — nothing was added; nothing to overfit.
 - It is a tool-schema narrowing (param `enum`, `description` typing) — those are precision improvements, not overfitting.
 
@@ -85,9 +83,7 @@ Convert each REVISE / STRIP decision into a concrete edit:
 
 - **VAPI** — a follow-up assistant PATCH or tool PATCH that overwrites the just-changed field with the cleaned-up version. Bundle all cleanup edits into a single PATCH per artifact (one for the assistant, one per tool) to minimize round-trips.
 - **ElevenLabs** — a follow-up agent PATCH (`conversation_config.agent.prompt.prompt`) or tool PATCH (`/v1/convai/tools/{id}`) overwriting the just-changed field with the cleaned-up version. One PATCH per artifact.
-- **Self-hosted / pipecat** — a follow-up `mcp__cekura__aiagents_partial_update` with the updated `mock_tools` list (include all tools; pass updated `description` / `mock_data` for the changed one).
-- **Self-hosted / websocket / `file`** — `Edit` calls on the source file, each with `old_string` = the overfit fragment that just landed and `new_string` = the cleaned-up version. If REVISE replaces a multi-line block, include 3–5 lines of surrounding context per anchor to keep `old_string` unique.
-- **Self-hosted / websocket / `offline`** — render a SECOND revised prompt and replace the just-shown rendered prompt with it. Tell the user explicitly: "I noticed the previous rendering quoted the failing transcript verbatim; here's a generalized version — apply this instead of the previous one."
+- **Self-hosted** — apply the cleanup via whatever the run-setup edits: `Edit` calls on the source file (each with `old_string` = the overfit fragment that just landed and `new_string` = the cleaned-up version; include 3–5 lines of surrounding context per anchor to keep `old_string` unique), the database-row write query, or a follow-up `mcp__cekura__aiagents_partial_update` with the updated `mock_tools` list. For render-only, render a SECOND revised prompt and replace the just-shown one, telling the user explicitly: "I noticed the previous rendering quoted the failing transcript verbatim; here's a generalized version — apply this instead of the previous one."
 
 If KEEP was the decision for every flagged row, no cleanup edits are needed — skip Steps GATE.5 and GATE.6 and hand off straight to Eval after surfacing the gate's summary.
 
@@ -109,14 +105,12 @@ Apply via the same provider-specific apply machinery the Optimization · Apply s
 
 - **VAPI** — [`../providers/vapi/phase-4-apply.md`](../providers/vapi/phase-4-apply.md) (tool PATCH → assistant PATCH).
 - **ElevenLabs** — [`../providers/elevenlabs/phase-4-apply.md`](../providers/elevenlabs/phase-4-apply.md) (tool PATCH → agent PATCH). No redeploy step (edits land live).
-- **Self-hosted / pipecat** — [`../providers/self-hosted/pipecat.md`](../providers/self-hosted/pipecat.md) § "Phase 4.1b — apply order".
-- **Self-hosted / websocket / `file`** — [`../providers/self-hosted/websocket.md`](../providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `file`).
-- **Self-hosted / websocket / `offline`** — render the revised prompt; tell the user to apply this version instead of the previous one.
+- **Self-hosted** — [`../providers/self-hosted/overview.md`](../providers/self-hosted/overview.md) § "Apply order, Sync, and exit framing" + "Edit mechanisms". For render-only, render the revised prompt and tell the user to apply this version instead of the previous one.
 
 **Redeploy step (self-hosted with live target).** The cleanup apply changes the live agent's state again, so the same `redeploy_command` flow runs a second time this iteration:
 
 - **Command provided** → run it via the Bash tool. Same exit-code handling as Optimization · Apply Step APPLY.2.
-- **`redeploy_command == "manual"`** → fire the per-sub-flavor manual restart gate. Wait for explicit user confirmation.
+- **`redeploy_command == "manual"`** → fire the manual restart gate. Wait for explicit user confirmation.
 - **Unset and `auto_mode: true`** → proceed straight to Step GATE.7 without pausing.
 
 **Skip the redeploy entirely** if the gate produced zero cleanup edits (the original Optimization apply is still the live state; no new redeploy needed).
@@ -127,9 +121,7 @@ Re-fetch / re-read the just-cleaned-up artifacts and verify the overfit fragment
 
 - **VAPI** — re-fetch `/assistant/{id}` and every edited `/tool/{id}`.
 - **ElevenLabs** — re-fetch `GET /v1/convai/agents/{id}` (confirm `conversation_config.agent.prompt.prompt` shows the cleaned-up text) and every edited `GET /v1/convai/tools/{id}`.
-- **Self-hosted / pipecat** — re-fetch via `mcp__cekura__aiagents_retrieve` and `mcp__cekura__aiagents_tool_retrieve`.
-- **Self-hosted / websocket / `file`** — re-read the source file (Read tool, not cached); verify the cleanup `Edit`s landed where intended.
-- **Self-hosted / websocket / `offline`** — skip; nothing to sync server-side.
+- **Self-hosted** — re-read whatever was edited: re-`Read` the source file (not cached) and verify the cleanup `Edit`s landed; re-run the DB fetch query; or re-fetch via `mcp__cekura__aiagents_retrieve`. For render-only, skip — nothing to sync server-side.
 
 **Skip the re-fetch** if the gate produced zero cleanup edits — the Optimization · Sync Step SYNC.1 from a few moments ago is still valid.
 
@@ -150,7 +142,7 @@ If the gate's decision tree ended at "all flags resolved as KEEP" or "no flags f
 - **Flagging short common words.** "Refund", "order", "account" appear in failing transcripts AND in production traffic. A short common word in the edit is not a verbatim transcript quote. Reserve the signature for phrases ≥ 4–5 words OR shorter phrases that are unmistakably test-derived (account numbers, customer names).
 - **Scoring only the identifiers, not the surrounding frame.** When an edit adds an example dialog, the gate must check both the proper nouns AND the surrounding sentence frame. Genericizing the nouns while keeping the transcript's syntactic frame ("I said `<city>` earlier but we are actually in `<city>`") is still a verbatim quote — the 5-word substring "earlier but we are actually" was lifted whole. The fix is to drop the example entirely or rewrite it from scratch using a frame the model would plausibly generate on its own, not just swap the nouns. Procedure when scoring: mentally replace every proper noun / number / date in the edit's example with `<X>`, then grep the failing transcripts for any ≥4-word contiguous substring of the remaining frame. A hit means the example is structurally cloned from the transcript even if the surface tokens look generic.
 - **Re-flagging the same edit across iterations.** If iteration N's edit was flagged and KEPT (because revising would invalidate the fix), iteration N+1 should not re-flag the now-applied state. Track the KEEP'd flags so they don't enter the gate inventory on subsequent iterations.
-- **Running the gate on orchestration-code edits.** Code edits (websocket / `file` only) are scored by code correctness, not by overfitting signatures. The same five-signature lens doesn't apply to history-window sizes or message-role mappings. Skip code-stream edits entirely. Note that early-end-call-diagnose may emit BOTH a prompt edit AND an orchestration-code edit for the same failure cluster — score the prompt edit, skip the code one.
+- **Running the gate on orchestration-code edits.** Code edits (self-hosted source-file edits only) are scored by code correctness, not by overfitting signatures. The same five-signature lens doesn't apply to history-window sizes or message-role mappings. Skip code-stream edits entirely. Note that early-end-call-diagnose may emit BOTH a prompt edit AND an orchestration-code edit for the same failure cluster — score the prompt edit, skip the code one.
 - **Running the gate on pure-deletion edits.** If Optimization removed a contradictory clause and added nothing, there is no overfitting risk. Score only edits that introduced new text.
 - **Triggering double-redeploy when there are no cleanup edits.** The gate must short-circuit (skip GATE.5 / GATE.6 / GATE.7 redeploy) when its decision is "no cleanup needed". Otherwise it inflates per-iteration cost for zero benefit.
 - **Surfacing the gate's verdict as a worry caveat.** Internal calibration is fine; user-facing wording should report a clean transition: "Gate scrub: 2 revises applied, sync confirmed, moving to validation." Avoid hedging language like "the edits *might* generalize poorly" — the gate either revised the issue or it didn't.
