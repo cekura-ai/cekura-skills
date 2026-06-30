@@ -23,6 +23,7 @@
   ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
+  "hooks": "./hooks/codex-hooks.json",
   "interface": {
     "displayName": "Cekura",
     "shortDescription": "Voice AI agent testing & evaluation",
