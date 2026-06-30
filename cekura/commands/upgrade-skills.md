@@ -16,36 +16,30 @@ If anything in this skill turns out to be ambiguous, broken, or missing a
 needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
 LIBERALLY — even `severity="low"` reports are valuable feedback.
 
-Upgrade the Cekura plugin to the latest version by pulling from the remote repository.
+Upgrade the Cekura plugin to the latest published version.
 
 ## Process
 
-1. Find the cekura-skills marketplace directory. It should be at one of:
-   - The marketplace install path (check `~/.claude/plugins/marketplaces/cekura-skills/`)
-   - Or find it by searching for the marketplace name
+### 1. Re-pin the plugin to the latest version (this is the actual upgrade)
 
-2. Check current state:
-   ```bash
-   cd <marketplace_path>
-   git status
-   git log --oneline -3
-   ```
+Run both CLI commands. The first refreshes the marketplace catalog from GitHub; the second moves the installed **version pin** to the latest. A plain `git pull` of the marketplace checkout does **not** move the pin — which is why sessions can keep loading an old version after a "successful" pull. These commands do move it.
 
-3. If there are local modifications, warn the user and show what would be lost. Ask for confirmation before proceeding.
+```bash
+claude plugin marketplace update cekura-skills
+claude plugin update cekura@cekura-skills
+```
 
-4. Pull latest:
-   ```bash
-   git pull origin main
-   ```
+If either command errors:
+- **Network / auth:** check internet access and GitHub credentials, then retry.
+- **`Source path does not exist` or the update is a no-op while the version is clearly behind:** this is the stale-layout case — jump to step 3.
 
-5. Show what changed:
-   ```bash
-   git log --oneline -5
-   ```
+### 2. Apply it in the current session
 
-6. Report what changed (new skills, updated commands, etc.).
+Tell the user to run `/reload-plugins` — it hot-reloads the newly pinned version with no restart in the common case. If `/reload-plugins` warns about an MCP cache invalidation, a restart (or `/reload-plugins --force`) applies it. `/reload-plugins` only reloads what's already pinned on disk, so it must run **after** step 1, not instead of it.
 
-7. Detect stale plugin entries from a previous Cekura layout. If found, surface the reinstall instructions:
+### 3. Detect stale plugin entries from a previous Cekura layout
+
+If found, surface the reinstall instructions:
 
    ```bash
    INSTALLED="$HOME/.claude/plugins/installed_plugins.json"
@@ -76,18 +70,12 @@ Upgrade the Cekura plugin to the latest version by pulling from the remote repos
    fi
    ```
 
-   If the detection prints the migration note, surface it verbatim to the user.
-
-## If Pull Fails
-
-- **Merge conflicts:** Show the conflicts and ask the user how to proceed. Offer to reset to remote (`git reset --hard origin/main`) with explicit confirmation.
-- **Network error:** Suggest checking internet connection or GitHub access.
-- **Authentication:** Suggest checking GitHub credentials or SSH keys.
+   If the detection prints the migration note, surface it verbatim to the user — for the stale-layout cohort the 4-command reinstall replaces step 1 (the version pin points at a dead plugin name, so `claude plugin update` alone can't fix it).
 
 ## Output
 
 Report a summary:
-- Previous version (commit hash before pull)
-- New version (commit hash after pull)
-- Files changed (skills, commands, agents, hooks)
-- Any new skills, commands, or agents added
+- Whether the marketplace catalog refreshed cleanly
+- Whether the plugin re-pinned to a newer version (note the version if the CLI reported it)
+- Whether stale legacy entries were detected (and the reinstall note surfaced)
+- A reminder to run `/reload-plugins` to apply the new version, if not already done
