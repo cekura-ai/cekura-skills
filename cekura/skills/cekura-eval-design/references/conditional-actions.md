@@ -85,7 +85,7 @@ The `role` and `conditions[]` fields inside `conditional_actions`:
 
 `<hold>` is **only** uninterruptible during the hold period itself; any spoken text before or after `<hold>` in the same action remains interruptible (so `"sentence <hold time=\"3s\" /> sentence"` is not safe inside an `action_followup`).
 
-**Practical rule:** if the action contains any interruptible content (plain spoken text, `<silence>`, or text adjacent to `<hold>`) AND the main agent might speak during it, use `type: "standard"` so the testing agent can adapt on interruption. Reserve `action_followup` for cases where the next testing-agent turn must fire regardless of what the main agent said (multi-part responses, scripted sequences) AND the action either completes too quickly to be interrupted in practice or is one of the fully uninterruptible forms above. See "Anti-Patterns" and "Troubleshooting" for the failure signature.
+**Practical rule:** use `type: "standard"` when the scenario is **intentionally designed to invite an interruption** — most commonly an action containing a long `<silence>` tag (or an opening-line-then-silence pattern) where the test is precisely whether the main agent will speak during the deliberate pause. In those scenarios an `action_followup` loops on the same sentence each time the interruption recurs, because there is no condition string to re-match against. `action_followup` remains the right choice for ordinary multi-part responses, scripted sequences, and `<interruption>` placement — those actions fire and complete quickly and are rarely interrupted in practice. See "Anti-Patterns" and "Troubleshooting" for the failure signature.
 
 ## Writing the `condition` String (standard conditions, id > 0)
 
@@ -512,7 +512,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - **`<interruption>` as `type: "standard"`.** It only works as `action_followup`; on `standard` it has no effect because the timing mechanism needs a preceding action to anchor against.
 - **Expecting `action_followup` to fire in the same turn.** `action_followup` fires on the **next turn** — after the testing agent sends condition X and the main agent replies. It does not fire in the same turn as condition X.
 - **Splitting same-turn actions across conditions.** Each condition is one testing-agent turn. If two testing-agent actions must happen without a main agent reply between them, they belong in the same `action` string — not split across a `standard` condition and an `action_followup`. The `action_followup` fires at the next turn (after the main agent replies); if the main agent never replies, the followup never fires and the call stalls.
-- **`action_followup` wrapping interruptible content (plain spoken text, `<silence>`, or text adjacent to `<hold>`).** When the main agent interrupts, the testing agent re-runs the whole `action_followup` action from the start because there is no condition to re-match. If interruption recurs, the testing agent loops on the same sentence. Use `type: "standard"` for any action where the main agent might interrupt — on interruption, the testing agent re-evaluates conditions against the new context and adapts. Fully uninterruptible actions are limited to: entire-action `<ivr text="..." />`, entire-action `<voicemail text="..." />`, or actions that lead with `<interruption time="Xs" />`. `<hold>` protects only the hold period itself, so surrounding text in the same action is still vulnerable.
+- **`action_followup` for scenarios designed to invite an interruption (e.g., a long `<silence>` tag, or an opening-line-then-silence pattern).** When the action contains a deliberate pause the main agent is likely to speak during, the interrupt restarts the whole `action_followup` from the beginning and the testing agent loops on the same sentence. Use `type: "standard"` for these scenarios so the testing agent re-evaluates conditions on each interruption and adapts to the new context. Ordinary `action_followup` actions (multi-part responses, scripted sequences, `<interruption>` placement) are fine — they fire and complete quickly and are rarely interrupted in practice.
 - **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored.
 - **Stringly-typed `action_followup` references.** The `condition` field on an `action_followup` must be an **integer** matching a prior condition's `id`. String values like `"1"` are rejected.
 - **Putting the JSON object directly in `instructions`.** Use the `conditional_actions` field on the scenario create/update payload. `instructions` accepts a string only.
@@ -530,7 +530,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - [ ] `type` is explicitly `"standard"` or `"action_followup"` on every condition
 - [ ] `action_followup` conditions have an integer (not string) in `condition`
 - [ ] Every `action_followup` references a condition where the main agent produces a reply (if the main agent is silent — hold, voicemail mid-sequence, back-to-back caller actions — the actions are merged into one condition instead)
-- [ ] No `action_followup` action contains interruptible content — plain spoken text, `<silence>`, or text adjacent to `<hold>` (the hold period itself is uninterruptible, but surrounding text is not). Fully uninterruptible forms: entire-action `<ivr>`, entire-action `<voicemail>`, or actions that lead with `<interruption>`. If interruption is possible, use `type: "standard"` so the testing agent re-evaluates conditions on interruption instead of looping on the same action.
+- [ ] If the scenario is intentionally designed to invite an interruption (long `<silence>` tag, opening-line-then-silence pattern, or any other deliberate pause the main agent is expected to speak through), the condition uses `type: "standard"` so the testing agent re-evaluates conditions on interruption instead of looping on the same `action_followup`.
 - [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
 - [ ] `<network_simulation>` only uses `packet_loss`
@@ -558,7 +558,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 | `action_followup` doesn't fire when expected | `condition` field contains a string, not the integer `id` of the prior condition | For `type: "action_followup"`, set `condition` to the integer `id` of the preceding condition (e.g., `"condition": 1`, not `"condition": "1"` or `"condition": "previous"`). |
 | `action_followup` fires too early | Expecting it to fire in the same turn as the referenced condition | `action_followup` fires on the **next turn** — after the testing agent sends condition X *and* the main agent replies. It does not fire immediately. |
 | `action_followup` never fires / call stalls | Two testing-agent actions were split across conditions when no main agent reply occurs between them (e.g., during `<hold>`, mid-voicemail, or any back-to-back caller actions) | Merge both actions into one `action` string on the same condition. Each condition is one testing-agent turn; `action_followup` fires at the next turn only after the main agent replies. |
-| Testing agent keeps repeating the same sentence / opening line in a loop | An `action_followup` action contains interruptible content (plain spoken text, `<silence>`, or text adjacent to `<hold>`) and the main agent interrupts each cycle. On interruption, the testing agent re-executes the whole `action_followup` from the start because there is no condition to re-match. | Change the condition to `type: "standard"` so the testing agent re-evaluates conditions on interruption and adapts to the new context. Reserve `action_followup` for fully uninterruptible actions (entire-action `<ivr>` / `<voicemail>`, or actions leading with `<interruption>`) or for actions the main agent is unlikely to interrupt. |
+| Testing agent keeps repeating the same sentence / opening line in a loop | The scenario is designed to invite an interruption (e.g., a long `<silence>` tag, or an opening-line-then-silence pattern) and is using `type: "action_followup"`. The main agent speaks during the pause; on interruption the testing agent re-executes the whole `action_followup` from the start, and the cycle repeats. | Change the condition to `type: "standard"` so the testing agent re-evaluates conditions on interruption and adapts to the new context. |
 | IVR menu plays twice (once from the main agent, once from the testing agent) | `<ivr>` was used in `id: 0` for an inbound IVR test | Set `id: 0 action: ""`. The main agent plays its own IVR. Reserve the `<ivr>` tag for outbound scenarios where the testing agent simulates the IVR. |
 | Scenario created but behaves like a behavioral evaluator (ignores conditions) | `scenario_type` defaulted to `"instruction"` — the `conditional_actions` payload was dropped silently | Set `scenario_type: "conditional_actions"` explicitly in the create/update request. |
 | `instructions` field type error | JSON object was passed directly to `instructions` instead of `conditional_actions` | Pass the structured payload via the `conditional_actions` field and leave `instructions` unset. |
@@ -625,18 +625,18 @@ Scenario-level fields (set on the scenario, not inside the conditions):
 Action types:
   standard         Fires when conversation context matches condition string.
                    On interruption: re-evaluates all conditions against new context and adapts.
-                   → Use for any action where the main agent might interrupt (e.g., contains <silence>).
+                   → Use when the scenario is designed to invite an interruption (long <silence>,
+                     opening-line-then-silence patterns).
   action_followup  Fires on the NEXT TURN after condition id (int): testing agent sends
                    condition X → main agent replies → this fires. Does not fire immediately.
                    condition field MUST be an integer (not a string).
                    Useful for multi-part responses, scripted sequences (no conditions needed),
                    and <interruption>.
                    On interruption: re-executes the whole action from the start (no condition
-                   to re-match). If interruption recurs, the testing agent LOOPS on the same
-                   sentence. Fully uninterruptible forms: entire-action <ivr text="..." />,
-                   entire-action <voicemail text="..." />, or actions that lead with
-                   <interruption time="Xs" />. <hold> protects only the hold period itself —
-                   surrounding text in the same action is still interruptible.
+                   to re-match). Ordinary action_followup actions complete quickly and aren't
+                   typically interrupted, so this is fine — but for scenarios designed to invite
+                   an interruption (long <silence>, etc.), the testing agent LOOPS on the same
+                   sentence. Use `standard` for those.
 
 Test profile variables (fixed_message:true only):
   {{test_profile.field_name}}                   Simple field
