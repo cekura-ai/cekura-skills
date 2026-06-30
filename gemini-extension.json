@@ -1,6 +1,6 @@
 {
   "name": "cekura",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Access Cekura voice AI testing & evaluation context and MCP tools directly from Gemini CLI.",
   "mcpServers": {
     "cekura": {
