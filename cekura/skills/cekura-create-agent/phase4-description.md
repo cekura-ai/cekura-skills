@@ -61,14 +61,14 @@ At each layer, read:
 - Transfer/escalation conditions and what is said before transferring
 - Language/locale branching — different responses per language
 
-**While reading, maintain a running list of dynamic variable candidates** — flag any per-run input that shapes the main agent's observable behaviour, not just string interpolations. Anything supplied at call-start that changes what the main agent does qualifies: headers, config payloads, structured parameters, and template variables alike. These will be registered in Phase 8.
+**While reading, maintain a running list of dynamic variable candidates** — flag any per-run input that shapes the main agent's observable behaviour, not just string interpolations. Anything supplied at call-start that changes what the main agent does qualifies: headers, config payloads, structured parameters, and template variables alike. These will be registered in Phase 9.
 
 **Skip and ignore:**
 - LLM provider selection, model names, temperature settings, retry logic, fallback chains
 - Session management, keepalive, context window management, token limits
 - Infrastructure code, logging, monitoring, deployment configuration
 - Anything the caller cannot observe or experience
-- **Knowledge base files** — do NOT read their content here. Just note their filenames/paths. They will be uploaded in Phase 7. Reading KB file contents in Phase 4 is wasted work.
+- **Knowledge base files** — do NOT read their content here. Just note their filenames/paths. They will be uploaded in Phase 8. Reading KB file contents in Phase 4 is wasted work.
 
 #### Step 2 — Fill gaps (after reading code — only ask when code doesn't answer)
 
@@ -94,7 +94,7 @@ Ask the user these questions one at a time. Do not move to the next until the cu
 8. "Are there any special cases — VIP callers, after-hours, returning customers, specific languages?"
 9. "What configuration does your main agent need at the start of each call to work correctly? For example — caller data, account information, session context, feature flags, or anything else that changes per call or per customer?"
 
-For each answer, ask follow-up questions until you have enough detail to write a complete description. Note all runtime configuration values from question 9 as dynamic variables — they will be registered in Phase 8. Then proceed to Step 3.
+For each answer, ask follow-up questions until you have enough detail to write a complete description. Note all runtime configuration values from question 9 as dynamic variables — they will be registered in Phase 9. Then proceed to Step 3.
 
 #### Step 3 — Use the actual content, not a synthesis
 
@@ -157,7 +157,7 @@ Iterate until the user confirms it is complete.
 
 ## 4c. Note dynamic variable patterns
 
-If the description contains `{{variableName}}` placeholders, flag them — Cekura will auto-detect them after main agent creation. These are handled in [Phase 8](phase8-dynamic-variables.md).
+If the description contains `{{variableName}}` placeholders, flag them — Cekura will auto-detect them after main agent creation. These are handled in [Phase 9](phase9-dynamic-variables.md).
 
 ---
 

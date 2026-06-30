@@ -1,8 +1,8 @@
-# Phase 7 — Main Agent Knowledge Base
+# Phase 8 — Main Agent Knowledge Base
 
 Upload any documents the main agent references so Cekura can use them for evaluator generation.
 
-> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — knowledge base files were imported automatically. Go directly to [Phase 8](phase8-dynamic-variables.md).
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — knowledge base files were imported automatically. Go directly to [Phase 9](phase9-dynamic-variables.md).
 
 **Rule: if the main agent reads any documents during a conversation, upload them. No exceptions.**
 
@@ -10,9 +10,9 @@ The reason for uploading is so Cekura can generate better test scenarios — not
 
 ---
 
-> **Start:** Announce "Starting Phase 7 — Main Agent Knowledge Base" before doing anything in this phase.
+> **Start:** Announce "Starting Phase 8 — Main Agent Knowledge Base" before doing anything in this phase.
 
-## 7a. Find documents from code
+## 8a. Find documents from code
 
 **If code is available**, search broadly — document paths are often not in the main code but in config:
 
@@ -49,7 +49,7 @@ Only skip if there are genuinely zero documents.
 
 ---
 
-## 7b. Upload files via MCP
+## 8b. Upload files via MCP
 
 Use the MCP upload tool to upload all found documents. Upload the actual files — not summaries or descriptions of them.
 
@@ -57,8 +57,8 @@ Supported formats: PDF, text files, markdown, documents.
 
 ---
 
-## Phase 7 Gate
+## Phase 8 Gate
 
 **All documents the main agent references must be uploaded before proceeding.**
 
-Announce: "Phase 7 complete." Then immediately begin [Phase 8 — Dynamic Variables](phase8-dynamic-variables.md) without waiting for the user.
+Announce: "Phase 8 complete." Then immediately begin [Phase 9 — Dynamic Variables](phase9-dynamic-variables.md) without waiting for the user.

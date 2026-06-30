@@ -324,13 +324,22 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
       "api_key": "APIxxx",
       "config": {
         "api_secret": "secret_xxx",
-        "url": "wss://acme.livekit.cloud"
+        "url": "wss://acme.livekit.cloud",
+        "agent_name": "concierge",
+        "config": {"empty_timeout": 300},
+        "tracing_enabled": true
       }
     }
   },
-  "telephony": {"inbound": true}
+  "telephony": {"phone_number": "+14155551234", "inbound": true}
 }
 ```
+
+- **`tracing_enabled: true`** — Phase 6 will integrate the SDK. If the user refuses the SDK integration in Phase 6, that phase flips this back to `false`.
+- **`agent_name`** — must match what the LiveKit worker registers (`@server.rtc_session(agent_name=...)`). Required for WebRTC Automated and Chat; optional otherwise but still worth collecting.
+- **`api_key`, `api_secret`, `url`** — required for WebRTC Automated, Chat, and SDK-based observability. Skip only if every connection mode is telephony-only and the SDK isn't in scope.
+- **`credentials.config.config`** — optional JSON injected into `ctx.room.metadata` for WebRTC sessions. Populate only with the keys the agent actually reads; omit if the agent doesn't read room metadata.
+- **`telephony`** — include the phone block only when telephony is one of the connection modes from Phase 3.
 
 ### Bland
 ```json
@@ -361,7 +370,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
   "description": "Voice agent deployed on Pipecat Cloud",
   "project": 123,
   "language": "en",
-  "telephony": {"inbound": true},
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "pipecat",
     "credentials": {
@@ -371,18 +380,20 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
         "webhook_url": "<optional — webhook URL for call events>",
         "config": {},
         "room_properties": {},
-        "tracing_enabled": false
+        "tracing_enabled": true
       }
     }
   }
 }
 ```
 
-- `pipecat_agent_name` — required when `tracing_enabled` is false; the name of the agent as deployed in Pipecat Cloud
-- `config` — additional agent configuration as JSON (optional)
-- `room_properties` — Daily.co room properties configuration as JSON (optional)
-- `webhook_url` — webhook URL for Pipecat call events (optional)
-- `tracing_enabled` — enable Pipecat tracing (optional, default false)
+- **`tracing_enabled: true`** — Phase 6 will integrate the SDK. If the user refuses the SDK integration in Phase 6, that phase flips this back to `false`.
+- **`pipecat_agent_name`** — the agent name as deployed in Pipecat Cloud. Required for WebRTC Automated; collect it anyway so it's available later.
+- **`api_key`** — required for WebRTC Automated; not needed for telephony-only or SDK-based observability.
+- **`credentials.config.config`** — optional Pipecat agent configuration JSON used when Cekura starts a session. Populate only with the keys the agent reads.
+- **`credentials.config.room_properties`** — optional Daily.co room properties JSON applied when Cekura creates the room.
+- **`webhook_url`** — optional webhook URL for Pipecat call events.
+- **`telephony`** — include the phone block only when telephony is one of the connection modes from Phase 3.
 
 ### Chirp
 ```json
@@ -510,7 +521,8 @@ The response `id` is needed for all subsequent steps.
 
 **Creating the main agent record is NOT the end of setup.** Move immediately to the next phase.
 
-- **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** Tools, KB, and dynamic variables were auto-populated. Skip Phases 6, 7, and 8. Go directly to [Phase 9 — Advanced Configuration](phase9-advanced.md).
-- **All other providers:** Mock tools, knowledge base, and dynamic variables still need manual setup. Proceed to [Phase 6 — Mock Tools](phase6-mock-tools.md).
+- **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** Tools, KB, and dynamic variables were auto-populated. Skip Phases 7, 8, and 9. Phase 6 is also a no-op for these providers. Go directly to [Phase 10 — Advanced Configuration](phase10-advanced.md).
+- **LiveKit / Pipecat:** Proceed to [Phase 6 — SDK Integration](phase6-sdk-integration.md). The SDK adds rich agent-side data and is integrated into the user's repo unless they explicitly opt out.
+- **All other providers:** Phase 6 is a no-op. Proceed to [Phase 7 — Mock Tools](phase7-mock-tools.md).
 
 Announce: "Phase 5 complete." Then immediately begin the next applicable phase without waiting for the user.

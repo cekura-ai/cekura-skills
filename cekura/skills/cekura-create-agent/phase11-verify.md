@@ -1,12 +1,12 @@
-# Phase 10 — Verify Main Agent Setup
+# Phase 11 — Verify Main Agent Setup
 
 Confirm the main agent is fully configured and verify it works end-to-end with a real test run. **This phase does not end until the run succeeds.**
 
 ---
 
-> **Start:** Announce "Starting Phase 10 — Verify Main Agent Setup" before doing anything in this phase.
+> **Start:** Announce "Starting Phase 11 — Verify Main Agent Setup" before doing anything in this phase.
 
-## 10a. Verification checklist
+## 11a. Verification checklist
 
 Run through each item:
 
@@ -16,10 +16,14 @@ Run through each item:
 4. **Mock tools configured** — list mock tools via the API → every tool in the main agent description has at least one mapping
 5. **Knowledge base** — `knowledge_base_files` on the main agent object matches what was uploaded (or confirmed empty)
 6. **Dynamic variables** — all runtime-injected variables are registered via the API (or confirmed none needed)
+7. **SDK tracing (LiveKit / Pipecat only)** — if the SDK was wired in Phase 6, confirm `credentials.config.tracing_enabled` matches expectations:
+   - SDK + testing in scope → `true`
+   - SDK + observability only → `false`
+   - No SDK → `false`
 
 ---
 
-## 10b. End-to-end verification run (mandatory)
+## 11b. End-to-end verification run (mandatory)
 
 **Do not ask permission. Run this automatically using MCP tools.**
 
@@ -66,15 +70,24 @@ Inspect `transcript_object` in the result — **not** just the run status or `co
 | Empty transcript, not connected | Server not reachable — go back to Phase 3, fix URL, retry | — |
 | Only testing agent messages, agent silent | Agent not responding | Check agent is running and sending responses |
 | Only main agent messages, no testing agent | Scenario runner issue | Check dynamic variables, scenario instructions |
-| Tool call errors | Missing mock tools | Go back to Phase 6, add/fix mock tools |
-| Variable substitution errors | Missing dynamic variables | Go back to Phase 8, register the variables |
+| Tool call errors | Missing mock tools | Go back to Phase 7, add/fix mock tools |
+| Variable substitution errors | Missing dynamic variables | Go back to Phase 9, register the variables |
 | Agent gives empty/wrong responses | Description too vague | Go back to Phase 4, improve the description |
+| LiveKit + SDK: empty `metadata.raw_metrics` on the result | SDK not initialised, wrong agent_id, missing `CEKURA_API_KEY`, or tracer call after `session.start(...)` | Re-check Phase 6 wiring; verify env var; confirm tracer call placement |
+| Pipecat + SDK: no OTel spans visible | Missing aggregators, `enable_tracing=False` on `PipelineTask`, or tracer disabled | Re-check Phase 6 wiring; confirm aggregators present and tracing flags on |
+
+**For LiveKit/Pipecat with SDK wired in Phase 6**, after the run completes the result should expose agent-side data:
+
+- **LiveKit:** `metadata.raw_metrics` populated with STT/LLM/TTS/EOU latencies; transcript contains tool calls if any.
+- **Pipecat:** Run details page shows OTel spans (Conversation → Turn → STT/LLM/TTS hierarchy).
+
+If either is empty, the SDK is not reporting — diagnose using the gotchas table above before declaring success.
 
 **After fixing any issue, re-run from Step 1.** Do not move to the summary until the run produces a real back-and-forth conversation in the transcript.
 
 ---
 
-## 10c. Summary for the user
+## 11c. Summary for the user
 
 Only present this after the verification run succeeds:
 
@@ -91,7 +104,7 @@ Verification: ✓ Run confirmed — testing agent and main agent exchanged messa
 
 ---
 
-## 10d. Next steps
+## 11d. Next steps
 
 The main agent is ready. Point you to what comes next:
 
@@ -104,8 +117,8 @@ The main agent is ready. Point you to what comes next:
 
 ---
 
-## Phase 10 Gate
+## Phase 11 Gate
 
 **The skill does not end until the verification run succeeds.** If the run fails, fix the issue and retry. Do not announce completion until the transcript confirms a real conversation happened.
 
-Announce: "Phase 10 complete. Verification confirmed — the main agent is working end-to-end."
+Announce: "Phase 11 complete. Verification confirmed — the main agent is working end-to-end."
