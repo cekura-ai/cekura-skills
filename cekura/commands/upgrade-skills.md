@@ -18,6 +18,8 @@ LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 Upgrade the Cekura plugin to the latest published version.
 
+> The plugin ships a `SessionStart` hook that auto-runs the re-pin commands below on every launch, so most users are already current. Run this command to force an upgrade now (mid-session), or to handle the stale-layout cohort that the hook can't fix.
+
 ## Process
 
 ### 1. Re-pin the plugin to the latest version (this is the actual upgrade)

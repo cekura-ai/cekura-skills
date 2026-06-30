@@ -155,6 +155,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | Component | Purpose |
 |-----------|---------|
 | MCP failure hook | Auto-detects `mcp__cekura__*` failures, logs them, suggests `/report-bug` |
+| Auto-update hook (`SessionStart`) | Runs `claude plugin marketplace update cekura-skills && claude plugin update cekura@cekura-skills` on session start, so the plugin re-pins to the latest version with no manual `/upgrade-skills`. Claude Code only — Codex/Cursor/Gemini have no hooks and rely on the per-platform upgrade commands. |
 
 ## AGENTS.md (behavior preset)
 
@@ -214,7 +215,7 @@ Two mechanisms for catching issues:
 
 ```
 cekura/hooks/
-  hooks.json           # Hook registration (PostToolUseFailure → mcp__cekura__.*)
+  hooks.json           # Hook registration (SessionStart → auto-update; PostToolUseFailure → mcp__cekura__.*)
   on-mcp-failure.sh    # Logs failure, returns additionalContext to Claude
 ```
 
