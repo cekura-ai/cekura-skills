@@ -34,7 +34,7 @@ cekura-skills/
       cekura-infra-test-suite/
     commands/                    # Slash commands (Claude Code only)
     agents/                      # Sub-agent definitions (Claude Code only)
-    hooks/                       # MCP failure detection (Claude Code only)
+    hooks/                       # MCP failure detection + session-start auto-update (Claude Code CLI only)
   _template/                     # SKILL.md.tmpl scaffold for new skills (dev-only)
   codex/
     AGENTS.md                    # Single-file behavior preset for Codex/Cursor/other agents
@@ -155,6 +155,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | Component | Purpose |
 |-----------|---------|
 | MCP failure hook | Auto-detects `mcp__cekura__*` failures, logs them, suggests `/report-bug` |
+| Auto-update hook (`SessionStart`) | Runs `claude plugin marketplace update cekura-skills && claude plugin update cekura@cekura-skills` on session start, so the plugin re-pins to the latest version with no manual `/upgrade-skills`. **Claude Code CLI only.** Codex/Cursor/Gemini have no hooks (they rely on the per-platform upgrade commands), and **Claude Desktop keeps a separate plugin store** under `~/Library/Application Support/Claude/local-agent-mode-sessions/.../rpm/` governed by its own `installationPreference` (auto_install vs available) — the hook writes to `~/.claude/plugins/` and does not reach it. |
 
 ## AGENTS.md (behavior preset)
 
@@ -214,7 +215,7 @@ Two mechanisms for catching issues:
 
 ```
 cekura/hooks/
-  hooks.json           # Hook registration (PostToolUseFailure → mcp__cekura__.*)
+  hooks.json           # Hook registration (SessionStart → CLI auto-update; PostToolUseFailure → mcp__cekura__.*)
   on-mcp-failure.sh    # Logs failure, returns additionalContext to Claude
 ```
 
