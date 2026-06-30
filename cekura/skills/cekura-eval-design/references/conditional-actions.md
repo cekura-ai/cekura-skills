@@ -71,6 +71,17 @@ The `role` and `conditions[]` fields inside `conditional_actions`:
 
   **One action fires per turn. `action_followup` fires at the testing agent's next turn** — the turn after the main agent replies to condition X. If two things must happen within the same testing-agent turn (no main agent reply between them), they belong in one `action` string, not split across two conditions. See "Turn-by-Turn Construction Rules" below for a wrong/correct example.
 
+### Interruption behavior — `action_followup` re-executes from the start
+
+**When the main agent interrupts the testing agent mid-action, the consequence depends on the condition `type`:**
+
+- **`action_followup` → the testing agent re-executes the whole action from the start.** Because the followup has no trigger string to re-match against, the only deterministic behavior on interruption is to repeat the same scripted action. If the interruption keeps recurring (e.g., the main agent talks every time the testing agent pauses), the testing agent will loop on the same sentence, never reaching the rest of the action. Real failure mode observed in production: a `<silence time="15s" />` inside an `action_followup` got interrupted by the main agent every cycle, causing the testing agent to repeat its opening line indefinitely.
+- **`standard` → the testing agent re-evaluates all conditions against the new conversation context and matches the best fit.** This is the adaptive path: if the agent's response moved the conversation forward, a different `standard` condition can fire; if the original condition still matches, the same action re-fires (but now with updated context).
+
+**Uninterruptible content is exempt.** Actions that consist only of an uninterruptible tag — `<ivr>`, `<voicemail>`, `<hold>`, or that lead with `<interruption>` — cannot be interrupted by the main agent, so the looping issue does not apply. (`<silence>` is interruptible; `<hold>` is not — see "`<silence>` vs `<hold>`" below.)
+
+**Practical rule:** if the action contains interruptible content (especially `<silence>`) AND the main agent might speak during it, use `type: "standard"` so the testing agent can adapt on interruption. Reserve `action_followup` for cases where the next testing-agent turn must fire regardless of what the main agent said (multi-part responses, scripted sequences, `<interruption>` placement) AND the action itself either completes quickly or is uninterruptible. See "Anti-Patterns" and "Troubleshooting" for the failure signature.
+
 ## Writing the `condition` String (standard conditions, id > 0)
 
 The `condition` field must describe the main agent's observable action from a **third-person observer** perspective. It must never be a verbatim quote or the agent's own words.
@@ -496,6 +507,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - **`<interruption>` as `type: "standard"`.** It only works as `action_followup`; on `standard` it has no effect because the timing mechanism needs a preceding action to anchor against.
 - **Expecting `action_followup` to fire in the same turn.** `action_followup` fires on the **next turn** — after the testing agent sends condition X and the main agent replies. It does not fire in the same turn as condition X.
 - **Splitting same-turn actions across conditions.** Each condition is one testing-agent turn. If two testing-agent actions must happen without a main agent reply between them, they belong in the same `action` string — not split across a `standard` condition and an `action_followup`. The `action_followup` fires at the next turn (after the main agent replies); if the main agent never replies, the followup never fires and the call stalls.
+- **`action_followup` wrapping interruptible content (`<silence>`, plain spoken text the main agent might cut in on).** When the main agent interrupts, the testing agent re-runs the whole `action_followup` action from the start because there is no condition to re-match. If interruption recurs, the testing agent loops on the same sentence. Use `type: "standard"` for any action where the main agent might interrupt — on interruption, the testing agent re-evaluates conditions against the new context and adapts. Uninterruptible-only actions (`<ivr>`, `<voicemail>`, `<hold>`, leading `<interruption>`) are safe as `action_followup`.
 - **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored.
 - **Stringly-typed `action_followup` references.** The `condition` field on an `action_followup` must be an **integer** matching a prior condition's `id`. String values like `"1"` are rejected.
 - **Putting the JSON object directly in `instructions`.** Use the `conditional_actions` field on the scenario create/update payload. `instructions` accepts a string only.
@@ -513,6 +525,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - [ ] `type` is explicitly `"standard"` or `"action_followup"` on every condition
 - [ ] `action_followup` conditions have an integer (not string) in `condition`
 - [ ] Every `action_followup` references a condition where the main agent produces a reply (if the main agent is silent — hold, voicemail mid-sequence, back-to-back caller actions — the actions are merged into one condition instead)
+- [ ] No `action_followup` action contains interruptible content (`<silence>` or plain spoken text the main agent might cut in on); if interruption is possible, use `type: "standard"` so the testing agent re-evaluates conditions on interruption instead of looping on the same action
 - [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
 - [ ] `<network_simulation>` only uses `packet_loss`
@@ -540,6 +553,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 | `action_followup` doesn't fire when expected | `condition` field contains a string, not the integer `id` of the prior condition | For `type: "action_followup"`, set `condition` to the integer `id` of the preceding condition (e.g., `"condition": 1`, not `"condition": "1"` or `"condition": "previous"`). |
 | `action_followup` fires too early | Expecting it to fire in the same turn as the referenced condition | `action_followup` fires on the **next turn** — after the testing agent sends condition X *and* the main agent replies. It does not fire immediately. |
 | `action_followup` never fires / call stalls | Two testing-agent actions were split across conditions when no main agent reply occurs between them (e.g., during `<hold>`, mid-voicemail, or any back-to-back caller actions) | Merge both actions into one `action` string on the same condition. Each condition is one testing-agent turn; `action_followup` fires at the next turn only after the main agent replies. |
+| Testing agent keeps repeating the same sentence / opening line in a loop | An `action_followup` action contains interruptible content (`<silence>` or plain spoken text) and the main agent interrupts each cycle. On interruption, the testing agent re-executes the whole `action_followup` from the start because there is no condition to re-match. | Change the condition to `type: "standard"` so the testing agent re-evaluates conditions on interruption and adapts to the new context. Reserve `action_followup` for actions that are uninterruptible (`<ivr>`, `<voicemail>`, `<hold>`, leading `<interruption>`) or that the main agent is unlikely to interrupt. |
 | IVR menu plays twice (once from the main agent, once from the testing agent) | `<ivr>` was used in `id: 0` for an inbound IVR test | Set `id: 0 action: ""`. The main agent plays its own IVR. Reserve the `<ivr>` tag for outbound scenarios where the testing agent simulates the IVR. |
 | Scenario created but behaves like a behavioral evaluator (ignores conditions) | `scenario_type` defaulted to `"instruction"` — the `conditional_actions` payload was dropped silently | Set `scenario_type: "conditional_actions"` explicitly in the create/update request. |
 | `instructions` field type error | JSON object was passed directly to `instructions` instead of `conditional_actions` | Pass the structured payload via the `conditional_actions` field and leave `instructions` unset. |
@@ -604,12 +618,18 @@ Scenario-level fields (set on the scenario, not inside the conditions):
                        Do not also set instructions or first_message; they are managed.
 
 Action types:
-  standard         Fires when conversation context matches condition string
+  standard         Fires when conversation context matches condition string.
+                   On interruption: re-evaluates all conditions against new context and adapts.
+                   → Use for any action where the main agent might interrupt (e.g., contains <silence>).
   action_followup  Fires on the NEXT TURN after condition id (int): testing agent sends
                    condition X → main agent replies → this fires. Does not fire immediately.
                    condition field MUST be an integer (not a string).
                    Useful for multi-part responses, scripted sequences (no conditions needed),
                    and <interruption>.
+                   On interruption: re-executes the whole action from the start (no condition
+                   to re-match). If interruption recurs, the testing agent LOOPS on the same
+                   sentence. Only safe when action is uninterruptible (<ivr>, <voicemail>, <hold>,
+                   leading <interruption>) or main agent unlikely to interrupt.
 
 Test profile variables (fixed_message:true only):
   {{test_profile.field_name}}                   Simple field
