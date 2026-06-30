@@ -260,6 +260,8 @@ codex plugin add cekura@cekura            # re-pin to the new version (required 
 
 Both steps are needed: `marketplace upgrade` only refreshes the snapshot, and `codex plugin add` re-pins the installed plugin to it. Running just the first leaves you on the old version. Confirm with `codex plugin list` — the `cekura@cekura` row should show the new version.
 
+**Auto-update (optional).** The plugin ships a `SessionStart` hook that runs the two commands above automatically on each launch (throttled to once/day), so you stay current without typing them. Codex requires you to trust the hook once: run `codex`, open `/hooks`, and trust the Cekura **SessionStart** hook. After that it's automatic; the manual commands above remain available to force an update immediately.
+
 For the fallbacks, re-run the skill installer / re-download `AGENTS.md`.
 
 ---
@@ -298,6 +300,8 @@ Ask Cursor to help with Cekura metrics or evals — skills load automatically wh
 
 Cursor then re-indexes the marketplace at most once every ~10 minutes, picking up pushed updates to the installed plugin. Note: Auto Refresh updates the *existing* plugin only — if a brand-new plugin is added to the repo later, re-import the marketplace to pick it up.
 
+**Team-wide auto-install (Teams/Enterprise):** a workspace admin can mark the Cekura plugin **Required** for a distribution group in the Team Marketplace settings — that installs and keeps it updated for everyone automatically, no per-developer action. This is an admin dashboard setting, not something the plugin declares.
+
 ---
 
 ## Gemini CLI
@@ -307,12 +311,16 @@ Extension support — MCP tools plus the Cekura context file. (Gemini discovers 
 ### Install
 
 ```bash
-gemini extensions install https://github.com/cekura-ai/cekura-skills
+gemini extensions install https://github.com/cekura-ai/cekura-skills --auto-update
 ```
+
+The `--auto-update` flag lets the extension self-check GitHub on each launch and apply the new version on the next restart — no manual updates needed. Omit it if you prefer to update manually.
 
 On first use of a Cekura MCP tool, Gemini runs an OAuth sign-in flow. The extension loads `GEMINI.md` — all Cekura domain knowledge (metric design, eval design, API reference, anti-patterns) — as context.
 
 ### Upgrade
+
+If you installed with `--auto-update`, new versions are pulled automatically (restart to apply). To update manually, or to force it now:
 
 ```bash
 gemini extensions update cekura

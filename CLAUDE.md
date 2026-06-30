@@ -155,7 +155,8 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | Component | Purpose |
 |-----------|---------|
 | MCP failure hook | Auto-detects `mcp__cekura__*` failures, logs them, suggests `/report-bug` |
-| Auto-update hook (`SessionStart`) | Runs `claude plugin marketplace update cekura-skills && claude plugin update cekura@cekura-skills` on session start, so the plugin re-pins to the latest version with no manual `/upgrade-skills`. **Claude Code CLI only.** Codex/Cursor/Gemini have no hooks (they rely on the per-platform upgrade commands), and **Claude Desktop keeps a separate plugin store** under `~/Library/Application Support/Claude/local-agent-mode-sessions/.../rpm/` governed by its own `installationPreference` (auto_install vs available) — the hook writes to `~/.claude/plugins/` and does not reach it. |
+| Auto-update hook — Claude Code CLI (`hooks/hooks.json` → `SessionStart`) | Runs `claude plugin marketplace update cekura-skills && claude plugin update cekura@cekura-skills` on session start, so the plugin re-pins with no manual `/upgrade-skills`. Claude's hooks run without an extra trust step. Does **not** affect Claude Desktop, which keeps a separate plugin store under `~/Library/Application Support/Claude/local-agent-mode-sessions/.../rpm/` governed by its own `installationPreference` (the CLI hook writes to `~/.claude/plugins/`). |
+| Auto-update hook — Codex (`hooks/codex-hooks.json` → `codex-self-update.sh`) | `SessionStart` hook running `codex plugin marketplace upgrade cekura && codex plugin add cekura@cekura`, throttled to once/day. **Codex requires the user to trust it once via `/hooks`** before it runs — there is no manifest field to pre-trust. Wired via the `hooks` field in `cekura/.codex-plugin/plugin.json`. |
 
 ## AGENTS.md (behavior preset)
 
@@ -169,7 +170,7 @@ Beyond the Claude Code plugin, the repo ships native plugin/extension manifests 
 
 | Platform | Files | What it delivers | MCP |
 |----------|-------|------------------|-----|
-| Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` | Skills + MCP (no slash commands — Codex plugins have no `commands` field) | reuses `cekura/.mcp.json` (`type: http`, OAuth on first use) |
+| Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` (`hooks` → `cekura/hooks/codex-hooks.json`) | Skills + MCP + `SessionStart` auto-update hook (no slash commands — Codex plugins have no `commands` field). The hook needs a one-time `/hooks` trust. | reuses `cekura/.mcp.json` (`type: http`, OAuth on first use) |
 | Cursor | `.cursor-plugin/marketplace.json` (root) + `cekura/.cursor-plugin/plugin.json` | Skills + MCP | `mcpServers` override → `./.mcp.json` (Cursor's default discovery looks for `mcp.json`, ours is `.mcp.json`) |
 | Gemini CLI | `gemini-extension.json` (root) + `GEMINI.md` (root) | MCP + context file only — Gemini discovers skills from a root `skills/` dir, so the nested `cekura/skills/` isn't bundled; native skill bundling deferred | declared inline via `httpUrl` (native remote MCP + OAuth; no `mcp-remote` shim) |
 
