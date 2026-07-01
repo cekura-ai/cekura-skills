@@ -97,7 +97,7 @@ One MCP endpoint has an issue that requires a `curl` workaround:
 
 1. **`mcp__cekura__aiagents_create` — 414 URI Too Long on large payloads.** The MCP server encodes params as URL query strings, not JSON bodies. Agent descriptions (10-60KB) exceed nginx's URI limit. **Workaround:** Use `curl -X POST` with a JSON body for any agent creation with a description longer than ~4KB.
 
-Mock tools are managed via `mcp__cekura__aiagents_partial_update` using the `mock_tools` field — pass the full desired list of tools. To enable/disable mock mode use `mcp__cekura__aiagents_toggle_mock_tools_create`.
+Mock tools are managed via `mcp__cekura__aiagents_partial_update` using the `mock_tools` field — pass the full desired list of tools. Mock mode is now per-run: pass `mock_tool_ids` (list of tool IDs) to `mcp__cekura__scenarios_run_voice` (or any run_scenarios endpoint) to activate mocking for only those tools on that run.
 
 The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the create-agent skill's "Known MCP Limitations & Curl Workarounds" section for full curl examples. Skills that hit these endpoints should include `Bash` in their `allowed-tools` frontmatter.
 

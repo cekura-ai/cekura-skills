@@ -22,7 +22,7 @@ All pipecat-mode work uses Cekura platform tools (not VAPI's API). Confirm the M
 | Fetch agent record (description + provider config + mock tools) | `mcp__cekura__aiagents_retrieve` with `ql={mock_tools}` |
 | Update agent description | `mcp__cekura__aiagents_partial_update` |
 | Create / update / delete mock tools | `mcp__cekura__aiagents_partial_update` with full `mock_tools` list (GET first → merge → PATCH) |
-| Enable / disable mock mode | `mcp__cekura__aiagents_toggle_mock_tools_create` |
+| Activate mock tools on a run | pass `mock_tool_ids` to the run_scenarios endpoint |
 
 `aiagents_create` has a known MCP URI-length limit for large payloads (>4 KB). For long descriptions, fall back to direct API calls — see `cekura-create-agent`'s `scripts/upload-agent.sh` and the "Known MCP Limitations" section in this repo's CLAUDE.md.
 
