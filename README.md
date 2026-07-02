@@ -35,6 +35,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-metric-improvement` | |
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
+| `cekura-backfill-mock-manifests` | |
 | `cekura-infra-test-suite` | |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
@@ -95,6 +96,7 @@ Ten skills, scoped to specific Cekura workflows:
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
+| `cekura-backfill-mock-manifests` | "Backfill mock manifests / add expected mock tool calls to a manual scenario / fix missing mock data" |
 | `cekura-infra-test-suite` | "Create CI/CD tests for my voice bot / test my voice AI infrastructure / E2E test my pipecat bot" |
 
 ### Want full functionality?
@@ -369,6 +371,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
+| `cekura-backfill-mock-manifests` | Backfilling manual scenarios with expected mock tool calls + matching mock data — companion to `cekura-eval-design` |
 | `cekura-infra-test-suite` | Generating a CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
 
 ### Getting Started Flow

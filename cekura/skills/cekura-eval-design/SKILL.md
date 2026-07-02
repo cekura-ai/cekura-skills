@@ -15,7 +15,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.4.0"
+  version: "0.4.1"
 ---
 
 # Cekura Eval Design
@@ -441,6 +441,8 @@ These three form one cohesive test data set and must be designed together. Key p
 - **Test profile completeness**: if an existing profile covers only a subset of required fields, create a new complete profile — never use a partial one
 
 **See `references/test-data-design.md`** for the full approach-selection guide, decision matrix for new vs. reuse, fuzzy-match variation rules, chain dependency design, dynamic variable wiring, and API reference.
+
+**Expected mock tool calls (tool scenarios you author directly):** the mock data above makes mocks *fire*, but a scenario's expected mock tool calls (`generated_mock_tool_entries`) are populated only by platform auto-generation, not by the create/update call. If you author a tool-using scenario directly here and want its tool calls tracked for scoring/observability (e.g. the *Mock tool call accuracy* metric), populate them as a separate step (REST-only) using the `cekura-backfill-mock-manifests` skill. It's optional — skip it if you don't need tool-call scoring; it does not require any metric to be enabled.
 
 ## Tagging Strategy
 
