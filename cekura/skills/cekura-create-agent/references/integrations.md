@@ -147,21 +147,26 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 
 ## LiveKit
 
+Keep `provider.type = livekit` regardless of connection mode (phone, WebRTC, chat). LiveKit/Pipecat phone agents should not be classified as `self_hosted`.
+
+**Recommended payload (SDK integration + WebRTC Automated, also covers Telephony):**
+
 ```json
 {
   "name": "LiveKit Agent",
   "description": "...",
   "project": 123,
-  "telephony": {"inbound": true},
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "livekit",
     "credentials": {
       "api_key": "<LiveKit API Key>",
       "config": {
-        "api_secret": "<LiveKit API Secret — required>",
-        "url": "<wss://your-server.livekit.cloud — required>",
-        "agent_name": "<optional>",
-        "tracing_enabled": false
+        "api_secret": "<LiveKit API Secret>",
+        "url": "<wss://your-server.livekit.cloud>",
+        "agent_name": "<worker agent_name>",
+        "config": {"empty_timeout": 300},
+        "tracing_enabled": true
       }
     },
     "auto_dial_outbound": true
@@ -169,20 +174,33 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 }
 ```
 
+- `tracing_enabled: true` — Cekura waits for the Cekura SDK to confirm test-run data. Phase 6 of `cekura-create-agent` integrates the SDK in the user's agent code. If the SDK is not integrated, set this to `false`.
+- `agent_name` must match `@server.rtc_session(agent_name=...)` in the agent code (required for WebRTC Automated and Chat connections).
+- `credentials.config.config` — JSON injected into `ctx.room.metadata` during dispatch. Populate with the keys the agent reads.
+- Required credentials by connection mode:
+  - **Telephony only:** none on the agent record (Cekura dials the phone number).
+  - **WebRTC Automated or Chat:** `api_key`, `api_secret`, `url`, `agent_name` all required.
+  - **WebRTC Manual:** none on the agent record (room URL + token per scenario run via the scenarios-external API).
+  - **Observability via Cekura SDK:** `api_key`, `api_secret`, `url` required for LiveKit egress audio recording; `agent_name` optional.
+
 **Credentials:** LiveKit Cloud Dashboard → Settings → Keys  
-**Connection:** WebRTC — Cekura manages room creation and token generation automatically  
+**SDK setup:** see `references/livekit-tracing.md`  
 **Latency metrics:** `metadata.raw_metrics` with per-component latency (LLM TTFT, TTS TTFB, EOU delay)
 
 ---
 
 ## Pipecat Cloud
 
+Keep `provider.type = pipecat` regardless of connection mode.
+
+**Recommended payload (SDK integration + WebRTC Automated, also covers Telephony):**
+
 ```json
 {
   "name": "Pipecat Agent",
   "description": "...",
   "project": 123,
-  "telephony": {"inbound": true},
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "pipecat",
     "credentials": {
@@ -191,15 +209,26 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
         "pipecat_agent_name": "<agent name from Pipecat dashboard>",
         "webhook_url": "<optional>",
         "config": {},
-        "room_properties": {}
+        "room_properties": {},
+        "tracing_enabled": true
       }
     }
   }
 }
 ```
 
+- `tracing_enabled: true` — Cekura waits for the Cekura SDK to confirm test-run data. Phase 6 of `cekura-create-agent` integrates the SDK in the user's agent code. If the SDK is not integrated, set this to `false`.
+- `credentials.config.config` — optional Pipecat agent configuration JSON used when Cekura starts the session.
+- `credentials.config.room_properties` — optional Daily.co room properties JSON applied when Cekura creates the room.
+- Required credentials by connection mode:
+  - **Telephony only:** none on the agent record (Cekura dials the phone number).
+  - **WebRTC Automated:** `api_key`, `pipecat_agent_name` both required.
+  - **WebRTC Manual:** none on the agent record (room URL + token per scenario run via the scenarios-external API).
+  - **Observability via Cekura SDK:** none on the agent record — the SDK records audio in-process via its own audio frame processor.
+
 **Credentials:** pipecat.daily.co → Settings → API Keys  
 **Agent name:** use the name given when deploying to Pipecat Cloud  
+**SDK setup:** see `references/pipecat-tracing.md`  
 **Docs:** https://docs.pipecat.ai
 
 ---

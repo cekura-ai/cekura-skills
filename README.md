@@ -128,14 +128,31 @@ Ask "I'm new to Cekura, help me get started" for a guided walkthrough, or ask "w
 
 ### Upgrade
 
-Run `/upgrade-skills` in any Claude Code session, or manually:
+Run `/upgrade-skills` in any Claude Code session — it refreshes the marketplace and re-pins the plugin to the latest version, then prompts you to run `/reload-plugins` (no restart needed in the common case).
+
+To upgrade manually:
 
 ```bash
-cd ~/.claude/plugins/marketplaces/cekura-skills
-git pull origin main
+claude plugin marketplace update cekura-skills   # refresh catalog from GitHub
+claude plugin update cekura@cekura-skills          # move the installed pin to latest
 ```
 
-Restart Claude Code after upgrading.
+Then run `/reload-plugins` in your session to apply it. A plain `git pull` of the marketplace checkout does **not** move the version pin, so it won't upgrade you on its own — use the commands above.
+
+#### Auto-update (optional)
+
+To have Claude Code pull new Cekura versions automatically at launch (it still prompts you to `/reload-plugins`), add this to your `~/.claude/settings.json` — or just run `/setup-mcp`, which offers to enable it for you:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "cekura-skills": {
+      "source": { "source": "github", "repo": "cekura-ai/cekura-skills" },
+      "autoUpdate": true
+    }
+  }
+}
+```
 
 ---
 
@@ -164,14 +181,16 @@ Ask "I'm new to Cekura, help me get started" for a guided walkthrough, or ask "w
 
 ### Upgrade
 
-Run `/upgrade-skills` in any Claude Code session, or manually:
+Run `/upgrade-skills` in any Claude Code session — it refreshes the marketplace and re-pins the plugin to the latest version, then prompts you to run `/reload-plugins` (no restart needed in the common case).
+
+To upgrade manually:
 
 ```bash
-cd ~/.claude/plugins/marketplaces/cekura-skills
-git pull origin main
+claude plugin marketplace update cekura-skills   # refresh catalog from GitHub
+claude plugin update cekura@cekura-skills          # move the installed pin to latest
 ```
 
-Restart Claude Code and your terminal after upgrading.
+Then run `/reload-plugins` to apply it. A plain `git pull` of the marketplace checkout does **not** move the version pin. To pull new versions automatically at launch, see [Auto-update (optional)](#auto-update-optional) under Claude Code (VS Code), or run `/setup-mcp`.
 
 ---
 
@@ -237,9 +256,13 @@ Ask Codex to help with Cekura metrics or evals — skills load automatically whe
 ### Upgrade
 
 ```bash
-codex plugin marketplace upgrade cekura   # pull the latest commit
-codex plugin add cekura@cekura            # re-install if prompted
+codex plugin marketplace upgrade cekura   # refresh the marketplace snapshot from GitHub
+codex plugin add cekura@cekura            # re-pin to the new version (required — not optional)
 ```
+
+Both steps are needed: `marketplace upgrade` only refreshes the snapshot, and `codex plugin add` re-pins the installed plugin to it. Running just the first leaves you on the old version. Confirm with `codex plugin list` — the `cekura@cekura` row should show the new version.
+
+**Auto-update (optional).** The plugin ships a `SessionStart` hook that runs the two commands above automatically on each launch (throttled to once/day), so you stay current without typing them. Codex requires you to trust the hook once: run `codex`, open `/hooks`, and trust the Cekura **SessionStart** hook. After that it's automatic; the manual commands above remain available to force an update immediately.
 
 For the fallbacks, re-run the skill installer / re-download `AGENTS.md`.
 
@@ -279,6 +302,8 @@ Ask Cursor to help with Cekura metrics or evals — skills load automatically wh
 
 Cursor then re-indexes the marketplace at most once every ~10 minutes, picking up pushed updates to the installed plugin. Note: Auto Refresh updates the *existing* plugin only — if a brand-new plugin is added to the repo later, re-import the marketplace to pick it up.
 
+**Team-wide auto-install (Teams/Enterprise):** a workspace admin can mark the Cekura plugin **Required** for a distribution group in the Team Marketplace settings — that installs and keeps it updated for everyone automatically, no per-developer action. This is an admin dashboard setting, not something the plugin declares.
+
 ---
 
 ## Gemini CLI
@@ -288,12 +313,16 @@ Extension support — MCP tools plus the Cekura context file. (Gemini discovers 
 ### Install
 
 ```bash
-gemini extensions install https://github.com/cekura-ai/cekura-skills
+gemini extensions install https://github.com/cekura-ai/cekura-skills --auto-update
 ```
+
+The `--auto-update` flag lets the extension self-check GitHub on each launch and apply the new version on the next restart — no manual updates needed. Omit it if you prefer to update manually.
 
 On first use of a Cekura MCP tool, Gemini runs an OAuth sign-in flow. The extension loads `GEMINI.md` — all Cekura domain knowledge (metric design, eval design, API reference, anti-patterns) — as context.
 
 ### Upgrade
+
+If you installed with `--auto-update`, new versions are pulled automatically (restart to apply). To update manually, or to force it now:
 
 ```bash
 gemini extensions update cekura
@@ -346,7 +375,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 |---------|-------------|
 | `/cekura-onboarding` | Guided end-to-end setup — preflight, state-aware resume, walks through agent + metrics + first eval run |
 | `/setup-mcp` | Configure MCP server (run once after install) |
-| `/upgrade-skills` | Pull latest skill updates from GitHub |
+| `/upgrade-skills` | Re-pin the plugin to the latest version, then `/reload-plugins` |
 | `/report-bug` | Report a bug — files GitHub issue, optionally attempts a fix |
 | `/create-metric` | Create or update a metric |
 | `/list-metrics` | List metrics for an agent or project |

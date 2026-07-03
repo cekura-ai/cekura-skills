@@ -94,12 +94,45 @@ cd ~/.claude/plugins/marketplaces/cekura-skills
 git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
 ```
 
+### 6. Offer to enable auto-updates (optional)
+
+Third-party marketplaces like `cekura-skills` do **not** auto-update by default — only Anthropic's official marketplace does. Without this, the user has to run `/upgrade-skills` manually to pick up new versions.
+
+Ask the user:
+
+> "Want Claude Code to pull new Cekura versions automatically at launch? It'll still prompt you to run `/reload-plugins` to apply them — nothing installs silently mid-session."
+
+If yes, merge the opt-in into `~/.claude/settings.json` (idempotent — preserves all other settings):
+
+```bash
+python3 - <<'EOF'
+import json, os
+p = os.path.expanduser("~/.claude/settings.json")
+try:
+    with open(p) as f:
+        d = json.load(f)
+except Exception:
+    d = {}
+mk = d.setdefault("extraKnownMarketplaces", {})
+mk["cekura-skills"] = {
+    "source": {"source": "github", "repo": "cekura-ai/cekura-skills"},
+    "autoUpdate": True,
+}
+with open(p, "w") as f:
+    json.dump(d, f, indent=2)
+print("Auto-update enabled for cekura-skills in", p)
+EOF
+```
+
+The change takes effect on the next Claude Code launch. To turn it off later, set `autoUpdate` to `false` in that same file.
+
 ## Output
 
 Report the setup status:
 - Auth path used: OAuth / API key
 - MCP server: connected / not reachable [reason]
 - Connectivity test: passed / failed [reason]
+- Auto-update: enabled / declined
 
 If everything passes:
 

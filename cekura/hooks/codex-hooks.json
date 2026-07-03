@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${PLUGIN_ROOT}/hooks/codex-self-update.sh\"",
+            "statusMessage": "Checking for Cekura skill updates"
+          }
+        ]
+      }
+    ]
+  }
+}
