@@ -1,4 +1,0 @@
-interface:
-  display_name: "Cekura: Backfill Mock Manifests"
-  short_description: "Backfills manual evals with mock data and manifests."
-  default_prompt: "Use $cekura-backfill-mock-manifests to add expected mock tool manifests and matching mock data to manually authored Cekura scenarios."

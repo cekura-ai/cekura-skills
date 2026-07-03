@@ -44,7 +44,7 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `cekura-metric-improvement` | Improve metric accuracy through feedback cycle (labs workflow) |
 | `cekura-predefined-metrics` | Catalog of built-in metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
-| `cekura-backfill-mock-manifests` | Backfill a manual scenario with expected mock tool calls + matching mock data (companion to cekura-eval-design) |
+| `cekura-fill-expected-mock` | Fill a manual scenario's expected mock tool calls + matching mock data (companion to cekura-eval-design) |
 
 ### Commands
 
@@ -140,7 +140,7 @@ This skill routes — it doesn't perform tasks itself. After confirming the user
 - Improving metric accuracy → **cekura-metric-improvement**
 - Picking which built-in metrics to use → **cekura-predefined-metrics**
 - Designing test scenarios → **cekura-eval-design**
-- Backfilling a manual scenario with expected mock tool calls / mock data → **cekura-backfill-mock-manifests**
+- Filling a manual scenario's expected mock tool calls / mock data → **cekura-fill-expected-mock**
 - Fixing a production call bug end-to-end → **cekura-self-improving-agent**
 
 ## Documentation

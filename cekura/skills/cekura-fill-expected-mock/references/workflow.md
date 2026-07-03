@@ -1,8 +1,8 @@
-# Hydrating Mock Manifests for Manual Cekura Scenarios
+# Filling Expected Mock Tool Calls for Manual Cekura Scenarios
 
 ## Scope
 
-This workflow fills the gap between manual conditional-action authoring and platform auto-generation. The platform's server-side auto-generation produces synchronized test profiles, agent mock-tool entries, **and** the scenario's expected mock tool calls (`generated_mock_tool_entries`, which this skill calls the *mock manifest* for short). Scenarios authored any other way (an agent following `cekura-eval-design`, a human in the dashboard, a CSV import) get the first two but **not the expected mock tool calls**.
+This workflow fills the gap between manual conditional-action authoring and platform auto-generation. The platform's server-side auto-generation produces synchronized test profiles, agent mock-tool entries, **and** the scenario's expected mock tool calls (`generated_mock_tool_entries`). Scenarios authored any other way (an agent following `cekura-eval-design`, a human in the dashboard, a CSV import) get the first two but **not the expected mock tool calls**.
 
 Keep the two straight:
 
@@ -84,11 +84,11 @@ Prefer the auto-configured Cekura platform tools when available.
 - **Retrieve the scenario / agent mock tools / test profiles** with the corresponding platform read operations, or the public REST reads:
   - `GET /test_framework/v2/aiagents/{id}/?ql={mock_tools}` for agent mock tools.
 - **Patch agent mock tools:** send the **full** `mock_tools` list (Cekura replaces the whole list) via the agent update operation, or `PATCH /test_framework/v2/aiagents/{id}/`.
-- **Attach the scenario manifest — REST only:** write `generated_mock_tool_entries` with `PATCH /test_framework/v1/scenarios/{id}/`. This field is **not in the scenario create/update request schema**, so the create/update platform operations cannot carry it — they simply have no parameter for it. The REST scenario endpoint goes through the full serializer, which accepts and validates the field. Always confirm on retrieve that it persisted.
+- **Attach the expected mock tool calls — REST only:** write `generated_mock_tool_entries` with `PATCH /test_framework/v1/scenarios/{id}/`. This field is **not in the scenario create/update request schema**, so the create/update platform operations cannot carry it — they simply have no parameter for it. The REST scenario endpoint goes through the full serializer, which accepts and validates the field. Always confirm on retrieve that it persisted.
 
 All Cekura REST calls use the `X-CEKURA-API-KEY: <key>` header. For large mock payloads, send the JSON from a file (`curl ... -d @file.json`) — URL-encoded parameters can exceed the server's URI length limit.
 
-## Hydration Procedure
+## Fill-In Procedure
 
 ### 1. Normalize Inputs
 
@@ -100,7 +100,7 @@ For the scenario, collect:
 - Attached `test_profile` and `test_profile_data`, if any.
 - `tool_ids`, metrics, folder, personality, and language.
 
-Abort hydration if `conditional_actions` is missing and the user did not ask to convert the scenario.
+Abort if `conditional_actions` is missing and the user did not ask to convert the scenario.
 
 ### 2. Determine Exercised Tools
 
@@ -110,13 +110,13 @@ Use the agent description and existing mock tool names as the source of truth. F
 - Input fields the agent is likely to send, and output fields needed for the scenario to proceed.
 - Which fields the caller must know (→ `testing_agent_variables`) vs. which the main agent receives at call start (→ `main_agent_variables`).
 
-Ask before writing if two or more tool choices are plausible and would produce different manifests.
+Ask before writing if two or more tool choices are plausible and would produce different expected calls.
 
 ### 3. Design or Reuse the Backing Data
 
 Design the mock entries and test profile **per `cekura-eval-design`'s `references/test-data-design.md`** — reuse rules, cardinality / not-found / validation-failure patterns, phone-format variants, `freetext_params`, and the profile shape all live there. Do not re-derive them here.
 
-The only manifest-specific constraint: whatever input/output you settle on for each exercised tool must end up **identical** in three places — the agent's mock data, the scenario's `new_entry`, and (for values the caller/agent uses) the test profile.
+The only fill-in constraint: whatever input/output you settle on for each exercised tool must end up **identical** in three places — the agent's mock data, the scenario's `new_entry`, and (for values the caller/agent uses) the test profile.
 
 ### 4. Patch Agent Mock Data
 
@@ -129,9 +129,9 @@ When patching:
 - Preserve every tool's `id`, `name`, `description`, `freetext_params`, and `served_via`.
 - Mirror the read shape (`mock_data` vs `information`) as noted above.
 
-### 5. Attach the Scenario Manifest
+### 5. Attach the Expected Mock Tool Calls
 
-For each exercised tool, add a manifest entry:
+For each exercised tool, add an entry:
 
 ```json
 {
@@ -153,8 +153,8 @@ When updating an existing scenario, preserve its current `conditional_actions`, 
 Retrieve the scenario and agent after writes. Check:
 
 - `generated_mock_tool_entries` is present and non-empty for tool-dependent scenarios.
-- Every manifest entry maps to a real mock tool on this scenario's agent, and every `tool_id` belongs to that agent.
-- Every manifest `new_entry` is present in that tool's mock data.
+- Every entry maps to a real mock tool on this scenario's agent, and every `tool_id` belongs to that agent.
+- Every entry's `new_entry` is present in that tool's mock data.
 - The scenario has a complete test profile.
 - Profile lookup keys, dynamic variables, and mock inputs/outputs are identical where they represent the same fact.
 - The final conditional action can end the call, or the scenario has a terminal end-call action.
@@ -167,7 +167,7 @@ Recommend a text run for first-pass validation. Voice is only necessary for audi
 
 When reporting back, include:
 
-- Scenario IDs hydrated.
+- Scenario IDs filled in.
 - Tool names and number of mock entries added or reused.
 - Test profile IDs created or reused.
 - Whether `generated_mock_tool_entries` was verified on retrieve.

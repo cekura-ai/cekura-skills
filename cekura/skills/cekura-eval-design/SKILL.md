@@ -442,7 +442,7 @@ These three form one cohesive test data set and must be designed together. Key p
 
 **See `references/test-data-design.md`** for the full approach-selection guide, decision matrix for new vs. reuse, fuzzy-match variation rules, chain dependency design, dynamic variable wiring, and API reference.
 
-**Expected mock tool calls (tool scenarios you author directly):** the mock data above makes mocks *fire*, but a scenario's expected mock tool calls (`generated_mock_tool_entries`) are populated only by platform auto-generation, not by the create/update call. If you author a tool-using scenario directly here and want its tool calls tracked for scoring/observability (e.g. the *Mock tool call accuracy* metric), populate them as a separate step (REST-only) using the `cekura-backfill-mock-manifests` skill. It's optional — skip it if you don't need tool-call scoring; it does not require any metric to be enabled.
+**Expected mock tool calls (tool scenarios you author directly):** the mock data above makes mocks *fire*, but a scenario's expected mock tool calls (`generated_mock_tool_entries`) are populated only by platform auto-generation, not by the create/update call. If you author a tool-using scenario directly here and want its tool calls tracked for scoring/observability (e.g. the *Mock tool call accuracy* metric), populate them as a separate step (REST-only) using the `cekura-fill-expected-mock` skill. It's optional — skip it if you don't need tool-call scoring; it does not require any metric to be enabled.
 
 ## Tagging Strategy
 

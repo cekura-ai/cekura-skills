@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cekura: Fill Expected Mock Tool Calls"
+  short_description: "Fills manual evals with expected mock tool calls + matching mock data."
+  default_prompt: "Use $cekura-fill-expected-mock to add a scenario's expected mock tool calls and matching mock data to manually authored Cekura scenarios."
