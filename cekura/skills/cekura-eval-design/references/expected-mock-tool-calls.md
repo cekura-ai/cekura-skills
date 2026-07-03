@@ -14,9 +14,9 @@ With that precondition met, use it in two situations:
 Know what this field is and isn't:
 
 - **Mock responses during a simulated call are served by the agent's mock tools** (`Tool.information`), matched by fuzzy input comparison — **not** by this field. If the agent has mock tools configured, calls get mocked whether or not expected mock tool calls are set. Designing those mock tools + the test profile is the job of `test-data-design.md`.
-- **The expected mock tool calls are the record used for scoring/observability** — the *Mock tool call accuracy* metric and the per-run resolved-calls data read them to know which tool calls *should* have happened. Without them, that metric has nothing to grade against.
+- **The expected mock tool calls are the record used for scoring/observability** — the *Mock Tool Call Accuracy* metric and the per-run resolved-calls data read them to know which tool calls *should* have happened. Without them, that metric has nothing to grade against.
 
-**Only the platform's server-side auto-generation populates this field.** Scenarios created any other way — authoring directly, the dashboard, a CSV/bulk import — get working mocks and a test profile but no expected mock tool calls. That gap is what this doc fills.
+**Only the platform's server-side scenario auto-generation populates this field automatically.** Scenarios created any other way — authoring directly, the dashboard, a CSV/bulk import — get working mocks and a test profile but no expected mock tool calls. That gap is what this doc fills, via the REST PATCH write path below.
 
 ## Required context
 
@@ -166,7 +166,7 @@ Retrieve the scenario and agent after writes. Check:
 - Do not write a partial `mock_tools` list — Cekura replaces the whole list, so send every tool you want to keep.
 - Do not overwrite user-authored scenario conditions while adding expected mock tool calls.
 - Do not enable provider mock mode or toggle live provider configuration unless the user explicitly asks.
-- **Do not add or enable metrics.** Populating expected mock tool calls does not require the *Mock tool call accuracy* metric to be on, and the record still feeds the resolved-calls data and observability without it. Metric selection stays with the main eval-design flow / the user.
+- **Do not add or enable metrics.** Populating expected mock tool calls does not require the *Mock Tool Call Accuracy* metric to be on, and the record still feeds the resolved-calls data and observability without it. Metric selection stays with the main eval-design flow / the user.
 - Every entry's `tool_id` must belong to the scenario's own agent, or the write is rejected — reuse the agent's existing tool IDs.
 - Ask one concise clarification if the expected tool name, required input schema, or success path is ambiguous enough that a wrong mock would produce a false pass.
 
