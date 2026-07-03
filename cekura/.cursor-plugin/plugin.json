@@ -1,0 +1,25 @@
+{
+  "name": "cekura",
+  "displayName": "Cekura",
+  "version": "0.8.1",
+  "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from Cursor.",
+  "author": {
+    "name": "Cekura",
+    "email": "support@cekura.ai"
+  },
+  "homepage": "https://cekura.ai",
+  "repository": "https://github.com/cekura-ai/cekura-skills",
+  "license": "MIT",
+  "keywords": [
+    "cekura",
+    "voice-ai",
+    "evaluation",
+    "metrics",
+    "evaluators",
+    "testing",
+    "scenarios",
+    "onboarding",
+    "platform"
+  ],
+  "mcpServers": { "cekura": { "url": "https://api.cekura.ai/mcp" } }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "cekura",
+  "interface": {
+    "displayName": "Cekura"
+  },
+  "plugins": [
+    {
+      "name": "cekura",
+      "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals — skills plus MCP tools.",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/cekura-ai/cekura-skills.git",
+        "path": "./cekura",
+        "ref": "main"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

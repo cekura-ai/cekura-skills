@@ -2,7 +2,7 @@
 name: autogen-eval
 description: Auto-generate Cekura evaluators using the generate API with full configuration
 argument-hint: "[agent ID] [count] [scenario type]"
-allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 
 <!-- cekura-tracking-beacon -->
@@ -104,22 +104,6 @@ Tags are applied uniformly to all generated scenarios. Common patterns:
 - `["workflow", "must-have"]` — category and priority
 - `["2026-04-sprint"]` — sprint tracking
 
-### 7. Personality
-
-Default: 693 (Normal Male, en/American) for English agents.
-
-**Ask about language first:** "What language should the scenarios be in?" Then select an appropriate personality.
-
-If non-English: use 693 + set `scenario_language` on each generated scenario after creation (see post-generation fixup).
-
-### 8. Tools
-
-**Ask:** "Should the testing agent have end-call and transfer tools enabled?"
-
-Default recommendation: `["TOOL_END_CALL"]`. Add `TOOL_END_CALL_ONLY_ON_TRANSFER` for agents with transfer flows. Add `TOOL_DTMF` for IVR flows.
-
-**VAPI agents use prefixed names:** `VAPI_TOOL_END_CALL`, etc.
-
 ## Pre-Generation Checkpoint
 
 Present the full configuration for approval:
@@ -129,8 +113,6 @@ Agent: [agent_id] ([agent_name])
 Folder: [folder_path]
 Scenario type: [workflow / redteaming / knowledge_base]
 Count: [num_scenarios]
-Personality: [personality_id] ([name])
-Tools: [tool_ids]
 Tags: [tags]
 
 Extra instructions:
@@ -148,11 +130,8 @@ Use `mcp__cekura__scenarios_generate_bg` with:
 | `agent_id` | Agent ID |
 | `num_scenarios` | Count from step 4 |
 | `extra_instructions` | From step 5 |
-| `personalities` | `[personality_id]` |
-| `generate_expected_outcomes` | `true` (always) |
 | `folder_path` | From step 2 |
 | `tags` | From step 6 |
-| `tool_ids` | From step 8 |
 
 Returns `{"progress_id": "<uuid>"}`.
 
@@ -221,6 +200,8 @@ ID,Category,Name,Instructions,Expected Outcome,Priority
 S-01,Scheduling,New adult patient,Calls as new patient...,Agent books appointment...,must-have
 ```
 
+This is a post-generation create path — it uses `mcp__cekura__scenarios_create` to write each row of the user's CSV/JSON into a scenario directly. The Auto-Generate flow above does not apply here, and unlike that flow, `scenarios_create` needs `personalities` and `tool_ids` as explicit per-scenario fields (they aren't inferred from the agent).
+
 ### Process
 1. Parse the input file
 2. Walk through the same configuration (agent, personality, metrics, tools, tags, folder)
@@ -228,6 +209,11 @@ S-01,Scheduling,New adult patient,Calls as new patient...,Agent books appointmen
 4. Get confirmation: "Ready to create [N] evaluators?"
 5. Create sequentially with `mcp__cekura__scenarios_create`, including `metrics` and `tool_ids`
 6. Report results: created vs failed with error details
+
+**Gathering personality and tools for this path** (the main walkthrough above does not cover these — they belong only to the bulk-create path):
+
+- **Personality:** ask which personality the bulk scenarios should use. Default `693` (Normal Male, en/American) for English agents. Use `mcp__cekura__personalities_list` to surface other options when language or persona needs to differ. (The Auto-Generate flow above intentionally does *not* pass a personality — it lets the backend infer one from the agent. Only the bulk-create path needs this explicit.)
+- **Tools:** ask which tools the testing agent should have enabled. Default `["TOOL_END_CALL"]`; add `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows and `TOOL_DTMF` for IVR. VAPI agents use prefixed names (`VAPI_TOOL_END_CALL`, etc.).
 
 ## Summary Report
 
@@ -260,5 +246,4 @@ Missing coverage (consider manual creation):
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
 - **Metrics are required** — PATCH them on after generation
-- **Personality is required** — set it in the generate call
 - Consider running `/manual-create-update-eval` for edge cases and red-team scenarios that the generator doesn't cover

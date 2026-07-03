@@ -7,11 +7,21 @@ This is a Claude Code **marketplace** that doubles as an **Agent Skills package*
 ```
 cekura-skills/
   .claude-plugin/
-    marketplace.json             # Marketplace registry (single plugin entry, source: "./cekura")
-  cekura/                        # The plugin lives here (marketplace.json points to this dir)
+    marketplace.json             # Claude Code marketplace registry (source: "./cekura")
+  .cursor-plugin/
+    marketplace.json             # Cursor marketplace registry (source: "./cekura")
+  .agents/plugins/
+    marketplace.json             # Codex/generic registry (git-subdir → ./cekura)
+  gemini-extension.json          # Gemini CLI extension manifest (inline MCP + GEMINI.md)
+  GEMINI.md                      # Gemini context file — kept identical to codex/AGENTS.md
+  cekura/                        # The plugin lives here (the manifests above point to this dir)
     .claude-plugin/
-      plugin.json                # Plugin manifest
-    .mcp.json                    # MCP auto-config
+      plugin.json                # Claude plugin manifest
+    .codex-plugin/
+      plugin.json                # Codex plugin manifest (skills: ./skills/, mcpServers: ./.mcp.json)
+    .cursor-plugin/
+      plugin.json                # Cursor plugin manifest (mcpServers: ./.mcp.json)
+    .mcp.json                    # MCP auto-config (shared by all platforms)
     skills/                      # Single source of truth for skills
       cekura-coordinator/
       cekura-onboarding/
@@ -21,11 +31,10 @@ cekura-skills/
       cekura-metric-improvement/
       cekura-predefined-metrics/
       cekura-eval-design/
-      cekura-fixing-prod-issues/
       cekura-infra-test-suite/
     commands/                    # Slash commands (Claude Code only)
     agents/                      # Sub-agent definitions (Claude Code only)
-    hooks/                       # MCP failure detection (Claude Code only)
+    hooks/                       # MCP failure detection + session-start auto-update (Claude Code CLI only)
   _template/                     # SKILL.md.tmpl scaffold for new skills (dev-only)
   codex/
     AGENTS.md                    # Single-file behavior preset for Codex/Cursor/other agents
@@ -35,6 +44,8 @@ cekura-skills/
 ```
 
 > **Note on the `cekura/` subdir:** Claude Code's marketplace validator rejects `"source": "."`, so the plugin contents live under `cekura/` and `marketplace.json` points to `"./cekura"`. The `.claude-plugin/marketplace.json` itself stays at the repo root; everything else (plugin.json, .mcp.json, skills/, commands/, agents/, hooks/) travels with the plugin root under `cekura/`.
+>
+> **Other platforms follow the same root-registry → `cekura/` pattern.** Cursor (`.cursor-plugin/marketplace.json`), Codex/generic (`.agents/plugins/marketplace.json`, via `source: "git-subdir"` + `path: "./cekura"`), and Gemini (`gemini-extension.json`) all live at the repo root and resolve into `cekura/`. They reuse `cekura/.mcp.json` (Cursor/Codex) or declare MCP inline (Gemini). These are purely additive — they don't touch `.claude-plugin/marketplace.json`, the `cekura/` assets, or the `npx skills add` path, so existing Claude + npx users are unaffected. See "Multi-platform plugin manifests" below.
 
 ### Two install paths, one source of truth
 
@@ -97,7 +108,7 @@ One MCP endpoint has an issue that requires a `curl` workaround:
 
 1. **`mcp__cekura__aiagents_create` — 414 URI Too Long on large payloads.** The MCP server encodes params as URL query strings, not JSON bodies. Agent descriptions (10-60KB) exceed nginx's URI limit. **Workaround:** Use `curl -X POST` with a JSON body for any agent creation with a description longer than ~4KB.
 
-Mock tools are managed via `mcp__cekura__aiagents_partial_update` using the `mock_tools` field — pass the full desired list of tools. Mock mode is now per-run: pass `mock_tool_ids` (list of tool IDs) to `mcp__cekura__scenarios_run_voice` (or any run_scenarios endpoint) to activate mocking for only those tools on that run.
+Mock tools are managed via `mcp__cekura__aiagents_partial_update` using the `mock_tools` field — pass the full desired list of tools. Mock mode is now per-run: pass `mock_tool_names` (list of tool names) to `mcp__cekura__scenarios_run_voice` (or any run_scenarios endpoint) to activate mocking for only those tools on that run (omit to mock all configured tools).
 
 The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the create-agent skill's "Known MCP Limitations & Curl Workarounds" section for full curl examples. Skills that hit these endpoints should include `Bash` in their `allowed-tools` frontmatter.
 
@@ -114,7 +125,6 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-metric-improvement` | Metric improvement through feedback iteration |
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
-| `cekura-fixing-prod-issues` | Debug a production call, write a fix, and verify it with two rounds of evaluator testing before raising a PR |
 | `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
 
 ### Commands
@@ -145,12 +155,34 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | Component | Purpose |
 |-----------|---------|
 | MCP failure hook | Auto-detects `mcp__cekura__*` failures, logs them, suggests `/report-bug` |
+| Auto-update hook — Claude Code CLI (`hooks/hooks.json` → `SessionStart`) | Runs `claude plugin marketplace update cekura-skills && claude plugin update cekura@cekura-skills` on session start, so the plugin re-pins with no manual `/upgrade-skills`. Claude's hooks run without an extra trust step. Does **not** affect Claude Desktop, which keeps a separate plugin store under `~/Library/Application Support/Claude/local-agent-mode-sessions/.../rpm/` governed by its own `installationPreference` (the CLI hook writes to `~/.claude/plugins/`). |
+| Auto-update hook — Codex (`hooks/codex-hooks.json` → `codex-self-update.sh`) | `SessionStart` hook running `codex plugin marketplace upgrade cekura && codex plugin add cekura@cekura`, throttled to once/day. **Codex requires the user to trust it once via `/hooks`** before it runs — there is no manifest field to pre-trust. Wired via the `hooks` field in `cekura/.codex-plugin/plugin.json`. |
 
-## AGENTS.md (Codex/Cursor)
+## AGENTS.md (behavior preset)
 
-`codex/AGENTS.md` is a single-file distillation of the plugin's domain knowledge — metric design, eval design, anti-patterns, and API reference. It's designed for agents that don't support the Claude Code plugin system (Codex, Cursor, Windsurf, etc.).
+`codex/AGENTS.md` is a single-file distillation of the plugin's domain knowledge — metric design, eval design, anti-patterns, and API reference. It's the no-MCP fallback for agents using only a context/rules file (Windsurf, the Cursor rules-file fallback, etc.).
 
 When updating skills, keep AGENTS.md in sync with major changes (new patterns, API changes, new anti-patterns). It doesn't need every detail — just the core guidance that makes a meaningful difference in output quality.
+
+## Multi-platform plugin manifests
+
+Beyond the Claude Code plugin, the repo ships native plugin/extension manifests for **Codex, Cursor, and Gemini CLI** (Grok is not supported — its marketplace schema has no documented subdirectory source, so the `cekura/` layout can't be targeted). All manifests are additive root siblings that point into the existing `cekura/` plugin root; none modify the Claude or `npx skills add` paths.
+
+| Platform | Files | What it delivers | MCP |
+|----------|-------|------------------|-----|
+| Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` (`hooks` → `cekura/hooks/codex-hooks.json`) | Skills + MCP + `SessionStart` auto-update hook (no slash commands — Codex plugins have no `commands` field). The hook needs a one-time `/hooks` trust. | reuses `cekura/.mcp.json` (`type: http`, OAuth on first use) |
+| Cursor | `.cursor-plugin/marketplace.json` (root) + `cekura/.cursor-plugin/plugin.json` | Skills + MCP | `mcpServers` override → `./.mcp.json` (Cursor's default discovery looks for `mcp.json`, ours is `.mcp.json`) |
+| Gemini CLI | `gemini-extension.json` (root) + `GEMINI.md` (root) | MCP + context file only — Gemini discovers skills from a root `skills/` dir, so the nested `cekura/skills/` isn't bundled; native skill bundling deferred | declared inline via `httpUrl` (native remote MCP + OAuth; no `mcp-remote` shim) |
+
+**`GEMINI.md` is a verbatim copy of `codex/AGENTS.md`** (Gemini loads it via `contextFileName`). Keep them identical. Before any release, run:
+
+```bash
+diff codex/AGENTS.md GEMINI.md   # must report no differences
+```
+
+When you edit `codex/AGENTS.md`, re-copy it: `cp codex/AGENTS.md GEMINI.md`.
+
+Bump the `version` in `cekura/.codex-plugin/plugin.json`, `cekura/.cursor-plugin/plugin.json`, and `gemini-extension.json` alongside the Claude plugin/marketplace version when cutting a release.
 
 ## Conventions
 
@@ -184,7 +216,7 @@ Two mechanisms for catching issues:
 
 ```
 cekura/hooks/
-  hooks.json           # Hook registration (PostToolUseFailure → mcp__cekura__.*)
+  hooks.json           # Hook registration (SessionStart → CLI auto-update; PostToolUseFailure → mcp__cekura__.*)
   on-mcp-failure.sh    # Logs failure, returns additionalContext to Claude
 ```
 

@@ -1,6 +1,6 @@
 # Cekura AI Skills
 
-AI-powered skills for building and improving voice agent tests and metrics on the [Cekura](https://cekura.ai) platform. Works with Claude Code, Codex, Cursor, and other AI coding assistants.
+AI-powered skills for building and improving voice agent tests and metrics on the [Cekura](https://cekura.ai) platform. Works with Claude Code, Codex, Cursor, Gemini CLI, and other AI coding assistants.
 
 ## Table of Contents
 
@@ -11,6 +11,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 - [Claude Code (Terminal CLI)](#claude-code-terminal-cli)
 - [Codex](#codex)
 - [Cursor](#cursor)
+- [Gemini CLI](#gemini-cli)
 - [Windsurf / Other Agents](#windsurf--other-agents)
 - [MCP Server](#mcp-server)
 - [Quick Reference](#quick-reference)
@@ -34,7 +35,6 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-metric-improvement` | |
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
-| `cekura-fixing-prod-issues` | |
 | `cekura-infra-test-suite` | |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
@@ -90,12 +90,11 @@ Ten skills, scoped to specific Cekura workflows:
 | `cekura-coordinator` | "What can Cekura do?" — routes you to the right skill |
 | `cekura-onboarding` | "Get started with Cekura" — full platform walkthrough |
 | `cekura-create-agent` | "Connect my voice agent to Cekura" |
-| `cekura-self-improving-agent` | "Improve my agent / auto-tune from eval results" |
+| `cekura-self-improving-agent` | "Improve my agent / auto-tune from eval results" — **also** "fix a production call bug / reproduce and test a fix before raising a PR" |
 | `cekura-metric-design` | "Create a metric / measure call quality" |
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
-| `cekura-fixing-prod-issues` | "Fix a production call bug / reproduce and test a fix before raising a PR" |
 | `cekura-infra-test-suite` | "Create CI/CD tests for my voice bot / test my voice AI infrastructure / E2E test my pipecat bot" |
 
 ### Want full functionality?
@@ -127,14 +126,31 @@ Ask "I'm new to Cekura, help me get started" for a guided walkthrough, or ask "w
 
 ### Upgrade
 
-Run `/upgrade-skills` in any Claude Code session, or manually:
+Run `/upgrade-skills` in any Claude Code session — it refreshes the marketplace and re-pins the plugin to the latest version, then prompts you to run `/reload-plugins` (no restart needed in the common case).
+
+To upgrade manually:
 
 ```bash
-cd ~/.claude/plugins/marketplaces/cekura-skills
-git pull origin main
+claude plugin marketplace update cekura-skills   # refresh catalog from GitHub
+claude plugin update cekura@cekura-skills          # move the installed pin to latest
 ```
 
-Restart Claude Code after upgrading.
+Then run `/reload-plugins` in your session to apply it. A plain `git pull` of the marketplace checkout does **not** move the version pin, so it won't upgrade you on its own — use the commands above.
+
+#### Auto-update (optional)
+
+To have Claude Code pull new Cekura versions automatically at launch (it still prompts you to `/reload-plugins`), add this to your `~/.claude/settings.json` — or just run `/setup-mcp`, which offers to enable it for you:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "cekura-skills": {
+      "source": { "source": "github", "repo": "cekura-ai/cekura-skills" },
+      "autoUpdate": true
+    }
+  }
+}
+```
 
 ---
 
@@ -163,24 +179,54 @@ Ask "I'm new to Cekura, help me get started" for a guided walkthrough, or ask "w
 
 ### Upgrade
 
-Run `/upgrade-skills` in any Claude Code session, or manually:
+Run `/upgrade-skills` in any Claude Code session — it refreshes the marketplace and re-pins the plugin to the latest version, then prompts you to run `/reload-plugins` (no restart needed in the common case).
+
+To upgrade manually:
 
 ```bash
-cd ~/.claude/plugins/marketplaces/cekura-skills
-git pull origin main
+claude plugin marketplace update cekura-skills   # refresh catalog from GitHub
+claude plugin update cekura@cekura-skills          # move the installed pin to latest
 ```
 
-Restart Claude Code and your terminal after upgrading.
+Then run `/reload-plugins` to apply it. A plain `git pull` of the marketplace checkout does **not** move the version pin. To pull new versions automatically at launch, see [Auto-update (optional)](#auto-update-optional) under Claude Code (VS Code), or run `/setup-mcp`.
 
 ---
 
 ## Codex
 
-Codex doesn't support Claude Code plugins directly. Skills are loaded automatically based on conversation context. No slash commands or MCP tools — uses curl-based API reference instead.
+Native plugin support — skills **and** MCP tools. (Codex plugins don't carry slash commands; the skills cover those workflows — they activate by context or when you invoke one with `@`.)
 
-### Install
+### Install (recommended)
 
-**Option A: Install skills (recommended)**
+Three steps — add the marketplace, install the plugin, then authenticate the MCP:
+
+```bash
+# 1. Add the marketplace
+codex plugin marketplace add cekura-ai/cekura-skills
+
+# 2. Install the plugin (cekura plugin from the cekura marketplace)
+codex plugin add cekura@cekura
+
+# 3. Authenticate the Cekura MCP — opens a browser for OAuth sign-in (no API key)
+codex mcp login cekura
+```
+
+Prefer the TUI? Run `codex`, open `/plugins` to install **cekura**, then `/mcp` to authenticate.
+
+Verify it worked:
+
+```bash
+codex plugin list   # cekura should be listed as installed
+codex mcp list      # cekura should show as connected after login
+```
+
+> If you added the marketplace before a recent release, refresh it first so the latest manifest is picked up: `codex plugin marketplace upgrade cekura`.
+>
+> **API-key alternative:** the bundled MCP config is OAuth-only. To use a key instead, add the server to `~/.codex/config.toml` with `http_headers = { "X-CEKURA-API-KEY" = "your-key" }` (or `env_http_headers` to read it from an env var).
+
+### Fallbacks (no MCP)
+
+**Skills only** — install the skill files directly:
 
 ```bash
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
@@ -192,53 +238,45 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-metric-improvement \
          cekura/skills/cekura-predefined-metrics \
          cekura/skills/cekura-eval-design \
-         cekura/skills/cekura-fixing-prod-issues \
          cekura/skills/cekura-infra-test-suite
 ```
 
-Restart Codex after install.
-
-**Option B: Behavior preset (quick start)**
-
-Copy the single-file behavior preset into your repo:
+**Behavior preset** — single-file domain knowledge (metric design, eval design, API reference, anti-patterns):
 
 ```bash
 curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
 ```
 
-This gives Codex all the domain knowledge (metric design, eval design, API reference, anti-patterns) in one file.
-
 ### Get Started
 
-Ask Codex to help with Cekura metrics or evals — skills load automatically when the conversation matches.
+Ask Codex to help with Cekura metrics or evals — skills load automatically when the conversation matches, or invoke one explicitly with `@`.
 
 ### Upgrade
 
-Re-run the skill installer:
-
 ```bash
-python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo cekura-ai/cekura-skills \
-  --path cekura/skills/cekura-onboarding \
-         cekura/skills/cekura-create-agent \
-         cekura/skills/cekura-self-improving-agent \
-         cekura/skills/cekura-metric-design \
-         cekura/skills/cekura-metric-improvement \
-         cekura/skills/cekura-predefined-metrics \
-         cekura/skills/cekura-eval-design \
-         cekura/skills/cekura-fixing-prod-issues \
-         cekura/skills/cekura-infra-test-suite
+codex plugin marketplace upgrade cekura   # refresh the marketplace snapshot from GitHub
+codex plugin add cekura@cekura            # re-pin to the new version (required — not optional)
 ```
+
+Both steps are needed: `marketplace upgrade` only refreshes the snapshot, and `codex plugin add` re-pins the installed plugin to it. Running just the first leaves you on the old version. Confirm with `codex plugin list` — the `cekura@cekura` row should show the new version.
+
+**Auto-update (optional).** The plugin ships a `SessionStart` hook that runs the two commands above automatically on each launch (throttled to once/day), so you stay current without typing them. Codex requires you to trust the hook once: run `codex`, open `/hooks`, and trust the Cekura **SessionStart** hook. After that it's automatic; the manual commands above remain available to force an update immediately.
+
+For the fallbacks, re-run the skill installer / re-download `AGENTS.md`.
 
 ---
 
 ## Cursor
 
-Uses the behavior preset as a rules file. No slash commands or MCP tools — all domain knowledge is embedded in the rules file.
+Native plugin support — skills **and** MCP tools. (Cursor plugins don't carry Claude-style slash commands; the skills cover those workflows.)
 
-### Install
+### Install (recommended)
 
-Copy the behavior preset into your project:
+In Cursor, go to **Settings > Plugins > Team Marketplaces > Add Marketplace > Import from Repo**, point it at `https://github.com/cekura-ai/cekura-skills`, then install **cekura**. Authenticate the Cekura MCP via OAuth when prompted.
+
+### Fallback (no MCP)
+
+Use the behavior preset as a rules file:
 
 ```bash
 curl -o .cursor/rules/cekura.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
@@ -248,14 +286,44 @@ Or add it as a global rule in Cursor Settings > Rules.
 
 ### Get Started
 
-Ask Cursor to help with Cekura metrics or evals — the rules file provides all the domain context.
+Ask Cursor to help with Cekura metrics or evals — skills load automatically when the conversation matches.
 
 ### Upgrade
 
-Re-download the behavior preset:
+**Manual:** re-import the marketplace from **Settings > Plugins > Team Marketplaces** (or re-download the rules-file fallback).
+
+**Auto Refresh (optional)** — have Cursor pull new versions automatically:
+
+1. Install the **Cursor GitHub App** on the `cekura-ai/cekura-skills` repository (Cursor prompts for this; it's required for Auto Refresh).
+2. Go to **Settings > Plugins > Team Marketplaces** and locate the imported Cekura marketplace.
+3. Toggle on **Auto Refresh** and save.
+
+Cursor then re-indexes the marketplace at most once every ~10 minutes, picking up pushed updates to the installed plugin. Note: Auto Refresh updates the *existing* plugin only — if a brand-new plugin is added to the repo later, re-import the marketplace to pick it up.
+
+**Team-wide auto-install (Teams/Enterprise):** a workspace admin can mark the Cekura plugin **Required** for a distribution group in the Team Marketplace settings — that installs and keeps it updated for everyone automatically, no per-developer action. This is an admin dashboard setting, not something the plugin declares.
+
+---
+
+## Gemini CLI
+
+Extension support — MCP tools plus the Cekura context file. (Gemini discovers extension skills from a root `skills/` directory, so this extension doesn't bundle the nested `cekura/skills/`; native Gemini skill bundling is deferred.)
+
+### Install
 
 ```bash
-curl -o .cursor/rules/cekura.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
+gemini extensions install https://github.com/cekura-ai/cekura-skills --auto-update
+```
+
+The `--auto-update` flag lets the extension self-check GitHub on each launch and apply the new version on the next restart — no manual updates needed. Omit it if you prefer to update manually.
+
+On first use of a Cekura MCP tool, Gemini runs an OAuth sign-in flow. The extension loads `GEMINI.md` — all Cekura domain knowledge (metric design, eval design, API reference, anti-patterns) — as context.
+
+### Upgrade
+
+If you installed with `--auto-update`, new versions are pulled automatically (restart to apply). To update manually, or to force it now:
+
+```bash
+gemini extensions update cekura
 ```
 
 ---
@@ -291,9 +359,9 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 2. Starting the MCP server
 3. Verifying connectivity
 
-**For other platforms:** The MCP server is optional. The `AGENTS.md` behavior preset includes API reference with curl examples as a fallback.
+**For Codex, Cursor, and Gemini CLI:** the MCP server is wired up natively through each platform's plugin/extension manifest, authenticating via OAuth (no API key stored). The sign-in step differs per platform — in **Codex** run `codex mcp login cekura`; **Cursor** prompts for OAuth when you connect the server; **Gemini** runs the OAuth flow on first tool use. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
 
-**How it works:** The plugin ships a single `.mcp.json` file at the marketplace root that auto-configures the connection to the Cekura MCP server at `https://api.cekura.ai/mcp`. By default it authenticates via OAuth — on first use Claude Code opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
+**How it works:** Claude, Codex, and Cursor read the bundled `cekura/.mcp.json`, which points at the Cekura MCP server at `https://api.cekura.ai/mcp`; Gemini declares the same remote endpoint inline in `gemini-extension.json`. By default it authenticates via OAuth — on first use the client opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
 
 ---
 
@@ -305,7 +373,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 |---------|-------------|
 | `/cekura-onboarding` | Guided end-to-end setup — preflight, state-aware resume, walks through agent + metrics + first eval run |
 | `/setup-mcp` | Configure MCP server (run once after install) |
-| `/upgrade-skills` | Pull latest skill updates from GitHub |
+| `/upgrade-skills` | Re-pin the plugin to the latest version, then `/reload-plugins` |
 | `/report-bug` | Report a bug — files GitHub issue, optionally attempts a fix |
 | `/create-metric` | Create or update a metric |
 | `/list-metrics` | List metrics for an agent or project |
@@ -325,12 +393,11 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-coordinator` | "What can Cekura do?" — routes to the right skill |
 | `cekura-onboarding` | First-time setup, end-to-end platform walkthrough |
 | `cekura-create-agent` | Setting up an agent — provider, mock tools, KB, dynamic vars |
-| `cekura-self-improving-agent` | Auto-tuning an agent prompt from eval results |
+| `cekura-self-improving-agent` | Auto-tuning an agent prompt from eval results — **and** fixing a production call bug end-to-end (auto-build reproduction harness, must-fail-first gate, fix, stochastic verify, regression sweep, PR / summary) |
 | `cekura-metric-design` | Designing or creating metrics |
 | `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
-| `cekura-fixing-prod-issues` | Fixing a production call bug — debug, reproduce, fix, verify, regression test, PR |
 | `cekura-infra-test-suite` | Generating a CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
 
 ### Getting Started Flow
@@ -347,13 +414,14 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 ## Platform Compatibility
 
-| Platform | Method | Full Plugin Support | MCP Tools | Slash Commands |
-|----------|--------|-------------------|-----------|---------------|
-| **Any Agent Skills client** | `npx skills add` | Skills only | No | No |
+| Platform | Recommended method | Skills | MCP Tools | Slash Commands |
+|----------|--------|--------|-----------|---------------|
+| **Any Agent Skills client** | `npx skills add` | Yes | No | No |
 | **Claude Code (VS Code)** | Marketplace install | Yes | Yes | Yes |
 | **Claude Code (CLI)** | `/plugins` install | Yes | Yes | Yes |
-| **Codex** | Skill installer | Skills only | No | No |
-| **Cursor** | Rules file | Behavior preset | No | No |
+| **Codex** | `codex plugin marketplace add` | Yes | Yes | No |
+| **Cursor** | Plugin marketplace install | Yes | Yes | No |
+| **Gemini CLI** | `gemini extensions install` | Context file only | Yes | No |
 | **Windsurf** | Rules file | Behavior preset | No | No |
 | **Other agents** | Copy AGENTS.md | Behavior preset | No | No |
 

@@ -393,5 +393,5 @@ python infra_test_run.py
 
 **Next steps:**
 - To add behavioral (non-infra) test coverage → **cekura-eval-design**
-- To debug a failing production call → **cekura-fixing-prod-issues**
+- To debug a failing production call → **cekura-self-improving-agent**
 - To improve metric accuracy on failing scenarios → **cekura-metric-improvement**

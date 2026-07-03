@@ -1,5 +1,16 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude plugin marketplace update cekura-skills && claude plugin update cekura@cekura-skills",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
     "PostToolUseFailure": [
       {
         "matcher": "mcp__cekura__.*",

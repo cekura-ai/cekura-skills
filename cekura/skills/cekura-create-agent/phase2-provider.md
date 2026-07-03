@@ -59,19 +59,52 @@ Ask: "What provider does your main agent run on?"
 > **Fast path:** ElevenLabs supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
 
 ### LiveKit
+Ask for all four credentials by default. Whether each is strictly required depends on the connection mode(s) chosen in Phase 3 and whether the Cekura SDK is in scope.
+
 - **`credentials.api_key`**: LiveKit Cloud Dashboard → Settings → Keys
-- **`credentials.config.api_secret`** (required)
-- **`credentials.config.url`** (required): wss:// format
-- **`credentials.config.agent_name`** (optional)
+- **`credentials.config.api_secret`**
+- **`credentials.config.url`** (wss:// format)
+- **`credentials.config.agent_name`**
+
+**When each is required:**
+
+| Setup | api_key | api_secret | url | agent_name |
+|-------|---------|------------|-----|------------|
+| Testing — Telephony only | – | – | – | – |
+| Testing — WebRTC Automated or Chat | R | R | R | R |
+| Testing — WebRTC Manual | – | – | – | – |
+| Observability with Cekura SDK (audio egress) | R | R | R | optional |
+
+If only telephony / WebRTC Manual is in scope, the LiveKit Cloud credentials are not strictly needed — collect them only if the user has them handy.
+
+**Session config (WebRTC Automated only):** `credentials.config.config` is a JSON object Cekura injects into `ctx.room.metadata` when it creates the room. If the agent reads room metadata (e.g. `empty_timeout`, `max_participants`, agent-specific knobs), scan the codebase to determine the expected shape and populate this field. Confirm values with the user. Cekura also injects `scenario_id`, `run_id`, and `test_profile_data` into `ctx.job.metadata` during dispatch — no configuration required for those.
+
+**Docs:** https://docs.livekit.io
 
 ### Pipecat Cloud
+Ask for all credentials by default. Required fields depend on the connection mode(s) chosen in Phase 3.
+
 - **`credentials.api_key`**: pipecat.daily.co → Settings → API Keys
-- **`credentials.config.pipecat_agent_name`**: Pipecat agent name from dashboard (required when `tracing_enabled` is false)
+- **`credentials.config.pipecat_agent_name`**: Pipecat agent name from dashboard
 - **`credentials.config.webhook_url`** (optional): webhook URL for call events
-- **`credentials.config.config`** (optional): additional agent configuration as JSON object
-- **`credentials.config.room_properties`** (optional): Daily.co room properties as JSON object
-- **`credentials.config.tracing_enabled`** (optional): boolean, default false
-- **Docs:** https://docs.pipecat.ai
+- **`credentials.config.config`** (optional): additional agent configuration as JSON object — used by Cekura when starting the session; accessible inside the agent
+- **`credentials.config.room_properties`** (optional): Daily.co room properties as JSON object — applied when Cekura creates the WebRTC session
+- **`credentials.config.tracing_enabled`** (set by Phase 6 when the SDK is wired and testing is in scope; otherwise leave false)
+
+**When each is required:**
+
+| Setup | api_key | pipecat_agent_name |
+|-------|---------|--------------------|
+| Testing — Telephony only | – | – |
+| Testing — WebRTC Automated | R | R |
+| Testing — WebRTC Manual | – | – |
+| Observability with Cekura SDK | – | – |
+
+Pipecat observability via the SDK does not need provider creds — the SDK handles audio recording in-process via its own audio frame processor.
+
+**Session config (WebRTC Automated only):** scan the agent codebase for keys/options it expects at session start (Daily.co room properties, Pipecat agent runtime config). Populate `credentials.config.config` and `credentials.config.room_properties` accordingly. Confirm with the user.
+
+**Docs:** https://docs.pipecat.ai
 
 ### Bland
 - **`credentials.api_key`**: Bland Dashboard → API Keys

@@ -23,7 +23,7 @@ Collect the fields needed to identify the main agent and determine how Cekura wi
 | Field | Notes |
 |-------|-------|
 | **Language** | Always — see 3a-lang |
-| **Connection type** | Decide this first (see 3c) — it determines everything else below |
+| **Connection mode(s)** | Decide this first (see 3c) — it determines everything else below. **An agent can support more than one connection mode** — collect every mode that's applicable, even if the user only plans to use one right now. Adding the rest later means re-collecting credentials. |
 
 Connection type sets what telephony fields to collect:
 
@@ -260,7 +260,7 @@ Wire it up with:
 
 **Step 3 — Register all parameters as dynamic variables in Cekura**
 
-Every value the server reads per-run that isn't hardcoded must be registered as a dynamic variable (Phase 8). Cekura will generate appropriate values and pass them to the server at the start of each run.
+Every value the server reads per-run that isn't hardcoded must be registered as a dynamic variable (Phase 9). Cekura will generate appropriate values and pass them to the server at the start of each run.
 
 **Step 4 — Expose publicly**
 

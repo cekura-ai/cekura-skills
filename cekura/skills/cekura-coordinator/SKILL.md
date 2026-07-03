@@ -44,7 +44,6 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `cekura-metric-improvement` | Improve metric accuracy through feedback cycle (labs workflow) |
 | `cekura-predefined-metrics` | Catalog of built-in metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
-| `cekura-fixing-prod-issues` | Debug a failing production call, reproduce with evals, fix, regression test, raise PR |
 
 ### Commands
 
@@ -94,7 +93,7 @@ When the user describes what they need, route them:
 | "Something's broken" / "file a bug" | `/report-bug` command |
 | "Improve my agent" / "auto-tune from eval results" | **cekura-self-improving-agent** skill |
 | "Which built-in metrics are available?" / "what does Hallucination Detection cost?" | **cekura-predefined-metrics** skill |
-| "Fix this prod call bug" / "reproduce and test a fix" | **cekura-fixing-prod-issues** skill |
+| "Fix this prod call bug" / "reproduce and test a fix" | **cekura-self-improving-agent** skill |
 | "Run a full quality report" / "generate evals and run them end-to-end" | `/cekura-report` command |
 
 ## Typical User Journeys
@@ -140,7 +139,7 @@ This skill routes — it doesn't perform tasks itself. After confirming the user
 - Improving metric accuracy → **cekura-metric-improvement**
 - Picking which built-in metrics to use → **cekura-predefined-metrics**
 - Designing test scenarios → **cekura-eval-design**
-- Fixing a production call bug end-to-end → **cekura-fixing-prod-issues**
+- Fixing a production call bug end-to-end → **cekura-self-improving-agent**
 
 ## Documentation
 
