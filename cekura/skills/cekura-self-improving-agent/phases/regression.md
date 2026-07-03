@@ -1,31 +1,27 @@
 # Regression Phase — Confirm the Fix Didn't Break Anything Else
 
-This phase runs **once**, after Eval declares the validation set 100% green (Eval Step EVAL.4 case 3) and before the PR phase. The reproduction dataset proves the original bug is fixed; this phase proves the fix didn't break a previously-working flow. A fix that resolves the bug but regresses a happy path is not shippable.
+Runs **once**, after Eval declares the validation set 100% green (EVAL.4 case 3) and before PR. The reproduction dataset proves the original bug is fixed; this phase proves the fix didn't break a previously-working flow. A fix that resolves the bug but regresses a happy path is not shippable.
 
-> ## ⚠️ ALL REGRESSION RUNS ARE E2E SIMULATIONS ON CEKURA — SAME TRANSPORT
->
-> Every regression case is a full end-to-end simulation over the same connection medium as the production call — same agent, same transport. Text mode is never a substitute; do not switch transports. Passing regression over a different medium than production is a false pass.
-
----
+**The sweep is the target's validation mechanism (Setup):**
+- **Cekura-scenario targets** — happy-path + edge-case scenarios on the changed surface, run E2E over the **same transport as the production call** (same agent, same medium). Text mode is never a substitute; passing over a different medium than production is a false pass.
+- **Code-fix targets** — the **existing test suite + the new test**, run offline. No live redeploy.
 
 ## Step REGRESS.1 — Identify the affected flows
 
-The in-loop sweep (Eval Step EVAL.4 case 2) already re-ran the reproduction dataset / original input batch. This phase widens coverage to flows that touch the **same surface the fix changed** but weren't in the dataset:
+The in-loop sweep (EVAL.4 case 2) already re-ran the reproduction dataset. This phase widens coverage to flows touching the **same surface the fix changed** but absent from the dataset:
 
-- Standard happy-path flows through the same prompt section / squad member / code path the edit touched.
+- Happy-path flows through the same prompt section / squad member / code path the edit touched.
 - Edge cases the fix might have broken — error paths, timeouts, retries, fallback branches near the edited region.
-- Voice-specific stress on the affected flow: silence gaps, interruptions, background noise, DTMF input.
-- Other caller intents that reach the same code path / decision point.
+- (Cekura-scenario) voice stress on the affected flow: silence gaps, interruptions, background noise, DTMF.
+- Other caller intents reaching the same code path / decision point.
 
-Produce a named list. **Confirm it with the user before creating evaluators** *(in `auto_mode: true`, render the list and proceed unless it's empty or clearly under-scoped — then ask).* The goal is enough coverage to trust the fix, not an exhaustive suite — scale the count to how invasive the edit was (a one-clause prompt tweak needs fewer cases than an orchestration-code change to history management).
+For **code-fix targets** this is the existing suite (already covers these flows) plus the new test — no new scenarios to author; skip to REGRESS.2's run step.
 
----
+Produce a named list. **Confirm with the user before creating evaluators** *(in `auto_mode: true`, render and proceed unless empty or clearly under-scoped — then ask)*. Goal is enough coverage to trust the fix, not exhaustiveness — scale the count to how invasive the edit was (a one-clause prompt tweak needs fewer cases than an orchestration-code change).
 
 ## Step REGRESS.2 — Create and run the regression cases
 
-Build one evaluator per case. Reuse the harness machinery from the Reproduce phase — the agent already has the mock tools and dynamic variables set, so regression cases inherit a faithful environment.
-
-Evaluator construction follows the same rule as REPRO.4: **prefer `expected_outcome` bullets; fall back to a predefined metric only when the case is out of scope for behavioral bullets** (e.g. silence / non-response → Infrastructure Issues; slow replies → Latency; tool behavior → Tool Call Success). To *generate* voice-specific stress, use XML tags in `fixed_message` (`<silence>`, `<interruption>`, `<background_noise>`, `<dtmf>`).
+**Cekura-scenario targets:** build one evaluator per case, reusing the Reproduce harness machinery (the agent already has mock tools + dynamic variables, so cases inherit a faithful environment). Follow REPRO.4: **prefer `expected_outcome` bullets; fall back to a predefined metric only when the case is out of scope for behavioral bullets** (silence/non-response → Infrastructure Issues; slow replies → Latency; tool behavior → Tool Call Success). To *generate* voice stress, use XML tags in `fixed_message` (`<silence>`, `<interruption>`, `<background_noise>`, `<dtmf>`).
 
 ```bash
 create_scenario '{
@@ -38,21 +34,22 @@ create_scenario '{
 }'
 ```
 
-Run each case over the agent's transport, work through them one at a time (restore any modified conditions between cases), and poll all results. Apply the same **must-pass stochastic policy** as Eval Step EVAL.2: every case — LLM-based and infra alike — must pass in ≥ M of N runs (a single clean pass is not enough for either class).
+Run each case over the agent's transport one at a time (restore any modified conditions between cases), poll all results.
 
-Build a summary:
+**Code-fix targets:** run the existing test suite + the new test offline.
+
+Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM, infra, and code-fix alike — must pass in ≥ M of N runs (a single clean pass is never enough). Deterministic tests pass all N in one shot; re-run under the same ≥ M of N logic when a trigger is intermittent.
 
 | Case | Class | Runs | Pass/Fail | Result URL |
 |---|---|---|---|---|
 | Happy path | LLM | 8/8 | PASS | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID |
 | Silence gap | infra | 1/1 | PASS | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID |
-
----
+| test_existing_suite | code | 8/8 | PASS | (offline) |
 
 ## Regression Gate
 
-**Every regression case must pass before the PR phase.**
+**Every regression case must pass before PR.**
 
-If a case fails, the fix has collateral damage — do NOT ship it. **Hand back to Optimization · Collect** with the regressed case(s) as the new failure set (exactly like Eval Step EVAL.4 case 4), so Diagnose can scope the fix more narrowly (e.g. a conditional clause for the specific failing scenario type rather than a blanket prompt-wide change). This re-enters the loop and counts toward the iteration cap. Keep the regressed cases in the validation set thereafter so the loop catches re-regressions.
+Any failure = collateral damage — do NOT ship. **Hand back to Optimization · Collect** with the regressed case(s) as the new failure set (exactly like EVAL.4 case 4), so Fix can scope the fix more narrowly (a conditional clause for the specific type rather than a blanket prompt-wide change). This re-enters the loop and counts toward the iteration cap. Keep regressed cases in the validation set thereafter so re-regressions are caught.
 
-Only when every regression case passes, hand off to [`pr.md`](pr.md) with the full result-URL set (reproduction fail-runs + verification pass-runs + regression pass-runs).
+Only when every case passes, hand off to [`pr.md`](pr.md) with the full result-URL set (reproduction fail-runs + verification pass-runs + regression pass-runs).

@@ -1,167 +1,142 @@
-# Reproduce Phase — Build a Faithful Replay of the Prod Call, Then Gate on a Definitive FAIL
+# Reproduce Phase — Build the Harness, Then Gate on a Definitive FAIL
 
-This phase runs **once per invocation**, after Setup (and Clone, for VAPI / ElevenLabs) and before the Optimization loop. It exists for one reason: the loop is only as trustworthy as the failure it iterates against. Before any edit is proposed, the skill stands up a controlled reproduction of the production failure on Cekura and **proves the bug reproduces** — otherwise every later iteration is chasing a failure it can't measure.
+Runs **once**, after Debug (Setup / Clone / Collect precede it), before the Optimization loop. Debug has established the root cause and failure class, and Collect (COLLECT.6) recorded the replay artifacts; Reproduce turns them into a controlled harness and **proves it fails** before any edit. If it can't be made to fail, stop.
 
-**When this phase does real work vs. passes through:**
+## Entry branch (on the signal)
 
-- **Prod-call inputs (`call_ids`, or a `result_id` / `run_ids` that point at production call logs rather than simulation runs)** → full procedure below. The skill auto-builds the reproduction harness from the prod call's own trace (mock tools, expected tool returns, main-agent dynamic variables, testing-agent variables), constructs the evaluator, branches the harness shape on the failure class, and runs the must-fail-first gate.
-- **Simulation-run inputs (`scenario_ids`, or a `result_id` / `run_ids` from a Cekura simulation)** → the reproduction artifacts already exist as scenarios. Skip harness construction (REPRO.3) and evaluator construction (REPRO.4); still run REPRO.1 (debug / root-cause) lightly, REPRO.2 (LLM-vs-infra classification, which drives the dataset-vs-single harness-shape branch; the stochastic re-run policy is now the same 5–10× ≥M/N gate for both classes), and REPRO.6 (must-fail-first gate against the existing scenarios). A scenario that doesn't fail on re-run is not a reproduction — surface and stop, same as the prod-call path.
-- **Render-only run (pasted prompt + pasted failures, no reachable live target)** → no live target to replay against. Skip this phase entirely; the pasted `{transcript, expected_outcome, verdict}` blocks are the only available failure signal. The must-fail-first and must-pass gates degrade to "the user re-pastes failures each iteration" (handled in Eval).
+- **Prod-call inputs** (`call_ids`, or a `result_id` / `run_ids` pointing at production call logs) → full procedure. Auto-build the harness from the call's own trace (mocks, expected returns, dynamic vars, testing-agent vars), construct the evaluator, branch on failure class, run the gate.
+- **Code bug** (owned self-hosted source — incl. STT / transport / timing / forked-SDK bugs) → **code-fix branch** (REPRO.CB below). This covers both a root cause supplied up front **and one Debug resolved from any signal (including a prod call) to owned code that won't reproduce in simulation** — the branch follows Debug's resolved surface, not just the raw input shape. The harness is a **failing test**, not a Cekura scenario; the root cause is consumed as-is, not re-derived. A passing Cekura simulation is EXPECTED here, not a stop condition.
+- **Simulation-run inputs** (`scenario_ids`, or a `result_id` / `run_ids` from a Cekura simulation) → artifacts already exist as scenarios. Skip REPRO.3 and REPRO.4; run REPRO.2 (drives harness shape), REPRO.6 against the existing scenarios. A scenario that doesn't fail on re-run is not a reproduction — surface and stop.
+- **Render-only** (pasted prompt + pasted failures, no reachable live target) → skip this phase. The pasted `{transcript, expected_outcome, verdict}` blocks are the only signal; the gates degrade to "user re-pastes failures each iteration" (handled in Eval).
 
-> ## ⚠️ SAME CONNECTION MEDIUM AS THE PROD CALL — NO EXCEPTIONS
+> ## ⚠️ SAME VALIDATION MECHANISM AS THE SIGNAL — NO SUBSTITUTES
 >
-> Every reproduction, verification, and regression run MUST be a full end-to-end simulation on Cekura over the **same transport the agent is configured for**. Read the agent record (already fetched in Setup) to confirm transport — telephony / SIP (most common) → `run_voice`; WebRTC → the provider's WebRTC run endpoint. **Text mode, unit tests, pytest, frame-level or any other code-level test harness you author, or any reproduction outside a Cekura end-to-end simulation are never valid substitutes, and you must not switch transports between phases.** This holds even when the failure is a timing/race condition that a live simulation can't force on demand — a code-level test is still not a sanctioned reproduction; if the live sim can't reproduce it, STOP and surface (REPRO.6 "If it PASSES"), do not author a test to stand in for the gate. The bug lives in the real call path; only a simulation over the same medium confirms it.
+> **Simulation-validated targets:** every reproduction / verification / regression run is a full end-to-end Cekura simulation over the **same transport the agent uses** (from the agent record fetched in Setup — telephony / SIP → `run_voice`; WebRTC → the provider's WebRTC endpoint). Do not switch transports between phases; do not substitute text mode or a hand-authored code test for the simulation. If a timing/race failure can't be forced in a live sim, STOP and surface (REPRO.6) — do not author a test to stand in.
+>
+> **Code-fix targets (REPRO.CB):** the opposite — the sanctioned harness IS a test suite, and a passing simulation is expected. The two paths never cross: a signal is EITHER simulation-validated OR test-validated, decided by the entry branch.
 
 ---
 
-## Step REPRO.1 — Debug the prod call and confirm the root cause
+## Step REPRO.CB — Code-fix branch (test-backed harness)
 
-Fetch the full production call and build a complete picture of what went wrong **before** touching any harness or evaluator.
+Use when the signal is a diagnosed bug in **owned self-hosted source** (orchestration or a vendored/forked SDK in the tree). This is a **CodeBug (in-scope)**, never Upstream — Upstream is only code the user genuinely cannot edit.
 
-```bash
-get_call "CALL_ID"
-```
+1. **Consume the root cause as given** — file + failing path come from Debug; do not re-derive. Confirm only that the responsible path exists.
+2. **Harness = a failing test.** Author a test that fails against current code. Prefer deterministic; when the trigger is intermittent (timing/race), make it re-runnable under the stochastic gate.
+3. **Must-fail-first gate = that test failing.** Deterministic test → fails every run. Intermittent → fails ≥ M of N (REPRO.6 thresholds). A passing Cekura simulation is NOT a reason to stop.
+4. **Apply path = offline / PR** (`redeploy_command` `"noop"` / offline; no live redeploy).
+5. Hand off with: the failing test as the harness, failure class = CodeBug, and the source file + root cause + originating call (for the PR body). Verification (Eval) = the same test(s) passing; Regression = existing suite + the new test.
 
-Extract and record:
+Skip REPRO.3–REPRO.5 (mock/evaluator/dataset construction) — those are simulation artifacts.
 
-| Field | Path | Why it matters downstream |
+---
+
+## Step REPRO.2 — Classify the failure class (drives harness shape only)
+
+This drives **one** decision — harness shape (REPRO.5). The re-run policy is the **same 5–10× ≥ M of N gate for both classes**. The class is a *preview* from prod evidence, not the authoritative Fix verdict (per-failure, in-loop — see [`optimization/fix.md`](optimization/fix.md) FIX.4).
+
+| Class | Fix buckets | Harness shape |
 |---|---|---|
-| Agent under test | the agent that handled this call (the call record's agent reference) | every reproduction artifact is created under this agent |
-| Personality ID | `metadata.personality_id` | testing-agent persona for the replay |
-| Project ID | `project` on the agent record | result URLs in the PR / summary |
-| Main-agent dynamic variables | `dynamic_variables` (call metadata) | REPRO.3 copies these onto the agent |
-| Tool-call trace | `transcript_object` + provider call object (`artifact.messages[*].toolCalls`, or the provider `/logs` request/response pairs) | REPRO.3 derives mock-tool entries + expected returns |
-| Ended reason | `metadata.ended_reason` | early-end signal |
-| Transcript | `transcript_object` (turns with role + content) | testing-agent turns for the replay |
-| Failing metrics | `runs[].evaluation.metrics[]` | fallback evaluator construction (REPRO.4) |
+| **LLM-based** | Gap / Conflict / Ambiguity (over-eager-transfer, premature-exit patterns) | **dataset** of N varied scenarios |
+| **Infra** | CodeBug (source truncation, broken state, missing tool-result forwarding) / Upstream-infra (mock wiring, idle timer, DTMF, telephony) | **single** evaluator |
 
-Then pull logs and traces around the call timestamp using whatever observability is configured (Datadog, Grafana, CloudWatch, Langfuse, LLMObs, etc.) — search by `call_id` / `session_id` / agent ID / timestamp. Look for: exceptions in the call handler, unexpected tool inputs/outputs, timeouts or slow spans (STT / LLM / TTS / tool), upstream services returning empty or malformed responses, and gaps between transcript turns that suggest a silent failure. Cross-reference findings turn-by-turn with `transcript_object` to pinpoint exactly where the call diverged.
+Both re-run 5–10× at the gate because real behavior — LLM and real-transport infra alike — is intermittent: an infra bug that's deterministic in *cause* still fires only sometimes over telephony/SIP/WebRTC (timing/audio/latency/interruption races), so a single run can false-PASS. A truly deterministic infra bug fails all N trivially; an intermittent one is caught as long as it fails ≥ M of N.
 
-**Root-cause summary** — write down: what the caller said, what the agent did wrong, the suspected root cause, which code path / artifact is responsible, and which metrics were failing.
-
-**Gate:** present the root-cause summary and confirm with the user before building anything. *(In `auto_mode: true`, render the summary and proceed unless the root cause is genuinely ambiguous or low-confidence — then pause and ask, per the orchestrator's "when to ask" rules. A wrong root cause here wastes the whole loop.)*
+When the prod call shows symptoms of both, default to **LLM-based + dataset** (larger sample is the safe error).
 
 ---
 
-## Step REPRO.2 — Classify the failure: LLM-based vs. infra
+## Step REPRO.3 — Auto-build the reproduction harness (prod-call inputs)
 
-This classification drives **one** later decision — the harness shape (REPRO.5: a dataset of N varied scenarios for LLM-based vs. a single evaluator for infra). The stochastic re-run policy (REPRO.6, Eval) is now the **same for both classes** — auto re-run 5–10× and gate on ≥ M of N. The classification still falls directly out of the existing Diagnose taxonomy (see [`optimization/diagnose.md`](optimization/diagnose.md) Step DIAGNOSE.3):
+Replay the call faithfully with zero manual setup by the user. Derive every artifact from the call's own trace — never from prompt-guessing.
 
-| Class | Diagnose buckets | Nature | Harness shape | Re-run policy |
-|---|---|---|---|---|
-| **LLM-based** | Gap / Conflict / Ambiguity (and over-eager-transfer / premature-exit prompt patterns) | Probabilistic agent behavior — the model *sometimes* gets it wrong | **dataset** of N scenarios (REPRO.5) | auto re-run 5–10× (REPRO.6) |
-| **Infra** | CodeBug (source-code history truncation, broken state, missing tool-result forwarding) / Upstream-infra (mock-tool wiring, idle timer, DTMF parsing, telephony) | Deterministic in *cause*, but over a real transport (telephony / SIP / WebRTC) the manifestation is often intermittent — timing, audio, latency, and interruption races don't fire on every run | **single** evaluator (REPRO.5) | auto re-run 5–10× (REPRO.6) |
-
-> **Why infra also re-runs 5–10× (not once).** Earlier revisions ran infra a single time on the theory that a deterministic bug fails identically every time. Over a real transport that assumption breaks: timing/audio/latency/interruption-collision failures are intermittent even when their root cause is fixed code, so a single run routinely *misses* the bug and produces a false PASS at the must-fail gate. Running 5–10× and gating on ≥ M of N is robust to both — a truly deterministic infra bug simply fails all N (clearing the gate trivially), while an intermittent one is still caught as long as it fails in ≥ M of N. The only thing the LLM-vs-infra split still drives is the **harness shape** (dataset of N *varied* scenarios for LLM-based vs. one evaluator for infra), not the re-run count.
-
-This is a *preview* classification from the prod call's evidence, not the authoritative Diagnose verdict (that's still produced inside the loop, per failure). It only needs to be good enough to pick the harness shape (the re-run count is the same either way). When the prod call shows symptoms of both (e.g., a prompt gap that only triggers when a mock returns a specific shape), default to **LLM-based + dataset** — the larger sample is the safe error.
+- **REPRO.3a — Mock tool entries.** Every tool the call invoked must appear in the agent's mock-tool JSON (name + parameter schema matching what the agent actually sent). Self-hosted: mocks are the testing contract — set the full desired `mock_tools` on the agent (fetch → merge → write back). VAPI / ElevenLabs: tools already exist on the cloned agent; here you only set their return values (3b).
+- **REPRO.3b — Expected return values.** Set each mock's return to the **actual production response** (read the req→resp pairs from the call object / provider `/logs`, not what the prompt says it "should" return). Same tool, different args → different responses: encode the per-invocation mapping (`freetext_params` / argument-keyed mock data). A plausible-but-different value won't reproduce the bug.
+- **REPRO.3c — Main-agent dynamic variables.** Copy `dynamic_variables` from call metadata onto the agent (assistant-/squad-level, per provider) **verbatim** — the bug may depend on them. Don't invent or normalize. Leave `{{...}}` placeholders in the prompt untouched; you're setting the values they resolve to.
+- **REPRO.3d — Testing-agent variables.** Populate the testing-agent/scenario layer (caller persona, context payload, scripted fields, test-profile vars) from the call. Use the prod `personality_id`; extract caller turns from `transcript_object` **verbatim** — garbled text, truncations, STT artifacts are exactly what the LLM received and are often the trigger. Do not clean them up.
 
 ---
 
-## Step REPRO.3 — Auto-build the reproduction harness (prod-call inputs only)
+## Step REPRO.4 — Construct the evaluator (prefer `expected_outcome`)
 
-The whole point of this phase: **replay the prod call faithfully with zero manual mock/variable setup by the user.** Derive every artifact below from the prod call's own trace — never from prompt-guessing.
+**Default: derive pass/fail bullets from the scenario's `expected_outcome`** — express the behavior that should have happened as bullets. Higher-signal, and aligned with how Fix keys off expected-outcome bullets. Defaulting to the prod metric drags metric-judge noise in as a confounder.
 
-### REPRO.3a — Mock tool entries
+**Fallback — attach the prod metric directly — only when the failure is out of scope for `expected_outcome`** (latency / sentiment / interruption-score / infrastructure metrics that don't map to behavioral bullets). Attach the exact failing metric(s) from Collect's failing-metric record (COLLECT.6).
 
-Every tool the prod call invoked must appear in the Cekura agent's mock-tool JSON. Walk the tool-call trace from REPRO.1 and, for each distinct tool the agent called, ensure a mock-tool entry exists (name + parameter schema matching what the agent actually sent).
+If unsure whether `expected_outcome` can express the failure, prefer it and add the prod metric as a secondary check — do not silently drop to metric-only. Genuinely ambiguous → ask.
 
-For self-hosted agents, mock tools are the Cekura testing contract — set them on the agent record (the full desired `mock_tools` list: fetch current → merge → write back). For VAPI / ElevenLabs, the referenced tools already exist on the cloned agent (Clone phase copied them); here you set their *mock return values* (next step) so the replay is deterministic.
-
-### REPRO.3b — Expected mock tool return values
-
-For each tool invocation in the prod trace, set the mock's return value to the **actual response the tool produced in production** — read it from the request → response pairs in the call object / provider `/logs`, not from what the prompt says the tool "should" return. If the same tool was called multiple times with different arguments → different responses, encode the per-invocation mapping (`freetext_params` / argument-keyed mock data) so each call in the replay returns what it returned in prod. A mock that returns a plausible-but-different value will not reproduce the bug.
-
-### REPRO.3c — Main-agent dynamic variables
-
-Copy `dynamic_variables` from the prod call's metadata onto the agent (assistant-level / squad-level dynamic variables, per provider). These are the values the live agent had at call time — the bug may depend on them. Do **not** invent or normalize them; copy verbatim. (Leave `{{...}}` placeholders in the prompt untouched — you're setting the *values* they resolve to, not editing the placeholders.)
-
-### REPRO.3d — Testing-agent variables
-
-Wherever the testing-agent / scenario layer accepts variables — caller persona, context payload, scripted fields, test-profile variables — populate them from the prod call so the simulated caller mirrors the real one. Use the prod `personality_id` for the persona, and extract the testing-agent (caller) turns from `transcript_object` **verbatim** — garbled text, truncated words, STT artifacts are exactly what the main agent's LLM received in production and are often the bug trigger. Do not clean them up.
-
----
-
-## Step REPRO.4 — Construct the evaluator (prefer `expected_outcome`, fall back to the prod metric)
-
-**Default: derive the evaluator's pass/fail bullets from the scenario's `expected_outcome` field.** Express the behavior that should have happened as expected-outcome bullets. These are higher-signal, easier to reason about, and align with how Diagnose classifies failures (it keys off expected-outcome bullets). Defaulting to the prod metric instead drags metric-judge noise in as a confounder.
-
-**Fallback — use the prod metric directly — only when the failure mode is genuinely out of scope for `expected_outcome`:** i.e., the failure is a latency / sentiment / interruption-score / infrastructure metric that doesn't map to behavioral bullets. In that case attach the exact metric(s) that were failing in the prod call (from REPRO.1's `runs[].evaluation.metrics[]`) rather than inventing behavioral bullets a behavioral judge can't score.
-
-If you're unsure whether `expected_outcome` can express the failure, prefer `expected_outcome` and add the prod metric as a secondary check — but do not silently drop to metric-only. When the choice is genuinely ambiguous, ask the user.
-
-Create the scenario(s) under the agent that handled the failing call so the replay runs against the correct configuration:
+Create the scenario(s) under the agent that handled the failing call:
 
 ```bash
 create_scenario '{
   "agent": AGENT_ID,
   "personality": PERSONALITY_ID,
-  "name": "Bug repro: <brief issue description>",
+  "name": "Bug repro: <brief issue>",
   "instructions": "Replay the production call that caused <issue>.",
   "expected_outcome": "<behavioral bullets derived from the prod failure>",
   "conditional_actions": { "role": "caller", "conditions": [ /* verbatim testing-agent turns from REPRO.3d */ ] }
 }'
 ```
 
-(For the fallback path, omit `expected_outcome` bullets that can't express the failure and attach `"metrics": [METRIC_ID_1, ...]` instead.) Save the `scenario_id`(s).
+(Fallback path: omit inexpressible bullets and attach `"metrics": [METRIC_ID_1, ...]`.) Save the `scenario_id`(s).
 
 ---
 
-## Step REPRO.5 — Branch the harness shape on the failure class
+## Step REPRO.5 — Branch harness shape on the failure class (REPRO.2)
 
-From REPRO.2:
-
-- **LLM-based → build a dataset of N scenarios.** One reproduction scenario alone gives the loop too little signal to tell a real fix from a lucky sample. Build `N` scenarios (default `N = 8`, configurable via `dataset_size`, range 5–10) that all exercise the *same* failure mode with light variation — vary the caller's phrasing / order / incidental details while keeping the trigger condition (the thing that broke) constant. The prod replay is scenario 1; the rest are near-variants. This dataset is the **full set** for the rest of the loop (Eval, regression).
-- **Infra → a single evaluator (but still run it N times).** Infra failures don't need a *dataset* of varied scenarios — the trigger is fixed, so one faithful replay is the right harness. But that single evaluator is still re-run 5–10× at the gate (REPRO.6), because over a real transport the failure may be intermittent. The single repro scenario is the full set.
+- **LLM-based → dataset of N scenarios.** One scenario gives too little signal to tell a real fix from a lucky sample. Build `N` (default 8, `dataset_size` 5–10) exercising the *same* failure mode with light variation — vary caller phrasing / order / incidental details, hold the trigger constant. Prod replay is scenario 1; the rest are near-variants. This dataset is the **full set** for the loop (Eval, regression).
+- **Infra → a single evaluator** (still re-run 5–10× at the gate). One faithful replay is the right harness; the trigger is fixed. The single repro scenario is the full set.
 
 ---
 
-## Step REPRO.6 — Must-fail-first gate (the hardest gate in the skill)
+## Step REPRO.6 — Must-fail-first gate
 
-> ## ⛔ ABSOLUTE HARD STOP — DO NOT ENTER THE OPTIMIZATION LOOP WITHOUT A DEFINITIVE FAIL.
+> ## ⛔ HARD STOP — DO NOT ENTER THE LOOP WITHOUT A DEFINITIVE FAIL.
 
-Run the reproduction evaluator(s) on Cekura over the agent's transport and **require a definitive FAIL before any edit is proposed or applied.**
+Run the harness and require a definitive FAIL before any edit. **Simulation targets:** run the evaluator(s) on Cekura over the agent's transport. **Code-fix targets (REPRO.CB):** run the test suite — the gate is that test failing.
 
-### Re-run policy (from REPRO.2)
+### Re-run policy (both classes)
 
-- **LLM-based (dataset):** the skill **auto-triggers the runs itself** — do NOT ask the user to trigger each one. Run the evaluator(s) **5–10 times** (default `N = 8`, configurable via `stochastic_runs`). Because agent behavior is probabilistic, a single failing run is not proof the bug is real and reproducible. **The bug counts as reproduced only if it fails in ≥ M of N runs** (default `M = ⌈N/2⌉`, e.g. ≥4/8 or ≥5/10 or ≥3/5 — tune via `repro_threshold`). Fewer than M fails → the bug is not reliably reproducible from this harness; surface and stop (see "If it passes" below).
-- **Infra (single evaluator, also re-run):** auto-trigger the **same single evaluator 5–10 times** (same `stochastic_runs` default and `repro_threshold` ≥ M of N as LLM-based) — do NOT settle for one run. A real-transport infra failure (timing / audio / latency / interruption collision) is frequently intermittent even though its cause is deterministic code; a single run can silently miss it and produce a false PASS. A genuinely deterministic infra bug will fail all N and clear the gate trivially; an intermittent one clears it as long as it fails in ≥ M of N. The difference from LLM-based is only the harness shape (one evaluator, not a dataset of N varied scenarios), not the run count.
+The skill **auto-fires N runs itself** — never ask the user to trigger each. Run **5–10×** (default `N = 8`, `stochastic_runs`). **Reproduced only if it fails ≥ M of N** (default `M = ⌈N/2⌉`, e.g. ≥4/8, ≥5/10, ≥3/5 — `repro_threshold`). Fewer than M → not reliably reproducible; surface and stop.
+
+- **LLM-based:** dataset of N varied scenarios.
+- **Infra:** the same single evaluator ×N.
+- **Code-fix:** the test ×N (deterministic → all N; intermittent → ≥ M of N).
+
+The only thing the class changes is harness shape, not the run count.
 
 ```bash
-# Both classes: the skill fires N runs without prompting the user between them
+# Simulation targets: N runs fired without prompting between them
 run_voice "SCENARIO_ID" '{"agent_number": "<caller_id>"}'   # ×N
 get_result "RESULT_ID"                                        # poll each to terminal
 ```
 
-**Self-hosted live targets:** launch the main agent and pass it the per-run Cekura connection details using the run-setup steps saved in `memory.md` / `CLAUDE.md` (Setup Step 1.4a). If those launch steps weren't captured at Setup, ask the user now and persist them to `memory.md` / `CLAUDE.md` before the first run — don't guess how to start the agent.
+**Self-hosted live targets:** launch the main agent with the per-run Cekura connection details using the run-setup steps in `.claude/CLAUDE.md` / `.claude/MEMORY.md` (Setup 1.4a). If those weren't captured, ask now and persist before the first run — don't guess how to start the agent.
 
 ### What "fails" means
 
-Failure means the **Cekura metric / expected-outcome scores** show failure — not that the call merely ended, errored, or the transcript "looks wrong." Read `runs[].evaluation.metrics[]` (or expected-outcome verdict) on each result. The same failure mode the prod call showed must be present in the replay transcript **and** reflected in the scores. Compare the replay transcript turn-by-turn with the prod transcript.
+The **Cekura metric / expected-outcome scores** (or, for code-fix, the **test result**) show failure — not merely that the call ended, errored, or "looks wrong." Read `runs[].evaluation.metrics[]` (or expected-outcome verdict) per result. The prod failure mode must be present in the replay transcript **and** reflected in the scores; compare replay vs. prod turn-by-turn.
 
 ### Errors are NOT a reproduction
 
-If a run errored, the call didn't connect, or the bot crashed → **fix it and retry that run.** An error is not a FAIL and does not count toward the M-of-N threshold. If you can't get the simulation to run at all, stop and ask the user.
+A run that errored / didn't connect / crashed → **fix and retry that run.** An error is not a FAIL and doesn't count toward M-of-N. If the sim won't run at all, stop and ask.
 
 ### If it PASSES (below the fail threshold) — STOP and surface
 
-If the evaluator passes (or fails fewer than M of N times), the bug is **not reproduced** — do not enter the loop. The most likely causes, in order:
+*(Simulation targets only — for code-fix a passing simulation is expected; the gate is the failing test.)* Below M-of-N fails → not reproduced. Most likely causes, in order:
 
-1. **Mock/variable mismatch** — a mock tool returns a different value than prod (REPRO.3b), a dynamic variable wasn't copied (REPRO.3c/d), or the testing-agent turns were cleaned up instead of replayed verbatim (REPRO.3d). Re-check the harness against the prod trace.
-2. **Stale fix** — the bug was already fixed on the live agent since the prod call. Confirm with the user; if so, there's nothing to do.
-3. **Wrong evaluator** — the bullets / metric don't actually detect this failure (REPRO.4).
+1. **Mock/variable mismatch** — a mock returns a different value than prod (3b), a dynamic var wasn't copied (3c/d), or caller turns were cleaned up instead of replayed verbatim (3d). Re-check the harness against the trace.
+2. **Stale fix** — already fixed on the live agent since the call. Confirm; if so, nothing to do.
+3. **Wrong evaluator** — bullets / metric don't detect this failure (REPRO.4).
 
-Show the user the replay transcript + scores side-by-side with prod and ask: "this didn't reproduce the prod failure — is the harness wrong, or was this already fixed?" Do not guess, and do not proceed into the loop on an unreproduced bug.
+Show the replay transcript + scores side-by-side with prod and ask: "this didn't reproduce the prod failure — is the harness wrong, or was this already fixed?" Do not guess or proceed into the loop on an unreproduced bug.
 
 ---
 
 ## Hand-off to the Optimization loop
 
-When the must-fail gate is satisfied (a definitive FAIL in ≥ M of N runs — for both LLM-based and infra), hand off to [`optimization/collect.md`](optimization/collect.md) with:
+When the must-fail gate is satisfied (definitive FAIL in ≥ M of N — simulation, or the failing test for code-fix), hand off to the Optimization loop ([`optimization/fix.md`](optimization/fix.md)) with:
 
-- The **reproduction scenario IDs** as the loop's input (replacing the raw `call_ids` — from here on the loop iterates against the controlled replay, not the raw prod log).
-- The recorded **full set** (the N-scenario dataset for LLM-based; the single scenario for infra) and the **failure class** (LLM-based / infra), which Eval reads for its must-pass re-run policy.
-- The root-cause summary, the harness inventory (mocks + variables set), and the failing fail-run result URLs (these go in the eventual PR / summary as the reproduction evidence).
-- The prod call ID + project ID (for the final PR / summary).
-
-The Optimization loop, Overfitting Gate, and Eval then run exactly as documented — now anchored to a reproduction the skill has proven fails.
+- The **harness** — reproduction scenario IDs (or the failing test, for code-fix) — as the loop's validation target; from here the loop iterates against it, not the raw prod log.
+- The **full set** (N-scenario dataset for LLM-based; single scenario for infra; test suite for code-fix) and the **failure class**, which Eval reads for its must-pass re-run policy.
+- The harness inventory (mocks + variables, or the test) and the failing result URLs / test output (reproduction evidence for the PR / summary). The root-cause summary + replay artifacts (from Debug / Collect) travel on run state.
