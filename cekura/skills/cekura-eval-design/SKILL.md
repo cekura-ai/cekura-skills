@@ -444,9 +444,9 @@ These three form one cohesive test data set and must be designed together. Key p
 
 **See `references/test-data-design.md`** for the full approach-selection guide, decision matrix for new vs. reuse, fuzzy-match variation rules, chain dependency design, dynamic variable wiring, and API reference.
 
-**Expected mock tool calls — see `references/expected-mock-tool-calls.md`.** The mock data above makes mocks *fire*, but a scenario's expected mock tool calls (`generated_mock_tool_entries`) — the record the *Mock tool call accuracy* metric grades against — are populated **only** by platform auto-generation, not by the create/update call (the field isn't in that request schema; it's REST-PATCH-only). Two cases route to that reference:
-- **You just authored a tool-using scenario here** and want its tool calls tracked → fill them in as a follow-up step. Optional; skip if you don't need tool-call scoring, and it does not require any metric to be enabled.
-- **The user only wants to fill in or repair the expected mock tool calls** on an existing scenario (dashboard-authored, CSV import, earlier session) → go **straight** to that reference and do just that step; don't run the full design workflow.
+**Expected mock tool calls — see `references/expected-mock-tool-calls.md`.** **Approach B only.** This step applies only when the evaluator runs against **Cekura mock tools**. Under Approach A the tools are served by the client's staging backend and under Approach C there are no tools — in both cases there are no mock calls to expect, so skip this entirely. For Approach B: the mock data above makes mocks *fire*, but a scenario's expected mock tool calls (`generated_mock_tool_entries`) — the record the *Mock tool call accuracy* metric grades against — are populated **only** by platform auto-generation, not by the create/update call (the field isn't in that request schema; it's REST-PATCH-only). Two cases route to that reference:
+- **You just authored an Approach B scenario here** (its tools are mocked by Cekura) and want its tool calls tracked → fill them in as a follow-up step. Optional; skip if you don't need tool-call scoring, and it does not require any metric to be enabled.
+- **The user only wants to fill in or repair the expected mock tool calls** on an existing scenario (dashboard-authored, CSV import, earlier session) → first confirm the scenario's agent actually has Cekura mock tools configured (if not, there is nothing to fill — say so instead of inventing mocks); then go **straight** to that reference and do just that step; don't run the full design workflow.
 
 ## Tagging Strategy
 
@@ -494,7 +494,7 @@ After completing eval design, the user typically needs:
 
 - **`references/choosing-personality.md`** — Full personality selection logic: sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status, fallback rules
 - **`references/test-data-design.md`** — Approach selection (A/B/C), mock tool data design (per-input branching, fuzzy-match variation, phone format variants, chain dependencies, append-not-replace), test profile creation and reuse decision matrix, dynamic variable wiring, data flow by mode, API reference
-- **`references/expected-mock-tool-calls.md`** — Filling a scenario's `generated_mock_tool_entries` (expected mock tool calls) when it has none: the data model, the REST-only write path, the fill-in procedure, and validation. Also the standalone "just fill/repair the expected mock calls on an existing scenario" path.
+- **`references/expected-mock-tool-calls.md`** — Filling a scenario's `generated_mock_tool_entries` (expected mock tool calls) when it has none — **Approach B (Cekura mock tools) only**: the data model, the REST-only write path, the fill-in procedure, and validation. Also the standalone "just fill/repair the expected mock calls on an existing scenario" path.
 - **`references/conditional-actions.md`** — Conditional actions: field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, quick-reference card
 - **`references/expected-outcomes.md`** — Writing rules, prioritization hierarchy, metric variables, good/bad examples
 - **`references/coverage-patterns.md`** — Test coverage category breakdowns

@@ -4,7 +4,9 @@ Populate a scenario's **expected mock tool calls** (the `generated_mock_tool_ent
 
 ## When to use this
 
-Use it in two situations:
+**Precondition — the evaluator must use Cekura mock tools (Approach B in `test-data-design.md`).** Expected mock tool calls only exist to record which *mocked* calls should fire. If the scenario's tools are served by the client's staging backend (Approach A) or the agent has no tools at all (Approach C), this document does not apply — do not add `generated_mock_tool_entries`, and do not create mock tools just to have something to record. Verify the agent has Cekura mock tools configured before proceeding; if it doesn't, stop and tell the user.
+
+With that precondition met, use it in two situations:
 
 - **After authoring a tool-using scenario directly** (conditional-actions / scripted / structured) — the create/update call does not set expected mock tool calls, so add them as a follow-up.
 - **On its own, to fill in or repair** the expected mock tool calls of a scenario that already exists (authored in the dashboard, imported from CSV, or built in an earlier session). In this mode, skip the design workflow — do not touch the scenario's conditions, outcome, metrics, or profile beyond what's needed for consistency.
