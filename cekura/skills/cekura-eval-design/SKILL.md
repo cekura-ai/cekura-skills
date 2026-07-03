@@ -7,15 +7,17 @@ description: >
   actions", "write a conditional action evaluator", "build a deterministic test", "design an
   IVR test", "IVR navigation test", "write a unit test for a voice agent", "build a regression
   test", "scripted scenario", "scripted voice test", "structured evaluator", "exact flow test",
-  "sequential conditions", "fixed sequence test", or "run evals". Covers individual evaluator design, suite coverage
-  strategy, test profiles, mock-tool data design, conditional actions (deterministic / unit
-  test / regression / IVR navigation flows), and best practices for workflow / red-team /
-  edge-case / deterministic test types.
+  "sequential conditions", "fixed sequence test", "run evals", "fill in expected mock tool calls",
+  "add expected mock calls to a scenario", "backfill mock tool data", or "fix missing mock data".
+  Covers individual evaluator design, suite coverage strategy, test profiles, mock-tool data design,
+  a scenario's expected mock tool calls (`generated_mock_tool_entries`) for tool-call scoring,
+  conditional actions (deterministic / unit test / regression / IVR navigation flows), and best
+  practices for workflow / red-team / edge-case / deterministic test types.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.4.1"
+  version: "0.5.0"
 ---
 
 # Cekura Eval Design
@@ -442,7 +444,9 @@ These three form one cohesive test data set and must be designed together. Key p
 
 **See `references/test-data-design.md`** for the full approach-selection guide, decision matrix for new vs. reuse, fuzzy-match variation rules, chain dependency design, dynamic variable wiring, and API reference.
 
-**Expected mock tool calls (tool scenarios you author directly):** the mock data above makes mocks *fire*, but a scenario's expected mock tool calls (`generated_mock_tool_entries`) are populated only by platform auto-generation, not by the create/update call. If you author a tool-using scenario directly here and want its tool calls tracked for scoring/observability (e.g. the *Mock tool call accuracy* metric), populate them as a separate step (REST-only) using the `cekura-fill-expected-mock` skill. It's optional — skip it if you don't need tool-call scoring; it does not require any metric to be enabled.
+**Expected mock tool calls — see `references/expected-mock-tool-calls.md`.** The mock data above makes mocks *fire*, but a scenario's expected mock tool calls (`generated_mock_tool_entries`) — the record the *Mock tool call accuracy* metric grades against — are populated **only** by platform auto-generation, not by the create/update call (the field isn't in that request schema; it's REST-PATCH-only). Two cases route to that reference:
+- **You just authored a tool-using scenario here** and want its tool calls tracked → fill them in as a follow-up step. Optional; skip if you don't need tool-call scoring, and it does not require any metric to be enabled.
+- **The user only wants to fill in or repair the expected mock tool calls** on an existing scenario (dashboard-authored, CSV import, earlier session) → go **straight** to that reference and do just that step; don't run the full design workflow.
 
 ## Tagging Strategy
 
@@ -490,6 +494,7 @@ After completing eval design, the user typically needs:
 
 - **`references/choosing-personality.md`** — Full personality selection logic: sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status, fallback rules
 - **`references/test-data-design.md`** — Approach selection (A/B/C), mock tool data design (per-input branching, fuzzy-match variation, phone format variants, chain dependencies, append-not-replace), test profile creation and reuse decision matrix, dynamic variable wiring, data flow by mode, API reference
+- **`references/expected-mock-tool-calls.md`** — Filling a scenario's `generated_mock_tool_entries` (expected mock tool calls) when it has none: the data model, the REST-only write path, the fill-in procedure, and validation. Also the standalone "just fill/repair the expected mock calls on an existing scenario" path.
 - **`references/conditional-actions.md`** — Conditional actions: field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, quick-reference card
 - **`references/expected-outcomes.md`** — Writing rules, prioritization hierarchy, metric variables, good/bad examples
 - **`references/coverage-patterns.md`** — Test coverage category breakdowns

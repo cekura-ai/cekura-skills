@@ -31,7 +31,6 @@ cekura-skills/
       cekura-metric-improvement/
       cekura-predefined-metrics/
       cekura-eval-design/
-      cekura-fill-expected-mock/
       cekura-infra-test-suite/
     commands/                    # Slash commands (Claude Code only)
     agents/                      # Sub-agent definitions (Claude Code only)
@@ -125,8 +124,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-metric-design` | Core metric design patterns and best practices |
 | `cekura-metric-improvement` | Metric improvement through feedback iteration |
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
-| `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
-| `cekura-fill-expected-mock` | Fill manual scenarios' expected mock tool calls (`generated_mock_tool_entries`) + matching agent mock data — companion to `cekura-eval-design` |
+| `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory, filling a scenario's expected mock tool calls |
 | `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
 
 ### Commands
