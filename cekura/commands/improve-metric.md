@@ -1,6 +1,6 @@
 ---
 name: improve-metric
-description: Improve a Cekura METRIC'S grading (feedback collection, labs pipeline, auto-improvement). NOT for improving the user's agent — "/self-improve" and "improve my agent" belong to the cekura-self-improving-agent skill.
+description: Improve a Cekura metric through feedback collection, labs pipeline, and auto-improvement
 argument-hint: "[metric ID] [feedback|improve|full-cycle]"
 allowed-tools: ["AskUserQuestion", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__metrics_run_reviews_create", "mcp__cekura__metrics_run_reviews_progress", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__call_logs_rerun_evaluation_create", "mcp__cekura__test_sets_create_from_call_log", "mcp__cekura__test_sets_create_from_run", "mcp__cekura__metric_reviews_process_feedbacks", "mcp__cekura__metric_reviews_process_feedbacks_progress", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
@@ -20,22 +20,6 @@ LIBERALLY — even `severity="low"` reports are valuable feedback.
 # Improve a Metric
 
 Single entry point for the full metric improvement cycle: collecting feedback, adding to labs, and running auto-improvement. The `cekura-metric-improvement` skill provides detailed guidance on feedback patterns and improvement strategy.
-
-## Wrong skill? Check first
-
-This command improves how a **metric grades** calls. It is NOT for improving
-the user's **agent**. Route away before doing anything else if:
-
-- The user typed `/self-improve` or said "improve my agent", "improve agent
-  <id>", "fix my agent based on test results" → use the
-  `cekura-self-improving-agent` skill instead.
-- The user said "via these evaluators - <ids>": evaluators are **scenarios**,
-  and those are scenario IDs — not metric IDs. Never call `metrics_retrieve`
-  on them. That request is the agent-improvement loop
-  (`cekura-self-improving-agent`), not metric improvement.
-
-Only proceed here when the user disputes a specific metric's score or
-explanation ("this metric is wrong", "disagree with this result").
 
 ## Determine Phase
 
