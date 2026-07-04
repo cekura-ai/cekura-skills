@@ -138,6 +138,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `list-metrics` | List metrics for an agent or project |
 | `evaluate-calls` | Run metrics on specific calls |
 | `improve-metric` | Full improvement cycle: feedback, labs, auto-improve |
+| `self-improve` | Entrypoint for agent self-improvement from eval results (loads `cekura-self-improving-agent`) |
 | `manual-create-update-eval` | Create or update a single evaluator with full field walkthrough |
 | `autogen-eval` | Auto-generate evaluators or bulk create from CSV/JSON |
 | `list-evals` | List evaluators for an agent or project |

@@ -23,14 +23,14 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 10 Skills, 14 Commands in one plugin
+### 10 Skills, 15 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
 | `cekura-coordinator` | `cekura-onboarding`, `setup-mcp`, `upgrade-skills`, `report-bug` |
 | `cekura-onboarding` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` |
 | `cekura-create-agent` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report` |
-| `cekura-self-improving-agent` | |
+| `cekura-self-improving-agent` | `self-improve` |
 | `cekura-metric-design` | |
 | `cekura-metric-improvement` | |
 | `cekura-predefined-metrics` | |
@@ -379,6 +379,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `/list-metrics` | List metrics for an agent or project |
 | `/evaluate-calls` | Run metrics on specific calls |
 | `/improve-metric` | Improve metric accuracy: feedback, labs, auto-improve |
+| `/self-improve` | Improve your agent from eval results — entrypoint for the `cekura-self-improving-agent` loop |
 | `/autogen-eval` | Auto-generate evaluators (or bulk create from CSV/JSON) |
 | `/manual-create-update-eval` | Create or update a single evaluator with full field walkthrough |
 | `/list-evals` | List evaluators for an agent or project |
