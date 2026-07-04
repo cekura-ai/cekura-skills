@@ -2,7 +2,10 @@
 name: cekura-self-improving-agent
 description: >
   Use to close the loop on agent quality — turn a failure signal into a
-  verified fix. Triggers: "improve my agent", "self-improving agent",
+  verified fix. Triggers: the "/self-improve" slash command (always this
+  skill, never improve-metric), "improve my agent", "improve agent <id>",
+  "self-improve via these evaluators - <ids>" (evaluator ids are SCENARIO
+  ids to diagnose and re-run, not metric ids), "self-improving agent",
   "auto-tune / iterate on my prompt", "fix my agent from test results",
   "optimize my prompt based on failures", "rewrite my prompt". ALSO for
   production-call bug fixing: "fix this prod call issue", "debug and fix
