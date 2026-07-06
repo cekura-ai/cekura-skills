@@ -151,7 +151,7 @@ Hold this inventory for the handoff context.
 |---|---|
 | No project | Phase 1 - Account & Project Setup |
 | Project, 0 agents | Phase 2 - Agent Configuration |
-| Agent exists, but `description` is empty | Phase 2.1 - Agent description prompt |
+| Agent exists, but `description` is empty | Phase 2 - Agent Configuration (description step, `phase2-agent.md` §2c) |
 | Agent OK, 0 enabled/copied metrics detected | Phase 3 - Metrics Setup |
 | Agent + metrics OK, 0 evaluators | Phase 4 - First Evaluators |
 | Evaluators exist, 0 results | Phase 5 - First Test Run |
@@ -164,12 +164,12 @@ Hold this inventory for the handoff context.
 |---|---|
 | No project | Phase 1 - Account & Project Setup |
 | Project, 0 agents | Phase 2 - Agent Configuration |
-| Agent exists, but `description` is empty | Phase 2.1 - Agent description prompt |
+| Agent exists, but `description` is empty | Phase 2 - Agent Configuration (description step, `phase2-agent.md` §2c) |
 | Agent OK, 0 ingested call logs | Phase 3 - Ingest Call Logs |
 | Call logs exist, 0 enabled/copied metrics | Phase 4 - Configure Metrics |
 | Calls + metrics OK, no evaluation kicked off | Phase 5 - Run Metric Evaluation |
 | Evaluation done, 0 votes recorded | Phase 6 - Review Results & Vote |
-| Votes recorded | Phase 7 - What's Next |
+| Votes recorded | Phase 6 - Review Results & Vote (what's-next section) |
 
 (Vote-count detection is best-effort — `call_logs_list` may not return per-call vote totals. If unclear, resume at Phase 6 and let the skill verify.)
 
