@@ -4,17 +4,24 @@
 
 **Skip this phase entirely if the user is already signed in with a project selected** (or Phase 0's state shows an existing project) — go straight to Phase 2. Don't re-ask account or project facts you already have.
 
-## 1a. Verify account access
+## 1a. Verify account access — OAuth first
 
-Ask:
-- "Do you already have a Cekura account?"
-- "Do you have an API key, or do you sign in via OAuth?"
+**Priority: get the user connected via the Cekura plugin's OAuth flow.** Every supported coding agent has a plugin, and all of them authenticate via OAuth (no API key needed). Full per-client instructions: https://docs.cekura.ai/mcp/overview
 
-If they have an API key, verify it works by listing metrics (`metrics_list`). A successful response (even empty) confirms the key is valid.
+| Client | Install |
+|---|---|
+| Claude Code | `/plugin marketplace add cekura-ai/cekura-skills` → `/plugin install cekura@cekura-skills` → `/setup-mcp` |
+| Claude Desktop | Customize → Plugins → Add marketplace `cekura-ai/cekura-skills` → install → authorize OAuth |
+| Cursor | Settings → Plugins → Add Marketplace → Import from Repo `https://github.com/cekura-ai/cekura-skills` → install → authenticate |
+| Codex | `codex plugin marketplace add cekura-ai/cekura-skills` → `codex plugin add cekura@cekura` → `codex mcp login cekura` |
+| Gemini CLI | `gemini extensions install https://github.com/cekura-ai/cekura-skills` (OAuth triggers on first tool use) |
 
-If they don't have an account, direct them to https://dashboard.cekura.ai/sign-up.
+If platform tools are already working in this session, auth is done — verify with one cheap call (`metrics_list`; a successful response, even empty, confirms access) and move on.
 
-**Claude Code plugin users:** if platform tools aren't working, run `/setup-mcp` to configure API access, then return here.
+**Fallbacks, in order:**
+1. Tools present but failing → re-run the client's OAuth step (`/setup-mcp` in Claude Code) and return here.
+2. User prefers an API key → verify it with `metrics_list`.
+3. OAuth sign-in fails because no Cekura account exists → sign up at https://dashboard.cekura.ai/sign-up, then retry OAuth. Don't lead with the signup link — the OAuth flow is the front door.
 
 ## 1b. Project setup
 
