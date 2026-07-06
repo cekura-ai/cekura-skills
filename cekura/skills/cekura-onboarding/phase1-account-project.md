@@ -21,7 +21,8 @@ If platform tools are already working in this session, auth is done — verify w
 **Fallbacks, in order:**
 1. Tools present but failing → re-run the client's OAuth step (`/setup-mcp` in Claude Code) and return here.
 2. User prefers an API key → verify it with `metrics_list`.
-3. OAuth sign-in fails because no Cekura account exists → sign up at https://dashboard.cekura.ai/sign-up, then retry OAuth. Don't lead with the signup link — the OAuth flow is the front door.
+
+No account? No separate step — the OAuth sign-in page includes a **Sign up** link (and Google/SSO), so the OAuth flow covers account creation too.
 
 ## 1b. Project setup
 
