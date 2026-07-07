@@ -29,7 +29,7 @@ No auto-import for these, so collect their credentials per the create-agent matr
 
 There is **no SDK requirement to onboard**. Simulations dispatch via provider APIs and Cekura produces its own transcript from call audio. The Cekura SDK is a post-first-result upgrade (agent-side traces, tool-call visibility) — offer it in Phase 6T, not here.
 
-1. **Connection mode — prefer telephony when it exists.** Ask: "Does your agent already have a phone number or SIP endpoint?" If yes, connect via phone/SIP (validated in 2d) — it's the fewest moving parts. Use WebRTC dispatch only when there's no phone path:
+1. **Connection mode — prefer telephony when it exists.** Ask: "Does your agent already have a phone number or SIP endpoint?" If yes, connect via phone/SIP — it's the fewest moving parts. Use WebRTC dispatch only when there's no phone path:
    - **Pipecat Cloud**: `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name`. Runs via `scenarios_run_pipecat_v2`.
    - **LiveKit**: `credentials.url` + `api_key` + `api_secret` + `config.agent_name` (must match the worker's `agent_name`). Runs via `scenarios_run_livekit_v2`.
 2. **Keep `provider.type` = `livekit` / `pipecat` regardless of connection mode.** A LiveKit agent reached by phone is still a LiveKit agent — never reroute it to `self_hosted`.
@@ -50,13 +50,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 
 If the user names a known provider at any point, use that `provider.type` even when connecting via phone/SIP.
 
-## 2d. Validate expensive-to-be-wrong inputs (before `aiagents_create`)
-
-- **Phone numbers:** before attaching an outbound number, check the country is supported for Cekura outbound calling. If it isn't (e.g. many non-US/EU country codes), say so now and steer to SIP/WebRTC/websocket instead. Never accept a number Cekura cannot dial.
-- **SIP:** capture the full URI and any auth; flag that it will be verified with a real call in Phase 5T before onboarding is declared done.
-- **Description:** placeholder → flagged open item (2c).
-
-## 2e. Create the agent
+## 2d. Create the agent
 
 Call `aiagents_create` with the collected fields. On validation errors, fix and retry — don't hand the user a dashboard workaround.
 
@@ -66,6 +60,6 @@ Call `aiagents_create` with the collected fields. On validation errors, fix and 
 
 ## Phase 2 Gate
 
-**Do not proceed until `aiagents_create` succeeded AND the connection details are plausible** (provider confirmed, no unsupported phone number). Description: on the **testing** path it must be the real system prompt — a placeholder blocks this gate; on the **observability** path a clearly flagged placeholder is acceptable.
+**Do not proceed until `aiagents_create` succeeded and the provider is confirmed.** Description: on the **testing** path it must be the real system prompt — a placeholder blocks this gate; on the **observability** path a clearly flagged placeholder is acceptable.
 
 Announce: "Phase 2 complete." Then begin the path's Phase 3: [testing](phase3-testing-metrics.md) or [observability](phase3-observability-ingest.md).
