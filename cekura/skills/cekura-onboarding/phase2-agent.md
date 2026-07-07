@@ -2,7 +2,7 @@
 
 > **Start:** Announce "Starting Phase 2 — Agent".
 
-Register the user's agent on Cekura with the **minimum that produces a working, testable connection** — and nothing more. Framing differs by path:
+Register the user's agent on Cekura. Framing differs by path:
 
 - **Testing**: "Let's connect your agent so we can simulate calls against it."
 - **Observability**: "Let's register your production agent so Cekura can attribute uploaded calls to it."
