@@ -22,7 +22,7 @@ Retrieve the agent (`aiagents_retrieve`) and match its configured connection:
 
 ## 5b. Execute
 
-Start small — **3–10 scenarios, `frequency: 1`**. Voice calls take 1–3 minutes each.
+Run **one single scenario, `frequency: 1`** — this run is the end-to-end verification, not a coverage sweep. Voice calls take 1–3 minutes. Once it verifies clean (5c), the user can run the rest of the suite.
 
 ## 5c. Verification gate — the whole point
 
