@@ -32,6 +32,10 @@ allowed-tools:
     "mcp__cekura__scenarios_run_voice",
     "mcp__cekura__scenarios_run_text",
     "mcp__cekura__scenarios_run_websocket",
+    "mcp__cekura__scenarios_run_chirp",
+    "mcp__cekura__aiagents_auto_fetch_progress_retrieve",
+    "mcp__cekura__runs_bulk_retrieve",
+    "mcp__cekura__predefined_metrics_copy_create",
     "mcp__cekura__scenarios_run_pipecat_v1",
     "mcp__cekura__scenarios_run_pipecat_v2",
     "mcp__cekura__scenarios_run_retell_webrtc",
@@ -230,7 +234,7 @@ Context already established:
 Resume at: Phase <N> - <title>
 Skip phases 1..<N-1>. For each remaining phase, use MCP tools where available
 (the skill names the primary tool per phase).
-Confirm with the user at phase boundaries and before write/run operations.
+Announce phase boundaries and keep moving; confirm with the user before write/run operations (creating the agent, starting a test run) and before anything destructive.
 Do not ask known account/project/agent/variant facts again.
 
 User intent for this session: <short string from arguments, or "default end-to-end onboarding">
