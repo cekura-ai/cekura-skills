@@ -9,15 +9,21 @@ Register the user's agent on Cekura. Framing differs by path:
 
 **Provider first — it shapes everything.** Ask before anything else:
 
-> "What provider is your agent built on — VAPI, Retell, ElevenLabs, Synthflow, LiveKit, Pipecat, or something self-hosted/custom?"
+> "What provider is your agent built on — VAPI, Retell, ElevenLabs, Synthflow, LiveKit, Pipecat, Bland, Chirp, KoreAI, Genesys, Cisco, or something self-hosted/custom?"
 
 Then follow the matching section below. For per-provider credential fields, read [`../cekura-create-agent/phase2-provider.md`](../cekura-create-agent/phase2-provider.md) (credential matrix) — follow only the field guidance there, not that skill's phase gates.
+
+**Two rules that apply to EVERY named provider:**
+- **Keep `provider.type` set to the real provider** — never reroute to `self_hosted` because a credential is missing or the agent is reached by phone.
+- **Deferred credentials are fine, but never silent.** If the user won't share an API key yet, fall back to the manual essentials of 2c, tell them which capabilities won't work until the key is added (provider-dispatched simulations, auto-sync, auto-import of calls), and carry it as an open item in every summary. Do not leave a half-connected agent without saying so.
 
 ## 2a. VAPI / Retell / ElevenLabs / Synthflow — auto-import (preferred)
 
 The one high-leverage step: **provider agent ID + provider API key**. Create with `aiagents_create` using `configure_from_provider: true`, then poll `aiagents_auto_fetch_progress_retrieve`. Auto-import pulls the description (system prompt), tools, and config automatically — do not ask the user to paste their prompt when auto-import is available.
 
-**If the user won't share the API key yet:** that's fine — fall back to the manual flow of section 2c, but **keep `provider.type` set to the real provider** (never reroute to `self_hosted` because a key is missing), and tell the user simulations that dispatch via the provider won't run until the key is added. Do not leave a half-connected agent without saying so.
+## 2a′. Bland / Chirp / KoreAI / Genesys / Cisco — standard named providers
+
+No auto-import for these, so collect their credentials per the create-agent matrix (e.g. Bland: `provider.agent_id` = pathway_id; Chirp: websocket URL + basic auth; Cisco: no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.
 
 ## 2b. LiveKit / Pipecat — config-only connection (no SDK, no code changes)
 
