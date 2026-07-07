@@ -6,7 +6,9 @@ The observability path does not generate scenarios or run simulations. You inges
 
 ## 3a. Pick an ingestion mode
 
-Ask: "(a) upload a sample call to see how Cekura processes it, or (b) configure continuous webhook ingestion from your provider?"
+**Default for VAPI / Retell / ElevenLabs / Synthflow / Bland (when the provider API key is on the agent): auto-fetch production calls.** Enable it with `aiagents_auto_fetch_create` (poll `aiagents_auto_fetch_progress_retrieve`) — Cekura pulls the calls from the provider directly, no webhook or manual upload needed. Only fall back to the modes below if the API key was deferred in Phase 2 (surface that as the reason and offer to add the key now).
+
+For other providers — or when no key is available — ask: "(a) upload a sample call to see how Cekura processes it, or (b) configure continuous webhook ingestion from your provider?"
 
 ### (a) One-shot upload — fastest aha-moment, zero integration
 
