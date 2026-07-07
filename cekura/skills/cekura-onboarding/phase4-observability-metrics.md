@@ -18,6 +18,8 @@ Three metrics that cover the high-value bases:
 
 List the catalog with `predefined_metrics_list`; create chosen ones with `metrics_create` / `metrics_bulk_create` (pass `project_id`).
 
+**Do not enable Transcription Accuracy by default on the observability path** — it's a testing-path metric (Phase 3T). Only add it if the user explicitly asks for it on production calls.
+
 ## 4c. LLM-generated metrics (optional)
 
 If the user wants metrics auto-tailored to their agent, use `metrics_generate` (generates from the agent description). Defer careful custom-metric design to the **cekura-metric-design** skill.
