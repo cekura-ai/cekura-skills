@@ -32,6 +32,10 @@ allowed-tools:
     "mcp__cekura__scenarios_run_voice",
     "mcp__cekura__scenarios_run_text",
     "mcp__cekura__scenarios_run_websocket",
+    "mcp__cekura__scenarios_run_chirp",
+    "mcp__cekura__aiagents_auto_fetch_progress_retrieve",
+    "mcp__cekura__runs_bulk_retrieve",
+    "mcp__cekura__predefined_metrics_copy_create",
     "mcp__cekura__scenarios_run_pipecat_v1",
     "mcp__cekura__scenarios_run_pipecat_v2",
     "mcp__cekura__scenarios_run_retell_webrtc",
@@ -151,7 +155,7 @@ Hold this inventory for the handoff context.
 |---|---|
 | No project | Phase 1 - Account & Project Setup |
 | Project, 0 agents | Phase 2 - Agent Configuration |
-| Agent exists, but `description` is empty | Phase 2.1 - Agent description prompt |
+| Agent exists, but `description` is empty | Phase 2 - Agent Configuration (description step, `phase2-agent.md` §2c) |
 | Agent OK, 0 enabled/copied metrics detected | Phase 3 - Metrics Setup |
 | Agent + metrics OK, 0 evaluators | Phase 4 - First Evaluators |
 | Evaluators exist, 0 results | Phase 5 - First Test Run |
@@ -164,14 +168,13 @@ Hold this inventory for the handoff context.
 |---|---|
 | No project | Phase 1 - Account & Project Setup |
 | Project, 0 agents | Phase 2 - Agent Configuration |
-| Agent exists, but `description` is empty | Phase 2.1 - Agent description prompt |
+| Agent exists, but `description` is empty | Phase 2 - Agent Configuration (description step, `phase2-agent.md` §2c) |
 | Agent OK, 0 ingested call logs | Phase 3 - Ingest Call Logs |
 | Call logs exist, 0 enabled/copied metrics | Phase 4 - Configure Metrics |
 | Calls + metrics OK, no evaluation kicked off | Phase 5 - Run Metric Evaluation |
-| Evaluation done, 0 votes recorded | Phase 6 - Review Results & Vote |
-| Votes recorded | Phase 7 - What's Next |
+| Evaluation done | Phase 6 - Review Results |
 
-(Vote-count detection is best-effort — `call_logs_list` may not return per-call vote totals. If unclear, resume at Phase 6 and let the skill verify.)
+
 
 If the user provided an explicit phase argument, override the detected phase but keep the inventory.
 
@@ -231,7 +234,7 @@ Context already established:
 Resume at: Phase <N> - <title>
 Skip phases 1..<N-1>. For each remaining phase, use MCP tools where available
 (the skill names the primary tool per phase).
-Confirm with the user at phase boundaries and before write/run operations.
+Announce phase boundaries and keep moving; confirm with the user before write/run operations (creating the agent, starting a test run) and before anything destructive.
 Do not ask known account/project/agent/variant facts again.
 
 User intent for this session: <short string from arguments, or "default end-to-end onboarding">
@@ -265,16 +268,15 @@ Format as one tight block:
 - New agent: `id`, `agent_name`, dashboard link.
 - New ingested call logs: count + latest call_log id.
 - New metrics attached: count.
-- Votes recorded: count.
 
 Format as one tight block:
 
 > Onboarding complete (observability).
 > - Agent: **Prod Voice Agent** (`12345`) - [open](https://dashboard.cekura.ai/<project_id>/agents/12345)
 > - 3 ingested calls; latest `call_log-789` (evaluated)
-> - 4 metrics attached, 5 votes recorded
+> - 4 metrics attached
 >
-> Next: improve metric prompts with the collected votes (`cekura-metric-improvement`).
+> Next: improve metric prompts from review feedback (`cekura-metric-improvement`).
 
 If the skill exited mid-flow, do not call it complete. Use the variant-appropriate resume hint:
 
