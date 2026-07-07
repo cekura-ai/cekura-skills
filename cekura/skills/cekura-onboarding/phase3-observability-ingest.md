@@ -38,7 +38,7 @@ Other optional fields: `metadata` (freeform filter tags), `dynamic_variables`, `
 
 How continuous ingestion works depends on the provider:
 
-- **VAPI / Retell / ElevenLabs** — provider-specific webhook endpoints accept the provider's raw post-call shape. The user configures their provider to POST every completed call, with `Authorization: Bearer <Cekura API key>`:
+- **VAPI / Retell / ElevenLabs** — provider-specific webhook endpoints accept the provider's raw post-call shape. The user configures their provider to POST every completed call, authenticated via a request header: `X-CEKURA-API-KEY: <Cekura API key>`:
 
   | Provider | Webhook URL |
   |---|---|
