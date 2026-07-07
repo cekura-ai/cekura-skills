@@ -4,14 +4,15 @@
 
 ## 3a. Enable pre-defined metrics
 
-**Recommend selecting ALL pre-defined metrics** for a comprehensive baseline. List the catalog with `predefined_metrics_list` and copy the chosen ones into the project with `predefined_metrics_copy_create`.
+List the catalog with `predefined_metrics_list` and copy metrics into the project with `predefined_metrics_copy_create`. For the **testing (simulation) path**, enable the standard set:
 
-| Category | Examples |
-|----------|---------|
-| Accuracy | Expected Outcome, Hallucination, Relevancy, Tool Call Success, Transcription Accuracy |
-| Quality | Interruptions, Response latency, Silence, Call termination appropriateness |
-| Customer Experience | CSAT, Sentiment, Dropoff nodes, Topic categorization |
-| Speech Quality | Pitch, Speaking rate, Gibberish detection, Pronunciation |
+| Enable for testing | Metrics |
+|---|---|
+| Both paths' baseline | AI interrupting user, Average Pitch, Infrastructure Issues, Interruption Score, Latency, Stop Time after User Interruption, Talk Ratio, Tool Call Success, Unnecessary Repetition Score |
+| Testing-only additions | **Expected Outcome**, **Transcription Accuracy**, **Mock tool call accuracy** |
+| Leave off unless asked | Letterwise Pronunciation Detection |
+
+Each metric has separate `simulation_enabled` / `observability_enabled` toggles — for this path make sure **simulation** is on.
 
 **Two-step activation:** metrics must be (1) enabled at the project level AND (2) attached to individual evaluators (Phase 4T handles attachment).
 

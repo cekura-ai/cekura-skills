@@ -6,19 +6,17 @@
 
 `metrics_list` — if the project already has metrics from a prior testing onboarding, reuse them; they apply to call logs too.
 
-## 4b. Recommend a starter set
+## 4b. Enable the observability set
 
-Three metrics that cover the high-value bases:
+List the catalog with `predefined_metrics_list`; copy/create with `predefined_metrics_copy_create` / `metrics_bulk_create` (pass `project_id`). Each metric has separate `simulation_enabled` / `observability_enabled` toggles — for this path make sure **observability** is on.
 
-| Metric | Why |
+| Observability default | Metrics |
 |---|---|
-| **Hallucination** | Catches invented facts on live calls — highest blast-radius failure. |
-| **Expected Outcome adherence** | Did the agent accomplish the call's purpose? |
-| **Sentiment** | Surfaces frustration trends — leading churn indicator. |
+| Enable | AI interrupting user, Average Pitch, Infrastructure Issues, Interruption Score, Latency, Stop Time after User Interruption, Talk Ratio, Tool Call Success, Unnecessary Repetition Score |
+| Do NOT enable by default (testing-only) | Expected Outcome, Transcription Accuracy, Mock tool call accuracy |
+| Leave off unless asked | Letterwise Pronunciation Detection |
 
-List the catalog with `predefined_metrics_list`; create chosen ones with `metrics_create` / `metrics_bulk_create` (pass `project_id`).
-
-**Do not enable Transcription Accuracy by default on the observability path** — it's a testing-path metric (Phase 3T). Only add it if the user explicitly asks for it on production calls.
+Only add the testing-only ones to production calls if the user explicitly asks.
 
 ## 4c. LLM-generated metrics (optional)
 
