@@ -38,7 +38,9 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 
 ## 2c. Manual essentials (self-hosted, deferred-key, LiveKit/Pipecat)
 
-- **Description = the real system prompt.** Read [`../cekura-create-agent/phase4-description.md`](../cekura-create-agent/phase4-description.md) for the quality bar and follow it. Do not accept a one-line summary: the description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent. If the user genuinely can't provide it now, create with a clearly marked placeholder AND surface it as an open item in every subsequent summary; do not silently proceed to evaluator generation on a placeholder.
+- **Description = the real system prompt.** Read [`../cekura-create-agent/phase4-description.md`](../cekura-create-agent/phase4-description.md) for the quality bar and follow it. Do not accept a one-line summary: the description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent.
+  - **Testing path: the description is a blocker.** If the user can't provide the real system prompt (or a substantive equivalent), **stop here** — evaluator generation on a placeholder produces junk. Help them retrieve it (provider dashboard, their repo) or pause onboarding until they have it. Do not create the agent with a placeholder and continue.
+  - **Observability path: a placeholder is acceptable.** Ingestion and most metrics work without it. Create with a clearly marked placeholder and surface it as an open item in every subsequent summary.
 - Agent name, language.
 - Connection details for how Cekura reaches the agent, in order of preference: existing phone number → SIP URI → websocket URL → provider WebRTC (2b).
 
@@ -64,6 +66,6 @@ Call `aiagents_create` with the collected fields. On validation errors, fix and 
 
 ## Phase 2 Gate
 
-**Do not proceed until `aiagents_create` succeeded AND the connection details are plausible** (provider confirmed, no unsupported phone number, description real or explicitly flagged as placeholder).
+**Do not proceed until `aiagents_create` succeeded AND the connection details are plausible** (provider confirmed, no unsupported phone number). Description: on the **testing** path it must be the real system prompt — a placeholder blocks this gate; on the **observability** path a clearly flagged placeholder is acceptable.
 
 Announce: "Phase 2 complete." Then begin the path's Phase 3: [testing](phase3-testing-metrics.md) or [observability](phase3-observability-ingest.md).
