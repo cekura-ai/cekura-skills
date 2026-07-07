@@ -27,4 +27,4 @@ If a metric prompt changes later and the user wants existing call logs re-scored
 
 **Do not proceed until the call log's metrics array shows real scores** (`call_logs_retrieve`).
 
-Announce: "Phase 5 complete." Then begin [Phase 6 — Review & Vote](phase6-observability-review.md).
+Announce: "Phase 5 complete." Then begin [Phase 6 — Review Results](phase6-observability-review.md).

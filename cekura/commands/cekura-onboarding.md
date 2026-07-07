@@ -168,10 +168,9 @@ Hold this inventory for the handoff context.
 | Agent OK, 0 ingested call logs | Phase 3 - Ingest Call Logs |
 | Call logs exist, 0 enabled/copied metrics | Phase 4 - Configure Metrics |
 | Calls + metrics OK, no evaluation kicked off | Phase 5 - Run Metric Evaluation |
-| Evaluation done, 0 votes recorded | Phase 6 - Review Results & Vote |
-| Votes recorded | Phase 6 - Review Results & Vote (what's-next section) |
+| Evaluation done | Phase 6 - Review Results |
 
-(Vote-count detection is best-effort — `call_logs_list` may not return per-call vote totals. If unclear, resume at Phase 6 and let the skill verify.)
+
 
 If the user provided an explicit phase argument, override the detected phase but keep the inventory.
 
@@ -265,16 +264,15 @@ Format as one tight block:
 - New agent: `id`, `agent_name`, dashboard link.
 - New ingested call logs: count + latest call_log id.
 - New metrics attached: count.
-- Votes recorded: count.
 
 Format as one tight block:
 
 > Onboarding complete (observability).
 > - Agent: **Prod Voice Agent** (`12345`) - [open](https://dashboard.cekura.ai/<project_id>/agents/12345)
 > - 3 ingested calls; latest `call_log-789` (evaluated)
-> - 4 metrics attached, 5 votes recorded
+> - 4 metrics attached
 >
-> Next: improve metric prompts with the collected votes (`cekura-metric-improvement`).
+> Next: improve metric prompts from review feedback (`cekura-metric-improvement`).
 
 If the skill exited mid-flow, do not call it complete. Use the variant-appropriate resume hint:
 

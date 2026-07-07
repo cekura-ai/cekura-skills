@@ -30,7 +30,7 @@ Walk a new user from account to their **first verified result** — a completed 
 Both paths share Phases 0–2 (path choice, account/project, agent) and diverge after that:
 
 - **Testing** *(default)* — generate evaluators, run them against the agent in simulation, review results.
-- **Observability** — ingest production call logs, attach metrics, evaluate, review/vote.
+- **Observability** — ingest production call logs, attach metrics, evaluate, review.
 
 ## Execution Model — Read This First
 
@@ -57,7 +57,7 @@ Several phases delegate to files in the sibling **cekura-create-agent** skill (`
 | 3O | [phase3-observability-ingest.md](phase3-observability-ingest.md) | Ingest call logs + **verification gate** | observability |
 | 4O | [phase4-observability-metrics.md](phase4-observability-metrics.md) | Configure starter metrics | observability |
 | 5O | [phase5-observability-evaluate.md](phase5-observability-evaluate.md) | Run metric evaluation | observability |
-| 6O | [phase6-observability-review.md](phase6-observability-review.md) | Review results, collect votes, what's next | observability |
+| 6O | [phase6-observability-review.md](phase6-observability-review.md) | Review results, what's next | observability |
 
 ## Performing Platform Actions
 
