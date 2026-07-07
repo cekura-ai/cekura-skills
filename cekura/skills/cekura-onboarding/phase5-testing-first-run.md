@@ -32,10 +32,11 @@ Poll the run's results (`results_retrieve` / `runs_bulk_retrieve`). Verify, for 
 2. A **transcript is present** with both sides talking (not empty, not one-sided silence).
 3. Metric scores appeared.
 
-**If verification fails, onboarding is not done.** Diagnose now, while you're here:
-- Call never connected / busy → wrong or unsupported number, SIP endpoint unreachable, WebRTC dispatch misconfigured (LiveKit `agent_name` mismatch is a classic). Fix the connection config from Phase 2 and re-run.
-- Connected but empty/one-sided transcript → the agent never spoke (agent-side error) or audio isn't flowing (SIP media/codec issue). Surface the finding to the user with the run link.
-- Repeat until one clean run exists. If truly blocked on the user's infrastructure, end with an explicit statement of what is broken and what they must fix — never with an implied success.
+**If verification fails: surface the finding, offer to fix now (default), but let the user skip.** Never fail silently — diagnose and present what's wrong with the run link:
+- Call never connected / busy → wrong or unsupported number, SIP endpoint unreachable, WebRTC dispatch misconfigured (LiveKit `agent_name` mismatch is a classic).
+- Connected but empty/one-sided transcript → the agent never spoke (agent-side error) or audio isn't flowing (SIP media/codec issue).
+
+Then ask: **"Want me to fix this now and re-run?"** — fixing now is the default recommendation. If the user prefers to skip for now, continue to the next phase, but record the failure as an open item in every subsequent summary (what's broken + what to fix) so onboarding never ends with an implied success.
 
 ## 5d. Review results with the user
 
@@ -46,6 +47,6 @@ Poll the run's results (`results_retrieve` / `runs_bulk_retrieve`). Verify, for 
 
 ## Phase 5 Gate
 
-**Do not declare onboarding complete until at least one run has a completed call with a real two-sided transcript and metric scores.**
+**Preferred exit: at least one run with a completed call, a real two-sided transcript, and metric scores.** If the user chose to skip a failed verification, you may proceed — but the failure must be surfaced as an open item, never an implied success.
 
 Announce: "Phase 5 complete." Then begin [Phase 6 — What's Next](phase6-testing-next.md).
