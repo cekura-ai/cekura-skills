@@ -30,7 +30,9 @@ Minimum payload:
 
 For `transcript_type: "cekura"`, the only valid roles are `"Testing Agent"` (caller) and `"Main Agent"`. If the user has a provider-native transcript (VAPI, Retell, ElevenLabs, Bland, LiveKit, Pipecat, KoreAI, Trillet), set `transcript_type` to that provider and pass `transcript_json` exactly as the provider emits it.
 
-Useful optional fields: `voice_recording_url` (enables audio metrics), `metadata` (freeform filter tags), `dynamic_variables`, `customer_number` (E.164), `metric_ids` (evaluate immediately — skips Phase 5O's separate kickoff).
+**Always try to include the call recording** — `voice_recording_url` (or `voice_recording` as a file upload). Ask the user for it; every provider exposes recordings. It unlocks the audio metrics (pitch, speaking rate, gibberish, latency-from-audio) that show the platform's value on the very first call. Omit it only if the user genuinely has no recording at all.
+
+Other optional fields: `metadata` (freeform filter tags), `dynamic_variables`, `customer_number` (E.164), `metric_ids` (evaluate immediately — skips Phase 5O's separate kickoff).
 
 ### (b) Continuous webhook ingestion
 
