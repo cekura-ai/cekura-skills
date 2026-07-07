@@ -34,22 +34,23 @@ For `transcript_type: "cekura"`, the only valid roles are `"Testing Agent"` (cal
 
 Other optional fields: `metadata` (freeform filter tags), `dynamic_variables`, `customer_number` (E.164), `metric_ids` (evaluate immediately — skips Phase 5O's separate kickoff).
 
-### (b) Continuous webhook ingestion
+### (b) Continuous ingestion
 
-Provider-specific webhook endpoints accept the provider's raw post-call shape:
+How continuous ingestion works depends on the provider:
 
-| Provider | Webhook URL |
-|---|---|
-| VAPI | `POST /observability/v1/vapi/observe/` |
-| Retell | `POST /observability/v1/retell/observe/` |
-| ElevenLabs | `POST /observability/v1/elevenlabs/observe/` |
-| LiveKit | `POST /observability/v1/livekit/observe/` |
-| Pipecat | `POST /observability/v1/pipecat/observe/` |
-| Other | generic `observe_create` |
+- **VAPI / Retell / ElevenLabs** — provider-specific webhook endpoints accept the provider's raw post-call shape. The user configures their provider to POST every completed call, with `Authorization: Bearer <Cekura API key>`:
 
-The user configures their provider to POST every completed call to the URL with `Authorization: Bearer <Cekura API key>`. Then trigger one real test call so an ingestion lands.
+  | Provider | Webhook URL |
+  |---|---|
+  | VAPI | `POST /observability/v1/vapi/observe/` |
+  | Retell | `POST /observability/v1/retell/observe/` |
+  | ElevenLabs | `POST /observability/v1/elevenlabs/observe/` |
 
-**LiveKit / Pipecat note:** continuous production observability for these providers requires the Cekura SDK in the agent (read `../cekura-create-agent/phase6-sdk-integration.md` when the user is ready) — or the user pushes call data themselves via `observe_create` after each call. Start with the one-shot upload either way.
+- **LiveKit / Pipecat** — continuous production observability comes from the **Cekura SDK** in the agent (`observe_*` mode reports every call automatically; read `../cekura-create-agent/phase6-sdk-integration.md` when the user is ready to integrate it). Without the SDK, the user pushes call data themselves via `observe_create` after each call.
+
+- **All other providers / self-hosted** — push each completed call to the generic `observe_create` endpoint from the agent's post-call hook.
+
+After configuring any of these, trigger one real call so an ingestion lands.
 
 ## 3b. Verification gate
 
