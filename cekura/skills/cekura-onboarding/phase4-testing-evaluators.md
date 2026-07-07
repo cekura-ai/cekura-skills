@@ -6,7 +6,7 @@
 
 Generate the first evaluators with the **background generation endpoint**:
 
-1. Call **`scenarios_generate_bg`** (NOT `scenarios_agent_create` — that is a different, agentic-session flow):
+1. Call **`scenarios_generate_bg`**:
 
 ```json
 {
