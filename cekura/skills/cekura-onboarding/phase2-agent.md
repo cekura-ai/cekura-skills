@@ -7,6 +7,8 @@ Register the user's agent on Cekura. Framing differs by path:
 - **Testing**: "Let's connect your agent so we can simulate calls against it."
 - **Observability**: "Let's register your production agent so Cekura can attribute uploaded calls to it."
 
+**Prerequisites are handled inline, not as a phase:** if platform tools fail, fix access via [references/client-setup.md](references/client-setup.md); if no project is in context, pick one with `projects_list` or create one with `projects_create` — then continue here.
+
 **Provider first — it shapes everything.** Ask before anything else:
 
 > "What provider is your agent built on — VAPI, Retell, ElevenLabs, Synthflow, LiveKit, Pipecat, Bland, Chirp, KoreAI, Genesys, Cisco, or something self-hosted/custom?"

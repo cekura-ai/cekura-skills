@@ -11,7 +11,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # Cekura Platform Onboarding
@@ -27,7 +27,7 @@ Walk a new user from account to their **first verified result** — a completed 
 
 ## Two Paths
 
-Both paths share Phases 0–2 (path choice, account/project, agent) and diverge after that:
+Both paths share Phases 0 and 2 (path choice, agent connection) and diverge after that. **The first objective is always connecting the agent** — there is no separate account/project phase: working tools prove auth, and a missing project is handled inline (`projects_list` / `projects_create`) on the way into Phase 2.
 
 - **Testing** *(default)* — generate evaluators, run them against the agent in simulation, review results.
 - **Observability** — ingest production call logs, attach metrics, evaluate, review.
@@ -47,9 +47,10 @@ Several phases delegate to files in the sibling **cekura-create-agent** skill (`
 
 | Phase | File | What happens | Path |
 |-------|------|--------------|------|
-| 0 | [phase0-path.md](phase0-path.md) | Pick testing vs observability; survey existing project state | shared |
-| 1 | [phase1-account-project.md](phase1-account-project.md) | Account access, API key/OAuth, project | shared |
+| 0 | [phase0-path.md](phase0-path.md) | Pick testing vs observability; ONE `aiagents_list` call to detect existing work | shared |
 | 2 | [phase2-agent.md](phase2-agent.md) | Create/connect the agent — provider-first, minimal, validated | shared |
+
+*(There is no Phase 1 — the old account/project phase is retired; client/OAuth setup lives in [references/client-setup.md](references/client-setup.md) as a fallback and phase numbering is kept stable.)*
 | 3T | [phase3-testing-metrics.md](phase3-testing-metrics.md) | Enable pre-defined metrics | testing |
 | 4T | [phase4-testing-evaluators.md](phase4-testing-evaluators.md) | Generate first evaluators (generation-first) | testing |
 | 5T | [phase5-testing-first-run.md](phase5-testing-first-run.md) | First test run + **verification gate** | testing |

@@ -1,6 +1,6 @@
-# Phase 0 — Choose the Path & Assess State
+# Phase 0 — Choose the Path & Check for Existing Work
 
-> **Start:** Announce "Starting Phase 0 — Path & State Assessment".
+> **Start:** Announce "Starting Phase 0 — Path".
 
 ## 0a. Choose the path
 
@@ -14,26 +14,25 @@ Otherwise, ask once:
 
 Default to **testing** when ambiguous.
 
-## 0b. State assessment (do this once)
+## 0b. Existing-work check (ONE call, not an inventory sweep)
 
-Survey what already exists before walking the user through any phase. This prevents asking "Resume where?" on an empty project and prevents skipping past existing work.
+**The first objective of onboarding is connecting the agent — get there fast.** Do NOT survey metrics, predefined-metric catalogs, scenarios, or results up front; each later phase checks its own state when it runs.
 
-**Gathering state:**
-- If you were handed an inventory (e.g. the `/cekura-onboarding` command pre-detected project state), trust it — don't re-run the same lookups.
-- Otherwise, list the path-relevant resources: agents and metrics for both paths; plus scenarios and results for **testing**; plus call logs for **observability**.
+- If you were handed an inventory (e.g. the `/cekura-onboarding` command pre-detected project state), trust it — don't re-run lookups.
+- Otherwise make exactly one call: `aiagents_list` on the current project.
 
 **Decision:**
 
-| State of the path's relevant resources | Action |
+| `aiagents_list` result | Action |
 |---|---|
-| **Clean slate** — none exist | Proceed straight to Phase 1 (or Phase 2 if account/project already set up). Don't ask "Resume where?" — there's nothing to resume. |
-| **Mid-onboarding** — some resources exist but the flow is incomplete | Surface ONE concrete clarification: e.g. "Found existing agent **Booking Bot** with 12 scenarios and 1 result. Continue with it, or create a new agent?" — never a generic "Ready to continue?". |
-| **Obvious from the user's message** — "create a new agent" / "start fresh" / a named agent | Honour that intent without an extra confirm. |
+| **0 agents** (the common case for onboarding) | Clean slate. Go straight to Phase 2 — connect the agent. No further lookups, no "Resume where?" question. |
+| **≥1 agent** | Possible mid-onboarding resume. Now (and only now) look deeper — the path-relevant resources: scenarios + latest result for **testing**, call logs for **observability**. Surface ONE concrete clarification: e.g. "Found existing agent **Booking Bot** with 12 scenarios and 1 result. Continue with it, or create a new agent?" — never a generic "Ready to continue?". |
+| **Call fails (auth/tools broken)** | Fix access first — see [references/client-setup.md](references/client-setup.md). If there's no project in context, list with `projects_list` or create one with `projects_create`, then retry. |
 
 ---
 
 ## Phase 0 Gate
 
-**Do not proceed until the path is decided and the project state is known.**
+**Do not proceed until the path is decided and the agent check has run (or an inventory was handed in).**
 
-Announce: "Phase 0 complete." Then begin [Phase 1 — Account & Project](phase1-account-project.md) (or Phase 2 if account/project already exist).
+Announce: "Phase 0 complete." Then begin [Phase 2 — Agent](phase2-agent.md).
