@@ -11,7 +11,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # Cekura Platform Onboarding
@@ -27,7 +27,7 @@ Walk a new user from account to their **first verified result** — a completed 
 
 ## Two Paths
 
-Both paths share Phases 0–2 (path choice, account/project, agent) and diverge after that:
+Both paths share Phases 0 and 2 (path choice, agent connection) and diverge after that. **The first objective is always connecting the agent** — there is no separate account/project phase: working tools prove auth, and a missing project is handled inline (`projects_list` / `projects_create`) on the way into Phase 2.
 
 - **Testing** *(default)* — generate evaluators, run them against the agent in simulation, review results.
 - **Observability** — ingest production call logs, attach metrics, evaluate, review.
@@ -39,7 +39,9 @@ This skill executes **one phase at a time, in order**. For each phase:
 1. Announce: "Starting Phase N — [name]".
 2. **Read the phase file** (`phaseN-*.md` in this skill directory). Do not rely on memory of its contents.
 3. Complete every task in the file and satisfy its gate condition.
-4. Announce: "Phase N complete." and move to the next phase without waiting for the user. (Confirmation is still required where a phase file says so — e.g. before creating the agent or starting a run — but never a generic "ready to continue?" at a boundary.)
+4. Announce: "Phase N complete." and move to the next phase without waiting for the user.
+
+**Ask questions ONLY to collect missing inputs or resolve genuine ambiguity** (provider choice, credentials, phone number, self-hosted confirmation). Never ask permission to continue, never confirm an action the flow already implies — the user invoked onboarding, so creating the agent, enabling metrics, generating evaluators, and starting the first verification run are all pre-authorized. No "ready to continue?", no "shall I create it?", no "want me to proceed?" — just do the step and narrate it. The one exception: when a **gate is blocked** (e.g. the testing-path description gate) present the blocker and the options.
 
 Several phases delegate to files in the sibling **cekura-create-agent** skill (`../cekura-create-agent/…`). When a phase file tells you to read one of those, follow only the referenced guidance — **ignore that file's own phase gates and "continue to Phase N+1" instructions**; return to this skill's flow.
 
@@ -47,10 +49,9 @@ Several phases delegate to files in the sibling **cekura-create-agent** skill (`
 
 | Phase | File | What happens | Path |
 |-------|------|--------------|------|
-| 0 | [phase0-path.md](phase0-path.md) | Pick testing vs observability; survey existing project state | shared |
-| 1 | [phase1-account-project.md](phase1-account-project.md) | Account access, API key/OAuth, project | shared |
+| 0 | [phase0-path.md](phase0-path.md) | Pick testing vs observability; ONE `aiagents_list` call to detect existing work | shared |
 | 2 | [phase2-agent.md](phase2-agent.md) | Create/connect the agent — provider-first, minimal, validated | shared |
-| 3T | [phase3-testing-metrics.md](phase3-testing-metrics.md) | Enable pre-defined metrics | testing |
+| 3T | [phase3-testing-metrics.md](phase3-testing-metrics.md) | Verify default metrics (auto-enabled at project creation) | testing |
 | 4T | [phase4-testing-evaluators.md](phase4-testing-evaluators.md) | Generate first evaluators (generation-first) | testing |
 | 5T | [phase5-testing-first-run.md](phase5-testing-first-run.md) | First test run + **verification gate** | testing |
 | 6T | [phase6-testing-next.md](phase6-testing-next.md) | What's next (SDK, mock tools, custom metrics) | testing |
@@ -58,6 +59,8 @@ Several phases delegate to files in the sibling **cekura-create-agent** skill (`
 | 4O | [phase4-observability-metrics.md](phase4-observability-metrics.md) | Configure starter metrics | observability |
 | 5O | [phase5-observability-evaluate.md](phase5-observability-evaluate.md) | Run metric evaluation | observability |
 | 6O | [phase6-observability-review.md](phase6-observability-review.md) | Review results, what's next | observability |
+
+*(There is no Phase 1 — the old account/project phase is retired; client/OAuth setup lives in [references/client-setup.md](references/client-setup.md) as a fallback and phase numbering is kept stable.)*
 
 ## Performing Platform Actions
 

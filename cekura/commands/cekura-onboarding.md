@@ -1,7 +1,7 @@
 ---
 name: cekura-onboarding
 description: State-aware Cekura onboarding that resumes at the right setup phase and delegates to the cekura-onboarding skill. Supports two variants — `testing` (default) and `observability`.
-argument-hint: "[testing|observability] [account|agent|metrics|evals|run|ingest|evaluate|review] [project-id]"
+argument-hint: "[testing|observability] [agent|metrics|evals|run|ingest|evaluate|review] [project-id]"
 allowed-tools:
   [
     "AskUserQuestion",
@@ -10,7 +10,6 @@ allowed-tools:
     "Skill",
     "mcp__cekura__list_available_tools",
     "mcp__cekura__test_simple_tool",
-    "mcp__cekura__user_organizations_list",
     "mcp__cekura__projects_list",
     "mcp__cekura__projects_create",
     "mcp__cekura__projects_retrieve",
@@ -82,12 +81,12 @@ Up to three optional positional args, in any order — the parser classifies by 
 |---|---|
 | `testing` \| `observability` | Variant override. If absent, default to `testing`. |
 | Numeric, e.g. `5242` | Project ID. Skip project picker. |
-| Alphabetic phase token | Phase override (testing-flow: `account` \| `agent` \| `metrics` \| `evals` \| `run`; observability-flow: `account` \| `agent` \| `ingest` \| `evaluate` \| `review`). Detection still runs to populate handoff context. |
+| Alphabetic phase token | Phase override (testing-flow: `agent` \| `metrics` \| `evals` \| `run`; observability-flow: `agent` \| `ingest` \| `evaluate` \| `review`). Detection still runs to populate handoff context. |
 | Anything else | Ask one short clarifying question with `AskUserQuestion`. |
 
 The variant determines which set of phase tokens is valid:
-- `testing` → `account`, `agent`, `metrics`, `evals`, `run`
-- `observability` → `account`, `agent`, `ingest`, `evaluate`, `review`
+- `testing` → `agent`, `metrics`, `evals`, `run`
+- `observability` → `agent`, `ingest`, `evaluate`, `review`
 
 If the user passes a phase token that doesn't match the resolved variant, ask one clarifying question (don't silently re-route).
 
@@ -99,11 +98,8 @@ Run silently unless broken.
 
 1. Call `mcp__cekura__list_available_tools`.
    - On error: print `MCP not connected. Run /setup-mcp first.` and stop.
-2. Call `mcp__cekura__user_organizations_list`.
-   - On 401/403: print `API key invalid or missing. Set CEKURA_API_KEY, restart Claude Code, then run /setup-mcp.` and stop.
-   - On success: capture available organization IDs/names and user identity. If there is more than one org, mention the selected org in the confirmation prompt.
 
-If both pass, print nothing yet. Continue to state detection.
+That is the whole preflight — auth is proven by the first real call in state detection (a 401/403 there → print `API key invalid or missing. Set CEKURA_API_KEY, restart Claude Code, then run /setup-mcp.` and stop). Print nothing yet.
 
 ---
 
@@ -123,29 +119,32 @@ Otherwise call `mcp__cekura__projects_list`.
 
 | Result | Behavior |
 |---|---|
-| 0 projects | Resume at Phase 1. |
+| 0 projects | Create one now with `projects_create` (confirm the name with the user in the single confirmation prompt), then continue. There is no account/project phase. |
 | 1 project | Auto-pick it. |
 | 2+ projects | Defer selection to the single confirmation prompt. Do not ask a separate question here. |
 
-### Inventory — shared (both variants)
+### Agent check — the ONLY mandatory inventory call
 
-With a chosen `project_id`, gather:
+**The first objective of onboarding is connecting the agent. Do not survey metrics, the predefined-metric catalog, scenarios, or results up front** — each phase checks its own state when it runs, and a fresh account has nothing to count.
 
-1. `mcp__cekura__aiagents_list(project_id=<project_id>, page_size=20)` for agent summaries. List results use `agent_name`, not `name`, and may not include `description`.
-2. `mcp__cekura__aiagents_retrieve(id=<agent_id>)` for each candidate onboarding agent. Capture `id`, `agent_name`, `description`, `assistant_provider`, `inbound`, `contact_number`, and `language`.
-3. `mcp__cekura__metrics_list(project_id=<project_id>, page_size=100)` for enabled/copied project metrics. Count likely predefined metrics using fields such as `vocera_defined_metric_code`, `predefined_metric`, `function_name`, or `user_defined=false`. If the response shape is ambiguous, keep the raw count and let the skill verify before creating anything.
-4. `mcp__cekura__predefined_metrics_list()` for catalog size only. This endpoint lists available predefined metric templates; it does not prove a project has enabled them.
+With a chosen `project_id`, make exactly one call:
 
-### Inventory — variant-specific
+1. `mcp__cekura__aiagents_list(project_id=<project_id>, page_size=20)` — agent summaries (v2 shape: `id`, `name`; `description` may be omitted in list responses).
+
+**If 0 agents (the common case): stop detecting. Entry phase is Phase 2 — Connect your agent.** Skip everything below and go to Step 2.
+
+### Deeper inventory — ONLY when agents already exist (resume case)
+
+2. `mcp__cekura__aiagents_retrieve(id=<agent_id>)` for each candidate onboarding agent. The v2 response nests provider and telephony — capture `id`, `name`, `description`, `language`, `provider.type`, `provider.agent_id`, `telephony.inbound`, and `telephony.phone_number`. (There are no flat `agent_name`/`assistant_provider`/`inbound`/`contact_number` fields.)
 
 **Testing variant** also gathers:
 
-5. `mcp__cekura__scenarios_list(project_id=<project_id>, page_size=5)` for evaluator count and folder/folder path names.
-6. `mcp__cekura__results_list(project_id=<project_id>, page_size=1)` for latest result `id`, `status`, and any `error_message`.
+3. `mcp__cekura__scenarios_list(project_id=<project_id>, page_size=5)` for evaluator count and folder/folder path names.
+4. `mcp__cekura__results_list(project_id=<project_id>, page_size=1)` for latest result `id`, `status`, and any `error_message`.
 
 **Observability variant** also gathers:
 
-5. `mcp__cekura__call_logs_list(project_id=<project_id>, page_size=5)` for ingested call count and latest call_log id.
+3. `mcp__cekura__call_logs_list(project_id=<project_id>, page_size=5)` for ingested call count and latest call_log id.
 
 Hold this inventory for the handoff context.
 
@@ -153,11 +152,9 @@ Hold this inventory for the handoff context.
 
 | Detected state | Resume at |
 |---|---|
-| No project | Phase 1 - Account & Project Setup |
 | Project, 0 agents | Phase 2 - Agent Configuration |
 | Agent exists, but `description` is empty | Phase 2 - Agent Configuration (description step, `phase2-agent.md` §2c) |
-| Agent OK, 0 enabled/copied metrics detected | Phase 3 - Metrics Setup |
-| Agent + metrics OK, 0 evaluators | Phase 4 - First Evaluators |
+| Agent OK, 0 evaluators | Phase 3 - Metrics Setup (it verifies its own state, then flows into Phase 4) |
 | Evaluators exist, 0 results | Phase 5 - First Test Run |
 | Latest result has `error_message` or failed/errored infrastructure status | Phase 5 - First Test Run |
 | Successful/completed results exist | Phase 6 - What's Next |
@@ -166,12 +163,10 @@ Hold this inventory for the handoff context.
 
 | Detected state | Resume at |
 |---|---|
-| No project | Phase 1 - Account & Project Setup |
 | Project, 0 agents | Phase 2 - Agent Configuration |
 | Agent exists, but `description` is empty | Phase 2 - Agent Configuration (description step, `phase2-agent.md` §2c) |
 | Agent OK, 0 ingested call logs | Phase 3 - Ingest Call Logs |
-| Call logs exist, 0 enabled/copied metrics | Phase 4 - Configure Metrics |
-| Calls + metrics OK, no evaluation kicked off | Phase 5 - Run Metric Evaluation |
+| Call logs exist, no evaluation kicked off | Phase 4 - Configure Metrics (it verifies its own state, then flows into Phase 5) |
 | Evaluation done | Phase 6 - Review Results |
 
 
@@ -180,31 +175,36 @@ If the user provided an explicit phase argument, override the detected phase but
 
 ---
 
-## Step 2 - Single Confirmation Prompt
+## Step 2 - Confirmation Prompt (resume/ambiguity ONLY — skip on a clean slate)
 
-Use `AskUserQuestion` exactly once before the skill takes over.
+**Clean slate (0 agents, one project or a just-created one): do NOT ask anything.** There is nothing to resume and no decision for the user to make — announce one line ("Project **<name>** — let's connect your agent.") and delegate to the skill immediately at Phase 2. A confirmation prompt here is pure friction.
 
-Prompt format (testing variant):
+Ask (`AskUserQuestion`, exactly once) ONLY when there is a real choice:
+- agents already exist (resume case), or
+- 2+ projects and no explicit project argument, or
+- the user's message conflicts with the resolved variant.
 
-> Detected project **<name>** (`<id>`): <N> agent(s), <E>/<T> predefined metrics detected, <M> evaluator(s), <K> result(s).
+Prompt format — resume (agents exist, testing variant):
+
+> Detected project **<name>** (`<id>`): <N> agent(s), <M> evaluator(s), <K> result(s).
 > Variant: **Testing**. Resume at **Phase <P>: <phase title>**.
 > Continue?
 
-Prompt format (observability variant):
+Prompt format — resume (agents exist, observability variant):
 
-> Detected project **<name>** (`<id>`): <N> agent(s), <C> ingested call(s), <E>/<T> predefined metrics detected.
+> Detected project **<name>** (`<id>`): <N> agent(s), <C> ingested call(s).
 > Variant: **Observability**. Resume at **Phase <P>: <phase title>**.
 > Continue?
 
 Options:
 
 1. `Yes, resume at Phase <P>` - proceed to Step 3.
-2. `Start fresh from Phase 1` - override to Phase 1, keep variant.
+2. `Start fresh (new agent)` - override to Phase 2, keep variant.
 3. `Pick a different phase` - follow up with a phase picker (scoped to the resolved variant).
 4. `Switch variant` - flip testing ↔ observability and redo state detection.
 5. `Pick a different project` - show only if 2+ projects exist.
 
-If more than one organization was detected, mention which org's projects are listed. If the user needs a different org and MCP does not expose org switching, tell them to use an API key scoped to the desired org/project.
+If the user needs a different organization than the one their credentials resolve to, tell them to use an API key scoped to the desired org/project.
 
 ---
 
@@ -215,15 +215,11 @@ Invoke the `cekura-onboarding` skill with a structured context block. Pass every
 ```text
 Context already established:
 - Variant: <testing|observability>
-- Org: <org_id> / <org_name>
-- User: <email or "OAuth-authenticated">
-- API key: valid
+- API key: valid (proven by successful project/agent calls)
 - Project: <project_id> (<project_name>) - <existing|just created>
 - Agents in project:
-  - <agent_id> (<agent_name>) - description: <yes|no>, provider: <assistant_provider>, inbound: <true|false>, language: <language>
+  - <agent_id> (<name>) - description: <yes|no>, provider: <provider.type>, inbound: <telephony.inbound>, language: <language>
   - ...
-- Metrics detected in project: <enabled_or_copied_count>
-- Predefined metric catalog size: <catalog_count>
 [testing-only:]
 - Evaluators: <count> in folders [<folder1>, <folder2>, ...]
 - Latest result: <result_id> (<status>, error: <yes|no>) - or "none"
@@ -232,7 +228,7 @@ Context already established:
 - Latest call_log: <call_log_id> (<status>) - or "none"
 
 Resume at: Phase <N> - <title>
-Skip phases 1..<N-1>. For each remaining phase, use MCP tools where available
+Skip phases before <N>. For each remaining phase, use MCP tools where available
 (the skill names the primary tool per phase).
 Announce phase boundaries and keep moving; confirm with the user before write/run operations (creating the agent, starting a test run) and before anything destructive.
 Do not ask known account/project/agent/variant facts again.
@@ -250,7 +246,7 @@ After the skill returns, run a short state diff using the same MCP tools as Step
 
 **Testing variant** — report:
 - New project: name + dashboard link.
-- New agent: `id`, `agent_name`, dashboard link.
+- New agent: `id`, `name`, dashboard link.
 - New evaluators: count + folder.
 - New result: `id`, `status`, dashboard link.
 
@@ -265,7 +261,7 @@ Format as one tight block:
 
 **Observability variant** — report:
 - New project: name + dashboard link.
-- New agent: `id`, `agent_name`, dashboard link.
+- New agent: `id`, `name`, dashboard link.
 - New ingested call logs: count + latest call_log id.
 - New metrics attached: count.
 

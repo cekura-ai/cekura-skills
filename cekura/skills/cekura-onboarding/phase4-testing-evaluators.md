@@ -4,6 +4,8 @@
 
 ## 4a. Generation-first — this is a hard rule
 
+**Do NOT ask "would you like me to auto-generate evaluators?"** — generation is the mandated path of this phase and the user already opted into onboarding. Announce ("Generating your first evaluators from the agent description…") and start immediately.
+
 Generate the first evaluators with the **background generation endpoint**:
 
 1. Call **`scenarios_generate_bg`**:
