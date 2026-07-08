@@ -9,7 +9,9 @@ Register the user's agent on Cekura. Framing differs by path:
 
 **Prerequisites are handled inline, not as a phase:** if platform tools fail, fix access via [references/client-setup.md](references/client-setup.md); if no project is in context, pick one with `projects_list` or create one with `projects_create` — then continue here.
 
-**Provider first — it shapes everything.** Ask before anything else. The full provider list is:
+**Provider first — it shapes everything. Ask the provider question ALONE and wait for the answer.** Never batch it with name / description / credential questions in one multi-question round: every follow-up depends on the provider answer, so pre-batched questions are guaranteed wrong — e.g. a pre-authored "paste your system prompt" question fires even when the user picks an auto-import provider (VAPI/Retell/ElevenLabs/Synthflow), whose correct follow-up is API key + agent ID with **no description ask at all**, or a LiveKit/Pipecat user gets credential questions before the telephony-vs-WebRTC choice. Agent name may ride along with the provider question; nothing else may.
+
+The full provider list is:
 
 > VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · Chirp · KoreAI · Genesys · Cisco · self-hosted/custom
 
