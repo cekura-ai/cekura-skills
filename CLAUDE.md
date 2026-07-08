@@ -28,6 +28,7 @@ cekura-skills/
       cekura-create-agent/
       cekura-self-improving-agent/
       cekura-metric-design/
+      cekura-metric-builder/
       cekura-metric-improvement/
       cekura-predefined-metrics/
       cekura-eval-design/
@@ -122,6 +123,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-create-agent` | Set up a voice AI agent — provider, mock tools, KB, dynamic vars |
 | `cekura-self-improving-agent` | Auto-tune agent prompts from eval results — diagnose → propose → apply → re-validate loop |
 | `cekura-metric-design` | Core metric design patterns and best practices |
+| `cekura-metric-builder` | Build a metric conversationally — run a draft on real calls/runs, resolve edge cases, ask only on genuine ambiguity |
 | `cekura-metric-improvement` | Metric improvement through feedback iteration |
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cekura: Metric Builder"
+  short_description: "Builds a metric conversationally by running a draft on real calls/runs, resolving edge cases, and asking only on genuine ambiguity."
+  brand_color: "#8B5CF6"
+
+policy:
+  allow_implicit_invocation: true
