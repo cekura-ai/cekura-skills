@@ -40,9 +40,22 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 
 ## 2c. Manual essentials (self-hosted, deferred-key, LiveKit/Pipecat)
 
-- **Description = the real system prompt.** Read [`../cekura-create-agent/phase4-description.md`](../cekura-create-agent/phase4-description.md) for the quality bar and follow it. Do not accept a one-line summary: the description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent.
-  - **Testing path: the description is a blocker.** If the user can't provide the real system prompt (or a substantive equivalent), **stop here** — evaluator generation on a placeholder produces junk. Help them retrieve it (provider dashboard, their repo) or pause onboarding until they have it. Do not create the agent with a placeholder and continue.
-  - **Observability path: a placeholder is acceptable.** Ingestion and most metrics work without it. Create with a clearly marked placeholder and surface it as an open item in every subsequent summary.
+- **Description = the real system prompt.** Read [`../cekura-create-agent/phase4-description.md`](../cekura-create-agent/phase4-description.md) for the quality bar and follow it. The description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent.
+
+  **How to ask — demand the full prompt, don't invite a summary:**
+  > "Paste your agent's **complete system prompt** — the actual prompt your bot runs with, however long. From your provider's dashboard you can export it (Retell: Agents → Export; VAPI: Workflows → Code → Copy JSON). If it lives in your codebase, share the file or repo path and I'll read it."
+
+  Never phrase it as "or a plain-English description of what it does" and never show a one-line example — that teaches the user to give a one-liner, which produces junk evaluators.
+
+  **Hard acceptance check — run on EVERY candidate description before creating the agent:**
+  A description fails the check if ANY of these hold:
+  - It's a summary rather than a prompt (a few sentences; under ~15 lines).
+  - Reading it leaves obvious open questions: What exact flows does the agent walk through? What rules/constraints does it follow? What does it say on failure/escalation? What tools does it call?
+  - It describes the *business* ("handles support calls for an e-commerce store") instead of the *agent's instructions*.
+
+  On failure, do NOT create the agent. Push back once, concretely: name 2–3 specific questions the description leaves open, and re-ask for the full system prompt (offer the provider-export steps or the code-reading path from `phase4-description.md`). Repeat until the check passes.
+  - **Testing path: this check is a blocker.** If the user genuinely cannot produce the prompt, help them retrieve it (provider dashboard, their repo) or pause onboarding until they have it. Do not create the agent with a summary/placeholder and continue.
+  - **Observability path: a placeholder is acceptable** after one push-back. Ingestion and most metrics work without it. Create with a clearly marked placeholder and surface it as an open item in every subsequent summary.
 - Agent name, language.
 - Connection details for how Cekura reaches the agent, in order of preference: existing phone number → SIP URI → websocket URL → provider WebRTC (2b).
 
@@ -62,6 +75,6 @@ Call `aiagents_create` with the collected fields. On validation errors, fix and 
 
 ## Phase 2 Gate
 
-**Do not proceed until `aiagents_create` succeeded and the provider is confirmed.** Description: on the **testing** path it must be the real system prompt — a placeholder blocks this gate; on the **observability** path a clearly flagged placeholder is acceptable.
+**Do not proceed until `aiagents_create` succeeded, the provider is confirmed, and the description passed the hard acceptance check in 2c** (auto-imported descriptions pass by construction). On the **testing** path a summary/placeholder blocks this gate; on the **observability** path a clearly flagged placeholder is acceptable.
 
 Announce: "Phase 2 complete." Then begin the path's Phase 3: [testing](phase3-testing-metrics.md) or [observability](phase3-observability-ingest.md).
