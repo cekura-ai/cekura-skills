@@ -9,9 +9,12 @@ Register the user's agent on Cekura. Framing differs by path:
 
 **Prerequisites are handled inline, not as a phase:** if platform tools fail, fix access via [references/client-setup.md](references/client-setup.md); if no project is in context, pick one with `projects_list` or create one with `projects_create` — then continue here.
 
-**Provider first — it shapes everything.** Ask before anything else:
+**Provider first — it shapes everything.** Ask before anything else, as an **open question with the full provider list visible in the question text** — like this:
 
-> "What provider is your agent built on — VAPI, Retell, ElevenLabs, Synthflow, LiveKit, Pipecat, Bland, Chirp, KoreAI, Genesys, Cisco, or something self-hosted/custom?"
+> "What provider is your agent built on?
+> VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · Chirp · KoreAI · Genesys · Cisco · self-hosted/custom"
+
+**Do NOT compress the list into a 3–4 option picker with an "Other" bucket.** Structured-choice UIs cap the number of options, and burying first-class providers (LiveKit, Pipecat, …) under "Other / Self-hosted" both hides them and nudges users toward the self-hosted misclassification warned about below. If you must use a structured question, put the full list in the question text and let the user type the provider name.
 
 Then follow the matching section below. For per-provider credential fields, read [`../cekura-create-agent/phase2-provider.md`](../cekura-create-agent/phase2-provider.md) (credential matrix) — follow only the field guidance there, not that skill's phase gates.
 
