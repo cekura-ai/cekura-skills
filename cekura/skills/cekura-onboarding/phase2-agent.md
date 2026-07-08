@@ -64,7 +64,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 
   Offer to read the codebase yourself ("share the file or repo path and I'll read it") **only when the session actually has file access** — e.g. local Claude Code with the user's repo. In the Cekura platform UI there is no codebase access: ask for a paste or a file attachment instead.
 
-  Never phrase it as "or a plain-English description of what it does" and never show a one-line example — that teaches the user to give a one-liner, which produces junk evaluators.
+  **The ask must offer NO alternative to the complete prompt — in any wording.** Never "or a plain-English description", "or a short description", "or a summary of what it does", or any paraphrase thereof; never a one-line example. The moment the question offers a lighter option, users take it, and a summary description produces junk evaluators. The only acceptable ask is for the complete system prompt (with export/paste/attach routes to get it). If the user replies with a summary anyway, the hard acceptance check below handles it.
 
   **Hard acceptance check — run on EVERY candidate description before creating the agent:**
   A description fails the check if ANY of these hold:
