@@ -1,22 +1,3 @@
-# Local Claude Code session state — never commit
-.claude/
-
-# OS / editor
+__pycache__/
+*.pyc
 .DS_Store
-*.swp
-*~
-.vscode/
-.idea/
-
-# Node (if anyone runs npm/npx in the repo)
-node_modules/
-npm-debug.log*
-
-# Local skills CLI test artifacts
-skills-lock.json
-# Ignore the skills-CLI's local .agents/ artifacts, but keep our committed
-# Codex/generic plugin marketplace registry tracked.
-.agents/*
-!.agents/plugins/
-.agents/plugins/*
-!.agents/plugins/marketplace.json

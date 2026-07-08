@@ -7,15 +7,17 @@ description: >
   actions", "write a conditional action evaluator", "build a deterministic test", "design an
   IVR test", "IVR navigation test", "write a unit test for a voice agent", "build a regression
   test", "scripted scenario", "scripted voice test", "structured evaluator", "exact flow test",
-  "sequential conditions", "fixed sequence test", or "run evals". Covers individual evaluator design, suite coverage
-  strategy, test profiles, mock-tool data design, conditional actions (deterministic / unit
-  test / regression / IVR navigation flows), and best practices for workflow / red-team /
-  edge-case / deterministic test types.
+  "sequential conditions", "fixed sequence test", "run evals", "fill in expected mock tool calls",
+  "add expected mock calls to a scenario", "backfill mock tool data", or "fix missing mock data".
+  Covers individual evaluator design, suite coverage strategy, test profiles, mock-tool data design,
+  a scenario's expected mock tool calls (`generated_mock_tool_entries`) for tool-call scoring,
+  conditional actions (deterministic / unit test / regression / IVR navigation flows), and best
+  practices for workflow / red-team / edge-case / deterministic test types.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # Cekura Eval Design
@@ -352,7 +354,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 - **All XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text.
 - **`<ivr text="..." />` and `<voicemail text="..." />`** (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags. Use a separate `action_followup` for post-IVR / post-beep content.
 - **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
-- **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. Supports decimal seconds (`"0.5s"`) for sub-second precision. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
+- **`<silence time="Xs" />`** is interruptible by the main agent. On a `standard` condition an interrupt re-evaluates conditions; inside an `action_followup` it re-executes the whole action from the start — so scenarios designed to invite an interruption (long silence, opening-line-then-silence) must use `type: "standard"` or the testing agent loops (see reference § Interruption behavior). Supports decimal seconds (`"0.5s"`) for sub-second precision. **`<hold time="Xs" />`** is not interruptible during the hold itself (spoken text around it in the same action still is); multiple `<hold>` tags allowed in one action.
 - **`<dtmf digits="..." />`** supports `0–9`, `#`, `*`; combinable with surrounding text.
 - **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
 - **`<spell>TEXT</spell>`** wraps text to spell letter by letter (good for IDs, account numbers).
@@ -442,6 +444,10 @@ These three form one cohesive test data set and must be designed together. Key p
 
 **See `references/test-data-design.md`** for the full approach-selection guide, decision matrix for new vs. reuse, fuzzy-match variation rules, chain dependency design, dynamic variable wiring, and API reference.
 
+**Expected mock tool calls — see `references/expected-mock-tool-calls.md`.** **Approach B only.** This step applies only when the evaluator runs against **Cekura mock tools**. Under Approach A the tools are served by the client's staging backend and under Approach C there are no tools — in both cases there are no mock calls to expect, so skip this entirely. For Approach B: the mock data above makes mocks *fire*, but a scenario's expected mock tool calls (`generated_mock_tool_entries`) — the record the *Mock Tool Call Accuracy* metric grades against — are only populated **automatically** by scenario auto-generation. The create/update call can't set them (the field isn't in that request schema); the manual write path is a REST PATCH, per that reference. Two cases route there:
+- **You just directly authored an Approach B scenario here** (conditional-actions / scripted / structured, with its tools mocked by Cekura) and want its tool calls tracked → fill them in as a follow-up step. Optional; skip if you don't need tool-call scoring, and it does not require any metric to be enabled. (Auto-generated scenarios don't need this — generation populates the field itself.)
+- **The user only wants to fill in or repair the expected mock tool calls** on an existing scenario (dashboard-authored, CSV import, earlier session) → first confirm the scenario's agent actually has Cekura mock tools configured (if not, there is nothing to fill — say so instead of inventing mocks); then go **straight** to that reference and do just that step; don't run the full design workflow.
+
 ## Tagging Strategy
 
 Format: `tags: ["Category", "priority-level", "scenario-ID"]`. Category codes: S=Scheduling, RS=Rescheduling, CN=Cancellation, V=Verification, SA=Safety, RT=RedTeam, etc.
@@ -488,6 +494,7 @@ After completing eval design, the user typically needs:
 
 - **`references/choosing-personality.md`** — Full personality selection logic: sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status, fallback rules
 - **`references/test-data-design.md`** — Approach selection (A/B/C), mock tool data design (per-input branching, fuzzy-match variation, phone format variants, chain dependencies, append-not-replace), test profile creation and reuse decision matrix, dynamic variable wiring, data flow by mode, API reference
+- **`references/expected-mock-tool-calls.md`** — Filling a scenario's `generated_mock_tool_entries` (expected mock tool calls) when it has none — **Approach B (Cekura mock tools) only**: the data model, the REST-only write path, the fill-in procedure, and validation. Also the standalone "just fill/repair the expected mock calls on an existing scenario" path.
 - **`references/conditional-actions.md`** — Conditional actions: field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, quick-reference card
 - **`references/expected-outcomes.md`** — Writing rules, prioritization hierarchy, metric variables, good/bad examples
 - **`references/coverage-patterns.md`** — Test coverage category breakdowns

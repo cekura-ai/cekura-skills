@@ -137,8 +137,8 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<silence time="Xs" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues; condition matching restarts after an interrupt. Supports decimal seconds for sub-second precision (e.g., `time="0.5s"`). | Embeddable mid-action |
-| `<hold time="Xs" />` | Dead air — **not interruptible**; background noise stops | Multiple per action allowed |
+| `<silence time="Xs" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues. What happens after an interrupt depends on the condition `type` (see "Interruption behavior" above) — use `type: "standard"` for deliberate-pause scenarios. Supports decimal seconds for sub-second precision (e.g., `time="0.5s"`). | Embeddable mid-action |
+| `<hold time="Xs" />` | Dead air — **not interruptible** during the hold itself (spoken text around it in the same action still is); background noise stops | Multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell text letter-by-letter (no attributes) | Wrap target text |
 | `<speed ratio="N" />` | Speech rate; ratio range **0.8–1.2** (0.8 = 20% slower, 1.2 = 20% faster) | **Must start the action** |
 | `<volume ratio="N" />` | Volume; ratio range **0–2** (0 = silent, 1 = normal, 2 = double) | **Must start the action. Cartesia voices only.** |
@@ -496,8 +496,8 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 
 ### Hold / silence behavior
 
-- `<hold time="Xs" />` for guaranteed dead air (not interruptible; background noise stops; multiple per action allowed).
-- `<silence time="Xs" />` for natural-feeling pauses (interruptible by the main agent; background noise continues; condition matching restarts after an interrupt). Supports decimal seconds (`"0.5s"`) for sub-second precision.
+- `<hold time="Xs" />` for guaranteed dead air (not interruptible during the hold itself; background noise stops; multiple per action allowed).
+- `<silence time="Xs" />` for natural-feeling pauses (interruptible by the main agent; background noise continues; post-interrupt behavior depends on the condition `type` — see "Interruption behavior" above). Supports decimal seconds (`"0.5s"`) for sub-second precision.
 
 ## Anti-Patterns
 

@@ -124,7 +124,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-metric-design` | Core metric design patterns and best practices |
 | `cekura-metric-improvement` | Metric improvement through feedback iteration |
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
-| `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
+| `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory, filling a scenario's expected mock tool calls |
 | `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
 
 ### Commands

@@ -43,7 +43,7 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `cekura-metric-design` | Design new metrics, improve existing ones, metric best practices |
 | `cekura-metric-improvement` | Improve metric accuracy through feedback cycle (labs workflow) |
 | `cekura-predefined-metrics` | Catalog of built-in metrics — what each does, costs, constraints, configuration |
-| `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
+| `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions, fill a scenario's expected mock tool calls |
 
 ### Commands
 
@@ -138,7 +138,7 @@ This skill routes — it doesn't perform tasks itself. After confirming the user
 - Designing metrics → **cekura-metric-design**
 - Improving metric accuracy → **cekura-metric-improvement**
 - Picking which built-in metrics to use → **cekura-predefined-metrics**
-- Designing test scenarios → **cekura-eval-design**
+- Designing test scenarios, or filling a scenario's expected mock tool calls → **cekura-eval-design**
 - Fixing a production call bug end-to-end → **cekura-self-improving-agent**
 
 ## Documentation
