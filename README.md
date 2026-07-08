@@ -23,7 +23,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 10 Skills, 14 Commands in one plugin
+### 11 Skills, 14 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
@@ -32,6 +32,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-create-agent` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report` |
 | `cekura-self-improving-agent` | |
 | `cekura-metric-design` | |
+| `cekura-metric-builder` | |
 | `cekura-metric-improvement` | |
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
@@ -83,7 +84,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Ten skills, scoped to specific Cekura workflows:
+Eleven skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
@@ -92,6 +93,7 @@ Ten skills, scoped to specific Cekura workflows:
 | `cekura-create-agent` | "Connect my voice agent to Cekura" |
 | `cekura-self-improving-agent` | "Improve my agent / auto-tune from eval results" — **also** "fix a production call bug / reproduce and test a fix before raising a PR" |
 | `cekura-metric-design` | "Create a metric / measure call quality" |
+| `cekura-metric-builder` | "Build a metric by testing it on real calls / find its edge cases" |
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
@@ -235,6 +237,7 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-create-agent \
          cekura/skills/cekura-self-improving-agent \
          cekura/skills/cekura-metric-design \
+         cekura/skills/cekura-metric-builder \
          cekura/skills/cekura-metric-improvement \
          cekura/skills/cekura-predefined-metrics \
          cekura/skills/cekura-eval-design \
