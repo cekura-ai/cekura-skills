@@ -54,7 +54,9 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 - **Description = the real system prompt.** Read [`../cekura-create-agent/phase4-description.md`](../cekura-create-agent/phase4-description.md) for the quality bar and follow it. The description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent.
 
   **How to ask — demand the full prompt, don't invite a summary:**
-  > "Paste your agent's **complete system prompt** — the actual prompt your bot runs with, however long. From your provider's dashboard you can export it (Retell: Agents → Export; VAPI: Workflows → Code → Copy JSON). If it lives in your codebase, share the file or repo path and I'll read it."
+  > "Paste your agent's **complete system prompt** — the actual prompt your bot runs with, however long. From your provider's dashboard you can export it (Retell: Agents → Export; VAPI: Workflows → Code → Copy JSON). If it lives in your codebase, paste the prompt file's contents or attach the file here."
+
+  Offer to read the codebase yourself ("share the file or repo path and I'll read it") **only when the session actually has file access** — e.g. local Claude Code with the user's repo. In the Cekura platform UI there is no codebase access: ask for a paste or a file attachment instead.
 
   Never phrase it as "or a plain-English description of what it does" and never show a one-line example — that teaches the user to give a one-liner, which produces junk evaluators.
 
