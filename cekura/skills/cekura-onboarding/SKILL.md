@@ -51,8 +51,6 @@ Several phases delegate to files in the sibling **cekura-create-agent** skill (`
 |-------|------|--------------|------|
 | 0 | [phase0-path.md](phase0-path.md) | Pick testing vs observability; ONE `aiagents_list` call to detect existing work | shared |
 | 2 | [phase2-agent.md](phase2-agent.md) | Create/connect the agent — provider-first, minimal, validated | shared |
-
-*(There is no Phase 1 — the old account/project phase is retired; client/OAuth setup lives in [references/client-setup.md](references/client-setup.md) as a fallback and phase numbering is kept stable.)*
 | 3T | [phase3-testing-metrics.md](phase3-testing-metrics.md) | Enable pre-defined metrics | testing |
 | 4T | [phase4-testing-evaluators.md](phase4-testing-evaluators.md) | Generate first evaluators (generation-first) | testing |
 | 5T | [phase5-testing-first-run.md](phase5-testing-first-run.md) | First test run + **verification gate** | testing |
@@ -61,6 +59,8 @@ Several phases delegate to files in the sibling **cekura-create-agent** skill (`
 | 4O | [phase4-observability-metrics.md](phase4-observability-metrics.md) | Configure starter metrics | observability |
 | 5O | [phase5-observability-evaluate.md](phase5-observability-evaluate.md) | Run metric evaluation | observability |
 | 6O | [phase6-observability-review.md](phase6-observability-review.md) | Review results, what's next | observability |
+
+*(There is no Phase 1 — the old account/project phase is retired; client/OAuth setup lives in [references/client-setup.md](references/client-setup.md) as a fallback and phase numbering is kept stable.)*
 
 ## Performing Platform Actions
 

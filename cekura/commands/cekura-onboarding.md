@@ -1,7 +1,7 @@
 ---
 name: cekura-onboarding
 description: State-aware Cekura onboarding that resumes at the right setup phase and delegates to the cekura-onboarding skill. Supports two variants — `testing` (default) and `observability`.
-argument-hint: "[testing|observability] [account|agent|metrics|evals|run|ingest|evaluate|review] [project-id]"
+argument-hint: "[testing|observability] [agent|metrics|evals|run|ingest|evaluate|review] [project-id]"
 allowed-tools:
   [
     "AskUserQuestion",
@@ -10,7 +10,6 @@ allowed-tools:
     "Skill",
     "mcp__cekura__list_available_tools",
     "mcp__cekura__test_simple_tool",
-    "mcp__cekura__user_organizations_list",
     "mcp__cekura__projects_list",
     "mcp__cekura__projects_create",
     "mcp__cekura__projects_retrieve",
@@ -205,7 +204,7 @@ Options:
 4. `Switch variant` - flip testing ↔ observability and redo state detection.
 5. `Pick a different project` - show only if 2+ projects exist.
 
-If more than one organization was detected, mention which org's projects are listed. If the user needs a different org and MCP does not expose org switching, tell them to use an API key scoped to the desired org/project.
+If the user needs a different organization than the one their credentials resolve to, tell them to use an API key scoped to the desired org/project.
 
 ---
 
@@ -216,9 +215,7 @@ Invoke the `cekura-onboarding` skill with a structured context block. Pass every
 ```text
 Context already established:
 - Variant: <testing|observability>
-- Org: <org_id> / <org_name>
-- User: <email or "OAuth-authenticated">
-- API key: valid
+- API key: valid (proven by successful project/agent calls)
 - Project: <project_id> (<project_name>) - <existing|just created>
 - Agents in project:
   - <agent_id> (<agent_name>) - description: <yes|no>, provider: <assistant_provider>, inbound: <true|false>, language: <language>
