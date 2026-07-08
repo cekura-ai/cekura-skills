@@ -280,11 +280,13 @@ Format as one tight block:
 
 If the skill exited mid-flow, do not call it complete. Use the variant-appropriate resume hint:
 
-> Paused at Phase 4. Run `/cekura-onboarding testing evals <project_id>` to resume.
+> Paused before generating evaluators. Run `/cekura-onboarding testing evals <project_id>` to pick up there.
 
 or
 
-> Paused at Phase 5. Run `/cekura-onboarding observability evaluate <project_id>` to resume.
+> Paused before running the evaluation. Run `/cekura-onboarding observability evaluate <project_id>` to pick up there.
+
+(Same rule as the confirmation prompt: user-facing pause/resume messages name the next ACTION in plain words, never a phase number — phase numbers are internal navigation only.)
 
 ---
 
