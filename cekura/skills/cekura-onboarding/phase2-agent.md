@@ -71,6 +71,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 
   On failure, do NOT create the agent. Push back once, concretely: name 2–3 specific questions the description leaves open, and re-ask for the full system prompt (offer the provider-export steps or the code-reading path from `phase4-description.md`). Repeat until the check passes.
   - **Testing path: this check is a blocker.** If the user genuinely cannot produce the prompt, help them retrieve it (provider dashboard, their repo) or pause onboarding until they have it. Do not create the agent with a summary/placeholder and continue.
+    **Never offer "switch to the observability path" as a way around this gate.** The path was chosen for the user's goal in Phase 0; observability's placeholder allowance is not an escape hatch from the testing requirement. Only switch paths if the user themselves says their goal is actually production-call monitoring — not to dodge providing the prompt.
   - **Observability path: a placeholder is acceptable** after one push-back. Ingestion and most metrics work without it. Create with a clearly marked placeholder and surface it as an open item in every subsequent summary.
 - Agent name, language.
 - Connection details for how Cekura reaches the agent, in order of preference: existing phone number → SIP URI → websocket URL → provider WebRTC (2b).
