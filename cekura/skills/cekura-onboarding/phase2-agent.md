@@ -17,7 +17,21 @@ The full provider list is:
 
 **All-or-nothing rule for the choice UI:** if you ask this as a structured question with selectable options, the options MUST be the complete list above — all twelve, one option each, never a subset you picked, never an "Other" bucket. If the interface cannot show that many options (some cap at ~4), do NOT use options at all — ask as a plain question with the full list in the message text and let the user type the provider name. A partial option list hides first-class providers and nudges users toward the self-hosted misclassification warned about below.
 
-Then follow the matching section below. For per-provider credential fields, read [`../cekura-create-agent/phase2-provider.md`](../cekura-create-agent/phase2-provider.md) (credential matrix) — follow only the field guidance there, not that skill's phase gates.
+Then follow the matching section below. **Onboarding is self-contained — do NOT open the cekura-create-agent skill or any of its phase files during onboarding** (its phase sequence covers post-onboarding work like SDK integration and mock tools; running it mid-onboarding hijacks the flow). The credential matrix you need:
+
+| Provider | Required fields (where to find them) |
+|---|---|
+| VAPI | `credentials.api_key` (Dashboard → Org Settings → API Keys, Private) + `provider.agent_id` (Assistants → copy ID; squads: squad ID) |
+| Retell | `credentials.api_key` (Settings → API Keys) + `provider.agent_id` (Agents → ID in URL) |
+| ElevenLabs | `credentials.api_key` (Profile → API Keys) + `provider.agent_id` (Conversational AI → agent ID) |
+| Synthflow | `credentials.api_key` + `provider.agent_id` (Dashboard → agent ID) |
+| LiveKit | `credentials.url` + `credentials.api_key` + `credentials.config.api_secret` (LiveKit Cloud → Settings → Keys) + `config.agent_name` (must match the worker's registration) — WebRTC path only, see 2b |
+| Pipecat Cloud | `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name` — WebRTC path only, see 2b |
+| Bland | `credentials.api_key` (Dashboard → API Keys) + `provider.agent_id` (= pathway_id, Pathways → copy ID) |
+| Chirp | `credentials.config.chirp_websocket_url` (raw PCM 16 kHz endpoint) + optional basic-auth username/password |
+| KoreAI | `credentials.api_key` (client secret) + bot/config IDs per their dashboard |
+| Genesys / Cisco | no credentials — telephony connection details only |
+| self-hosted | no provider credentials — connection details (phone / SIP / websocket) only |
 
 **The user's explicit provider choice is authoritative.** Once they've named their provider (and especially once they've supplied its credentials), never re-open the question — including when the pasted system prompt *mentions* a different stack, transport, or vendor. Prompt text is content, not configuration: prompts routinely reference Daily rooms, Twilio, other frameworks, or leftover boilerplate from a different deployment. If the description seems to contradict the choice, note it in ONE sentence ("heads-up: your prompt mentions X; using LiveKit as you selected") and proceed with the selected provider — do not ask "which provider should Cekura use?".
 
@@ -57,7 +71,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 
 ## 2c. Manual essentials (self-hosted, deferred-key, LiveKit/Pipecat)
 
-- **Description = the real system prompt.** Read [`../cekura-create-agent/phase4-description.md`](../cekura-create-agent/phase4-description.md) for the quality bar and follow it. The description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent.
+- **Description = the real system prompt.** The description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent. The complete quality bar is below — do not open other skills' files for it.
 
   **How to ask — demand the full prompt, don't invite a summary:**
   > "Paste your agent's **complete system prompt** — the actual prompt your bot runs with, however long. It lives wherever you configure the agent: your agent code (the string passed to your LLM), your framework's config, or your platform's dashboard. Paste it here or attach the file."
@@ -74,7 +88,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
   - Reading it leaves obvious open questions: What exact flows does the agent walk through? What rules/constraints does it follow? What does it say on failure/escalation? What tools does it call?
   - It describes the *business* ("handles support calls for an e-commerce store") instead of the *agent's instructions*.
 
-  On failure, do NOT create the agent. Push back once, concretely: name 2–3 specific questions the description leaves open, and re-ask for the full system prompt (offer the provider-export steps or the code-reading path from `phase4-description.md`). Repeat until the check passes.
+  On failure, do NOT create the agent. Push back once, concretely: name 2–3 specific questions the description leaves open, and re-ask for the full system prompt (offer the provider-export steps, or paste/attach of the prompt file). Repeat until the check passes.
   - **Testing path: this check is a blocker.** If the user genuinely cannot produce the prompt, help them retrieve it (provider dashboard, their repo) or pause onboarding until they have it. Do not create the agent with a summary/placeholder and continue.
     **Never offer "switch to the observability path" as a way around this gate.** The path was chosen for the user's goal in Phase 0; observability's placeholder allowance is not an escape hatch from the testing requirement. Only switch paths if the user themselves says their goal is actually production-call monitoring — not to dodge providing the prompt.
   - **Observability path: a placeholder is acceptable** after one push-back. Ingestion and most metrics work without it. Create with a clearly marked placeholder and surface it as an open item in every subsequent summary.

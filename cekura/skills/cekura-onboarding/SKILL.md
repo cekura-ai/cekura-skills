@@ -43,7 +43,7 @@ This skill executes **one phase at a time, in order**. For each phase:
 
 **Ask questions ONLY to collect missing inputs or resolve genuine ambiguity** (provider choice, credentials, phone number, self-hosted confirmation). Never ask permission to continue, never confirm an action the flow already implies — the user invoked onboarding, so creating the agent, enabling metrics, generating evaluators, and starting the first verification run are all pre-authorized. No "ready to continue?", no "shall I create it?", no "want me to proceed?" — just do the step and narrate it. The one exception: when a **gate is blocked** (e.g. the testing-path description gate) present the blocker and the options.
 
-Several phases delegate to files in the sibling **cekura-create-agent** skill (`../cekura-create-agent/…`). When a phase file tells you to read one of those, follow only the referenced guidance — **ignore that file's own phase gates and "continue to Phase N+1" instructions**; return to this skill's flow.
+**Onboarding is self-contained.** Do NOT open the sibling cekura-create-agent skill (or any other skill) during onboarding — everything needed (credential matrix, description quality bar) is inlined in this skill's phase files. cekura-create-agent's phase sequence covers post-onboarding work (SDK integration, mock tools, knowledge base) and running it mid-onboarding hijacks the flow into those steps; it is a Phase-6 handoff only.
 
 ## The Phases
 
