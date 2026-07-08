@@ -9,12 +9,11 @@ Register the user's agent on Cekura. Framing differs by path:
 
 **Prerequisites are handled inline, not as a phase:** if platform tools fail, fix access via [references/client-setup.md](references/client-setup.md); if no project is in context, pick one with `projects_list` or create one with `projects_create` — then continue here.
 
-**Provider first — it shapes everything.** Ask before anything else, as a **plain open question with the full provider list in the message text** — the user types their provider's name:
+**Provider first — it shapes everything.** Ask before anything else. The full provider list is:
 
-> "What provider is your agent built on?
-> VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · Chirp · KoreAI · Genesys · Cisco · self-hosted/custom"
+> VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · Chirp · KoreAI · Genesys · Cisco · self-hosted/custom
 
-**Do not use a structured-choice picker for this question.** Choice UIs cap at ~4 options, which forces either dropping providers or an "Other / Self-hosted" bucket — both hide first-class providers and the bucket nudges users toward the self-hosted misclassification warned about below. Every provider gets equal billing in the text; the user just types the name.
+**All-or-nothing rule for the choice UI:** if you ask this as a structured question with selectable options, the options MUST be the complete list above — all twelve, one option each, never a subset you picked, never an "Other" bucket. If the interface cannot show that many options (some cap at ~4), do NOT use options at all — ask as a plain question with the full list in the message text and let the user type the provider name. A partial option list hides first-class providers and nudges users toward the self-hosted misclassification warned about below.
 
 Then follow the matching section below. For per-provider credential fields, read [`../cekura-create-agent/phase2-provider.md`](../cekura-create-agent/phase2-provider.md) (credential matrix) — follow only the field guidance there, not that skill's phase gates.
 
