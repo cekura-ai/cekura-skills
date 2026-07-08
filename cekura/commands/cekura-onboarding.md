@@ -129,13 +129,13 @@ Otherwise call `mcp__cekura__projects_list`.
 
 With a chosen `project_id`, make exactly one call:
 
-1. `mcp__cekura__aiagents_list(project_id=<project_id>, page_size=20)` — agent summaries. List results use `agent_name`, not `name`, and may not include `description`.
+1. `mcp__cekura__aiagents_list(project_id=<project_id>, page_size=20)` — agent summaries (v2 shape: `id`, `name`; `description` may be omitted in list responses).
 
 **If 0 agents (the common case): stop detecting. Entry phase is Phase 2 — Connect your agent.** Skip everything below and go to Step 2.
 
 ### Deeper inventory — ONLY when agents already exist (resume case)
 
-2. `mcp__cekura__aiagents_retrieve(id=<agent_id>)` for each candidate onboarding agent. Capture `id`, `agent_name`, `description`, `assistant_provider`, `inbound`, `contact_number`, and `language`.
+2. `mcp__cekura__aiagents_retrieve(id=<agent_id>)` for each candidate onboarding agent. The v2 response nests provider and telephony — capture `id`, `name`, `description`, `language`, `provider.type`, `provider.agent_id`, `telephony.inbound`, and `telephony.phone_number`. (There are no flat `agent_name`/`assistant_provider`/`inbound`/`contact_number` fields.)
 
 **Testing variant** also gathers:
 
@@ -218,7 +218,7 @@ Context already established:
 - API key: valid (proven by successful project/agent calls)
 - Project: <project_id> (<project_name>) - <existing|just created>
 - Agents in project:
-  - <agent_id> (<agent_name>) - description: <yes|no>, provider: <assistant_provider>, inbound: <true|false>, language: <language>
+  - <agent_id> (<name>) - description: <yes|no>, provider: <provider.type>, inbound: <telephony.inbound>, language: <language>
   - ...
 [testing-only:]
 - Evaluators: <count> in folders [<folder1>, <folder2>, ...]
@@ -246,7 +246,7 @@ After the skill returns, run a short state diff using the same MCP tools as Step
 
 **Testing variant** — report:
 - New project: name + dashboard link.
-- New agent: `id`, `agent_name`, dashboard link.
+- New agent: `id`, `name`, dashboard link.
 - New evaluators: count + folder.
 - New result: `id`, `status`, dashboard link.
 
@@ -261,7 +261,7 @@ Format as one tight block:
 
 **Observability variant** — report:
 - New project: name + dashboard link.
-- New agent: `id`, `agent_name`, dashboard link.
+- New agent: `id`, `name`, dashboard link.
 - New ingested call logs: count + latest call_log id.
 - New metrics attached: count.
 
