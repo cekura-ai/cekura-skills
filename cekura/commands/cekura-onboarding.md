@@ -176,15 +176,14 @@ If the user provided an explicit phase argument, override the detected phase but
 
 ---
 
-## Step 2 - Single Confirmation Prompt
+## Step 2 - Confirmation Prompt (resume/ambiguity ONLY — skip on a clean slate)
 
-Use `AskUserQuestion` exactly once before the skill takes over.
+**Clean slate (0 agents, one project or a just-created one): do NOT ask anything.** There is nothing to resume and no decision for the user to make — announce one line ("Project **<name>** — let's connect your agent.") and delegate to the skill immediately at Phase 2. A confirmation prompt here is pure friction.
 
-Prompt format — clean slate (0 agents, the common case):
-
-> Project **<name>** (`<id>`) has no agents yet.
-> Variant: **<Testing|Observability>**. First step: **Connect your agent**.
-> Continue?
+Ask (`AskUserQuestion`, exactly once) ONLY when there is a real choice:
+- agents already exist (resume case), or
+- 2+ projects and no explicit project argument, or
+- the user's message conflicts with the resolved variant.
 
 Prompt format — resume (agents exist, testing variant):
 
