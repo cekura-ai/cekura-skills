@@ -154,7 +154,7 @@ Hold this inventory for the handoff context.
 |---|---|
 | Project, 0 agents | Phase 2 - Agent Configuration |
 | Agent exists, but `description` is empty | Phase 2 - Agent Configuration (description step, `phase2-agent.md` §2c) |
-| Agent OK, 0 evaluators | Phase 3 - Metrics Setup (it verifies its own state, then flows into Phase 4) |
+| Agent OK, 0 evaluators | Phase 4 - First Evaluators (metrics are already enabled at project creation; Phase 3's silent verify runs on the way — never present a "Metrics" step to the user) |
 | Evaluators exist, 0 results | Phase 5 - First Test Run |
 | Latest result has `error_message` or failed/errored infrastructure status | Phase 5 - First Test Run |
 | Successful/completed results exist | Phase 6 - What's Next |

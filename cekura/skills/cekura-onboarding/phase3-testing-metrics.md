@@ -1,6 +1,6 @@
-# Phase 3 (testing) — Metrics Check
+# Phase 3 (testing) — Metrics Check (silent)
 
-> **Start:** Announce "Starting Phase 3 — Metrics".
+> This phase is a background verification, NOT a user-facing step. Do not announce a "Metrics" phase, do not present metrics setup in a resume prompt, and do not ask the user anything here — the only user-visible output is the single confirmation line below when the check passes.
 
 ## 3a. Default metrics are ALREADY enabled — do not re-enable them
 

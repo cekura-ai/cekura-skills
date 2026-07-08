@@ -9,12 +9,13 @@ Register the user's agent on Cekura. Framing differs by path:
 
 **Prerequisites are handled inline, not as a phase:** if platform tools fail, fix access via [references/client-setup.md](references/client-setup.md); if no project is in context, pick one with `projects_list` or create one with `projects_create` — then continue here.
 
-**Provider first — it shapes everything.** Ask before anything else, as a **plain open question with the full provider list in the message text** — the user types their provider's name:
+**Provider first — it shapes everything. The opening question is the provider question, ALONE — nothing rides along.** Never batch name / description / credential questions with it: every follow-up depends on the provider answer, so pre-batched questions are guaranteed wrong — auto-import providers (VAPI/Retell/ElevenLabs/Synthflow) fetch the agent's **name and system prompt from the provider**, so asking for either wastes the user's time and a pre-authored "paste your system prompt" question is flat wrong for them; LiveKit/Pipecat need the telephony-vs-WebRTC choice before any credentials. Ask for a name only in the branches that actually need one (manual/self-hosted paths), after the provider is known.
 
-> "What provider is your agent built on?
-> VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · Chirp · KoreAI · Genesys · Cisco · self-hosted/custom"
+The full provider list is:
 
-**Do not use a structured-choice picker for this question.** Choice UIs cap at ~4 options, which forces either dropping providers or an "Other / Self-hosted" bucket — both hide first-class providers and the bucket nudges users toward the self-hosted misclassification warned about below. Every provider gets equal billing in the text; the user just types the name.
+> VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · Chirp · KoreAI · Genesys · Cisco · self-hosted/custom
+
+**All-or-nothing rule for the choice UI:** if you ask this as a structured question with selectable options, the options MUST be the complete list above — all twelve, one option each, never a subset you picked, never an "Other" bucket. If the interface cannot show that many options (some cap at ~4), do NOT use options at all — ask as a plain question with the full list in the message text and let the user type the provider name. A partial option list hides first-class providers and nudges users toward the self-hosted misclassification warned about below.
 
 Then follow the matching section below. For per-provider credential fields, read [`../cekura-create-agent/phase2-provider.md`](../cekura-create-agent/phase2-provider.md) (credential matrix) — follow only the field guidance there, not that skill's phase gates.
 
@@ -63,7 +64,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 
   Offer to read the codebase yourself ("share the file or repo path and I'll read it") **only when the session actually has file access** — e.g. local Claude Code with the user's repo. In the Cekura platform UI there is no codebase access: ask for a paste or a file attachment instead.
 
-  Never phrase it as "or a plain-English description of what it does" and never show a one-line example — that teaches the user to give a one-liner, which produces junk evaluators.
+  **The ask must offer NO alternative to the complete prompt — in any wording.** Never "or a plain-English description", "or a short description", "or a summary of what it does", or any paraphrase thereof; never a one-line example. The moment the question offers a lighter option, users take it, and a summary description produces junk evaluators. The only acceptable ask is for the complete system prompt (with export/paste/attach routes to get it). If the user replies with a summary anyway, the hard acceptance check below handles it.
 
   **Hard acceptance check — run on EVERY candidate description before creating the agent:**
   A description fails the check if ANY of these hold:
