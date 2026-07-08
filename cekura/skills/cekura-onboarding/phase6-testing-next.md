@@ -1,6 +1,6 @@
 # Phase 6 (testing) — What's Next
 
-> **Start:** Announce "Starting Phase 6 — What's Next".
+> **Start:** Announce the step in plain words (e.g. "Let's connect your agent", "Generating your first evaluators") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
 Onboarding is done (Phase 5 gate passed). Offer the depth that was deliberately deferred — each item is an upsell triggered by a real need, not a required step:
 

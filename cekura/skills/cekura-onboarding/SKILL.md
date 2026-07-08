@@ -36,10 +36,10 @@ Both paths share Phases 0 and 2 (path choice, agent connection) and diverge afte
 
 This skill executes **one phase at a time, in order**. For each phase:
 
-1. Announce: "Starting Phase N — [name]".
+1. Announce the step in plain words (e.g. "Let's connect your agent") — phase numbers are internal navigation, never user-facing.
 2. **Read the phase file** (`phaseN-*.md` in this skill directory). Do not rely on memory of its contents.
 3. Complete every task in the file and satisfy its gate condition.
-4. Announce: "Phase N complete." and move to the next phase without waiting for the user.
+4. Confirm the step in plain words and move on without waiting for the user (no "Phase N complete").
 
 **Ask questions ONLY to collect missing inputs or resolve genuine ambiguity** (provider choice, credentials, phone number, self-hosted confirmation). Never ask permission to continue, never confirm an action the flow already implies — the user invoked onboarding, so creating the agent, enabling metrics, generating evaluators, and starting the first verification run are all pre-authorized. No "ready to continue?", no "shall I create it?", no "want me to proceed?" — just do the step and narrate it. The one exception: when a **gate is blocked** (e.g. the testing-path description gate) present the blocker and the options.
 

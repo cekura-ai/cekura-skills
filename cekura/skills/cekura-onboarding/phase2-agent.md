@@ -1,6 +1,6 @@
 # Phase 2 — Agent Configuration (shared)
 
-> **Start:** Announce "Starting Phase 2 — Agent".
+> **Start:** Announce the step in plain words (e.g. "Let's connect your agent", "Generating your first evaluators") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
 Register the user's agent on Cekura. Framing differs by path:
 
@@ -60,7 +60,9 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 - **Description = the real system prompt.** Read [`../cekura-create-agent/phase4-description.md`](../cekura-create-agent/phase4-description.md) for the quality bar and follow it. The description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent.
 
   **How to ask — demand the full prompt, don't invite a summary:**
-  > "Paste your agent's **complete system prompt** — the actual prompt your bot runs with, however long. From your provider's dashboard you can export it (Retell: Agents → Export; VAPI: Workflows → Code → Copy JSON). If it lives in your codebase, paste the prompt file's contents or attach the file here."
+  > "Paste your agent's **complete system prompt** — the actual prompt your bot runs with, however long. It lives wherever you configure the agent: your agent code (the string passed to your LLM), your framework's config, or your platform's dashboard. Paste it here or attach the file."
+
+  (This ask only ever fires for non-auto-import providers — LiveKit, Pipecat, Bland, self-hosted, etc. Do not cite VAPI/Retell dashboard export steps here; those providers auto-import and never reach this ask.)
 
   Offer to read the codebase yourself ("share the file or repo path and I'll read it") **only when the session actually has file access** — e.g. local Claude Code with the user's repo. In the Cekura platform UI there is no codebase access: ask for a paste or a file attachment instead.
 
@@ -97,4 +99,4 @@ Call `aiagents_create` with the collected fields. On validation errors, fix and 
 
 **Do not proceed until `aiagents_create` succeeded, the provider is confirmed, and the description passed the hard acceptance check in 2c** (auto-imported descriptions pass by construction). On the **testing** path a summary/placeholder blocks this gate; on the **observability** path a clearly flagged placeholder is acceptable.
 
-Announce: "Phase 2 complete." Then begin the path's Phase 3: [testing](phase3-testing-metrics.md) or [observability](phase3-observability-ingest.md).
+Confirm the step is done in plain words (no phase numbers). Then begin the path's Phase 3: [testing](phase3-testing-metrics.md) or [observability](phase3-observability-ingest.md).

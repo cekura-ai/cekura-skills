@@ -23,4 +23,4 @@ Skip custom metrics during onboarding. Once the user has test results, hand off 
 
 **Do not proceed until `metrics_list` confirms Expected Outcome is enabled for the project.**
 
-Announce: "Phase 3 complete." Then begin [Phase 4 — First Evaluators](phase4-testing-evaluators.md).
+Confirm the step is done in plain words (no phase numbers). Then begin [Phase 4 — First Evaluators](phase4-testing-evaluators.md).

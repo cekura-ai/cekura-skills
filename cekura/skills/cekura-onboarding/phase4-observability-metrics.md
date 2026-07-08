@@ -1,6 +1,6 @@
 # Phase 4 (observability) — Configure Metrics
 
-> **Start:** Announce "Starting Phase 4 — Configure Metrics".
+> **Start:** Announce the step in plain words (e.g. "Let's connect your agent", "Generating your first evaluators") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
 ## 4a. Survey existing metrics
 
@@ -28,4 +28,4 @@ If the user wants metrics auto-tailored to their agent, use `metrics_generate` (
 
 **Do not proceed until the starter metrics exist in `metrics_list`.**
 
-Announce: "Phase 4 complete." Then begin [Phase 5 — Run Evaluation](phase5-observability-evaluate.md).
+Confirm the step is done in plain words (no phase numbers). Then begin [Phase 5 — Run Evaluation](phase5-observability-evaluate.md).
