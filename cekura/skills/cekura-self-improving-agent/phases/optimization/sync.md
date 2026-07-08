@@ -14,7 +14,7 @@ On drift, do NOT proceed to the Overfitting Gate — roll back to Apply, fix the
 Before any SYNC.x work, verify Apply completed:
 
 - APPLY.1 emitted no errors.
-- APPLY.2 redeploy succeeded (self-hosted live target) — or was skipped (VAPI / ElevenLabs / render-only / offline-PR / `"noop"`, or `redeploy_command` unset in `auto_mode: true`).
+- APPLY.2 redeploy succeeded (self-hosted live target) — or was skipped (VAPI / ElevenLabs / render-only / `"noop"`, or `redeploy_command` unset in `auto_mode: true`).
 - The edited-artifact list and combined edit set are available from Apply's hand-off.
 
 If Apply errored, return control to the orchestrator — Sync has nothing to verify.
@@ -29,7 +29,6 @@ For each artifact, verify **each individual changed field** — not just "the ar
   - **Source file / owned code** (incl. vendored/forked SDK) — re-read (Read tool, not cached) and verify the changed regions match the `Edit` output. If a tool-list extension shows the old length, the edit matched an ambiguous/partial `old_string` — roll back and retry with more surrounding context.
   - **Database row** — re-run the fetch query; the returned prompt must equal the intended new prompt (whitespace-only diffs OK; content drift = wrong row or a trigger rewrote it).
   - **Cekura mock tools** — re-fetch via `mcp__cekura__aiagents_retrieve` with `ql={mock_tools}`; verify the updated `mock_tools` list matches. There is no "live agent" sync on Cekura's side; the redeploy gate (non-auto) / no-change detector (auto) covers live state.
-  - **Offline-PR (code-fix)** — no live target and no redeploy; verify the working-tree diff instead: re-read the edited source and confirm each changed region matches the intended `Edit` output (same ambiguous-anchor check as above). The staged diff is what the PR phase carries — landing it in the wrong region would ship a broken PR. Validation is the test suite (run later), not a live re-fetch.
   - **Render-only (no live target)** — skip; nothing to sync server-side. The user's reply to the apply gate is the only confirmation.
 
 ## Drift handling
@@ -38,7 +37,7 @@ If any field doesn't match its intended value:
 
 - **VAPI: nested object wiped** → PATCH body replaced rather than merged a nested `messages` / `destinations`. Rebuild with the full nested structure preserved (VAPI apply doc) and re-issue via Apply.
 - **ElevenLabs: prompt unchanged after 200** → body nested the prompt at the wrong path. Rebuild with `{"conversation_config":{"agent":{"prompt":{"prompt":"..."}}}}` and re-issue. If `tool_ids` lost entries, the array was sent partially — re-send the full array.
-- **Self-hosted source file / owned code: edit in wrong region** → `old_string` matched a lookalike. Invert the `Edit` (swap `old_string`/`new_string`) at the wrong location, then re-issue Apply with a uniquely-anchored `old_string` (5–10 lines of context). Same handling for an offline-PR working-tree diff that landed wrong.
+- **Self-hosted source file / owned code: edit in wrong region** → `old_string` matched a lookalike. Invert the `Edit` (swap `old_string`/`new_string`) at the wrong location, then re-issue Apply with a uniquely-anchored `old_string` (5–10 lines of context).
 - **Self-hosted DB row: re-fetch shows pre-edit prompt** → wrong row (stale WHERE/bind), a trigger/view rewrote it, or fetch and write point at different environments. Re-issue the UPDATE against the correct row (self-hosted overview DB notes), or in render-only re-render and wait.
 - **Self-hosted mock tools: re-fetch shows old description** → wait 2–3s and re-fetch once (eventual-consistency window). Still stale → re-issue the PATCH; the original may not have committed.
 

@@ -3,8 +3,8 @@
 Runs **once per invocation**, before Reproduce / Optimization / Eval. Setup resolves the run's **target** — the three axes that let one loop serve every provider and fix surface:
 
 - **Editable surface** — where the fix lands: system prompt / tool config / (self-hosted) owned source code the run-setup points to (source file / DB row / Cekura mock tools / pasted text).
-- **Apply path** — how an edit goes live: provider API PATCH (VAPI / ElevenLabs, live immediately) · `Edit` + `redeploy_command` · live-on-save (`"noop"`) · **offline / PR** (code-fix) · **render-only** (print the rewrite).
-- **Validation** — how a fix is proven later: Cekura scenarios (simulation) or a code test suite. Setup only records which; it does not run either.
+- **Apply path** — how an edit goes live: provider API PATCH (VAPI / ElevenLabs, live immediately) · `Edit` + `redeploy_command` (self-hosted, including owned source-code edits) · live-on-save (`"noop"`) · **render-only** (print the rewrite).
+- **Validation** — always Cekura scenarios (simulation); Setup only records the transport, it does not run anything.
 
 Setup also records the **signal shape** (`input_is_prod_call`), collects the `redeploy_command` (hard gate, Step 1.4) where a live target exists, and persists newly-collected run-setup to `.claude/MEMORY.md` (Step 1.4a).
 
@@ -27,7 +27,7 @@ If no run-setup is found, proceed through 1.1–1.4 and persist what you collect
 Branch on the user's input:
 
 - `prompt` (text or file) **and** no `agent_id`, OR `prompt` + `mode: self_hosted` with no reachable live target → **render-only** (apply path = print the rewrite; no live agent to edit/validate). Skip to Step 1.3.
-- **Diagnosed code bug** (source file + supplied root cause, ± the originating call) → **code-fix**: editable surface = that owned source file, apply path = **offline / PR** (no live redeploy — the Step 1.4 hard gate is satisfied by `redeploy_command = "noop"`/offline), validation = a **test suite**. The supplied root cause is consumed as-is, not re-derived. Resolve `mode: self_hosted` and continue at Step 1.3 (self-hosted branch) to locate/record the source file.
+- **Diagnosed code bug** (source file + supplied root cause, ± the originating call) → editable surface = that owned source file, apply path = `Edit` + `redeploy_command` (self-hosted live), validation = **Cekura scenarios** (the bug is forced to reproduce in-sim via Reproduce REPRO.3e, and the source edit ships as a PR after it passes). The supplied root cause is consumed as-is, not re-derived. Resolve `mode: self_hosted` and continue at Step 1.3 (self-hosted branch) to locate/record the source file.
 - `agent_id` only → Step 1.2.
 - `agent_id` **and** `prompt` without a mode → ask once: operate against the live agent (PATCH / edit per run-setup) or render-only. Default to live agent.
 - Neither → ask. If they don't know an agent ID, list their agents.
@@ -51,7 +51,7 @@ Fetch the agent's provider config + tool surface only — **no failure data**. E
 
 - **VAPI** — [`../providers/vapi/overview.md`](../providers/vapi/overview.md) (+ [`phase-1-fetch.md`](../providers/vapi/phase-1-fetch.md) for curl bodies/edge cases). Pulls live `/assistant/{id}` (or squad) + every referenced `/tool/{id}` via `VAPI_KEY`.
 - **ElevenLabs** (Step 1.3c) — [`../providers/elevenlabs/overview.md`](../providers/elevenlabs/overview.md) (+ [`phase-1-fetch.md`](../providers/elevenlabs/phase-1-fetch.md)). Pulls live `/v1/convai/agents/{id}` + referenced `/v1/convai/tools/{id}` via `xi-api-key`. Cekura `assistant_id` = ElevenLabs `agent_id`.
-- **Self-hosted** — [`../providers/self-hosted/overview.md`](../providers/self-hosted/overview.md). The **run-setup** is authoritative: it names the editable surface (source file / DB row / Cekura mock tools / pasted text) and how to read it. Explore and record it; content stays otherwise unread until Fix. For a **code-fix**, the surface is the supplied source file. For a **DB row**, collect connection details (type, credentials, fetch/write queries) before any read — credentials stay in-memory for the run only, never echoed, persisted, or logged. If the run-setup is silent on where to look, ask.
+- **Self-hosted** — [`../providers/self-hosted/overview.md`](../providers/self-hosted/overview.md). The **run-setup** is authoritative: it names the editable surface (source file / DB row / Cekura mock tools / pasted text) and how to read it. Explore and record it; content stays otherwise unread until Fix. For a **diagnosed code bug**, the surface is the supplied source file. For a **DB row**, collect connection details (type, credentials, fetch/write queries) before any read — credentials stay in-memory for the run only, never echoed, persisted, or logged. If the run-setup is silent on where to look, ask.
 
 Each branch ends by surfacing a compact summary, then → Step 1.4 (self-hosted) or the **Clone phase** ([`clone.md`](clone.md)) (VAPI / ElevenLabs skip 1.4 and clone before Collect, so edits land on a disposable copy).
 
@@ -61,10 +61,10 @@ Each branch ends by surfacing a compact summary, then → Step 1.4 (self-hosted)
 
 - a **shell command** (self-hosted live target),
 - `"manual"` — user-driven restart gate every iteration,
-- `"noop"` — the edit is live the moment it lands (DB re-read per request; **also** the code-fix / offline / render-only case, where the harness is a failing test and there is no live restart to run),
+- `"noop"` — the edit is live the moment it lands (DB re-read per request),
 - an explicit user-confirmed "no live target to restart" (rare; usually means render-only instead).
 
-Skipped only for VAPI / ElevenLabs (managed — nothing to redeploy). For **code-fix / offline / render-only** the gate is satisfied without a live restart command (`"noop"`/offline) — record it and move on.
+Skipped only for VAPI / ElevenLabs (managed — nothing to redeploy) and for render-only (nothing to restart).
 
 Skipping this gate for a live target is the top cause of phantom "prompt edits didn't help" iterations: edits never reach the running process, and the Eval no-change detector only catches it after an iteration of cap is burned.
 
@@ -107,7 +107,7 @@ When the run setup was **collected from the user this session** (not loaded from
 - Notes: <ports, env vars, anything else needed to reproduce a run>
 ```
 
-Capture the **simulation-launch** lines (start the main agent + pass it the per-run connection details Cekura returns) alongside the redeploy command — Reproduce and Eval both need them to run a self-hosted simulation. If only a redeploy command was given and the launch steps are still unknown when the first run is about to happen, ask (and persist) then, not a silent guess. (Code-fix / render-only runs have no live-simulation launch to capture.)
+Capture the **simulation-launch** lines (start the main agent + pass it the per-run connection details Cekura returns) alongside the redeploy command — Reproduce and Eval both need them to run a self-hosted simulation. If only a redeploy command was given and the launch steps are still unknown when the first run is about to happen, ask (and persist) then, not a silent guess. (Render-only runs have no live-simulation launch to capture.)
 
 **Confirm the write succeeded** before continuing. Do NOT echo or persist secrets — DB credentials stay in-memory for the run only; persist only non-secret launch/redeploy steps, referencing credentials by env-var name. This is part of the Step 1.4 hard gate: a self-hosted run must not enter Optimization with run setup collected but not saved.
 
@@ -117,9 +117,9 @@ Before Clone (VAPI / ElevenLabs) or Optimization (all other modes), confirm:
 
 - [ ] **Project memory checked FIRST** (1.0): `.claude/CLAUDE.md` / `.claude/MEMORY.md` (current dir upward) read, used as authoritative where present (mode, source location, redeploy command, simulation-launch/connect path); the record's configured URL was NOT treated as a redeploy/reproduction target
 - [ ] Mode resolved (`vapi` / `elevenlabs` / `self_hosted`)
-- [ ] **Three axes resolved** — editable surface, apply path (PATCH / redeploy / `"noop"` / offline-PR / render-only), and validation mechanism (scenarios or test suite)
+- [ ] **Three axes resolved** — editable surface, apply path (PATCH / redeploy / `"noop"` / render-only), and validation (always Cekura scenarios)
 - [ ] Agent loaded (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + `/v1/convai/tools/{id}`; self_hosted: editable surface explored per run-setup and recorded — source file / DB row / Cekura mock tools / pasted text; for a DB row, `db_type` + `db_connection` + `db_fetch_query` recorded and the fetch query executed; content otherwise unread until Fix; Cekura `description` informational only)
-- [ ] **Self-hosted**: `redeploy_command` resolved to a shell command, `"manual"`, or `"noop"` (the latter also covers code-fix / offline / render-only, where no live restart runs; N/A for VAPI / ElevenLabs)
+- [ ] **Self-hosted**: `redeploy_command` resolved to a shell command, `"manual"`, or `"noop"` (N/A for VAPI / ElevenLabs and render-only)
 - [ ] **Self-hosted**: run setup either loaded from `.claude/CLAUDE.md` / `.claude/MEMORY.md`, OR — if collected this session — **persisted** (1.4a), write confirmed, no secrets written
 - [ ] I have NOT fetched any failure data (`results_retrieve` / `runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) — that belongs to Collect
 

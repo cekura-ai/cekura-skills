@@ -12,13 +12,13 @@ Before any COLLECT.x work, verify Setup is complete. If any is unresolved, ask t
 
 - Mode resolved (`vapi` / `elevenlabs` / `self_hosted`)?
 - Source-of-truth editable surface loaded? (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + referenced tools; self_hosted: the surface the run-setup points to — source file / DB row / Cekura mock tools / pasted text.)
-- **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`? If not, return to [`../setup.md`](setup.md) § Step 1.4. (N/A for VAPI / ElevenLabs and for offline-PR / render-only apply paths.)
+- **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`? If not, return to [`../setup.md`](setup.md) § Step 1.4. (N/A for VAPI / ElevenLabs and for render-only.)
 
 ## Step COLLECT.1 — If input is `scenario_ids`: execute, then wait
 
 Skip for other input types. Pick voice mode for VAPI / ElevenLabs (both voice agents). Trigger, capture `result_id`, poll to terminal (~30s cadence; cap 15 min voice / 5 min text), then treat as a `result_id` input.
 
-Self-hosted scenario execution runs against the live agent the run-setup points to. In auto mode the skill triggers validation without pausing to confirm a redeploy/restart; unchanged results across iterations surface the no-change hypothesis after the fact (Eval EVAL.4). When there's no reachable live target (render-only / offline-PR), there are no scenarios to execute — only pasted failures.
+Self-hosted scenario execution runs against the live agent the run-setup points to. In auto mode the skill triggers validation without pausing to confirm a redeploy/restart; unchanged results across iterations surface the no-change hypothesis after the fact (Eval EVAL.4). When there's no reachable live target (render-only), there are no scenarios to execute — only pasted failures.
 
 ## Step COLLECT.2 — Fetch the runs or call logs (or trust pasted failures)
 
@@ -38,7 +38,7 @@ For shapes the script doesn't cover, fall back to direct MCP:
 |-------|-----------|
 | `run_ids` | `runs_bulk_retrieve(run_ids="1,2,3")` — bare comma-separated string. Same per-run shape (transcript, expected_outcome, scenario_instructions, **`metadata.ended_reason`**, `error_message`, metric evaluations). |
 | `call_ids` | Fetch each call log individually — transcripts + metric evaluations, no expected outcome. |
-| Pasted failures (render-only / offline-PR, no live target) | Trust `{transcript, expected_outcome, verdict, verdict_explanation}` blocks. No fetch. One failing run each, no metric evals beyond what's pasted. |
+| Pasted failures (render-only, no live target) | Trust `{transcript, expected_outcome, verdict, verdict_explanation}` blocks. No fetch. One failing run each, no metric evals beyond what's pasted. |
 
 **Two-step fetch rationale (fallback paths only).** `metadata.ended_reason` (Signal 5) is carried ONLY on the `runs_bulk_retrieve` per-run shape — NOT on the per-run subtree nested inside `results_retrieve`. The trap: calling `results_retrieve` manually and diagnosing off its `runs[*]` subtree — reading `ended_reason` from there returns `null`/missing for every run (a wrong-source signature, not "field absent for this provider"). If you find yourself doing this, stop and use the helper (or `runs_bulk_retrieve` on the failing IDs). Secondary benefit: payload size stays small (a raw `results_retrieve` for 20 runs is 250–300 KB, mostly passed-run transcripts).
 
