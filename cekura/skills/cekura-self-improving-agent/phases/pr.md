@@ -6,7 +6,7 @@ Final phase. Runs once, after [`regression.md`](regression.md) passes. Packages 
 
 ## Step PR.1 — Determine the change kind
 
-- **Owned source code in a repo (self-hosted source-file edits, incl. a forked/vendored SDK in the tree)** → real code changes on disk; there's a diff to commit and review. This is the PR path — continue to PR.2. Evidence in the PR body may be Cekura scenario URLs, or **test-run results** (the must-fail-first failing run + must-pass passing runs + regression suite) when the bug was validated by a test suite instead of simulation — or both.
+- **Owned source code in a repo (self-hosted source-file edits, incl. a forked/vendored SDK in the tree)** → real code changes on disk; there's a diff to commit and review. This is the PR path — continue to PR.2. Evidence in the PR body is the Cekura scenario URLs (repro fail-runs + verification/regression pass-runs) — source edits are validated on Cekura like every other fix.
 - **Managed config (VAPI / ElevenLabs clone, or self-hosted non-repo edits — Cekura mock tools, a DB row)** → no repo diff to open a PR against. Skip to PR.4 and emit a **promotion summary**: the validated cumulative config diff + the instruction to promote it to production (for VAPI / ElevenLabs, promoting the clone's diff to the live agent — never automatic; see [`clone.md`](clone.md)), with all the same Cekura result URLs.
 - **Render-only (no repo, no live target)** → emit the PR-ready summary (PR.4) with the rendered prompt diff and result URLs; the user applies it.
 
@@ -47,7 +47,7 @@ When an automatic PR isn't possible (or the change is managed-config / render-on
 - **Branch name** — suggested (e.g. `fix/<short-slug>`).
 - **Commit message** — the conventional-commit one-liner.
 - **Diff** — unified diff of the changed file(s) (PR path), OR the cumulative config / prompt diff (managed-config / render-only), fenced and ready to apply. For managed-config, replace the diff with the **promotion instruction** (which provider fields changed + that the user promotes clone → live agent deliberately).
-- **Full Cekura result URLs** — repro fail-runs, verification pass-runs, regression pass-runs (the PR.5 body). For a test-suite-validated code fix, the same rows carry test-run results in place of scenario URLs.
+- **Full Cekura result URLs** — repro fail-runs, verification pass-runs, regression pass-runs (the PR.5 body).
 - **Copy-pasteable PR description** — the PR.5 body, ready for the forge UI.
 
 ---
@@ -59,15 +59,15 @@ When an automatic PR isn't possible (or the change is managed-config / render-on
 <one-sentence root cause + fix>
 
 ## Test evidence
-<Cekura E2E simulations on the same transport as the prod call, OR test-suite runs for a code fix>
+<Cekura E2E simulations on the same transport as the prod call>
 
 ### Bug reproduction (REPRO.6 — expected to FAIL, proves the bug)
-| Scenario / Test | Runs | Result |
+| Scenario | Runs | Result |
 |---|---|---|
 | Bug repro | <M/N FAIL> | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID ❌ |
 
 ### Fix verification (EVAL.2 — expected to PASS)
-| Scenario / Test | Runs | Result |
+| Scenario | Runs | Result |
 |---|---|---|
 | Bug repro | <M/N PASS> | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID ✅ |
 
@@ -83,7 +83,7 @@ Iterations to converge: <N>
 Cumulative diff: <summary of edits across iterations>
 ```
 
-For a code fix validated by a test suite (no simulation), the Scenario/Test rows hold test names + the CI/test-run link or command output instead of Cekura result URLs; the `Prod call` line is optional if the signal was a diagnosed code bug rather than a call.
+The `Prod call` line is optional if the signal was a diagnosed code bug rather than a call.
 
 ---
 

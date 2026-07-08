@@ -10,13 +10,13 @@ description: >
   "fix the bug from this call and open a PR". Works across VAPI, ElevenLabs,
   and self-hosted agents, and across three fix surfaces — prompt, tool config,
   and (self-hosted) owned source code, including infra-flavored / forked-SDK
-  bugs that don't reproduce in simulation and are validated by a test suite
-  and shipped as a PR rather than a simulated rerun.
+  bugs, which are reproduced and validated on Cekura (never a code test) and,
+  for source edits, shipped as a PR.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Cekura Self-Improving Agent
@@ -39,13 +39,14 @@ Every run resolves to a **target** described by three axes. Resolving these thre
   config.
 - **Apply path** — how an edit goes live: a provider API PATCH (VAPI /
   ElevenLabs — live immediately), an `Edit` plus a `redeploy_command` (self-hosted
-  live target), live-on-save (`"noop"`), **offline / PR** (code-fix — no live
-  target; the diff ships as a PR), or **render-only** (print the rewrite for the
-  user to apply).
-- **Validation** — how a fix is proven: **Cekura scenarios** run in simulation
-  when the failure reproduces there, or a **code test suite** when it does not.
-  Both gate stochastically (≥ M of N runs) because real behavior — LLM and
-  real-transport infra alike — is intermittent.
+  live target — including owned source-code edits, which are re-validated on
+  Cekura and then shipped as a PR), live-on-save (`"noop"`), or **render-only**
+  (print the rewrite for the user to apply).
+- **Validation** — how a fix is proven: **always Cekura scenarios** run in
+  simulation over the agent's transport — never a code/unit test. Infra and
+  code bugs are forced to reproduce in-sim (Reproduce REPRO.3e). Gates
+  stochastically (≥ M of N runs) because real behavior — LLM and real-transport
+  infra alike — is intermittent.
 
 And two inputs the loop consumes:
 
@@ -54,11 +55,12 @@ And two inputs the loop consumes:
   **diagnosed code bug** (source file + root cause, optionally the originating
   call for the PR body). A root cause already established outside the skill is
   consumed as-is, not re-derived.
-- **Harness** — a controlled reproduction that MUST fail before any edit: a Cekura
-  evaluator (a *dataset* for probabilistic / LLM failures so a real fix is
-  distinguishable from a lucky sample; a *single* evaluator for fixed-trigger
-  infra failures) when the bug reproduces in simulation, or a **failing test**
-  when it does not.
+- **Harness** — a controlled Cekura reproduction that MUST fail before any edit:
+  a *dataset* for probabilistic / LLM failures on managed providers (so a real
+  fix is distinguishable from a lucky sample), or a *single* evaluator for
+  fixed-trigger infra failures and any self-hosted target. Infra / code bugs are
+  forced to fire via injected triggers (Reproduce REPRO.3e), never validated by a
+  code test.
 
 ## The loop
 
@@ -68,8 +70,8 @@ phase entry (`Iteration N · <Phase>`) and re-read its phase file on entry.
 
 1. **Setup** ([`phases/setup.md`](phases/setup.md)) — resolve the three target
    axes + the signal; for self-hosted live targets collect the `redeploy_command`
-   (hard gate before the loop; skipped when the apply path is offline/PR or
-   render-only). Persist reusable run-setup to `.claude/MEMORY.md`. Runs once.
+   (hard gate before the loop; skipped when render-only). Persist reusable
+   run-setup to `.claude/MEMORY.md`. Runs once.
 2. **Clone** ([`phases/clone.md`](phases/clone.md)) — VAPI / ElevenLabs only:
    stand up a disposable copy of the agent + its tools in the same org and rebind
    the run to it, so production is never touched. Every other target passes
@@ -94,21 +96,21 @@ phase entry (`Iteration N · <Phase>`) and re-read its phase file on entry.
      all-KEEP → stop. (Owned code — including a forked SDK in the tree — is a CodeBug,
      not Upstream.)
    - **Apply** ([`phases/optimization/apply.md`](phases/optimization/apply.md)) —
-     land edits via the apply path, then redeploy (or offline/PR-defer). Non-zero
-     redeploy exit halts.
+     land edits via the apply path, then redeploy (VAPI / ElevenLabs / render-only
+     skip it). Non-zero redeploy exit halts.
    - **Sync** ([`phases/optimization/sync.md`](phases/optimization/sync.md)) —
      re-fetch and verify every changed field landed. Drift rolls back to Apply.
 7. **Overfitting Gate** ([`phases/overfitting-gate.md`](phases/overfitting-gate.md))
    — scrub the just-applied edits for transcript quotes / scenario IDs / hardcoded
    test data / hyper-narrow clauses. Pass-through when clean. Code-control-flow and
    pure deletions are not scored; embedded prompt string literals are.
-8. **Eval** ([`phases/eval.md`](phases/eval.md)) — validate against the target's
-   validation mechanism (scenarios or test suite) under the **must-pass gate**
+8. **Eval** ([`phases/eval.md`](phases/eval.md)) — validate on Cekura scenarios
+   under the **must-pass gate**
    (≥ M of N), re-collect, and decide: hand back to Collect, converge, or stop
    (iteration cap / oscillation / no-change / 3× same-shape / all-Upstream).
 9. **Regression** ([`phases/regression.md`](phases/regression.md)) — on 100%
-   only: sweep happy-path + edge-case flows on the changed surface (for code-fix,
-   the existing test suite + the new test). Any regression hands back to Collect.
+   only: sweep happy-path + edge-case flows on the changed surface (Cekura
+   scenarios). Any regression hands back to Collect.
 10. **PR** ([`phases/pr.md`](phases/pr.md)) — auto-detect the runtime and either
    raise a PR (source edits in a writable git checkout with `gh`) or emit a
    PR-ready / promotion summary, with all Cekura result URLs. Success exit.
@@ -143,7 +145,7 @@ directly to their APIs. Retell is intentionally disabled.
 ## Inputs & parameters
 
 Required: a target (`agent_id` + the resolvable axes above, or a source file for a
-code-fix / render-only run) plus exactly one signal.
+diagnosed-code-bug / render-only run) plus exactly one signal.
 
 Optional: `dataset_size` (default 8, range 5–10) · `stochastic_runs` (default 8,
 5–10) · `repro_threshold` (default ⌈runs/2⌉) · `verify_threshold` (default
@@ -160,9 +162,8 @@ privileged `redeploy_command` on that path.
 ## When to pause and ask (even in auto mode)
 
 Ask when input or resolution is ambiguous (mode, prompt source, which file is
-live); when the harness can't be made to fail (bad mock/variables vs. stale fix —
-does not apply to code-fix, where a passing simulation is expected); on a
-low-confidence diagnosis; on oscillation, a no-change signature, or the same
+live); when the harness can't be made to fail (bad mock/variables, trigger not
+forced, vs. stale fix); on a low-confidence diagnosis; on oscillation, a no-change signature, or the same
 failure shape three iterations running (escalate to a larger change — model swap /
 programmatic guard / flow restructure — don't autonomously pick one; this in-loop
 escalation applies only after ≥3 iterations — choosing a fix surface is never a
