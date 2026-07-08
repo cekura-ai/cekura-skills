@@ -31,12 +31,23 @@ No auto-import for these, so collect their credentials per the create-agent matr
 
 There is **no SDK requirement to onboard**. Simulations dispatch via provider APIs and Cekura produces its own transcript from call audio. The Cekura SDK is a post-first-result upgrade (agent-side traces, tool-call visibility) — offer it in Phase 6T, not here.
 
-1. **Connection mode — prefer telephony when it exists.** Ask: "Does your agent already have a phone number or SIP endpoint?" If yes, connect via phone/SIP — it's the fewest moving parts. Use WebRTC dispatch only when there's no phone path:
-   - **Pipecat Cloud**: `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name`. Runs via `scenarios_run_pipecat_v2`.
-   - **LiveKit**: `credentials.url` + `api_key` + `api_secret` + `config.agent_name` (must match the worker's `agent_name`). Runs via `scenarios_run_livekit_v2`.
-2. **Keep `provider.type` = `livekit` / `pipecat` regardless of connection mode.** A LiveKit agent reached by phone is still a LiveKit agent — never reroute it to `self_hosted`.
-3. **Set `credentials.config.tracing_enabled: false`.** It only becomes `true` after the SDK is actually integrated and verified (a later, optional step). Setting it `true` without the SDK makes every run wait on a webhook that never arrives.
-4. No auto-import exists for these providers, so collect the manual essentials of 2c (description, language).
+**The FIRST question for LiveKit/Pipecat is the connection mode — NEVER credentials.** Do not ask for an API key, secret, or URL until the user has chosen WebRTC. Ask:
+
+> "How should Cekura reach your agent — does it already have a **phone number or SIP endpoint** (simplest), or should we dispatch over **WebRTC** via your provider's API?"
+
+**Path A — Telephony (preferred, fewest moving parts).** If the agent has a phone number or SIP endpoint, that's the whole connection:
+1. Get the phone number (or SIP URI).
+2. Ask inbound or outbound (does Cekura call the agent, or does the agent call Cekura?).
+3. Collect the 2c essentials (description, language) and create the agent. **No provider credentials needed** — do not ask for any.
+
+**Path B — WebRTC dispatch (only when there's no phone path, or the user chooses it).** Now — and only now — collect credentials:
+- **Pipecat Cloud**: `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name`. Runs via `scenarios_run_pipecat_v2`.
+- **LiveKit**: `credentials.url` + `api_key` + `api_secret` + `config.agent_name` (must match the worker's `agent_name`). Runs via `scenarios_run_livekit_v2`.
+
+**Both paths:**
+- **Keep `provider.type` = `livekit` / `pipecat` regardless of connection mode.** A LiveKit agent reached by phone is still a LiveKit agent — never reroute it to `self_hosted`.
+- **Set `credentials.config.tracing_enabled: false`.** It only becomes `true` after the SDK is actually integrated and verified (a later, optional step). Setting it `true` without the SDK makes every run wait on a webhook that never arrives.
+- No auto-import exists for these providers, so collect the manual essentials of 2c (description, language).
 
 ## 2c. Manual essentials (self-hosted, deferred-key, LiveKit/Pipecat)
 
