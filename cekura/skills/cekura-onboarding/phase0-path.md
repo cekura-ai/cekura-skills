@@ -1,6 +1,6 @@
 # Phase 0 — Choose the Path & Check for Existing Work
 
-> **Start:** Announce "Starting Phase 0 — Path".
+> **Start:** Announce the step in plain words (e.g. "Let's connect your agent", "Generating your first evaluators") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
 ## 0a. Choose the path
 
@@ -35,4 +35,4 @@ Default to **testing** when ambiguous.
 
 **Do not proceed until the path is decided and the agent check has run (or an inventory was handed in).**
 
-Announce: "Phase 0 complete." Then begin [Phase 2 — Agent](phase2-agent.md).
+Confirm the step is done in plain words (no phase numbers). Then begin [Phase 2 — Agent](phase2-agent.md).

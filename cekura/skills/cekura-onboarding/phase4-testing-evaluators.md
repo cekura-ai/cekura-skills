@@ -1,6 +1,6 @@
 # Phase 4 (testing) — First Evaluators
 
-> **Start:** Announce "Starting Phase 4 — First Evaluators".
+> **Start:** Announce the step in plain words (e.g. "Let's connect your agent", "Generating your first evaluators") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
 ## 4a. Generation-first — this is a hard rule
 
@@ -49,4 +49,4 @@ Every evaluator needs metrics attached. At minimum: **Expected Outcome** and an 
 
 **Do not proceed until generated evaluators exist (via `scenarios_generate_bg`) with metrics attached.**
 
-Announce: "Phase 4 complete." Then begin [Phase 5 — First Test Run](phase5-testing-first-run.md).
+Confirm the step is done in plain words (no phase numbers). Then begin [Phase 5 — First Test Run](phase5-testing-first-run.md).

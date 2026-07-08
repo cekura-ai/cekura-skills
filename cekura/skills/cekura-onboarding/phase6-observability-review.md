@@ -1,6 +1,6 @@
 # Phase 6 (observability) — Review Results & What's Next
 
-> **Start:** Announce "Starting Phase 6 — Review Results".
+> **Start:** Announce the step in plain words (e.g. "Let's connect your agent", "Generating your first evaluators") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
 ## 6a. Show results
 

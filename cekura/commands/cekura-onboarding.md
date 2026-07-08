@@ -109,6 +109,8 @@ Detect the current state without asking the user.
 
 ### Project
 
+**If the invoking context already fixes a project (the platform UI always does), use it and SKIP this section entirely — do not call `projects_list` or `projects_retrieve`.**
+
 If the user passed a numeric project ID, use it directly and verify with:
 
 ```text
@@ -187,18 +189,20 @@ Ask (`AskUserQuestion`, exactly once) ONLY when there is a real choice:
 Prompt format — resume (agents exist, testing variant):
 
 > Detected project **<name>** (`<id>`): <N> agent(s), <M> evaluator(s), <K> result(s).
-> Variant: **Testing**. Resume at **Phase <P>: <phase title>**.
+> Variant: **Testing**. Next step: **<plain action — e.g. "generate evaluators" / "run the first test">**.
 > Continue?
+
+(Never name a phase number in the prompt — describe the next action in plain words.)
 
 Prompt format — resume (agents exist, observability variant):
 
 > Detected project **<name>** (`<id>`): <N> agent(s), <C> ingested call(s).
-> Variant: **Observability**. Resume at **Phase <P>: <phase title>**.
+> Variant: **Observability**. Next step: **<plain action>**.
 > Continue?
 
 Options:
 
-1. `Yes, resume at Phase <P>` - proceed to Step 3.
+1. `Yes, continue` - proceed to Step 3.
 2. `Start fresh (new agent)` - override to Phase 2, keep variant.
 3. `Pick a different phase` - follow up with a phase picker (scoped to the resolved variant).
 4. `Switch variant` - flip testing ↔ observability and redo state detection.

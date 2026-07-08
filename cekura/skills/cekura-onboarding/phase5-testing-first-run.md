@@ -1,6 +1,6 @@
 # Phase 5 (testing) — First Test Run & Verification
 
-> **Start:** Announce "Starting Phase 5 — First Test Run".
+> **Start:** Announce the step in plain words (e.g. "Let's connect your agent", "Generating your first evaluators") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
 This phase is the **finish line of onboarding**: one run completed and a transcript visible. Records existing is not success.
 
@@ -49,4 +49,4 @@ Then ask: **"Want me to fix this now and re-run?"** — fixing now is the defaul
 
 **Preferred exit: at least one run with a completed call, a real two-sided transcript, and metric scores.** If the user chose to skip a failed verification, you may proceed — but the failure must be surfaced as an open item, never an implied success.
 
-Announce: "Phase 5 complete." Then begin [Phase 6 — What's Next](phase6-testing-next.md).
+Confirm the step is done in plain words (no phase numbers). Then begin [Phase 6 — What's Next](phase6-testing-next.md).
