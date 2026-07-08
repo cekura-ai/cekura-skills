@@ -39,7 +39,9 @@ This skill executes **one phase at a time, in order**. For each phase:
 1. Announce: "Starting Phase N — [name]".
 2. **Read the phase file** (`phaseN-*.md` in this skill directory). Do not rely on memory of its contents.
 3. Complete every task in the file and satisfy its gate condition.
-4. Announce: "Phase N complete." and move to the next phase without waiting for the user. (Confirmation is still required where a phase file says so — e.g. before creating the agent or starting a run — but never a generic "ready to continue?" at a boundary.)
+4. Announce: "Phase N complete." and move to the next phase without waiting for the user.
+
+**Ask questions ONLY to collect missing inputs or resolve genuine ambiguity** (provider choice, credentials, phone number, self-hosted confirmation). Never ask permission to continue, never confirm an action the flow already implies — the user invoked onboarding, so creating the agent, enabling metrics, generating evaluators, and starting the first verification run are all pre-authorized. No "ready to continue?", no "shall I create it?", no "want me to proceed?" — just do the step and narrate it. The one exception: when a **gate is blocked** (e.g. the testing-path description gate) present the blocker and the options.
 
 Several phases delegate to files in the sibling **cekura-create-agent** skill (`../cekura-create-agent/…`). When a phase file tells you to read one of those, follow only the referenced guidance — **ignore that file's own phase gates and "continue to Phase N+1" instructions**; return to this skill's flow.
 
