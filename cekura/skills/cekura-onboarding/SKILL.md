@@ -51,7 +51,7 @@ Several phases delegate to files in the sibling **cekura-create-agent** skill (`
 |-------|------|--------------|------|
 | 0 | [phase0-path.md](phase0-path.md) | Pick testing vs observability; ONE `aiagents_list` call to detect existing work | shared |
 | 2 | [phase2-agent.md](phase2-agent.md) | Create/connect the agent — provider-first, minimal, validated | shared |
-| 3T | [phase3-testing-metrics.md](phase3-testing-metrics.md) | Enable pre-defined metrics | testing |
+| 3T | [phase3-testing-metrics.md](phase3-testing-metrics.md) | Verify default metrics (auto-enabled at project creation) | testing |
 | 4T | [phase4-testing-evaluators.md](phase4-testing-evaluators.md) | Generate first evaluators (generation-first) | testing |
 | 5T | [phase5-testing-first-run.md](phase5-testing-first-run.md) | First test run + **verification gate** | testing |
 | 6T | [phase6-testing-next.md](phase6-testing-next.md) | What's next (SDK, mock tools, custom metrics) | testing |

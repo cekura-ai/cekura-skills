@@ -1,20 +1,17 @@
-# Phase 3 (testing) — Metrics Setup
+# Phase 3 (testing) — Metrics Check
 
 > **Start:** Announce "Starting Phase 3 — Metrics".
 
-## 3a. Enable pre-defined metrics
+## 3a. Default metrics are ALREADY enabled — do not re-enable them
 
-List the catalog with `predefined_metrics_list` and copy metrics into the project with `predefined_metrics_copy_create`. For the **testing (simulation) path**, enable the standard set:
+**Every project gets the default pre-defined metrics automatically at creation** (the platform copies them in when the project is created). Do NOT list the catalog, do NOT run `predefined_metrics_copy_create` for the standard set, and do NOT walk the user through "enabling metrics" — it's already done.
 
-| Enable for testing | Metrics |
-|---|---|
-| Both paths' baseline | AI interrupting user, Average Pitch, Infrastructure Issues, Interruption Score, Latency, Stop Time after User Interruption, Talk Ratio, Tool Call Success, Unnecessary Repetition Score |
-| Testing-only additions | **Expected Outcome**, **Transcription Accuracy**, **Mock tool call accuracy** |
-| Leave off unless asked | Letterwise Pronunciation Detection |
+This phase is a single verification: call `metrics_list` for the project and confirm the defaults are present (they will be, on any normally-created project). In particular check that **Expected Outcome** is there — it's the metric Phase 4T attaches to every evaluator.
 
-Each metric has separate `simulation_enabled` / `observability_enabled` toggles — for this path make sure **simulation** is on.
+- **Defaults present (the normal case):** announce one line — "Your project already has the default metrics enabled (Expected Outcome, Latency, Interruption Score, …)" — and move on. Nothing to do.
+- **Something testing-critical genuinely missing** (rare — e.g. an old project created before a metric existed): copy just the missing metric with `predefined_metrics_copy_create`, say what you added and why, and move on. Make sure its **simulation** toggle is on (`simulation_enabled` — metrics have separate simulation/observability toggles).
 
-**Two-step activation:** metrics must be (1) enabled at the project level AND (2) attached to individual evaluators (Phase 4T handles attachment).
+**Two-step activation reminder:** project-level enablement (already done) is step 1; attaching metrics to individual evaluators is step 2 — Phase 4T handles that.
 
 ## 3b. Custom metrics — defer
 
@@ -24,6 +21,6 @@ Skip custom metrics during onboarding. Once the user has test results, hand off 
 
 ## Phase 3 Gate
 
-**Do not proceed until the project's metric list (`metrics_list`) shows at least Expected Outcome enabled.**
+**Do not proceed until `metrics_list` confirms Expected Outcome is enabled for the project.**
 
 Announce: "Phase 3 complete." Then begin [Phase 4 — First Evaluators](phase4-testing-evaluators.md).
