@@ -22,7 +22,7 @@ Then follow the matching section below. For per-provider credential fields, read
 
 **Two rules that apply to EVERY named provider:**
 - **Keep `provider.type` set to the real provider** — never reroute to `self_hosted` because a credential is missing or the agent is reached by phone.
-- **Deferred credentials are fine, but never silent.** If the user won't share an API key yet, fall back to the manual essentials of 2c, tell them which capabilities won't work until the key is added (provider-dispatched simulations, auto-sync, auto-import of calls), and carry it as an open item in every summary. Do not leave a half-connected agent without saying so.
+- **Deferred credentials are fine ONLY when another connection path exists** (e.g. the agent is reachable by phone/SIP). In that case fall back to the manual essentials of 2c, tell them which capabilities won't work until the key is added (provider-dispatched simulations, auto-sync, auto-import of calls), and carry it as an open item in every summary. Do not leave a half-connected agent without saying so. **When the chosen connection IS the credentials — the WebRTC path in 2b — there is no skip:** without them Cekura cannot reach the agent at all, so collect them before creating the agent (or switch to a telephony connection if the user has one).
 
 ## 2a. VAPI / Retell / ElevenLabs / Synthflow — auto-import (preferred)
 
@@ -45,7 +45,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 2. Ask inbound or outbound (does Cekura call the agent, or does the agent call Cekura?).
 3. Collect the 2c essentials (description, language) and create the agent. **No provider credentials needed** — do not ask for any.
 
-**Path B — WebRTC dispatch (only when there's no phone path, or the user chooses it).** Now — and only now — collect credentials:
+**Path B — WebRTC dispatch (only when there's no phone path, or the user chooses it).** Now — and only now — collect credentials. **On this path credentials are mandatory — never offer "skip credentials for now":** WebRTC dispatch is the connection, so without them the agent is unreachable and the first-run verification (Phase 5T) cannot happen. If the user can't share them, offer the telephony path instead or pause here.
 - **Pipecat Cloud**: `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name`. Runs via `scenarios_run_pipecat_v2`.
 - **LiveKit**: `credentials.url` + `api_key` + `api_secret` + `config.agent_name` (must match the worker's `agent_name`). Runs via `scenarios_run_livekit_v2`.
 
