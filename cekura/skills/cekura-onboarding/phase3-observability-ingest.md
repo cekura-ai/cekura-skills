@@ -1,6 +1,6 @@
 # Phase 3 (observability) — Ingest Call Logs & Verify
 
-> **Start:** Announce "Starting Phase 3 — Ingest Call Logs".
+> **Start:** Announce the step in plain words (e.g. "Let's connect your agent", "Generating your first evaluators") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
 The observability path does not generate scenarios or run simulations. You ingest the user's real production calls. This phase carries the path's **verification gate**: one call log visible in Cekura.
 
@@ -65,4 +65,4 @@ After configuring any of these, trigger one real call so an ingestion lands.
 
 **Do not proceed until at least one call log is visible via `call_logs_list`.**
 
-Announce: "Phase 3 complete." Then begin [Phase 4 — Configure Metrics](phase4-observability-metrics.md).
+Confirm the step is done in plain words (no phase numbers). Then begin [Phase 4 — Configure Metrics](phase4-observability-metrics.md).

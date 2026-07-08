@@ -44,7 +44,9 @@ Accept the paste as-is. Do not truncate — descriptions >10 KB are fine.
 
 If the codebase is already visible in the current session (e.g. open in the editor, files already read, or the user is working in the repo), proceed directly to Step 1 — do not ask the user to share code you can already see.
 
-Only ask the user to share code if it is genuinely not accessible. If no code access is possible at all, fall back to structured questioning — skip to Step 2-fallback below.
+Only ask the user to share code if it is genuinely not accessible.
+
+**No file access in this session (e.g. the platform UI chat)? PASTE-FIRST, never interview-first.** The system prompt still exists — as a string constant, prompt file, or config in their project. Ask the user to **paste the prompt file's contents or attach the file** ("open the file where your agent's system prompt lives and paste it here — however long"). This is one action for the user and yields the exact prompt; a structured interview yields a lossy reconstruction. Fall back to structured questioning (Step 2-fallback) ONLY after the user says they cannot retrieve the prompt at all.
 
 #### Step 1 — Trace the full call chain and read everything
 

@@ -1,6 +1,6 @@
 # Phase 5 (observability) — Run Metric Evaluation
 
-> **Start:** Announce "Starting Phase 5 — Run Evaluation".
+> **Start:** Announce the step in plain words (e.g. "Let's connect your agent", "Generating your first evaluators") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
 If `metric_ids` was passed during ingestion, auto-evaluation already started — skip to the gate check.
 
@@ -27,4 +27,4 @@ If a metric prompt changes later and the user wants existing call logs re-scored
 
 **Do not proceed until the call log's metrics array shows real scores** (`call_logs_retrieve`).
 
-Announce: "Phase 5 complete." Then begin [Phase 6 — Review Results](phase6-observability-review.md).
+Confirm the step is done in plain words (no phase numbers). Then begin [Phase 6 — Review Results](phase6-observability-review.md).
