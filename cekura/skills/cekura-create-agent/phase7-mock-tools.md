@@ -37,7 +37,7 @@ If the provider API key and assistant ID are already set:
 
 1. Go to **Agent Settings → Mock Tools → click Auto-Fetch**
 2. Cekura fetches all tool definitions from the provider and generates sample I/O data
-3. Review and toggle mock mode per tool
+3. Review the mock data per tool — mock tools are activated per-run by passing `mock_tool_names` when running scenarios
 
 **Via API — new agents:** set `provider.configure_from_provider: true` inside the `provider` block when calling `POST /v2/aiagents/`. Requires `provider.agent_id` (the assistant ID on the provider) and `provider.credentials.api_key`. The create response includes a `progress_id` to poll `GET /v2/aiagents/{id}/auto-fetch-progress/?progress_id=...`.
 

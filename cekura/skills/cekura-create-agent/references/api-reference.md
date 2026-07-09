@@ -97,7 +97,7 @@ Mock tools are managed via the agent's `mock_tools` field:
 | GET | `/test_framework/v2/aiagents/{id}/?ql={mock_tools}` | List mock tools |
 | PATCH | `/test_framework/v2/aiagents/{id}/` | Create / update / delete mock tools (via `mock_tools` field) |
 | POST | `/test_framework/v2/aiagents/{id}/auto-fetch/` | Auto-fetch tools from provider |
-| POST | `/test_framework/v2/aiagents/{id}/toggle-mock-tools/` | Enable / disable mock mode |
+| POST | `/test_framework/v1/aiagents/{id}/run_scenarios/` | Run scenarios — pass `mock_tool_names` to activate per-run mocking |
 
 ### Update Mock Tools Schema
 

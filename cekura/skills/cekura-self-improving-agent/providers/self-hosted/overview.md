@@ -121,7 +121,8 @@ must en/decrypt), read-replica lag (short sleep before Sync).
 
 When the run-setup contracts tools via Cekura, the surface is the **mock-tool definitions**,
 via `mcp__cekura__aiagents_partial_update` with the full `mock_tools` list (GET → merge →
-PATCH); `mcp__cekura__aiagents_toggle_mock_tools_create` toggles mock mode. Mock tools are the
+PATCH). Mock tools are activated per-run: pass `mock_tool_names` to the run_scenarios endpoint
+to mock only those tools for that run (omit to mock all configured tools). Mock tools are the
 *testing contract*, not the live implementation (which lives in the user's code) — when a
 mock-tool change matters, pair it with a hand-off to update the live implementation. The prompt
 is still applied per the run-setup, not on the Cekura record.
