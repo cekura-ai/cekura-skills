@@ -26,8 +26,8 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/observability/v1/call-logs-external/` | List calls (filter: `agent_id`, `project`, `search`, `timestamp__gte/lte`, `page_size`) |
-| GET | `/observability/v1/call-logs-external/{id}/` | Get call details + evaluation results |
+| GET | `/observability/v2/call-logs/` | List calls (filter: `agent_id`, `project`, `search`, `timestamp__gte/lte`, `page_size`) |
+| GET | `/observability/v2/call-logs/{id}/` | Get call details + evaluation results |
 | POST | `/observability/v1/call-logs/evaluate_metrics/` | Evaluate specific metrics on calls |
 | POST | `/observability/v1/call-logs/rerun_evaluation/` | Re-run evaluation |
 | POST | `/observability/v1/call-logs-external/{id}/mark_metric_vote/` | Leave feedback on metric result |

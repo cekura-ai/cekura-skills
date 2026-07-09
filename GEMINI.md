@@ -431,11 +431,11 @@ Skipping this checkpoint leads to wrong tool strategy, data mismatches, wasted v
 | POST | `/test_framework/v1/test-profiles/` | Create test profile |
 | GET | `/test_framework/v1/test-profiles/?agent_id=ID` | List profiles |
 | GET | `/test_framework/v1/personalities/` | List personalities |
-| GET | `/test_framework/v1/results/` | List run results |
-| GET | `/test_framework/v1/results/{id}/` | Get run details |
-| GET | `/test_framework/v1/runs/{id}/` | Get individual run |
-| GET | `/observability/v1/call-logs-external/?agent=ID` | List calls |
-| GET | `/observability/v1/call-logs-external/{id}/` | Get call + transcript |
+| GET | `/test_framework/v2/results/` | List run results |
+| GET | `/test_framework/v2/results/{id}/` | Get run details |
+| GET | `/test_framework/v2/runs/{id}/` | Get individual run |
+| GET | `/observability/v2/call-logs/?agent=ID` | List calls |
+| GET | `/observability/v2/call-logs/{id}/` | Get call + transcript |
 
 ### ID Glossary
 
@@ -443,10 +443,10 @@ Three IDs appear in simulation workflows — don't confuse them:
 
 | Term | Type | What it is |
 |------|------|-----------|
-| `result_id` | integer | A **Result** — one batch execution grouping multiple runs. `GET /test_framework/v1/results/{result_id}/` |
-| `run_id` | integer | A **Run** — one scenario execution inside a result. `GET /test_framework/v1/runs/{run_id}/`. In the result detail response, `runs` is a dict keyed by run_id. |
+| `result_id` | integer | A **Result** — one batch execution grouping multiple runs. `GET /test_framework/v2/results/{result_id}/` |
+| `run_id` | integer | A **Run** — one scenario execution inside a result. `GET /test_framework/v2/runs/{run_id}/`. In the result detail response, `runs` is a dict keyed by run_id. |
 | `run.call_id` | string | The provider's call identifier (a provider-issued string) — a field on the run object, not an endpoint ID. Do not use this where `run_id` is expected. |
-| CallLog ID | integer | A production call log (observability only). `GET /observability/v1/call-logs-external/{id}/`. Simulations do NOT create call logs. |
+| CallLog ID | integer | A production call log (observability only). `GET /observability/v2/call-logs/{id}/`. Simulations do NOT create call logs. |
 
 **Dashboard URL convention:** `https://dashboard.cekura.ai/{project}/results/{result_id}?call_id={run_id}`
 The `?call_id=` query param holds a `run_id` — use that format only when constructing dashboard UI links. Everywhere else (API calls, MCP tools, code) use `run_id`.
