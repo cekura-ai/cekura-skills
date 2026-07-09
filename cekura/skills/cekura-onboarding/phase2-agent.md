@@ -43,6 +43,12 @@ Then follow the matching section below. **Onboarding is self-contained — do NO
 
 The one high-leverage step: **provider agent ID + provider API key**. Create with `aiagents_create` using `configure_from_provider: true`, then poll `aiagents_auto_fetch_progress_retrieve`. Auto-import pulls the description (system prompt), tools, and config automatically — do not ask the user to paste their prompt when auto-import is available.
 
+**If the user skips the credentials (or the provider rejects them and they can't fix it now), do NOT create a connection-less agent and improvise.** Apply the deferred-credentials rule: these agents almost always have a phone number — ask for it:
+
+> "No problem — does your agent have a phone number I can call it on? That lets us run real test calls now; you can add the API key later for auto-import and auto-sync."
+
+Then: phone number (or SIP URI) → inbound/outbound → the 2c essentials (complete system prompt via the description gate, language) → create with the telephony connection. Tell them what's deferred (auto-import, auto-sync, call ingestion) and carry it as an open item. **The verification run then goes over the phone connection (`scenarios_run_voice`) — never substitute a text simulation for a voice agent** (text mode is for chat agents, not a workaround for missing credentials). If they have neither credentials nor a phone number, pause onboarding — there is nothing to test against.
+
 ## 2a′. Bland / Chirp / KoreAI / Genesys / Cisco — standard named providers
 
 No auto-import for these, so collect their credentials per the create-agent matrix (e.g. Bland: `provider.agent_id` = pathway_id; Chirp: websocket URL + basic auth; Cisco: no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.

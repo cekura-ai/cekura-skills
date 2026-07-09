@@ -20,6 +20,8 @@ Retrieve the agent (`aiagents_retrieve`) and match its configured connection:
 | custom websocket | `scenarios_run_websocket` |
 | chat/text | `scenarios_run_text` |
 
+**Pick the tool from the agent's ACTUAL connection — never downgrade.** `scenarios_run_text` is for chat/text agents only; running a voice agent's verification as a text simulation (e.g. because provider credentials are unverified) is NOT a verification — it proves nothing about the connection. If no working connection exists, that IS the finding: surface it and collect a connection (phone number, or fixed credentials) instead of running a fake check.
+
 ## 5b. Execute
 
 Run **one single scenario, `frequency: 1`** — this run is the end-to-end verification, not a coverage sweep. Voice calls take 1–3 minutes. Once it verifies clean (5c), the user can run the rest of the suite.
