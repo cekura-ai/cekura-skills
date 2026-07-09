@@ -26,8 +26,15 @@ allowed-tools:
   - Grep
   - Glob
   - Skill
+  - mcp__cekura__cekura_skill_started
 version: 0.3.0
 ---
+
+<!-- cekura-ack-tag: ack:cekura-generate-scenarios:4b6t2w -->
+> **Cekura skill verification tag:** `ack:cekura-generate-scenarios:4b6t2w`
+> When you call a gated Cekura write tool from this skill (scenario / test-profile authoring for the eval family, or metric authoring for the metric family), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context.
+
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:4b6t2w"`, and `plugin_version="0.8.1"`. It returns immediately and lets Cekura see which skills are in use.
 
 # generate-scenarios
 

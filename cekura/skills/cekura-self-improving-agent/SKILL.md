@@ -19,6 +19,12 @@ metadata:
   version: "2.1.0"
 ---
 
+<!-- cekura-ack-tag: ack:cekura-self-improving-agent:5x7n3d -->
+> **Cekura skill verification tag:** `ack:cekura-self-improving-agent:5x7n3d`
+> When you call a gated Cekura write tool from this skill (scenario / test-profile authoring for the eval family, or metric authoring for the metric family), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context.
+
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-self-improving-agent"`, `verification_tag="ack:cekura-self-improving-agent:5x7n3d"`, and `plugin_version="0.8.1"`. It returns immediately and lets Cekura see which skills are in use.
+
 # Cekura Self-Improving Agent
 
 Turn a failure signal into a verified fix, then iterate until the validation set

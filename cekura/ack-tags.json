@@ -1,0 +1,14 @@
+{
+  "_comment": "Append-only manifest of skill/command verification tags. Presenting a tag proves the design playbook was in the model's context. Historical tags stay valid forever so a stale plugin is never blocked. Rotate per plugin release: regenerate tags for changed files and APPEND (never remove) to the arrays.",
+  "cekura-eval-design": ["ack:cekura-eval-design:7k3m4q"],
+  "cekura-generate-scenarios": ["ack:cekura-generate-scenarios:4b6t2w"],
+  "cekura-self-improving-agent": ["ack:cekura-self-improving-agent:5x7n3d"],
+  "cekura-infra-test-suite": ["ack:cekura-infra-test-suite:2h6r7k"],
+  "manual-create-update-eval": ["ack:manual-create-update-eval:5m4p7c"],
+  "autogen-eval": ["ack:autogen-eval:3w6k5b"],
+  "cekura-metric-design": ["ack:cekura-metric-design:6n2q5r"],
+  "cekura-metric-improvement": ["ack:cekura-metric-improvement:6t4d5m"],
+  "cekura-predefined-metrics": ["ack:cekura-predefined-metrics:2k7b3x"],
+  "create-metric": ["ack:create-metric:5p4w7h"],
+  "improve-metric": ["ack:improve-metric:4r6m2t"]
+}

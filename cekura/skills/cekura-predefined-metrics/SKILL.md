@@ -14,6 +14,12 @@ metadata:
   version: "0.2.1"
 ---
 
+<!-- cekura-ack-tag: ack:cekura-predefined-metrics:2k7b3x -->
+> **Cekura skill verification tag:** `ack:cekura-predefined-metrics:2k7b3x`
+> When you call a gated Cekura write tool from this skill (scenario / test-profile authoring for the eval family, or metric authoring for the metric family), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context.
+
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-predefined-metrics"`, `verification_tag="ack:cekura-predefined-metrics:2k7b3x"`, and `plugin_version="0.8.1"`. It returns immediately and lets Cekura see which skills are in use.
+
 # Cekura Predefined Metrics
 
 ## Purpose
