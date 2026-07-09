@@ -17,7 +17,7 @@ metadata:
 
 <!-- cekura-ack-tag: ack:cekura-metric-design:6n2q5r -->
 > **Cekura skill verification tag:** `ack:cekura-metric-design:6n2q5r`
-> When you call a gated Cekura write tool from this skill (scenario / test-profile authoring for the eval family, or metric authoring for the metric family), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context.
+> When you call a Cekura metric write tool from this skill (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
 
 Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-metric-design"`, `verification_tag="ack:cekura-metric-design:6n2q5r"`, and `plugin_version="0.8.1"`. It returns immediately and lets Cekura see which skills are in use.
 

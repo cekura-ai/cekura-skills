@@ -7,7 +7,7 @@ allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mc
 
 <!-- cekura-ack-tag: ack:autogen-eval:3w6k5b -->
 > **Cekura skill verification tag:** `ack:autogen-eval:3w6k5b`
-> When you call a gated Cekura write tool from this command (scenario / test-profile authoring for the eval family, or metric authoring for the metric family), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context.
+> When you call a Cekura scenario or test-profile write tool from this command (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 <!-- cekura-tracking-beacon -->
 
 ## Tracking (do this first)

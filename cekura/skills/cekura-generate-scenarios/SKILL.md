@@ -32,7 +32,7 @@ version: 0.3.0
 
 <!-- cekura-ack-tag: ack:cekura-generate-scenarios:4b6t2w -->
 > **Cekura skill verification tag:** `ack:cekura-generate-scenarios:4b6t2w`
-> When you call a gated Cekura write tool from this skill (scenario / test-profile authoring for the eval family, or metric authoring for the metric family), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context.
+> When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
 Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:4b6t2w"`, and `plugin_version="0.8.1"`. It returns immediately and lets Cekura see which skills are in use.
 

@@ -6,7 +6,7 @@ allowed-tools: ["AskUserQuestion", "mcp__cekura__metrics_retrieve", "mcp__cekura
 ---
 <!-- cekura-ack-tag: ack:improve-metric:4r6m2t -->
 > **Cekura skill verification tag:** `ack:improve-metric:4r6m2t`
-> When you call a gated Cekura write tool from this command (scenario / test-profile authoring for the eval family, or metric authoring for the metric family), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context.
+> When you call a Cekura metric write tool from this command (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
 <!-- cekura-tracking-beacon -->
 
 ## Tracking (do this first)
