@@ -2,7 +2,7 @@
 
 The "verify the change and decide" half of the loop. Builds the validation set, runs it under the **must-pass stochastic gate**, re-collects failures with Collect's logic, and decides: **exit**, **hand back to Optimization · Collect**, or **pause for the user**. Eval never edits the agent.
 
-**Validation mechanism** is the target's resolved axis (Setup): **Cekura scenarios** (simulation) OR a **code test suite** (code-fix path — a passing simulation is expected there, not a stop signal). Both gate stochastically (≥ M of N). Everywhere below, "scenario" = one validation unit (a Cekura scenario or a test).
+**Validation mechanism** is **always Cekura scenarios** (simulation over the agent's transport) — never a code / unit test. Gates stochastically (≥ M of N). Everywhere below, "scenario" = one validation unit.
 
 ## Pre-flight check
 
@@ -24,7 +24,6 @@ Pick by **original input type** (recorded iter 1, never changes):
 | `scenario_ids` | Same scenario IDs. |
 | `result_id` / `run_ids` | `scenario_id` from every run (fetched in COLLECT.2), de-duped. |
 | `call_ids` | One scenario synthesized per call from its transcript; cache IDs iter 1, reuse after. |
-| Code-fix (failing test) | The test(s) reproducing the bug + any sibling tests on the changed surface. Recorded iter 1. |
 | Pasted failures (render-only) | Whatever the user re-runs after applying the rewrite; EVAL.3 collects new pasted failures (zero = 100%). Record iter 1 which scenarios are tested; ask before widening. |
 
 Two tracked sets:
@@ -40,17 +39,14 @@ Never widen either set mid-loop without telling the user — the stop criterion 
 
 ## Step EVAL.2 — Run validation (must-pass stochastic gate)
 
-**Cekura-scenario targets:** run the failure set in the agent's transport (voice for VAPI/ElevenLabs; the saved run-setup's transport for self-hosted live targets — launch the agent and pass per-run Cekura connection details per Setup 1.4a, as Reproduce did). Capture `result_id`, poll to terminal (30s cadence, 15-min cap, as COLLECT.1).
-
-**Code-fix targets:** run the test(s) offline against the current code. No live agent, no redeploy.
+Run the failure set in the agent's transport (voice for VAPI/ElevenLabs; the saved run-setup's transport for self-hosted live targets — launch the agent and pass per-run Cekura connection details per Setup 1.4a, as Reproduce did, with any REPRO.3e trigger conditions still active). Capture `result_id`, poll to terminal (30s cadence, 15-min cap, as COLLECT.1).
 
 **Stochastic re-run policy — mirror REPRO.6 on the verification side.** A single passing run never ends the iteration (that's the source of most "looked good in dev, regressed in prod" miscalls). The skill **auto-triggers the verification runs itself** (do NOT ask the user to fire each). Run **5–10 times** (default `N = 8`, `stochastic_runs`); a scenario is **verified only if it passes in ≥ M of N** (default `M = ⌈0.8·N⌉` — e.g. ≥7/8, ≥4/5; tune via `verify_threshold`). Below M → not fixed, stays in the failure set. Report pass-rate per scenario (`7/8 pass`), not a single verdict.
 
 This is uniform across classes — the only difference is harness shape:
 
-- **LLM-based failures** — dataset of N varied scenarios.
-- **Infra failures** — the single evaluator, re-run N times (over real transport, timing/audio/latency/interruption failures are intermittent; a deterministic fix passes all N).
-- **Code-fix** — the same test(s). Deterministic tests pass all N in one shot; **when the trigger is intermittent, re-run under the same ≥ M of N logic**.
+- **LLM-based failures** (managed provider) — dataset of N varied scenarios.
+- **Infra failures / self-hosted targets** — the single evaluator, re-run N times (over real transport, timing/audio/latency/interruption failures are intermittent; a deterministic fix passes all N).
 
 In a **render-only run** the skill runs nothing: EVAL.2 collapses to "ask the user for the new failure set" (fresh pasted `{transcript, expected_outcome, verdict}` blocks). Zero new failures = 100%. The gate degrades to whatever the user re-pastes.
 
@@ -78,7 +74,7 @@ Decision tree, in order:
      - **Full set = 100%** → case 3.
      - **Full set < 100%** → case 4 (hand back with the new failures as the failure set, whether each was originally passing or failing-then-fixed). Fixed scenarios stay in the validation set so re-regressions are caught.
 
-3. **Full set = 100% → converged. Hand off to Regression, then PR.** Do NOT exit yet. The in-loop sweep only confirms the reproduction dataset is green; [`regression.md`](regression.md) runs the happy-path + edge-case sweep (for code-fix: the existing suite + the new test) that catches collateral damage the dataset can't see, and [`pr.md`](pr.md) ships (raise a PR or emit a PR-ready summary). Pass forward: cumulative diff, iterations used, which scenarios changed verdict, all result URLs (REPRO.6 fail-runs + EVAL.2 pass-runs). Only after Regression passes and PR/summary is emitted does the skill report success and stop.
+3. **Full set = 100% → converged. Hand off to Regression, then PR.** Do NOT exit yet. The in-loop sweep only confirms the reproduction dataset is green; [`regression.md`](regression.md) runs the happy-path + edge-case sweep that catches collateral damage the dataset can't see, and [`pr.md`](pr.md) ships (raise a PR or emit a PR-ready summary). Pass forward: cumulative diff, iterations used, which scenarios changed verdict, all result URLs (REPRO.6 fail-runs + EVAL.2 pass-runs). Only after Regression passes and PR/summary is emitted does the skill report success and stop.
 
 4. **Regression detected during sweep → do NOT exit. Hand back to Optimization · Collect** with the regressed scenarios as the new failure set. State explicitly that this iteration's edit broke a previously-passing scenario, so Fix can scope the fix more narrowly (conditional clauses for the specific type rather than blanket prompt-wide changes).
 

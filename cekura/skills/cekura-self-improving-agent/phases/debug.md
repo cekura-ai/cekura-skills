@@ -22,4 +22,4 @@ Produce a **root-cause summary** — input, what the target did wrong, evidenced
 
 ## Hand-off to Reproduce
 
-Pass the root-cause summary + responsible surface + failure class. If the cause is **owned code that won't reproduce in simulation**, Reproduce builds a code-fix harness (a failing test), not a simulation evaluator.
+Pass the root-cause summary + responsible surface + failure class. If the cause is **owned code**, Reproduce still builds a Cekura evaluator and forces the bug's trigger to fire in the simulation (REPRO.3e) — never a code test.

@@ -1,5 +1,7 @@
 # Phase 5 — Create the Main Agent
 
+
+> **Description values in every example below are placeholders.** The real value is the agent's COMPLETE system prompt collected in [Phase 4](phase4-description.md) — often hundreds of lines. NEVER copy these example shapes into a real ask or payload as a one-line description; auto-import providers (`configure_from_provider: true`) omit the field entirely.
 **Endpoint:** `POST https://api.cekura.ai/test_framework/v2/aiagents/`
 
 **Required fields:** `name`, `description`, `project` — everything else is optional.
@@ -197,7 +199,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 ```json
 {
   "name": "Support Bot",
-  "description": "Handles inbound support calls for ACME Inc.",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {"type": "self_hosted"},
@@ -212,7 +214,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 ```json
 {
   "name": "Internal Test Agent",
-  "description": "Staging build of the support flow",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -235,7 +237,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 ```json
 {
   "name": "VAPI Sales Agent",
-  "description": "Auto-syncing from provider",
+  "description": "<omit — auto-imported from the provider via configure_from_provider>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -264,7 +266,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Retell Booking Agent",
-  "description": "Auto-syncing from provider",
+  "description": "<omit — auto-imported from the provider via configure_from_provider>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -295,7 +297,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "ElevenLabs Voice Agent",
-  "description": "Auto-syncing from provider",
+  "description": "<omit — auto-imported from the provider via configure_from_provider>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -315,7 +317,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "LiveKit Concierge",
-  "description": "Multi-modal front-desk agent",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -345,7 +347,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Bland Support Agent",
-  "description": "Handles tier-1 billing questions",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -367,7 +369,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Pipecat Support Agent",
-  "description": "Voice agent deployed on Pipecat Cloud",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "telephony": {"phone_number": "+14155551234", "inbound": true},
@@ -399,7 +401,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Chirp Voice Agent",
-  "description": "WebSocket voice agent",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -437,7 +439,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "KoreAI Agent",
-  "description": "...",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -458,7 +460,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Genesys Agent",
-  "description": "...",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -478,7 +480,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Cisco Agent",
-  "description": "...",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "telephony": {"phone_number": "+14155551234", "inbound": true},

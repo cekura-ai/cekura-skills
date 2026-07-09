@@ -2,9 +2,7 @@
 
 Runs **once**, after Eval declares the validation set 100% green (EVAL.4 case 3) and before PR. The reproduction dataset proves the original bug is fixed; this phase proves the fix didn't break a previously-working flow. A fix that resolves the bug but regresses a happy path is not shippable.
 
-**The sweep is the target's validation mechanism (Setup):**
-- **Cekura-scenario targets** — happy-path + edge-case scenarios on the changed surface, run E2E over the **same transport as the production call** (same agent, same medium). Text mode is never a substitute; passing over a different medium than production is a false pass.
-- **Code-fix targets** — the **existing test suite + the new test**, run offline. No live redeploy.
+**The sweep is always Cekura scenarios:** happy-path + edge-case scenarios on the changed surface, run E2E over the **same transport as the production call** (same agent, same medium). Text mode and code / unit tests are never a substitute; passing over a different medium than production is a false pass.
 
 ## Step REGRESS.1 — Identify the affected flows
 
@@ -14,8 +12,6 @@ The in-loop sweep (EVAL.4 case 2) already re-ran the reproduction dataset. This 
 - Edge cases the fix might have broken — error paths, timeouts, retries, fallback branches near the edited region.
 - (Cekura-scenario) voice stress on the affected flow: silence gaps, interruptions, background noise, DTMF.
 - Other caller intents reaching the same code path / decision point.
-
-For **code-fix targets** this is the existing suite (already covers these flows) plus the new test — no new scenarios to author; skip to REGRESS.2's run step.
 
 Produce a named list. **Confirm with the user before creating evaluators** *(in `auto_mode: true`, render and proceed unless empty or clearly under-scoped — then ask)*. Goal is enough coverage to trust the fix, not exhaustiveness — scale the count to how invasive the edit was (a one-clause prompt tweak needs fewer cases than an orchestration-code change).
 
@@ -36,15 +32,12 @@ create_scenario '{
 
 Run each case over the agent's transport one at a time (restore any modified conditions between cases), poll all results.
 
-**Code-fix targets:** run the existing test suite + the new test offline.
-
-Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM, infra, and code-fix alike — must pass in ≥ M of N runs (a single clean pass is never enough). Deterministic tests pass all N in one shot; re-run under the same ≥ M of N logic when a trigger is intermittent.
+Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM and infra alike — must pass in ≥ M of N runs (a single clean pass is never enough), re-run under the ≥ M of N logic when a trigger is intermittent.
 
 | Case | Class | Runs | Pass/Fail | Result URL |
 |---|---|---|---|---|
 | Happy path | LLM | 8/8 | PASS | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID |
-| Silence gap | infra | 1/1 | PASS | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID |
-| test_existing_suite | code | 8/8 | PASS | (offline) |
+| Silence gap | infra | 8/8 | PASS | https://dashboard.cekura.ai/PROJECT_ID/results/RESULT_ID |
 
 ## Regression Gate
 

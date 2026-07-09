@@ -1,6 +1,6 @@
 # Clone Phase
 
-Runs **once**, after Setup and before Optimize. **VAPI and ElevenLabs only** — every `self_hosted` run (including code-fix, offline, and render-only targets) skips this phase entirely; there is no managed provider to clone into.
+Runs **once**, after Setup and before Optimize. **VAPI and ElevenLabs only** — every `self_hosted` run (including source-code and render-only targets) skips this phase entirely; there is no managed provider to clone into.
 
 Goal: stand up a disposable copy of the provider agent + its tools (same org, same key), duplicate the Cekura agent (`copy_scenarios=true`), repoint the clone at the cloned provider id, and rebind the run to the clone. The loop then iterates entirely on the clone — production is never touched. A failed POST **halts**; never fall through to editing the original.
 

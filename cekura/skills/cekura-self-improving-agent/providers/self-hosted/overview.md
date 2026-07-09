@@ -18,9 +18,9 @@ to change it are whatever the run-setup points to.
    wherever the run-setup points: a source file, a DB row, or pasted text.
 2. **Edit** — apply a change via the mechanism the run-setup implies (menu below).
 3. **Redeploy** — make edits live: a `redeploy_command`, `"manual"`, `"noop"` (runtime
-   re-reads every request), or render-only / offline (no live target to deploy to).
-4. **Simulate** — validate: run a Cekura eval against the live agent, OR run a **code test
-   suite** (for code-fix). When there's no reachable live target, collect pasted
+   re-reads every request), or render-only (no live target to deploy to).
+4. **Simulate** — validate: **always** run a Cekura eval against the live agent (never a
+   code / unit test). When there's no reachable live target, collect pasted
    `{transcript, expected_outcome, verdict}` failures instead.
 
 ## Setup: read the run-setup, collect what's missing
@@ -32,14 +32,12 @@ and read the run-setup — don't ask which "kind". From it, resolve the three ax
 - **Editable surface** — prompt / tool config / owned source code (orchestration + any
   vendored-or-forked SDK inside the tree the run-setup edits). Out of scope always: business
   logic, auth / secrets, dependencies, LLM-client config.
-- **Apply path** — `Edit`+`redeploy_command` / live-on-save (`"noop"`) / offline-PR (code-fix)
-  / render-only. (No provider-API path here.)
-- **Validation** — Cekura scenarios (simulation) OR a code test suite; both gate
-  stochastically (≥ M of N).
+- **Apply path** — `Edit`+`redeploy_command` (including owned source-code edits) / live-on-save
+  (`"noop"`) / render-only. (No provider-API path here.)
+- **Validation** — always Cekura scenarios (simulation); gates stochastically (≥ M of N).
 
 Plus **Explore** (how to read the surface) and **Simulate** (how to launch the main agent +
-connect it to a Cekura run, or "test suite" for code-fix; persisted per Setup 1.4a — needed by
-Reproduce and Eval). If the surface is a **DB row**, collect DB connection details (below)
+connect it to a Cekura run; persisted per Setup 1.4a — needed by Reproduce and Eval). If the surface is a **DB row**, collect DB connection details (below)
 before any read.
 
 ### Setup summary template
@@ -48,12 +46,12 @@ before any read.
 Self-hosted agent: <agent_name> (id: <agent_id>)
   Provider tag: <assistant_provider>
   Editable surface: <source file path | DB row <table>.<column> | Cekura mock tools |
-                     owned source code (code-fix) | pasted text (no live target)>
+                     owned source code | pasted text (no live target)>
   Explore:  <how the current prompt/tools/code are read>
   Edit:     <Edit tool | DB UPDATE via client | mock-tools API | render-only>
-  Apply path: <redeploy_command | "noop" | offline/PR | render-only>
-  Validation: <Cekura scenarios | test suite>
-  Simulate: <launch + connect steps | "test suite" | "pasted failures (no live target)">
+  Apply path: <redeploy_command | "noop" | render-only>
+  Validation: Cekura scenarios
+  Simulate: <launch + connect steps | "pasted failures (no live target)">
   System prompt: <N> chars at <location>
   Tool definitions: <where, or "none" / "in code (out of scope)">
   Dynamic-variable placeholders detected: <list of {{...}} or "none">
@@ -78,17 +76,17 @@ Three surfaces can live in the file: **system prompt**, **tool definitions**, an
   ask the user for the *effective* prompt passed to the LLM, or to consolidate it.
 - Read-only / outside the workspace → `Edit` fails → fall back to render-only.
 
-### Diagnosed code bug in owned source — apply path: offline / PR
+### Diagnosed code bug in owned source — apply path: `Edit` + redeploy, ship as a PR
 
 A diagnosed bug in owned source is a **first-class CodeBug target**, not Upstream — including
 infra-flavored bugs (STT / transport / timing) and bugs inside a **forked/vendored SDK in the
 tree**. "Upstream" is reserved for code the user genuinely cannot edit.
 
-- **Harness** = a **test** that fails against current code (deterministic where possible;
-  re-run under the stochastic gate if intermittent). A passing Cekura simulation is
-  **EXPECTED**, not a stop signal — the failure lives in code, not in simulated dialogue.
-- **Apply path** = offline / PR: `redeploy_command` is `"noop"` / offline, no live restart.
-- **Validation** = the test suite. **Regression** = the suite + the new test.
+- **Harness** = a **Cekura evaluator**, with the bug's trigger forced to fire in the simulation
+  (Reproduce REPRO.3e) so it fails ≥ M of N. Never a hand-authored code / unit test.
+- **Apply path** = `Edit` + `redeploy_command` (self-hosted live); the source diff is carried to
+  the PR phase and shipped after it validates on Cekura.
+- **Validation** and **Regression** = Cekura scenarios, like every other fix.
 - A supplied root cause is consumed **as-is**, not re-derived.
 
 ### Stored row (database) — apply path: `"noop"` if re-read, else restart
@@ -153,7 +151,7 @@ mode with a privileged redeploy command on that path.
 ### Collection (Setup Step 1.4)
 
 Collected once. Skip the prompt when `redeploy_command` was passed in inputs, mode is
-`vapi` / `elevenlabs`, or the apply path is offline/PR or render-only. Prompt template:
+`vapi` / `elevenlabs`, or the apply path is render-only. Prompt template:
 
 ```
 For end-to-end automation, I can run your redeployment automatically after each
@@ -175,7 +173,7 @@ before each re-validation).
 ### Sentinel handling
 
 - `"manual"` (case-insensitive) → fall through to the manual restart gate at every apply.
-- `"noop"` → edit is live the moment it lands (DB re-read, code-fix offline path); skip the
+- `"noop"` → edit is live the moment it lands (DB re-read); skip the
   pause, go straight to Sync.
 - Empty / "skip" → treat as `"manual"`; tell the user you recorded the manual fallback (not
   "no redeploy needed").
@@ -285,8 +283,10 @@ hard substitution-failure signal.
 - **Calling an owned-source bug "Upstream."** Owned code — including a forked/vendored SDK in
   the tree, and infra-flavored STT/transport/timing bugs — is a CodeBug (in-scope). Upstream is
   only code the user genuinely cannot edit.
-- **Stopping a code-fix because the Cekura simulation passes.** For a CodeBug the harness is a
-  failing test; a passing simulation is expected. Validate against the test suite, ship as a PR.
+- **Substituting a code / unit test for a Cekura simulation.** Even a CodeBug validates on
+  Cekura: force the bug's trigger to fire in the sim (Reproduce REPRO.3e) so it fails ≥ M of N,
+  fix via `Edit` + redeploy, re-validate on Cekura, then ship as a PR. Never author a test to
+  stand in — if the bug genuinely can't be forced in a live sim, stop and surface.
 - **Crossing the orchestration / business-logic line.** Orchestration (and forked SDK) is
   editable; tool bodies, auth/secrets, LLM config, and dependencies are not. When in doubt,
   hand off — a false hand-off is recoverable; an unwanted code change is not.
