@@ -6,7 +6,7 @@
 # API payload fields:
 #   name: "5 - Booking Flow"
 #   type: "custom_code"
-#   eval_type: "binary_workflow_adherence"
+#   eval_type: "binary"
 #   evaluation_trigger: "custom"
 #   trigger_type: "llm_judge"
 #   evaluation_trigger_prompt: "Return TRUE if the call involves booking intent..."

@@ -60,8 +60,7 @@ Do NOT use `basic` or `custom_prompt` — API returns 400.
 
 | Eval Type | Output | Use For |
 |-----------|--------|---------|
-| `binary_qualitative` | TRUE/FALSE | Soft skills, quality assessments |
-| `binary_workflow_adherence` | TRUE/FALSE | Flow compliance checks |
+| `binary` | TRUE/FALSE | Pass/fail checks — flow compliance, soft-skill/quality assessments |
 | `enum` | String from defined values | Classification tasks |
 | `numeric` | Float score | Scoring tasks |
 | `continuous_qualitative` | Continuous score | Continuous quality assessment |
@@ -138,7 +137,7 @@ Use `evaluation_trigger: "custom"` with a trigger prompt that checks if the call
 - [Specific exclusion 2]"
 
 ### Layer 2: Description-Level N/A (handle nuance within the metric)
-For edge cases that need transcript context to determine. **Important:** Binary metrics (`binary_workflow_adherence`) cannot return N/A from the prompt — only through the trigger. When the prompt encounters a case that "should be N/A" (empty metadata, inapplicable scenario), return TRUE (auto-pass) as a safety net.
+For edge cases that need transcript context to determine. **Important:** Binary metrics (`binary`) cannot return N/A from the prompt — only through the trigger. When the prompt encounters a case that "should be N/A" (empty metadata, inapplicable scenario), return TRUE (auto-pass) as a safety net.
 
 ## Dynamic Variable-Driven Metrics
 
@@ -247,12 +246,12 @@ All metrics must require:
 ### Key Endpoints
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | `/test_framework/v1/metrics/` | Create metric |
-| GET | `/test_framework/v1/metrics/` | List metrics (filter by agent/project) |
-| GET | `/test_framework/v1/metrics/{id}/` | Get metric |
-| PATCH | `/test_framework/v1/metrics/{id}/` | Update metric |
-| DELETE | `/test_framework/v1/metrics/{id}/` | Delete metric |
-| POST | `/test_framework/v1/metrics/generate_evaluation_trigger/` | Auto-generate trigger |
+| POST | `/test_framework/v2/metrics/` | Create metric |
+| GET | `/test_framework/v2/metrics/` | List metrics (filter by agent/project) |
+| GET | `/test_framework/v2/metrics/{id}/` | Get metric |
+| PATCH | `/test_framework/v2/metrics/{id}/` | Update metric |
+| DELETE | `/test_framework/v2/metrics/{id}/` | Delete metric |
+| POST | `/test_framework/v2/metrics/generate_evaluation_trigger/` | Auto-generate trigger |
 | POST | `/observability/v1/call-logs/evaluate_metrics/` | Evaluate metrics on calls |
 | POST | `/observability/v1/call-logs-external/{id}/mark_metric_vote/` | Leave feedback |
 | POST | `/test_framework/metric-reviews/process_feedbacks/` | Run labs auto-improve |

@@ -12,15 +12,15 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | `/test_framework/v1/metrics/` | Create metric |
-| GET | `/test_framework/v1/metrics/` | List metrics (filter by agent/project) |
-| GET | `/test_framework/v1/metrics/{id}/` | Get metric |
-| PATCH | `/test_framework/v1/metrics/{id}/` | Update metric |
-| DELETE | `/test_framework/v1/metrics/{id}/` | Delete metric (returns 204) |
-| POST | `/test_framework/v1/metrics/preview/` | Preview metric before creating |
-| POST | `/test_framework/v1/metrics/{id}/auto-improve/` | Auto-improve from feedback |
-| POST | `/test_framework/v1/metrics/{id}/run-reviews/` | Re-evaluate metric on calls |
-| POST | `/test_framework/v1/metrics/generate_evaluation_trigger/` | Auto-generate trigger from description |
+| POST | `/test_framework/v2/metrics/` | Create metric |
+| GET | `/test_framework/v2/metrics/` | List metrics (filter by agent/project) |
+| GET | `/test_framework/v2/metrics/{id}/` | Get metric |
+| PATCH | `/test_framework/v2/metrics/{id}/` | Update metric |
+| DELETE | `/test_framework/v2/metrics/{id}/` | Delete metric (returns 204) |
+| POST | `/test_framework/v2/metrics/preview/` | Preview metric before creating |
+| POST | `/test_framework/v2/metrics/{id}/auto-improve/` | Auto-improve from feedback |
+| POST | `/test_framework/v2/metrics/{id}/run-reviews/` | Re-evaluate metric on calls |
+| POST | `/test_framework/v2/metrics/generate_evaluation_trigger/` | Auto-generate trigger from description |
 
 ## Call / Evaluation Endpoints
 
@@ -49,7 +49,7 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
   "name": "string (required)",
   "description": "string — FOR llm_judge: this IS the evaluation prompt",
   "type": "llm_judge | custom_code",
-  "eval_type": "binary_qualitative | binary_workflow_adherence | enum | numeric | continuous_qualitative",
+  "eval_type": "binary | enum | numeric | continuous_qualitative",
   "agent": "integer (agent ID)",
   "project": "integer (project ID, alternative to agent)",
   "custom_code": "string — Python code for custom_code type",

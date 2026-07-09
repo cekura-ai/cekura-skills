@@ -130,7 +130,7 @@ Pull the caller's identity from `metadata` (`enrollment_hello_data`, `*_data` bl
 
 ### E. Metric
 
-Score the specific behavior. Follow the **Metric selection policy** above — resolve in order: (1) reuse an existing metric on the agent (`mcp__cekura__metrics_list(agent_id=...)` — e.g. an existing "Voicemail Detection Accuracy" / "No Premature Transfer…"); (2) if none fits, check the predefined catalog (`mcp__cekura__predefined_metrics_list`, after searching the [predefined-metrics docs](https://docs.cekura.ai/documentation/key-concepts/metrics/pre-defined-metrics)) and **copy** a matching template with `mcp__cekura__predefined_metrics_copy_create`; (3) only if neither fits, **create** one (`mcp__cekura__metrics_create`, `type=llm_judge`, `eval_type=binary_workflow_adherence`, `project=<id>`, `agents=[<agent_id>]`) whose description spells out PASS/FAIL grounded in the call's failure and cites the call ID.
+Score the specific behavior. Follow the **Metric selection policy** above — resolve in order: (1) reuse an existing metric on the agent (`mcp__cekura__metrics_list(agent_id=...)` — e.g. an existing "Voicemail Detection Accuracy" / "No Premature Transfer…"); (2) if none fits, check the predefined catalog (`mcp__cekura__predefined_metrics_list`, after searching the [predefined-metrics docs](https://docs.cekura.ai/documentation/key-concepts/metrics/pre-defined-metrics)) and **copy** a matching template with `mcp__cekura__predefined_metrics_copy_create`; (3) only if neither fits, **create** one (`mcp__cekura__metrics_create`, `type=llm_judge`, `eval_type=binary`, `project=<id>`, `agents=[<agent_id>]`) whose description spells out PASS/FAIL grounded in the call's failure and cites the call ID.
 
 ### F. Create (after user OK)
 

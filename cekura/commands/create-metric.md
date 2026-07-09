@@ -41,7 +41,7 @@ For **updates**: fetch the current metric with `mcp__cekura__metrics_retrieve` a
 2. **Understand the requirement**: Clarify what the user wants to measure. Determine:
    - What workflow or KPI does this metric track?
    - Which agent(s) will it apply to?
-   - What eval type is appropriate (binary_qualitative, binary_workflow_adherence, enum, numeric)?
+   - What eval type is appropriate (binary, enum, numeric)?
    - What trigger type (always, custom)?
 
 3. **Identify the agent**: Ask for agent ID or project ID if not provided. Use the list-metrics command to check existing metrics and avoid duplication.
@@ -111,5 +111,5 @@ Beyond baseline metrics, these are commonly valuable:
 
 - API key: `CEKURA_API_KEY` env var (configured via .mcp.json)
 - Base URL: `https://api.cekura.ai`
-- Create: `POST /test_framework/v1/metrics/`
-- Update: `PATCH /test_framework/v1/metrics/{id}/`
+- Create: `POST /test_framework/v2/metrics/`
+- Update: `PATCH /test_framework/v2/metrics/{id}/`
