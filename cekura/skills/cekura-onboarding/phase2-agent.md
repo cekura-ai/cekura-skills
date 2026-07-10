@@ -49,7 +49,7 @@ The one high-leverage step: **provider agent ID + provider API key**. Create wit
 
 > "No problem — does your agent have a phone number I can call it on? That lets us run real test calls now; you can add the API key later for auto-import and auto-sync."
 
-Then: phone number (or SIP URI) → inbound/outbound → the 2c essentials (complete system prompt via the description gate, language) → create with the telephony connection. Tell them what's deferred (auto-import, auto-sync, call ingestion) and carry it as an open item. **The verification run then goes over the phone connection (`scenarios_run_voice`) — never substitute a text simulation for a voice agent** (text mode is for chat agents, not a workaround for missing credentials). If they have neither credentials nor a phone number, pause onboarding — there is nothing to test against.
+Then collect the telephony essentials in ONE clarification — **phone number (or SIP URI), inbound-or-outbound, and language, asked together** — plus the complete system prompt via the description gate. **Ask inbound/outbound explicitly; never infer the direction** (it decides who dials whom — getting it wrong means the run can't connect) and don't silently default the language. Then create with the telephony connection. Tell them what's deferred (auto-import, auto-sync, call ingestion) and carry it as an open item. **The verification run then goes over the phone connection (`scenarios_run_voice`) — never substitute a text simulation for a voice agent** (text mode is for chat agents, not a workaround for missing credentials). If they have neither credentials nor a phone number, pause onboarding — there is nothing to test against.
 
 ## 2a′. Bland / Chirp / KoreAI / Genesys / Cisco — standard named providers
 
@@ -63,10 +63,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 
 > "How should Cekura reach your agent — does it already have a **phone number or SIP endpoint** (simplest), or should we dispatch over **WebRTC** via your provider's API?"
 
-**Path A — Telephony (preferred, fewest moving parts).** If the agent has a phone number or SIP endpoint, that's the whole connection:
-1. Get the phone number (or SIP URI).
-2. Ask inbound or outbound (does Cekura call the agent, or does the agent call Cekura?).
-3. Collect the 2c essentials (description, language) and create the agent. **No provider credentials needed** — do not ask for any.
+**Path A — Telephony (preferred, fewest moving parts).** If the agent has a phone number or SIP endpoint, that's the whole connection. Collect in ONE clarification: **phone number (or SIP URI) + inbound-or-outbound + language, together** — plus the complete system prompt via the description gate. **Ask inbound/outbound explicitly — never infer it** (it decides who dials; a wrong guess means the run can't connect), and don't silently default the language. **No provider credentials needed** — do not ask for any.
 
 **Path B — WebRTC dispatch (only when there's no phone path, or the user chooses it).** Now — and only now — collect credentials. **On this path credentials are mandatory — never offer "skip credentials for now":** WebRTC dispatch is the connection, so without them the agent is unreachable and the first-run verification (Phase 5T) cannot happen. If the user can't share them, offer the telephony path instead or pause here.
 - **Pipecat Cloud**: `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name`. Runs via `scenarios_run_pipecat_v2`.
