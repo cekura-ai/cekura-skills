@@ -75,8 +75,7 @@ Start as `llm_judge` for rapid iteration. Once the prompt is validated (through 
 
 | Eval Type | Output | Use For |
 |-----------|--------|---------|
-| `binary_qualitative` | TRUE/FALSE | Soft skills, quality assessments |
-| `binary_workflow_adherence` | TRUE/FALSE | Flow compliance checks |
+| `binary` | TRUE/FALSE | Pass/fail checks — flow compliance, soft-skill/quality assessments |
 | `enum` | String from defined values | Classification tasks |
 | `numeric` | Float score | Scoring tasks |
 | `continuous_qualitative` | Continuous score | Continuous quality assessment |

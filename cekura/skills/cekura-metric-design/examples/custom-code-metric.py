@@ -6,7 +6,7 @@
 # API payload fields:
 #   name: "3/4 - New/Existing Customer Flow Adherence"
 #   type: "custom_code"
-#   eval_type: "binary_workflow_adherence"
+#   eval_type: "binary"
 #   custom_code: <this file's contents>
 
 from utils import extract_section, parse_llm_result, METRIC_SECTIONS

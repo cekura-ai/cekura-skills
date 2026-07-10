@@ -10,7 +10,7 @@ which works well for behavioral and timing metrics.
   "name": "T-1 Transcript Sender Performance",
   "description": "<PROMPT BELOW>",
   "type": "llm_judge",
-  "eval_type": "binary_workflow_adherence",
+  "eval_type": "binary",
   "agent": 10282,
   "evaluation_trigger": "always"
 }

@@ -59,13 +59,13 @@ POST /test_framework/v1/scenarios/run_scenarios/
 ### Checking Results
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/test_framework/v1/results/` | List results |
-| GET | `/test_framework/v1/results/{id}/` | Get result details (transcript, metrics, audio) |
+| GET | `/test_framework/v2/results/` | List results |
+| GET | `/test_framework/v2/results/{id}/` | Get result details (transcript, metrics, audio) |
 
 ### Metrics
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/test_framework/v1/metrics/` | List metrics |
+| GET | `/test_framework/v2/metrics/` | List metrics |
 | GET | `/test_framework/v1/predefined-metrics/` | List pre-defined metrics |
 
 ### Personalities
@@ -87,7 +87,7 @@ POST /test_framework/v1/scenarios/create_folder/
 ## Verification Checklist
 
 After onboarding, confirm:
-- [ ] API key works (`GET /test_framework/v1/metrics/` returns 200)
+- [ ] API key works (`GET /test_framework/v2/metrics/` returns 200)
 - [ ] Agent created with full description
 - [ ] Provider integration configured
 - [ ] Pre-defined metrics enabled at project level
