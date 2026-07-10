@@ -109,11 +109,12 @@ Wrap instructions in `<scenario>` tags with a step-by-step format:
 SCENARIO: [Brief scenario name]
 
 YOUR BEHAVIOR:
-1. State your intent to [action]
-2. Confirm you are the patient when asked
-3. Say and spell your first name when asked for verification
-4. Provide your date of birth when asked
-5. If the agent says no slots are available, say you are flexible with timing
+1. State your intent to [action] when asked for the reason of the call
+2. Confirm you are the patient when asked if you are the patient
+3. Say and spell {{test_profile.first_name}} when asked for your name for verification
+4. Provide {{test_profile.date_of_birth}} when asked for your date of birth
+5. Say you are flexible with timing when told no slots are available
+6. End the call when the appointment confirmation is provided
 
 KEY INTERACTION POINTS:
 [Specific workflow nodes or edge cases to exercise]
@@ -155,9 +156,10 @@ KEY INTERACTION POINTS:
 SCENARIO: Wrong number — caller is not the intended recipient
 
 YOUR BEHAVIOR:
-1. When the agent asks for your name or tries to verify your identity, say this is the wrong number and you don't know the person they're looking for
-2. If the agent asks for any additional information, decline — you have no connection to the intended person
-3. If the agent apologizes and offers to remove your number, confirm that's fine
+1. Say this is the wrong number and you don't know the person being looked for when asked for your name or asked to verify your identity
+2. Decline when asked for any additional information — you have no connection to the intended person
+3. Confirm that's fine when offered to have your number removed
+4. End the call when the number-removal confirmation is given
 </scenario>
 ```
 
@@ -180,12 +182,14 @@ YOUR BEHAVIOR:
 SCENARIO: New adult patient scheduling with insurance
 
 YOUR BEHAVIOR:
-1. State you're a new patient and need to schedule a first visit with a primary care provider
-2. When asked about insurance, say you have Blue Cross PPO
-3. Provide your date of birth and spell your full name when asked for verification
-4. Request a morning appointment if given timing options
-5. If no morning slots are available, accept the earliest available afternoon slot
-6. Confirm the appointment details when the agent reads them back
+1. State you're a new patient and need to schedule a first visit with a primary care provider when asked for the reason of the call
+2. Say you have {{test_profile.insurance_plan}} when asked about insurance
+3. Provide {{test_profile.date_of_birth}} when asked for your date of birth
+4. Spell {{test_profile.full_name}} when asked for your name for verification
+5. Request a morning appointment when asked for a preferred time
+6. Accept the earliest available afternoon slot when told no morning slots are available
+7. Verify the appointment details are correct when asked to confirm the appointment details and correct if wrong
+8. End the call when the booking confirmation is provided
 
 KEY INTERACTION POINTS:
 - New patient registration flow

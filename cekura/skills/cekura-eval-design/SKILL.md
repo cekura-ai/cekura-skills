@@ -169,11 +169,12 @@ Wrap instructions in `<scenario>` tags with a step-by-step format:
 SCENARIO: [Brief scenario name]
 
 YOUR BEHAVIOR:
-1. State your intent to [action]
-2. Confirm you are the patient when asked
-3. Say and spell your first name when asked for verification
-4. Provide your date of birth when asked
-5. If the agent says no slots are available, say you are flexible with timing
+1. State your intent to [action] when asked for the reason of the call
+2. Confirm you are the patient when asked if you are the patient
+3. Say and spell {{test_profile.first_name}} when asked for your name for verification
+4. Provide {{test_profile.date_of_birth}} when asked for your date of birth
+5. Say you are flexible with timing when told no slots are available
+6. End the call when the appointment confirmation is provided
 
 KEY INTERACTION POINTS:
 [Specific workflow nodes or edge cases to exercise]
