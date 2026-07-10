@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""Validate Cekura skill/command verification tags against the append-only manifest.
+
+For every file carrying a `<!-- cekura-ack-tag: ... -->` marker, checks:
+  1. the inline tag exists in cekura/ack-tags.json under a matching slug,
+  2. if the file's frontmatter declares `allowed-tools`, it includes the beacon tool, and
+  3. every inline `plugin_version="..."` matches the package.json version — a
+     mismatch makes released installs report a stale version and draw wrong
+     update nudges.
+
+Exit non-zero on any drift. Safe to run locally or from CI.
+"""
+import json
+import re
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+CEKURA = REPO / "cekura"
+MANIFEST = CEKURA / "ack-tags.json"
+PACKAGE_JSON = REPO / "package.json"
+BEACON_TOOL = "mcp__cekura__cekura_skill_started"
+
+TAG_RE = re.compile(r"<!--\s*cekura-ack-tag:\s*(ack:[a-z0-9-]+:[a-z2-7]{6})\s*-->")
+SLUG_RE = re.compile(r"^ack:([a-z0-9-]+):[a-z2-7]{6}$")
+PLUGIN_VERSION_RE = re.compile(r'plugin_version="([^"]*)"')
+
+
+def load_manifest():
+    data = json.loads(MANIFEST.read_text())
+    return {k: v for k, v in data.items() if not k.startswith("_")}
+
+
+def iter_tagged_files():
+    for base in ("skills", "commands"):
+        for path in sorted((CEKURA / base).rglob("*.md")):
+            text = path.read_text()
+            m = TAG_RE.search(text)
+            if m:
+                yield path, text, m.group(1)
+
+
+def frontmatter_allowed_tools(text):
+    """Return the declared allowed-tools value, or None if absent.
+
+    Handles both shapes: an inline array on the same line
+    (`allowed-tools: [...]`) and a YAML block list (`allowed-tools:` followed
+    by indented `- item` lines). For the block form, the following indented
+    items are collected so the membership check sees every listed tool.
+    """
+    if not text.startswith("---"):
+        return None
+    end = text.find("\n---", 3)
+    fm = text[3:end] if end != -1 else text
+    lines = fm.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip().startswith("allowed-tools"):
+            base_indent = len(line) - len(line.lstrip())
+            collected = [line]
+            for nxt in lines[i + 1:]:
+                if not nxt.strip():
+                    continue
+                indent = len(nxt) - len(nxt.lstrip())
+                if indent > base_indent or nxt.lstrip().startswith("-"):
+                    collected.append(nxt)
+                else:
+                    break
+            return "\n".join(collected)
+    return None
+
+
+def check_plugin_versions(errors):
+    try:
+        pkg_version = json.loads(PACKAGE_JSON.read_text()).get("version")
+    except Exception as e:
+        errors.append(f"package.json: unreadable ({e})")
+        return
+    if not pkg_version:
+        errors.append("package.json: missing 'version'")
+        return
+    for base in ("skills", "commands"):
+        for path in sorted((CEKURA / base).rglob("*.md")):
+            for m in PLUGIN_VERSION_RE.finditer(path.read_text()):
+                if m.group(1) != pkg_version:
+                    errors.append(
+                        f"{path}: plugin_version=\"{m.group(1)}\" != package.json "
+                        f"version \"{pkg_version}\" (bump inline versions on release)"
+                    )
+
+
+def main():
+    manifest = load_manifest()
+    errors = []
+    seen = 0
+    for path, text, tag in iter_tagged_files():
+        seen += 1
+        sm = SLUG_RE.match(tag)
+        if not sm:
+            errors.append(f"{path}: malformed tag {tag!r}")
+            continue
+        slug = sm.group(1)
+        if slug not in manifest:
+            errors.append(f"{path}: slug {slug!r} not in manifest")
+        elif tag not in manifest[slug]:
+            errors.append(f"{path}: tag {tag!r} not in manifest[{slug!r}] (append it; never remove)")
+        at = frontmatter_allowed_tools(text)
+        if at is not None and BEACON_TOOL not in at:
+            errors.append(f"{path}: allowed-tools present but missing {BEACON_TOOL}")
+    if seen == 0:
+        errors.append("no tagged files found")
+    check_plugin_versions(errors)
+    if errors:
+        print("ack-tag validation FAILED:")
+        for e in errors:
+            print(f"  - {e}")
+        return 1
+    print(f"ack-tag validation OK ({seen} tagged files, {len(manifest)} manifest slugs)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
