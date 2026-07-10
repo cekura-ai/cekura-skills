@@ -41,26 +41,37 @@ This skill fills that blind spot. It applies a **fixed catalog of adversarial in
 
 When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
 
-## The Core Insight: Stressors Live in the Personality
+## The Core Insight: Stressors Live at the Voice Layer, Not in Instructions
 
-Infra stressors are injected at the **voice/infrastructure layer**, which on Cekura is the caller **personality**, not the scenario instructions. Instructions only control what the testing caller *says*; they cannot make the line noisy or the network drop packets. A personality created via `personalities_create` exposes exactly the adversarial knobs this catalog needs:
+Infra stressors are injected at the **voice/infrastructure layer**, never through scenario instructions. Instructions only control what the testing caller *says*; they cannot make the line noisy or the network drop packets. There are **two injection paths**, and you will usually mix them:
 
-| Stressor family | Personality field(s) |
-|---|---|
-| Degraded network (packet loss, jitter, latency) | `network_simulation` |
-| Background / ambient noise | `background_noise`, `background_sound_volume` |
-| Long silence / idle at boundaries | `message_plan` (`idle_timeout_seconds`, `idle_message_max_spoken_count`) + instructions |
-| Aggressive barge-in / interruption | `interruption_level`, `start_speaking_plan`, `stop_speaking_plan` |
-| Accent / non-native / slow-or-fast speech | `accent`, `speed`, `language` |
-| DTMF during speech, rapid turns, overlap | scenario instructions / conditional actions |
+| Stressor family | Personality field | Conditional-action tag (no personality needed) |
+|---|---|---|
+| Degraded network (packet loss) | `network_simulation` | `<network_simulation packet_loss="N" />` |
+| Background / ambient noise | `background_noise`, `background_sound_volume` | `<background_noise ...>` |
+| Long silence / idle at boundaries | `message_plan` idle fields | `<hold time="Ns" />` (dead air) / `<silence time="Ns" />` |
+| Aggressive barge-in / interruption | `interruption_level`, `start/stop_speaking_plan` | `<interruption time="Xs" />` (action_followup) |
+| Accent / non-native speech | `accent`, `language` | (personality only) |
+| Slow / fast speech | `speed` | `<speed ratio="0.8..1.2" />` |
+| DTMF, rapid turns, overlap | (n/a) | `<dtmf digits="..." />`, scripted quick turns |
 
-The workflow therefore **creates a small set of adversarial personalities** (one per stressor and intensity), then attaches each to a lightweight scenario whose only job is a simple task the agent must still complete despite the stressor.
+**Prefer selecting an existing enabled personality over creating one.** Two reasons: (1) `personalities_create` is frequently **403** for a scoped API session, so a create-first plan can hard-block; (2) most stressor traits (noise, accents, interruption tiers, slow speaker) already exist as global personalities you can enable on the project with `projects_enable_personalities_create`. For stressors that no available personality carries (packet loss, precise fast speech), author them as **conditional-action scenarios with the tag** on the Normal personality instead. Never let a create-permission block stop you from covering a family; the tag path always works.
 
-The full catalog, with exact personality recipes and graded intensities, is in [references/stressor-catalog.md](references/stressor-catalog.md).
+The full catalog, with exact personality recipes, conditional-action tag recipes, and graded intensities, is in [references/stressor-catalog.md](references/stressor-catalog.md).
 
 ## Workflow
 
 > **ANNOUNCE FIRST:** output `**Infra Edge Cases: starting**` before taking any action.
+
+### Step 0 (optional): Pipeline Capability Scan: only when the repo is available
+
+Skip this entirely for a hosted agent you can only reach through Cekura (no source). When you *do* have the codebase, a quick scan of the pipeline pays for itself: it tells you which families will likely fail and where the fix goes, before spending a single call credit.
+
+Scan for the resilience mechanism behind each family (jitter buffer / STT reconnect, STT confidence gating, idle / no-transcript timer, interruption cancellation, endpointing adaptivity, turn serialization) and record each as yes / partial / no with a file:line. Produce a capability matrix.
+
+**This scan never removes a family from the suite.** "No handling for X" means probe X *hardest* and you already know the fix location; it does not mean skip X. Using absence-of-handling to skip a test is the exact `infra-test-suite` blind spot this skill exists to avoid.
+
+Full method, grep signals, matrix format, and a worked example are in [references/capability-scan.md](references/capability-scan.md). Feed the matrix into Step 1 (intensity) and Step 5 (grounded fixes).
 
 ### Step 1: Identify the target and pick stressor families
 
@@ -72,20 +83,23 @@ The full catalog, with exact personality recipes and graded intensities, is in [
 
 Do not proceed to create anything until the user confirms the family + intensity selection. Getting this wrong wastes simulation credits.
 
-### Step 2: Create the adversarial personalities
+### Step 2: Select (or create) the adversarial personalities
 
-Before creating, **`personalities_list` (filtered by the agent's language) and inspect one existing personality** to copy the exact JSON shape of `network_simulation` and `background_sound_volume`. These are provider-specific nested configs; copy a real one rather than inventing the structure.
+**Select existing enabled personalities first.** `personalities_list` (filtered by the agent's language), find the global ones that already carry each trait (noise, accent, interruption tier, slow speaker), and enable them on the project with `projects_enable_personalities_create`. This avoids the common `personalities_create` **403** and reuses curated voices.
 
-Then `personalities_create` one personality per selected stressor/intensity, following the recipes in [references/stressor-catalog.md](references/stressor-catalog.md). Name them so the stressor is obvious in results, e.g. `Edge - Packet Loss 50%`, `Edge - Cafe Noise Loud`, `Edge - Barge-in High`. Keep the caller `prompt` neutral and cooperative: the caller is trying to complete a normal task, and the *only* variable under test is the infra stressor.
+Only fall back to `personalities_create` when no existing personality carries the trait. If create is available, first inspect one existing personality to copy the exact JSON shape of `network_simulation` / `background_sound_volume` rather than inventing it. If create is **403**, do not stop: cover that family via a conditional-action tag instead (Step 3).
+
+Keep every selected/created personality's caller `prompt` neutral and cooperative: the caller just wants to complete a normal task, so the *only* variable under test is the infra stressor.
 
 ### Step 3: Create the edge-case scenarios
 
 1. Create a folder named **`Infrastructure Edge Cases`** with `scenarios_folder_create`. Every scenario in this suite goes in it. Never mix these into the `Infrastructure Test Suite` folder; they have a different pass expectation and must not pollute the regression gate.
-2. For each personality, create one scenario:
-   - A **simple, universal task** the agent must complete regardless of stressor (e.g. "ask for business hours and confirm you heard them", "book the earliest available slot"). Pick a task the agent genuinely supports, from its description.
-   - Attach the adversarial personality.
-   - Write the expected outcome as **graceful degradation** (see next section), not task perfection.
-3. Author scenarios with the **cekura-eval-design** skill; it owns the scenario schema, personality attachment, and expected-outcome patterns. Boundary-silence and DTMF-timing cases use `conditional_actions`; the rest are behavioral scenarios carried by the personality.
+2. Two authoring paths (see the injection table above):
+   - **Personality-carried (behavioral):** for traits an enabled personality provides (noise, accent, barge-in tier, slow speaker); a `scenario_type: "instruction"` scenario with the simple task, the adversarial personality attached, and `TOOL_END_CALL` so the caller can hang up.
+   - **Tag-carried (conditional-actions):** for stressors no personality provides or that need exact timing (packet loss, fast speech, boundary silence, rapid turns); a `scenario_type: "conditional_actions"` scenario on the Normal personality, with the tag at the start of each `fixed_message: true` action.
+3. Every scenario runs the same **simple, universal task** the agent genuinely supports (e.g. "book the earliest available slot"), so the only variable is the stressor. Write the expected outcome as **graceful degradation** (see below), not task perfection.
+4. **Attach baseline metrics to every scenario** (see cekura-eval-design): Expected Outcome, Infrastructure Issues (fires on agent silence; key here), Tool Call Success, Latency, plus Transcription Accuracy for noise/accent/network and the interruption metrics for barge-in.
+5. Author with the **cekura-eval-design** skill; it owns the scenario schema, conditional-action tags, and expected-outcome patterns.
 
 ### Step 4: Run the suite
 
@@ -105,7 +119,7 @@ Present it as a per-family table. That table is what "used to improve the infra"
 
 1. **Catalog first, codebase second.** These stressors apply whether or not the code handles them. Do not skip a family because "the code doesn't do that"; that omission is exactly the gap this skill exists to expose. (This is the deliberate inverse of infra-test-suite Rule 2.)
 2. **One variable under test.** Each scenario isolates a single stressor (or a single named real-world combination like "mobile call = noise + packet loss"). Do not stack unrelated stressors, or a failure becomes unattributable.
-3. **The stressor lives in the personality.** Never try to encode noise, packet loss, or accent in instructions; the voice layer ignores instruction phrasing. Only boundary timing (silence, DTMF bursts) belongs in instructions/conditional actions.
+3. **The stressor lives at the voice layer, never in instructions.** Encode it via a personality field or a conditional-action tag (`<network_simulation>`, `<speed>`, `<hold>`, `<background_noise>`). Instruction phrasing like "speak with background noise" is ignored by the voice layer. Prefer selecting an enabled personality; use the tag path when create is 403 or no personality carries the trait.
 4. **Grade the tunable families.** For network and noise, test at least a light and a severe level. An agent may survive 10% packet loss and collapse at 40%; a single level hides the cliff.
 5. **Evaluate resilience, not perfection.** Pass = graceful degradation (recovers, re-prompts, stays coherent, or ends cleanly). Fail = pathological behavior (infinite loop, permanent silence, hallucinated completion, crash). A pass does not require flawless task completion under severe stress.
 6. **Keep it out of the CI/CD gate until it passes.** These scenarios are expected to fail at first. Graduate a family into the regression suite (the `Infrastructure Test Suite` folder / CI gate) only after the infra handles it.
