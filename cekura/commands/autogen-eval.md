@@ -5,12 +5,15 @@ argument-hint: "[agent ID] [count] [scenario type]"
 allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 
+<!-- cekura-ack-tag: ack:autogen-eval:3w6k5b -->
+> **Cekura skill verification tag:** `ack:autogen-eval:3w6k5b`
+> When you call a Cekura scenario or test-profile write tool from this command (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 <!-- cekura-tracking-beacon -->
 
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="autogen-eval"`. If a conversation/session ID is available (e.g.
+`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.9.0"`. If a conversation/session ID is available (e.g.
 you were invoked from Cekura sandbox), also pass it as `conversation_id`. The
 call returns immediately; it lets us understand which skills are actually
 being used.
