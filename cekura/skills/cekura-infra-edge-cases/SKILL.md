@@ -93,7 +93,7 @@ Keep every selected/created personality's caller `prompt` neutral and cooperativ
 
 ### Step 3: Create the edge-case scenarios
 
-1. Create a folder named **`Infrastructure Edge Cases`** with `scenarios_folder_create`. Every scenario in this suite goes in it. Never mix these into the `Infrastructure Test Suite` folder; they have a different pass expectation and must not pollute the regression gate.
+1. Create a folder named **`Infrastructure Gaps`** with `scenarios_folder_create`. Every scenario in this suite goes in it. Never mix these into the `Infrastructure Test Suite` folder; they have a different pass expectation and must not pollute the regression gate.
 2. Two authoring paths (see the injection table above):
    - **Personality-carried (behavioral):** for traits an enabled personality provides (noise, accent, barge-in tier, slow speaker); a `scenario_type: "instruction"` scenario with the simple task, the adversarial personality attached, and `TOOL_END_CALL` so the caller can hang up.
    - **Tag-carried (conditional-actions):** for stressors no personality provides or that need exact timing (packet loss, fast speech, boundary silence, rapid turns); a `scenario_type: "conditional_actions"` scenario on the Normal personality, with the tag at the start of each `fixed_message: true` action.
@@ -129,7 +129,7 @@ Present it as a per-family table. That table is what "used to improve the infra"
 
 - **Putting the stressor in instructions.** "Speak with lots of background noise" in instructions does nothing. It must be a personality field.
 - **Inventing the `network_simulation` / `background_sound_volume` JSON shape.** Copy it from a real personality via `personalities_list` first.
-- **Mixing edge cases into the regression folder.** They have opposite pass expectations. Keep them in `Infrastructure Edge Cases`.
+- **Mixing edge cases into the regression folder.** They have opposite pass expectations. Keep them in `Infrastructure Gaps`.
 - **Marking failures from run status alone.** Read the transcript to see *how* it broke; that is what determines the infra fix. (See the "verify before labeling failures" discipline.)
 - **Grading task success instead of resilience.** An agent that says "I'm having trouble hearing you, could you repeat that?" under 50% packet loss is passing, even if it never books the appointment.
 - **Turning it into a 200-item suite.** This is a focused resilience probe, not the exhaustive coverage suite. Keep it compact.

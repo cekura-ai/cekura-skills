@@ -65,7 +65,7 @@ Shashij's constraint holds: an edge case an agent cannot yet survive does not be
 
 The lifecycle for each family:
 
-1. **Probe.** It lives in the `Infrastructure Edge Cases` folder and is expected to fail. It is *not* in the CI gate.
+1. **Probe.** It lives in the `Infrastructure Gaps` folder and is expected to fail. It is *not* in the CI gate.
 2. **Fix.** The infra change lands (from the mapping above).
 3. **Re-run.** Re-run just that family from this suite.
 4. **Graduate.** Once it passes reliably, move it into the codebase-derived regression suite (the `Infrastructure Test Suite` folder / CI gate) via **cekura-infra-test-suite**, where it now protects against regressions. At that point the code *does* implement handling, so "only test what's there" applies and it is a legitimate gate test.
