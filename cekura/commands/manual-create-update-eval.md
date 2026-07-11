@@ -103,11 +103,12 @@ Default: `en`. Set via `scenario_language` field on the scenario.
 Use `mcp__cekura__personalities_list` to list available personalities, filtered by the chosen language if possible.
 
 **Recommended defaults:**
-- **English:** 693 (Normal Male, en/American)
+- **Purely English scenarios:** 693 (Normal Male, en/American). Use 693 ONLY when the scenario is entirely in English.
 - **Spanish:** 362 (Normal Spanish Male)
-- **Other languages:** Use 693 + set `scenario_language` to the correct code (platform uses `scenario_language` for TTS)
+- **Other non-English languages:** pick a personality matching the scenario's language from `mcp__cekura__personalities_list` (filter with `language=<code>`), and set `scenario_language` to the correct code (platform uses `scenario_language` for TTS).
+- **Multiple languages / code-switching in one scenario:** use a multilingual personality (filter with `language=multi`, e.g. 4710 "Normal (Spanish + English)").
 
-**Note:** Language-specific personalities may not be enabled on all projects. If you get "Personality is not enabled" errors, fall back to 693 with `scenario_language` set.
+**Note:** Language-specific personalities may not be enabled on all projects. Only if the language-matched personality returns a "Personality is not enabled" error, fall back to 693 with `scenario_language` set — never default to 693 for a non-English scenario without trying the language-matched personality first.
 
 ### 9. Metrics
 

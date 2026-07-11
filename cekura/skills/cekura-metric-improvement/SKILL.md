@@ -167,8 +167,8 @@ After improving a metric, the user typically needs:
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /observability/v1/call-logs-external/?agent=ID` | List calls |
-| `GET /observability/v1/call-logs-external/{id}/` | Get call details + evaluation results |
+| `GET /observability/v2/call-logs/?agent=ID` | List calls |
+| `GET /observability/v2/call-logs/{id}/` | Get call details + evaluation results |
 | `POST /observability/v1/call-logs-external/{id}/mark_metric_vote/` | Leave feedback |
 | `POST /test_framework/metric-reviews/process_feedbacks/` | Run labs auto-improve (see below) |
 | `GET /test_framework/metric-reviews/process_feedbacks_progress/` | Poll improvement progress |

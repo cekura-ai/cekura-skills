@@ -7,7 +7,7 @@
   "name": "1 - Global Soft Skills & Friction",
   "description": "<PROMPT BELOW>",
   "type": "llm_judge",
-  "eval_type": "binary_qualitative",
+  "eval_type": "binary",
   "agent": 12414,
   "evaluation_trigger": "always"
 }

@@ -15,7 +15,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-eval-design:7k3m4q -->
@@ -120,7 +120,7 @@ Open-ended persona dialogue, exploratory red-team without specific attack script
 2. **Dynamic variables** — For outbound and websocket runs, the profile's `main_agent_variables` section is sent to the agent under test as dynamic variables (mimicking production); the `testing_agent_variables` section stays with Cekura's simulator as persona/context only.
 3. **Single source of truth** — No risk of name in test profile saying "Sarah" while instructions say "John", which causes the testing agent to hallucinate. `test_profile.information.main_agent_variables` is the single source of truth for dynamic variables at call time.
 
-**Always use test profiles.** Never hardcode identity data (names, DOBs, account IDs, addresses, phone numbers, service addresses, discrepancy amounts — anything persona-related) in scenario instructions. Instead, create a test profile with the data and let the instructions reference it generically (e.g., "State your name when asked").
+**Always use test profiles.** Never hardcode identity data (names, DOBs, account IDs, addresses, phone numbers, service addresses, discrepancy amounts — anything persona-related) in scenario instructions. This includes **caller choices and confirmations** — a plan, tier, or option the caller selects or agrees to is still caller data ("Select {{test_profile.delivery_speed}} when asked", not "Select express shipping"). Create a test profile with the data and reference it via `{{test_profile.field}}` placeholders, using the same token at every mention.
 
 **Building test profiles from real data:**
 The best approach is to pull call history from observability and/or past eval runs and use data that is known to work:
@@ -144,7 +144,21 @@ Instructions tell the testing agent what to do. Write in **first person** from t
 
 - First person: "State your name when asked" NOT "The caller should state their name"
 - Behavioral, not scripted: "Report fever and cough, request same provider" NOT "Say exactly: I have a fever"
-- Reference test profile data: "Provide your date of birth when asked for verification" (the actual DOB comes from the test profile)
+- Reference test profile data: "Provide {{test_profile.date_of_birth}} when asked for verification" (the actual DOB comes from the test profile)
+
+### Step-Writing Rules (the short version)
+
+Full rulebook with examples: **`references/instruction-patterns.md` § Step-Writing Rules** — load it before authoring. The essentials:
+
+1. **Every step = one caller action + a passive "when …" trigger.** "State the reason for calling when asked for the reason of the call." Never unconditional actions, and never the words "agent", "AI", "bot", "system" in a step — describe what the step asks about, not who asks it.
+2. **Trigger precision** — name the exact question or offer ("when asked for a preferred appointment time"), never bare "when asked" or vague context.
+3. **One action per step.** Two joined actions ⇒ the second is silently dropped. Exception: the volunteer pattern ("when asked X, answer and also mention Z") is one turn.
+4. **No passive/non-verbal steps** — no Wait/Listen/Interrupt/Remain silent/Mumble/Acknowledge. Those are personality attributes. Hangup IS a valid step.
+5. **Data read-backs use the verify format**: "Verify [item] when asked to confirm [item] and correct if wrong." — the last phrase is required.
+6. **Last step is always** "End the call when <specific condition naming the result of the final scripted action>." — unless the scenario ends in a terminal transfer (then accepting the transfer is the last step) or the user asked not to end the call.
+7. **Stop at the fork** — only script steps whose triggers the agent description guarantees; when the description doesn't mandate the agent's next reaction, end the scenario there. A short deterministic scenario beats a long speculative one. Never premise a scenario on non-controllable state (backend conditions no mock fixes, or the main agent misbehaving — test forbidden behavior via outcomes demanding its absence).
+8. **Placeholders for ALL caller-provided data — including choices.** Anything the caller provides, selects, agrees to, or confirms uses `{{test_profile.field}}` ("Select {{test_profile.delivery_speed}} when asked for a delivery speed"), the same token at every mention, and every placeholder must exist in the attached profile. Don't fabricate placeholders for one-shot topics — those go inline.
+9. **If the caller must lead** (reactive main agent), put the opening request in `first_message`, not a step, and key each trigger to the response to the previous step — never to the caller's own state.
 
 ### Good Instructions Pattern
 
@@ -155,11 +169,12 @@ Wrap instructions in `<scenario>` tags with a step-by-step format:
 SCENARIO: [Brief scenario name]
 
 YOUR BEHAVIOR:
-1. State your intent to [action]
-2. Confirm you are the patient when asked
-3. Say and spell your first name when asked for verification
-4. Provide your date of birth when asked
-5. If the agent says no slots are available, say you are flexible with timing
+1. State your intent to [action] when asked for the reason of the call
+2. Confirm you are the patient when asked if you are the patient
+3. Say and spell {{test_profile.first_name}} when asked for your name for verification
+4. Provide {{test_profile.date_of_birth}} when asked for your date of birth
+5. Say you are flexible with timing when told no slots are available
+6. End the call when the appointment confirmation is provided
 
 KEY INTERACTION POINTS:
 [Specific workflow nodes or edge cases to exercise]
@@ -182,55 +197,7 @@ KEY INTERACTION POINTS:
 
 ### Bad vs Good Instructions
 
-**BAD** (filler, vague, passive):
-```
-<scenario>
-1. When the agent asks to confirm your identity and whether you are the intended person, clearly state: "No, you have the wrong number."
-2. Listen to the agent's response.
-3. End the call politely.
-</scenario>
-```
-
-**GOOD** (every step is a specific caller action):
-```
-<scenario>
-SCENARIO: Wrong number — caller is not the intended recipient
-
-YOUR BEHAVIOR:
-1. When the agent asks for your name or tries to verify your identity, say this is the wrong number and you don't know the person they're looking for
-2. If the agent asks for any additional information, decline — you have no connection to the intended person
-3. If the agent apologizes and offers to remove your number, confirm that's fine
-</scenario>
-```
-
-**BAD** (generic, no specifics):
-```
-<scenario>
-1. Call to schedule an appointment.
-2. Provide your information when asked.
-3. Confirm the appointment.
-</scenario>
-```
-
-**GOOD** (specific scenario with constraints):
-```
-<scenario>
-SCENARIO: New adult patient scheduling with insurance
-
-YOUR BEHAVIOR:
-1. State you're a new patient and need to schedule a first visit with a primary care provider
-2. When asked about insurance, say you have Blue Cross PPO
-3. Provide your date of birth and spell your full name when asked for verification
-4. Request a morning appointment if given timing options
-5. If no morning slots are available, accept the earliest available afternoon slot
-6. Confirm the appointment details when the agent reads them back
-
-KEY INTERACTION POINTS:
-- New patient registration flow
-- Insurance verification
-- Appointment slot selection with preference constraints
-</scenario>
-```
+Full worked bad-vs-good examples (wrong-number scenario, new-patient scheduling) live in **`references/instruction-patterns.md`** — load it before authoring behavioral scenarios.
 
 ## Auto-Generation
 
@@ -260,7 +227,7 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the preferred w
 
 3. **Auto-gen may add greetings to `first_message`** — When `extra_instructions` specify exact verbatim questions, some scenarios get a greeting (e.g., "Здравствуйте") as the `first_message` while the actual question is in instructions as a follow-up. PATCH `first_message` after generation.
 
-4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Workaround: use personality 693 (Normal Male English) and rely on `scenario_language` to drive TTS and pronunciation. See "Checking Available Personalities" under the Personality section.
+4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Always try the language-matched personality first (via `personalities_list` with `language=<code>`, or a multilingual `language=multi` personality when the scenario mixes languages); only on that error fall back to personality 693 (Normal Male English) and rely on `scenario_language` to drive TTS and pronunciation. See "Checking Available Personalities" under the Personality section.
 
 5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.
 
@@ -405,7 +372,7 @@ Present a checkpoint like this before proceeding:
 
 3. **Run mode** — "Default to text/chat for the first pass? It's cheapest, and since tools are mocked the results are the same as voice for logic validation." Recommend text unless the user specifically needs voice testing (latency, interruption handling, TTS quality).
 
-4. **Personality** — For **conditional-actions** scenarios, default to the normal personality for the target language (e.g., 693 for English) — behavioral logic is in the conditions, not the personality. For **behavioral** scenarios, propose a mix: ~60% normal, ~20% challenging (interrupter/background noise), ~10% non-native, ~10% edge cases. Confirm with the user before using anything other than the normal default. See "Picking the Right Personality" above.
+4. **Personality** — For **conditional-actions** scenarios, default to the normal personality for the target language (693 ONLY for purely English scenarios; for other languages pick the language-matched "Normal" personality via `personalities_list language=<code>`, or a multilingual `language=multi` one when the scenario mixes languages) — behavioral logic is in the conditions, not the personality. For **behavioral** scenarios, propose a mix: ~60% normal, ~20% challenging (interrupter/background noise), ~10% non-native, ~10% edge cases. Confirm with the user before using anything other than the normal default. See "Picking the Right Personality" above.
 
 5. **Authoring mode** — Default is **behavioral instructions**. Switch automatically when the user's request used a direct trigger phrase ("conditional actions", "structured", "scripted", "deterministic test", "regression test", "compliance test", "exact flow", "fixed sequence"). Ask the user when the scenario mentions a tag-supported feature (voicemail, IVR, DTMF, hold, interruption, network simulation, background noise) without specifying a mode. See "Choosing Authoring Mode" above.
 
@@ -439,7 +406,11 @@ A complete suite covers: **Workflow** (happy path), **Deterministic/Unit Test** 
 
 These three form one cohesive test data set and must be designed together. Key principles for Approach B:
 
-- **Mock data first**: design mock tool entries before creating the test profile; derive all profile values from mock outputs
+- **Mock data first**: design mock tool entries before creating the test profile; derive all profile values from mock outputs (never edit an entry to match a story value — derive in that direction only)
+- **Input = caller-provided trigger keys, output = returned values**: lookup steps have the caller provide `{{test_profile.<input_field>}}`; verification steps have the caller state back `{{test_profile.<output_field>}}`
+- **Entry only when a step completes the trigger**: a caller asking a question ≠ a tool call; offered ≠ completed; an empty entry list is often correct. Conversely, every completed tool-backed step MUST have an entry.
+- **One input → one output**: a different outcome needs a different input — never two entries with the same input
+- **Identical values everywhere**: the same fact in mock entries, test profile, and dynamic variables must be the identical string (only the deliberate validation-failure pattern mismatches). Every registered dynamic variable gets a non-empty value on every scenario.
 - **Per-input branching**: one mapping per distinct input the agent might send; not one mapping per tool
 - **Phone format variants**: always add 10-digit, 11-digit-with-1, and E.164 forms (mismatches cause 404s)
 - **Append-not-replace**: PATCHing `information` REPLACES the array; always GET → merge → PATCH
@@ -455,13 +426,15 @@ Format: `tags: ["Category", "priority-level", "scenario-ID"]`. Category codes: S
 ## Expected Outcomes
 
 Focus on the main agent's behavior, not the caller's experience:
-- **One statement per line** — write each "The main agent should…" statement on its own line; do not concatenate multiple statements into a single paragraph
-- **Agent-centric**: "Agent books appointment and provides arrival instructions" — not "the caller has a great experience"
-- **Specific and measurable**: Include concrete actions (book, transfer, cancel, inform)
-- **Include follow-up actions**: What happens after the primary action
-- **Keep them concise** — expected outcomes are evaluated by an LLM judge that checks whether each part was satisfied. Overly specific prompts (e.g., specifying exact dates/times) cause false failures. Focus on the behavioral outcome, not exact details.
+- **One atomic statement per line** — each line starts "The main agent should…" and makes ONE verifiable demand; split "and"-joined aggregates. 2–6 lines per scenario; short scenarios get few lines — never pad.
+- **Every line must be fired by a written step** — an outcome whose condition the scripted flow never produces returns "blocked" on every run.
+- **Verb AND object must be licensed** by the agent description (or a mock output / KB fact): "ask for X" does not license "explain X"; "transfer" does not license "transfer to a manager" unless the description says so. When a behavior isn't licensed, omit the line.
+- **Offering is not executing** — if the flow doesn't complete the action (deferral, hang-up, terminal transfer first), demand only the partial state reached ("offered", "gathered"), never "booked".
+- **Never grade who hung up** — end-call mechanics are structural; don't test them unless explicitly asked.
+- **Binary verifiability, no subjective words** — ban "appropriately", "professionally", "warmly", "politely"; semantic content, not verbatim phrasing (except exact KB facts like phone numbers).
+- **Copy placeholder tokens from the steps** — an outcome referencing a profile value uses the identical `{{test_profile.field}}` token; a prose paraphrase still counts as hardcoding.
 
-**See `references/expected-outcomes.md`** for the full writing rules, prioritization hierarchy, metric variable support (`{{test_profile.*}}`, `{{agent.*}}`, etc.), and good/bad examples.
+**See `references/expected-outcomes.md`** for the full writing rules, scoring model, prioritization hierarchy, metric variable support (`{{test_profile.*}}`, `{{agent.*}}`, etc.), and good/bad examples.
 
 ## Create Evaluator from Transcript
 

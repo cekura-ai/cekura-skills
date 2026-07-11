@@ -4,6 +4,18 @@
 
 A comprehensive eval suite covers all major workflows, their edge cases, and adversarial scenarios. This reference shows real-world coverage patterns from deployed agents.
 
+## Diversity & Friction Distribution
+
+When generating a batch of scenarios (auto-gen or manual), apply this distribution:
+
+- **~30% happy-path** (cooperative caller completing the full workflow), **~70% friction** — with at least one happy-path scenario in any batch.
+- **Every scenario opens with a DIFFERENT caller persona** inferred from the agent's domain (healthcare: worried patient, impatient caregiver, confused elderly caller). No two scenarios share the same opening persona.
+- **Each scenario progresses through MULTIPLE workflow steps** — not just the first one or two.
+- **Friction appears at DIFFERENT points across the batch**: some early-then-cooperative, some smooth-start-with-mid-flow pushback, some late friction (refuses to confirm, changes mind), some multi-point.
+- **Friction must be SPECIFIC and behavioral**, never "the caller is difficult": refuses to confirm identity until told why it's needed; challenges a specific piece of information; asks the same question repeatedly despite an answer; suddenly asks for a human mid-flow.
+- **Every scenario must be grounded** in an actual agent capability — a workflow branch in the description, a configured tool, a KB fact, or a general conduct policy (professionalism, safety, escalation). Reach the target count by permuting grounded branches, value variants, friction positions, and personas — never by inventing capabilities the agent doesn't have. Friction may never be premised on environment failures the scenario can't control or on the main agent misbehaving.
+- **KB grounding**: when knowledge-base content exists, enrich scenarios with 1–2 concrete named facts from it ("asks whether the clinic accepts Blue Shield PPO", not "asks about insurance"). Not every scenario needs KB facts — workflow-only scenarios are equally valid. When NO KB exists, don't write scenarios expecting the agent to answer factual questions — the only valid expected behaviors are clarifying, saying it can't find that information, transferring, or redirecting to a defined workflow.
+
 ## Example: Medical Clinic Agent (BCHS/Kouper — 54 evaluators)
 
 ### Category Breakdown

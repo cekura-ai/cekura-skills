@@ -14,10 +14,10 @@ Three IDs appear in simulation workflows — don't confuse them:
 
 | Term | Type | What it is |
 |------|------|-----------|
-| `result_id` | integer | A **Result** — one batch execution grouping multiple runs. `GET /test_framework/v1/results/{result_id}/` |
-| `run_id` | integer | A **Run** — one scenario execution inside a result. `GET /test_framework/v1/runs/{run_id}/`. In the result detail response, `runs` is a dict keyed by run_id. |
+| `result_id` | integer | A **Result** — one batch execution grouping multiple runs. `GET /test_framework/v2/results/{result_id}/` |
+| `run_id` | integer | A **Run** — one scenario execution inside a result. `GET /test_framework/v2/runs/{run_id}/`. In the result detail response, `runs` is a dict keyed by run_id. |
 | `run.call_id` | string | The provider's call identifier (a provider-issued string) — a field on the run object, not an endpoint ID. Do not use this where `run_id` is expected. |
-| CallLog ID | integer | A production call log (observability only). `GET /observability/v1/call-logs-external/{id}/`. Simulations do NOT create call logs. |
+| CallLog ID | integer | A production call log (observability only). `GET /observability/v2/call-logs/{id}/`. Simulations do NOT create call logs. |
 
 **Dashboard URL convention:** `https://dashboard.cekura.ai/{project}/results/{result_id}?call_id={run_id}`
 Use `?call_id=` only when constructing a dashboard UI link to a specific run. In all other contexts — API calls, MCP tools, code — use `run_id`.
@@ -80,8 +80,8 @@ Returns a result object with `id`, `status`, and `runs` array.
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/test_framework/v1/results/` | List results |
-| GET | `/test_framework/v1/results/{id}/` | Get result details |
+| GET | `/test_framework/v2/results/` | List results |
+| GET | `/test_framework/v2/results/{id}/` | Get result details |
 | POST | `/test_framework/v1/results/{id}/rerun/` | Rerun a result |
 | POST | `/test_framework/v1/results/{id}/end-calls/` | End all calls in a result |
 | POST | `/test_framework/v1/results/{id}/create-shareable-link/` | Generate shareable link |
@@ -90,7 +90,7 @@ Returns a result object with `id`, `status`, and `runs` array.
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/test_framework/v1/runs/` | List runs |
+| GET | `/test_framework/v2/runs/` | List runs |
 | POST | `/test_framework/v1/runs/{id}/end-call/` | End a single call |
 
 ## Personality Endpoints
@@ -275,5 +275,5 @@ Filter for unassigned (`scenario_name: null`), US format (`+1` prefix, 12 chars)
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/observability/v1/call-logs-external/` | List calls |
-| GET | `/observability/v1/call-logs-external/{id}/` | Get call details + transcript |
+| GET | `/observability/v2/call-logs/` | List calls |
+| GET | `/observability/v2/call-logs/{id}/` | Get call details + transcript |
