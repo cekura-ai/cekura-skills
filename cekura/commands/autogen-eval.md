@@ -215,7 +215,7 @@ This is a post-generation create path — it uses `mcp__cekura__scenarios_create
 
 **Gathering personality and tools for this path** (the main walkthrough above does not cover these — they belong only to the bulk-create path):
 
-- **Personality:** ask which personality the bulk scenarios should use. Default `693` (Normal Male, en/American) for English agents. Use `mcp__cekura__personalities_list` to surface other options when language or persona needs to differ. (The Auto-Generate flow above intentionally does *not* pass a personality — it lets the backend infer one from the agent. Only the bulk-create path needs this explicit.)
+- **Personality:** ask which personality the bulk scenarios should use. Default `693` (Normal Male, en/American) ONLY for purely English agents. For non-English agents use `mcp__cekura__personalities_list` with `language=<code>` to pick a language-matched personality; for agents mixing languages use a multilingual (`language=multi`) one. (The Auto-Generate flow above intentionally does *not* pass a personality — it lets the backend infer one from the agent. Only the bulk-create path needs this explicit.)
 - **Tools:** ask which tools the testing agent should have enabled. Default `["TOOL_END_CALL"]`; add `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows and `TOOL_DTMF` for IVR. VAPI agents use prefixed names (`VAPI_TOOL_END_CALL`, etc.).
 
 ## Summary Report
