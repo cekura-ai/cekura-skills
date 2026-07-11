@@ -154,7 +154,6 @@ When no sustained behavioral cue is present, or no personality matches the descr
 - Spanish → ID 362 (Normal Spanish Male)
 - Other non-English languages → pick a personality matching the scenario's language via `personalities_list` with `language=<code>`, and set `scenario_language` to the correct code so TTS uses the right language for pronunciation
 - Multiple languages / code-switching in one scenario → use a multilingual personality (`language=multi`, e.g. ID 4710 "Normal (Spanish + English)")
-- Only if the language-matched personality returns "Personality is not enabled" → fall back to 693 with `scenario_language` set
 
 ---
 
