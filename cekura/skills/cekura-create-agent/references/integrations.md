@@ -377,7 +377,7 @@ Contact Cekura support to set up the Cisco Webex integration for your organizati
 }
 ```
 
-SIP headers injected by Cekura: `X-Run-Id`, `X-Scenario-Id`, `X-Result-Id`, any test profile field starting with `X-`.
+SIP headers: Cekura injects `X-Run-Id`, `X-Scenario-Id`, and `X-Result-Id` on every test call. To send your own custom headers, add `X-` prefixed keys to a test profile's `main_agent_variables` and attach that profile to the run (`test_profile_ids`) — headers cannot be configured on the agent itself or in the run request.
 
 ---
 

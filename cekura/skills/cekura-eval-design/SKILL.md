@@ -132,6 +132,8 @@ This ensures test profiles work against production tools.
 
 **Always check for existing test profiles first.** Clients often pre-build profiles that are tested against their mock backend — reuse these rather than creating from scratch.
 
+**Custom headers (SIP / WebSocket runs):** keys in `main_agent_variables` starting with `X-` are sent over the wire as custom SIP headers (SIP runs) or WebSocket connection headers to the agent under test. For SIP runs this is the **only** way to pass custom headers — they cannot be set on the agent record or in the run request; create a test profile with the `X-` keys and attach it to the run via `test_profile_ids`. (WebSocket runs can also carry static headers via the agent's `websocket_headers`; the profile's `X-` keys are merged on top.) Cekura always appends `X-Run-Id`, `X-Scenario-Id`, and `X-Result-Id`; those names are reserved and cannot be overridden.
+
 **Template variables in instructions:** Use `{{test_profile.field_name}}` or `{{test_profile['key']}}` for dynamic injection. For nested data: `{{test_profile.address.city}}`. Note: in voice scenarios, the simulated caller reads from the instruction text directly — the profile data is there for the caller to reference, not injected as hidden context.
 
 See `references/test-data-design.md` for the full profile creation guide, decision matrix for new vs. reuse, and the data-extraction workflow.
