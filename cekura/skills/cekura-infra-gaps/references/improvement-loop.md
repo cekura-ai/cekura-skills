@@ -6,6 +6,26 @@ The edge-case suite is only worth running if the failures turn into fixes. This 
 
 A red run is not a finding. *How* it went red is the finding, and it determines the fix. Read the transcript for each failing scenario and classify the failure signature before recommending anything. The same red status can mean "hung silently" (needs an idle ladder) or "hallucinated a confirmation" (needs STT confidence gating); opposite fixes.
 
+## Two "fail" signals, and the gap taxonomy
+
+A run's `success=false` conflates two different signals. Separating them is the core of the report:
+
+- **`Expected Outcome`** = the scenario's own resilience verdict (graceful degradation = pass, pathological = fail). This is the signal that matches this skill's intent.
+- **`Infrastructure Issues`** = a hard check (agent silent >10s). It can mark a run failed *even when `Expected Outcome=100`* and the task completed. That is a distinct *stall* finding, not "the agent can't handle the stressor."
+
+Classify every run into one of four buckets. Only the first two are agent gaps:
+
+| Bucket | Signature | What it means | Action |
+|---|---|---|---|
+| **Logic gap** | `Expected Outcome` failed; pathological behavior | Highest-value finding (context loss, hallucinated confirmation, loop) | Pipeline/logic fix below |
+| **Stall / latency gap** | `Expected Outcome` passed but `Infrastructure Issues` fired (>10s dead air) | Real, but a different fix; easy to over-report as a logic failure | Timeout / retry / keep-alive |
+| **Graceful pass** | `Expected Outcome` passed, no infra breach | The agent genuinely copes | Report as a family the agent survives; do not pad a pass rate |
+| **Broken probe** | The stressor never bit (DTMF landed after the turn, tag stored as text) | An eval bug, not an agent finding | Fix the eval and re-run |
+
+**Report gaps, not a pass rate.** These are gap probes; "N% passed" is the wrong headline and hides the findings. Lead with the distinct gaps (grouped, with quoted timestamped evidence), the families the agent survives, and any broken probes.
+
+**Intermittency.** Gaps are often timing-sensitive (a stall on run 2 but not run 1). Run each scenario `frequency: 3–5` and report a rate ("failed 2/5"), not a single coin flip.
+
 ## Failure-signature to infra-fix mapping
 
 These are pipeline/infrastructure changes, not prompt edits. If the fix is really a prompt or tool-config change, hand off to **cekura-self-improving-agent** instead.

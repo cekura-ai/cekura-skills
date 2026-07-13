@@ -111,8 +111,17 @@ Set the personality `message_plan` to a short `idle_timeout_seconds` (e.g. 8–1
 
 | Name | Pattern | Resilience question |
 |---|---|---|
-| `Edge - DTMF During Speech` | Caller sends DTMF while the agent is mid-sentence. | Is it buffered/handled or does it corrupt the turn / get dropped silently? |
+| `Edge - DTMF During Speech` | Caller sends DTMF **while the agent is mid-utterance**. | Is it buffered/handled or does it corrupt the turn / get dropped silently? |
 | `Edge - Rapid Short Turns` | Several one-word turns back to back. | Does the pipeline serialize them, or queue/drop/duplicate? |
+
+**DTMF timing; do not use a plain `action_followup`.** An `action_followup` fires on the caller's *next* turn, i.e. **after** the agent's reply finishes, so `<dtmf>` sent that way lands in the silence *after* the turn and never tests "during speech" (a common broken probe). To land the digits *into* the agent's utterance, fire them on an interruption offset so they occur while the agent is still speaking:
+
+```json
+{ "id": 1, "condition": 0, "type": "action_followup", "fixed_message": true,
+  "action": "<interruption time=\"1.5s\" /><dtmf digits=\"12345\" />" }
+```
+
+`<interruption time="Xs" />` fires `Xs` after the agent's next turn *begins* (it must be `action_followup` and at the very start of the action), so the DTMF arrives mid-utterance. Verify on the run that the digits' timestamp falls inside the agent's speaking window; if the provider does not support combining the two tags, treat DTMF-during-speech as not testable on that connection rather than shipping a probe that never bites.
 
 ---
 

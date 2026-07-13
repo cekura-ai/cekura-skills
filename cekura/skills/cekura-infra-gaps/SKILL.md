@@ -148,18 +148,28 @@ Do not run until this pass reports 0 unresolved mismatches.
 ### Step 5: Run the suite
 
 1. **Readiness first.** The agent must be reachable on its run connection; for a telephony agent the bot must be live on its number, or every call fails at *connection* and the results say nothing about resilience. Confirm before spending credits.
-2. Run the `Infrastructure Gaps` folder **as its own batch** using the `scenarios_run_*` tool matching the connection from Step 1, separate from any regression run so a wall of expected failures is not read as a regression.
-3. Give any silence- or hang-prone scenario a `max_duration` cap so a non-terminating call is recorded as a timeout, not left running on the meter.
+2. Trigger the `Infrastructure Gaps` folder **as its own batch** using the `scenarios_run_*` tool matching the connection from Step 1 (voice / websocket / vapi-webrtc / elevenlabs / etc.), separate from any regression run so a wall of expected failures is not read as a regression.
+3. **Run each scenario `frequency: 3–5` times, not once.** Infra gaps are usually **intermittent**: a stall or a post-interruption context loss may fire on run 2 but not run 1. A single run per scenario reports a coin flip, not a rate. Multiple runs turn "it failed" into "it failed 2/5 times," which is what tells you severity.
+4. Give any silence- or hang-prone scenario a `max_duration` cap so a non-terminating call is recorded as a timeout, not left running on the meter.
+5. **Poll `results_retrieve(id=<result_id>)`** until `status` is `completed`, then hand the result to Step 6. Do not report from the create-time payload.
 
-### Step 6: Produce the improvement report
+### Step 6: Generate the report from the run results
 
-This is the deliverable. Read the runs (do not label failures from status alone; read the transcripts), group them by stressor family, and for each family write:
+This is the deliverable, and it is **generated from the finished run, not narrated from the dashboard status column.** Pull the result with `results_retrieve` and work from the graded data.
 
-- **What broke**, quoted from the transcript (looping the greeting, permanent silence, garbled task completion, premature hang-up, ignoring the caller entirely).
-- **The concrete infra fix**, at the pipeline layer, not the prompt (STT confidence gating, a "having trouble hearing you" fallback after N low-confidence turns, an idle re-prompt ladder, jitter buffering, endpointing tuning). When Step 0 ran, cite the file:line from the capability matrix. See [references/improvement-loop.md](references/improvement-loop.md) for the failure-to-fix mapping.
-- **CI/CD graduation status**: does this family now pass and belong in the regression gate, or does it stay in this probe suite until the fix lands?
+**6a. Never trust the `success` flag alone; separate the two "fail" signals.** A run's `success=false` conflates two very different things, and telling them apart is the whole job:
+- **`Expected Outcome`** is the scenario's own resilience verdict (graceful degradation = pass, pathological = fail). This is the signal that matches this skill's intent.
+- **`Infrastructure Issues`** is a separate hard check (agent silent >10s). It can flip a run to `success=false` **even when `Expected Outcome=100`** and the agent completed the task. That is not "the agent can't handle noise"; it is a distinct *stall* finding.
 
-Present it as a per-family table. That table is what "used to improve the infra" means in practice.
+Read the metric `explanation` fields (they are timestamped turn-by-turn analyses) and quote them. Use Cekura's own `ai_summary`, `failed_reasons`, and `overall_evaluation` on the result as scaffolding, then verify each against the per-run metrics before repeating it.
+
+**6b. Classify every run into the gap taxonomy** (see [references/improvement-loop.md](references/improvement-loop.md)):
+- **Logic gap**; pathological behavior (context loss after interruption, hallucinated confirmation, loop). `Expected Outcome` failed. The highest-value finding.
+- **Stall / latency gap**; task handled gracefully (`Expected Outcome` passed) but a >10s dead-air or latency breach fired. Real, but a different fix (pipeline timeout/retry), and easy to over-report as a logic failure.
+- **Graceful pass**; the agent genuinely coped. Report it as a *family the agent already survives*, not padding for a pass rate.
+- **Broken probe**; the stressor never actually bit (e.g. a DTMF that landed after the agent's turn, a tag stored as text). Fix the eval and re-run; do not attribute it to the agent.
+
+**6c. Report gaps, not a pass rate.** These are gap probes; "N% passed" is the wrong headline and hides the findings. Lead with: the distinct gaps found (grouped, with the quoted evidence and timestamp), the families the agent survives, and any broken probes to fix. For each gap give the concrete **pipeline-layer** fix (STT confidence gate, "trouble hearing you" fallback, idle re-prompt ladder, jitter buffer, preserve tool state across interruptions, endpointing tuning); and when Step 0 ran, cite the file:line from the capability matrix. See [references/improvement-loop.md](references/improvement-loop.md) for the failure-to-fix mapping. Close each gap with its **CI/CD graduation status**: does it now hold and belong in the regression gate, or stay a probe until the fix lands?
 
 ## Ground Rules
 
