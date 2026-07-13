@@ -82,7 +82,7 @@ matrix           intensity        tag-carry it     metrics + ack    field vs pla
 | Step | What happens | Hard gate |
 |---|---|---|
 | 0 (optional) | Scan the repo → capability matrix (which families will fail, and where the fix goes) | none; skipped when no repo |
-| 1 | Retrieve the agent; confirm target + which families + intensity | **user confirms scope before anything is created** |
+| 1 | Retrieve the agent; auto-include all applicable families; confirm intensity | **user approves the plan before anything is created** |
 | 2 | Select/enable existing stressor personalities; fall back to tags | none |
 | 3 | Create the scenarios in the `Infrastructure Gaps` folder, metrics attached, via cekura-eval-design | none |
 | 4 | Retrieve every created scenario and patch mismatches | **0 unresolved before running** |
@@ -105,11 +105,13 @@ Full method, grep signals, matrix format, and a worked example are in [reference
 
 1. Confirm the target **agent** and **project**. If unknown, ask the user directly; do not guess.
 2. `aiagents_retrieve` the agent to read its run connection (VAPI / Retell / ElevenLabs / SIP / web) and language. The connection determines which `scenarios_run_*` tool Step 5 uses; the language determines the personality language.
-3. Present the stressor catalog (families in the table above) and confirm scope. Two knobs to agree on:
-   - **Which families apply.** Network degradation and DTMF-during-speech are only meaningful for telephony/SIP agents; a web-widget agent skips them. Noise, boundary silence, barge-in, and accent apply to essentially every voice agent.
-   - **Intensity coverage.** For the graded families (network, noise) decide whether to test one severe level or the light/moderate/severe ladder. Default: light + severe per graded family, single level for the rest. That lands around 12–20 scenarios.
+3. **Include every family applicable to the agent by default; do not make the user hand-pick the list.** Determine applicability automatically from the agent's connection (from step 2):
+   - **Telephony / SIP / phone** → all families, including degraded network and DTMF-during-speech.
+   - **Web widget / WebRTC / chat** → all families *except* network degradation and DTMF-during-speech (there is no PSTN layer to degrade or key into).
+   Boundary silence, background noise, barge-in, accent, and speech-rate apply to essentially every voice agent, so they are always in.
+4. The only knob worth surfacing is **intensity**: default light + severe per graded family (network, noise), single level for the rest (~12–20 scenarios). Present the resulting plan (all applicable families at the default intensity) as **one checkpoint** the user can approve or trim. Do not ask them to build the family list from scratch; lead with the full applicable set and let them subtract if they want.
 
-Do not proceed to create anything until the user confirms the family + intensity selection. Getting this wrong wastes simulation credits.
+Do not create anything until the user approves this plan. Getting scope wrong wastes simulation credits, but the default is comprehensive, not minimal.
 
 ### Step 2: Select (or create) the adversarial personalities
 
@@ -168,7 +170,7 @@ Present it as a per-family table. That table is what "used to improve the infra"
 4. **Grade the tunable families.** For network and noise, test at least a light and a severe level. An agent may survive 10% packet loss and collapse at 40%; a single level hides the cliff.
 5. **Evaluate resilience, not perfection.** Pass = graceful degradation (recovers, re-prompts, stays coherent, or ends cleanly). Fail = pathological behavior (infinite loop, permanent silence, hallucinated completion, crash). A pass does not require flawless task completion under severe stress.
 6. **Keep it out of the CI/CD gate until it passes.** These scenarios are expected to fail at first. Graduate a family into the regression suite (the `Infrastructure Test Suite` folder / CI gate) only after the infra handles it.
-7. **Confirm before creating.** Present the family + intensity plan as a checkpoint. Do not create personalities or scenarios until the user approves.
+7. **All applicable families by default; confirm before creating.** Auto-include every family the agent's connection supports (do not make the user assemble the list); present that full plan at the default intensity as one checkpoint. Do not create personalities or scenarios until the user approves.
 8. **Verify before running.** After creating, retrieve every scenario and patch mismatches (Step 4). A metric that never fires or a stressor tag stored as plain text fails silently and wastes the whole run.
 
 ## Common Pitfalls
