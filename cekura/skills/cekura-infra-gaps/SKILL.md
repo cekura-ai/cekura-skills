@@ -71,9 +71,27 @@ The full catalog, with exact personality recipes, conditional-action tag recipes
 
 ## Workflow
 
-> **ANNOUNCE FIRST:** output `**Infra Edge Cases: starting**` before taking any action.
+```
+Phase 0          Step 1           Step 2           Step 3           Step 4           Step 5           Step 6
+Scan code    →   Scope        →   Personalities →  Build        →   Verify       →   Run          →   Report
+(optional)       target +         select/enable    scenarios in     retrieve each    live, as its     gaps quoted +
+capability       families +       existing, or     the folder;      + patch every    own batch,       infra fix per
+matrix           intensity        tag-carry it     metrics + ack    field vs plan    per-call cap     family + fixes
+```
 
-### Step 0 (optional): Pipeline Capability Scan: only when the repo is available
+| Step | What happens | Hard gate |
+|---|---|---|
+| 0 (optional) | Scan the repo → capability matrix (which families will fail, and where the fix goes) | none; skipped when no repo |
+| 1 | Retrieve the agent; confirm target + which families + intensity | **user confirms scope before anything is created** |
+| 2 | Select/enable existing stressor personalities; fall back to tags | none |
+| 3 | Create the scenarios in the `Infrastructure Gaps` folder, metrics attached, via cekura-eval-design | none |
+| 4 | Retrieve every created scenario and patch mismatches | **0 unresolved before running** |
+| 5 | Run the folder as its own batch on the matching connection | agent must be reachable/live |
+| 6 | Read transcripts → per-family gap → infra fix → graduation status | none |
+
+> **ANNOUNCE FIRST:** output `**Infra Gaps: starting**` before taking any action.
+
+### Step 0 (optional): Pipeline Capability Scan, only when the repo is available
 
 Skip this entirely for a hosted agent you can only reach through Cekura (no source). When you *do* have the codebase, a quick scan of the pipeline pays for itself: it tells you which families will likely fail and where the fix goes, before spending a single call credit.
 
@@ -81,12 +99,12 @@ Scan for the resilience mechanism behind each family (jitter buffer / STT reconn
 
 **This scan never removes a family from the suite.** "No handling for X" means probe X *hardest* and you already know the fix location; it does not mean skip X. Using absence-of-handling to skip a test is the exact `infra-test-suite` blind spot this skill exists to avoid.
 
-Full method, grep signals, matrix format, and a worked example are in [references/capability-scan.md](references/capability-scan.md). Feed the matrix into Step 1 (intensity) and Step 5 (grounded fixes).
+Full method, grep signals, matrix format, and a worked example are in [references/capability-scan.md](references/capability-scan.md). Feed the matrix into Step 1 (intensity) and Step 6 (grounded fixes).
 
 ### Step 1: Identify the target and pick stressor families
 
 1. Confirm the target **agent** and **project**. If unknown, ask the user directly; do not guess.
-2. `aiagents_retrieve` the agent to read its run connection (VAPI / Retell / ElevenLabs / SIP / web) and language. The connection determines which `scenarios_run_*` tool Step 4 uses; the language determines the personality language.
+2. `aiagents_retrieve` the agent to read its run connection (VAPI / Retell / ElevenLabs / SIP / web) and language. The connection determines which `scenarios_run_*` tool Step 5 uses; the language determines the personality language.
 3. Present the stressor catalog (families in the table above) and confirm scope. Two knobs to agree on:
    - **Which families apply.** Network degradation and DTMF-during-speech are only meaningful for telephony/SIP agents; a web-widget agent skips them. Noise, boundary silence, barge-in, and accent apply to essentially every voice agent.
    - **Intensity coverage.** For the graded families (network, noise) decide whether to test one severe level or the light/moderate/severe ladder. Default: light + severe per graded family, single level for the rest. That lands around 12–20 scenarios.
@@ -101,26 +119,43 @@ Only fall back to `personalities_create` when no existing personality carries th
 
 Keep every selected/created personality's caller `prompt` neutral and cooperative: the caller just wants to complete a normal task, so the *only* variable under test is the infra stressor.
 
-### Step 3: Create the edge-case scenarios
+### Step 3: Create the scenarios
 
 1. Create a folder named **`Infrastructure Gaps`** with `scenarios_folder_create`. Every scenario in this suite goes in it. Never mix these into the `Infrastructure Test Suite` folder; they have a different pass expectation and must not pollute the regression gate.
 2. Two authoring paths (see the injection table above):
    - **Personality-carried (behavioral):** for traits an enabled personality provides (noise, accent, barge-in tier, slow speaker); a `scenario_type: "instruction"` scenario with the simple task, the adversarial personality attached, and `TOOL_END_CALL` so the caller can hang up.
    - **Tag-carried (conditional-actions):** for stressors no personality provides or that need exact timing (packet loss, fast speech, boundary silence, rapid turns); a `scenario_type: "conditional_actions"` scenario on the Normal personality, with the tag at the start of each `fixed_message: true` action.
 3. Every scenario runs the same **simple, universal task** the agent genuinely supports (e.g. "book the earliest available slot"), so the only variable is the stressor. Write the expected outcome as **graceful degradation** (see below), not task perfection.
-4. **Attach baseline metrics to every scenario**: Expected Outcome, Infrastructure Issues (fires on agent silence; key here), Tool Call Success, Latency, plus Transcription Accuracy for noise/accent/network and the interruption metrics for barge-in. If the built-ins miss a gap you need to measure, author a custom metric via **cekura-metric-design** (see the Delegation section); do not hand-roll it here.
+4. **Attach baseline metrics to every scenario**: Expected Outcome, Infrastructure Issues (fires on agent silence; key here), Tool Call Success, Latency, plus Transcription Accuracy for noise/accent/network and the interruption metrics for barge-in. **Predefined metrics must be activated at the project level before they fire** (a global metric ID attached to a scenario is stored but never evaluated). Use **cekura-predefined-metrics** to activate/verify. If the built-ins miss a gap, author a custom metric via **cekura-metric-design** (see Delegation); do not hand-roll it here.
 5. Author every scenario through the **cekura-eval-design** skill (load it first; thread its `skill_ack`). It owns the scenario schema, conditional-action tags, and expected-outcome patterns; this skill only supplies the stressor and the task.
+6. **Create scenarios in parallel** (fire the create calls concurrently); there is no dependency between them.
 
-### Step 4: Run the suite
+### Step 4: Verify the built suite before running
 
-Run every scenario using the `scenarios_run_*` tool that matches the agent's connection from Step 1. Run the edge-case folder as its own batch, separate from any regression run, so a wall of expected failures does not get read as a regression.
+Mirror of the regression skill's cross-verify pass. After creating, `scenarios_retrieve` **every** scenario and confirm each field, patching any mismatch immediately with `scenarios_partial_update`. Skipping this produces silent failures: a metric that never fires, a stressor tag stored as literal text, a scenario in the wrong folder.
 
-### Step 5: Produce the improvement report
+Check per scenario:
+- **Personality** is the intended adversarial one (not silently defaulted to Normal where a trait was meant to be carried).
+- **Metrics** are attached **and active at project level** (attached-but-inactive = never fires).
+- **Folder** is `Infrastructure Gaps` (not root, not the regression folder).
+- **Tag-carried scenarios:** the `<network_simulation>` / `<speed>` / `<hold>` tag is actually present at the start of each `fixed_message: true` action; the API will store a malformed tag as plain spoken text, silently neutering the stressor.
+- **`expected_outcome_prompt`** is set and phrased as graceful degradation, not blank or generic.
+- **`TOOL_END_CALL`** present on personality-carried scenarios (absent = the caller can never hang up, so the call runs to timeout); deliberately absent on silence-at-end, which instead sets a `max_duration` cap.
+
+Do not run until this pass reports 0 unresolved mismatches.
+
+### Step 5: Run the suite
+
+1. **Readiness first.** The agent must be reachable on its run connection; for a telephony agent the bot must be live on its number, or every call fails at *connection* and the results say nothing about resilience. Confirm before spending credits.
+2. Run the `Infrastructure Gaps` folder **as its own batch** using the `scenarios_run_*` tool matching the connection from Step 1, separate from any regression run so a wall of expected failures is not read as a regression.
+3. Give any silence- or hang-prone scenario a `max_duration` cap so a non-terminating call is recorded as a timeout, not left running on the meter.
+
+### Step 6: Produce the improvement report
 
 This is the deliverable. Read the runs (do not label failures from status alone; read the transcripts), group them by stressor family, and for each family write:
 
 - **What broke**, quoted from the transcript (looping the greeting, permanent silence, garbled task completion, premature hang-up, ignoring the caller entirely).
-- **The concrete infra fix**, at the pipeline layer, not the prompt (STT confidence gating, a "having trouble hearing you" fallback after N low-confidence turns, an idle re-prompt ladder, jitter buffering, endpointing tuning). See [references/improvement-loop.md](references/improvement-loop.md) for the failure-to-fix mapping.
+- **The concrete infra fix**, at the pipeline layer, not the prompt (STT confidence gating, a "having trouble hearing you" fallback after N low-confidence turns, an idle re-prompt ladder, jitter buffering, endpointing tuning). When Step 0 ran, cite the file:line from the capability matrix. See [references/improvement-loop.md](references/improvement-loop.md) for the failure-to-fix mapping.
 - **CI/CD graduation status**: does this family now pass and belong in the regression gate, or does it stay in this probe suite until the fix lands?
 
 Present it as a per-family table. That table is what "used to improve the infra" means in practice.
@@ -134,10 +169,12 @@ Present it as a per-family table. That table is what "used to improve the infra"
 5. **Evaluate resilience, not perfection.** Pass = graceful degradation (recovers, re-prompts, stays coherent, or ends cleanly). Fail = pathological behavior (infinite loop, permanent silence, hallucinated completion, crash). A pass does not require flawless task completion under severe stress.
 6. **Keep it out of the CI/CD gate until it passes.** These scenarios are expected to fail at first. Graduate a family into the regression suite (the `Infrastructure Test Suite` folder / CI gate) only after the infra handles it.
 7. **Confirm before creating.** Present the family + intensity plan as a checkpoint. Do not create personalities or scenarios until the user approves.
+8. **Verify before running.** After creating, retrieve every scenario and patch mismatches (Step 4). A metric that never fires or a stressor tag stored as plain text fails silently and wastes the whole run.
 
 ## Common Pitfalls
 
-- **Putting the stressor in instructions.** "Speak with lots of background noise" in instructions does nothing. It must be a personality field.
+- **Putting the stressor in instructions.** "Speak with lots of background noise" in instructions does nothing. It must be a personality field or a conditional-action tag.
+- **Skipping the verify pass.** A metric attached but not project-activated, or a stressor tag the API stored as literal text, fails silently; Step 4 catches both.
 - **Inventing the `network_simulation` / `background_sound_volume` JSON shape.** Copy it from a real personality via `personalities_list` first.
 - **Mixing edge cases into the regression folder.** They have opposite pass expectations. Keep them in `Infrastructure Gaps`.
 - **Marking failures from run status alone.** Read the transcript to see *how* it broke; that is what determines the infra fix. (See the "verify before labeling failures" discipline.)
