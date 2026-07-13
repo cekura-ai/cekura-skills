@@ -138,6 +138,27 @@ Use these sparingly (one or two), on top of the isolated single-variable cases, 
 
 ---
 
+## Expected-outcome exemplars (write sharp, not lenient)
+
+The single biggest content failure mode is a vague `expected_outcome_prompt` full of "OR" escape hatches ("completes the booking OR asks to repeat OR ends cleanly"); under that, a bot that stalled for 15 seconds still scores PASS because the booking eventually completed, and the probe misses the gap it existed to catch. Every expected outcome must be **falsifiable**: name the concrete pathological signal for that stressor as a hard FAIL, even when the task nominally completes.
+
+Two rules for every family:
+- **A >10s stretch of dead air is always a FAIL**, regardless of whether the task completed. Do not let the EO rely on the separate Infrastructure Issues metric to catch stalls; state it in the EO itself.
+- **Confirming or acting on a value the caller never said is always a FAIL** (hallucinated slot/name/detail), even if it produces a "successful" booking.
+
+Per-family FAIL signals to state explicitly (PASS = the agent avoids all of them and stays on task):
+
+| Family | Hard FAIL signals to name in the EO |
+|---|---|
+| Degraded network | >10s dead air; confirms a value the caller never said; repeats the same line 2+ times without progressing; proceeds silently on garbled audio instead of asking to repeat |
+| Background noise | responds to noise as if it were speech (spurious turn); a turn never closes; >10s dead air; confirms wrong/invented details |
+| Boundary silence | no re-prompt at all (permanent dead air); hangs up before the first idle threshold; loops the same nudge more than its limit; never ends the call |
+| Barge-in | keeps talking over the caller; **after yielding, contradicts or forgets a value/result established before the interruption**; repeats an already-completed step |
+| Accent / speech rate | proceeds on a misheard value; asks the caller to repeat the same thing 3+ times with no progress; (slow speaker) commits the turn before the caller finished the sentence |
+| DTMF / rapid turns | DTMF echoed back as spoken text or misread as speech; a turn dropped, duplicated, or reordered; state corrupted |
+
+Write the EO as: one line of what graceful handling looks like for this stressor, then "FAIL if any of:" with the concrete signals above. Keep the PASS side to genuine graceful degradation, not a menu of ways to pass.
+
 ## Sizing the suite
 
 A default run selecting the common families lands around 12–20 scenarios:
