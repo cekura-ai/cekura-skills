@@ -32,7 +32,7 @@ cekura-skills/
       cekura-predefined-metrics/
       cekura-eval-design/
       cekura-infra-test-suite/
-      cekura-infra-edge-cases/
+      cekura-infra-gaps/
     commands/                    # Slash commands (Claude Code only)
     agents/                      # Sub-agent definitions (Claude Code only)
     hooks/                       # MCP failure detection + session-start auto-update (Claude Code CLI only)
@@ -127,7 +127,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
 | `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
-| `cekura-infra-edge-cases` | Generate an adversarial infra-stressor catalog (network degradation, noise, boundary silence, barge-in, accent) that drives infra improvement — the complement to infra-test-suite |
+| `cekura-infra-gaps` | Find infra gaps via an adversarial infra-stressor catalog (network degradation, noise, boundary silence, barge-in, accent) that drives infra improvement; the complement to infra-test-suite |
 
 ### Commands
 | Component | Purpose |

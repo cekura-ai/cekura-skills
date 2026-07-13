@@ -36,7 +36,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
 | `cekura-infra-test-suite` | |
-| `cekura-infra-edge-cases` | |
+| `cekura-infra-gaps` | |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
@@ -97,7 +97,7 @@ Ten skills, scoped to specific Cekura workflows:
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
 | `cekura-infra-test-suite` | "Create CI/CD tests for my voice bot / test my voice AI infrastructure / E2E test my pipecat bot" |
-| `cekura-infra-edge-cases` | "Stress test my voice agent / test packet loss, background noise, barge-in, long silences / red team my voice infra to improve it" |
+| `cekura-infra-gaps` | "Find infra gaps / stress test my voice agent / test packet loss, background noise, barge-in, long silences / red team my voice infra to improve it" |
 
 ### Want full functionality?
 
@@ -241,7 +241,7 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-predefined-metrics \
          cekura/skills/cekura-eval-design \
          cekura/skills/cekura-infra-test-suite \
-         cekura/skills/cekura-infra-edge-cases
+         cekura/skills/cekura-infra-gaps
 ```
 
 **Behavior preset** — single-file domain knowledge (metric design, eval design, API reference, anti-patterns):
@@ -402,7 +402,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
 | `cekura-infra-test-suite` | Generating a CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
-| `cekura-infra-edge-cases` | Stress-testing infra with an adversarial catalog (network degradation, noise, boundary silence, barge-in, accent) to drive infra improvement |
+| `cekura-infra-gaps` | Finding infra gaps with an adversarial catalog (network degradation, noise, boundary silence, barge-in, accent) to drive infra improvement |
 
 ### Getting Started Flow
 

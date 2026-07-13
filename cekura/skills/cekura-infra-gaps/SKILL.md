@@ -1,15 +1,15 @@
 ---
-name: cekura-infra-edge-cases
+name: cekura-infra-gaps
 description: >
-  Use when the user asks to "create infra edge cases", "stress test my voice agent",
-  "test packet loss / network jitter / latency", "test background noise", "test barge-in",
-  "test long silences / idle timeouts", "test accents / slow speech", "red team my voice
-  infrastructure", "find where my voice pipeline breaks", or "generate edge cases to
-  improve my infra". Builds a compact catalog of adversarial infra stressors (degraded
-  network, ambient noise, boundary silence, barge-in, accent/speed, DTMF-during-speech)
-  that apply to ANY voice pipeline whether or not the code handles them, runs them, and
-  turns failures into concrete infra fixes. Complement to cekura-infra-test-suite, which
-  only tests behavior the codebase already implements.
+  Use when the user asks to "find infra gaps", "create infra edge cases", "stress test my
+  voice agent", "test packet loss / network jitter / latency", "test background noise",
+  "test barge-in", "test long silences / idle timeouts", "test accents / slow speech",
+  "red team my voice infrastructure", "find where my voice pipeline breaks", or "generate
+  edge cases to improve my infra". Builds a compact catalog of adversarial infra stressors
+  (degraded network, ambient noise, boundary silence, barge-in, accent/speed,
+  DTMF-during-speech) that apply to ANY voice pipeline whether or not the code handles
+  them, runs them, and turns failures into concrete infra fixes. Complement to
+  cekura-infra-test-suite, which only tests behavior the codebase already implements.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
@@ -17,9 +17,9 @@ metadata:
   version: "0.1.0"
 ---
 
-# Cekura Voice AI Infrastructure Edge Cases
+# Cekura Voice AI Infrastructure Gaps
 
-Generate a canonical catalog of adversarial infrastructure conditions, run them against the agent, and turn the failures into concrete infra fixes.
+Find the gaps in a voice agent's infrastructure: run a canonical catalog of adversarial conditions against it, see where it breaks, and turn each break into a concrete infra fix.
 
 ## Purpose
 
@@ -27,7 +27,7 @@ Generate a canonical catalog of adversarial infrastructure conditions, run them 
 
 This skill fills that blind spot. It applies a **fixed catalog of adversarial infra stressors** that every real-world voice call can throw at a pipeline, regardless of whether the code was written to handle them. The point is not coverage of implemented logic. The point is to **discover where the infra breaks so it can be improved.**
 
-| | cekura-infra-test-suite | cekura-infra-edge-cases (this skill) |
+| | cekura-infra-test-suite | cekura-infra-gaps (this skill) |
 |---|---|---|
 | Source of tests | The codebase (discover then test) | A fixed adversarial catalog (no codebase needed) |
 | Philosophy | Only test what's there | Test what a real call throws at it, handled or not |
