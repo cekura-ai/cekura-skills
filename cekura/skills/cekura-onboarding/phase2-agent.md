@@ -104,7 +104,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 - Agent name, language.
 - Connection details for how Cekura reaches the agent, in order of preference: existing phone number → SIP URI → websocket URL → provider WebRTC (2b).
 
-**`self_hosted` / "custom" requires explicit confirmation — never a default.** Before setting it, confirm:
+**Confirm `self_hosted` ONLY when YOU inferred it — never re-confirm a choice the user already made.** If the user explicitly picked "self-hosted / custom" from the provider question, or you routed a fork/variant to `self_hosted` per the variant carve-out above, that IS the decision — proceed straight to collecting the connection, do NOT ask "are you sure none of VAPI/Retell/… apply?". Ask the confirmation below only when you are about to *default* to `self_hosted` without the user having said so (e.g. they were vague and you're guessing):
 
 > "Custom/self-hosted means you built the voice stack yourself (your own STT/LLM/TTS pipeline). Most teams are on VAPI, Retell, ElevenLabs, LiveKit, or Pipecat — are you sure none of those apply?"
 
