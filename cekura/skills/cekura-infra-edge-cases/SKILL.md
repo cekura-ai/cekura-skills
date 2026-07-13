@@ -41,6 +41,16 @@ This skill fills that blind spot. It applies a **fixed catalog of adversarial in
 
 When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
 
+## Delegate Authoring to the Dedicated Skills
+
+This skill is the **orchestrator**: it decides *which* stressors to probe and *how to read the results*. It does **not** hand-roll scenario or metric creation. Whenever it needs to generate an evaluator or a metric, load the dedicated Cekura skill first and thread that skill's verification tag on every write call:
+
+- **Generating scenarios / evaluators** → load and follow **cekura-eval-design** (use `cekura_load_skill(skill_name="cekura-eval-design")` when the plugin is not installed). It owns the scenario schema, the conditional-action XML tags, personality selection, and expected-outcome patterns. Pass its `skill_ack` tag on every `scenarios_*` create/update.
+- **Creating or modifying a metric** → load and follow **cekura-metric-design**, and pass its metric-family ack tag on every `metrics_*` write. Only needed when the built-in baseline metrics do not capture a gap (e.g. a custom "recovered vs. looped forever" check for a stressor). Never write a metric prompt ad-hoc.
+- **Just reusing existing metrics** needs no metric skill; attach the baseline metric IDs (Step 3).
+
+Skipping these dedicated skills produces materially worse evaluators and metrics. Route through them every time.
+
 ## The Core Insight: Stressors Live at the Voice Layer, Not in Instructions
 
 Infra stressors are injected at the **voice/infrastructure layer**, never through scenario instructions. Instructions only control what the testing caller *says*; they cannot make the line noisy or the network drop packets. There are **two injection paths**, and you will usually mix them:
@@ -98,8 +108,8 @@ Keep every selected/created personality's caller `prompt` neutral and cooperativ
    - **Personality-carried (behavioral):** for traits an enabled personality provides (noise, accent, barge-in tier, slow speaker); a `scenario_type: "instruction"` scenario with the simple task, the adversarial personality attached, and `TOOL_END_CALL` so the caller can hang up.
    - **Tag-carried (conditional-actions):** for stressors no personality provides or that need exact timing (packet loss, fast speech, boundary silence, rapid turns); a `scenario_type: "conditional_actions"` scenario on the Normal personality, with the tag at the start of each `fixed_message: true` action.
 3. Every scenario runs the same **simple, universal task** the agent genuinely supports (e.g. "book the earliest available slot"), so the only variable is the stressor. Write the expected outcome as **graceful degradation** (see below), not task perfection.
-4. **Attach baseline metrics to every scenario** (see cekura-eval-design): Expected Outcome, Infrastructure Issues (fires on agent silence; key here), Tool Call Success, Latency, plus Transcription Accuracy for noise/accent/network and the interruption metrics for barge-in.
-5. Author with the **cekura-eval-design** skill; it owns the scenario schema, conditional-action tags, and expected-outcome patterns.
+4. **Attach baseline metrics to every scenario**: Expected Outcome, Infrastructure Issues (fires on agent silence; key here), Tool Call Success, Latency, plus Transcription Accuracy for noise/accent/network and the interruption metrics for barge-in. If the built-ins miss a gap you need to measure, author a custom metric via **cekura-metric-design** (see the Delegation section); do not hand-roll it here.
+5. Author every scenario through the **cekura-eval-design** skill (load it first; thread its `skill_ack`). It owns the scenario schema, conditional-action tags, and expected-outcome patterns; this skill only supplies the stressor and the task.
 
 ### Step 4: Run the suite
 
@@ -140,3 +150,4 @@ After running this skill, the user typically wants:
 - **cekura-self-improving-agent**; if a failure is actually fixable in the prompt or tool config rather than the pipeline.
 - **cekura-infra-test-suite**; to graduate a now-handled stressor family into the codebase-derived regression gate.
 - **cekura-eval-design**; to author additional edge-case variants by hand.
+- **cekura-metric-design**; to build a custom resilience metric when the built-ins do not capture a gap.
