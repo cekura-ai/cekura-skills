@@ -14,7 +14,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Cekura Voice AI Infrastructure Gaps
