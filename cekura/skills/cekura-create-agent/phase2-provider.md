@@ -19,7 +19,7 @@ Ask: "What provider does your main agent run on?"
 | **Pipecat Cloud** | `pipecat` | Phone + WebRTC; agent name in `credentials.config.pipecat_agent_name` |
 | **Bland** | `bland` | Phone + chat; `provider.agent_id` = pathway_id |
 | **Synthflow** | `synthflow` | Phone; auto-sync prompt supported |
-| **Chirp** | `chirp` | WebSocket voice (raw PCM 16 kHz) |
+| **WebSocket voice (raw-PCM)** | `custom` | Cekura dials your `wss://` endpoint (16 kHz raw PCM); set `telephony.websocket_url` (+ optional `telephony.websocket_auth`). Runs via the CHIRP protocol. |
 | **KoreAI** | `koreai` | Chat/text only |
 | **Genesys** | `genesys` | Chat/text only |
 | **Cisco** | `cisco` | Phone; no credentials needed |
@@ -119,10 +119,13 @@ Pipecat observability via the SDK does not need provider creds — the SDK handl
 
 > **Fast path:** Synthflow supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
 
-### Chirp
-- **`credentials.config.chirp_websocket_url`** (required): Raw PCM 16 kHz endpoint
-- **`credentials.config.chirp_basic_auth_username`** (optional)
-- **`credentials.config.chirp_basic_auth_password`** (optional, write-only)
+### WebSocket voice (raw-PCM)
+Use `provider.type = "custom"` and put the endpoint under `telephony`:
+- **`telephony.websocket_url`** (required): Raw PCM 16 kHz `wss://` endpoint Cekura dials
+- **`telephony.websocket_auth`** (optional): HTTP Basic Auth `{username, password}` for the websocket upgrade
+- **`telephony.inbound`** (optional): `true` if the agent receives inbound calls
+
+Runs over the CHIRP protocol (see `run_scenarios_chirp`).
 
 ### KoreAI
 - **`credentials.api_key`**: KoreAI client secret
@@ -166,18 +169,18 @@ Set in `chat_agent_details`, not `provider.type`:
 
 ## 2c. Provider capabilities quick reference
 
-| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Cisco | Chirp | KoreAI | Genesys | Self-hosted |
-|---------|------|--------|------------|---------|---------|-------|-----------|-------|-------|--------|---------|-------------|
-| Phone | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ |
-| WebRTC | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — | — | — |
-| WebSocket voice | — | — | — | — | — | — | — | — | ✓ | — | — | — |
-| Chat/Text | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | ✓ | ✓ | ✓ |
-| **Auto-import agent** | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — |
-| Auto-import calls | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — |
-| Auto-sync prompt | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — | — |
-| Auto-dial outbound | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — |
-| Auto-fetch tools | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — | — |
-| Squads / multi-agent | ✓ | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — | — |
+| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Cisco | KoreAI | Genesys | Self-hosted |
+|---------|------|--------|------------|---------|---------|-------|-----------|-------|--------|---------|-------------|
+| Phone | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | — | ✓ |
+| WebRTC | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — | — |
+| WebSocket voice | — | — | — | — | — | — | — | — | — | — | ✓ |
+| Chat/Text | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | ✓ | ✓ | ✓ |
+| **Auto-import agent** | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — |
+| Auto-import calls | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — |
+| Auto-sync prompt | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — |
+| Auto-dial outbound | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — |
+| Auto-fetch tools | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — |
+| Squads / multi-agent | ✓ | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — |
 
 ---
 

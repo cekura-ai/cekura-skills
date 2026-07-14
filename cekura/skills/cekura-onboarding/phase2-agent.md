@@ -13,9 +13,9 @@ Register the user's agent on Cekura. Framing differs by path:
 
 The full provider list is:
 
-> VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · Chirp · KoreAI · Genesys · Cisco · self-hosted/custom
+> VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · KoreAI · Genesys · Cisco · self-hosted/custom
 
-**All-or-nothing rule for the choice UI:** if you ask this as a structured question with selectable options, the options MUST be the complete list above — all twelve, one option each, never a subset you picked, never an "Other" bucket. If the interface cannot show that many options (some cap at ~4), do NOT use options at all — ask as a plain question with the full list in the message text and let the user type the provider name. A partial option list hides first-class providers and nudges users toward the self-hosted misclassification warned about below.
+**All-or-nothing rule for the choice UI:** if you ask this as a structured question with selectable options, the options MUST be the complete list above — all eleven, one option each, never a subset you picked, never an "Other" bucket. If the interface cannot show that many options (some cap at ~4), do NOT use options at all — ask as a plain question with the full list in the message text and let the user type the provider name. A partial option list hides first-class providers and nudges users toward the self-hosted misclassification warned about below.
 
 Then follow the matching section below. **Onboarding is self-contained — do NOT open the cekura-create-agent skill or any of its phase files during onboarding** (its phase sequence covers post-onboarding work like SDK integration and mock tools; running it mid-onboarding hijacks the flow). The credential matrix you need:
 
@@ -28,7 +28,6 @@ Then follow the matching section below. **Onboarding is self-contained — do NO
 | LiveKit | `credentials.url` + `credentials.api_key` + `credentials.config.api_secret` (LiveKit Cloud → Settings → Keys) + `config.agent_name` (must match the worker's registration) — WebRTC path only, see 2b |
 | Pipecat Cloud | `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name` — WebRTC path only, see 2b |
 | Bland | `credentials.api_key` (Dashboard → API Keys) + `provider.agent_id` (= pathway_id, Pathways → copy ID) |
-| Chirp | `credentials.config.chirp_websocket_url` (raw PCM 16 kHz endpoint) + optional basic-auth username/password |
 | KoreAI | `credentials.api_key` (client secret) + bot/config IDs per their dashboard |
 | Genesys / Cisco | no credentials — telephony connection details only |
 | self-hosted | no provider credentials — connection details (phone / SIP / websocket) only |
@@ -55,9 +54,9 @@ The one high-leverage step: **provider agent ID + provider API key**. Create wit
 
 Then collect the telephony essentials in ONE clarification — **phone number (or SIP URI), inbound-or-outbound, and language, asked together** — plus the complete system prompt via the description gate. **Ask inbound/outbound explicitly; never infer the direction** (it decides who dials whom — getting it wrong means the run can't connect) and don't silently default the language. Then create with the telephony connection. Tell them what's deferred (auto-import, auto-sync, call ingestion) and carry it as an open item. **The verification run then goes over the phone connection (`scenarios_run_voice`) — never substitute a text simulation for a voice agent** (text mode is for chat agents, not a workaround for missing credentials). If they have neither credentials nor a phone number, pause onboarding — there is nothing to test against.
 
-## 2a′. Bland / Chirp / KoreAI / Genesys / Cisco — standard named providers
+## 2a′. Bland / KoreAI / Genesys / Cisco — standard named providers
 
-No auto-import for these, so collect their credentials per the create-agent matrix (e.g. Bland: `provider.agent_id` = pathway_id; Chirp: websocket URL + basic auth; Cisco: no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.
+No auto-import for these, so collect their credentials per the create-agent matrix (e.g. Bland: `provider.agent_id` = pathway_id; Cisco: no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.
 
 ## 2b. LiveKit / Pipecat — config-only connection (no SDK, no code changes)
 

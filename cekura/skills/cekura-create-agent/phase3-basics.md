@@ -32,7 +32,7 @@ Connection type sets what telephony fields to collect:
 | **Phone (PSTN)** | `telephony.phone_number` (E.164) + `telephony.inbound` |
 | **SIP** | `telephony.sip_uri` + `telephony.inbound` + optional `telephony.sip_auth` |
 | **WebRTC** | Provider-specific credential (see 3c) — no telephony block |
-| **WebSocket (voice)** | e.g. Chirp raw PCM, ElevenLabs voice WebSocket — may include `telephony.phone_number` if phone-linked; set `credentials.config` for the WebSocket endpoint |
+| **WebSocket (voice)** | raw-PCM voice WebSocket (`provider.type = custom`) — set `telephony.websocket_url` (+ optional `telephony.websocket_auth`); may include `telephony.phone_number` if phone-linked |
 | **WebSocket (chat/text)** | `provider.chat_agent_details` — no telephony block |
 | **Chat (provider)** | `provider.chat_agent_details` — no telephony block |
 
@@ -113,7 +113,7 @@ Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja
 | **Bland** | Yes | Fetch prompt, ask user for name | `agent_id` = pathway_id; name not returned by API |
 | **LiveKit** | No | Ask user | WebRTC only |
 | **Pipecat** | No | Ask user | Agent identified by `credentials.config.pipecat_agent_name` |
-| **Chirp** | No | Ask user | Connects via `chirp_websocket_url` |
+| **WebSocket voice (raw-PCM)** | No | Ask user | `provider.type = custom`; connects via `telephony.websocket_url` |
 | **KoreAI** | No | Ask user | Text/chat only |
 | **Genesys** | No | Ask user | Text/chat only |
 | **Cisco** | Yes | Ask user | Pre-configured integration |

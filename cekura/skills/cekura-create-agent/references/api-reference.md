@@ -49,7 +49,7 @@ All other fields are optional. PATCH requires no mandatory fields.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `type` | enum | `vapi\|retell\|elevenlabs\|bland\|livekit\|pipecat\|synthflow\|chirp\|koreai\|genesys\|trillet\|cisco\|self_hosted` |
+| `type` | enum | `vapi\|retell\|elevenlabs\|bland\|livekit\|pipecat\|synthflow\|koreai\|genesys\|trillet\|cisco\|self_hosted\|custom` |
 | `agent_id` | string\|null | Voice agent ID on provider platform |
 | `credentials` | AgentCredentials\|null | `{api_key (write-only), config}` |
 | `chat_agent_details` | ChatAgentDetails\|null | `{type, config}` |
@@ -68,7 +68,6 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
 | `pipecat` | — | `pipecat_agent_name`, `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
 | `synthflow` | — | `synthflow_base_url_override` |
-| `chirp` | `chirp_websocket_url` | `chirp_basic_auth_username`, `chirp_basic_auth_password` |
 | `koreai` | `client_id`, `bot_id` | `host` (default: https://bots.kore.ai) |
 | `genesys` | `client_id`, `region` | — |
 | `trillet` | `workspace_id` | — |
