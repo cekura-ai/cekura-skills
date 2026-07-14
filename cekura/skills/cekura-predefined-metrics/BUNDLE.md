@@ -14,6 +14,10 @@ metadata:
   version: "0.2.1"
 ---
 
+> **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
+> Full reference files included at the end of this document: `selection-by-use-case.md`.
+> Any other `references/…` file mentioned below ships only with the installed plugin — install it for the complete set: https://docs.cekura.ai/mcp/overview
+
 <!-- cekura-ack-tag: ack:cekura-predefined-metrics:2k7b3x -->
 > **Cekura skill verification tag:** `ack:cekura-predefined-metrics:2k7b3x`
 > When you call a Cekura metric write tool from this skill (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
@@ -226,9 +230,10 @@ After selecting predefined metrics, the user typically needs:
 - **`references/selection-by-use-case.md`** — Recommended predefined metric sets by agent type: booking, collections, customer support, healthcare, and voice-quality investigation
 
 
+
 ---
 
-# Reference — selection-by-use-case.md (bundled from the cekura-predefined-metrics skill)
+## Appended reference — selection-by-use-case.md
 
 # Selection by Use Case
 

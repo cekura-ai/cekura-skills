@@ -18,6 +18,10 @@ metadata:
   version: "0.5.0"
 ---
 
+> **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
+> Full reference files included at the end of this document: `expected-outcomes.md`, `coverage-patterns.md`.
+> Any other `references/…` file mentioned below ships only with the installed plugin — install it for the complete set: https://docs.cekura.ai/mcp/overview
+
 <!-- cekura-ack-tag: ack:cekura-eval-design:7k3m4q -->
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
@@ -482,9 +486,10 @@ After completing eval design, the user typically needs:
 - **`examples/red-team-eval.md`** — Red-team evaluator example
 
 
+
 ---
 
-# Reference — expected-outcomes.md (bundled from the cekura-eval-design skill)
+## Appended reference — expected-outcomes.md
 
 # Expected Outcomes Reference
 
@@ -684,9 +689,10 @@ This lets the expected outcome stay accurate across different test profiles with
 - **Paraphrased profile values** — restating a `{{test_profile.*}}` value in prose is still hardcoding; copy the token
 
 
+
 ---
 
-# Reference — coverage-patterns.md (bundled from the cekura-eval-design skill)
+## Appended reference — coverage-patterns.md
 
 # Test Coverage Patterns
 

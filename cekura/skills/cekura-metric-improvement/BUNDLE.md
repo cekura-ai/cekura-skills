@@ -12,6 +12,10 @@ metadata:
   version: "0.3.0"
 ---
 
+> **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
+> Full reference files included at the end of this document: `feedback-examples.md`.
+> Any other `references/…` file mentioned below ships only with the installed plugin — install it for the complete set: https://docs.cekura.ai/mcp/overview
+
 <!-- cekura-ack-tag: ack:cekura-metric-improvement:6t4d5m -->
 > **Cekura skill verification tag:** `ack:cekura-metric-improvement:6t4d5m`
 > When you call a Cekura metric write tool from this skill (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
@@ -211,9 +215,10 @@ POST /test_framework/test-sets/create_from_call_log/
 - **`references/feedback-examples.md`** — Examples of good feedback for different metric types
 
 
+
 ---
 
-# Reference — feedback-examples.md (bundled from the cekura-metric-improvement skill)
+## Appended reference — feedback-examples.md
 
 # Feedback Examples for Labs
 

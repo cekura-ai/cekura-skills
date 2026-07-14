@@ -15,6 +15,10 @@ metadata:
   version: "0.3.0"
 ---
 
+> **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
+> Full reference files included at the end of this document: `prompt-patterns.md`, `advanced-patterns.md`.
+> Any other `references/…` file mentioned below ships only with the installed plugin — install it for the complete set: https://docs.cekura.ai/mcp/overview
+
 <!-- cekura-ack-tag: ack:cekura-metric-design:6n2q5r -->
 > **Cekura skill verification tag:** `ack:cekura-metric-design:6n2q5r`
 > When you call a Cekura metric write tool from this skill (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
@@ -322,9 +326,10 @@ See `references/api-reference.md` for complete endpoint documentation and field 
 - **`examples/section-extraction-metric.py`** — Pythonic metric with agent description scoping
 
 
+
 ---
 
-# Reference — prompt-patterns.md (bundled from the cekura-metric-design skill)
+## Appended reference — prompt-patterns.md
 
 # LLM Judge Prompt Patterns
 
@@ -691,9 +696,10 @@ Include MM:SS timestamps for any violations.
 ```
 
 
+
 ---
 
-# Reference — advanced-patterns.md (bundled from the cekura-metric-design skill)
+## Appended reference — advanced-patterns.md
 
 # Advanced Metric Design Patterns
 

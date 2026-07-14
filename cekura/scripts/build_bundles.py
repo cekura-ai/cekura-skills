@@ -31,18 +31,42 @@ KEY_REFERENCES = {
 }
 
 
+def _insert_after_frontmatter(text, note):
+    """Insert `note` right after the SKILL.md YAML frontmatter (or at the top if
+    there is none), so the model reads it before the body's reference pointers."""
+    lines = text.split("\n")
+    if lines and lines[0].strip() == "---":
+        for i in range(1, len(lines)):
+            if lines[i].strip() == "---":
+                return "\n".join(lines[: i + 1] + ["", note] + lines[i + 1 :])
+    return note + "\n\n" + text
+
+
 def build_bundle(slug, refs):
     skill_dir = SKILLS / slug
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.exists():
         return None, f"{slug}: SKILL.md missing"
-    parts = [skill_md.read_text().rstrip()]
+
+    # The body still points to references that are NOT inlined (they exist only in
+    # the installed plugin). Name what IS included so the model treats those other
+    # `references/…` pointers as install-only instead of chasing dead paths.
+    included = ", ".join(f"`{r}`" for r in refs)
+    preamble = (
+        "> **Condensed skill bundle** — loaded on the fly because the Cekura plugin "
+        "is not installed in this session.\n"
+        f"> Full reference files included at the end of this document: {included}.\n"
+        "> Any other `references/…` file mentioned below ships only with the installed "
+        "plugin — install it for the complete set: https://docs.cekura.ai/mcp/overview"
+    )
+    parts = [_insert_after_frontmatter(skill_md.read_text().rstrip(), preamble)]
+
     for ref in refs:
         ref_path = skill_dir / "references" / ref
         if not ref_path.exists():
             return None, f"{slug}: reference {ref!r} missing"
         parts.append(
-            f"\n\n---\n\n# Reference — {ref} (bundled from the {slug} skill)\n\n"
+            f"\n\n\n---\n\n## Appended reference — {ref}\n\n"
             + ref_path.read_text().rstrip()
         )
     # Trailing newline so the file is POSIX-clean.
