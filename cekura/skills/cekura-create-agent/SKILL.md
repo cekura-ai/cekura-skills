@@ -12,7 +12,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Cekura Create Agent
@@ -50,7 +50,7 @@ Project    Provider   Create     Advanced   Verify
 | 4 | [phase4-description.md](phase4-description.md) | Collect main agent description — the full system prompt | **✓ required** | **✓ required** | skipped — auto-imported |
 | 5 | [phase5-create.md](phase5-create.md) | Create the main agent — POST v2, full provider examples | **✓ required** | **✓ required** | **✓ required** (auto-import path) |
 | 6 | [phase6-sdk-integration.md](phase6-sdk-integration.md) | SDK integration in the user's repo (LiveKit / Pipecat only) | no-op | **✓ required** (unless explicitly refused) | no-op |
-| 7 | [phase7-mock-tools.md](phase7-mock-tools.md) | Main agent mock tools — auto-fetch or manual | **✓ required** | **✓ required** | skipped — auto-imported |
+| 7 | [phase7-mock-tools.md](phase7-mock-tools.md) | Main agent mock tools — auto-fetch (managed provider or self-hosted MCP) or manual | **✓ required** | **✓ required** | skipped — auto-imported |
 | 8 | [phase8-knowledge-base.md](phase8-knowledge-base.md) | Main agent knowledge base — upload KB files | **✓ required** | **✓ required** | skipped — auto-imported |
 | 9 | [phase9-dynamic-variables.md](phase9-dynamic-variables.md) | Main agent dynamic variables — register via API | **✓ required** | **✓ required** | skipped — auto-imported |
 | 10 | [phase10-advanced.md](phase10-advanced.md) | Auto-sync, auto-import calls, outbound config | **✓ required** | **✓ required** | **✓ required** |

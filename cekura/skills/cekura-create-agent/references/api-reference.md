@@ -117,6 +117,28 @@ PATCH /test_framework/v2/aiagents/{agent_id}/
 
 **Critical: Full-list replace** — always include all tools; omitting a tool removes it. GET existing `mock_tools` first, merge, then PATCH the full list.
 
+### Auto-fetch & mock-mode endpoints (managed providers + custom MCP)
+
+For self-hosted agents with their own MCP server, use `provider="custom"` to auto-discover tools and have Cekura host a drop-in mock MCP endpoint. MCP tool names shown for driving via the Cekura MCP server.
+
+| Method | Path | MCP tool | Purpose |
+|--------|------|----------|---------|
+| POST | `/test_framework/v1/aiagents/{agent_id}/tools/auto-fetch/` | `aiagents_tools_auto_fetch_create` | Discover tools + generate mock data. `provider` ∈ `vapi\|retell\|elevenlabs\|custom`; custom needs `mcp_server_url` (+ optional `mcp_server_headers`) |
+| GET | `/test_framework/v1/aiagents/{agent_id}/tools/auto-fetch-progress/` | `aiagents_tools_auto_fetch_progress_retrieve` | Poll auto-fetch (`?progress_id=`) |
+| POST | `/test_framework/v1/aiagents/{agent_id}/tools/enable-mock/` | `aiagents_tools_enable_mock_create` | Activate mock mode |
+| GET | `/test_framework/v1/aiagents/{agent_id}/tools/enable-mock-progress/` | `aiagents_tools_enable_mock_progress_retrieve` | Poll enable; returns `mcp_endpoints[]` |
+| POST | `/test_framework/v1/aiagents/{agent_id}/tools/disable-mock/` | `aiagents_tools_disable_mock_create` | Revert to original tools |
+| GET | `/test_framework/v1/aiagents/{agent_id}/tools/disable-mock-progress/` | `aiagents_tools_disable_mock_progress_retrieve` | Poll disable |
+| GET | `/test_framework/v1/aiagents/{agent_id}/tools/mock-status/` | `aiagents_tools_mock_status_retrieve` | Current state + `mcp_endpoints[]` / `tool_endpoints[]` (env-correct URLs) |
+
+**Runtime endpoints** (called by the agent under test; no auth):
+- `POST /test_framework/v1/aiagents/{agent_id}/mcp/{mock_index}/` — mock MCP server (JSON-RPC 2.0: `initialize`, `tools/list`, `tools/call`). Custom agents point their MCP client here.
+- `POST /test_framework/v1/aiagents/{agent_id}/tool/{tool_name}/` — per-tool webhook for standalone (non-MCP) tools.
+
+For custom agents: `mcp_server_url` is SSRF-validated (http/https only; private/loopback/metadata IPs blocked; `Host`/`Cookie`/`X-Forwarded-*` headers rejected), headers are stored encrypted, and an agent is pinned to a single MCP server.
+
+> If the `aiagents_tools_*` MCP tools aren't in the Cekura MCP server yet (spec not regenerated), call these paths directly over REST with the `X-CEKURA-API-KEY` header.
+
 ## Knowledge Base
 
 ```
