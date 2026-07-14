@@ -150,7 +150,7 @@ Do not run until this pass reports 0 unresolved mismatches.
 
 1. **Readiness first.** The agent must be reachable on its run connection; for a telephony agent the bot must be live on its number, or every call fails at *connection* and the results say nothing about resilience. Confirm before spending credits.
 2. Trigger the `Infrastructure Gaps` folder **as its own batch** using the `scenarios_run_*` tool matching the connection from Step 1 (voice / websocket / vapi-webrtc / elevenlabs / etc.), separate from any regression run so a wall of expected failures is not read as a regression.
-3. **Run each scenario `frequency: 3–5` times, not once.** Infra gaps are usually **intermittent**: a stall or a post-interruption context loss may fire on run 2 but not run 1. A single run per scenario reports a coin flip, not a rate. Multiple runs turn "it failed" into "it failed 2/5 times," which is what tells you severity.
+3. **Run each scenario `frequency: 1–2` times (default 2).** Infra gaps can be intermittent (a stall on run 2 but not run 1), so a second run catches the flaky ones and turns "it failed" into "it failed 1/2". Keep it to 1–2 to stay cheap; do not fan out to 3+ unless the user asks to quantify a specific flaky gap.
 4. Give any silence- or hang-prone scenario a `max_duration` cap so a non-terminating call is recorded as a timeout, not left running on the meter.
 5. **Poll `results_retrieve(id=<result_id>)`** until `status` is `completed`, then hand the result to Step 6. Do not report from the create-time payload.
 

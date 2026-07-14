@@ -24,7 +24,7 @@ Classify every run into one of four buckets. Only the first two are agent gaps:
 
 **Report gaps, not a pass rate.** These are gap probes; "N% passed" is the wrong headline and hides the findings. Lead with the distinct gaps (grouped, with quoted timestamped evidence), the families the agent survives, and any broken probes.
 
-**Intermittency.** Gaps are often timing-sensitive (a stall on run 2 but not run 1). Run each scenario `frequency: 3–5` and report a rate ("failed 2/5"), not a single coin flip.
+**Intermittency.** Gaps are often timing-sensitive (a stall on run 2 but not run 1). Run each scenario `frequency: 1–2` (default 2) so a flaky gap still shows, and report a rate ("failed 1/2"). Only go higher if the user wants to quantify a specific flaky gap.
 
 ## Failure-signature to infra-fix mapping
 
