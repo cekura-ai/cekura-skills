@@ -6,7 +6,7 @@ ElevenLabs Conversational AI is a managed provider. Edits to the system prompt a
 
 When `assistant_provider == elevenlabs` (compare lowercased), proceed straight to Phase 1.3. No extra confirmation.
 
-ElevenLabs is a **single-agent provider** — no squad concept. Agent-to-agent transfer uses `built_in_tools.transfer_to_agent`; this skill edits the agent it was pointed at, not transfer targets.
+ElevenLabs has no squad concept; agents link via `built_in_tools.transfer_to_agent` (targets in its `transfers[].agent_id`). Every agent reachable through these links is in scope — the skill fetches, clones, diagnoses, and edits the whole linked graph together, validating through the registered entry agent (transfers exercise the rest). See [`../../phases/clone.md`](../../phases/clone.md).
 
 ## Where the prompt and tools live
 
@@ -15,7 +15,7 @@ The Cekura agent record's `assistant_id` holds the ElevenLabs `agent_id` (shape 
 - **System prompt** — `conversation_config.agent.prompt.prompt` (single string).
 - **Referenced tools** — `conversation_config.agent.prompt.tool_ids` — array of standalone tool IDs; each fetched/edited via `/v1/convai/tools/{tool_id}`.
 - **Inline tools (legacy)** — `conversation_config.agent.prompt.tools` — full tool objects embedded on the agent; editable in-place on the agent PATCH.
-- **Built-in / system tools** — `conversation_config.agent.prompt.built_in_tools` — `end_call`, `transfer_to_agent`, `transfer_to_number`, `language_detection`, `skip_turn`. Config flags, not free-form definitions; touch only if the user explicitly asks.
+- **Built-in / system tools** — `conversation_config.agent.prompt.built_in_tools` — `end_call`, `transfer_to_agent`, `transfer_to_number`, `language_detection`, `skip_turn`. Config flags, not free-form definitions; touch only if the user explicitly asks — except `transfer_to_agent.transfers[].agent_id`, which is read to discover linked agents and repointed to the clones during Clone.
 
 The Cekura `description` field is **not** read or written. ElevenLabs is the single source of truth.
 
