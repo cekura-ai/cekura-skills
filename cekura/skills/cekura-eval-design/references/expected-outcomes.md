@@ -9,6 +9,12 @@ Key facts:
 - **Requires the metric** — the `expected_outcome_prompt` field alone does nothing; you must also attach the **Expected Outcome** predefined metric to the evaluator
 - **Speaker labels** — always refer to speakers as **"main agent"** and **"testing agent"**; never "user", "bot", "AI", or "assistant"
 
+> ⚠️ **A missing Expected Outcome metric fails SILENTLY — it does not error.** If you set `expected_outcome_prompt` but never attach the metric, runs still complete and report **`success_rate = 100`** with **zero expected-outcome evaluations** — the eval *looks* like it's passing when nothing was actually checked. This is the single most common way a hand-built eval set is quietly broken (observed: a dogfood suite where every scenario had a prompt but no metric, so all runs read 100%).
+>
+> **Always verify after building an eval set** — for a completed run, confirm there is an `evaluate_expected_outcome` metric evaluation on it (in the dashboard: the run shows an "Expected Outcome" result with per-statement ✅/❌; via API: the run's `expected_outcome` field is populated with `outcome_alignments`). A `success_rate` of 100 with **no** expected-outcome result on the run means the metric is not attached — do not trust the score.
+>
+> Prefer building scenarios through the generation flow (`generate_expected_outcomes=true`), which attaches the metric for you. If you create scenarios directly via the API, you MUST attach the Expected Outcome predefined metric yourself.
+
 ---
 
 ## Scoring Model
@@ -181,7 +187,7 @@ This lets the expected outcome stay accurate across different test profiles with
 
 ## Common Pitfalls
 
-- **Missing metric attachment** — the `expected_outcome_prompt` field alone does nothing; attach the Expected Outcome predefined metric to the evaluator
+- **Missing metric attachment (fails SILENTLY)** — the `expected_outcome_prompt` field alone does nothing; attach the Expected Outcome predefined metric to the evaluator. Without it, runs report `success_rate=100` with no expected-outcome evaluation — verify a completed run actually has one (see the ⚠️ note at the top).
 - **Including auto-injected variables** — `{{transcript}}`, `{{call_end_reason}}`, and call duration are provided automatically; adding them manually causes duplication
 - **Wrong speaker labels** — always use "main agent" and "testing agent"; never "user", "assistant", "bot", or "AI"
 - **Exact phrases or hardcoded values** — specifying exact dates, times, or verbatim sentences causes false failures when the agent paraphrases or uses different test data
