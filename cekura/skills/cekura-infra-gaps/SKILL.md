@@ -14,7 +14,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Cekura Voice AI Infrastructure Gaps
@@ -123,15 +123,16 @@ Keep every selected/created personality's caller `prompt` neutral and cooperativ
 ### Step 3: Create the scenarios
 
 1. Create a folder named **`Infrastructure Gaps`** with `scenarios_folder_create`. Every scenario in this suite goes in it. Never mix these into the `Infrastructure Test Suite` folder; they have a different pass expectation and must not pollute the regression gate.
-2. **Every scenario is `scenario_type: "conditional_actions"`; always, no exceptions.** Infra probes must fire the stressor at an exact moment with a deterministic, repeatable turn sequence; free-form behavioral instructions are not reliable enough to trigger pipeline behavior at the right point. Script the same simple task as a short `conditions[]` flow. Inject the stressor one of two ways, both on the conditional-actions scenario:
+2. **Name and tag convention.** Name every scenario **`Gap - <stressor>`** (e.g. `Gap - Packet Loss 55%`, `Gap - Cafe Noise Loud`, `Gap - Silence at Start`), and put the tag **`infra-gap`** on each one (alongside a family tag like `network` / `noise` / `barge-in`), so the suite can be selected and run by tag.
+3. **Every scenario is `scenario_type: "conditional_actions"`; always, no exceptions.** Infra probes must fire the stressor at an exact moment with a deterministic, repeatable turn sequence; free-form behavioral instructions are not reliable enough to trigger pipeline behavior at the right point. Script the same simple task as a short `conditions[]` flow. Inject the stressor one of two ways, both on the conditional-actions scenario:
    - **Personality-injected:** attach the adversarial personality (noise, accent, interruption tier, slow speaker) to the CA scenario; it carries the call-wide trait while the `conditions[]` drive the flow deterministically.
    - **Tag-injected:** for stressors no personality carries or that need exact timing (packet loss, fast speech, boundary silence, DTMF, rapid turns), put the tag at the start of the relevant `fixed_message: true` action, on the Normal personality.
    Add `TOOL_END_CALL` so the caller can hang up (except silence-at-end, which uses a `max_duration` cap).
-3. Every scenario runs the same **simple, universal task** the agent genuinely supports (e.g. "book the earliest available slot"), so the only variable is the stressor. Write the expected outcome as **graceful degradation** (see below), not task perfection.
+4. Every scenario runs the same **simple, universal task** the agent genuinely supports (e.g. "book the earliest available slot"), so the only variable is the stressor. Write the expected outcome as **graceful degradation** (see below), not task perfection.
    - **Make each `expected_outcome_prompt` falsifiable, not boilerplate.** The most common content failure is a vague EO with "OR" escape hatches ("completes the booking OR asks to repeat OR ends cleanly") that a *stalling* agent still passes. Name the concrete pathological FAIL signals for that stressor (a >10s stall and any hallucinated/never-said value are always hard FAILs), so the EO catches the gap on its own rather than leaning on the Infrastructure Issues metric. Use the per-family FAIL-signal rubric in [references/stressor-catalog.md](references/stressor-catalog.md) ("Expected-outcome exemplars").
-4. **Attach baseline metrics to every scenario**: Expected Outcome, Infrastructure Issues (fires on agent silence; key here), Tool Call Success, Latency, plus Transcription Accuracy for noise/accent/network and the interruption metrics for barge-in. **Predefined metrics must be activated at the project level before they fire** (a global metric ID attached to a scenario is stored but never evaluated). Use **cekura-predefined-metrics** to activate/verify. If the built-ins miss a gap, author a custom metric via **cekura-metric-design** (see Delegation); do not hand-roll it here.
-5. Author every scenario through the **cekura-eval-design** skill (load it first; thread its `skill_ack`). It owns the scenario schema, conditional-action tags, and expected-outcome patterns; this skill only supplies the stressor and the task.
-6. **Create scenarios in parallel** (fire the create calls concurrently); there is no dependency between them.
+5. **Attach baseline metrics to every scenario**: Expected Outcome, Infrastructure Issues (fires on agent silence; key here), Tool Call Success, Latency, plus Transcription Accuracy for noise/accent/network and the interruption metrics for barge-in. **Predefined metrics must be activated at the project level before they fire** (a global metric ID attached to a scenario is stored but never evaluated). Use **cekura-predefined-metrics** to activate/verify. If the built-ins miss a gap, author a custom metric via **cekura-metric-design** (see Delegation); do not hand-roll it here.
+6. Author every scenario through the **cekura-eval-design** skill (load it first; thread its `skill_ack`). It owns the scenario schema, conditional-action tags, and expected-outcome patterns; this skill only supplies the stressor and the task.
+7. **Create scenarios in parallel** (fire the create calls concurrently); there is no dependency between them.
 
 ### Step 4: Verify the built suite before running
 

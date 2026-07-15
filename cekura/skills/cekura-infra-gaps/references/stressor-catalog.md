@@ -18,11 +18,11 @@ All personalities in this suite share a **neutral, cooperative caller `prompt`**
 
 | Name | Level | Intent |
 |---|---|---|
-| `Edge - Packet Loss 10%` | light | Baseline: agent should be essentially unaffected. |
-| `Edge - Packet Loss 30%` | moderate | Where degradation starts to show. |
-| `Edge - Packet Loss 50%` | severe | Should trigger graceful "trouble hearing you" behavior, not collapse. |
+| `Gap - Packet Loss 10%` | light | Baseline: agent should be essentially unaffected. |
+| `Gap - Packet Loss 30%` | moderate | Where degradation starts to show. |
+| `Gap - Packet Loss 50%` | severe | Should trigger graceful "trouble hearing you" behavior, not collapse. |
 
-Add jitter and latency variants (`Edge - High Jitter`, `Edge - High Latency`) if the agent is latency-sensitive (barge-in heavy, or does real-time confirmations). Default minimum: light + severe packet loss.
+Add jitter and latency variants (`Gap - High Jitter`, `Gap - High Latency`) if the agent is latency-sensitive (barge-in heavy, or does real-time confirmations). Default minimum: light + severe packet loss.
 
 **Resilience question:** Does the agent detect low-quality input and re-prompt / ask to repeat, or does it hallucinate a transcript, loop, or go silent?
 
@@ -38,9 +38,9 @@ Add jitter and latency variants (`Edge - High Jitter`, `Edge - High Latency`) if
 
 | Name | background_noise | base volume | Intent |
 |---|---|---|---|
-| `Edge - Office Noise` | office | ~0.15 | Mild, common condition. |
-| `Edge - Cafe Noise Loud` | cafe | ~0.4 | Severe: babble near the caller's speech level. |
-| `Edge - Street Noise` | street | ~0.3 | Traffic/wind, intermittent bursts. |
+| `Gap - Office Noise` | office | ~0.15 | Mild, common condition. |
+| `Gap - Cafe Noise Loud` | cafe | ~0.4 | Severe: babble near the caller's speech level. |
+| `Gap - Street Noise` | street | ~0.3 | Traffic/wind, intermittent bursts. |
 
 Default minimum: one mild + one loud.
 
@@ -58,9 +58,9 @@ Default minimum: one mild + one loud.
 
 | Name | Where the silence falls | Resilience question |
 |---|---|---|
-| `Edge - Silence At Start` | Caller says nothing for 15–20s after the greeting. | Does the agent re-prompt ("are you there?") on a ladder, then end cleanly, or loop / hang? |
-| `Edge - Silence Mid-Call` | Caller goes quiet for 15s mid-task. | Does the agent hold the task context and re-prompt, or reset / abandon? |
-| `Edge - Silence At End` | Task complete, caller stays silent. | Does the agent close the call gracefully, or wait indefinitely / repeat the closer? |
+| `Gap - Silence At Start` | Caller says nothing for 15–20s after the greeting. | Does the agent re-prompt ("are you there?") on a ladder, then end cleanly, or loop / hang? |
+| `Gap - Silence Mid-Call` | Caller goes quiet for 15s mid-task. | Does the agent hold the task context and re-prompt, or reset / abandon? |
+| `Gap - Silence At End` | Task complete, caller stays silent. | Does the agent close the call gracefully, or wait indefinitely / repeat the closer? |
 
 Set the personality `message_plan` to a short `idle_timeout_seconds` (e.g. 8–10) with `idle_message_max_spoken_count` of 2–3 so the ladder is exercised within the run.
 
@@ -76,8 +76,8 @@ Set the personality `message_plan` to a short `idle_timeout_seconds` (e.g. 8–1
 
 | Name | Config | Intent |
 |---|---|---|
-| `Edge - Barge-in High` | `interruption_level: high` | Caller repeatedly cuts in immediately. |
-| `Edge - Instant Talk-over` | low `start_speaking_plan` wait (~0.2s) | Caller starts before the agent finishes greeting. |
+| `Gap - Barge-in High` | `interruption_level: high` | Caller repeatedly cuts in immediately. |
+| `Gap - Instant Talk-over` | low `start_speaking_plan` wait (~0.2s) | Caller starts before the agent finishes greeting. |
 
 **Resilience question:** Does the agent yield promptly and recover, or keep talking over the caller, lose the interrupted context, or produce audio artifacts / duplicate turns?
 
@@ -95,9 +95,9 @@ Set the personality `message_plan` to a short `idle_timeout_seconds` (e.g. 8–1
 
 | Name | Config | Intent |
 |---|---|---|
-| `Edge - Non-native / Unclear Speech` | one accented / imperfect-English personality, named and framed generically | STT robustness on non-standard speech (a single probe, not per-ethnicity). |
-| `Edge - Slow Speaker` | `speed: 0.8` | Long pauses may prematurely close turns (endpointing too eager). |
-| `Edge - Fast Speaker` | `speed: 1.2` | Words run together; STT segmentation stress. |
+| `Gap - Non-native / Unclear Speech` | one accented / imperfect-English personality, named and framed generically | STT robustness on non-standard speech (a single probe, not per-ethnicity). |
+| `Gap - Slow Speaker` | `speed: 0.8` | Long pauses may prematurely close turns (endpointing too eager). |
+| `Gap - Fast Speaker` | `speed: 1.2` | Words run together; STT segmentation stress. |
 
 **Multilingual agent:** add one full booking probe **per supported language** (a real capability), using that language's personality and `scenario_language`. This is separate from the single non-native probe above.
 
@@ -115,8 +115,8 @@ Set the personality `message_plan` to a short `idle_timeout_seconds` (e.g. 8–1
 
 | Name | Pattern | Resilience question |
 |---|---|---|
-| `Edge - DTMF During Speech` | Caller sends DTMF **while the agent is mid-utterance**. | Is it buffered/handled or does it corrupt the turn / get dropped silently? |
-| `Edge - Rapid Short Turns` | Several one-word turns back to back. | Does the pipeline serialize them, or queue/drop/duplicate? |
+| `Gap - DTMF During Speech` | Caller sends DTMF **while the agent is mid-utterance**. | Is it buffered/handled or does it corrupt the turn / get dropped silently? |
+| `Gap - Rapid Short Turns` | Several one-word turns back to back. | Does the pipeline serialize them, or queue/drop/duplicate? |
 
 **DTMF timing; do not use a plain `action_followup`.** An `action_followup` fires on the caller's *next* turn, i.e. **after** the agent's reply finishes, so `<dtmf>` sent that way lands in the silence *after* the turn and never tests "during speech" (a common broken probe). To land the digits *into* the agent's utterance, fire them on an interruption offset so they occur while the agent is still speaking:
 
@@ -135,8 +135,8 @@ The one place stacking is allowed: a single named condition that co-occurs in re
 
 | Name | Combination | Represents |
 |---|---|---|
-| `Edge - Mobile Call` | moderate packet loss + street noise | Caller on a phone outdoors. |
-| `Edge - Noisy Impatient` | cafe noise + `interruption_level: high` | Busy caller in a loud room. |
+| `Gap - Mobile Call` | moderate packet loss + street noise | Caller on a phone outdoors. |
+| `Gap - Noisy Impatient` | cafe noise + `interruption_level: high` | Busy caller in a loud room. |
 
 Use these sparingly (one or two), on top of the isolated single-variable cases, never as a replacement for them.
 
