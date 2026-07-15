@@ -22,7 +22,7 @@ Full main agent setup flow — **pick provider early, it shapes everything that 
 > **LiveKit / Pipecat note:** keep `provider.type = livekit` or `pipecat` regardless of how Cekura connects (phone, WebRTC, chat). Never reroute a LiveKit/Pipecat agent into `self_hosted` just because it has a phone number — these providers support phone-based simulations and SDK integration natively under their own type.
 
 ```
-Standard path (Bland, Chirp, KoreAI, Genesys, Cisco, self-hosted):
+Standard path (Bland, KoreAI, Genesys, Cisco, self-hosted):
 Phase 1  → Phase 2  → Phase 3  → Phase 4  → Phase 5  → Phase 6  → Phase 7  → Phase 8  → Phase 9  → Phase 10 → Phase 11
 Project    Provider   Basics &   Description  Create     SDK        Mock       KB         Dyn Vars   Advanced   Verify
                       Conn Type               agent     (no-op)     Tools

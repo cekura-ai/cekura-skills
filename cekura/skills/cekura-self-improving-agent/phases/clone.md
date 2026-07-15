@@ -2,7 +2,7 @@
 
 Runs **once**, after Setup and before Optimize. **VAPI and ElevenLabs only** — every `self_hosted` run (including source-code and render-only targets) skips this phase entirely; there is no managed provider to clone into.
 
-Goal: stand up a disposable copy of the provider agent + its tools (same org, same key), duplicate the Cekura agent (`copy_scenarios=true`), repoint the clone at the cloned provider id, and rebind the run to the clone. The loop then iterates entirely on the clone — production is never touched. A failed POST **halts**; never fall through to editing the original.
+Goal: stand up a disposable copy of the provider agent(s) + their tools (same org, same key) — following any transfer/handoff links so the whole linked graph is cloned — duplicate the Cekura agent (`copy_scenarios=true`), repoint the clone at the cloned entry agent, and rebind the run to the clone. The loop then iterates entirely on the clone — production is never touched. A failed POST **halts**; never fall through to editing the original.
 
 ## Pre-flight
 
@@ -34,8 +34,13 @@ When copying any provider body, strip server-owned fields before POSTing: `id`, 
 
 ### ElevenLabs
 
-1. For each id in `prompt.tool_ids` — `POST /v1/convai/tools` with the fetched `tool_config`. Record `old_tool_id → new_tool_id`.
-2. `POST /v1/convai/agents/create` with `conversation_config.agent.prompt.tool_ids` rewritten through the tool map, `name` suffixed. Capture the new `agent_id`.
+First resolve the agent graph: from the target agent, follow `built_in_tools.transfer_to_agent.transfers[].agent_id` transitively (`GET /v1/convai/agents/{id}` for each) to collect every reachable agent. Dedupe; guard cycles (A→B→A). A lone agent is just a graph of one.
+
+Clone **every** agent in the graph:
+
+1. For each `prompt.tool_ids` across all agents — `POST /v1/convai/tools` with the fetched `tool_config`. Record `old_tool_id → new_tool_id`.
+2. For each agent — `POST /v1/convai/agents/create` with `tool_ids` rewritten through the tool map, `name` suffixed. Record `old_agent_id → new_agent_id`.
+3. Repoint each clone's `built_in_tools.transfer_to_agent.transfers[].agent_id` through the agent map (`PATCH /v1/convai/agents/{clone_id}`) so transfers stay inside the clone graph — the same self-containment rule as VAPI cross-member handoffs.
 
    ```
    curl -fsS -X POST -H "xi-api-key: $ELEVENLABS_API_KEY" -H "Content-Type: application/json" \
@@ -44,6 +49,8 @@ When copying any provider body, strip server-owned fields before POSTing: `id`, 
      -d '{"name":"<name> [cekura-selfimprove-clone]","conversation_config":<fetched config, tool_ids repointed>}' \
      https://api.elevenlabs.io/v1/convai/agents/create
    ```
+
+The cloned **entry** agent (the one the Cekura record was registered against) is what CLONE.2 repoints to.
 
 Non-2xx response on any provider POST → **stop**, surface the error. A half-built clone is a hard stop, not a reason to retarget the live agent.
 
@@ -70,8 +77,8 @@ Non-2xx response on any provider POST → **stop**, surface the error. A half-bu
 
 From here on **"the agent" means the clone** in every later phase:
 
-- **Fix** reads the clone's prompt + tool config (byte-identical to the original on iteration 1).
-- **Apply / Sync** PATCH the **cloned** provider assistant and the **cloned** tools — never the originals.
+- **Fix** reads the cloned agent(s)' prompt + tool config (byte-identical to the originals on iteration 1) and attributes each failure to the agent that caused it.
+- **Apply / Sync** PATCH the **cloned** agent(s) + tools that own each edit — never the originals.
 - **Eval validation** runs the **cloned scenarios**. Swap each original scenario id for its `cloned_scenario_id` via the CLONE.2 map before running. For `call_ids` input there are no pre-existing scenarios — synthesize validation scenarios directly on the clone Cekura agent (Eval caches these on iteration 1); the scenario map is empty and expected.
 - **Collect's historical read is the exception** — it still consumes the user's original input (`result_id` / `run_ids` / `call_ids` / `scenario_ids`). Those failures happened on the original; they are the diagnostic signal. Only forward-looking validation and edits move to the clone.
 
@@ -109,6 +116,8 @@ Offer to delete the clone (provider assistant/tools + Cekura record) once the us
 | Provider key missing at clone time | Stop; ask the user to export it (same key as the Setup fetch) |
 | Squad with inline-only members | Clone embedded `assistant` objects inside the new `POST /squad` body; no separate `POST /assistant` per member |
 | Cross-member handoff destinations | Repoint through the member map so the clone is self-contained; a destination left pointing at a production member lets a handoff escape the clone mid-validation |
+| ElevenLabs `transfer_to_agent` graph | Clone every reachable agent; repoint each clone's `transfers[].agent_id` through the agent map so transfers stay inside the clone. A target left pointing at production lets a transfer escape mid-validation (and would edit a live agent on Apply) |
+| Cyclic / deep transfer graph (A→B→A, A→B→C) | Traverse transitively with a visited-set; clone each agent once, then repoint all links through the agent map |
 | `call_ids` input | `copy_scenarios=true` copies nothing (call logs aren't scenarios); the scenario map is empty; validation scenarios are synthesized on the clone in Eval |
 | Partial success (tools created, assistant fails) | Stop and surface; orphaned cloned tools are harmless (suffixed, unreferenced) and can be cleaned up; do not retarget production |
 | Resumed run | If `clone_cekura_agent_id` is already recorded, skip CLONE.1–CLONE.2 and reuse the existing clone |
