@@ -83,19 +83,23 @@ Set the personality `message_plan` to a short `idle_timeout_seconds` (e.g. 8–1
 
 ---
 
-## 5. Accent / Non-native / Speech Rate
+## 5. Non-native Speech / Speech Rate
 
-**Mechanism:** `accent`, `speed` (0.8 slow to 1.2 fast), and `language` on the personality.
+**Mechanism:** `speed` (0.8 slow to 1.2 fast) on the personality; plus, for a single clarity probe, a personality that speaks accented / imperfect English.
 
-**Why it matters:** STT accuracy varies by accent and speed. A pipeline tuned only on clean American English degrades on a heavy accent or a fast talker, and there is often no fallback.
+**Why it matters:** STT accuracy drops on fast, slow, or non-standard speech. This probes whether the pipeline degrades gracefully (asks to clarify) rather than acting on a misheard value.
 
-**Cases:**
+**Do NOT enumerate accents by nationality or ethnicity.** For a monolingual agent, ONE generic "non-native / unclear speech" probe covers the STT-robustness dimension. Creating "Indian accent", "Spanish accent", "Chinese accent" variants is both off-target (handling a specific ethnic accent is not an infra gap the agent is designed for) and inappropriate. Test a SPECIFIC language or accent only when the agent's description explicitly lists it as a **supported language**; then it is a real capability test, authored properly in that language with its `scenario_language`.
+
+**Cases (monolingual agent):**
 
 | Name | Config | Intent |
 |---|---|---|
-| `Edge - Heavy Accent` | non-native accent for the agent's language | STT robustness across accents. |
+| `Edge - Non-native / Unclear Speech` | one accented / imperfect-English personality, named and framed generically | STT robustness on non-standard speech (a single probe, not per-ethnicity). |
 | `Edge - Slow Speaker` | `speed: 0.8` | Long pauses may prematurely close turns (endpointing too eager). |
 | `Edge - Fast Speaker` | `speed: 1.2` | Words run together; STT segmentation stress. |
+
+**Multilingual agent:** add one full booking probe **per supported language** (a real capability), using that language's personality and `scenario_language`. This is separate from the single non-native probe above.
 
 **Resilience question:** Does the agent understand and complete the task, or repeatedly mishear and fail to recover? For the slow speaker specifically: does endpointing cut the caller off mid-sentence?
 
@@ -167,7 +171,7 @@ A default run selecting the common families lands around 12–20 scenarios:
 - Noise: 2 (mild + loud)
 - Boundary silence: 3 (start / mid / end)
 - Barge-in: 2
-- Accent / speed: 3
+- Speech rate + non-native clarity: 3 for a monolingual agent (slow, fast, one generic non-native probe); for a multilingual agent add one probe per supported language
 - DTMF / rapid turns: 2 (telephony only)
 - Named combinations: 1–2
 

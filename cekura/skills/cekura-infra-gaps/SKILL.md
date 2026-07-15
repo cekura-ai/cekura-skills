@@ -61,7 +61,7 @@ Infra stressors are injected at the **voice/infrastructure layer**, never throug
 | Background / ambient noise | `background_noise`, `background_sound_volume` | `<background_noise ...>` |
 | Long silence / idle at boundaries | `message_plan` idle fields | `<hold time="Ns" />` (dead air) / `<silence time="Ns" />` |
 | Aggressive barge-in / interruption | `interruption_level`, `start/stop_speaking_plan` | `<interruption time="Xs" />` (action_followup) |
-| Accent / non-native speech | `accent`, `language` | (personality only) |
+| Non-native / unclear speech (STT robustness) | `accent`, `language` | (personality only) |
 | Slow / fast speech | `speed` | `<speed ratio="0.8..1.2" />` |
 | DTMF, rapid turns, overlap | (n/a) | `<dtmf digits="..." />`, scripted quick turns |
 
@@ -184,6 +184,7 @@ Read the metric `explanation` fields (they are timestamped turn-by-turn analyses
 6. **Keep it out of the CI/CD gate until it passes.** These scenarios are expected to fail at first. Graduate a family into the regression suite (the `Infrastructure Test Suite` folder / CI gate) only after the infra handles it.
 7. **Decide scope, then confirm once.** Auto-include every family the agent's connection supports and auto-choose intensity (do not make the user assemble the family list or answer per-family intensity questions). Present the one finished plan as a single approve-or-trim checkpoint; do not create personalities or scenarios until the user approves.
 8. **Verify before running.** After creating, retrieve every scenario and patch mismatches (Step 4). A metric that never fires or a stressor tag stored as plain text fails silently and wastes the whole run.
+9. **Test capability, not identity.** Do not enumerate nationality/ethnicity-specific accent probes ("Indian accent", "Spanish accent"). For a monolingual agent, one generic "non-native / unclear speech" probe covers STT robustness. Test a specific language only when the agent's description lists it as a supported language, in which case it is a real capability test authored in that language.
 
 ## Common Pitfalls
 
