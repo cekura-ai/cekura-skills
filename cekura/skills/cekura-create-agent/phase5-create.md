@@ -137,6 +137,8 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 | `telephony.inbound` | boolean, default `false` |
 | `telephony.sip_uri` | e.g. `sip:agent@domain.com` |
 | `telephony.sip_auth` | `{"username": "...", "password": "..."}` |
+| `telephony.websocket_url` | Raw-PCM 16 kHz WebSocket voice endpoint (`wss://…`); runs via `scenarios_run_chirp` |
+| `telephony.websocket_auth` | `{"username": "...", "password": "..."}` basic-auth for the WebSocket endpoint |
 | `telephony.outbound_numbers` | Array of E.164 numbers for outbound webhook validation |
 
 ---
@@ -145,7 +147,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 
 ```json
 "provider": {
-  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|chirp|koreai|genesys|cisco|self_hosted",
+  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|agora|koreai|genesys|cisco|amazon_connect|telnyx|self_hosted|custom",
   "agent_id": "<voice agent ID on provider platform>",
   "credentials": {
     "api_key": "<provider API key (write-only)>",
@@ -172,7 +174,6 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 | `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
 | `pipecat` | — | `pipecat_agent_name`, `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
 | `synthflow` | `agent_id` (top-level `provider.agent_id`) | `synthflow_base_url_override` |
-| `chirp` | `chirp_websocket_url` | `chirp_basic_auth_username`, `chirp_basic_auth_password` |
 | `koreai` | `client_id`, `bot_id` | `host` |
 | `genesys` | `client_id`, `region` | — |
 | `cisco` | — | — |
@@ -397,22 +398,22 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 - **`webhook_url`** — optional webhook URL for Pipecat call events.
 - **`telephony`** — include the phone block only when telephony is one of the connection modes from Phase 3.
 
-### Chirp
+### WebSocket voice (raw-PCM)
+Cekura dials your `wss://` endpoint and streams 16 kHz raw PCM (the CHIRP protocol).
+Create it as `provider.type = "custom"` with the endpoint under `telephony`:
 ```json
 {
-  "name": "Chirp Voice Agent",
+  "name": "WebSocket Voice Agent",
   "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
-    "type": "chirp",
-    "credentials": {
-      "config": {
-        "chirp_websocket_url": "wss://your-host/voice",
-        "chirp_basic_auth_username": "user",
-        "chirp_basic_auth_password": "pass"
-      }
-    }
+    "type": "custom"
+  },
+  "telephony": {
+    "websocket_url": "wss://your-host/voice",
+    "inbound": true,
+    "websocket_auth": { "username": "user", "password": "pass" }
   }
 }
 ```
