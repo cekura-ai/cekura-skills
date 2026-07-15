@@ -73,7 +73,7 @@ POST /test_framework/v1/scenarios/run_scenarios/
 |--------|------|---------|
 | GET | `/test_framework/v1/personalities/` | List available personalities |
 
-Default personality: **693** (Normal Male, English/American)
+Default personality: **693** (Normal Male, English/American) — for purely English scenarios only. For other languages pick a language-matched personality from the list above (`language=<code>`); use a multilingual (`language=multi`) one when a scenario mixes languages.
 
 ### Folders
 ```json

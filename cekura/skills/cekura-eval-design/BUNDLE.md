@@ -18,6 +18,10 @@ metadata:
   version: "0.5.0"
 ---
 
+> **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
+> Full reference files included at the end of this document: `expected-outcomes.md`, `coverage-patterns.md`.
+> Any other `references/…` file mentioned below ships only with the installed plugin — install it for the complete set: https://docs.cekura.ai/mcp/overview
+
 <!-- cekura-ack-tag: ack:cekura-eval-design:7k3m4q -->
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
@@ -480,3 +484,364 @@ After completing eval design, the user typically needs:
 - **`examples/csv-eval-creation.md`** — CSV-to-evaluator workflow
 - **`examples/workflow-eval.md`** — Single workflow evaluator example
 - **`examples/red-team-eval.md`** — Red-team evaluator example
+
+
+
+---
+
+## Appended reference — expected-outcomes.md
+
+# Expected Outcomes Reference
+
+## What Is Expected Outcome
+
+`expected_outcome_prompt` is a string field on each evaluator that describes what the main agent should achieve in the test. After each run, an LLM judge reads the call transcript and checks every statement against what actually happened.
+
+Key facts:
+- **Transcript-only** — the judge has no access to audio; it cannot evaluate tone, pronunciation, or speech quality
+- **Requires the metric** — the `expected_outcome_prompt` field alone does nothing; you must also attach the **Expected Outcome** predefined metric to the evaluator
+- **Speaker labels** — always refer to speakers as **"main agent"** and **"testing agent"**; never "user", "bot", "AI", or "assistant"
+
+---
+
+## Scoring Model
+
+The judge evaluates each statement independently and assigns an alignment status:
+
+| Alignment | Meaning |
+|-----------|---------|
+| `yes` | The main agent's behavior satisfies the requirement |
+| `no` | The main agent violated or failed to meet the requirement |
+| `blocked` | The prerequisite for this requirement never occurred in the call |
+
+Final score:
+
+| Outcome | Score |
+|---------|-------|
+| All statements `yes` | **100** — pass |
+| Any statement `no` | **0** — fail |
+| Any statement `blocked`, none `no` | **50** — needs review |
+
+**When to expect "blocked":** Use sparingly. It applies when the condition that would trigger the tested behavior never arose — e.g., `"The main agent should transfer the call when the testing agent asks about prescriptions"` will be blocked if no prescription question was asked. When the testing agent ends the call before the agent can act, that is also blocked, not a failure.
+
+**Transfer attempts count as success:** If the expected outcome requires a transfer and the agent attempted one (even if the call dropped), the judge marks it `yes`.
+
+**Volunteered information counts:** If the testing agent volunteered information the main agent was supposed to ask for, the judge treats the requirement as met.
+
+---
+
+## Writing Rules
+
+Every statement must start with **"The main agent should"**. Beyond that, these rules apply:
+
+### 0. One statement per line
+Write each statement on its own line. Separate multiple statements with a newline — do NOT concatenate them into a single paragraph separated by ". ".
+
+✅ Correct:
+```
+The main agent should respond to the DTMF input 123 sent with the hash terminator.
+The main agent should respond to DTMF input 45 sent without a terminator after the 2 second timeout flush.
+The main agent should respond to DTMF input 7 as a single digit flushed after 2 seconds.
+```
+
+❌ Wrong:
+```
+The main agent should respond to the DTMF input 123 sent with the hash terminator. The main agent should respond to DTMF input 45 sent without a terminator after the 2 second timeout flush. The main agent should respond to DTMF input 7 as a single digit flushed after 2 seconds.
+```
+
+### 1. Atomic statements — one verifiable demand per line
+Prefer exactly one verifiable demand per statement; never more than two distinct actions. Split every "and"-joined aggregate ("confirms the booking **and** mentions the document requirement" → two lines). Splitting never creates new obligations — each fragment must itself be required by the agent description, and a fragment may not be NARROWER than the description's wording.
+
+Keep the list short: 2–6 statements for a typical scenario, up to 5 for legacy suites. A short scenario that ends at its last deterministic point gets FEW lines — never pad to a target count.
+
+### 1a. Every statement must be fired by a written step
+Each outcome must be triggered by an explicit scenario step (or the opening). Drop conditional lines whose condition the script never produces — they will come back `blocked` on every run. If the scenario offers multiple valid branches, accept any of them in one either/or line rather than demanding one side.
+
+### 1b. Verb AND object must both be licensed
+Both the action verb and its object must come from the same source — the agent description, a mock-tool output the agent verbalizes, or a KB fact. "Transfer" being mentioned doesn't license "transfer **to a manager**" if the description only defines transfers elsewhere. Adjacent workflow steps license only timing, never new content: "ask for X" does NOT license "explain X", "handle refusal of X", or "reassure about X". Topics the caller may raise don't license the agent raising them. When a behavior isn't licensed, omit the line — never invent a fallback.
+
+### 1c. Offering is not executing — match the tool state
+If the action doesn't complete in the scripted flow (caller hesitates, defers, hangs up, or a terminal handoff happens first), describe only the partial state reached — "offered", "gathered", "discussed" — never "booked"/"completed". For a terminal transfer, outcomes end at "the main agent transfers the call with appropriate context"; nothing post-transfer.
+
+### 1d. Never grade who hung up
+Write no outcome for the end-call step, hangup attribution, or call-end reason unless the user explicitly asked to test termination. Grade only a mandated verbal closing phrase, if the description requires one. (End-call is structural, not behavior under test.)
+
+### 1e. Order lines
+When the description mandates X before Y within the scenario's deterministic span, write ONE order line naming both events with scenario-scoped anchors ("The main agent should ask for the date of birth before providing any account details"). The order line evaluates order only — the events themselves get their own atomic lines if independently required.
+
+### 2. Semantic content only — except for fact lookups
+Outcomes test functional intent, not verbatim wording. The agent paraphrasing a response is still a pass. Do not quote expected sentences.
+
+**Exception — KB/fact lookups:** When the test is verifying that the agent retrieved and stated a specific piece of data (phone number, address, name, date), the exact value is required. Use backticks to mark the expected data point:
+```
+The main agent should state the office address as `123 Medical Lane, Suite 100`
+```
+For descriptive KB data (policies, how-to explanations), check core meaning — phrasing variation is acceptable:
+```
+The main agent should explain that appointments can be cancelled up to 24 hours in advance
+```
+Specific names and identifiers are acceptable in lookup statements because the fact itself is what's being tested.
+
+### 3. No subjective descriptors
+Ban: "appropriately", "warmly", "empathetically", "politely", "professionally", "briefly", "clearly", "naturally". Replace with functional descriptions of what the agent says or does.
+
+### 4. Binary verifiability
+Every statement must be objectively True/False from the transcript. If a reasonable reader could disagree on whether the transcript satisfies the requirement, rewrite it.
+
+### 5. Agent-centric
+Focus on what the **main agent** does — not what the caller experiences, feels, or receives. "The caller will feel helped" is not a valid outcome.
+
+### 6. No call closing / farewells
+Do not test goodbye or farewell statements unless the `extra_instructions` explicitly require testing that behavior. The last testable outcome is the agent's response to the testing agent's final substantive statement.
+
+### 7. No test-setup rationale
+The expected outcome describes only what the judge should observe in the transcript. Do not explain how or why the test is structured — dynamic variable values, timeout thresholds, hold durations, or any other test-design context belong in the scenario **Instructions**, not the expected outcome.
+
+✅ Correct:
+```
+The main agent should confirm the booking and provide a reference number.
+```
+
+❌ Wrong:
+```
+The main agent should confirm the booking. retryCount=3 is set via dynamic variable so the retry loop reliably exercises the fallback path.
+```
+
+---
+
+## Prioritization Hierarchy
+
+When choosing which statements to include, follow this priority order — if you need to cut, sacrifice lower-priority items first:
+
+1. **Core Test Goal** — the primary functional or behavioral objective of this specific test; always present
+2. **Critical Prerequisites** — steps the main agent must complete to enable the core goal (e.g., collecting required data before booking); fully represent these
+3. **The Hard Stop** — the main agent's final verbal action within the test's scope
+4. **Other Key Functional Steps** — other mandatory actions from the agent description that fall within the test's scope
+
+> **Behavioral tests:** If the test goal is to verify how the agent handles a specific caller behavior (e.g., unprofessionalism, confusion, hostility), at least one statement must explicitly test that behavioral reaction — e.g., `"The main agent should proceed with the next question without reacting to the testing agent's unprofessional comment."`
+
+---
+
+## Metric Variables in Expected Outcome
+
+`expected_outcome_prompt` supports `{{variable_name}}` substitution — the same system used in LLM Judge metric prompts. This is useful when the expected outcome depends on test-profile data or dynamic call context.
+
+> **Already injected automatically** — `{{transcript}}`, `{{call_end_reason}}`, and call duration are provided to the judge automatically. Do not include them in your prompt.
+
+### Available Variables
+
+#### System Variables (available everywhere)
+| Variable | Description |
+|----------|-------------|
+| `{{date}}` | Current date as YYYY-MM-DD |
+| `{{timestamp}}` | ISO 8601 timestamp with timezone |
+
+#### Simulation Variables
+| Variable | Description |
+|----------|-------------|
+| `{{test_profile.*}}` | Structured test profile data — names, DOB, phone, addresses, etc. |
+| `{{metadata.*}}` | Custom key-value pairs plus system fields like `ringing_duration` |
+| `{{provider_call_data.*}}` | Complete call details from VAPI, Retell, ElevenLabs, etc. |
+| `{{evaluator.*}}` | Evaluator instructions and conditional action details |
+| `{{agent.*}}` | Agent configuration — name, description, language code, inbound status, contact number |
+
+Variables are **case-sensitive**. Access nested fields with dot notation: `{{test_profile.caller_name}}` or `{{metadata.customer_id}}`. Not all variables exist in every call context — handle missing values appropriately.
+
+### Example
+
+```
+The main agent should greet the caller using the name {{test_profile.caller_name}} and ask for their date of birth to proceed with verification
+```
+
+This lets the expected outcome stay accurate across different test profiles without hardcoding identity data.
+
+**Copy the token, don't paraphrase.** When a scenario step uses `{{test_profile.field}}`, any outcome referencing that value must use the IDENTICAL token — do not re-describe the value in prose. A paraphrase ("should confirm the caller's premium plan") still counts as hardcoding and breaks when the profile changes; write "should confirm the caller's {{test_profile.selected_plan}}".
+
+---
+
+## Good vs Bad Examples
+
+| Bad | Good | Why |
+|-----|------|-----|
+| `"The main agent should state the message: 'The best next step would be to call the facility directly.'"` | `"The main agent should advise the testing agent to contact the facility directly."` | Verbatim phrases cause false failures when the agent paraphrases |
+| `"The main agent should ask for the caller's name, ask for their mother's date of birth, and state no appointment was found."` | `"The main agent should ask for the caller's name and the mother's date of birth."` + `"The main agent should state that no appointment was found for the specified date."` | 3 actions → split into 2 statements |
+| `"The main agent should warmly and professionally handle the request."` | `"The main agent should proceed with the next question without reacting to the testing agent's unprofessional comment."` | Subjective descriptors ("warmly", "professionally") are not verifiable |
+| `"The main agent should provide the caller with a great experience."` | `"The main agent should book the appointment and provide arrival instructions."` | Caller experience is not agent-centric or measurable |
+| `"The main agent should confirm the appointment for Thursday at 2pm."` | `"The main agent should confirm the appointment date and time with the testing agent."` | Hardcoded values cause false failures across different test data |
+| `"The main agent should collect the caller's details. timeout=30 is passed as a dynamic variable so the silence window reliably triggers the fallback."` | `"The main agent should collect the caller's name and date of birth."` | Test-setup rationale (dynamic variable values, timeout thresholds) is not observable behavior; it belongs in the scenario Instructions |
+
+---
+
+## Common Pitfalls
+
+- **Missing metric attachment** — the `expected_outcome_prompt` field alone does nothing; attach the Expected Outcome predefined metric to the evaluator
+- **Including auto-injected variables** — `{{transcript}}`, `{{call_end_reason}}`, and call duration are provided automatically; adding them manually causes duplication
+- **Wrong speaker labels** — always use "main agent" and "testing agent"; never "user", "assistant", "bot", or "AI"
+- **Exact phrases or hardcoded values** — specifying exact dates, times, or verbatim sentences causes false failures when the agent paraphrases or uses different test data
+- **Subjective descriptors** — "appropriately", "warmly", "professionally" are not verifiable; replace with functional descriptions
+- **Testing call closing** — farewell statements are out of scope unless the test explicitly requires it
+- **3+ actions in one statement** — split into multiple statements, each with max 2 distinct actions
+- **Test-setup rationale in expected outcome** — dynamic variable values, timeout thresholds, hold durations, and explanations of why the test is structured a certain way are not observable behavior; move them to the scenario Instructions field
+- **Outcomes no step triggers** — a line whose condition the scripted flow never produces returns `blocked` on every run; either add the causing step or delete the line
+- **Bundled demands** — "and"-joined aggregates fail as a unit; one verifiable demand per line
+- **Grading completion the flow never reaches** — if the caller defers or a transfer happens first, demand "offered/gathered", not "booked/completed"
+- **Grading who hung up** — end-call mechanics are structural; don't test them unless explicitly asked
+- **Paraphrased profile values** — restating a `{{test_profile.*}}` value in prose is still hardcoding; copy the token
+
+
+
+---
+
+## Appended reference — coverage-patterns.md
+
+# Test Coverage Patterns
+
+## Coverage Strategy
+
+A comprehensive eval suite covers all major workflows, their edge cases, and adversarial scenarios. This reference shows real-world coverage patterns from deployed agents.
+
+## Diversity & Friction Distribution
+
+When generating a batch of scenarios (auto-gen or manual), apply this distribution:
+
+- **~30% happy-path** (cooperative caller completing the full workflow), **~70% friction** — with at least one happy-path scenario in any batch.
+- **Every scenario opens with a DIFFERENT caller persona** inferred from the agent's domain (healthcare: worried patient, impatient caregiver, confused elderly caller). No two scenarios share the same opening persona.
+- **Each scenario progresses through MULTIPLE workflow steps** — not just the first one or two.
+- **Friction appears at DIFFERENT points across the batch**: some early-then-cooperative, some smooth-start-with-mid-flow pushback, some late friction (refuses to confirm, changes mind), some multi-point.
+- **Friction must be SPECIFIC and behavioral**, never "the caller is difficult": refuses to confirm identity until told why it's needed; challenges a specific piece of information; asks the same question repeatedly despite an answer; suddenly asks for a human mid-flow.
+- **Every scenario must be grounded** in an actual agent capability — a workflow branch in the description, a configured tool, a KB fact, or a general conduct policy (professionalism, safety, escalation). Reach the target count by permuting grounded branches, value variants, friction positions, and personas — never by inventing capabilities the agent doesn't have. Friction may never be premised on environment failures the scenario can't control or on the main agent misbehaving.
+- **KB grounding**: when knowledge-base content exists, enrich scenarios with 1–2 concrete named facts from it ("asks whether the clinic accepts Blue Shield PPO", not "asks about insurance"). Not every scenario needs KB facts — workflow-only scenarios are equally valid. When NO KB exists, don't write scenarios expecting the agent to answer factual questions — the only valid expected behaviors are clarifying, saying it can't find that information, transferring, or redirecting to a defined workflow.
+
+## Example: Medical Clinic Agent (BCHS/Kouper — 54 evaluators)
+
+### Category Breakdown
+
+| Category | Code | Count | Description |
+|----------|------|-------|-------------|
+| Scheduling | S | 10 | New/established patients, adult/pediatric, insurance/no-insurance, sliding scale |
+| Rescheduling | RS | 6 | Same/different provider, no appointments, multiple appointments, tool failures |
+| Cancellation | CN | 6 | Cancel + decline reschedule, cancel + rebook, no appointments, tool errors |
+| Verification | V | 7 | Spouse/authorized rep, name spelling corrections, patient not found retries |
+| Intake | I | 3 | Ambiguous visit reason, billing concerns, multiple insurance plans |
+| Scheduling Edge Cases | SC | 4 | No slots, confirmation rejected, tool failures |
+| Overall Flow | OF | 4 | FAQ-only, behavioral health transfer, billing transfer, human request |
+| Safety | SA | 9 | Chest pain, emergency symptoms, suicidal ideation, symptom triage |
+| Error | ER | 4 | Angry caller, deceased patient, clinical question, silent tool failure |
+| Spanish | SP | 1 | Full scheduling call in Spanish |
+
+### Priority Distribution
+
+- **Must-have**: 39 evaluators (72%) — core workflows that must work correctly
+- **Nice-to-have**: 15 evaluators (28%) — edge cases and enhancements
+
+### Coverage Principles from BCHS
+
+1. **Every workflow gets a happy path**: S-01 through S-10 cover all scheduling variants
+2. **Every workflow gets error paths**: RS-06 (tool fails 3+ times), CN-05 (cancel tool error)
+3. **Verification gets its own category**: Identity verification is critical for medical — 7 dedicated scenarios
+4. **Safety is heavily covered**: 9 scenarios for medical emergency handling (highest consequence of failure)
+5. **Cross-workflow scenarios exist**: CN-02 tests cancel → immediately rebook (two workflows in one call)
+
+## Example: Staffing Platform Agent (Traba — 3 metrics, implicit eval patterns)
+
+### Coverage Areas
+
+| Area | What to Test |
+|------|-------------|
+| Interview Flow | Pay expectations, commute, availability, work experience questions |
+| Tool Performance | evaluate_transcript_prod timing, tool chain stalls |
+| Onboarding | App installation guidance, silence persistence, step-by-step navigation |
+| Escalation | Get Help redirect when user is stuck |
+| Multi-agent Transfer | Handoff between interview → evaluation → onboarding agents |
+
+### Key Insight: Traba has fewer evals but more metrics
+
+Traba's testing strategy relies more on metrics (measuring call quality on real production calls) than on simulated evals. This is appropriate for outbound calls where the agent initiates — you can't easily simulate the full multi-agent flow. Instead, real calls are evaluated by metrics.
+
+## Building a Coverage Matrix
+
+For any new agent, build coverage by:
+
+1. **List all workflows** from the agent description (booking, cancellation, transfer, etc.)
+2. **For each workflow, identify**:
+   - Happy path (standard successful completion)
+   - User variations (new vs existing, adult vs pediatric, etc.)
+   - Error paths (tool failures, retries exhausted)
+   - Edge cases (multiple items, confirmation rejection, user changes mind)
+3. **Add cross-cutting concerns**:
+   - Verification / authorization
+   - Safety / emergency handling
+   - Language support
+   - Adversarial / red team scenarios
+4. **Prioritize**: Must-have = workflows that handle real money, safety, or core business logic
+
+## Naming Convention
+
+Use consistent ID + name format for easy tracking:
+
+```
+{CATEGORY_CODE}-{NUMBER}: {Brief Description}
+```
+
+Examples:
+- `S-01: New adult patient with insurance`
+- `RS-03: No future appointments nothing to reschedule`
+- `SA-07: Suicidal ideation immediate transfer`
+
+Keep names under 80 chars (API limit on the `name` field).
+
+## Eval Types
+
+A complete suite has coverage across these categories. Each type can be authored as **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule.
+
+### Workflow Evals (Core)
+
+Happy path for each major workflow the agent supports — appointment booking, account lookup, password reset, etc. Cover every primary action the agent is supposed to perform end-to-end.
+
+### Deterministic / Unit Test Evals
+
+Conditional-actions evaluators for repeatable, structured testing of specific flows. Use when you need byte-identical behavior every run (regression, compliance verbatim, IVR navigation, DTMF entry).
+
+### Edge Case Evals
+
+Tool failures, multiple matching records, confirmation rejection, retry exhaustion, ambiguous user input. Each edge case is a separate evaluator with its own expected outcome.
+
+### Red Team Evals
+
+Prompt injection, social engineering, information extraction, off-topic manipulation, jailbreak attempts. Specific scripted attacks belong in conditional-actions evaluators (one evaluator per expected outcome — refusal vs compliance). Free-form probing stays behavioral.
+
+### Error Handling Evals
+
+Angry caller, deceased patient, clinical questions, silent tool failures, hostile callers. Tone-driven scenarios are usually behavioral; specific de-escalation flows can be conditional actions.
+
+### Multi-Language Evals
+
+Coverage across every language the agent supports. Set `scenario_language` and pair with a personality that matches. Behavioral covers tone/quality testing; conditional actions cover compliance-verbatim phrasing in the target language.
+
+## Execution Modes
+
+| Mode | Speed | Cost | Best For |
+|------|-------|------|----------|
+| **Voice** | Slow | High | Final validation, voice-specific testing (latency, interruptions, TTS quality) |
+| **Text/Chat** | Fast | Low | Logic testing, rapid iteration, flow validation without voice overhead |
+| **WebSocket** | Medium | Medium | Real-time agents, agents using WebSocket-based providers |
+| **Pipecat** | Medium | Medium | Pipecat framework agents |
+
+**Practical guidance:** Use text/chat for development iteration (fast, cheap, tests logic). Switch to voice for final validation before deployment. WebSocket for agents built on WebSocket providers.
+
+**Test profiles in chat/websocket:** Test profile data is passed to the main agent in chat and websocket runs, enabling tool verification without voice calls.
+
+## Create Evaluator from Transcript
+
+Cekura can create an evaluator directly from a real call transcript. Useful when:
+- A production call demonstrates an important scenario
+- You want to reproduce a specific customer interaction as a repeatable test
+- You're building regression tests from real-world edge cases
+
+**Endpoint:** `POST /test_framework/v1/scenarios/create_scenario_from_transcript/`
+
+**How it works:** Pass an observability call log ID. The endpoint analyzes the transcript, extracts the caller's behavior, and creates an evaluator that replays a similar conversation. The generated scenario captures the caller's intent, actions, and conversational flow — not an exact script replay.
+
+**When to use:** After reviewing production calls in observability, identify calls that represent important test scenarios (edge cases, failures, complex workflows) and convert them directly into evaluators. This is faster and more accurate than manually writing instructions to reproduce the scenario.
+
+**Post-creation:** Always review the generated evaluator — the auto-extraction may need refinement. Attach metrics, assign a test profile if identity data is involved, set the folder path, and enable tools.
