@@ -60,19 +60,16 @@ If the provider API key and assistant ID are already set:
 
 ## 7b-2. Option A (custom) — Auto-Fetch from a self-hosted MCP server
 
-For **self-hosted / custom agents** that expose their own [MCP](https://modelcontextprotocol.io) server (JSON-RPC 2.0), auto-fetch works directly via the API/MCP — no managed provider needed. Cekura reads the server's tool list, generates mock data, then hosts a drop-in mock MCP endpoint you point the agent at (so 7e wiring is a single endpoint swap, not per-tool). Drive it yourself with the Cekura MCP tools:
+For **self-hosted / custom agents** that expose their own [MCP](https://modelcontextprotocol.io) server (JSON-RPC 2.0), auto-fetch discovers the tools and stands up a single Cekura-hosted mock MCP endpoint the agent points at — no managed provider, no per-tool wiring. These are REST endpoints (not exposed as MCP tools), so drive them with the `X-CEKURA-API-KEY` header:
 
-1. **Auto-fetch** — `aiagents_tools_auto_fetch_create` with `provider="custom"`, `mcp_server_url`, optional `mcp_server_headers` (auth). Reads `tools/list` and LLM-generates mock I/O. Returns a `progress_id`.
-   - URL is SSRF-validated (http/https only; private/loopback/metadata IPs blocked; `Host`/`Cookie`/`X-Forwarded-*` headers rejected). Headers stored encrypted. One MCP server per agent.
-2. **Poll** — `aiagents_tools_auto_fetch_progress_retrieve` until `status="completed"`. Saves mock tools; does **not** activate mocking.
-3. **Review/edit** the generated mock data (7d design rules).
-4. **Enable mock** — `aiagents_tools_enable_mock_create` (`provider="custom"`), then poll `aiagents_tools_enable_mock_progress_retrieve`. The completed response returns `mcp_endpoints[]` (`{mock_index, url, tool_names}`) — the Cekura-hosted mock MCP endpoint.
-5. **Point the agent at it for test runs** — set the agent's MCP client to the returned `url`. Read the URL from `aiagents_tools_mock_status_retrieve`; never hand-build it.
-6. **Disable** later with `aiagents_tools_disable_mock_create` (`provider="custom"`); the stored `mcp_server_url` is preserved for re-enable.
+1. **Auto-fetch** — `POST /test_framework/v1/aiagents/{agent_id}/tools/auto-fetch/` with `{"provider":"custom","mcp_server_url":"…","mcp_server_headers":{…}}`. Cekura reads `tools/list`, LLM-generates mock I/O, and registers every tool under one mock MCP endpoint (`/mcp/1/`). Returns a `progress_id`.
+   - URL is SSRF-validated (http/https only; private/loopback/metadata IPs blocked; `Host`/`Cookie`/`X-Forwarded-*` headers rejected); headers stored encrypted; one MCP server per agent (re-fetch the same URL to refresh tools).
+2. **Poll** — `GET .../tools/auto-fetch-progress/?progress_id=<id>` until `status="completed"`. This is the **only** setup call — there is no separate enable step for custom.
+3. **Review/edit** the generated mock data (7d rules); re-fetching preserves tools that already have mock data.
+4. **Get the mock MCP URL** — `GET .../tools/mock-status/` → `mcp_endpoints[0].url` (the stable `/mcp/1/`). Read it from the API; never hand-build it.
+5. **Point the agent at it for test runs** (see 7e) — set the agent's MCP client to that URL. Enabling/disabling is customer-side: point at the URL to mock, or back at the real server to stop. Cekura can't flip a self-hosted agent for you.
 
 Full flow and JSON-RPC examples: https://docs.cekura.ai/documentation/integrations/custom-integration#mock-an-mcp-server
-
-> **If the `aiagents_tools_*` MCP tools aren't available**, the Cekura MCP server hasn't regenerated from the latest spec yet. Fall back to raw REST against the same paths (see `references/api-reference.md` → "Auto-fetch & mock-mode endpoints") with the `X-CEKURA-API-KEY` header until the tools appear.
 
 > The mock endpoint makes tools *respond*, but tool-based metrics score the **transcript** — the self-hosted agent must still emit `function_call` messages in the transcript it posts.
 
@@ -135,7 +132,7 @@ For providers without auto-injection (everything except LiveKit + Cekura SDK), t
 
 - **In agent code** — wrap the tool call so that when running in test mode it hits `POST /test_framework/v1/mock-tools/<tool_name>/invoke/` instead of the real API. Branch on an env var (e.g. `CEKURA_USE_MOCK_TOOLS=1`) so production traffic still uses real tools.
 - **In the provider configuration** — some providers (e.g. VAPI, Retell, ElevenLabs) let you point a tool's URL at an external endpoint. Set that URL to Cekura's mock endpoint for the tool. Tools auto-fetched in 7b are already wired this way.
-- **Via a mock MCP endpoint (custom/self-hosted)** — if you used 7b-2, point the agent's MCP client at the single `mcp_endpoints[].url` from enable-mock instead of rewriting each tool. It speaks standard MCP JSON-RPC 2.0 and serves all the agent's mocked tools.
+- **Via a mock MCP endpoint (custom/self-hosted)** — if you used 7b-2, point the agent's MCP client at the single `mcp_endpoints[0].url` from `mock-status` instead of rewriting each tool. It speaks standard MCP JSON-RPC 2.0 and serves all the agent's mocked tools.
 
 If the agent has no path to hit Cekura's mock endpoint, the mocks defined here will sit unused during test runs and tool calls will hit real APIs.
 
