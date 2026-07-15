@@ -56,7 +56,9 @@ Then collect the telephony essentials in ONE clarification — **phone number (o
 
 ## 2a′. Bland / KoreAI / Genesys / Cisco — standard named providers
 
-No auto-import for these, so collect their credentials per the create-agent matrix (e.g. Bland: `provider.agent_id` = pathway_id; Cisco: no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.
+No auto-import for these, so collect their credentials per the create-agent matrix (e.g. Bland: `provider.agent_id` = pathway_id; Cisco: no credentials) **plus** the manual essentials of 2c (the COMPLETE system prompt via the description gate). The two rules above apply unchanged.
+
+**These are PHONE / contact-centre voice agents, so they are telephony — the run must know who dials and in what language.** Collect, in ONE clarification, **inbound-or-outbound AND the conversation language** — ask both explicitly; **never assume English** and never infer the direction. This is not optional and not specific to a phone-number connection: a Bland pathway (or Cisco/Genesys/KoreAI) has no number in the create payload but still needs both. Creating one of these without direction + language is a bug (and the runtime gate will block it).
 
 ## 2b. LiveKit / Pipecat — config-only connection (no SDK, no code changes)
 
