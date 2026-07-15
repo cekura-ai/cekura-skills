@@ -285,22 +285,23 @@ Keep `provider.type = pipecat` regardless of connection mode.
 
 ---
 
-## Chirp
+## WebSocket voice (raw-PCM)
+
+Cekura dials your `wss://` endpoint and streams 16 kHz raw PCM (the CHIRP protocol).
+Create as `provider.type = "custom"` with the endpoint under `telephony`:
 
 ```json
 {
-  "name": "Chirp Agent",
+  "name": "WebSocket Voice Agent",
   "description": "...",
   "project": 123,
   "provider": {
-    "type": "chirp",
-    "credentials": {
-      "config": {
-        "chirp_websocket_url": "<wss://your-host/voice — required, raw PCM 16 kHz>",
-        "chirp_basic_auth_username": "<optional>",
-        "chirp_basic_auth_password": "<optional>"
-      }
-    }
+    "type": "custom"
+  },
+  "telephony": {
+    "websocket_url": "<wss://your-host/voice — required, raw PCM 16 kHz>",
+    "inbound": true,
+    "websocket_auth": { "username": "<optional>", "password": "<optional>" }
   }
 }
 ```
@@ -464,15 +465,15 @@ Message roles: `bot`, `user`, `system`, `function_call`, `function_call_result`
 
 Provider rows only. Connection modes (SIP, WebSocket, chat, PSTN, WebRTC) are picked independently.
 
-| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Cisco | Chirp | KoreAI | Genesys | Self-hosted |
-|---------|------|--------|------------|---------|---------|-------|-----------|-------|-------|--------|---------|-------------|
-| Phone (PSTN) | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | No | No | Yes |
-| WebRTC | Yes | Yes | No | Yes | Yes | No | No | No | No | No | No | No |
-| WebSocket voice | No | No | No | No | No | No | No | No | Yes | No | No | No |
-| Chat / Text | Yes | Yes | Yes | Yes | No | Yes | No | No | No | Yes | Yes | Yes |
-| **Auto-import agent** | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
-| Auto-fetch calls | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
-| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No | No |
-| Auto-sync prompt | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
-| Outbound auto-call | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No |
-| Latency metrics | No | No | No | Yes | No | No | No | No | No | No | No | No |
+| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Cisco | KoreAI | Genesys | Self-hosted |
+|---------|------|--------|------------|---------|---------|-------|-----------|-------|--------|---------|-------------|
+| Phone (PSTN) | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | No | Yes |
+| WebRTC | Yes | Yes | No | Yes | Yes | No | No | No | No | No | No |
+| WebSocket voice | No | No | No | No | No | No | No | No | No | No | Yes |
+| Chat / Text | Yes | Yes | Yes | Yes | No | Yes | No | No | Yes | Yes | Yes |
+| **Auto-import agent** | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No |
+| Auto-fetch calls | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No |
+| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No |
+| Auto-sync prompt | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No |
+| Outbound auto-call | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | No |
+| Latency metrics | No | No | No | Yes | No | No | No | No | No | No | No |

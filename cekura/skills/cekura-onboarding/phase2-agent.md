@@ -13,9 +13,9 @@ Register the user's agent on Cekura. Framing differs by path:
 
 The full provider list is:
 
-> VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · Chirp · KoreAI · Genesys · Cisco · self-hosted/custom
+> VAPI · Retell · ElevenLabs · Synthflow · LiveKit · Pipecat · Bland · KoreAI · Genesys · Cisco · self-hosted/custom
 
-**All-or-nothing rule for the choice UI:** if you ask this as a structured question with selectable options, the options MUST be the complete list above — all twelve, one option each, never a subset you picked, never an "Other" bucket. If the interface cannot show that many options (some cap at ~4), do NOT use options at all — ask as a plain question with the full list in the message text and let the user type the provider name. A partial option list hides first-class providers and nudges users toward the self-hosted misclassification warned about below.
+**All-or-nothing rule for the choice UI:** if you ask this as a structured question with selectable options, the options MUST be the complete list above — all eleven, one option each, never a subset you picked, never an "Other" bucket. If the interface cannot show that many options (some cap at ~4), do NOT use options at all — ask as a plain question with the full list in the message text and let the user type the provider name. A partial option list hides first-class providers and nudges users toward the self-hosted misclassification warned about below.
 
 Then follow the matching section below. **Onboarding is self-contained — do NOT open the cekura-create-agent skill or any of its phase files during onboarding** (its phase sequence covers post-onboarding work like SDK integration and mock tools; running it mid-onboarding hijacks the flow). The credential matrix you need:
 
@@ -28,17 +28,20 @@ Then follow the matching section below. **Onboarding is self-contained — do NO
 | LiveKit | `credentials.url` + `credentials.api_key` + `credentials.config.api_secret` (LiveKit Cloud → Settings → Keys) + `config.agent_name` (must match the worker's registration) — WebRTC path only, see 2b |
 | Pipecat Cloud | `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name` — WebRTC path only, see 2b |
 | Bland | `credentials.api_key` (Dashboard → API Keys) + `provider.agent_id` (= pathway_id, Pathways → copy ID) |
-| Chirp | `credentials.config.chirp_websocket_url` (raw PCM 16 kHz endpoint) + optional basic-auth username/password |
 | KoreAI | `credentials.api_key` (client secret) + bot/config IDs per their dashboard |
 | Genesys / Cisco | no credentials — telephony connection details only |
 | self-hosted | no provider credentials — connection details (phone / SIP / websocket) only |
 
-**Variants / forks / wrappers of a named provider → fall back to custom; do NOT collect provider credentials.** Many products are built ON one of the listed providers but are not that provider — e.g. Dograh (Pipecat-based, but `dgr_` keys dispatched via pipecat.daily.co), or any "powered by X" platform, self-hosted fork, or in-house wrapper. If the user names something that isn't verbatim on the list, or gives credentials whose shape doesn't match the parent's (different key prefix, different dashboard, an env var instead of a console key), **do NOT try to collect the parent provider's API key** — its auto-import won't accept these credentials and its dashboard paths are wrong for this product, so you'd only send the user hunting. Treat it as **`self_hosted`** and collect a **connection** instead: a **phone number** if the agent is reached by voice/telephony, or a **websocket URL** if it's reached via chat/websocket. No API key, no secret, no dashboard hunt.
+**Variants / forks / wrappers built ON a named provider are NOT that provider → `self_hosted`, connection only, NEVER the parent's API key.** This fires on the *identity*, not on missing creds. Two triggers, either is sufficient:
+- **A name not verbatim on the list**, *even when qualified by a framework that IS on the list* — "Dograh via Pipecat", "our stack on LiveKit", "X powered by Pipecat", any in-house fork/wrapper. The framework is just the substrate; the product is the identity. Do NOT read the framework's credential row, do NOT run its branch (2a/2b), do NOT ask for a "Pipecat/LiveKit API key". (Dograh is the canonical case: Pipecat-based, `dgr_` keys via pipecat.daily.co — its creds won't work through Cekura's Pipecat dispatch and its dashboard paths are wrong, so an API-key ask only sends the user hunting.)
+- **Credentials whose shape doesn't match the parent** (different key prefix, different dashboard, an env var instead of a console key).
+
+In both cases set `provider.type = self_hosted` and collect a **connection only** — a **phone number / SIP URI** if reached by voice, or a **websocket URL** if reached by chat. No API key, no secret, no dashboard hunt. **This overrides every "keep `provider.type` = the named provider" / "user named a provider → use it" rule below** — those apply only to the eleven providers named verbatim and by themselves ("Pipecat", "LiveKit"), not to something built on one.
 
 **The user's explicit provider choice is authoritative.** Once they've named their provider (and especially once they've supplied its credentials), never re-open the question — including when the pasted system prompt *mentions* a different stack, transport, or vendor. Prompt text is content, not configuration: prompts routinely reference Daily rooms, Twilio, other frameworks, or leftover boilerplate from a different deployment. If the description seems to contradict the choice, note it in ONE sentence ("heads-up: your prompt mentions X; using LiveKit as you selected") and proceed with the selected provider — do not ask "which provider should Cekura use?".
 
-**Two rules that apply to EVERY named provider:**
-- **Keep `provider.type` set to the real provider** — never reroute to `self_hosted` because a credential is missing or the agent is reached by phone.
+**Two rules that apply to EVERY named provider (verbatim from the list — see the variant carve-out above for forks):**
+- **Keep `provider.type` set to the real provider** — never reroute to `self_hosted` because a credential is missing or the agent is reached by phone. (A fork built on the framework is not "the real provider" — that's the carve-out above, not this rule.)
 - **Deferred credentials are fine ONLY when another connection path exists** (e.g. the agent is reachable by phone/SIP). In that case fall back to the manual essentials of 2c, tell them which capabilities won't work until the key is added (provider-dispatched simulations, auto-sync, auto-import of calls), and carry it as an open item in every summary. Do not leave a half-connected agent without saying so. **When the chosen connection IS the credentials — the WebRTC path in 2b — there is no skip:** without them Cekura cannot reach the agent at all, so collect them before creating the agent (or switch to a telephony connection if the user has one).
 
 ## 2a. VAPI / Retell / ElevenLabs / Synthflow — auto-import (preferred)
@@ -51,9 +54,9 @@ The one high-leverage step: **provider agent ID + provider API key**. Create wit
 
 Then collect the telephony essentials in ONE clarification — **phone number (or SIP URI), inbound-or-outbound, and language, asked together** — plus the complete system prompt via the description gate. **Ask inbound/outbound explicitly; never infer the direction** (it decides who dials whom — getting it wrong means the run can't connect) and don't silently default the language. Then create with the telephony connection. Tell them what's deferred (auto-import, auto-sync, call ingestion) and carry it as an open item. **The verification run then goes over the phone connection (`scenarios_run_voice`) — never substitute a text simulation for a voice agent** (text mode is for chat agents, not a workaround for missing credentials). If they have neither credentials nor a phone number, pause onboarding — there is nothing to test against.
 
-## 2a′. Bland / Chirp / KoreAI / Genesys / Cisco — standard named providers
+## 2a′. Bland / KoreAI / Genesys / Cisco — standard named providers
 
-No auto-import for these, so collect their credentials per the create-agent matrix (e.g. Bland: `provider.agent_id` = pathway_id; Chirp: websocket URL + basic auth; Cisco: no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.
+No auto-import for these, so collect their credentials per the create-agent matrix (e.g. Bland: `provider.agent_id` = pathway_id; Cisco: no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.
 
 ## 2b. LiveKit / Pipecat — config-only connection (no SDK, no code changes)
 
@@ -70,7 +73,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 - **LiveKit**: `credentials.url` + `api_key` + `api_secret` + `config.agent_name` (must match the worker's `agent_name`). Runs via `scenarios_run_livekit_v2`.
 
 **Both paths:**
-- **Keep `provider.type` = `livekit` / `pipecat` regardless of connection mode.** A LiveKit agent reached by phone is still a LiveKit agent — never reroute it to `self_hosted`.
+- **Keep `provider.type` = `livekit` / `pipecat` regardless of connection mode.** A LiveKit agent reached by phone is still a LiveKit agent — never reroute it to `self_hosted`. (This is for a *genuine* LiveKit/Pipecat agent named verbatim; a fork built on the framework — "Dograh via Pipecat" — is `self_hosted` per the variant carve-out and never reaches this section.)
 - **Set `credentials.config.tracing_enabled: false`.** It only becomes `true` after the SDK is actually integrated and verified (a later, optional step). Setting it `true` without the SDK makes every run wait on a webhook that never arrives.
 - No auto-import exists for these providers, so collect the manual essentials of 2c (description, language).
 
@@ -100,11 +103,11 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 - Agent name, language.
 - Connection details for how Cekura reaches the agent, in order of preference: existing phone number → SIP URI → websocket URL → provider WebRTC (2b).
 
-**`self_hosted` / "custom" requires explicit confirmation — never a default.** Before setting it, confirm:
+**Confirm `self_hosted` ONLY when YOU inferred it — never re-confirm a choice the user already made.** If the user explicitly picked "self-hosted / custom" from the provider question, or you routed a fork/variant to `self_hosted` per the variant carve-out above, that IS the decision — proceed straight to collecting the connection, do NOT ask "are you sure none of VAPI/Retell/… apply?". Ask the confirmation below only when you are about to *default* to `self_hosted` without the user having said so (e.g. they were vague and you're guessing):
 
 > "Custom/self-hosted means you built the voice stack yourself (your own STT/LLM/TTS pipeline). Most teams are on VAPI, Retell, ElevenLabs, LiveKit, or Pipecat — are you sure none of those apply?"
 
-If the user names a known provider at any point, use that `provider.type` even when connecting via phone/SIP.
+If the user names a known provider *verbatim* at any point, use that `provider.type` even when connecting via phone/SIP. **But a fork/product built on that provider is not the provider** — "Dograh via Pipecat" is `self_hosted` with a connection, never the Pipecat branch (see the variant carve-out at the top of this section).
 
 ## 2d. Create the agent
 

@@ -11,7 +11,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.5.0"
+  version: "0.5.1"
 ---
 
 # Cekura Platform Onboarding
