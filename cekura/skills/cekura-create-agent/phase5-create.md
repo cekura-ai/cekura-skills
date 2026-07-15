@@ -137,6 +137,8 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 | `telephony.inbound` | boolean, default `false` |
 | `telephony.sip_uri` | e.g. `sip:agent@domain.com` |
 | `telephony.sip_auth` | `{"username": "...", "password": "..."}` |
+| `telephony.websocket_url` | Raw-PCM 16 kHz WebSocket voice endpoint (`wss://…`); runs via `scenarios_run_chirp` |
+| `telephony.websocket_auth` | `{"username": "...", "password": "..."}` basic-auth for the WebSocket endpoint |
 | `telephony.outbound_numbers` | Array of E.164 numbers for outbound webhook validation |
 
 ---
@@ -145,7 +147,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 
 ```json
 "provider": {
-  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|koreai|genesys|cisco|self_hosted|custom",
+  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|agora|koreai|genesys|cisco|amazon_connect|telnyx|self_hosted|custom",
   "agent_id": "<voice agent ID on provider platform>",
   "credentials": {
     "api_key": "<provider API key (write-only)>",

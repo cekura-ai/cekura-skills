@@ -43,13 +43,15 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `inbound` | boolean | Default `false` |
 | `sip_uri` | string\|null | e.g. `sip:user@domain.com` |
 | `sip_auth` | object\|null | `{username, password}` |
+| `websocket_url` | string\|null | Raw-PCM 16 kHz WebSocket voice endpoint (`wss://…`); runs via `scenarios_run_chirp` |
+| `websocket_auth` | object\|null | `{username, password}` basic-auth for the WebSocket endpoint |
 | `outbound_numbers` | string[] | E.164 numbers for outbound webhook validation |
 
 ### AgentProvider
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `type` | enum | `vapi\|retell\|elevenlabs\|bland\|livekit\|pipecat\|synthflow\|koreai\|genesys\|trillet\|cisco\|self_hosted\|custom` |
+| `type` | enum | `vapi\|retell\|elevenlabs\|bland\|livekit\|pipecat\|synthflow\|agora\|koreai\|genesys\|cisco\|amazon_connect\|telnyx\|self_hosted\|custom` |
 | `agent_id` | string\|null | Voice agent ID on provider platform |
 | `credentials` | AgentCredentials\|null | `{api_key (write-only), config}` |
 | `chat_agent_details` | ChatAgentDetails\|null | `{type, config}` |
@@ -70,7 +72,6 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `synthflow` | — | `synthflow_base_url_override` |
 | `koreai` | `client_id`, `bot_id` | `host` (default: https://bots.kore.ai) |
 | `genesys` | `client_id`, `region` | — |
-| `trillet` | `workspace_id` | — |
 | `cisco` | — | — |
 | `self_hosted` | — | — (use `provider.send_post_conversation_metadata` at provider level) |
 
