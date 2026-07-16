@@ -117,6 +117,21 @@ PATCH /test_framework/v2/aiagents/{agent_id}/
 
 **Critical: Full-list replace** — always include all tools; omitting a tool removes it. GET existing `mock_tools` first, merge, then PATCH the full list.
 
+### Custom (self-hosted) MCP mock endpoints — REST only
+
+For self-hosted agents with their own MCP server, use `provider="custom"` to auto-discover tools; Cekura hosts a drop-in mock MCP endpoint the agent points at. These are **REST-only** (not exposed as MCP tools) — call with the `X-CEKURA-API-KEY` header. There is **no enable/disable step** for custom: auto-fetch sets up the mock MCP, and enabling/disabling is customer-side (point the agent's MCP client at the URL, or back at the real server).
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/test_framework/v1/aiagents/{agent_id}/tools/auto-fetch/` | Discover tools + generate mock data + register the mock MCP endpoint. `provider` ∈ `vapi\|retell\|elevenlabs\|custom`; custom needs `mcp_server_url` (+ optional `mcp_server_headers`) |
+| GET | `/test_framework/v1/aiagents/{agent_id}/tools/auto-fetch-progress/` | Poll auto-fetch (`?progress_id=`) |
+| GET | `/test_framework/v1/aiagents/{agent_id}/tools/mock-status/` | Current state; custom agents surface the stable `/mcp/1/` under `mcp_endpoints[]` (env-correct URLs) |
+
+**Runtime endpoint** (called by the agent under test; no auth):
+- `POST /test_framework/v1/aiagents/{agent_id}/mcp/{mock_index}/` — mock MCP server (JSON-RPC 2.0: `initialize`, `tools/list`, `tools/call`). Custom agents point their MCP client here.
+
+For custom agents: `mcp_server_url` is SSRF-validated (http/https only; private/loopback/metadata IPs blocked; `Host`/`Cookie`/`X-Forwarded-*` headers rejected), headers are stored encrypted, and an agent is pinned to a single MCP server.
+
 ## Knowledge Base
 
 ```
