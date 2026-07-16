@@ -36,7 +36,7 @@ POST /test_framework/v1/scenarios/
 Three fields are load-bearing:
 
 - **`scenario_type`** — must be set to the literal string `"conditional_actions"` (default is `"instruction"`). Other valid values: `"instruction"`, `"real_world_smart"`, `"real_world_fixed"`. Set this explicitly — the type is not inferred from the payload shape.
-- **`conditional_actions`** — JSON object carrying `{role, conditions[]}`. Use this field, not `instructions`.
+- **`conditional_actions`** — JSON object carrying `{role, conditions[]}` (plus an optional `functions[]` array — see "Custom Functions" below). Use this field, not `instructions`.
 - **`scenario_language`** — required when `scenario_type="conditional_actions"`. Set explicitly, or rely on the assigned `personality` to supply it (a personality's configured language is used when `scenario_language` is omitted).
 
 The `role` and `conditions[]` fields inside `conditional_actions`:
@@ -217,6 +217,97 @@ You MAY hardcode an incorrect value when the scenario explicitly requires the ca
 
 - Wrong DOB (intentional): `"It's May 10th, 1980."`
 - Correction: `"Sorry, I meant {{test_profile.dateOfBirth}}."`
+
+## Custom Functions — Live API Data (`functions[]`)
+
+Functions let the testing agent call a REST API during the call and use the response in its replies — a real order status instead of an invented one. Declare them in an optional `functions` array inside `conditional_actions` (sibling of `role` and `conditions`):
+
+```json
+"functions": [
+  {
+    "name": "lookup",
+    "type": "rest_api",
+    "auto_run": true,
+    "config": {
+      "method": "GET",
+      "url": "https://api.example.com/orders/{{test_profile.order_id}}",
+      "timeout_seconds": 5,
+      "response_mapping": {
+        "status": { "path": "$.status", "default": "unknown" },
+        "customer": "$.customer_name"
+      }
+    }
+  }
+]
+```
+
+**Function spec fields:**
+
+| Field | Notes |
+|---|---|
+| `name` | Unique; `[A-Za-z0-9_-]`, ≤64 chars. Used in tags/placeholders. |
+| `type` | `"rest_api"` — the only supported type. |
+| `auto_run` | Optional boolean, **default `true`** = runs once at call start, in the background, so values are ready for every condition. `false` = runs only via a `<function>` tag. |
+| `config.method` | `GET` or `POST`. |
+| `config.url` | `http(s)` only; supports `{{test_profile.*}}`. Must be **publicly reachable** — localhost/private-network hosts pass create-time validation but are refused at call time. |
+| `config.headers` / `config.query_params` | Flat objects; values must be strings or numbers. |
+| `config.body` | POST only. Object/array → sent as JSON; string → sent raw. |
+| `config.timeout_seconds` | 1–30; **10 if omitted**. Keep short — a tag-triggered call delays the turn waiting on it. |
+| `config.response_mapping` | Output name → JSONPath string, or `{"path": ..., "default": ...}`. |
+
+**Two references from an action string:**
+
+- `<function name="lookup"/>` — **invoking tag**: runs the function when the condition fires. Allowed on any non-first condition (`standard` or `action_followup`, fixed or non-fixed). Never on `id: 0`.
+- `{{function.lookup.status}}` — **value placeholder**: renders one mapped output into the spoken text. **`fixed_message: true` only**, and the key must be declared in that function's `response_mapping`.
+
+**Choosing the trigger:** prefer `auto_run` for data the call will need — it fetches in the background at call start, so no turn waits on the API. Use the tag when timing matters (fetch only after some exchange) or to **re-fetch**: a tag always makes a fresh request, even for a function `auto_run` already ran.
+
+**Trigger + use in one action:** put the tag before the placeholder in the same fixed action — the function completes before the text is spoken:
+
+```json
+{ "id": 2, "condition": 1, "action": "Let me check. <function name=\"lookup\"/> It shows as {{function.lookup.status}}.", "type": "action_followup", "fixed_message": true }
+```
+
+**Non-fixed grounding:** on a `fixed_message: false` action, no placeholder is needed (or allowed) — the testing agent automatically receives the function's outputs and response and phrases its reply from them: `"Mention the real order status when asked."`
+
+**Chaining:** a later function's `config` may reference an earlier function's outputs — `"url": "https://api.example.com/verify?name={{function.lookup.customer}}"`. The referenced function must have already run (`auto_run` or a tag on an earlier condition).
+
+**JSONPath subset:** dotted keys (`$.data.status`), array indices (`$.items[0]`, negative allowed), bracket keys (`$.meta["order-id"]`). No wildcards, filters, or recursion — one exact value per output.
+
+**Failure behavior:** a timeout, error response, or unreachable URL never breaks the call. Mapped outputs fall back to their declared `default`; a placeholder with no default is spoken literally (audible in the transcript — always declare defaults for placeholder-referenced outputs); on non-fixed actions the testing agent is told the lookup failed so it doesn't invent values.
+
+**Validation (rejected at create/update):** duplicate function names; unknown `type`; tag or placeholder on `id: 0`; `{{function.*}}` on a `fixed_message: false` condition; references to undefined functions; placeholder keys not declared in `response_mapping`; malformed placeholders (`{{function.lookup}}` — key part required); `timeout_seconds` outside 1–30; methods other than GET/POST; non-http(s) URLs.
+
+### API / MCP flow (create → read → update)
+
+- **Create** — `functions[]` rides inside the same `conditional_actions` object; there is no separate endpoint or field:
+
+```json
+POST /test_framework/v1/scenarios/
+{
+  "agent": 123,
+  "personality": 456,
+  "name": "CA-09: Order status — live lookup",
+  "scenario_type": "conditional_actions",
+  "scenario_language": "en",
+  "conditional_actions": {
+    "role": "You are a customer checking on an order",
+    "functions": [
+      { "name": "lookup", "type": "rest_api",
+        "config": { "method": "GET", "url": "https://api.example.com/orders/{{test_profile.order_id}}",
+          "response_mapping": { "status": { "path": "$.status", "default": "unknown" } } } }
+    ],
+    "conditions": [
+      { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, checking on my order.", "type": "standard", "fixed_message": true },
+      { "id": 1, "condition": "The agent asks for the order status you see", "action": "It shows as {{function.lookup.status}} on my side.", "type": "standard", "fixed_message": true }
+    ]
+  }
+}
+```
+
+- **Read** — retrieval returns the scenario's `instructions` as a JSON **string**; parse it to inspect `functions[]`. There is no separate functions field on the response.
+- **Update — full replace, so read-modify-write.** `conditional_actions` on an update rebuilds the stored object from exactly what you send. A PATCH that carries only `conditions` **silently deletes every function**. Always: parse the current `instructions`, apply the change, send the WHOLE object (role + conditions + functions) back.
+- **Auto-generation never emits functions.** Generated scenarios (`scenarios_generate_bg` / auto-gen) will not contain `functions[]` — add them afterward with a read-modify-write update.
 
 ## Turn-by-Turn Construction Rules
 
@@ -494,6 +585,10 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 
 `<send_sms text="..." />` triggers an SMS. Useful for testing flows where the agent confirms via SMS or where SMS verification codes are part of the flow.
 
+### Live data lookup (API-grounded responses)
+
+Declare a `rest_api` function (default `auto_run: true` fetches at call start) and reference its outputs: `{{function.name.output}}` in fixed actions for verbatim values, or plain non-fixed actions that phrase the fetched data naturally. Chain functions when one call's output feeds the next request. See "Custom Functions — Live API Data" above for the full spec, and always declare `default`s so an API failure degrades to a sane spoken value.
+
 ### Hold / silence behavior
 
 - `<hold time="Xs" />` for guaranteed dead air (not interruptible; background noise stops; multiple per action allowed).
@@ -513,6 +608,11 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - **Expecting `action_followup` to fire in the same turn.** `action_followup` fires on the **next turn** — after the testing agent sends condition X and the main agent replies. It does not fire in the same turn as condition X.
 - **Splitting same-turn actions across conditions.** Each condition is one testing-agent turn. If two testing-agent actions must happen without a main agent reply between them, they belong in the same `action` string — not split across a `standard` condition and an `action_followup`. The `action_followup` fires at the next turn (after the main agent replies); if the main agent never replies, the followup never fires and the call stalls.
 - **`action_followup` for scenarios designed to invite an interruption (e.g., a long `<silence>` tag, or an opening-line-then-silence pattern).** When the action contains a deliberate pause the main agent is likely to speak during, the interrupt restarts the whole `action_followup` from the beginning and the testing agent loops on the same sentence. Use `type: "standard"` for these scenarios so the testing agent re-evaluates conditions on each interruption and adapts to the new context. Ordinary `action_followup` actions (multi-part responses, scripted sequences, `<interruption>` placement) are fine — they fire and complete quickly and are rarely interrupted in practice.
+- **`{{function.*}}` on a non-fixed action.** Placeholders require `fixed_message: true` (validation error otherwise). Non-fixed actions don't need one — the testing agent already receives the function's results and phrases from them.
+- **Function tags or placeholders on `id: 0`.** Both are rejected on FIRST_MESSAGE. Use `auto_run` (the default) and reference the values from a later condition.
+- **No `default` on placeholder-referenced outputs.** If the API call fails or the path doesn't match, an un-defaulted placeholder is spoken literally — the testing agent says "your order is {{function.lookup.status}}" out loud. Declare a `default` for every output a fixed message references.
+- **Localhost / private-network function URLs.** Create-time validation only checks the URL is `http(s)`; internal addresses are refused at call time and the function falls back to defaults. Use a publicly reachable endpoint (e.g., a tunnel for local testing).
+- **Updating `conditional_actions` without the existing `functions[]`.** Updates are a full replace — the stored object is rebuilt from exactly what you send, so a PATCH that only carries `conditions` silently deletes every function. Read the current `instructions`, modify, and send the whole object back.
 - **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored.
 - **Stringly-typed `action_followup` references.** The `condition` field on an `action_followup` must be an **integer** matching a prior condition's `id`. String values like `"1"` are rejected.
 - **Putting the JSON object directly in `instructions`.** Use the `conditional_actions` field on the scenario create/update payload. `instructions` accepts a string only.
@@ -535,6 +635,10 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
 - [ ] `<network_simulation>` only uses `packet_loss`
 - [ ] No XML tags used with `fixed_message: false`
+- [ ] Every `<function>` tag and `{{function.*}}` placeholder references a declared function (and, for placeholders, a declared `response_mapping` output) — and none appear on `id: 0`
+- [ ] `{{function.*}}` placeholders appear only on `fixed_message: true` actions, and every referenced output declares a `default`
+- [ ] Function URLs are publicly reachable `http(s)` endpoints (no localhost/private hosts)
+- [ ] Updates send the FULL `conditional_actions` object including existing `functions[]` (updates are full-replace, not a merge)
 - [ ] The last condition ends the conversation (via `<endcall />` or a natural close)
 - [ ] `scenario_language` is set (either explicitly or via a personality with a configured language — required by validation rule 6)
 - [ ] A `personality` is set (API returns 400 without one)
@@ -565,6 +669,12 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 | `first_message` value gets overwritten unexpectedly | `first_message` was set alongside `conditional_actions` | When using `conditional_actions`, `first_message` is auto-derived from `id: 0` action. Don't set it separately. |
 | `scenario_language` validation error on conditional-actions create | Required field missing | Either set `scenario_language` explicitly, or assign a `personality` whose configured language can be inferred. |
 | `condition` field type error on `action_followup` | Passed a string like `"1"` instead of an integer | Use an integer literal: `"condition": 1` (not `"condition": "1"`). |
+| `{{function.lookup.status}}` spoken literally in the call | The function failed (or the JSONPath didn't match) and the output has no `default`; or the value was referenced before the function ran | Declare a `default` on every placeholder-referenced output; verify the JSONPath against a real response; to guarantee ordering, put the `<function>` tag before the placeholder in the same action. |
+| `references an undefined function` | A `<function>` tag or `{{function.*}}` placeholder names a function not present in `functions[]` | Match the tag/placeholder name to a declared function `name` exactly (case-sensitive). |
+| `is not a declared output of function` | Placeholder key missing from that function's `response_mapping` | Add the output to `response_mapping`, or fix the key in the placeholder. |
+| `placeholders require fixed_message=true` | `{{function.*}}` used on a non-fixed action | Set `fixed_message: true`, or drop the placeholder — non-fixed actions receive the function results automatically. |
+| Function config validates but no API call happens on the live call | URL points at localhost or a private network — refused at call time (create-time validation only checks `http(s)`) | Use a publicly reachable URL; for local testing, expose the endpoint via a tunnel. |
+| Functions silently disappeared after an update | `conditional_actions` on update is a **full replace** of the stored object; the PATCH omitted `functions[]` | Read-modify-write: parse the current `instructions`, re-attach `functions[]`, and send the whole object back. |
 
 ## Supporting Fields (When Creating the Scenario)
 
@@ -619,8 +729,8 @@ Scenario-level fields (set on the scenario, not inside the conditions):
   scenario_type      Must be "conditional_actions" (default is "instruction")
   scenario_language  Required for conditional_actions; inferred from personality if omitted
   personality        Required (any scenario type)
-  conditional_actions  JSON object {role, conditions[]} — pass on the scenario payload.
-                       Do not also set instructions or first_message; they are managed.
+  conditional_actions  JSON object {role, conditions[], functions[]?} — pass on the scenario
+                       payload. Do not also set instructions or first_message; they are managed.
 
 Action types:
   standard         Fires when conversation context matches condition string.
@@ -643,4 +753,23 @@ Test profile variables (fixed_message:true only):
   {{test_profile['key']}}                       Bracket notation (keys with spaces/special chars)
   {{test_profile.address.city}}                 Nested field
   <spell>{{test_profile.account_number}}</spell>   Combined with XML tag
+
+Custom functions (optional functions[] inside conditional_actions):
+  name        [A-Za-z0-9_-] ≤64, unique       type  "rest_api" (only type)
+  auto_run    default true → runs once at call start, in the background
+  config      method GET|POST · url public http(s) ({{test_profile.*}} ok)
+              headers/query_params (scalar values) · body (POST)
+              timeout_seconds 1–30 (10 if omitted)
+              response_mapping {out: "$.path" | {path, default}}
+  <function name="X"/>       Run X when this condition fires — any condition except id:0.
+                             Always a fresh request (re-runs even if auto_run already ran).
+  {{function.X.out}}         Render a mapped output — fixed_message:true only; key must be
+                             declared in response_mapping. Declare defaults or failures
+                             are spoken literally.
+  Non-fixed actions receive the function results automatically — no placeholder.
+  Chaining: a later function's config may reference {{function.earlier.out}}.
+  JSONPath subset: $.a.b, [0] (negative ok), ["quoted-key"] — no wildcards/filters.
+  API flow: updates FULL-REPLACE conditional_actions — always send functions[] back
+  (read-modify-write) or they are silently deleted. Auto-gen never emits functions;
+  add them after generation via an update. Retrieval: parse the instructions string.
 ```
