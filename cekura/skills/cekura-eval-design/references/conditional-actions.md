@@ -278,6 +278,37 @@ Functions let the testing agent call a REST API during the call and use the resp
 
 **Validation (rejected at create/update):** duplicate function names; unknown `type`; tag or placeholder on `id: 0`; `{{function.*}}` on a `fixed_message: false` condition; references to undefined functions; placeholder keys not declared in `response_mapping`; malformed placeholders (`{{function.lookup}}` — key part required); `timeout_seconds` outside 1–30; methods other than GET/POST; non-http(s) URLs.
 
+### API / MCP flow (create → read → update)
+
+- **Create** — `functions[]` rides inside the same `conditional_actions` object; there is no separate endpoint or field:
+
+```json
+POST /test_framework/v1/scenarios/
+{
+  "agent": 123,
+  "personality": 456,
+  "name": "CA-09: Order status — live lookup",
+  "scenario_type": "conditional_actions",
+  "scenario_language": "en",
+  "conditional_actions": {
+    "role": "You are a customer checking on an order",
+    "functions": [
+      { "name": "lookup", "type": "rest_api",
+        "config": { "method": "GET", "url": "https://api.example.com/orders/{{test_profile.order_id}}",
+          "response_mapping": { "status": { "path": "$.status", "default": "unknown" } } } }
+    ],
+    "conditions": [
+      { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, checking on my order.", "type": "standard", "fixed_message": true },
+      { "id": 1, "condition": "The agent asks for the order status you see", "action": "It shows as {{function.lookup.status}} on my side.", "type": "standard", "fixed_message": true }
+    ]
+  }
+}
+```
+
+- **Read** — retrieval returns the scenario's `instructions` as a JSON **string**; parse it to inspect `functions[]`. There is no separate functions field on the response.
+- **Update — full replace, so read-modify-write.** `conditional_actions` on an update rebuilds the stored object from exactly what you send. A PATCH that carries only `conditions` **silently deletes every function**. Always: parse the current `instructions`, apply the change, send the WHOLE object (role + conditions + functions) back.
+- **Auto-generation never emits functions.** Generated scenarios (`scenarios_generate_bg` / auto-gen) will not contain `functions[]` — add them afterward with a read-modify-write update.
+
 ## Turn-by-Turn Construction Rules
 
 Apply these rules when building the `conditions` array:
@@ -581,6 +612,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - **Function tags or placeholders on `id: 0`.** Both are rejected on FIRST_MESSAGE. Use `auto_run` (the default) and reference the values from a later condition.
 - **No `default` on placeholder-referenced outputs.** If the API call fails or the path doesn't match, an un-defaulted placeholder is spoken literally — the testing agent says "your order is {{function.lookup.status}}" out loud. Declare a `default` for every output a fixed message references.
 - **Localhost / private-network function URLs.** Create-time validation only checks the URL is `http(s)`; internal addresses are refused at call time and the function falls back to defaults. Use a publicly reachable endpoint (e.g., a tunnel for local testing).
+- **Updating `conditional_actions` without the existing `functions[]`.** Updates are a full replace — the stored object is rebuilt from exactly what you send, so a PATCH that only carries `conditions` silently deletes every function. Read the current `instructions`, modify, and send the whole object back.
 - **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored.
 - **Stringly-typed `action_followup` references.** The `condition` field on an `action_followup` must be an **integer** matching a prior condition's `id`. String values like `"1"` are rejected.
 - **Putting the JSON object directly in `instructions`.** Use the `conditional_actions` field on the scenario create/update payload. `instructions` accepts a string only.
@@ -606,6 +638,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - [ ] Every `<function>` tag and `{{function.*}}` placeholder references a declared function (and, for placeholders, a declared `response_mapping` output) — and none appear on `id: 0`
 - [ ] `{{function.*}}` placeholders appear only on `fixed_message: true` actions, and every referenced output declares a `default`
 - [ ] Function URLs are publicly reachable `http(s)` endpoints (no localhost/private hosts)
+- [ ] Updates send the FULL `conditional_actions` object including existing `functions[]` (updates are full-replace, not a merge)
 - [ ] The last condition ends the conversation (via `<endcall />` or a natural close)
 - [ ] `scenario_language` is set (either explicitly or via a personality with a configured language — required by validation rule 6)
 - [ ] A `personality` is set (API returns 400 without one)
@@ -641,6 +674,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 | `is not a declared output of function` | Placeholder key missing from that function's `response_mapping` | Add the output to `response_mapping`, or fix the key in the placeholder. |
 | `placeholders require fixed_message=true` | `{{function.*}}` used on a non-fixed action | Set `fixed_message: true`, or drop the placeholder — non-fixed actions receive the function results automatically. |
 | Function config validates but no API call happens on the live call | URL points at localhost or a private network — refused at call time (create-time validation only checks `http(s)`) | Use a publicly reachable URL; for local testing, expose the endpoint via a tunnel. |
+| Functions silently disappeared after an update | `conditional_actions` on update is a **full replace** of the stored object; the PATCH omitted `functions[]` | Read-modify-write: parse the current `instructions`, re-attach `functions[]`, and send the whole object back. |
 
 ## Supporting Fields (When Creating the Scenario)
 
@@ -735,4 +769,7 @@ Custom functions (optional functions[] inside conditional_actions):
   Non-fixed actions receive the function results automatically — no placeholder.
   Chaining: a later function's config may reference {{function.earlier.out}}.
   JSONPath subset: $.a.b, [0] (negative ok), ["quoted-key"] — no wildcards/filters.
+  API flow: updates FULL-REPLACE conditional_actions — always send functions[] back
+  (read-modify-write) or they are silently deleted. Auto-gen never emits functions;
+  add them after generation via an update. Retrieval: parse the instructions string.
 ```
