@@ -193,10 +193,10 @@ A user can attach a **pre-recorded audio clip** to a fixed-message condition; on
 **This tag is created by the audio-upload flow, not written by hand.** When authoring or generating conditional-actions scenarios:
 
 - **Never emit an `<audio>` tag yourself.** The `id` must reference a real uploaded clip; a hand-written id points at nothing and fails reference validation (`"audio id '…' does not reference an uploaded clip"`).
-- Audio is attached out-of-band via `POST /test_framework/v1/scenarios/{id}/condition-audio/` (multipart `condition_id` + `file`; ≤25MB; wav/mp3/m4a/ogg/webm/flac). Cekura transcodes, transcribes (word-level), and rewrites the target condition's `action` to `<audio id="…"/>`. `GET`/`DELETE` on the same path list/detach clips.
+- Audio is attached out-of-band via `POST /test_framework/v1/scenarios/{id}/condition-audio/` (multipart `condition_id` + `file`; ≤25MB; wav/mp3/m4a/ogg/webm/flac); the endpoint rewrites the target condition's `action` to `<audio id="…"/>`. `GET`/`DELETE` on the same path list/detach clips.
 - **Rules for an `<audio>` action:** fixed-message conditions only; the tag is the **sole content** of the action (no other text or tags); one clip per condition; the transcript is never in the `action`.
 - **Run gating:** a scenario can't run while any attached clip is not `ready` (pending/processing/failed all block). The transcript (from the recording, read-only) is what conditions and metrics match against.
-- A scenario using **generated audio samples** (embedding-sim) can't also use attached audio (`409` on upload) — mutually exclusive per scenario.
+- A scenario using **generated audio samples** can't also use attached audio (`409` on upload) — mutually exclusive per scenario.
 
 ## Test Profile Template Variables (fixed_message: true only)
 
@@ -490,7 +490,7 @@ The Cekura API rejects requests that violate these rules. Each rule maps to a sp
 7. **`action_followup` `condition` field must be an integer** — the integer must match the `id` of an existing earlier condition. String values like `"1"` are rejected. Self-references (`condition: <own id>`) are rejected.
 8. **`scenario_language` required** — Conditional Actions evaluators require a language. Set it via a personality with a configured language (inferred automatically) or set `scenario_language` explicitly. This also applies when changing an existing evaluator's type to Conditional Actions.
 9. **`personality` required** — every scenario needs a personality assigned, conditional-actions or otherwise. The API returns 400 without one.
-10. **`<audio>` tags must reference an uploaded clip** — if a condition's `action` is an `<audio id="…"/>` tag, the id must reference a real clip in the scenario's `condition_audio`, the condition must be `fixed_message: true`, and the tag must be the sole content of the action. Hand-written `<audio>` tags fail this. Don't author them — audio is attached via the [upload endpoint](#attached-audio-audio--managed-do-not-hand-author).
+10. **`<audio>` tags must reference an uploaded clip** — if a condition's `action` is an `<audio id="…"/>` tag, the id must reference a real uploaded clip, the condition must be `fixed_message: true`, and the tag must be the sole content of the action. Hand-written `<audio>` tags fail this. Don't author them — audio is attached via the [upload endpoint](#attached-audio-audio--managed-do-not-hand-author).
 
 ### Extra rules at generation time (LLM-generated scenarios only)
 
