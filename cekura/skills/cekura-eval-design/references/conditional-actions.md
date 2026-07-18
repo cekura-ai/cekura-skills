@@ -195,7 +195,7 @@ A user can attach a **pre-recorded audio clip** to a fixed-message condition; on
 - **Never emit an `<audio>` tag yourself.** The `id` must reference a real uploaded clip in the scenario's `condition_audio`; a hand-written id points at nothing and fails reference validation (`"audio id '…' does not reference an uploaded clip"`).
 - Audio is attached out-of-band via `POST /test_framework/v1/scenarios/{id}/condition-audio/` (multipart `condition_id` + `file`; ≤25MB; wav/mp3/m4a/ogg/webm/flac). Cekura transcodes, transcribes (word-level), and rewrites the target condition's `action` to `<audio id="…"/>`. `GET`/`DELETE` on the same path list/detach clips.
 - **Rules for an `<audio>` action:** fixed-message conditions only; the tag is the **sole content** of the action (no other text or tags); one clip per condition; the transcript lives in `condition_audio` (backend-owned), never in the `action`.
-- **Run gating:** a scenario can't run while any attached clip is not `ready` (pending/processing/failed all block). The transcript (from the recording, read-only) is what conditions and metrics match against; a missing audio object at call time degrades to TTS of that transcript.
+- **Run gating:** a scenario can't run while any attached clip is not `ready` (pending/processing/failed all block). The transcript (from the recording, read-only) is what conditions and metrics match against.
 - A scenario using **generated audio samples** (embedding-sim) can't also use attached audio (`409` on upload) — mutually exclusive per scenario.
 
 ## Test Profile Template Variables (fixed_message: true only)
