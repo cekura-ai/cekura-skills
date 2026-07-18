@@ -8,11 +8,12 @@ If the caller already specified a path — via the `/cekura-onboarding` command 
 
 Otherwise, ask once:
 
-> Two onboarding paths — which fits your goal?
-> - **Testing** *(default)* — build evaluators and run simulated calls against your agent.
-> - **Observability** — ingest your production call logs and evaluate them.
+> Three onboarding paths, which fits your goal?
+> - **Testing** *(default)*: build evaluators and run simulated calls against your agent.
+> - **Observability**: ingest your production call logs and evaluate them.
+> - **Integrate my codebase**: wire your own voice-agent repo into Cekura (config sync, transcript ingestion, metadata, tracing, CI/CD).
 
-Default to **testing** when ambiguous.
+Default to **testing** when ambiguous. Pick **integrate** only when the user has their **own codebase** they can instrument (custom / self-hosted, LiveKit, or Pipecat). A **managed-platform** agent (VAPI / Retell / ElevenLabs / Synthflow / Bland / ...) has no code to wire, so it does NOT belong on the integrate path: those providers are ingested natively on the **testing** and **observability** paths. If a user asks to "integrate" a managed-platform agent, route them to testing or observability instead.
 
 ## 0b. Existing-work check (ONE call, not an inventory sweep)
 
@@ -26,7 +27,7 @@ Default to **testing** when ambiguous.
 | `aiagents_list` result | Action |
 |---|---|
 | **0 agents** (the common case for onboarding) | Clean slate. Go straight to Phase 2 — connect the agent. No further lookups, no "Resume where?" question. |
-| **≥1 agent** | Possible mid-onboarding resume. Now (and only now) look deeper — the path-relevant resources: scenarios + latest result for **testing**, call logs for **observability**. Surface ONE concrete clarification: e.g. "Found existing agent **Booking Bot** with 12 scenarios and 1 result. Continue with it, or create a new agent?" — never a generic "Ready to continue?". |
+| **≥1 agent** | Possible mid-onboarding resume. Now (and only now) look deeper — the path-relevant resources: scenarios + latest result for **testing**, call logs for **observability**, the agent's `description` + `transcript_provider` for **integrate**. Surface ONE concrete clarification: e.g. "Found existing agent **Booking Bot** with 12 scenarios and 1 result. Continue with it, or create a new agent?" — never a generic "Ready to continue?". |
 | **Call fails (auth/tools broken)** | Fix access first — see [references/client-setup.md](references/client-setup.md). If there's no project in context, list with `projects_list` or create one with `projects_create`, then retry. |
 
 ---
