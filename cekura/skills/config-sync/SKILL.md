@@ -34,7 +34,16 @@ deployed**. The sync is nothing more than a few **plain HTTP calls** to the
 Cekura agent API (`GET` to read the live agent, `PATCH` to update it) — so it can
 be a script in **any language** (Python, Node/TS, Go, …), a `curl` step in your
 deploy pipeline, or a task in your CI tooling. There is nothing Python-specific
-about the contract. Three things are synced, each onto its own agent field:
+about the contract.
+
+> **The auto-sync workflow doesn't change — only how you send it.** You still run
+> this as a post-deploy step. For Python, use the official `cekura` SDK/CLI instead
+> of hand-rolling the GET/PATCH: `pip install cekura`, then the `agents` resource
+> (`client.agents.retrieve(...)` / `client.agents.update(...)`) or the CLI
+> (`cekura agents`, `cekura config`). Other languages use the plain HTTP calls
+> below.
+
+Three things are synced, each onto its own agent field:
 
 1. **Dynamic variables** — the runtime-injected variables the prompt uses → the
    agent's `dynamic_variables`.

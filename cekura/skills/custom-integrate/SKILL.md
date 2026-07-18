@@ -118,6 +118,15 @@ managed platform, the agent's dashboard/config) and answer:
    FastAPI, Node, Go, etc.; or LiveKit Agents, Pipecat; or a managed platform.)
    Decides which reference snippets translate directly vs. need porting — and
    whether a phase is a code change at all vs. a platform/dashboard setting.
+   **If Python:** the official `cekura` SDK/CLI (`pip install cekura`) already wraps
+   the transport for several phases — observe publish (`client.calls.send` /
+   `cekura calls send`, see `observability`), config-sync (`agents` resource /
+   `cekura agents`, `cekura config`, see `config-sync`), and running the eval suite
+   in CI (`cekura run …`, see `ci-cd`). Prefer it over hand-rolled HTTP. **LiveKit /
+   Pipecat** additionally get turnkey tracers (`cekura.livekit.tracer` /
+   `cekura.pipecat.tracer`) — use those instead of hand-instrumenting (see
+   `tracing`). Everything the SDK doesn't wrap (generic OTel tracing, the generic
+   eval webhook, metadata assembly) still follows the manual contract.
 2. **Architecture: pipeline vs speech-to-speech** — discrete STT → LLM → TTS
    calls, or a single speech-to-speech model (Gemini Live, etc.)? Changes which
    OTel spans to emit (`tracing`).

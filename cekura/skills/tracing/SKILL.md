@@ -92,11 +92,13 @@ snippets are one labeled illustration in one language.
    Live, OpenAI Realtime)? This decides which spans you emit.
 5. **What stack is this?** The mechanism differs by stack (see "Stack-neutral
    guidance" below): **custom/self-hosted code** (any language) — hand-instrument
-   with that language's OTel SDK; **LiveKit Agents** or **Pipecat** — both have
-   native OpenTelemetry tracing, so you typically *enable* the framework's tracing
-   and point its OTLP exporter at Cekura rather than hand-instrumenting; **managed
-   platforms** (Vapi / Retell / ElevenLabs) — usually don't expose per-turn OTel
-   traces, so this skill may not apply (call-log + metrics still do).
+   with that language's OTel SDK (this skill's contract); **LiveKit Agents** or
+   **Pipecat** — do NOT hand-instrument: the official `cekura` Python package ships
+   **turnkey tracers** for exactly these two (`cekura.livekit.tracer`,
+   `cekura.pipecat.tracer`), which emit the spans and handle the trace linkage for
+   you, so enable those instead (see `cekura-create-agent` Phase 6 SDK integration);
+   **managed platforms** (Vapi / Retell / ElevenLabs) — usually don't expose
+   per-turn OTel traces, so this skill may not apply (call-log + metrics still do).
 
 ## The Cekura contract (durable — true for any repo/language/domain)
 

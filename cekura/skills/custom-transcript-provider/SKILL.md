@@ -67,10 +67,18 @@ here can hang cleanup or crash call teardown if you don't isolate failures.
 ## The Cekura contract (durable — true for any repo/language/domain)
 
 These facts hold regardless of your language, framework, or business domain. **The
-webhook sink is nothing more than a plain HTTP POST of JSON** — there is no SDK,
-no Python dependency, no special client. Anything that can make an HTTPS request
-(any language's HTTP library, or even a `curl` from a shell hook) can satisfy this
-contract. Everything below describes the JSON body and the rules for filling it;
+webhook sink is nothing more than a plain HTTP POST of JSON** — no SDK is required,
+no special client. Anything that can make an HTTPS request (any language's HTTP
+library, or even a `curl` from a shell hook) can satisfy this contract.
+
+> **Unlike the observe sink, this generic eval webhook is NOT wrapped by the
+> `cekura` Python SDK** (the SDK only wraps the observe endpoint and the
+> LiveKit/Pipecat-specific webhooks). So this manual POST applies to every stack,
+> **including Python**. If you're on LiveKit or Pipecat, use their turnkey tracers
+> (`cekura.livekit.tracer` / `cekura.pipecat.tracer`), which handle their own
+> webhook; otherwise publish the body below yourself.
+
+Everything below describes the JSON body and the rules for filling it;
 the transport is just `POST` + `Content-Type: application/json` with your
 `X-CEKURA-API-KEY`.
 

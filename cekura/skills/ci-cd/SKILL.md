@@ -51,10 +51,14 @@ regressions before they ship.
    the returned metric scores against a threshold table, and collapses the
    outcome into a single gate result — a pass/fail bit plus a list of failures.
    It writes a human-readable summary into the CI step output. **Invoke the
-   suite however your stack allows: the Cekura CLI or the Cekura API**, called
-   from whatever CI system you run (GitHub Actions, GitLab CI, Bitbucket Pipelines, CircleCI, Jenkins,
-   …). The mechanism is language- and CI-agnostic — nothing here requires a
-   particular language or CI vendor.
+   suite however your stack allows: the Cekura CLI (`cekura run …`) or the Cekura
+   API**, called from whatever CI system you run (GitHub Actions, GitLab CI,
+   Bitbucket Pipelines, CircleCI, Jenkins, …). The mechanism is language- and
+   CI-agnostic — nothing here requires a particular language or CI vendor.
+   **This skill runs and gates an existing suite; it does not author it.** To
+   generate the voice-pipeline test suite in the first place (transport / STT / LLM
+   / TTS / pipeline conditional-action tests), use `cekura-infra-test-suite`, and
+   for scenario/metric authoring use `cekura-eval-design` / `cekura-metric-design`.
 
 2. **The local-invariant half.** The agent logs **every tool/function call** to
    a per-call log *during the call*. The gate runner executes the Cekura
