@@ -182,6 +182,22 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 `office`, `beep`, `cough1`, `cough2`
 
+## Attached Audio (`<audio>` — managed, do NOT hand-author)
+
+A user can attach a **pre-recorded audio clip** to a fixed-message condition; on the call the testing agent **plays the recording instead of TTS**. The clip is represented in the `action` as a managed reference tag:
+
+```json
+{ "id": 2, "condition": "The agent greets you", "action": "<audio id=\"ab12cd34\"/>", "type": "standard", "fixed_message": true }
+```
+
+**This tag is created by the audio-upload flow, not written by hand.** When authoring or generating conditional-actions scenarios:
+
+- **Never emit an `<audio>` tag yourself.** The `id` must reference a real uploaded clip; a hand-written id points at nothing and fails reference validation (`"audio id '…' does not reference an uploaded clip"`).
+- Audio is attached out-of-band via `POST /test_framework/v1/scenarios/{id}/condition-audio/` (multipart `condition_id` + `file`; ≤25MB; wav/mp3/m4a/ogg/webm/flac); the endpoint rewrites the target condition's `action` to `<audio id="…"/>`. `GET`/`DELETE` on the same path list/detach clips.
+- **Rules for an `<audio>` action:** fixed-message conditions only; the tag is the **sole content** of the action (no other text or tags); one clip per condition; the transcript is never in the `action`.
+- **Run gating:** a scenario can't run while any attached clip is not `ready` (pending/processing/failed all block). The transcript (from the recording, read-only) is what conditions and metrics match against.
+- A scenario using **generated audio samples** can't also use attached audio (`409` on upload) — mutually exclusive per scenario.
+
 ## Test Profile Template Variables (fixed_message: true only)
 
 Inject test-profile fields directly into verbatim text. Substitution happens at runtime before the message is spoken.
@@ -474,6 +490,7 @@ The Cekura API rejects requests that violate these rules. Each rule maps to a sp
 7. **`action_followup` `condition` field must be an integer** — the integer must match the `id` of an existing earlier condition. String values like `"1"` are rejected. Self-references (`condition: <own id>`) are rejected.
 8. **`scenario_language` required** — Conditional Actions evaluators require a language. Set it via a personality with a configured language (inferred automatically) or set `scenario_language` explicitly. This also applies when changing an existing evaluator's type to Conditional Actions.
 9. **`personality` required** — every scenario needs a personality assigned, conditional-actions or otherwise. The API returns 400 without one.
+10. **`<audio>` tags must reference an uploaded clip** — if a condition's `action` is an `<audio id="…"/>` tag, the id must reference a real uploaded clip, the condition must be `fixed_message: true`, and the tag must be the sole content of the action. Hand-written `<audio>` tags fail this. Don't author them — audio is attached via the [upload endpoint](#attached-audio-audio--managed-do-not-hand-author).
 
 ### Extra rules at generation time (LLM-generated scenarios only)
 
@@ -614,6 +631,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - **Localhost / private-network function URLs.** Create-time validation only checks the URL is `http(s)`; internal addresses are refused at call time and the function falls back to defaults. Use a publicly reachable endpoint (e.g., a tunnel for local testing).
 - **Updating `conditional_actions` without the existing `functions[]`.** Updates are a full replace — the stored object is rebuilt from exactly what you send, so a PATCH that only carries `conditions` silently deletes every function. Read the current `instructions`, modify, and send the whole object back.
 - **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored.
+- **Hand-authoring an `<audio>` tag.** `<audio id="…"/>` is created only by the audio-upload flow ([Attached Audio](#attached-audio-audio--managed-do-not-hand-author)); a tag you write points at a clip that doesn't exist and fails reference validation. Never emit one when generating scenarios.
 - **Stringly-typed `action_followup` references.** The `condition` field on an `action_followup` must be an **integer** matching a prior condition's `id`. String values like `"1"` are rejected.
 - **Putting the JSON object directly in `instructions`.** Use the `conditional_actions` field on the scenario create/update payload. `instructions` accepts a string only.
 - **Setting `first_message` independently of `id:0`.** When `conditional_actions` is provided, `first_message` is taken from `id:0` action; values you pass separately will be overwritten.
@@ -635,6 +653,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
 - [ ] `<network_simulation>` only uses `packet_loss`
 - [ ] No XML tags used with `fixed_message: false`
+- [ ] No hand-written `<audio>` tags (created only by the audio-upload flow; a fabricated id fails reference validation)
 - [ ] Every `<function>` tag and `{{function.*}}` placeholder references a declared function (and, for placeholders, a declared `response_mapping` output) — and none appear on `id: 0`
 - [ ] `{{function.*}}` placeholders appear only on `fixed_message: true` actions, and every referenced output declares a `default`
 - [ ] Function URLs are publicly reachable `http(s)` endpoints (no localhost/private hosts)
@@ -716,6 +735,9 @@ XML tags (fixed_message:true only):
   <network_simulation packet_loss="N" />   Only packet_loss supported (% value)
   <background_noise sound="NAME" volume="N">spoken text</background_noise>   volume multiplier 0.5–2 (optional)
   <noise sound="NAME" volume="N" time="Xs" />   One-shot: office | beep | cough1 | cough2; volume 0.5–2 (optional)
+  <audio id="..." />                MANAGED — do NOT hand-author. Plays an uploaded recording instead
+                                     of TTS; created by POST scenarios/{id}/condition-audio/. Sole
+                                     content of a fixed_message action; id must reference an uploaded clip.
 
 Background noise sounds:
   office-ambience, coffee-shop, kitchen-noise, home-chatter, restaurant, shopping-mall,
