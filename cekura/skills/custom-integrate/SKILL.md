@@ -76,7 +76,10 @@ path or core logic, find the additive way instead.
   a surfaced error, and never touches call teardown.
 - **Decoupled from the app's own config.** Don't import the app's fail-fast
   config into the Cekura code (it can hard-exit on missing keys and kill CI /
-  imports — see `ci-cd`). Read `CEKURA_*` from their own small config.
+  imports — see `ci-cd`). Read `CEKURA_*` from their own small config, and
+  **document each `CEKURA_*` var in the repo's env template** (`.env.example` or
+  equivalent) as you introduce it, in an "OFF by default" block (see `ci-cd`'s
+  env-var catalog).
 - **Prefer new files + guarded hooks** over edits to core files. Cekura-side
   config (agent settings, `transcript_provider`) is safe to change — it never
   touches the running bot — but still change only what's needed.

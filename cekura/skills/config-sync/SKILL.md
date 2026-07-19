@@ -43,6 +43,17 @@ about the contract.
 > (`cekura agents`, `cekura config`). Other languages use the plain HTTP calls
 > below.
 
+> **Don't stop at a manual script — wire the auto-sync into CI/CD.** The sync only
+> holds config in step with the code if it runs on every deploy, not by hand. After
+> the sync script exists, **set up the automation**: if the repo is on GitHub,
+> create a **GitHub Actions** workflow that runs the sync (post-deploy, or on merge
+> to the environment's branch) using repo secrets for `CEKURA_API_KEY`. If it's on
+> another CI (GitLab CI, Bitbucket Pipelines, CircleCI, Jenkins, …), **ask the user
+> which one they use** and add the equivalent job there. Only fall back to
+> "run it manually" if the user explicitly declines automation. See `ci-cd`'s CD
+> half for the per-environment env wiring and the "fail the workflow, not the
+> deploy" gating.
+
 Three things are synced, each onto its own agent field:
 
 1. **Dynamic variables** — the runtime-injected variables the prompt uses → the

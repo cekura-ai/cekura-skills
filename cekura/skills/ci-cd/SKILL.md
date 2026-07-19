@@ -423,6 +423,14 @@ only when eval/observability data is missing or polluted.
 
 ## The Cekura env-var catalog (what each one controls)
 
+> **Document every `CEKURA_*` var you introduce in the repo's env template.** As
+> you add these vars, add them to the project's `.env.example` (or `.env.sample` /
+> equivalent) with a short comment, grouped in their own "Cekura integration
+> (optional; OFF by default)" block. Secrets stay blank/placeholder (never a real
+> key). This keeps the integration discoverable and reproducible, and makes the
+> off-by-default contract obvious: without `CEKURA_API_KEY` + `CEKURA_AGENT_ID` the
+> agent runs unchanged. Do this in lockstep with introducing each var, not later.
+
 | Variable | Secret? | Scope | Controls |
 |---|---|---|---|
 | `CEKURA_API_KEY` | **secret** | account | Auth for every Cekura API/sink call. Goes in your platform's secret store, never in plain config. |
