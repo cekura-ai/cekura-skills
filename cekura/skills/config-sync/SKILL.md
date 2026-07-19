@@ -97,7 +97,7 @@ request step); the shape below is the same regardless:
 
 ```
 PATCH <agent endpoint>/{agent_id}    {"dynamic_variables": [ {name, description}, … ]}
-PATCH <agent endpoint>/{agent_id}    {"mock_tools":        [ {name, description, mock_data, …}, … ]}
+PATCH <agent endpoint>/{agent_id}    {"mock_tools":        [ {name, description, information: [{input, output}, …]}, … ]}
 PATCH <agent endpoint>/{agent_id}    {"description":       "<assembled system prompt text>"}
 ```
 
@@ -119,8 +119,11 @@ platform's config/API for a managed bot:
   platform.
 
 But Cekura also needs data that **cannot be derived from that source**: a human
-description per variable, and a description + canned `mock_data` per tool (live
-handlers return non-deterministic data — random ids, uuids, datetimes). That
+description per variable, and per tool a description + canned **`information`** — a
+**list of `{input, output}` example mappings** (NOT a `mock_data` object; verified
+live, sending `mock_data` 400s with "Information must be a list of input-output
+mappings"). Live handlers return non-deterministic data (random ids, uuids,
+datetimes), so these canned examples stand in for sims. That
 curated data lives in a **config file (e.g. YAML/JSON) beside the sync script**,
 keyed by name.
 
@@ -216,7 +219,7 @@ changes. In every case the sync ends in the same `GET`/`PATCH` HTTP calls.
   variables may live in the platform rather than your repo, so **source the three
   things from the platform's config/API** (fetch the assistant/agent definition),
   then `PATCH` them into the Cekura agent exactly the same way. Curated data
-  (descriptions, `mock_data`) still lives in your config file beside the sync.
+  (descriptions, `information` examples) still lives in your config file beside the sync.
 
 ## Reference implementation (example voice agent — Python/Jinja2/GitHub Actions/Cloud Run; example, adapt don't copy)
 
@@ -387,10 +390,10 @@ scripts/*
   code-without-config. Don't — also fail on config-without-code, or stale
   entries accumulate silently and the config slowly lies again.
 - **PATCH replaces, doesn't merge.** Always send the complete set. And diff only
-  the fields you own (`name`, `description`, `mock_data`, …) — comparing
+  the fields you own (`name`, `description`, `information`, …) — comparing
   server-added `id`/`url`/order reports spurious changes and never no-ops.
 - **The server reorders JSON object keys on read → your diff never no-ops.** The
-  agent read API returns nested objects (e.g. each `mock_data` `{input, output}`)
+  agent read API returns nested objects (e.g. each `information` entry `{input, output}`)
   with keys in a DIFFERENT order than you sent. A naive `JSON.stringify` compare
   then reports a change every run and re-pushes forever. Canonicalize before
   comparing: a **key-sorted / stable stringify** of the nested structures, not
