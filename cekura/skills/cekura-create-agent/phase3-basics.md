@@ -4,7 +4,7 @@ Collect the fields needed to identify the main agent and determine how Cekura wi
 
 ---
 
-> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** Skip this phase entirely. All fields — name, language, description, phone number, connection type — are fetched automatically by `configure_from_provider` during agent creation. Go directly to [Phase 5 — Create the Agent](phase5-create.md).
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Bland / Synthflow):** Skip this phase entirely. All fields — name, language, description, phone number, connection type — are fetched automatically by `configure_from_provider` during agent creation. Go directly to [Phase 5 — Create the Agent](phase5-create.md).
 
 > **Start:** Announce "Starting Phase 3 — Main Agent Basics & Connection Type" before doing anything in this phase.
 
@@ -110,7 +110,7 @@ Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja
 | **Retell** | Yes | Auto-fetch or paste | Separate `agent_id` (voice) and `chat_agent_id` (text) |
 | **ElevenLabs** | Yes | Auto-fetch or paste | |
 | **Synthflow** | Yes | Auto-fetch or paste | `agent_id` required for auto-import |
-| **Bland** | Yes | Fetch prompt, ask user for name | `agent_id` = pathway_id; name not returned by API |
+| **Bland** | Yes | Auto-fetch | `agent_id` = Persona ID; separate Pathway ID for chat |
 | **LiveKit** | No | Ask user | WebRTC only |
 | **Pipecat** | No | Ask user | Agent identified by `credentials.config.pipecat_agent_name` |
 | **WebSocket voice (raw-PCM)** | No | Ask user | `provider.type = custom`; connects via `telephony.websocket_url` |
@@ -300,14 +300,14 @@ curl -s https://api.elevenlabs.io/v1/convai/agents/{agent_id} \
 
 ### Bland
 ```bash
-curl -s https://api.bland.ai/agents/{pathway_id} \
-  -H "authorization: {bland_api_key}" | jq '{prompt, language, voice}'
+curl -s https://api.bland.ai/v1/personas/{persona_id} \
+  -H "authorization: {bland_api_key}" | jq '.data | {name, current_production_version, inbound_numbers}'
 ```
-Returns `prompt` (description) but NOT `name` — ask the user for a display name.
+The active persona version contains the prompt, language, tool IDs, and knowledge-base IDs. The persona also returns its name and attached phone numbers.
 
 ---
 
-## 3f. Auto-sync description (VAPI / Retell / ElevenLabs / Synthflow)
+## 3f. Auto-sync description (VAPI / Retell / ElevenLabs / Bland / Synthflow)
 
 Enable `provider.auto_sync_prompt: true` at create time (Phase 5). Cekura fetches the description from the provider within ~30 seconds. Pass a placeholder for the required `description` field.
 

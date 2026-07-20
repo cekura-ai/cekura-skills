@@ -1,6 +1,6 @@
 # Phase 4 — Main Agent Description
 
-> **Skip this phase** if the provider is VAPI, Retell, ElevenLabs, or Synthflow. These providers use `configure_from_provider: true` — the description (system prompt) is imported automatically during agent creation in Phase 5. Go directly to [Phase 5](phase5-create.md).
+> **Skip this phase** if the provider is VAPI, Retell, ElevenLabs, Bland, or Synthflow. These providers use `configure_from_provider: true` — the description (system prompt) is imported automatically during agent creation in Phase 5. Go directly to [Phase 5](phase5-create.md).
 
 For all other providers, or if the user prefers to provide the description manually, continue below.
 

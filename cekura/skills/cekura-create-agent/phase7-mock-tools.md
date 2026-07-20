@@ -4,7 +4,7 @@ Set up mock responses for any external APIs or tools the main agent calls during
 
 ---
 
-> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — tools were auto-fetched during import. Go directly to [Phase 8](phase8-knowledge-base.md).
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Bland / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — supported tools were auto-fetched during import. Go directly to [Phase 8](phase8-knowledge-base.md).
 
 > **LiveKit with the Cekura SDK (Phase 6):** Mocks defined here are auto-injected by the SDK at runtime — no agent-side wiring needed. Skip 7e.
 
@@ -31,13 +31,15 @@ If no tools → skip to [Phase 8](phase8-knowledge-base.md).
 
 ---
 
-## 7b. Option A — Auto-Fetch (VAPI, Retell, ElevenLabs, Pipecat)
+## 7b. Option A — Auto-Fetch (VAPI, Retell, ElevenLabs, Bland, Pipecat)
 
 If the provider API key and assistant ID are already set:
 
 1. Go to **Agent Settings → Mock Tools → click Auto-Fetch**
 2. Cekura fetches all tool definitions from the provider and generates sample I/O data
 3. Review the mock data per tool — mock tools are activated per-run by passing `mock_tool_names` when running scenarios
+
+For Bland, tools without input parameters are skipped because there is no input shape from which to generate mock data. During outbound tests, Cekura uses temporary cloned tools with mock URLs and removes the clones when the result finishes; the original persona and tools are unchanged.
 
 **Via API — new agents:** set `provider.configure_from_provider: true` inside the `provider` block when calling `POST /v2/aiagents/`. Requires `provider.agent_id` (the assistant ID on the provider) and `provider.credentials.api_key`. The create response includes a `progress_id` to poll `GET /v2/aiagents/{id}/auto-fetch-progress/?progress_id=...`.
 

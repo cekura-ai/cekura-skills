@@ -243,20 +243,31 @@ Keep `provider.type = pipecat` regardless of connection mode.
   "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "bland",
-    "agent_id": "<Bland pathway_id>",
+    "agent_id": "<Bland Persona ID>",
     "credentials": {
       "api_key": "<Bland API Key>",
       "config": {
         "encrypted_key": "<Twilio credential bundle — optional>"
       }
     },
+    "configure_from_provider": true,
     "auto_dial_outbound": true
+  },
+  "chat_agent_details": {
+    "type": "bland",
+    "config": {"agent_id": "<Bland Pathway ID — optional, chat only>"}
   }
 }
 ```
 
-**Credentials:** Bland Dashboard → API Keys  
-**`agent_id`:** Bland pathway_id — Pathways → Select → copy ID  
+**Credentials:** Bland Dashboard → API Keys
+
+**`provider.agent_id`:** Bland Persona ID for voice configuration and outbound calls
+
+**`chat_agent_details.config.agent_id`:** Bland Pathway ID for text-mode test runs (optional)
+
+**Auto-import:** Set `configure_from_provider: true` to import the persona's prompt, settings, phone number, supported tools, knowledge base, and dynamic variables.
+
 **Docs:** https://docs.bland.ai
 
 ---
@@ -471,9 +482,9 @@ Provider rows only. Connection modes (SIP, WebSocket, chat, PSTN, WebRTC) are pi
 | WebRTC | Yes | Yes | No | Yes | Yes | No | No | No | No | No | No |
 | WebSocket voice | No | No | No | No | No | No | No | No | No | No | Yes |
 | Chat / Text | Yes | Yes | Yes | Yes | No | Yes | No | No | Yes | Yes | Yes |
-| **Auto-import agent** | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No |
+| **Auto-import agent** | Yes | Yes | Yes | No | No | Yes | Yes | No | No | No | No |
 | Auto-fetch calls | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No |
-| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No |
-| Auto-sync prompt | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No |
+| Auto-fetch tools | Yes | Yes | Yes | No | Yes | Yes | No | No | No | No | No |
+| Auto-sync prompt | Yes | Yes | Yes | No | No | Yes | Yes | No | No | No | No |
 | Outbound auto-call | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | No |
 | Latency metrics | No | No | No | Yes | No | No | No | No | No | No | No |
