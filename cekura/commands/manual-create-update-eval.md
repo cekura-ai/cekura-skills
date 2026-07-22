@@ -1,8 +1,8 @@
 ---
 name: manual-create-update-eval
-description: Manually create or update a Cekura evaluator (a.k.a. scenario, eval) with full field walkthrough
-argument-hint: "[create|update] [eval type or scenario ID]"
-allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+description: Manually create, update, or duplicate a Cekura evaluator (a.k.a. scenario, eval)
+argument-hint: "[create|update|duplicate] [eval type or scenario ID]"
+allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_duplicate_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-ack-tag: ack:manual-create-update-eval:5m4p7c -->
 > **Cekura skill verification tag:** `ack:manual-create-update-eval:5m4p7c`
@@ -24,12 +24,38 @@ LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 Create a new evaluator (test scenario) or update an existing one on Cekura. This command walks through every field with the user — use it when you need precise control over the scenario configuration. For bulk/auto-generation, use `/autogen-eval` instead.
 
-## Determine Mode: Create or Update
+## Scope Gate
+
+Use this command only to create, update, or duplicate an evaluator. A test profile is an
+evaluator configuration input, not an evaluator itself. Do **not** load this
+command for a standalone test-profile question or edit request (for example,
+"How do I modify a test profile?"). Answer that request directly or use the
+test-profile tools without starting this evaluator walkthrough.
+
+## Determine Mode: Create, Update, or Duplicate
 
 - **Create**: User says "create", "new", "add", or provides a scenario description without an ID
 - **Update**: User says "update", "edit", "change", or provides a scenario ID
+- **Duplicate**: User says "duplicate", "copy", or asks to place copies of existing evaluators in another folder or project
 
 For updates, fetch the existing scenario first with `mcp__cekura__scenarios_retrieve` and show the user the current state before asking what to change.
+
+## Duplicate Existing Evaluators
+
+When the user wants copies of existing evaluators, use
+`mcp__cekura__scenarios_duplicate_create` — **never rebuild them with
+`scenarios_create`**. Same-project copies retain the evaluator configuration,
+metrics, and test profile; cross-project copies use the destination project's
+predefined metrics.
+
+- `project`: source project ID
+- `copy_to_project`: destination project ID; use the same ID for a folder-only copy
+- `scenarios`: source evaluator IDs
+- `scenario_agent`: optional destination agent ID, if the copies should be assigned to one
+- `folder_path`: destination folder path; it is created if it does not exist
+
+Confirm the source evaluators and destination before duplicating. The copied
+evaluators are named `Copy of <original name>`.
 
 ## Field Walkthrough — Ask in This Order
 
@@ -198,6 +224,9 @@ Get explicit "looks good" before proceeding.
 **Create:** Use `mcp__cekura__scenarios_create` with the full payload.
 
 **Update:** Use `mcp__cekura__scenarios_partial_update` with only the changed fields.
+
+**Duplicate:** Use `mcp__cekura__scenarios_duplicate_create`; do not recreate
+the evaluator payload with `scenarios_create`.
 
 ## After Creation
 

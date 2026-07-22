@@ -44,6 +44,7 @@ Execute one or more evaluators against the target agent.
    - **0 candidates** → STOP. Surface: *"Agent has no provider, phone number, SIP endpoint, or websocket URL configured — can't run evals."*
    - **1 candidate** → auto-pick. Announce: *"Auto-selected `<mode>` — only configured connection on this agent."*
    - **2+ candidates** → use `AskUserQuestion` with **only the configured options**, never the full list. One-line hint: text fastest/cheapest, WebRTC moderate, PSTN voice realistic but slowest.
+   - **Pipecat exception:** when the choices are `pipecat` and `pipecat-v2`, ask exactly: *"Your agent uses Pipecat. `pipecat` (v1) uses a manually provided room URL for each evaluator run; `pipecat-v2` uses configured Pipecat Cloud project credentials and creates sessions automatically."* Offer only `pipecat (v1)` and `pipecat-v2` as the options.
 
 3. **Confirm scope**: Show the user what will run:
    - Number of evaluators
@@ -79,7 +80,8 @@ Execute one or more evaluators against the target agent.
 |------|-------|------|----------|
 | text | Fast | Low | Logic testing, rapid iteration (requires a configured chat agent) |
 | websocket | Medium | Medium | Custom websocket agents (requires a websocket URL) |
-| pipecat / pipecat-v2 | Medium | Medium | Pipecat-based agents |
+| pipecat | Medium | Medium | Pipecat/Daily WebRTC with a manually supplied room URL per evaluator run |
+| pipecat-v2 | Medium | Medium | Pipecat Cloud with configured project credentials; Cekura creates sessions |
 | vapi / retell / elevenlabs / livekit (WebRTC) | Medium | Medium | Provider-native browser/SDK testing |
 | voice (PSTN) | Slow | High | Realistic phone-call validation (requires a phone number) |
 | sip | Slow | High | Self-hosted SIP endpoints (requires a SIP endpoint) |
