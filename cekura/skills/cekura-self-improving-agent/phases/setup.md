@@ -4,13 +4,13 @@ Runs **once per invocation**, before Reproduce / Optimization / Eval. Setup reso
 
 - **Editable surface** — where the fix lands: system prompt / tool config / (self-hosted) owned source code the run-setup points to (source file / DB row / Cekura mock tools / pasted text).
 - **Apply path** — how an edit goes live: provider API PATCH (VAPI / ElevenLabs, live immediately) · `Edit` + `redeploy_command` (self-hosted, including owned source-code edits) · live-on-save (`"noop"`) · **render-only** (print the rewrite).
-- **Validation** — always Cekura scenarios (simulation); Setup only records the transport, it does not run anything.
+- **Validation** — always Cekura scenarios; Setup records one simulation runner and does not run it.
 
-Setup also records the **signal shape** (`input_is_prod_call`), collects the `redeploy_command` (hard gate, Step 1.4) where a live target exists, and persists newly-collected run-setup to `.claude/MEMORY.md` (Step 1.4a).
+Setup also records the **signal shape** (`input_is_prod_call`) and, for live targets, `simulation_runner`; collects the `redeploy_command` (hard gate, Step 1.4) where needed; and persists newly-collected run-setup to `.claude/MEMORY.md` (Step 1.4a).
 
 **Prod-call inputs route through Collect → Debug → Reproduce** (the `3→4→5` loop in SKILL.md). When the input is `call_ids`, or a `result_id` / `run_ids` pointing at **production call logs**, set `input_is_prod_call = true`. After Setup, the orchestrator enters [`collect.md`](collect.md) — which anchors the kept-failure set on the FAIL'd verdict(s) — then [`debug.md`](debug.md) to root-cause them, then [`reproduce.md`](reproduce.md). Setup only records the input shape; Collect fetches and Debug diagnoses.
 
-**Setup's fetch surface is the agent only — prompt + tool config.** Do NOT fetch failure data (`results_retrieve` / `runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) here, even if the user supplied IDs. Failure data is Collect's job. The Pre-flight check at the top of [`collect.md`](collect.md) enforces that Collect cannot start until every step below is complete.
+**Setup fetches only agent config and the result metadata needed to select a runner.** Failure details (`runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) belong to Collect.
 
 ## Step 1.0 — Check project memory FIRST
 
@@ -44,6 +44,17 @@ Retrieve the agent, read `assistant_provider` (compare lowercased — defend aga
 `retell` is unsupported on purpose (temporarily disabled) — do not bypass the gate for direct PATCHing. Never default silently on empty `assistant_provider`; ask.
 
 Track the resolved mode; every later phase branches on it. VAPI error-shape / Retell note / 404 handling: [`../providers/vapi/phase-1-fetch.md`](../providers/vapi/phase-1-fetch.md).
+
+### Step 1.2a — Resolve the simulation runner (skip render-only)
+
+Save the exact Cekura `scenarios_run_*` tool and required connection fields. Resolve in order:
+
+1. Explicit `simulation_runner`.
+2. The supplied simulation result/run's transport metadata.
+3. `results_list(agent_id, page_size=10)`: newest completed result with usable transport metadata.
+4. The agent's configured connections; if several runners remain, ask.
+
+Use result/run metadata plus current tool capabilities; do not maintain a closed transport enum or infer from provider. Treat telephony, WebRTC, chat, websocket, and future modes alike. Reuse the saved runner for Collect, Reproduce, Eval, and Regression.
 
 ## Step 1.3 — Fetch the agent (branch by mode)
 
@@ -117,10 +128,11 @@ Before Clone (VAPI / ElevenLabs) or Optimization (all other modes), confirm:
 
 - [ ] **Project memory checked FIRST** (1.0): `.claude/CLAUDE.md` / `.claude/MEMORY.md` (current dir upward) read, used as authoritative where present (mode, source location, redeploy command, simulation-launch/connect path); the record's configured URL was NOT treated as a redeploy/reproduction target
 - [ ] Mode resolved (`vapi` / `elevenlabs` / `self_hosted`)
-- [ ] **Three axes resolved** — editable surface, apply path (PATCH / redeploy / `"noop"` / render-only), and validation (always Cekura scenarios)
+- [ ] **Three axes resolved** — editable surface, apply path (PATCH / redeploy / `"noop"` / render-only), and validation (saved simulation runner)
+- [ ] Live target: simulation runner resolved from explicit input, the signal, recent results, or configured connections — never provider alone (N/A render-only)
 - [ ] Agent loaded (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + `/v1/convai/tools/{id}`; self_hosted: editable surface explored per run-setup and recorded — source file / DB row / Cekura mock tools / pasted text; for a DB row, `db_type` + `db_connection` + `db_fetch_query` recorded and the fetch query executed; content otherwise unread until Fix; Cekura `description` informational only)
 - [ ] **Self-hosted**: `redeploy_command` resolved to a shell command, `"manual"`, or `"noop"` (N/A for VAPI / ElevenLabs and render-only)
 - [ ] **Self-hosted**: run setup either loaded from `.claude/CLAUDE.md` / `.claude/MEMORY.md`, OR — if collected this session — **persisted** (1.4a), write confirmed, no secrets written
-- [ ] I have NOT fetched any failure data (`results_retrieve` / `runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) — that belongs to Collect
+- [ ] I fetched no failure details; recent result metadata was used only for runner selection
 
 If any item is unresolved, ask the specific clarifying question and wait before entering Clone (VAPI / ElevenLabs) or Optimization (all other modes).

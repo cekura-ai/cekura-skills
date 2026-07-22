@@ -11,12 +11,13 @@ Runs first (before Debug) and again on every loop re-entry from Eval. Reads the 
 Before any COLLECT.x work, verify Setup is complete. If any is unresolved, ask the specific question and wait:
 
 - Mode resolved (`vapi` / `elevenlabs` / `self_hosted`)?
+- Live target: simulation runner resolved? (N/A render-only.)
 - Source-of-truth editable surface loaded? (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + referenced tools; self_hosted: the surface the run-setup points to — source file / DB row / Cekura mock tools / pasted text.)
 - **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`? If not, return to [`../setup.md`](setup.md) § Step 1.4. (N/A for VAPI / ElevenLabs and for render-only.)
 
 ## Step COLLECT.1 — If input is `scenario_ids`: execute, then wait
 
-Skip for other input types. Pick voice mode for VAPI / ElevenLabs (both voice agents). Trigger, capture `result_id`, poll to terminal (~30s cadence; cap 15 min voice / 5 min text), then treat as a `result_id` input.
+Skip for other input types. Use Setup's saved simulation runner. Trigger, capture `result_id`, poll to terminal (~30s cadence; cap 15 min voice / 5 min text), then treat as a `result_id` input.
 
 Self-hosted scenario execution runs against the live agent the run-setup points to. In auto mode the skill triggers validation without pausing to confirm a redeploy/restart; unchanged results across iterations surface the no-change hypothesis after the fact (Eval EVAL.4). When there's no reachable live target (render-only), there are no scenarios to execute — only pasted failures.
 
