@@ -114,7 +114,7 @@ Don't proceed to validation until both prompt and tool changes are confirmed liv
 | `run_ids` | Extract `scenario_id` from every run (bulk-retrieved in Collect). De-duplicate. |
 | `call_ids` | Synthesize one scenario per call from its transcript. **Cache the new scenario IDs on the first iteration** — reuse them on subsequent iterations, don't re-synthesize. |
 
-Run in voice mode (ElevenLabs agents are voice). Match the validation set to the failure set for the cleanest signal; the final regression sweep runs the full set (see eval phase Step EVAL.4).
+Run with Setup's saved simulation runner. Match the validation set to the failure set; the final regression sweep runs the full set (see Eval EVAL.4).
 
 If the original input was `call_ids` and any were `reviewed_success`, exclude their re-synthesized scenarios from the validation set.
 

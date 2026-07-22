@@ -39,7 +39,7 @@ Never widen either set mid-loop without telling the user — the stop criterion 
 
 ## Step EVAL.2 — Run validation (must-pass stochastic gate)
 
-Run the failure set in the agent's transport (voice for VAPI/ElevenLabs; the saved run-setup's transport for self-hosted live targets — launch the agent and pass per-run Cekura connection details per Setup 1.4a, as Reproduce did, with any REPRO.3e trigger conditions still active). Capture `result_id`, poll to terminal (30s cadence, 15-min cap, as COLLECT.1).
+Run the failure set with Setup's saved simulation runner. For self-hosted targets, use the saved launch/connect steps and keep REPRO.3e triggers active. Capture `result_id` and poll to terminal (as COLLECT.1).
 
 **Stochastic re-run policy — mirror REPRO.6 on the verification side.** A single passing run never ends the iteration (that's the source of most "looked good in dev, regressed in prod" miscalls). The skill **auto-triggers the verification runs itself** (do NOT ask the user to fire each). Run **5–10 times** (default `N = 8`, `stochastic_runs`); a scenario is **verified only if it passes in ≥ M of N** (default `M = ⌈0.8·N⌉` — e.g. ≥7/8, ≥4/5; tune via `verify_threshold`). Below M → not fixed, stays in the failure set. Report pass-rate per scenario (`7/8 pass`), not a single verdict.
 
