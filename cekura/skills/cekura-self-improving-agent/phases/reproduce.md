@@ -12,7 +12,7 @@ Owned-source-code bugs (orchestration / STT / transport / timing / forked-SDK) a
 
 > ## ⚠️ ALWAYS CEKURA, SAME TRANSPORT — NO SUBSTITUTES
 >
-> Every reproduction / verification / regression run is a full end-to-end **Cekura** simulation over the **same transport the agent uses** (from the agent record fetched in Setup — telephony / SIP → `run_voice`; WebRTC → the provider's WebRTC endpoint). Do not switch transports between phases. **Never** substitute text mode, a hand-authored code test, or a unit test for the simulation — even for infra / code bugs, build a Cekura evaluator and force the trigger (REPRO.3e). If a failure genuinely can't be forced in a live sim, STOP and surface (REPRO.6); do not author a test to stand in.
+> Every reproduction / verification / regression run uses Setup's saved Cekura simulation runner. Do not switch runners between phases or substitute a code/unit test. If the failure cannot be forced in that simulation, stop (REPRO.6).
 
 ---
 
@@ -77,7 +77,7 @@ create_scenario '{
 
 > ## ⛔ HARD STOP — DO NOT ENTER THE LOOP WITHOUT A DEFINITIVE FAIL.
 
-Run the evaluator(s) on Cekura over the agent's transport and require a definitive FAIL before any edit.
+Run the evaluator(s) with Setup's saved runner and require a definitive FAIL before any edit.
 
 ### Re-run policy (all classes)
 
@@ -88,11 +88,7 @@ The skill **auto-fires N runs itself** — never ask the user to trigger each. R
 
 The only thing the class changes is harness shape, not the run count.
 
-```bash
-# N runs fired without prompting between them
-run_voice "SCENARIO_ID" '{"agent_number": "<caller_id>"}'   # ×N
-get_result "RESULT_ID"                                        # poll each to terminal
-```
+Fire N runs with the saved runner and poll each result to terminal.
 
 **Self-hosted targets:** launch the main agent with the per-run Cekura connection details using the run-setup steps in `.claude/CLAUDE.md` / `.claude/MEMORY.md` (Setup 1.4a), with any REPRO.3e trigger conditions active. If those weren't captured, ask now and persist before the first run — don't guess how to start the agent.
 

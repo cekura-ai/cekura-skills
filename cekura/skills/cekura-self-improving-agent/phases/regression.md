@@ -2,7 +2,7 @@
 
 Runs **once**, after Eval declares the validation set 100% green (EVAL.4 case 3) and before PR. The reproduction dataset proves the original bug is fixed; this phase proves the fix didn't break a previously-working flow. A fix that resolves the bug but regresses a happy path is not shippable.
 
-**The sweep is always Cekura scenarios:** happy-path + edge-case scenarios on the changed surface, run E2E over the **same transport as the production call** (same agent, same medium). Text mode and code / unit tests are never a substitute; passing over a different medium than production is a false pass.
+**The sweep is always Cekura scenarios:** run happy-path + edge-case scenarios with Setup's saved simulation runner. A different runner or a code/unit test is not a substitute.
 
 ## Step REGRESS.1 — Identify the affected flows
 
@@ -30,7 +30,7 @@ create_scenario '{
 }'
 ```
 
-Run each case over the agent's transport one at a time (restore any modified conditions between cases), poll all results.
+Run each case with the saved runner one at a time (restore modified conditions between cases), then poll all results.
 
 Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM and infra alike — must pass in ≥ M of N runs (a single clean pass is never enough), re-run under the ≥ M of N logic when a trigger is intermittent.
 
