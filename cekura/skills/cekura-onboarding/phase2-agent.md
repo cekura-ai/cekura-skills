@@ -9,7 +9,7 @@ Register the user's agent on Cekura. Framing differs by path:
 
 **Prerequisites are handled inline, not as a phase:** if platform tools fail, fix access via [references/client-setup.md](references/client-setup.md); if no project is in context, pick one with `projects_list` or create one with `projects_create` — then continue here.
 
-**Provider first — it shapes everything. The opening question is the provider question, ALONE — nothing rides along.** Never batch name / description / credential questions with it: every follow-up depends on the provider answer, so pre-batched questions are guaranteed wrong — auto-import providers (VAPI/Retell/ElevenLabs/Synthflow) fetch the agent's **name and system prompt from the provider**, so asking for either wastes the user's time and a pre-authored "paste your system prompt" question is flat wrong for them; LiveKit/Pipecat need the telephony-vs-WebRTC choice before any credentials. Ask for a name only in the branches that actually need one (manual/self-hosted paths), after the provider is known.
+**Provider first — it shapes everything. The opening question is the provider question, ALONE — nothing rides along.** Never batch name / description / credential questions with it: every follow-up depends on the provider answer, so pre-batched questions are guaranteed wrong — auto-import providers (VAPI/Retell/ElevenLabs/Bland/Synthflow) fetch the agent's **name and system prompt from the provider**, so asking for either wastes the user's time and a pre-authored "paste your system prompt" question is flat wrong for them; LiveKit/Pipecat need the telephony-vs-WebRTC choice before any credentials. Ask for a name only in the branches that actually need one (manual/self-hosted paths), after the provider is known.
 
 The full provider list is:
 
@@ -27,7 +27,7 @@ Then follow the matching section below. **Onboarding is self-contained — do NO
 | Synthflow | `credentials.api_key` + `provider.agent_id` (Dashboard → agent ID) |
 | LiveKit | `credentials.url` + `credentials.api_key` + `credentials.config.api_secret` (LiveKit Cloud → Settings → Keys) + `config.agent_name` (must match the worker's registration) — WebRTC path only, see 2b |
 | Pipecat Cloud | `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name` — WebRTC path only, see 2b |
-| Bland | `credentials.api_key` (Dashboard → API Keys) + `provider.agent_id` (= pathway_id, Pathways → copy ID) |
+| Bland | `credentials.api_key` (Dashboard → API Keys) + `provider.agent_id` (Persona ID for voice); optional `chat_agent_details.config.agent_id` (Pathway ID for chat) |
 | KoreAI | `credentials.api_key` (client secret) + bot/config IDs per their dashboard |
 | Genesys / Cisco | no credentials — telephony connection details only |
 | self-hosted | no provider credentials — connection details (phone / SIP / websocket) only |
@@ -44,7 +44,7 @@ In both cases set `provider.type = self_hosted` and collect a **connection only*
 - **Keep `provider.type` set to the real provider** — never reroute to `self_hosted` because a credential is missing or the agent is reached by phone. (A fork built on the framework is not "the real provider" — that's the carve-out above, not this rule.)
 - **Deferred credentials are fine ONLY when another connection path exists** (e.g. the agent is reachable by phone/SIP). In that case fall back to the manual essentials of 2c, tell them which capabilities won't work until the key is added (provider-dispatched simulations, auto-sync, auto-import of calls), and carry it as an open item in every summary. Do not leave a half-connected agent without saying so. **When the chosen connection IS the credentials — the WebRTC path in 2b — there is no skip:** without them Cekura cannot reach the agent at all, so collect them before creating the agent (or switch to a telephony connection if the user has one).
 
-## 2a. VAPI / Retell / ElevenLabs / Synthflow — auto-import (preferred)
+## 2a. VAPI / Retell / ElevenLabs / Bland / Synthflow — auto-import (preferred)
 
 The one high-leverage step: **provider agent ID + provider API key**. Create with `aiagents_create` using `configure_from_provider: true`, then poll `aiagents_auto_fetch_progress_retrieve`. Auto-import pulls the description (system prompt), tools, and config automatically — do not ask the user to paste their prompt when auto-import is available.
 
@@ -54,9 +54,9 @@ The one high-leverage step: **provider agent ID + provider API key**. Create wit
 
 Then collect the telephony essentials in ONE clarification — **phone number (or SIP URI), inbound-or-outbound, and language, asked together** — plus the complete system prompt via the description gate. **Ask inbound/outbound explicitly; never infer the direction** (it decides who dials whom — getting it wrong means the run can't connect) and don't silently default the language. Then create with the telephony connection. Tell them what's deferred (auto-import, auto-sync, call ingestion) and carry it as an open item. **The verification run then goes over the phone connection (`scenarios_run_voice`) — never substitute a text simulation for a voice agent** (text mode is for chat agents, not a workaround for missing credentials). If they have neither credentials nor a phone number, pause onboarding — there is nothing to test against.
 
-## 2a′. Bland / KoreAI / Genesys / Cisco — standard named providers
+## 2a′. KoreAI / Genesys / Cisco — standard named providers
 
-No auto-import for these, so collect their credentials per the create-agent matrix (e.g. Bland: `provider.agent_id` = pathway_id; Cisco: no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.
+No auto-import for these, so collect their credentials per the create-agent matrix (for example, Cisco needs no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.
 
 ## 2b. LiveKit / Pipecat — config-only connection (no SDK, no code changes)
 
@@ -84,7 +84,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
   **How to ask — demand the full prompt, don't invite a summary:**
   > "Paste your agent's **complete system prompt** — the actual prompt your bot runs with, however long. It lives wherever you configure the agent: your agent code (the string passed to your LLM), your framework's config, or your platform's dashboard. Paste it here or attach the file."
 
-  (This ask only ever fires for non-auto-import providers — LiveKit, Pipecat, Bland, self-hosted, etc. Do not cite VAPI/Retell dashboard export steps here; those providers auto-import and never reach this ask.)
+  (This ask only ever fires for non-auto-import providers — LiveKit, Pipecat, self-hosted, etc. Do not cite VAPI/Retell/Bland dashboard export steps here; those providers auto-import and never reach this ask.)
 
   Offer to read the codebase yourself ("share the file or repo path and I'll read it") **only when the session actually has file access** — e.g. local Claude Code with the user's repo. In the Cekura platform UI there is no codebase access: ask for a paste or a file attachment instead.
 

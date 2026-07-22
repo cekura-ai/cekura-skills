@@ -80,7 +80,7 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `type` | Required config | Optional config |
 |--------|----------------|----------------|
 | `retell` | `agent_id` | — |
-| `bland` | `agent_id` (= pathway_id) | — |
+| `bland` | `agent_id` (= Pathway ID) | — |
 | `vapi` | — | `agent_id` |
 | `elevenlabs` | — | `agent_id` |
 | `agentforce` | `agent_id`, `client_id`, `client_secret`, `domain` | — |

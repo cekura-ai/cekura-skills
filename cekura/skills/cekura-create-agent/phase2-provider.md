@@ -17,7 +17,7 @@ Ask: "What provider does your main agent run on?"
 | **ElevenLabs** | `elevenlabs` | Phone + chat; auto-sync prompt |
 | **LiveKit** | `livekit` | Phone + WebRTC + chat |
 | **Pipecat Cloud** | `pipecat` | Phone + WebRTC; agent name in `credentials.config.pipecat_agent_name` |
-| **Bland** | `bland` | Phone + chat; `provider.agent_id` = pathway_id |
+| **Bland** | `bland` | Phone + chat; voice uses a Persona ID and chat uses a separate Pathway ID; auto-sync supported |
 | **Synthflow** | `synthflow` | Phone; auto-sync prompt supported |
 | **WebSocket voice (raw-PCM)** | `custom` | Cekura dials your `wss://` endpoint (16 kHz raw PCM); set `telephony.websocket_url` (+ optional `telephony.websocket_auth`). Runs via the CHIRP protocol. |
 | **KoreAI** | `koreai` | Chat/text only |
@@ -108,9 +108,12 @@ Pipecat observability via the SDK does not need provider creds — the SDK handl
 
 ### Bland
 - **`credentials.api_key`**: Bland Dashboard → API Keys
-- **`provider.agent_id`**: Bland pathway_id — Pathways → Select → copy ID
+- **`provider.agent_id`**: Bland Persona ID — Personas → select the voice persona → copy ID
+- **`chat_agent_details.config.agent_id`** (optional): Bland Pathway ID for text-mode test runs
 - **`credentials.config.encrypted_key`** (optional): Twilio credential bundle
 - **Docs:** https://docs.bland.ai
+
+> **Fast path:** Bland supports `configure_from_provider` — collect `api_key` + Persona ID. Cekura imports the name, description, phone number, tools, knowledge base, and dynamic variables. See Phase 5 for the import flow.
 
 ### Synthflow
 - **`credentials.api_key`**: Synthflow API Key
@@ -175,11 +178,11 @@ Set in `chat_agent_details`, not `provider.type`:
 | WebRTC | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — | — |
 | WebSocket voice | — | — | — | — | — | — | — | — | — | — | ✓ |
 | Chat/Text | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | ✓ | ✓ | ✓ |
-| **Auto-import agent** | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — |
+| **Auto-import agent** | ✓ | ✓ | ✓ | — | — | ✓ | ✓ | — | — | — | — |
 | Auto-import calls | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — |
-| Auto-sync prompt | ✓ | ✓ | ✓ | — | — | — | ✓ | — | — | — | — |
+| Auto-sync prompt | ✓ | ✓ | ✓ | — | — | ✓ | ✓ | — | — | — | — |
 | Auto-dial outbound | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — |
-| Auto-fetch tools | ✓ | ✓ | ✓ | — | ✓ | — | — | — | — | — | — |
+| Auto-fetch tools | ✓ | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — |
 | Squads / multi-agent | ✓ | ✓ | ✓ | — | ✓ | ✓ | — | — | — | — | — |
 
 ---

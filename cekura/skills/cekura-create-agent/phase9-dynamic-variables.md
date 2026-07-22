@@ -6,7 +6,7 @@ Registering a variable tells Cekura's evaluator generator to produce a value for
 
 ---
 
-> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — dynamic variables were extracted automatically during import. Go directly to [Phase 10](phase10-advanced.md).
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Bland / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — dynamic variables were extracted automatically during import. Go directly to [Phase 10](phase10-advanced.md).
 
 > **Start:** Announce "Starting Phase 9 — Main Agent Dynamic Variables" before doing anything in this phase.
 

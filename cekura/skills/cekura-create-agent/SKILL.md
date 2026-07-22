@@ -12,7 +12,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "1.2.0"
+  version: "1.2.1"
 ---
 
 # Cekura Create Agent
@@ -22,7 +22,7 @@ Full main agent setup flow — **pick provider early, it shapes everything that 
 > **LiveKit / Pipecat note:** keep `provider.type = livekit` or `pipecat` regardless of how Cekura connects (phone, WebRTC, chat). Never reroute a LiveKit/Pipecat agent into `self_hosted` just because it has a phone number — these providers support phone-based simulations and SDK integration natively under their own type.
 
 ```
-Standard path (Bland, KoreAI, Genesys, Cisco, self-hosted):
+Standard path (KoreAI, Genesys, Cisco, self-hosted):
 Phase 1  → Phase 2  → Phase 3  → Phase 4  → Phase 5  → Phase 6  → Phase 7  → Phase 8  → Phase 9  → Phase 10 → Phase 11
 Project    Provider   Basics &   Description  Create     SDK        Mock       KB         Dyn Vars   Advanced   Verify
                       Conn Type               agent     (no-op)     Tools
@@ -32,7 +32,7 @@ Phase 1  → Phase 2  → Phase 3  → Phase 4  → Phase 5  → Phase 6  → Ph
                                                        SDK
                                                        integration
 
-Auto-import path (VAPI / Retell / ElevenLabs / Synthflow — configure_from_provider: true):
+Auto-import path (VAPI / Retell / ElevenLabs / Bland / Synthflow — configure_from_provider: true):
 Phase 1  → Phase 2  → Phase 5  → Phase 10 → Phase 11
 Project    Provider   Create     Advanced   Verify
            (api_key   (import,   config
@@ -42,7 +42,7 @@ Project    Provider   Create     Advanced   Verify
 
 ## The 11 Phases
 
-| Phase | File | What happens | Standard providers | LiveKit / Pipecat | Auto-import (VAPI/Retell/ElevenLabs/Synthflow) |
+| Phase | File | What happens | Standard providers | LiveKit / Pipecat | Auto-import (VAPI/Retell/ElevenLabs/Bland/Synthflow) |
 |-------|------|--------------|-------------------|-------------------|------------------------------------------------|
 | 1 | [phase1-project.md](phase1-project.md) | List projects, pick `project_id` | **✓ required** | **✓ required** | **✓ required** |
 | 2 | [phase2-provider.md](phase2-provider.md) | Choose provider; collect all credentials upfront | **✓ required** | **✓ required** | **✓ required** (api_key + agent_id only) |
@@ -91,7 +91,7 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 
 **Use MCP tools, not raw API calls.** The Cekura MCP server is configured and authenticated. Use it directly for all Cekura platform operations — listing projects, creating agents, registering variables, running scenarios, fetching results. Do not generate curl commands for operations that the MCP server can perform. Raw curl is only a fallback when a specific operation is not available via MCP.
 
-**All 11 phases are mandatory for non-auto-import providers — execute every phase, every time, no exceptions.** Phase 6 (SDK Integration) is a no-op for providers other than LiveKit/Pipecat — announce it and continue. For VAPI, Retell, ElevenLabs, and Synthflow using `configure_from_provider`, phases 3, 4, 6, 7, 8, and 9 are skipped (the backend imports all of that automatically). The phase files for those phases contain explicit skip instructions — follow them.
+**All 11 phases are mandatory for non-auto-import providers — execute every phase, every time, no exceptions.** Phase 6 (SDK Integration) is a no-op for providers other than LiveKit/Pipecat — announce it and continue. For VAPI, Retell, ElevenLabs, Bland, and Synthflow using `configure_from_provider`, phases 3, 4, 6, 7, 8, and 9 are skipped (the backend imports all of that automatically). The phase files for those phases contain explicit skip instructions — follow them.
 
 **The skill does not end until Phase 11's verification run succeeds.** If the run reveals issues (missing dynamic variables, broken mock tools, wrong connection settings, silent agent), go back to the relevant phase, fix the issue, and retry the run. Never exit before a real conversation is confirmed in the transcript.
 

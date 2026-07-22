@@ -10,16 +10,16 @@
 
 > **Start:** Announce "Starting Phase 5 — Create the Main Agent" before doing anything in this phase.
 
-## Auto-import path (VAPI / Retell / ElevenLabs / Synthflow)
+## Auto-import path (VAPI / Retell / ElevenLabs / Bland / Synthflow)
 
-For these four providers, use `configure_from_provider: true`. The backend imports name, description (system prompt), language, phone number, connection type, tools, knowledge base, and dynamic variables automatically. Phases 3, 4, 6, 7, and 8 are all skipped.
+For these five providers, use `configure_from_provider: true`. The backend imports name, description (system prompt), language, phone number, connection type, supported tools, knowledge base, and dynamic variables automatically. Phases 3, 4, 6, 7, 8, and 9 are skipped.
 
 **Minimal payload:**
 ```json
 {
   "project": 123,
   "provider": {
-    "type": "vapi|retell|elevenlabs|synthflow",
+    "type": "vapi|retell|elevenlabs|bland|synthflow",
     "agent_id": "<assistant/agent ID on provider platform>",
     "credentials": {
       "api_key": "<provider API key>"
@@ -186,7 +186,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 | `type` | Config keys |
 |--------|-------------|
 | `retell` | `agent_id` (required) |
-| `bland` | `agent_id` (required, = pathway_id) |
+| `bland` | `agent_id` (required, = Pathway ID) |
 | `vapi` | `agent_id` |
 | `elevenlabs` | `agent_id` |
 | `agentforce` | `agent_id`, `client_id`, `client_secret`, `domain` (all required) |
@@ -347,21 +347,19 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ### Bland
 ```json
 {
-  "name": "Bland Support Agent",
-  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
-  "language": "en",
   "provider": {
     "type": "bland",
-    "agent_id": "bland_pathway_xyz",
+    "agent_id": "<Bland Persona ID>",
     "credentials": {
       "api_key": "bland_xxx",
       "config": {"encrypted_key": "twilio_bundle_xxx"}
-    }
+    },
+    "configure_from_provider": true
   },
-  "telephony": {
-    "phone_number": "+14155551234",
-    "inbound": true
+  "chat_agent_details": {
+    "type": "bland",
+    "config": {"agent_id": "<Bland Pathway ID — optional, chat only>"}
   }
 }
 ```
@@ -524,7 +522,7 @@ The response `id` is needed for all subsequent steps.
 
 **Creating the main agent record is NOT the end of setup.** Move immediately to the next phase.
 
-- **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** Tools, KB, and dynamic variables were auto-populated. Skip Phases 7, 8, and 9. Phase 6 is also a no-op for these providers. Go directly to [Phase 10 — Advanced Configuration](phase10-advanced.md).
+- **Auto-import providers (VAPI / Retell / ElevenLabs / Bland / Synthflow):** Tools, KB, and dynamic variables were auto-populated. Skip Phases 7, 8, and 9. Phase 6 is also a no-op for these providers. Go directly to [Phase 10 — Advanced Configuration](phase10-advanced.md).
 - **LiveKit / Pipecat:** Proceed to [Phase 6 — SDK Integration](phase6-sdk-integration.md). The SDK adds rich agent-side data and is integrated into the user's repo unless they explicitly opt out.
 - **All other providers:** Phase 6 is a no-op. Proceed to [Phase 7 — Mock Tools](phase7-mock-tools.md).
 

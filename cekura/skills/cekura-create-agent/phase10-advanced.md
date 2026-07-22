@@ -28,7 +28,7 @@ Supported for: VAPI, Retell, ElevenLabs, Bland, LiveKit. Test profile fields are
 
 ---
 
-## 10b. Auto-sync prompt (VAPI / Retell / ElevenLabs / Synthflow only)
+## 10b. Auto-sync prompt (VAPI / Retell / ElevenLabs / Bland / Synthflow only)
 
 **Skip this section for all other providers.**
 

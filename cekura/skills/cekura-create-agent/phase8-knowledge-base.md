@@ -2,7 +2,7 @@
 
 Upload any documents the main agent references so Cekura can use them for evaluator generation.
 
-> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — knowledge base files were imported automatically. Go directly to [Phase 9](phase9-dynamic-variables.md).
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Bland / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — knowledge base files were imported automatically. Go directly to [Phase 9](phase9-dynamic-variables.md).
 
 **Rule: if the main agent reads any documents during a conversation, upload them. No exceptions.**
 
