@@ -2,12 +2,15 @@
 
 Final phase. Runs once, after [`regression.md`](regression.md) passes. Packages the verified fix with all its evidence and either raises a PR automatically or hands the user a copy-pasteable summary. **The path is detected, not asked** — only ask if detection is genuinely ambiguous.
 
+**Managed providers never enter or announce this phase.** Stop after Regression
+with the validated clone diff and evidence. Never patch or repoint production.
+
 ---
 
 ## Step PR.1 — Determine the change kind
 
 - **Owned source code in a repo (self-hosted source-file edits, incl. a forked/vendored SDK in the tree)** → real code changes on disk; there's a diff to commit and review. This is the PR path — continue to PR.2. Evidence in the PR body is the Cekura scenario URLs (repro fail-runs + verification/regression pass-runs) — source edits are validated on Cekura like every other fix.
-- **Managed config (VAPI / ElevenLabs clone, or self-hosted non-repo edits — Cekura mock tools, a DB row)** → no repo diff to open a PR against. Skip to PR.4 and emit a **promotion summary**: the validated cumulative config diff + the instruction to promote it to production (for VAPI / ElevenLabs, promoting the clone's diff to the live agent — never automatic; see [`clone.md`](clone.md)), with all the same Cekura result URLs.
+- **Self-hosted non-repo edits** (Cekura mock tools, a DB row) → skip to PR.4 and emit a summary with the validated cumulative diff and result URLs.
 - **Render-only (no repo, no live target)** → emit the PR-ready summary (PR.4) with the rendered prompt diff and result URLs; the user applies it.
 
 ---
@@ -42,11 +45,11 @@ gh pr create --title "<fix title>" --body "<body from PR.5>"
 
 ## Step PR.4 — Emit a PR-ready summary in-panel
 
-When an automatic PR isn't possible (or the change is managed-config / render-only), emit a structured, copy-pasteable block:
+When an automatic PR isn't possible (or the change is render-only), emit a structured, copy-pasteable block:
 
 - **Branch name** — suggested (e.g. `fix/<short-slug>`).
 - **Commit message** — the conventional-commit one-liner.
-- **Diff** — unified diff of the changed file(s) (PR path), OR the cumulative config / prompt diff (managed-config / render-only), fenced and ready to apply. For managed-config, replace the diff with the **promotion instruction** (which provider fields changed + that the user promotes clone → live agent deliberately).
+- **Diff** — unified diff of the changed file(s), or the cumulative config / prompt diff for self-hosted non-repo and render-only changes.
 - **Full Cekura result URLs** — repro fail-runs, verification pass-runs, regression pass-runs (the PR.5 body).
 - **Copy-pasteable PR description** — the PR.5 body, ready for the forge UI.
 
