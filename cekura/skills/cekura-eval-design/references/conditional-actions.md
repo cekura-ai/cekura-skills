@@ -184,19 +184,18 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 ## Attached Audio (`<audio>` — managed, do NOT hand-author)
 
-A user can attach a **pre-recorded audio clip** to a fixed-message condition; on the call the testing agent **plays the recording instead of TTS**. The clip is represented in the `action` as a managed reference tag:
+A user can attach **pre-recorded audio clips** to a fixed-message condition. Managed `<audio>` references can appear inline with text and sibling tags:
 
 ```json
-{ "id": 2, "condition": "The agent greets you", "action": "<audio id=\"ab12cd34\"/>", "type": "standard", "fixed_message": true }
+{ "id": 2, "condition": "The agent greets you", "action": "Before <audio id=\"ab12cd34\"/> <silence time=\"1s\"/> continue", "type": "standard", "fixed_message": true }
 ```
 
 **This tag is created by the audio-upload flow, not written by hand.** When authoring or generating conditional-actions scenarios:
 
 - **Never emit an `<audio>` tag yourself.** The `id` must reference a real uploaded clip; a hand-written id points at nothing and fails reference validation (`"audio id '…' does not reference an uploaded clip"`).
-- Audio is attached out-of-band via `POST /test_framework/v1/scenarios/{id}/condition-audio/` (multipart `condition_id` + `file`; ≤25MB; wav/mp3/m4a/ogg/webm/flac); the endpoint rewrites the target condition's `action` to `<audio id="…"/>`. `GET`/`DELETE` on the same path list/detach clips.
-- **Rules for an `<audio>` action:** fixed-message conditions only; the tag is the **sole content** of the action (no other text or tags); one clip per condition; the transcript is never in the `action`.
-- **Run gating:** a scenario can't run while any attached clip is not `ready` (pending/processing/failed all block). The transcript (from the recording, read-only) is what conditions and metrics match against.
-- A scenario using **generated audio samples** can't also use attached audio (`409` on upload) — mutually exclusive per scenario.
+- Audio is attached via `POST /test_framework/v1/scenarios/{id}/condition-audio/` (multipart `condition_id` + `file`; ≤25MB; wav/mp3/m4a/ogg/webm/flac). Pass `action_template` with one `<audio />` marker to choose the insertion point; pass `replace_audio_id` to replace one existing clip. `GET`/`DELETE` on the same path list/detach clips.
+- **Rules:** fixed-message conditions only; multiple clips and sibling tags are allowed and run left to right; do not nest `<audio>` inside a wrapping tag.
+- **Run gating:** a scenario can't run while any attached clip is not `ready` (pending/processing/failed all block).
 
 ## Test Profile Template Variables (fixed_message: true only)
 
@@ -490,7 +489,7 @@ The Cekura API rejects requests that violate these rules. Each rule maps to a sp
 7. **`action_followup` `condition` field must be an integer** — the integer must match the `id` of an existing earlier condition. String values like `"1"` are rejected. Self-references (`condition: <own id>`) are rejected.
 8. **`scenario_language` required** — Conditional Actions evaluators require a language. Set it via a personality with a configured language (inferred automatically) or set `scenario_language` explicitly. This also applies when changing an existing evaluator's type to Conditional Actions.
 9. **`personality` required** — every scenario needs a personality assigned, conditional-actions or otherwise. The API returns 400 without one.
-10. **`<audio>` tags must reference an uploaded clip** — if a condition's `action` is an `<audio id="…"/>` tag, the id must reference a real uploaded clip, the condition must be `fixed_message: true`, and the tag must be the sole content of the action. Hand-written `<audio>` tags fail this. Don't author them — audio is attached via the [upload endpoint](#attached-audio-audio--managed-do-not-hand-author).
+10. **`<audio>` tags must reference uploaded clips** — every id must reference a real uploaded clip and the condition must be `fixed_message: true`. Hand-written `<audio>` tags fail this. Don't author them — audio is attached via the [upload endpoint](#attached-audio-audio--managed-do-not-hand-author).
 
 ### Extra rules at generation time (LLM-generated scenarios only)
 
@@ -498,7 +497,7 @@ These additional rules apply when the platform's auto-generator produces a scena
 
 - IDs must be in **ascending order** within the conditions array (not just unique)
 - Only documented tags are accepted (unknown tags are rejected)
-- At most **one tag per action**
+- Multiple sibling tags are allowed and run left to right; do not nest tags
 - `fixed_message` must be `true` whenever the action contains a tag
 - `<speed>` tag only at the very start of the action
 - "others" / catch-all conditions are rejected — write specific triggers
@@ -736,8 +735,8 @@ XML tags (fixed_message:true only):
   <background_noise sound="NAME" volume="N">spoken text</background_noise>   volume multiplier 0.5–2 (optional)
   <noise sound="NAME" volume="N" time="Xs" />   One-shot: office | beep | cough1 | cough2; volume 0.5–2 (optional)
   <audio id="..." />                MANAGED — do NOT hand-author. Plays an uploaded recording instead
-                                     of TTS; created by POST scenarios/{id}/condition-audio/. Sole
-                                     content of a fixed_message action; id must reference an uploaded clip.
+                                     of TTS; created by POST scenarios/{id}/condition-audio/. Multiple
+                                     clips and sibling tags are allowed on fixed_message actions.
 
 Background noise sounds:
   office-ambience, coffee-shop, kitchen-noise, home-chatter, restaurant, shopping-mall,

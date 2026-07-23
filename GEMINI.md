@@ -499,6 +499,8 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 
 ### XML Tags (fixed_message:true only)
 
+Sibling tags can be combined with text and run left to right. Do not nest tags; `<ivr>` and `<voicemail>` remain whole-action exceptions.
+
 | Tag | Behavior |
 |-----|---------|
 | `<ivr text="..." />` | Uninterruptible IVR message. **Must be entire action.** |
@@ -515,6 +517,7 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 | `<network_simulation packet_loss="N" />` | Only `packet_loss` supported — `jitter`/`latency` are ignored. |
 | `<background_noise sound="NAME" volume="0.x">text</background_noise>` | Continuous ambient sound (e.g. `coffee-shop`, `office-ambience`, `rain-thunder`, `vacuum-cleaner`, `construction-site`) |
 | `<noise sound="NAME" volume="N" time="Xms" />` | One-shot effect: `office`, `beep`, `cough1`, `cough2`. `volume` and `time` (milliseconds) are optional. |
+| `<audio id="..." />` | Managed uploaded recording. Multiple clips may appear inline; never fabricate an id. |
 
 ### Test Profile Variables in Fixed Messages
 
