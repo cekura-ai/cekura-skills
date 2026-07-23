@@ -110,7 +110,7 @@ Returns a result object with `id`, `status`, and `runs` array.
   "scenario_type": "string — one of: 'instruction' (default), 'real_world_smart', 'real_world_fixed', 'conditional_actions'. Must be 'conditional_actions' to use the conditional_actions field below.",
   "scenario_language": "string — language code (e.g., 'en', 'es'). Required when scenario_type is 'conditional_actions'; otherwise inferred from personality.",
   "instructions": "string — free-form, first-person scenario instructions for behavioral evaluators. Do not pass a JSON object here. For conditional-actions evaluators, use the `conditional_actions` field below and leave this unset.",
-  "conditional_actions": "object — required for scenario_type='conditional_actions'. Carries {role, conditions[]}. See 'Authoring a Conditional-Actions Evaluator' below.",
+  "conditional_actions": "object — required for scenario_type='conditional_actions'. Carries {role, conditions[], functions?}. See 'Authoring a Conditional-Actions Evaluator' below.",
   "expected_outcome_prompt": "string — what success looks like",
   "metrics": "[integer] — metric IDs to evaluate against",
   "tags": "[string] — tags for filtering",

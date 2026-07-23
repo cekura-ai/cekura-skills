@@ -279,7 +279,7 @@ Without metrics, runs return success/failure based only on whether the call comp
 
 ## Designing Conditional Actions
 
-When in conditional-actions mode (per "Choosing Authoring Mode" above), set `scenario_type: "conditional_actions"` on the scenario payload and pass `{ "role": "...", "conditions": [...] }` through the `conditional_actions` field — not through `instructions`. The testing agent walks the `conditions` array turn by turn.
+When in conditional-actions mode (per "Choosing Authoring Mode" above), set `scenario_type: "conditional_actions"` on the scenario payload and pass `{ "role": "...", "conditions": [...], "functions": [...] }` through the `conditional_actions` field — not through `instructions`. The testing agent walks the `conditions` array turn by turn.
 
 ### Authoring sequence
 
@@ -315,21 +315,23 @@ Follow these steps in order. Skipping any of them is the most common cause of av
 
 Three load-bearing top-level fields:
 - **`scenario_type: "conditional_actions"`** — explicit, required. Without this the scenario is created as behavioral and your `conditional_actions` payload is ignored.
-- **`conditional_actions`** — JSON object carrying `{role, conditions[]}`. Do not put this object in `instructions`.
+- **`conditional_actions`** — JSON object carrying `{role, conditions[], functions?}`. Do not put this object in `instructions`.
 - **`scenario_language`** — required for `conditional_actions`. Set explicitly, or rely on the assigned personality's language.
 
 Do not set `first_message` or `instructions` when using `conditional_actions` — they are managed for you.
 
 All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`) are required on every condition. `id: 0` must use `condition: "FIRST_MESSAGE"` (literal) and `fixed_message: true`; set `action: ""` if the main agent speaks first.
 
-### XML tag constraints (the ones you'll hit most)
+### Action-tag constraints (the ones you'll hit most)
 
-- **All XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text.
+- **Most XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text. `<function>` is the exception: it can run in any non-first action, while `{{function.*}}` placeholders require `fixed_message: true`.
 - **`<ivr text="..." />` and `<voicemail text="..." />`** (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags. Use a separate `action_followup` for post-IVR / post-beep content.
 - **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
 - **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. Supports decimal seconds (`"0.5s"`) for sub-second precision. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
 - **`<dtmf digits="..." />`** supports `0–9`, `#`, `*`; combinable with surrounding text.
 - **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
+- **`<audio id="..." />`** plays an uploaded clip attached in the editor. Multiple clips play in authored order and may be mixed with text and compatible tags; each clip ID can be used once per evaluator. Do not nest it inside `<spell>` or `<background_noise>`.
+- **`<function name="..." />`** runs a function declared in `conditional_actions.functions[]`. It is not allowed in `id: 0`; use a mapped result in a fixed-message action as `{{function.<name>.<output>}}` after the function tag.
 - **`<spell>TEXT</spell>`** wraps text to spell letter by letter (good for IDs, account numbers).
 - **`<speed ratio="N" />`** range **0.8–1.2**; **`<volume ratio="N" />`** range **0–2** (Cartesia voices only) — both must be at the **start** of the action.
 - **`<network_simulation packet_loss="N" />`** — only `packet_loss` is supported.

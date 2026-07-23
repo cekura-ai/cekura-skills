@@ -96,7 +96,7 @@ Keep names under 80 chars (API limit on the `name` field).
 
 ## Eval Types
 
-A complete suite has coverage across these categories. Each type can be authored as **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule.
+A complete suite has coverage across these categories. Each type can be authored as **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[], functions?}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule.
 
 ### Workflow Evals (Core)
 
@@ -149,4 +149,3 @@ Cekura can create an evaluator directly from a real call transcript. Useful when
 **When to use:** After reviewing production calls in observability, identify calls that represent important test scenarios (edge cases, failures, complex workflows) and convert them directly into evaluators. This is faster and more accurate than manually writing instructions to reproduce the scenario.
 
 **Post-creation:** Always review the generated evaluator — the auto-extraction may need refinement. Attach metrics, assign a test profile if identity data is involved, set the folder path, and enable tools.
-

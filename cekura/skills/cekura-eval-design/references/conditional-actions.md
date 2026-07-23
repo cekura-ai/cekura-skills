@@ -36,7 +36,7 @@ POST /test_framework/v1/scenarios/
 Three fields are load-bearing:
 
 - **`scenario_type`** — must be set to the literal string `"conditional_actions"` (default is `"instruction"`). Other valid values: `"instruction"`, `"real_world_smart"`, `"real_world_fixed"`. Set this explicitly — the type is not inferred from the payload shape.
-- **`conditional_actions`** — JSON object carrying `{role, conditions[]}`. Use this field, not `instructions`.
+- **`conditional_actions`** — JSON object carrying `{role, conditions[], functions?}`. Use this field, not `instructions`.
 - **`scenario_language`** — required when `scenario_type="conditional_actions"`. Set explicitly, or rely on the assigned `personality` to supply it (a personality's configured language is used when `scenario_language` is omitted).
 
 The `role` and `conditions[]` fields inside `conditional_actions`:
@@ -113,7 +113,7 @@ Think of conditions as stage directions: *what does the agent do that prompts th
 
 **Use `fixed_message: true` when:**
 - Exact wording matters (name, DOB, account number, confirmation codes, compliance phrases)
-- Using XML tags (IVR, DTMF, silence, hold, etc. — tags only parse when `true`)
+- Using most XML tags (IVR, DTMF, silence, hold, etc. — those tags only parse when `true`)
 - Running compliance or regression tests requiring verbatim output
 
 **Use `fixed_message: false` when:**
@@ -121,9 +121,9 @@ Think of conditions as stage directions: *what does the agent do that prompts th
 - You're giving behavioral instructions, not scripts
 - Phrasing can vary without affecting the test
 
-## XML Tags (fixed_message: true only)
+## Action Tags
 
-XML tags are interpreted as syntax only when `fixed_message: true`. With `false`, the testing agent reads the angle brackets as literal instructions.
+Most XML tags are interpreted as syntax only when `fixed_message: true`. With `false`, the testing agent reads them as literal instructions. `<function>` is the exception: it can execute in any non-first action, while `{{function.*}}` placeholders still require `fixed_message: true`.
 
 ### Communication
 
@@ -131,7 +131,9 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 |---|---|---|
 | `<ivr text="..." />` | Uninterruptible IVR menu played **by the testing agent**. Can appear in any condition. **When the scenario contains the `<ivr>` tag, any DTMF digits pressed by the main agent appear in the transcript** — use this to write conditions that detect which digit the main agent pressed (e.g., `"The main agent pressed 1"`). | **Must be the entire action.** No surrounding text or other tags. |
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible voicemail greeting + auto-beep at end. `text` is optional (silent voicemail allowed). | **Must be the entire action.** Post-beep message goes in a separate `action_followup` condition. |
-| `<endcall />` | Terminates the call | **May be combined with surrounding text** (the only "communication-class" tag that allows this — useful for natural sign-offs like `Thanks, that's all I needed <endcall />`). |
+| `<endcall />` | Terminates the call | May be combined with surrounding text (useful for natural sign-offs like `Thanks, that's all I needed <endcall />`). |
+| `<audio id="..." />` | Plays one uploaded clip attached to this evaluator. Attach it from the Conditional Actions editor; the UI inserts the clip ID. | May be interleaved with text and compatible tags; multiple clips play in authored order. Each clip ID is unique within an evaluator. Cannot be inside `<spell>` or `<background_noise>`. |
+| `<function name="..." />` | Runs a separately declared function. | Not allowed in `id: 0`. The referenced function must exist in `conditional_actions.functions[]`. |
 
 ### Speech Control
 
@@ -158,6 +160,35 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 | `<dtmf digits="..." />` | Send touch-tone digits. Supports digits, `#`, and `*` (e.g. `digits="123"`, `digits="456#"`, `digits="*9"`). | Combinable with text |
 | `<send_sms text="..." />` | Trigger an SMS for testing SMS-driven workflows | `text` required |
 | `<interruption time="Xs" />` | Cuts in `Xs` after the **main agent starts its next turn** (shorter = more aggressive) | **Must be `type: "action_followup"` AND must appear at the very start of the action string.** |
+
+### Functions
+
+Functions are declared separately from conditions in `conditional_actions.functions[]`, then executed from an action with `<function name="..." />`. The function tag can be used in any non-first condition, including a non-fixed action. To speak a mapped result verbatim, use a fixed action and `{{function.<name>.<output>}}` after the function tag.
+
+```json
+{
+  "functions": [
+    {
+      "name": "lookup_order",
+      "type": "rest_api",
+      "auto_run": false,
+      "config": {
+        "url": "https://example.com/orders/123",
+        "response_mapping": { "status": "status" }
+      }
+    }
+  ],
+  "conditions": [
+    { "id": 0, "condition": "FIRST_MESSAGE", "action": "I need an order update", "type": "standard", "fixed_message": true },
+    { "id": 1, "condition": "The main agent asks for the status", "action": "<function name=\"lookup_order\" /> It is {{function.lookup_order.status}}.", "type": "standard", "fixed_message": true }
+  ]
+}
+```
+
+- `name` must be unique and use letters, numbers, `_`, or `-`.
+- `auto_run: true` starts the function at call start; `false` runs it only when its tag is reached.
+- `{{function.<name>.<output>}}` requires `fixed_message: true`. The same-action text must follow the function tag; otherwise use it in a later action.
+- `rest_api` is the current function type. Its config requires an HTTP(S) `url`; it supports `GET` or `POST`, optional headers, query parameters, body, a 1–30 second timeout, and `response_mapping` values that expose response fields by name.
 
 ### Environmental
 
@@ -390,8 +421,8 @@ These additional rules apply when the platform's auto-generator produces a scena
 
 - IDs must be in **ascending order** within the conditions array (not just unique)
 - Only documented tags are accepted (unknown tags are rejected)
-- At most **one tag per action**
-- `fixed_message` must be `true` whenever the action contains a tag
+- Multiple tags are allowed only when their individual constraints permit it. In particular, multiple `<audio>` clips may be interleaved with text and compatible tags; respect tags that must start or occupy the entire action.
+- `fixed_message` must be `true` whenever an action contains a non-function tag
 - `<speed>` tag only at the very start of the action
 - "others" / catch-all conditions are rejected — write specific triggers
 
@@ -505,7 +536,9 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - **Missing `type`.** `type` is required on every condition with no default — omitting it returns a validation error. Always set `"standard"` or `"action_followup"` explicitly.
 - **Vague conditions.** `"condition": "verification"` is too ambiguous and may not trigger. Write `"condition": "The agent asks for your name and date of birth to verify your identity"`.
 - **Hardcoding profile data.** When data is in both the test profile and the instructions and they differ, the testing agent hallucinates. Prefer `"Provide your date of birth for verification"` (reads from profile) over `"My DOB is March 15, 1985"`.
-- **XML tags with `fixed_message: false`.** Tags only parse when `fixed_message: true`; otherwise the testing agent treats angle brackets as literal instructions.
+- **Non-function XML tags with `fixed_message: false`.** Those tags only parse when `fixed_message: true`; otherwise the testing agent treats angle brackets as literal instructions.
+- **Reusing or nesting `<audio>` tags.** An attached clip ID can be used only once per evaluator. Do not nest `<audio>` inside `<spell>` or `<background_noise>`; keep it inline with the action text instead.
+- **Function output before the function runs.** Put `<function name="..." />` before a same-action `{{function.<name>.<output>}}` reference, or use the result in a later fixed-message action. Functions and their placeholders are not allowed in `id: 0`.
 - **`<ivr>` or `<voicemail>` combined with other text or tags.** Both tags must be the *entire* action. Surrounding text or additional tags causes a validation error. Use a separate `action_followup` for any post-IVR / post-beep content.
 - **`<ivr>` in `id: 0` when testing an inbound IVR agent.** The main agent IS the IVR — leave `id: 0 action: ""` and let the main agent play its own menu, then press `<dtmf>` on later conditions. The `<ivr>` tag is only for the outbound case where the **testing agent** simulates a third-party IVR the main agent must navigate.
 - **Text before `<interruption>`.** `<interruption>` must be the very first thing in the action string.
@@ -534,7 +567,9 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 - [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
 - [ ] `<network_simulation>` only uses `packet_loss`
-- [ ] No XML tags used with `fixed_message: false`
+- [ ] No non-function XML tags used with `fixed_message: false`
+- [ ] Every `<audio id="..." />` references an uploaded clip, each ID is used once, and no audio tag is nested in `<spell>` or `<background_noise>`
+- [ ] Every `<function name="..." />` references a declared function; `{{function.*}}` placeholders are only in `fixed_message: true` non-first actions
 - [ ] The last condition ends the conversation (via `<endcall />` or a natural close)
 - [ ] `scenario_language` is set (either explicitly or via a personality with a configured language — required by validation rule 6)
 - [ ] A `personality` is set (API returns 400 without one)
@@ -550,7 +585,7 @@ Chain `action_followup` from `id: 0` — each entry fires automatically each tur
 | `scenario_language is required` | No language is set on the evaluator | Assign a personality with a configured language (inferred automatically), or set `scenario_language` explicitly in the request. |
 | `action cannot be empty` | A non-FIRST_MESSAGE condition has `action: ""` or whitespace | Provide non-empty action text. Empty actions are only allowed on `id: 0` when the main agent speaks first. |
 | Condition doesn't trigger when expected | Condition string is too vague, OR a prior condition matched first | Make the condition more specific (e.g., `"The agent asks for your name and date of birth to verify your identity"` rather than `"verification"`). Verify the condition describes what the **agent** says, not what the testing agent should do. Check whether an earlier condition swallowed the trigger. |
-| XML tag has no effect | Tag was used in a condition with `fixed_message: false` | Set `fixed_message: true` on conditions that contain XML tags. With `false`, tags are read as literal angle-bracketed text. |
+| Non-function XML tag has no effect | Tag was used in a condition with `fixed_message: false` | Set `fixed_message: true` on conditions that contain non-function XML tags. With `false`, those tags are read as literal angle-bracketed text. |
 | `<ivr>` / `<voicemail>` validation error | Tag mixed with surrounding text or other tags in the same action | Put the tag as the **entire** action. Use a separate `action_followup` for any post-IVR / post-beep content. |
 | `<interruption>` not interrupting | Tag used on `type: "standard"` or not at the start of the action | Move the tag to a `type: "action_followup"` condition AND make it the first thing in the action string. |
 | First message not sending | Missing or malformed `id: 0` | Verify `id: 0` exists with `condition: "FIRST_MESSAGE"`, `fixed_message: true`, and a valid `action` (or `""` if main agent speaks first). Confirm `role` is set on the evaluator. |
@@ -588,12 +623,15 @@ Condition fields (ALL five required on every condition):
   type          string        "standard" | "action_followup" — required, no default.
   fixed_message boolean       true = verbatim; false = instructions. Required.
 
-XML tags (fixed_message:true only):
+Action tags (most require fixed_message:true):
   <ivr text="..." />                Uninterruptible IVR — must be entire action
   <voicemail text="..." />          Uninterruptible + auto-beep at end — must be entire action;
    or <voicemail />                  use action_followup for the post-beep message
   <dtmf digits="..." />             Touch-tone input; supports digits, # and *
   <endcall />                       Terminate call — combinable with surrounding text
+  <audio id="..." />                Play an uploaded clip; multiple clips play in authored order;
+                                     clip IDs are unique within an evaluator
+  <function name="..." />           Run a declared function (not allowed in id:0)
   <silence time="Xs" />             Pause on caller's turn — interruptible; bg noise continues
                                      Supports decimal seconds (0.5s) for sub-second precision
   <hold time="Xs" />                Dead air — NOT interruptible; bg noise stops; multiple per action
@@ -619,7 +657,7 @@ Scenario-level fields (set on the scenario, not inside the conditions):
   scenario_type      Must be "conditional_actions" (default is "instruction")
   scenario_language  Required for conditional_actions; inferred from personality if omitted
   personality        Required (any scenario type)
-  conditional_actions  JSON object {role, conditions[]} — pass on the scenario payload.
+  conditional_actions  JSON object {role, conditions[], functions?} — pass on the scenario payload.
                        Do not also set instructions or first_message; they are managed.
 
 Action types:
@@ -643,4 +681,8 @@ Test profile variables (fixed_message:true only):
   {{test_profile['key']}}                       Bracket notation (keys with spaces/special chars)
   {{test_profile.address.city}}                 Nested field
   <spell>{{test_profile.account_number}}</spell>   Combined with XML tag
+
+Function variables (fixed_message:true only, except id:0):
+  {{function.lookup_order.status}}                 Mapped output from a declared function
+  <function name="lookup_order" />                 Run function before a same-action reference
 ```

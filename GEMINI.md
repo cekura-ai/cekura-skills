@@ -469,13 +469,14 @@ Use conditional actions when the user needs a scenario that runs identically eac
 
 ### Structure
 
-The `instructions` field of the scenario payload becomes a JSON object (not a string):
+Pass the Conditional Actions object in the scenario payload's `conditional_actions` field. Do not put it in `instructions` or set `first_message` separately:
 
 ```json
 {
-  "instructions": {
+  "conditional_actions": {
     "role": "You are a patient calling to cancel their appointment",
-    "conditions": [...]
+    "conditions": [...],
+    "functions": []
   }
 }
 ```
@@ -497,14 +498,18 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 - **`standard`** — fires when conversation context matches the condition string
 - **`action_followup`** — fires on the testing agent's **next turn** after the prior condition (one main-agent reply elapses in between, regardless of its content; never fires in the same turn as its parent). `condition` is the integer ID of that prior condition. Use for multi-part responses and `<interruption>`.
 
-### XML Tags (fixed_message:true only)
+### Action Tags
+
+Most tags require `fixed_message:true`. `<function>` is the exception: it can execute in any non-first action, while `{{function.*}}` placeholders require `fixed_message:true`.
 
 | Tag | Behavior |
 |-----|---------|
 | `<ivr text="..." />` | Uninterruptible IVR message. **Must be entire action.** |
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible + beep at end. **Must be entire action.** `text` optional (silent voicemail allowed). Post-beep message goes in a separate action_followup. |
 | `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`) |
-| `<endcall />` | Terminate call. **May be combined with surrounding text** (only "communication-class" tag that allows this). |
+| `<endcall />` | Terminate call. **May be combined with surrounding text.** |
+| `<audio id="..." />` | Play an uploaded clip attached to this evaluator. May be interleaved with text and compatible tags; multiple clips play in authored order. Each clip ID is unique within the evaluator. Cannot be inside `<spell>` or `<background_noise>`. |
+| `<function name="..." />` | Run a function declared in `conditional_actions.functions[]`. Not allowed on `id: 0`; use `{{function.name.output}}` only in a fixed-message action after the function has run. |
 | `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues. Supports decimal seconds (`"0.5s"`) for sub-second precision. |
 | `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell letter-by-letter |
@@ -520,13 +525,19 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 
 Inject test profile data into verbatim text: `"My name is {{test_profile.first_name}} {{test_profile.last_name}}"`. Also works nested (`{{test_profile.address.city}}`) and with XML tags (`<spell>{{test_profile.account_number}}</spell>`).
 
+### Conditional Functions
+
+Declare functions separately in `conditional_actions.functions[]` and invoke them with `<function name="..." />`. The current type is `rest_api`: it requires an HTTP(S) `url` and may map response fields with `response_mapping`. Set `auto_run: true` to start it at call start, or `false` to run it when its tag is reached. A mapped value can be spoken in a later `fixed_message: true` action as `{{function.<name>.<output>}}`; for the same action, place the tag before the placeholder.
+
 ### Key Anti-Patterns
 
 - **Multiple branches in one evaluator** — Each path (success/failure) is a separate evaluator
-- **XML tags with `fixed_message:false`** — Tags only parse when `fixed_message:true`
+- **Non-function XML tags with `fixed_message:false`** — Those tags only parse when `fixed_message:true`
 - **`<ivr>` or `<voicemail>` combined with other text/tags** — Must be the entire action
 - **`<interruption>` not at start of action or not as `action_followup`** — Both constraints required
 - **`<network_simulation>` with `jitter`/`latency`** — Only `packet_loss` is supported
+- **Reusing or nesting `<audio>`** — Each attached clip ID can be used once per evaluator; never nest it inside `<spell>` or `<background_noise>`
+- **Function result before execution** — Put a function tag before a same-action placeholder, or use the placeholder in a later fixed-message action. Do not use functions or function placeholders in `id: 0`.
 - **Missing `type` field** — Required on every condition, no default
 - **No `<endcall />` at end** — Calls run to timeout without it
 
