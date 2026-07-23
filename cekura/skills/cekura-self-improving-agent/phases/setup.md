@@ -10,7 +10,7 @@ Setup also records the **signal shape** (`input_is_prod_call`) and, for live tar
 
 **Prod-call inputs route through Collect → Debug → Reproduce** (the `3→4→5` loop in SKILL.md). When the input is `call_ids`, or a `result_id` / `run_ids` pointing at **production call logs**, set `input_is_prod_call = true`. After Setup, the orchestrator enters [`collect.md`](collect.md) — which anchors the kept-failure set on the FAIL'd verdict(s) — then [`debug.md`](debug.md) to root-cause them, then [`reproduce.md`](reproduce.md). Setup only records the input shape; Collect fetches and Debug diagnoses.
 
-**Setup fetches only agent config and the result metadata needed to select a runner.** Failure details (`runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) belong to Collect.
+**Setup fetches only agent config and source metadata needed to select a runner.** Failure details (`runs_bulk_retrieve` / `call_logs_retrieve` / `scenarios_retrieve`) belong to Collect.
 
 ## Step 1.0 — Check project memory FIRST
 
@@ -50,9 +50,11 @@ Track the resolved mode; every later phase branches on it. VAPI error-shape / Re
 Save the exact Cekura `scenarios_run_*` tool and required connection fields. Resolve in order:
 
 1. Explicit `simulation_runner`.
-2. The supplied simulation result/run's transport metadata.
+2. The supplied source's runner/modality metadata.
 3. `results_list(agent_id, page_size=10)`: newest completed result with usable transport metadata.
 4. The agent's configured connections; if several runners remain, ask.
+
+Preserve source modality: use a text runner when the source is text-based.
 
 Use result/run metadata plus current tool capabilities; do not maintain a closed transport enum or infer from provider. Treat telephony, WebRTC, chat, websocket, and future modes alike. Reuse the saved runner for Collect, Reproduce, Eval, and Regression.
 
@@ -133,6 +135,6 @@ Before Clone (VAPI / ElevenLabs) or Optimization (all other modes), confirm:
 - [ ] Agent loaded (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + `/v1/convai/tools/{id}`; self_hosted: editable surface explored per run-setup and recorded — source file / DB row / Cekura mock tools / pasted text; for a DB row, `db_type` + `db_connection` + `db_fetch_query` recorded and the fetch query executed; content otherwise unread until Fix; Cekura `description` informational only)
 - [ ] **Self-hosted**: `redeploy_command` resolved to a shell command, `"manual"`, or `"noop"` (N/A for VAPI / ElevenLabs and render-only)
 - [ ] **Self-hosted**: run setup either loaded from `.claude/CLAUDE.md` / `.claude/MEMORY.md`, OR — if collected this session — **persisted** (1.4a), write confirmed, no secrets written
-- [ ] I fetched no failure details; recent result metadata was used only for runner selection
+- [ ] I fetched no failure details; source metadata was used only for runner selection
 
 If any item is unresolved, ask the specific clarifying question and wait before entering Clone (VAPI / ElevenLabs) or Optimization (all other modes).
