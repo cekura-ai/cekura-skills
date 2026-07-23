@@ -1,6 +1,6 @@
 # Regression Phase — Confirm the Fix Didn't Break Anything Else
 
-Runs **once**, after Eval declares the validation set 100% green (EVAL.4 case 3) and before PR. The reproduction dataset proves the original bug is fixed; this phase proves the fix didn't break a previously-working flow. A fix that resolves the bug but regresses a happy path is not shippable.
+Runs **once**, after Eval declares the validation set 100% green (EVAL.4 case 3) and before final handoff. The reproduction dataset proves the original bug is fixed; this phase proves the fix didn't break a previously-working flow. A fix that resolves the bug but regresses a happy path is not shippable.
 
 **The sweep is always Cekura scenarios:** run happy-path + edge-case scenarios with Setup's saved simulation runner. A different runner or a code/unit test is not a substitute.
 
@@ -45,4 +45,5 @@ Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM and
 
 Any failure = collateral damage — do NOT ship. **Hand back to Optimization · Collect** with the regressed case(s) as the new failure set (exactly like EVAL.4 case 4), so Fix can scope the fix more narrowly (a conditional clause for the specific type rather than a blanket prompt-wide change). This re-enters the loop and counts toward the iteration cap. Keep regressed cases in the validation set thereafter so re-regressions are caught.
 
-Only when every case passes, hand off to [`pr.md`](pr.md) with the full result-URL set (reproduction fail-runs + verification pass-runs + regression pass-runs).
+When every case passes, managed providers report the validated clone and stop;
+all other targets hand off to [`pr.md`](pr.md) with the full result-URL set.

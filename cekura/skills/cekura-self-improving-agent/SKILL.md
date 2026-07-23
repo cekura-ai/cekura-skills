@@ -118,15 +118,15 @@ phase entry (`Iteration N · <Phase>`) and re-read its phase file on entry.
 9. **Regression** ([`phases/regression.md`](phases/regression.md)) — on 100%
    only: sweep happy-path + edge-case flows on the changed surface (Cekura
    scenarios). Any regression hands back to Collect.
-10. **PR** ([`phases/pr.md`](phases/pr.md)) — auto-detect the runtime and either
-   raise a PR (source edits in a writable git checkout with `gh`) or emit a
-   PR-ready / promotion summary, with all Cekura result URLs. Success exit.
+10. **PR** ([`phases/pr.md`](phases/pr.md)) — non-managed targets only. Managed
+   providers stop after Regression with the validated clone diff and evidence;
+   never promote or repoint production.
 
 First pass runs 3→4→5 (Collect → Debug → Reproduce) then the loop. Loop point:
 **Eval → Collect** (each hand-back counts toward `max_iterations`) — Debug +
 Reproduce are once-only and skipped on re-entry, so the loop is Collect → Fix →
-Apply → Sync → Overfitting → Eval. Convergence flows **Eval → Regression → PR**.
-Stop conditions surface and pause; they never reach Regression / PR.
+Apply → Sync → Overfitting → Eval. Convergence flows **Eval → Regression**, then
+PR only for non-managed targets. Stop conditions surface and pause.
 
 ## Providers
 

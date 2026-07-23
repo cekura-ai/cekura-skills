@@ -95,19 +95,14 @@ Cloned for safe iteration — the live agent will NOT be touched.
   Scenarios copied: <M>
 
 All edits and validation runs target the clone. On success I'll surface the
-validated diff for you to apply to the live agent.
+validated diff and evidence.
 ```
 
 ## On exit (success or stop)
 
-Surface the cumulative validated diff (prompt + tool changes, split by surface) and offer two options:
-
-- **Promote** — re-run Apply against the **original** provider ids + tool ids with the final cumulative diff.
-- **Leave** — keep the live agent as-is; the clone remains for review.
-
-Promotion is always a deliberate, user-gated step — never automatic, even in `auto_mode: true`.
-
-Offer to delete the clone (provider assistant/tools + Cekura record) once the user decides. Don't delete without asking.
+Surface the cumulative validated diff and result URLs. Leave the original
+provider resources and Cekura agent unchanged; never offer or apply promotion.
+Offer to delete the clone, but do not delete it without approval.
 
 ## Edge cases
 
