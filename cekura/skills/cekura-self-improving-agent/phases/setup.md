@@ -27,7 +27,7 @@ If no run-setup is found, proceed through 1.1–1.4 and persist what you collect
 Branch on the user's input:
 
 - `prompt` (text or file) **and** no `agent_id`, OR `prompt` + `mode: self_hosted` with no reachable live target → **render-only** (apply path = print the rewrite; no live agent to edit/validate). Skip to Step 1.3.
-- **Diagnosed code bug** (source file + supplied root cause, ± the originating call) → editable surface = that owned source file, apply path = `Edit` + `redeploy_command` (self-hosted live), validation = **Cekura scenarios** (the bug is forced to reproduce in-sim via Reproduce REPRO.3e, and the source edit ships as a PR after it passes). The supplied root cause is consumed as-is, not re-derived. Resolve `mode: self_hosted` and continue at Step 1.3 (self-hosted branch) to locate/record the source file.
+- **Diagnosed code bug** (source file + supplied root cause, ± the originating call) → editable surface = that owned source file, apply path = `Edit` + `redeploy_command` (self-hosted live), validation = **Cekura scenarios** (the bug is forced to reproduce in-sim via Reproduce REPRO.3e). The supplied root cause is consumed as-is, not re-derived. Resolve `mode: self_hosted` and continue at Step 1.3 (self-hosted branch) to locate/record the source file.
 - `agent_id` only → Step 1.2.
 - `agent_id` **and** `prompt` without a mode → ask once: operate against the live agent (PATCH / edit per run-setup) or render-only. Default to live agent.
 - Neither → ask. If they don't know an agent ID, list their agents.

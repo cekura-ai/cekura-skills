@@ -41,9 +41,9 @@ Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM and
 
 ## Regression Gate
 
-**Every regression case must pass before PR.**
+**Every regression case must pass before final handoff.**
 
 Any failure = collateral damage — do NOT ship. **Hand back to Optimization · Collect** with the regressed case(s) as the new failure set (exactly like EVAL.4 case 4), so Fix can scope the fix more narrowly (a conditional clause for the specific type rather than a blanket prompt-wide change). This re-enters the loop and counts toward the iteration cap. Keep regressed cases in the validation set thereafter so re-regressions are caught.
 
-When every case passes, managed providers report the validated clone and stop;
-all other targets hand off to [`pr.md`](pr.md) with the full result-URL set.
+When every case passes, report the validated diff and full result-URL set to the
+apply-diff workflow. Never promote or repoint production resources.
