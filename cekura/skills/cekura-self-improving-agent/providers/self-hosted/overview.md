@@ -76,7 +76,7 @@ Three surfaces can live in the file: **system prompt**, **tool definitions**, an
   ask the user for the *effective* prompt passed to the LLM, or to consolidate it.
 - Read-only / outside the workspace → `Edit` fails → fall back to render-only.
 
-### Diagnosed code bug in owned source — apply path: `Edit` + redeploy, ship as a PR
+### Diagnosed code bug in owned source — apply path: `Edit` + redeploy
 
 A diagnosed bug in owned source is a **first-class CodeBug target**, not Upstream — including
 infra-flavored bugs (STT / transport / timing) and bugs inside a **forked/vendored SDK in the
@@ -84,8 +84,7 @@ tree**. "Upstream" is reserved for code the user genuinely cannot edit.
 
 - **Harness** = a **Cekura evaluator**, with the bug's trigger forced to fire in the simulation
   (Reproduce REPRO.3e) so it fails ≥ M of N. Never a hand-authored code / unit test.
-- **Apply path** = `Edit` + `redeploy_command` (self-hosted live); the source diff is carried to
-  the PR phase and shipped after it validates on Cekura.
+- **Apply path** = `Edit` + `redeploy_command` (self-hosted live).
 - **Validation** and **Regression** = Cekura scenarios, like every other fix.
 - A supplied root cause is consumed **as-is**, not re-derived.
 
@@ -285,7 +284,7 @@ hard substitution-failure signal.
   only code the user genuinely cannot edit.
 - **Substituting a code / unit test for a Cekura simulation.** Even a CodeBug validates on
   Cekura: force the bug's trigger to fire in the sim (Reproduce REPRO.3e) so it fails ≥ M of N,
-  fix via `Edit` + redeploy, re-validate on Cekura, then ship as a PR. Never author a test to
+  fix via `Edit` + redeploy and re-validate on Cekura. Never author a test to
   stand in — if the bug genuinely can't be forced in a live sim, stop and surface.
 - **Crossing the orchestration / business-logic line.** Orchestration (and forked SDK) is
   editable; tool bodies, auth/secrets, LLM config, and dependencies are not. When in doubt,

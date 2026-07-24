@@ -74,7 +74,7 @@ Decision tree, in order:
      - **Full set = 100%** → case 3.
      - **Full set < 100%** → case 4 (hand back with the new failures as the failure set, whether each was originally passing or failing-then-fixed). Fixed scenarios stay in the validation set so re-regressions are caught.
 
-3. **Full set = 100% → converged. Hand off to Regression, then PR.** Do NOT exit yet. The in-loop sweep only confirms the reproduction dataset is green; [`regression.md`](regression.md) runs the happy-path + edge-case sweep that catches collateral damage the dataset can't see, and [`pr.md`](pr.md) ships (raise a PR or emit a PR-ready summary). Pass forward: cumulative diff, iterations used, which scenarios changed verdict, all result URLs (REPRO.6 fail-runs + EVAL.2 pass-runs). Only after Regression passes and PR/summary is emitted does the skill report success and stop.
+3. **Full set = 100% → converged. Hand off to Regression.** Do NOT exit yet. The in-loop sweep only confirms the reproduction dataset is green; [`regression.md`](regression.md) runs the happy-path + edge-case sweep that catches collateral damage the dataset can't see. Pass forward: cumulative diff, iterations used, which scenarios changed verdict, and all result URLs (REPRO.6 fail-runs + EVAL.2 pass-runs). After Regression passes, hand the validated diff and evidence to the apply-diff workflow and stop.
 
 4. **Regression detected during sweep → do NOT exit. Hand back to Optimization · Collect** with the regressed scenarios as the new failure set. State explicitly that this iteration's edit broke a previously-passing scenario, so Fix can scope the fix more narrowly (conditional clauses for the specific type rather than blanket prompt-wide changes).
 

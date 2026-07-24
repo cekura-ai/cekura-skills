@@ -6,12 +6,10 @@ description: >
   "auto-tune / iterate on my prompt", "fix my agent from test results",
   "optimize my prompt based on failures", "rewrite my prompt". ALSO for
   production-call bug fixing: "fix this prod call issue", "debug and fix
-  call ID", "reproduce this production bug", "regression test before a PR",
-  "fix the bug from this call and open a PR". Works across VAPI, ElevenLabs,
+  call ID", "reproduce this production bug". Works across VAPI, ElevenLabs,
   and self-hosted agents, and across three fix surfaces — prompt, tool config,
   and (self-hosted) owned source code, including infra-flavored / forked-SDK
-  bugs, which are reproduced and validated on Cekura (never a code test) and,
-  for source edits, shipped as a PR.
+  bugs, which are reproduced and validated on Cekura (never a code test).
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
@@ -45,9 +43,8 @@ Every run resolves to a **target** described by three axes. Resolving these thre
   config.
 - **Apply path** — how an edit goes live: a provider API PATCH (VAPI /
   ElevenLabs — live immediately), an `Edit` plus a `redeploy_command` (self-hosted
-  live target — including owned source-code edits, which are re-validated on
-  Cekura and then shipped as a PR), live-on-save (`"noop"`), or **render-only**
-  (print the rewrite for the user to apply).
+  live target), live-on-save (`"noop"`), or **render-only** (print the rewrite
+  for the user to apply).
 - **Validation** — how a fix is proven: **always Cekura scenarios** run through
   one saved simulation runner, resolved from the signal or recent agent runs —
   never from provider assumptions, and never a code/unit test. Infra and
@@ -59,8 +56,7 @@ And two inputs the loop consumes:
 
 - **Signal** — the failure to fix: `scenario_ids`, `result_id`, `run_ids`,
   `call_ids`, pasted `{transcript, expected_outcome, verdict}` blocks, or a
-  **diagnosed code bug** (source file + root cause, optionally the originating
-  call for the PR body). A root cause already established outside the skill is
+  **diagnosed code bug** (source file + root cause). A root cause already established outside the skill is
   consumed as-is, not re-derived.
 - **Harness** — a controlled Cekura reproduction that MUST fail before any edit:
   a *dataset* for probabilistic / LLM failures on managed providers (so a real
@@ -117,16 +113,15 @@ phase entry (`Iteration N · <Phase>`) and re-read its phase file on entry.
    (iteration cap / oscillation / no-change / 3× same-shape / all-Upstream).
 9. **Regression** ([`phases/regression.md`](phases/regression.md)) — on 100%
    only: sweep happy-path + edge-case flows on the changed surface (Cekura
-   scenarios). Any regression hands back to Collect.
-10. **PR** ([`phases/pr.md`](phases/pr.md)) — non-managed targets only. Managed
-   providers stop after Regression with the validated clone diff and evidence;
-   never promote or repoint production.
+   scenarios). Any regression hands back to Collect. On success, hand off the
+   validated diff and evidence to the apply-diff workflow. Never promote or
+   repoint a managed provider.
 
 First pass runs 3→4→5 (Collect → Debug → Reproduce) then the loop. Loop point:
 **Eval → Collect** (each hand-back counts toward `max_iterations`) — Debug +
 Reproduce are once-only and skipped on re-entry, so the loop is Collect → Fix →
 Apply → Sync → Overfitting → Eval. Convergence flows **Eval → Regression**, then
-PR only for non-managed targets. Stop conditions surface and pause.
+stop and hand off the validated diff. Stop conditions surface and pause.
 
 ## Providers
 
@@ -207,7 +202,7 @@ VAPI: https://docs.vapi.ai/api-reference.
 phases/
   setup.md · clone.md · collect.md · debug.md · reproduce.md
   optimization/{fix,apply,sync}.md
-  overfitting-gate.md · eval.md · regression.md · pr.md
+  overfitting-gate.md · eval.md · regression.md
 providers/
   vapi/{overview,phase-1-fetch,phase-4-apply}.md
   elevenlabs/{overview,phase-1-fetch,phase-4-apply,workflow-internals}.md
