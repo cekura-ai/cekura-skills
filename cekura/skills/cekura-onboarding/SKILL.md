@@ -4,9 +4,11 @@ description: >
   Use when the user says "get started with Cekura", "set up Cekura", "onboard to Cekura",
   "I'm new to Cekura", "help me set up my agent", "how do I use Cekura",
   "walk me through Cekura", "configure my project", "first time using Cekura",
-  or needs guidance on initial platform setup. Covers two onboarding paths:
-  **testing** (default — build evaluators and run simulated calls) and
-  **observability** (ingest production call logs and evaluate them).
+  or needs guidance on initial platform setup from scratch. Do not activate when the user
+  already has an established workspace and is adding a new agent, creating more scenarios,
+  or extending existing testing workflows — use `cekura-create-agent` for those cases.
+  Covers two onboarding paths: **testing** (default — build evaluators and run simulated
+  calls) and **observability** (ingest production call logs and evaluate them).
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
