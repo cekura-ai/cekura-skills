@@ -13,7 +13,7 @@ Before any COLLECT.x work, verify Setup is complete. If any is unresolved, ask t
 - Mode resolved (`vapi` / `elevenlabs` / `self_hosted`)?
 - Live target: simulation runner resolved? (N/A render-only.)
 - Source-of-truth editable surface loaded? (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + referenced tools; self_hosted: the surface the run-setup points to — source file / DB row / Cekura mock tools / pasted text.)
-- **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`? If not, return to [`../setup.md`](setup.md) § Step 1.4. (N/A for VAPI / ElevenLabs and for render-only.)
+- **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`? If not, return to [`../setup.md`](setup.md) § Step 1.4. (N/A for managed providers and render-only.)
 
 ## Step COLLECT.1 — If input is `scenario_ids`: execute, then wait
 

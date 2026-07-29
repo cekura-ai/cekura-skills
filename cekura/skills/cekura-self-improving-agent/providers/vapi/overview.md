@@ -6,8 +6,6 @@ VAPI is the provider where prompts and tool definitions are editable directly vi
 
 When `assistant_provider == vapi` (compare lowercased), proceed to Phase 1.3a without confirmation.
 
-`retell` is disabled — do NOT route Retell agents into the VAPI branch. See [`phase-1-fetch.md`](phase-1-fetch.md) for the unsupported-provider error wording.
-
 ## What's editable
 
 | Surface | Editable via | Notes |

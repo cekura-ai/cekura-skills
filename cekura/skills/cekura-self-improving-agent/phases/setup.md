@@ -3,7 +3,7 @@
 Runs **once per invocation**, before Reproduce / Optimization / Eval. Setup resolves the run's **target** — the three axes that let one loop serve every provider and fix surface:
 
 - **Editable surface** — where the fix lands: system prompt / tool config / (self-hosted) owned source code the run-setup points to (source file / DB row / Cekura mock tools / pasted text).
-- **Apply path** — how an edit goes live: provider API PATCH (VAPI / ElevenLabs, live immediately) · `Edit` + `redeploy_command` (self-hosted, including owned source-code edits) · live-on-save (`"noop"`) · **render-only** (print the rewrite).
+- **Apply path** — how an edit goes live: provider API PATCH (VAPI / Retell / ElevenLabs, live immediately) · `Edit` + `redeploy_command` (self-hosted, including owned source-code edits) · live-on-save (`"noop"`) · **render-only** (print the rewrite).
 - **Validation** — always Cekura scenarios; Setup records one simulation runner and does not run it.
 
 Setup also records the **signal shape** (`input_is_prod_call`) and, for live targets, `simulation_runner`; collects the `redeploy_command` (hard gate, Step 1.4) where needed; and persists newly-collected run-setup to `.claude/MEMORY.md` (Step 1.4a).
@@ -34,16 +34,16 @@ Branch on the user's input:
 
 ## Step 1.2 — Fetch agent details and gate on provider (skipped when render-only)
 
-Retrieve the agent, read `assistant_provider` (compare lowercased — defend against `ElevenLabs`, `VAPI`):
+Retrieve the agent and read `assistant_provider` case-insensitively:
 
 - **`vapi`** → VAPI branch (Step 1.3a; [`../providers/vapi/overview.md`](../providers/vapi/overview.md)). Managed: prompt + tools PATCHable, edits live.
+- **`retell`** → Retell branch (Step 1.3b; [`../providers/retell/overview.md`](../providers/retell/overview.md)). Managed: prompt + tools PATCHable, edits live.
 - **`elevenlabs`** → ElevenLabs branch (Step 1.3c; [`../providers/elevenlabs/overview.md`](../providers/elevenlabs/overview.md)). Managed: same fast path.
 - **Anything else** (`self_hosted`, `custom`, `agentforce`, other non-managed / unrecognized) → resolve **`mode: self_hosted`** and read the run-setup (Step 1.3; [`../providers/self-hosted/overview.md`](../providers/self-hosted/overview.md)). No further routing question — the run-setup defines explore/edit/redeploy/validate. No run-setup and no live target → render-only; if neither is workable, halt.
-- **`retell`, `livekit`, `sip`, or missing/empty** → live target unclear. Ask how the agent is run (menu: `vapi` / `elevenlabs` / `self_hosted`; self_hosted details live in memory). Fall back to render-only only if the user explicitly picks it.
 
-`retell` is unsupported on purpose (temporarily disabled) — do not bypass the gate for direct PATCHing. Never default silently on empty `assistant_provider`; ask.
+Never default silently on empty `assistant_provider`; ask.
 
-Track the resolved mode; every later phase branches on it. VAPI error-shape / Retell note / 404 handling: [`../providers/vapi/phase-1-fetch.md`](../providers/vapi/phase-1-fetch.md).
+Track the resolved mode; every later phase branches on it.
 
 ### Step 1.2a — Resolve the simulation runner (skip render-only)
 
@@ -63,10 +63,11 @@ Use result/run metadata plus current tool capabilities; do not maintain a closed
 Fetch the agent's provider config + tool surface only — **no failure data**. Each branch's full procedure is in its provider doc; the provider config is authoritative, the Cekura `description` is informational only.
 
 - **VAPI** — [`../providers/vapi/overview.md`](../providers/vapi/overview.md) (+ [`phase-1-fetch.md`](../providers/vapi/phase-1-fetch.md) for curl bodies/edge cases). Pulls live `/assistant/{id}` (or squad) + every referenced `/tool/{id}` via `VAPI_KEY`.
+- **Retell** — [`../providers/retell/overview.md`](../providers/retell/overview.md). Pulls the live agent and its LLM/flow tool configuration via `RETELL_API_KEY`.
 - **ElevenLabs** (Step 1.3c) — [`../providers/elevenlabs/overview.md`](../providers/elevenlabs/overview.md) (+ [`phase-1-fetch.md`](../providers/elevenlabs/phase-1-fetch.md)). Pulls live `/v1/convai/agents/{id}` + referenced `/v1/convai/tools/{id}` via `xi-api-key`. Cekura `assistant_id` = ElevenLabs `agent_id`.
 - **Self-hosted** — [`../providers/self-hosted/overview.md`](../providers/self-hosted/overview.md). The **run-setup** is authoritative: it names the editable surface (source file / DB row / Cekura mock tools / pasted text) and how to read it. Explore and record it; content stays otherwise unread until Fix. For a **diagnosed code bug**, the surface is the supplied source file. For a **DB row**, collect connection details (type, credentials, fetch/write queries) before any read — credentials stay in-memory for the run only, never echoed, persisted, or logged. If the run-setup is silent on where to look, ask.
 
-Each branch ends by surfacing a compact summary, then → Step 1.4 (self-hosted) or the **Clone phase** ([`clone.md`](clone.md)) (VAPI / ElevenLabs skip 1.4 and clone before Collect, so edits land on a disposable copy).
+Each branch ends by surfacing a compact summary, then → Step 1.4 (self-hosted) or the **Clone phase** ([`clone.md`](clone.md)) (managed providers skip 1.4 and clone before Collect).
 
 ## Step 1.4 — Resolve the redeploy command — HARD GATE
 
@@ -77,7 +78,7 @@ Each branch ends by surfacing a compact summary, then → Step 1.4 (self-hosted)
 - `"noop"` — the edit is live the moment it lands (DB re-read per request),
 - an explicit user-confirmed "no live target to restart" (rare; usually means render-only instead).
 
-Skipped only for VAPI / ElevenLabs (managed — nothing to redeploy) and for render-only (nothing to restart).
+Skipped only for managed providers (nothing to redeploy) and for render-only (nothing to restart).
 
 Skipping this gate for a live target is the top cause of phantom "prompt edits didn't help" iterations: edits never reach the running process, and the Eval no-change detector only catches it after an iteration of cap is burned.
 
@@ -126,15 +127,15 @@ Capture the **simulation-launch** lines (start the main agent + pass it the per-
 
 ## Setup completion checklist
 
-Before Clone (VAPI / ElevenLabs) or Optimization (all other modes), confirm:
+Before Clone (managed providers) or Optimization (all other modes), confirm:
 
 - [ ] **Project memory checked FIRST** (1.0): `.claude/CLAUDE.md` / `.claude/MEMORY.md` (current dir upward) read, used as authoritative where present (mode, source location, redeploy command, simulation-launch/connect path); the record's configured URL was NOT treated as a redeploy/reproduction target
-- [ ] Mode resolved (`vapi` / `elevenlabs` / `self_hosted`)
+- [ ] Mode resolved (`vapi` / `retell` / `elevenlabs` / `self_hosted`)
 - [ ] **Three axes resolved** — editable surface, apply path (PATCH / redeploy / `"noop"` / render-only), and validation (saved simulation runner)
 - [ ] Live target: simulation runner resolved from explicit input, the signal, recent results, or configured connections — never provider alone (N/A render-only)
-- [ ] Agent loaded (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + `/v1/convai/tools/{id}`; self_hosted: editable surface explored per run-setup and recorded — source file / DB row / Cekura mock tools / pasted text; for a DB row, `db_type` + `db_connection` + `db_fetch_query` recorded and the fetch query executed; content otherwise unread until Fix; Cekura `description` informational only)
-- [ ] **Self-hosted**: `redeploy_command` resolved to a shell command, `"manual"`, or `"noop"` (N/A for VAPI / ElevenLabs and render-only)
+- [ ] Agent loaded (VAPI: `/assistant/{id}` + tools; Retell: agent + LLM/flow config; ElevenLabs: `/v1/convai/agents/{id}` + `/v1/convai/tools/{id}`; self_hosted: editable surface explored per run-setup and recorded — source file / DB row / Cekura mock tools / pasted text; for a DB row, `db_type` + `db_connection` + `db_fetch_query` recorded and the fetch query executed; content otherwise unread until Fix; Cekura `description` informational only)
+- [ ] **Self-hosted**: `redeploy_command` resolved to a shell command, `"manual"`, or `"noop"` (N/A for managed providers and render-only)
 - [ ] **Self-hosted**: run setup either loaded from `.claude/CLAUDE.md` / `.claude/MEMORY.md`, OR — if collected this session — **persisted** (1.4a), write confirmed, no secrets written
 - [ ] I fetched no failure details; source metadata was used only for runner selection
 
-If any item is unresolved, ask the specific clarifying question and wait before entering Clone (VAPI / ElevenLabs) or Optimization (all other modes).
+If any item is unresolved, ask the specific clarifying question and wait before entering Clone (managed providers) or Optimization (all other modes).

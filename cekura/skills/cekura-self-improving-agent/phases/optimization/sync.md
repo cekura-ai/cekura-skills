@@ -14,7 +14,7 @@ On drift, do NOT proceed to the Overfitting Gate — roll back to Apply, fix the
 Before any SYNC.x work, verify Apply completed:
 
 - APPLY.1 emitted no errors.
-- APPLY.2 redeploy succeeded (self-hosted live target) — or was skipped (VAPI / ElevenLabs / render-only / `"noop"`, or `redeploy_command` unset in `auto_mode: true`).
+- APPLY.2 redeploy succeeded (self-hosted live target) — or was skipped (managed provider / render-only / `"noop"`, or `redeploy_command` unset in `auto_mode: true`).
 - The edited-artifact list and combined edit set are available from Apply's hand-off.
 
 If Apply errored, return control to the orchestrator — Sync has nothing to verify.
