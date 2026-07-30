@@ -6,6 +6,7 @@ Register the user's agent on Cekura. Framing differs by path:
 
 - **Testing**: "Let's connect your agent so we can simulate calls against it."
 - **Observability**: "Let's register your production agent so Cekura can attribute uploaded calls to it."
+- **Integrate**: "Let's register the Cekura agent your codebase will sync into, then wire the repo to it."
 
 **Prerequisites are handled inline, not as a phase:** if platform tools fail, fix access via [references/client-setup.md](references/client-setup.md); if no project is in context, pick one with `projects_list` or create one with `projects_create` — then continue here.
 
@@ -121,4 +122,6 @@ Call `aiagents_create` with the collected fields. On validation errors, fix and 
 
 **Do not proceed until `aiagents_create` succeeded, the provider is confirmed, and the description passed the hard acceptance check in 2c** (auto-imported descriptions pass by construction). On the **testing** path a summary/placeholder blocks this gate; on the **observability** path a clearly flagged placeholder is acceptable.
 
-Confirm the step is done in plain words (no phase numbers). Then begin the path's Phase 3: [testing](phase3-testing-metrics.md) or [observability](phase3-observability-ingest.md).
+Confirm the step is done in plain words (no phase numbers). Then begin the path's Phase 3: [testing](phase3-testing-metrics.md), [observability](phase3-observability-ingest.md), or [integrate](phase3C-integrate.md).
+
+> **Integrate path: the description is filled by the integration, so a placeholder is acceptable here.** The integrate flow's config-sync step PATCHes the codebase's assembled system prompt onto the agent `description` automatically, so at this step you only need the agent to exist with a target id. Create it with a clearly-marked placeholder (like the observability path) and let [phase3C-integrate.md](phase3C-integrate.md) sync the real prompt. Still collect the connection details, since simulated eval runs need Cekura to reach the agent.

@@ -1,7 +1,7 @@
 ---
 name: cekura-onboarding
-description: State-aware Cekura onboarding that resumes at the right setup phase and delegates to the cekura-onboarding skill. Supports two variants — `testing` (default) and `observability`.
-argument-hint: "[testing|observability] [agent|metrics|evals|run|ingest|evaluate|review] [project-id]"
+description: State-aware Cekura onboarding that resumes at the right setup phase and delegates to the cekura-onboarding skill. Supports three variants — `testing` (default), `observability`, and `integrate`.
+argument-hint: "[testing|observability|integrate] [agent|metrics|evals|run|ingest|evaluate|review|integrate] [project-id]"
 allowed-tools:
   [
     "AskUserQuestion",
@@ -79,14 +79,15 @@ Up to three optional positional args, in any order — the parser classifies by 
 
 | Token shape | Meaning |
 |---|---|
-| `testing` \| `observability` | Variant override. If absent, default to `testing`. |
+| `testing` \| `observability` \| `integrate` | Variant override. If absent, default to `testing`. |
 | Numeric, e.g. `5242` | Project ID. Skip project picker. |
-| Alphabetic phase token | Phase override (testing-flow: `agent` \| `metrics` \| `evals` \| `run`; observability-flow: `agent` \| `ingest` \| `evaluate` \| `review`). Detection still runs to populate handoff context. |
+| Alphabetic phase token | Phase override (testing-flow: `agent` \| `metrics` \| `evals` \| `run`; observability-flow: `agent` \| `ingest` \| `evaluate` \| `review`; integrate-flow: `agent` \| `integrate`). Detection still runs to populate handoff context. |
 | Anything else | Ask one short clarifying question with `AskUserQuestion`. |
 
 The variant determines which set of phase tokens is valid:
 - `testing` → `agent`, `metrics`, `evals`, `run`
 - `observability` → `agent`, `ingest`, `evaluate`, `review`
+- `integrate` → `agent`, `integrate`
 
 If the user passes a phase token that doesn't match the resolved variant, ask one clarifying question (don't silently re-route).
 
@@ -171,7 +172,18 @@ Hold this inventory for the handoff context.
 | Call logs exist, no evaluation kicked off | Phase 4 - Configure Metrics (it verifies its own state, then flows into Phase 5) |
 | Evaluation done | Phase 6 - Review Results |
 
+### Entry Phase — integrate variant
 
+The integrate path is deliberately thin on the command side: shared Phases 0 and 2 give it a connected agent, then Phase 3C hands off to the `custom-integrate` engine, which runs its own repo-profiling and phase sequence. So there is no deep resume ladder here.
+
+| Detected state | Resume at |
+|---|---|
+| Project, 0 agents | Phase 2 - Agent Configuration (create the target agent; a placeholder description is fine, config-sync fills it) |
+| Agent exists (any description) | Phase 3C - Integrate (`phase3C-integrate.md`) - hand off to `custom-integrate` |
+
+Unlike the other variants, do NOT block on an empty `description` for integrate: the integration's config-sync step populates it from the codebase. A placeholder is expected at this stage.
+
+**Integrate is own-code only.** If detection (or the Phase 2 provider answer) shows a managed platform (VAPI / Retell / ElevenLabs / Synthflow / Bland / ...), the integrate path does not apply. Redirect the user to the `testing` or `observability` variant, whose provider ingest is native, rather than handing off to `custom-integrate`. Phase 3C enforces this gate too.
 
 If the user provided an explicit phase argument, override the detected phase but keep the inventory.
 
@@ -218,7 +230,7 @@ Invoke the `cekura-onboarding` skill with a structured context block. Pass every
 
 ```text
 Context already established:
-- Variant: <testing|observability>
+- Variant: <testing|observability|integrate>
 - API key: valid (proven by successful project/agent calls)
 - Project: <project_id> (<project_name>) - <existing|just created>
 - Agents in project:
@@ -230,6 +242,10 @@ Context already established:
 [observability-only:]
 - Ingested call logs: <count>
 - Latest call_log: <call_log_id> (<status>) - or "none"
+[integrate-only:] (own code only — managed platforms are redirected to testing/observability, never handed off here)
+- Own-code setup type: <custom-self-hosted|livekit|pipecat|unknown>
+- Target agent for the codebase sync: <agent_id>
+- transcript_provider currently: <custom|other|unknown>
 
 Resume at: Phase <N> - <title>
 Skip phases before <N>. For each remaining phase, use MCP tools where available
@@ -278,6 +294,21 @@ Format as one tight block:
 >
 > Next: improve metric prompts from review feedback (`cekura-metric-improvement`).
 
+**Integrate variant** — report:
+- Target agent: `id`, `name`, dashboard link.
+- Which integration phases landed (config sync, metadata, tracing, evals, CI/CD).
+- `transcript_provider = "custom"` confirmed on the agent (if the eval sink was wired).
+- The one verified call/run that flowed through (transcript + metadata + trace linked).
+
+Format as one tight block:
+
+> Onboarding complete (integrate).
+> - Agent: **Support Bot** (`12345`) - [open](https://dashboard.cekura.ai/<project_id>/agents/12345)
+> - Wired: config sync, metadata, tracing; `transcript_provider` = custom
+> - Verified call `r-abc123` - transcript + metadata + trace linked - [open](https://dashboard.cekura.ai/<project_id>/results/r-abc123)
+>
+> Next: expand the starter Observability Suite (`cekura-eval-design`) or add the CI gate (`ci-cd`).
+
 If the skill exited mid-flow, do not call it complete. Use the variant-appropriate resume hint:
 
 > Paused before generating evaluators. Run `/cekura-onboarding testing evals <project_id>` to pick up there.
@@ -285,6 +316,10 @@ If the skill exited mid-flow, do not call it complete. Use the variant-appropria
 or
 
 > Paused before running the evaluation. Run `/cekura-onboarding observability evaluate <project_id>` to pick up there.
+
+or
+
+> Paused before wiring the codebase. Run `/cekura-onboarding integrate <project_id>` to pick up there.
 
 (Same rule as the confirmation prompt: user-facing pause/resume messages name the next ACTION in plain words, never a phase number — phase numbers are internal navigation only.)
 
