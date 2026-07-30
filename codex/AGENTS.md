@@ -514,6 +514,7 @@ Sibling tags can be combined with text and run left to right. Do not nest tags; 
 | `<speed ratio="N" />` | Speech rate 0.8–1.2. Must start action. |
 | `<volume ratio="N" />` | Volume 0–2. Must start action. Cartesia only. |
 | `<send_sms text="..." />` | Trigger an SMS for SMS-driven workflows |
+| `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent; `t` required, `d` optional, `fixed_message: true` |
 | `<network_simulation packet_loss="N" />` | Only `packet_loss` supported — `jitter`/`latency` are ignored. |
 | `<background_noise sound="NAME" volume="0.x">text</background_noise>` | Continuous ambient sound (e.g. `coffee-shop`, `office-ambience`, `rain-thunder`, `vacuum-cleaner`, `construction-site`) |
 | `<noise sound="NAME" volume="N" time="Xms" />` | One-shot effect: `office`, `beep`, `cough1`, `cough2`. `volume` and `time` (milliseconds) are optional. |
