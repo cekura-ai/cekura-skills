@@ -14,7 +14,7 @@ On drift, do NOT proceed to the Overfitting Gate — roll back to Apply, fix the
 Before any SYNC.x work, verify Apply completed:
 
 - APPLY.1 emitted no errors.
-- APPLY.2 redeploy succeeded (self-hosted live target) — or was skipped (VAPI / ElevenLabs / render-only / `"noop"`, or `redeploy_command` unset in `auto_mode: true`).
+- APPLY.2 redeploy succeeded (self-hosted live target) — or was skipped (managed provider / render-only / `"noop"`, or `redeploy_command` unset in `auto_mode: true`).
 - The edited-artifact list and combined edit set are available from Apply's hand-off.
 
 If Apply errored, return control to the orchestrator — Sync has nothing to verify.
@@ -25,6 +25,7 @@ For each artifact, verify **each individual changed field** — not just "the ar
 
 - **VAPI** — re-fetch `/assistant/{id}` and every edited/created `/tool/{id}`; verify changed fields. Don't skip the tool re-fetch — VAPI tool PATCH replaces nested objects wholesale; a malformed body silently wipes `messages` / `destinations` at 200.
 - **ElevenLabs** — re-fetch `GET /v1/convai/agents/{id}` and every edited/created `GET /v1/convai/tools/{id}`. Confirm `conversation_config.agent.prompt.prompt` equals the new prompt (a 200 proves nothing if the body nested it wrong — silent no-op), `prompt.tool_ids` matches the intended array (arrays replace wholesale), and edited tools' `tool_config` fields match.
+- **Bland** — re-fetch the live persona and every edited tool through the provider API/MCP; verify each changed field and preserve the active version.
 - **Self-hosted** — re-read whatever was edited:
   - **Source file / owned code** (incl. vendored/forked SDK) — re-read (Read tool, not cached) and verify the changed regions match the `Edit` output. If a tool-list extension shows the old length, the edit matched an ambiguous/partial `old_string` — roll back and retry with more surrounding context.
   - **Database row** — re-run the fetch query; the returned prompt must equal the intended new prompt (whitespace-only diffs OK; content drift = wrong row or a trigger rewrote it).

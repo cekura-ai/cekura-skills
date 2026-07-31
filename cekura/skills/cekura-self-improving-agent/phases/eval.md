@@ -57,7 +57,7 @@ Run the new result through Collect end to end: verdict pre-filter (keep `failure
 **No-change signature** (new failures identical to prior — same scenarios, same transcript shapes):
 
 - **Self-hosted / render-only** — most likely the live agent didn't pick up the new state (redeploy skipped, server not restarted, or the user never applied the rewrite). Surface this hypothesis in EVAL.4 before iterating. Render-only is most prone — the user applies the rewrite manually.
-- **VAPI / ElevenLabs** — edits land live, so no-change is NOT a stale deploy. For ElevenLabs, first confirm SYNC.1 showed the new `conversation_config.agent.prompt.prompt` value (a PATCH can silently no-op at the wrong JSON path). If the new prompt is confirmed live, treat as a genuine "this edit didn't address the root cause" and follow oscillation / 3×-same-shape handling.
+- **Managed providers** — edits land live, so no-change is NOT a stale deploy. First confirm SYNC.1 showed the changed provider field. If it is confirmed live, treat the result as a genuine "this edit didn't address the root cause" and follow oscillation / 3×-same-shape handling.
 
 ## Step EVAL.4 — Decide: exit, sweep, or loop
 

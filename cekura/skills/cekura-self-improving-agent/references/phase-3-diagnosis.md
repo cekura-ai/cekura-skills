@@ -65,7 +65,7 @@ Full classification table with examples, before/after templates per edit surface
 **Placement.** Pair with the existing "if you hear menu options, do X" / "Initial Audio Triage" guidance so the rules are read together.
 
 **Apply path notes:**
-- Provider API PATCH (VAPI/ElevenLabs): prompt edit only, lands live.
+- Managed-provider API/MCP update: prompt edit only, lands live.
 - Self-hosted source code: verify the code allows agent text + DTMF tool invocation on the same turn; if the source routes DTMF before speech (split paths for tool vs. speech turns), add an orchestration-code edit in the same iteration. For non-source-edit targets (DB row / mock tools / render-only), surface a paired hand-off asking the user to enable speech + DTMF on the same turn.
 
 ### Over-eager transfer / premature-exit patterns (scheduling & support flows)
@@ -80,7 +80,7 @@ These recur on enrollment / appointment-scheduling squads. All are genuine promp
 
 ## Tool-config edit sub-types
 
-The four sub-types apply regardless of provider. Mechanics differ by apply path: VAPI uses PATCH endpoints; ElevenLabs uses `PATCH /v1/convai/tools/{id}` for standalone tools and the agent's `prompt.tool_ids` for references; self-hosted edits owned source and redeploys. ElevenLabs has no spoken `messages`, `destinations`, or per-member scoping. See [`../providers/elevenlabs/phase-4-apply.md`](../providers/elevenlabs/phase-4-apply.md) for ElevenLabs mechanics.
+The four sub-types apply regardless of provider. Managed providers use their live API/MCP; self-hosted edits owned source and redeploys. Preserve provider-specific routing and tool-reference semantics.
 
 | Sub-type | When to propose | Mechanics |
 |---|---|---|
