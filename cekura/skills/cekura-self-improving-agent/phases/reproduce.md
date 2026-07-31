@@ -22,7 +22,7 @@ This drives **one** decision — harness shape (REPRO.5). The re-run policy is t
 
 | Class / target | Fix buckets | Harness shape |
 |---|---|---|
-| **LLM-based** on a managed provider (VAPI / ElevenLabs) | Gap / Conflict / Ambiguity (over-eager-transfer, premature-exit) | **dataset** of N varied scenarios |
+| **LLM-based** on a managed provider | Gap / Conflict / Ambiguity (over-eager-transfer, premature-exit) | **dataset** of N varied scenarios |
 | **Infra**, or **any self-hosted target** | CodeBug (source truncation, broken state, missing tool-result forwarding) / Upstream-infra (mock wiring, idle timer, DTMF, telephony) | **single** evaluator |
 
 All classes re-run 5–10× at the gate because real behavior — LLM and real-transport infra alike — is intermittent: a bug that's deterministic in *cause* still fires only sometimes over telephony/SIP/WebRTC (timing/audio/latency/interruption races), so a single run can false-PASS. When symptoms mix, default to a **dataset** (larger sample is the safe error) unless the target is self-hosted.
@@ -33,7 +33,7 @@ All classes re-run 5–10× at the gate because real behavior — LLM and real-t
 
 Replay the call faithfully with zero manual setup by the user. Derive every artifact from the call's own trace — never from prompt-guessing.
 
-- **REPRO.3a — Mock tool entries.** Every tool the call invoked must appear in the agent's mock-tool JSON (name + parameter schema matching what the agent actually sent). Self-hosted: mocks are the testing contract — set the full desired `mock_tools` on the agent (fetch → merge → write back). VAPI / ElevenLabs: tools already exist on the cloned agent; here you only set their return values (3b).
+- **REPRO.3a — Mock tool entries.** Every tool the call invoked must appear in the agent's mock-tool JSON (name + parameter schema matching what the agent actually sent). Self-hosted: mocks are the testing contract — set the full desired `mock_tools` on the agent (fetch → merge → write back). Managed providers: tools already exist on the clone; here you only set their return values (3b).
 - **REPRO.3b — Expected return values.** Set each mock's return to the **actual production response** (read the req→resp pairs from the call object / provider `/logs`, not what the prompt says it "should" return). Same tool, different args → different responses: encode the per-invocation mapping (`freetext_params` / argument-keyed mock data). A plausible-but-different value won't reproduce the bug.
 - **REPRO.3c — Main-agent dynamic variables.** Copy `dynamic_variables` from call metadata onto the agent (assistant-/squad-level, per provider) **verbatim** — the bug may depend on them. Don't invent or normalize. Leave `{{...}}` placeholders in the prompt untouched; you're setting the values they resolve to.
 - **REPRO.3d — Testing-agent variables.** Populate the testing-agent/scenario layer (caller persona, context payload, scripted fields, test-profile vars) from the call. Use the prod `personality_id`; extract caller turns from `transcript_object` **verbatim** — garbled text, truncations, STT artifacts are exactly what the LLM received and are often the trigger. Do not clean them up.

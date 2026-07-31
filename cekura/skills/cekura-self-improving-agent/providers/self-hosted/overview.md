@@ -1,7 +1,7 @@
 # Self-Hosted — The Generic Bucket
 
 `self_hosted` is the single mode for any agent the user runs themselves — anything this skill
-can't PATCH as a managed provider (not `vapi` / `elevenlabs`). It IS the generic case: the
+can't update as a managed provider (not `vapi` / `retell` / `elevenlabs` / `bland`). It IS the generic case: the
 three target axes (editable surface / apply path / validation, from SKILL.md) resolve here to
 concrete instances rather than being enumerated as agent "types". There are no sub-types to
 pick and no routing question — the **run-setup in `.claude/CLAUDE.md` / `.claude/MEMORY.md`** (read in Setup
@@ -25,7 +25,7 @@ to change it are whatever the run-setup points to.
 
 ## Setup: read the run-setup, collect what's missing
 
-When `assistant_provider` is anything other than `vapi` / `elevenlabs` (incl.
+When `assistant_provider` is anything other than `vapi` / `retell` / `elevenlabs` / `bland` (incl.
 `self_hosted` / `custom` / `agentforce` / empty / unrecognized), resolve `mode: self_hosted`
 and read the run-setup — don't ask which "kind". From it, resolve the three axes:
 
@@ -150,7 +150,7 @@ mode with a privileged redeploy command on that path.
 ### Collection (Setup Step 1.4)
 
 Collected once. Skip the prompt when `redeploy_command` was passed in inputs, mode is
-`vapi` / `elevenlabs`, or the apply path is render-only. Prompt template:
+`vapi` / `retell` / `elevenlabs` / `bland`, or the apply path is render-only. Prompt template:
 
 ```
 For end-to-end automation, I can run your redeployment automatically after each

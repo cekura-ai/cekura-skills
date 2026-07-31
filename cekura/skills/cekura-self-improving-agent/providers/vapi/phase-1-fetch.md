@@ -2,27 +2,6 @@
 
 Provider-gate error shapes, VAPI assistant / squad / tool fetch curl bodies, and Phase 1 edge cases.
 
-## Provider-gate error message format
-
-When `assistant_provider` is unsupported, respond with exactly:
-
-```
-Self-improvement isn't supported for this agent's provider.
-
-Agent: <agent_name> (id: <agent_id>)
-Provider: <assistant_provider or "not set">
-
-Supported providers: vapi, elevenlabs, self_hosted (any agent you run yourself, defined by your run-setup; render-only prompt-only fallback also available)
-```
-
-If the provider is `retell`, append:
-
-```
-Note: Retell support is temporarily disabled in this skill and will be re-enabled in a future revision.
-```
-
-Do not attempt any further phases. Do not fetch results, propose prompt changes, or offer workarounds.
-
 ## Edge cases on the agent retrieve
 
 - **Agent not found / 404**: surface the error directly. Don't retry with a different ID without user confirmation.

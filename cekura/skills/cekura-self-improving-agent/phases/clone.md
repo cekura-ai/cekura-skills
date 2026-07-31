@@ -1,14 +1,14 @@
 # Clone Phase
 
-Runs **once**, after Setup and before Optimize. **VAPI and ElevenLabs only** — every `self_hosted` run (including source-code and render-only targets) skips this phase entirely; there is no managed provider to clone into.
+Runs **once**, after Setup and before Optimize. Managed providers only; self-hosted and render-only targets skip it.
 
 Goal: stand up a disposable copy of the provider agent(s) + their tools (same org, same key) — following any transfer/handoff links so the whole linked graph is cloned — duplicate the Cekura agent (`copy_scenarios=true`), repoint the clone at the cloned entry agent, and rebind the run to the clone. The loop then iterates entirely on the clone — production is never touched. A failed POST **halts**; never fall through to editing the original.
 
 ## Pre-flight
 
-Setup is complete: mode is `vapi` or `elevenlabs`; the live agent config + every referenced tool were fetched in Setup Step 1.3. Reuse those bodies — do not re-fetch unless a body is missing.
+Setup is complete: the live agent and provider configuration were fetched in Setup Step 1.3. Reuse those bodies — do not re-fetch unless a body is missing.
 
-Required: `VAPI_KEY` or `ELEVENLABS_API_KEY` (already used during Setup fetch), original Cekura agent id, original provider assistant/squad id.
+Required: the provider key already used during Setup, the original Cekura agent id, and the original provider agent id.
 
 ## Step CLONE.1 — Clone provider-side agent + tools
 
@@ -60,6 +60,20 @@ Clone **every** agent in the graph:
 
 The cloned **entry** agent (the one the Cekura record was registered against) is what CLONE.2 repoints to.
 
+### Retell
+
+Clone the configuration referenced by `response_engine` first: the Retell LLM
+or conversation flow, including its tools and built-in behavior. Create a new
+agent pointing to that clone and record the old/new ids. Keep the same agent
+type and active version. If a required operation is unavailable, stop rather
+than retargeting the original.
+
+### Bland
+
+Use the provider-supported persona/tool copy operation, preserving the active
+configuration and modality-specific identifiers. If copying is unavailable,
+stop rather than editing the original.
+
 Non-2xx response on any provider POST → **stop**, surface the error. A half-built clone is a hard stop, not a reason to retarget the live agent.
 
 ## Step CLONE.2 — Duplicate the Cekura agent
@@ -74,7 +88,7 @@ Non-2xx response on any provider POST → **stop**, surface the error. A half-bu
    ```
    mcp__cekura__aiagents_partial_update(
      id=<clone Cekura agent id>,
-     provider={ type:"<vapi|elevenlabs>", agent_id:"<cloned provider assistant/squad id>",
+     provider={ type:"<vapi|retell|elevenlabs|bland>", agent_id:"<cloned provider agent id>",
                 credentials:{ ...same api_key/config as the original... } }
    )
    ```

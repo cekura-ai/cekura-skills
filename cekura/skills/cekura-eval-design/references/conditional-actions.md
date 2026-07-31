@@ -157,6 +157,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 |---|---|---|
 | `<dtmf digits="..." />` | Send touch-tone digits. Supports digits, `#`, and `*` (e.g. `digits="123"`, `digits="456#"`, `digits="*9"`). | Combinable with text |
 | `<send_sms text="..." />` | Trigger an SMS for testing SMS-driven workflows | `text` required |
+| `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent | `t` required; `d` optional; `fixed_message: true` |
 | `<interruption time="Xs" />` | Cuts in `Xs` after the **main agent starts its next turn** (shorter = more aggressive) | **Must be `type: "action_followup"` AND must appear at the very start of the action string.** |
 
 ### Environmental

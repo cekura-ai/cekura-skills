@@ -15,7 +15,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.6.0"
+  version: "0.7.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-eval-design:7k3m4q -->
@@ -325,6 +325,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 ### XML tag constraints (the ones you'll hit most)
 
 - **All XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text.
+- **`<client_message t="..." d='...' />`** sends an app-defined RTVI client message to a Pipecat agent. `t` is required, `d` is optional, and the message is silent.
 - **`<ivr text="..." />` and `<voicemail text="..." />`** (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags. Use a separate `action_followup` for post-IVR / post-beep content.
 - **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
 - **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. Supports decimal seconds (`"0.5s"`) for sub-second precision. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
