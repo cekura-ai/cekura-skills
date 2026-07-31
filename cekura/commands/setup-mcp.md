@@ -102,11 +102,9 @@ Third-party marketplaces like `cekura-skills` do **not** auto-update by default 
 
 Ask the user:
 
-> "Want Claude Code to pull new Cekura versions automatically at launch?
+> "Want Claude Code to pull new Cekura versions automatically at launch? It updates the whole plugin — skills, commands, and the hook scripts that run on session start. Updates apply at launch, never mid-session, and you'll still be prompted to `/reload-plugins`.
 >
-> What this means: at each launch, Claude Code fetches the latest `cekura-skills` from GitHub and re-pins your install to it. That includes **executable hook scripts** that run automatically — not just skill text — so you're trusting whatever is on the repo's `main` branch at that moment, without reviewing it first. Updates are applied at launch; nothing installs mid-session, and you'll still be prompted to `/reload-plugins`.
->
-> Prefer to review changes before they run? Decline this and run `/upgrade-skills` when you want an update instead."
+> If you'd rather update on your own schedule, decline and run `/upgrade-skills` whenever you want the latest."
 
 If yes, merge the opt-in into `~/.claude/settings.json` (idempotent — preserves all other settings):
 

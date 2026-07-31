@@ -56,7 +56,7 @@ mkdir -p .cekura-infra
 grep -qxF '.cekura-infra/' .gitignore 2>/dev/null || echo '.cekura-infra/' >> .gitignore
 ```
 
-These files are an infrastructure blueprint — credential variable names and where they load from, config paths, thresholds, dynamic-variable values. That is exactly what an attacker wants and what must not be committed or left world-readable. Two rules:
+These files are an infrastructure blueprint — credential variable names and where they load from, config paths, thresholds, dynamic-variable values. Not the kind of thing to commit to a repo or leave in a shared-readable location. Two rules:
 
 - **Never `/tmp`.** A shared host makes `/tmp` readable by every local user, and the files aren't covered by any gitignore there.
 - **Never a credential value** in any file this skill writes — `.cekura-infra/*` or the generated run script. Record variable *names* and load locations only.

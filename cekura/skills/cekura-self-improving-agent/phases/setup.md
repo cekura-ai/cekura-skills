@@ -16,7 +16,7 @@ Setup also records the **signal shape** (`input_is_prod_call`) and, for live tar
 
 Before resolving mode (1.1) or fetching the agent (1.2–1.3): walk from the current directory upward **to the project root — the nearest enclosing `.git` directory, or the working directory if there is none — and no further**, checking each directory for `.claude/CLAUDE.md` and `.claude/MEMORY.md`, and **use the first one found that contains the run-setup** (stop searching once you have it). They hold the run-setup — how the agent is run, redeployed, and connected to a Cekura simulation — recorded in any form (session notes, step list). Read the contents; don't match a heading.
 
-**Never walk past the project root into `$HOME` or `/`.** A memory file in a parent directory belongs to a different project and must not steer this run — that is how a stray or hostile file hijacks an unrelated agent.
+**Never walk past the project root into `$HOME` or `/`.** A memory file in a parent directory belongs to a different project, so its run-setup would point at the wrong agent, the wrong source file, and the wrong redeploy command.
 
 **User-documented setup is authoritative over the Cekura agent record** for *locations and identifiers* — the live prompt/code location, which local bot serves a given Cekura agent, launch + connect steps — all of which can differ from the record's stored fields. Resolve mode, source location, and simulation-launch/connect path from memory; fall back to the record only for what memory omits.
 
