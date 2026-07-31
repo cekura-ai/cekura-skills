@@ -8,19 +8,23 @@ set -euo pipefail
 INPUT=$(cat)
 
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
-ERROR_MSG=$(echo "$INPUT" | jq -r '.tool_response.error // .tool_response.exception // .tool_response // "unknown error"' 2>/dev/null | head -c 500)
+ERROR_MSG=$(echo "$INPUT" | jq -r '.tool_response.error // .tool_response.exception // .tool_response // "unknown error"' 2>/dev/null)
+ERROR_MSG=${ERROR_MSG:0:500}
 
 # Mask secret-shaped tokens before writing to disk — error bodies can echo
 # request payloads, and this log is what /report-bug may publish to a public
-# issue. Patterns are ordered specific → generic. Char classes are spelled out
-# rather than using sed's `I` flag, which is GNU-only (macOS ships BSD sed).
+# issue. Char classes are spelled out rather than using sed's `I` flag, which is
+# GNU-only (macOS ships BSD sed).
+#
+# The last expression is the catch-all: any 32+ char run of token characters.
+# The four before it exist only because they match things it would MISS — short
+# `sk-`/`Bearer` tokens, and JWT segments (a 27-char payload between dots) that
+# would otherwise leak while the long segments around it got redacted.
 ERROR_MSG=$(echo "$ERROR_MSG" | sed -E \
   -e 's/sk-[A-Za-z0-9_-]{8,}/[REDACTED]/g' \
   -e 's/(Bearer )[A-Za-z0-9._~+\/=-]{8,}/\1[REDACTED]/g' \
   -e 's/eyJ[A-Za-z0-9_-]{6,}(\.[A-Za-z0-9_-]+){0,2}/[REDACTED-JWT]/g' \
-  -e 's/[A-Za-z0-9_-]*([Kk][Ee][Yy]|[Tt][Oo][Kk][Ee][Nn]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Pp][Aa][Ss][Ss][A-Za-z]*|[Aa][Uu][Tt][Hh][A-Za-z]*)[A-Za-z0-9_-]*("?[[:space:]]*[:=][[:space:]]*"?)[^"'"'"'&,}[:space:]]{6,}/[REDACTED-CREDENTIAL]/g' \
-  -e 's/\b[A-Z]{2}[0-9a-fA-F]{32}\b/[REDACTED]/g' \
-  -e 's/\b[0-9a-fA-F]{32,}\b/[REDACTED]/g' \
+  -e 's/[A-Za-z0-9_-]*([Kk][Ee][Yy]|[Tt][Oo][Kk][Ee][Nn]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Pp][Aa][Ss][Ss]|[Aa][Uu][Tt][Hh])[A-Za-z0-9_-]*("?[[:space:]]*[:=][[:space:]]*"?)[^"'"'"'&,}[:space:]]{6,}/[REDACTED-CREDENTIAL]/g' \
   -e 's/[A-Za-z0-9+\/_-]{32,}/[REDACTED]/g')
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -28,6 +32,8 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # symlink — error text is newline-rich, so a planted link turns this into an
 # arbitrary-file append.
 LOG_FILE="$HOME/.claude/cekura-mcp-failures.log"
+# Only unlink when it IS a symlink — this log is appended across invocations, so
+# an unconditional rm would discard the history /report-bug reads.
 if [ -L "$LOG_FILE" ]; then
   rm -f "$LOG_FILE" 2>/dev/null || true
 fi

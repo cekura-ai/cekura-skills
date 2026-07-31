@@ -158,6 +158,23 @@ diff-approval and cleanup pauses and routine restart pauses; the Setup hard gate
 stop conditions, and every clarification trigger below still fire) ·
 `simulation_runner` (optional explicit `scenarios_run_*` override).
 
+## Working directory for payloads and backups
+
+Every curl in this skill sends its body as `-d @file` (never inline `-d '...'` —
+provider prompts contain apostrophes), so each phase writes payload and backup
+files. Those bodies carry live system prompts, tool definitions, and for
+ElevenLabs the `api_schema` request headers — i.e. webhook credentials. **Not
+`/tmp`**: it is world-readable on shared hosts. Export a private directory once,
+at the start of the run, and use `$CEKURA_WORK` in every path:
+
+```bash
+export CEKURA_WORK="${XDG_RUNTIME_DIR:-$HOME/.cache/cekura}/selfimprove"
+mkdir -m 700 -p "$CEKURA_WORK"
+```
+
+Delete it when the run ends (`rm -rf "$CEKURA_WORK"`) — nothing in it is needed
+after the final Sync.
+
 **Security:** two untrusted inputs reach a Bash-executed `redeploy_command`, and
 `auto_mode: true` removes the per-iteration pauses that would otherwise surface
 them.

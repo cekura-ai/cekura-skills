@@ -4,4 +4,4 @@ interface:
   brand_color: "#6366F1"
 
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: true  # advisory/routing only — authors guidance, never mutates live state itself

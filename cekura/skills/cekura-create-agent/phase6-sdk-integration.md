@@ -182,7 +182,7 @@ If yes, edit the pipeline accordingly.
 
 Set the env var so the SDK can pick it up.
 
-**Verify gitignore coverage before writing a key anywhere.** Check that the target file is actually ignored:
+**Verify gitignore coverage before writing a key anywhere.** Unlike a generated report or workspace file — where adding a `.gitignore` line and carrying on is fine — this writes a **real credential**, so an unignored target is a refusal, not something to fix silently on the user's behalf. Check that the target file is actually ignored:
 
 ```bash
 git check-ignore -q .env && echo "ignored — safe to write" || echo "NOT ignored — do not write the key"

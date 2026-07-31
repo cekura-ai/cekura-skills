@@ -230,7 +230,7 @@ Auto-picking the *mode* is not permission to *start the run*. A `voice` or `sip`
 > `<For voice/sip: "This places N real outbound phone calls and consumes call credits.">`
 > Estimated time: ~X min. Proceed?
 
-Wait for the answer. This applies even when the mode was auto-picked, and even when the user asked for the report in one shot — the cost is theirs to authorize. Skip it only if the user already stated the mode *and* pre-approved running in their initial command.
+Wait for the answer. Skip it only if the user already stated the mode *and* pre-approved running in their initial command — the cost is theirs to authorize.
 
 ### 4c. Trigger the run
 

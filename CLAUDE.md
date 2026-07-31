@@ -32,6 +32,9 @@ cekura-skills/
       cekura-predefined-metrics/
       cekura-eval-design/
       cekura-infra-test-suite/
+      cekura-generate-scenarios/
+      cekura-flag-call-log-failures/
+      cekura-fixing-prod-issues/
     commands/                    # Slash commands (Claude Code only)
     agents/                      # Sub-agent definitions (Claude Code only)
     hooks/                       # MCP failure detection + session-start auto-update (Claude Code CLI only)
@@ -49,12 +52,12 @@ cekura-skills/
 
 ### Two install paths, one source of truth
 
-The 10 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
+The 12 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
 
 1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
 2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 10 skills under `cekura/skills/`. The bare repo URL works cleanly.
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 12 skills under `cekura/skills/`. The bare repo URL works cleanly.
 
 ### Skill content rules
 
@@ -67,16 +70,24 @@ Every `cekura/skills/<name>/SKILL.md`:
 - Public provider names (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP) are fine — they're documented at https://docs.cekura.ai/documentation/integrations/
 - Aim for under 500 lines per file (Agent Skills spec recommendation)
 
-**Before merging any new or edited skill, grep for internal data.** The three call-log skills reached `main` with a customer name, two real phone numbers, and an internal repo path in them — the public-facing rule above was never checked. Run this and expect zero hits:
+**The internal-data rule above is enforced, not just documented.** The three call-log skills reached `main` with a customer name, two real phone numbers, and an internal repo path — the prose rule was never checked. `cekura/scripts/validate_ack_tags.py` now scans every shipped file (skills, commands, agents, `codex/AGENTS.md`, `GEMINI.md`, `README.md`) for real phone numbers, internal repo paths, and non-public hostnames, alongside the ack-tag and version checks:
 
 ```bash
-grep -rnE "\+1[0-9]{10}|vocera\.|localhost:[0-9]+" cekura/skills/ cekura/commands/ \
-  | grep -v "+1415555" | grep -v "websocket-server-scaffold.md"
+python3 cekura/scripts/validate_ack_tags.py
 ```
 
-(The one allowed exception is `ws://localhost:8765` in `websocket-server-scaffold.md` — that's the local dev server the user runs themselves, not a Cekura endpoint.)
+Run it before every release and after any skill edit. Use `+1415555xxxx` (the reserved documentation range) for example phone numbers, `<PLACEHOLDER>` for org-specific values, and describe internal behavior without citing internal file paths.
 
-Use `+1415555xxxx` (the reserved documentation range) for example phone numbers, `<PLACEHOLDER>` for org-specific values, and describe internal behavior without citing internal file paths. Also add every new skill to the `README.md` "What's Included" table and the table above — a skill missing from both is a skill nobody reviewed.
+### Implicit invocation policy (`skills/<name>/agents/openai.yaml`)
+
+One rule decides `policy.allow_implicit_invocation`:
+
+- **`false`** — the skill autonomously mutates live state: platform objects, provider config, or the local machine. Currently `cekura-self-improving-agent`, `cekura-create-agent`, `cekura-onboarding`, `cekura-metric-improvement`.
+- **`true`** — the skill only authors guidance or routes to another skill, and never mutates live state itself. Currently `cekura-coordinator`, `cekura-eval-design`, `cekura-metric-design`.
+
+Implicit invocation means the host can route into a skill without the user naming it, so a `false` here is the difference between "the user asked for this" and "a transcript talked us into it".
+
+**Known gap:** five skills ship without an `agents/openai.yaml` at all — `cekura-predefined-metrics`, `cekura-infra-test-suite`, `cekura-generate-scenarios`, `cekura-flag-call-log-failures`, `cekura-fixing-prod-issues`. Three of those mutate live state and would be `false` under the rule above. Add the file (and a `policy:` stanza in `_template/SKILL.md.tmpl`) once the host's default for a missing policy file is confirmed — don't guess.
 
 Operational MCP tool references belong in **command files** (`cekura/commands/*.md`), which are Claude Code–specific and only loaded by the plugin marketplace path. The `npx skills add` path doesn't fetch commands.
 
@@ -101,6 +112,7 @@ Once installed, npx users have three ways to stay current:
 5. Update the "What's Included" table and Quick Reference table in `README.md`
 6. If the skill needs an operational counterpart, also add a slash command in `cekura/commands/`
 7. In the release notes / commit message, name the new skill so users know what to pass to `--skill`
+8. Run `python3 cekura/scripts/validate_ack_tags.py` — it gates ack tags, version sync across all manifests, and internal-data leaks
 
 ## MCP Integration
 

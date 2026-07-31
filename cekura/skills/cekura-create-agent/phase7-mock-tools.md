@@ -83,36 +83,44 @@ Read the main agent description to find every tool name. For each tool, create a
 
 Mock tools are managed via the `mock_tools` field on the agent. **Always pass the full list** — a PATCH replaces the entire set. To add tools without losing existing ones, fetch current tools first then include them.
 
-The body below is shown inline for readability. When you actually send it, write the JSON to a file with `Write` and pass `-d @mock_tools.json` — tool descriptions and mock string values are free text, and an apostrophe in one of them ends the shell quote and breaks (or worse, extends) the command.
+Fetch the current tools first:
 
 ```bash
-# Fetch current tools first
 curl https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/?ql={mock_tools} \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY"
+```
 
-# PATCH with full list (existing + new)
+Write the merged full list with `Write` to `mock_tools.json` (`-d @file` per [SKILL.md § API Access](SKILL.md#api-access) — tool descriptions and mock string values are free text):
+
+```json
+{
+  "mock_tools": [
+    {
+      "name": "get_user_info",
+      "description": "Retrieves user data based on phone number",
+      "mock_data": [
+        {
+          "input": {"phone_number": "8645239892"},
+          "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
+        },
+        {
+          "input": {"phone_number": "18645239892"},
+          "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
+        }
+      ],
+      "freetext_params": ["notes", "reason"]
+    }
+  ]
+}
+```
+
+Then PATCH with the full list (existing + new):
+
+```bash
 curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{
-    "mock_tools": [
-      {
-        "name": "get_user_info",
-        "description": "Retrieves user data based on phone number",
-        "mock_data": [
-          {
-            "input": {"phone_number": "8645239892"},
-            "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
-          },
-          {
-            "input": {"phone_number": "18645239892"},
-            "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
-          }
-        ],
-        "freetext_params": ["notes", "reason"]
-      }
-    ]
-  }'
+  -d @mock_tools.json
 ```
 
 ---

@@ -72,20 +72,24 @@ Recommend enabling. If yes, include in the PATCH:
 
 ## 10d. Apply via PATCH
 
-Combine all relevant fields from 10a–10c into a single PATCH call. Shown inline for readability — write the JSON to a file with `Write` and send `-d @agent_patch.json` instead, since these fields carry free text that can contain apostrophes.
+Combine all relevant fields from 10a–10c into a single PATCH call. Write the body with `Write` to `agent_patch.json` (`-d @file` per [SKILL.md § API Access](SKILL.md#api-access)):
+
+```json
+{
+  "telephony": { "inbound": false, "outbound_numbers": ["+1..."] },
+  "provider": {
+    "auto_dial_outbound": true,
+    "auto_sync_prompt": true,
+    "auto_import_calls": true
+  }
+}
+```
 
 ```bash
 curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{
-    "telephony": { "inbound": false, "outbound_numbers": ["+1..."] },
-    "provider": {
-      "auto_dial_outbound": true,
-      "auto_sync_prompt": true,
-      "auto_import_calls": true
-    }
-  }'
+  -d @agent_patch.json
 ```
 
 Only include fields that apply — omit any section the user declined or that doesn't apply to their provider.

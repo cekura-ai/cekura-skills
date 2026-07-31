@@ -66,13 +66,12 @@ If none found: "I found no values the main agent reads at runtime that vary per 
 
 ## 9c. Register via the API
 
-**Auth header for all Cekura API calls: `X-CEKURA-API-KEY: $CEKURA_API_KEY`** — never use `Authorization: Api-Key` or `Authorization: Bearer`.
+Follow both curl conventions from [SKILL.md § API Access](SKILL.md#api-access): `X-CEKURA-API-KEY` for auth, and `-d @file` for the body. The `-d @file` rule matters most here — the `description` fields below are exactly the free text this phase tells you to make as detailed as possible, complete with embedded quotes and non-ASCII names.
 
-```bash
-curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic-variables/ \
-  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '[
+Write the array with `Write` to `dynamic_variables.json`:
+
+```json
+[
   {
     "name": "customer_name",
     "description": "Full name of the caller as stored in the CRM. String. Examples: \"Jane Smith\", \"Rahul Verma\", \"María López\"."
@@ -81,7 +80,16 @@ curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic
     "name": "account_id",
     "description": "Unique customer account identifier. Alphanumeric string prefixed with ACC-. Examples: \"ACC-001234\", \"ACC-987654\"."
   }
-]'
+]
+```
+
+Then POST it:
+
+```bash
+curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic-variables/ \
+  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @dynamic_variables.json
 ```
 
 **Key rules:**

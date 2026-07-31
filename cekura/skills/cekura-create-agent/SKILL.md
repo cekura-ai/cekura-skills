@@ -111,7 +111,10 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 
 For Claude Code plugin users, platform tools are auto-configured. If platform operations aren't working, run `/setup-mcp` to configure the connection.
 
-For other clients, use the Cekura dashboard or call the API directly. **All Cekura API calls use `X-CEKURA-API-KEY: <key>` as the auth header** — never `Authorization: Api-Key` or `Authorization: Bearer`.
+For other clients, use the Cekura dashboard or call the API directly. Two conventions apply to every curl in every phase of this skill:
+
+- **Auth header is `X-CEKURA-API-KEY: <key>`** — never `Authorization: Api-Key` or `Authorization: Bearer`.
+- **Send request bodies as `-d @payload.json`, never inline as `-d '{...}'`.** Write the JSON with the `Write` tool (it escapes correctly), then point curl at the file. Agent descriptions, prompts, tool descriptions, and dynamic-variable examples are all free text: one apostrophe (`"customer's account"`) closes the shell quote and breaks the call, or worse, lets the rest of the value run as shell. `scripts/upload-agent.sh` is the worked example of the pattern.
 
 ---
 

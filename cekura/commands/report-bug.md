@@ -62,7 +62,7 @@ tail -20 ~/.claude/cekura-mcp-failures.log 2>/dev/null
 
 If recent entries exist (within last 10 minutes), include them in the report. These give exact tool names and error messages.
 
-**Scrub before including.** The log captures raw error/response text, which can echo request payloads, IDs, or credentials. Before putting any log excerpt into the issue body, redact anything secret-shaped: API keys and tokens (`sk-...`, `Bearer ...`, long hex/base64 runs), `X-CEKURA-API-KEY` values, email addresses, and phone numbers. Replace each with `[REDACTED]`. When unsure whether a value is sensitive, redact it — the maintainers can ask for details privately if needed.
+**Scrub before including.** `hooks/on-mcp-failure.sh` already masks credential-shaped tokens on the way into this log (`sk-`/`Bearer` tokens, JWTs, `key=`/`token=`/`secret=` assignments, and any 32+ char token run), so entries usually arrive with `[REDACTED]` in place. It cannot pattern-match the rest — before putting an excerpt in the issue body, redact **email addresses, phone numbers, customer or org names, and account numbers** yourself. When unsure whether a value is sensitive, redact it; the maintainers can ask privately.
 
 ### 4. Identify the Affected File (if possible)
 
@@ -96,9 +96,9 @@ Local work and publishing to the public repo are **two separate approvals**. Com
 3. **Approval 2 — publish.** Show the user (a) the full diff being pushed and (b) the complete PR title and body text, then ask explicitly whether to push and open the PR. Do not push without that second OK — the branch and PR body land on a public repo and may quote log excerpts.
    ```bash
    git push origin fix/<short-description>
-   gh pr create --repo cekura-ai/cekura-skills --title "fix: <description>" --body-file /tmp/cekura-pr-body.md
+   gh pr create --repo cekura-ai/cekura-skills --title "fix: <description>" --body-file "$CEKURA_WORK/pr-body.md"
    ```
-   Write the PR body with `Write` and pass `--body-file`, for the same reason as the issue body in Step 6 — never interpolate log or error text into a shell heredoc.
+   Write the PR body to `$CEKURA_WORK/pr-body.md` with `Write` and pass `--body-file`, for the same reason as the issue body in Step 6 — never interpolate log or error text into a shell heredoc. `rm -rf "$CEKURA_WORK"` when done.
 4. If push fails (no access), tell the user: "Fix applied locally. The maintainers have been notified via the issue below."
 
 ### 6. File the GitHub Issue
@@ -107,7 +107,12 @@ Local work and publishing to the public repo are **two separate approvals**. Com
 
 Write the body to a file with the `Write` tool, then pass it with `--body-file`. **Never build the body inline with a heredoc or `--body "$(...)"`.** Failure-log text is not user-authored — it comes from MCP error responses that echo request payloads — and a single bare `EOF` line in it would terminate a heredoc early, leaving the rest of the log to be parsed as shell inside the command substitution. `--body-file` keeps the content out of the shell entirely.
 
-Write this content to `/tmp/cekura-bug-report.md` (via `Write`, not `cat`):
+Write this content to `$CEKURA_WORK/bug-report.md` (via `Write`, not `cat`). Set up the private dir first — the body can quote log excerpts, so it does not belong in world-readable `/tmp`:
+
+```bash
+export CEKURA_WORK="${XDG_RUNTIME_DIR:-$HOME/.cache/cekura}/report-bug"
+mkdir -m 700 -p "$CEKURA_WORK"
+```
 
 ```markdown
 ## Bug Report
@@ -152,10 +157,9 @@ Then file it:
 gh issue create --repo cekura-ai/cekura-skills \
   --title "Bug: <short description>" \
   --label "bug" \
-  --body-file /tmp/cekura-bug-report.md
+  --body-file "$CEKURA_WORK/bug-report.md"
+rm -rf "$CEKURA_WORK"
 ```
-
-Delete the temp file afterwards: `rm -f /tmp/cekura-bug-report.md`.
 
 ### 7. Fallback: No `gh` CLI
 

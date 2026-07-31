@@ -12,10 +12,11 @@ set -uo pipefail
 stamp_dir="${PLUGIN_DATA:-${XDG_STATE_HOME:-$HOME/.local/state}/cekura}"
 stamp="$stamp_dir/.cekura-codex-last-update"
 now="$(date +%s)"
-mkdir -p "$stamp_dir" 2>/dev/null || true
 
 # Throttle: skip if we updated within the last 24h. Only trust the stamp when we
 # own it, and strip it to digits so it can never reach `(( ))` as an expression.
+# `-L` is not implied by `-f`/`-O` (both stat through a link), and the `-le`
+# bound stops a future-dated stamp from throttling forever — both are load-bearing.
 if [ -f "$stamp" ] && [ ! -L "$stamp" ] && [ -O "$stamp" ]; then
   last="$(cat "$stamp" 2>/dev/null || true)"
   last="${last//[^0-9]/}"
@@ -29,7 +30,13 @@ fi
 codex plugin marketplace upgrade cekura >/dev/null 2>&1 || true
 codex plugin add cekura@cekura >/dev/null 2>&1 || true
 
-# Never write through a symlink someone else planted at the stamp path.
-[ -L "$stamp" ] && rm -f "$stamp" 2>/dev/null
+# Create the dir only on the path that actually writes — the throttle above exits
+# without touching the filesystem on all but one launch per day. `[ -f ]` is
+# already false when the dir is absent, so the throttle still works on first run.
+mkdir -p "$stamp_dir" 2>/dev/null || true
+
+# Unconditional: equivalent to truncation for a regular file, and it drops a
+# symlink someone else planted at the stamp path.
+rm -f "$stamp" 2>/dev/null || true
 echo "$now" > "$stamp" 2>/dev/null || true
 exit 0

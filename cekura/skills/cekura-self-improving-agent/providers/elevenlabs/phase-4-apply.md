@@ -19,13 +19,13 @@ The prompt is at `conversation_config.agent.prompt.prompt`. ElevenLabs PATCH dee
 curl -fsS -X PATCH \
   -H "xi-api-key: $ELEVENLABS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d @/tmp/el-agent-patch.json \
+  -d @$CEKURA_WORK/el-agent-patch.json \
   https://api.elevenlabs.io/v1/convai/agents/<agent_id>
 ```
 
 Construction rules:
 
-- **Always `-d @file`, never `-d '<json>'`.** Write the payload with the `Write` tool (it handles escaping) into the referenced `/tmp/el-*.json` file first. The new prompt is model-generated prose containing apostrophes and newlines; inlining it into a single-quoted shell argument breaks the call and can execute the tail of the prompt as shell.
+- **Always `-d @file`, never `-d '<json>'`.** Write the payload with the `Write` tool (it handles escaping) into the referenced `$CEKURA_WORK/el-*.json` file first. The new prompt is model-generated prose containing apostrophes and newlines; inlining it into a single-quoted shell argument breaks the call and can execute the tail of the prompt as shell.
 - The prompt lives at `conversation_config.agent.prompt.prompt`. **Do not** send a top-level `prompt` key — it's ignored and the edit silently no-ops.
 - To change only the prompt and leave tools untouched: `{"conversation_config":{"agent":{"prompt":{"prompt":"<NEW_PROMPT>"}}}}` — omit `tool_ids`.
 - To change `tool_ids`: send the **full new array** (it replaces wholesale). Add/remove ids relative to the array fetched in Phase 1; don't re-sort or de-duplicate without intent.
@@ -38,7 +38,7 @@ Construction rules:
 curl -fsS -X PATCH \
   -H "xi-api-key: $ELEVENLABS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d @/tmp/el-inline-tools-patch.json \
+  -d @$CEKURA_WORK/el-inline-tools-patch.json \
   https://api.elevenlabs.io/v1/convai/agents/<agent_id>
 ```
 
@@ -50,7 +50,7 @@ Write the body to the payload file first (`-d @file` rule above). The array repl
 curl -fsS -X PATCH \
   -H "xi-api-key: $ELEVENLABS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d @/tmp/el-tool-patch.json \
+  -d @$CEKURA_WORK/el-tool-patch.json \
   https://api.elevenlabs.io/v1/convai/tools/$TOOL_ID
 ```
 
@@ -66,10 +66,10 @@ Construction rules:
 Back up the original tool body before PATCHing — one snapshot per tool per iteration:
 
 ```
-mkdir -p /tmp/elevenlabs_tools
+mkdir -p $CEKURA_WORK/elevenlabs_tools
 curl -fsS -H "xi-api-key: $ELEVENLABS_API_KEY" \
   https://api.elevenlabs.io/v1/convai/tools/$TOOL_ID \
-  > /tmp/elevenlabs_tools/${TOOL_ID}_pre_iter${N}.json
+  > $CEKURA_WORK/elevenlabs_tools/${TOOL_ID}_pre_iter${N}.json
 ```
 
 Revert with a PATCH using the backed-up `tool_config`.
@@ -80,11 +80,11 @@ Revert with a PATCH using the backed-up `tool_config`.
 curl -fsS -X POST \
   -H "xi-api-key: $ELEVENLABS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d @/tmp/el-tool-new.json \
+  -d @$CEKURA_WORK/el-tool-new.json \
   https://api.elevenlabs.io/v1/convai/tools
 ```
 
-Write the body to `/tmp/el-tool-new.json` first (`-d @file` rule above). The response includes the new `id`. Use it in the subsequent agent PATCH's `tool_ids`. Don't reference an id before it returns 2xx.
+Write the body to `$CEKURA_WORK/el-tool-new.json` first (`-d @file` rule above). The response includes the new `id`. Use it in the subsequent agent PATCH's `tool_ids`. Don't reference an id before it returns 2xx.
 
 ## ElevenLabs tool deletion (rare)
 
@@ -138,6 +138,6 @@ Default 10 iterations. After the cap, stop and surface: what's fixed, what's sti
 - Track cumulative diff for prompt AND tools across all iterations, split by surface.
 - Watch for oscillation — if iteration N reverses iteration N-1's edit on the same clause or field, stop and flag it.
 - Don't widen the validation set mid-loop without telling the user.
-- Always back up tool definitions before editing (`GET` → `/tmp/elevenlabs_tools/{id}_pre_iter{N}.json`).
+- Always back up tool definitions before editing (`GET` → `$CEKURA_WORK/elevenlabs_tools/{id}_pre_iter{N}.json`).
 - Check `usage_stats` / `access_info` before deleting — tools are workspace-scoped.
 - Don't stop because the failure shape changed — a new bug surfacing after a fix is the loop working.

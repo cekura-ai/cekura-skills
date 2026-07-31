@@ -28,12 +28,12 @@ When copying any provider body, strip server-owned fields before POSTing: `id`, 
    **Write each body to a file and post it with `-d @file`.** Never inline a fetched body into `-d '...'`: these payloads carry real prompts and tool descriptions, and a single apostrophe (`"customer's account"` — guaranteed in production prompts) closes the shell quote, breaking the call at best and executing the remainder at worst. Use `Write` for the payload, not `echo`/`cat`.
 
    ```
-   # Write the stripped tool body to /tmp/vapi-tool.json first, then:
+   # Write the stripped tool body to $CEKURA_WORK/vapi-tool.json first, then:
    curl -fsS -X POST -H "Authorization: Bearer $VAPI_KEY" -H "Content-Type: application/json" \
-     -d @/tmp/vapi-tool.json https://api.vapi.ai/tool
-   # Write the stripped assistant body (toolIds repointed, name suffixed) to /tmp/vapi-assistant.json, then:
+     -d @$CEKURA_WORK/vapi-tool.json https://api.vapi.ai/tool
+   # Write the stripped assistant body (toolIds repointed, name suffixed) to $CEKURA_WORK/vapi-assistant.json, then:
    curl -fsS -X POST -H "Authorization: Bearer $VAPI_KEY" -H "Content-Type: application/json" \
-     -d @/tmp/vapi-assistant.json https://api.vapi.ai/assistant
+     -d @$CEKURA_WORK/vapi-assistant.json https://api.vapi.ai/assistant
    ```
 
 ### ElevenLabs
@@ -49,13 +49,13 @@ Clone **every** agent in the graph:
    Same rule as VAPI above — **write each body to a file, post with `-d @file`**, never inline a fetched config into `-d '...'`.
 
    ```
-   # Write <tool_config> to /tmp/el-tool.json first, then:
+   # Write <tool_config> to $CEKURA_WORK/el-tool.json first, then:
    curl -fsS -X POST -H "xi-api-key: $ELEVENLABS_API_KEY" -H "Content-Type: application/json" \
-     -d @/tmp/el-tool.json https://api.elevenlabs.io/v1/convai/tools
+     -d @$CEKURA_WORK/el-tool.json https://api.elevenlabs.io/v1/convai/tools
    # Write {"name":"<name> [cekura-selfimprove-clone]","conversation_config":<fetched config, tool_ids repointed>}
-   # to /tmp/el-agent.json, then:
+   # to $CEKURA_WORK/el-agent.json, then:
    curl -fsS -X POST -H "xi-api-key: $ELEVENLABS_API_KEY" -H "Content-Type: application/json" \
-     -d @/tmp/el-agent.json https://api.elevenlabs.io/v1/convai/agents/create
+     -d @$CEKURA_WORK/el-agent.json https://api.elevenlabs.io/v1/convai/agents/create
    ```
 
 The cloned **entry** agent (the one the Cekura record was registered against) is what CLONE.2 repoints to.
