@@ -591,11 +591,10 @@ credentials by name and let them fail loudly if unset:
 confirm the file is gitignored (`git check-ignore -q .env`); if it isn't, don't
 write it — say why. Never put a real key in `.env.example`.
 
-**Keep working files out of `/tmp`.** API payloads, config backups, and analysis
-notes hold prompts, credential variable names, and PII. `/tmp` is world-readable
-on shared hosts. Use a private directory and remove it when done:
-`mkdir -m 700 -p "${XDG_RUNTIME_DIR:-$HOME/.cache/cekura}"`. Files written into
-a repo workspace must be gitignored first.
+**Files written into a repo workspace must be gitignored first.** Scratch files
+under `/tmp` are fine — they're ephemeral. A generated script or report that
+lands in the user's repo is one `git add -A` from being committed, so confirm
+coverage (`git check-ignore -q <file>`) before writing one.
 
 **Confirm before spending money or destroying anything.** Show scope and cost
 and wait for a yes before starting a run that places real phone calls (`voice`,
