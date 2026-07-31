@@ -10,9 +10,9 @@ Runs first (before Debug) and again on every loop re-entry from Eval. Reads the 
 
 Before any COLLECT.x work, verify Setup is complete. If any is unresolved, ask the specific question and wait:
 
-- Mode resolved (`vapi` / `elevenlabs` / `self_hosted`)?
+- Mode resolved (`vapi` / `retell` / `elevenlabs` / `bland` / `self_hosted`)?
 - Live target: simulation runner resolved? (N/A render-only.)
-- Source-of-truth editable surface loaded? (VAPI: `/assistant/{id}` + tools; ElevenLabs: `/v1/convai/agents/{id}` + referenced tools; self_hosted: the surface the run-setup points to — source file / DB row / Cekura mock tools / pasted text.)
+- Source-of-truth editable surface loaded? (managed provider configuration + tools; self_hosted: the surface the run-setup points to — source file / DB row / Cekura mock tools / pasted text.)
 - **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`? If not, return to [`../setup.md`](setup.md) § Step 1.4. (N/A for managed providers and render-only.)
 
 ## Step COLLECT.1 — If input is `scenario_ids`: execute, then wait
@@ -89,6 +89,7 @@ Bulk-fetch runs (NOT result-fetch — call details aren't there) or fetch call l
 
 - **Self-hosted** — the user's agent controls what Cekura sees. Typically available: Signal 1 (test-profile/scenario variable values on the run record), Signals 3/4-partial (transcript + any `{"role":"Function Call","data":{…}}` tool records the agent forwards; many agents don't echo variable values), Signal 5 (`metadata.ended_reason`). Treat substitution as not-observable unless the transcript literally shows `{{varName}}`. With no live target (render-only), only Signals 3, 4-partial, 5 (from transcript tail).
 - **ElevenLabs** — no rich `artifact.variableValues` / rendered-message surface. Typically: Signal 1 (dynamic-var values on the run record), Signals 3/4-partial (transcript + tool records), Signal 5 (`metadata.ended_reason`, and the agent's built-in `end_call`/`transfer_to_agent` firing before required steps = early-end). Rendered system message generally NOT observable; confirm surviving `{{var}}` only from the transcript. Richer call object: `GET https://api.elevenlabs.io/v1/convai/conversations/{conversation_id}` (`xi-api-key`).
+- **Other managed providers (including Bland)** — use available run metadata, transcripts, tool records, and provider-native detail; do not infer missing runtime fields.
 
 In every mode: if a failure looks variable-injection-shaped but you can't confirm runtime state, mark "suspected upstream — runtime state not observable" and surface the gap rather than proposing a phantom prompt edit.
 
