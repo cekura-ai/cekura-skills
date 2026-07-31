@@ -3,7 +3,7 @@
 > **ANNOUNCE FIRST:** Before reading any file or taking any action, output this exact line to the user:
 > `**Phase 4 — Design the Test Plan: starting**`
 
-Read `/tmp/infra-test-list.md` (written by Phase 3) before doing anything else. That is the authoritative list of everything that needs testing. This phase turns that list into a concrete, compact test plan written in plain English. No Cekura scenarios are created here — that is Phase 5.
+Read `.cekura-infra/test-list.md` (written by Phase 3) before doing anything else. That is the authoritative list of everything that needs testing. This phase turns that list into a concrete, compact test plan written in plain English. No Cekura scenarios are created here — that is Phase 5.
 
 ---
 
@@ -11,7 +11,7 @@ Read `/tmp/infra-test-list.md` (written by Phase 3) before doing anything else. 
 
 Every test item that requires a specific parameter value to trigger the behavior — a timeout short enough to fire, a threshold pushed to an extreme, a flag that forces a fallback path — will be handled via **Cekura dynamic variables** set on the evaluator. Cekura passes these values to the bot at connection time. The bot reads them and configures itself for that call. No env var overrides, no bot restarts, nothing saved on the bot side.
 
-Go through the TEST-NNN list from `/tmp/infra-test-list.md`. For each item, identify whether it needs a non-default parameter value to trigger reliably:
+Go through the TEST-NNN list from `.cekura-infra/test-list.md`. For each item, identify whether it needs a non-default parameter value to trigger reliably:
 
 - **No special value needed** — the behavior can be triggered by what the testing agent says or does (speaking, staying silent, interrupting, sending DTMF) with the bot running at its normal defaults.
 - **Specific value needed** — the behavior only fires reliably if a specific parameter (timeout duration, threshold, flag) is set to a test-specific value. This value will be passed as a Cekura dynamic variable on the evaluator.
@@ -107,7 +107,7 @@ Rules for combining:
 
 ### Step 2b — Produce the complete item mapping (BLOCKING output)
 
-**Before writing a single scenario entry to `/tmp/infra-test-plan.md`**, output this mapping IN THE CHAT:
+**Before writing a single scenario entry to `.cekura-infra/test-plan.md`**, output this mapping IN THE CHAT:
 
 ```
 ITEM MAPPING — complete before any scenario is written
@@ -152,7 +152,7 @@ For each group, write out which TEST-NNN items it covers and note any items mark
 
 ## 4d. Write the test plan
 
-**Before writing any scenario entry, open `/tmp/infra-workflow-descriptions.md` and extract the exact values for that scenario's component.** Do not write a conversation flow or evaluation pointer from memory or inference — every numeric value, every phrase, and every behavior must come directly from Phase 2. This is the single most important rule in this phase: a plan grounded in Phase 2 produces aligned scenarios; a plan written from memory produces mismatches.
+**Before writing any scenario entry, open `.cekura-infra/workflow-descriptions.md` and extract the exact values for that scenario's component.** Do not write a conversation flow or evaluation pointer from memory or inference — every numeric value, every phrase, and every behavior must come directly from Phase 2. This is the single most important rule in this phase: a plan grounded in Phase 2 produces aligned scenarios; a plan written from memory produces mismatches.
 
 For each scenario, extract from Phase 2 before writing:
 - The exact timing values (idle threshold in seconds, interruption offset, hold duration, timeout deadline)
@@ -230,7 +230,7 @@ The Phase 3 exclusion list contains items Phase 2 documented as outside testable
 
 ## 4h. Self-review the plan before writing the output
 
-After drafting all scenarios in 4d and handling exclusions in 4e, stop and independently review the full plan before writing `/tmp/infra-test-plan.md`. Read it as if you had not written it. For each issue found, fix it in place before proceeding to output.
+After drafting all scenarios in 4d and handling exclusions in 4e, stop and independently review the full plan before writing `.cekura-infra/test-plan.md`. Read it as if you had not written it. For each issue found, fix it in place before proceeding to output.
 
 Check for the following categories of problem:
 
@@ -271,12 +271,12 @@ Write a brief review note at the top of the output file listing issues found and
 
 ## Phase 4 Output
 
-Write the complete test plan to `/tmp/infra-test-plan.md` using this structure:
+Write the complete test plan to `.cekura-infra/test-plan.md` using this structure:
 
 ```markdown
 # Infra Test Plan
 
-Source: /tmp/infra-test-list.md
+Source: .cekura-infra/test-list.md
 Self-review: [issues found and resolved, or "no issues found"]
 Read by Phase 5 before creating any scenarios.
 
@@ -339,7 +339,7 @@ Total TEST-NNN items accounted for: N / [total from Phase 3]
 
 Before writing "Move to Phase 5", verify these three conditions. If any fails, fix it first — do not proceed.
 
-**Condition 1:** `/tmp/infra-test-plan.md` exists and every scenario has a "Dynamic variable values" field, a conversation flow, and plain-English evaluation pointers.
+**Condition 1:** `.cekura-infra/test-plan.md` exists and every scenario has a "Dynamic variable values" field, a conversation flow, and plain-English evaluation pointers.
 
 **Condition 2:** Every actionable TEST-NNN item from Phase 3 maps to at least one scenario. To verify: count the total TEST-NNN IDs listed across all scenarios' "Tests covered" fields and compare to the actionable item count from Phase 3. If the counts differ, the plan is incomplete — find the missing items and add them.
 

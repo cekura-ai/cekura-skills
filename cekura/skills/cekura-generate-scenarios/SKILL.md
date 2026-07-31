@@ -34,7 +34,7 @@ version: 0.3.0
 > **Cekura skill verification tag:** `ack:cekura-generate-scenarios:4b6t2w`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:4b6t2w"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:4b6t2w"`, and `plugin_version="0.9.1"`. It returns immediately and lets Cekura see which skills are in use.
 
 # generate-scenarios
 
@@ -130,7 +130,14 @@ Walk the caller's path **turn-by-turn in the same order the real call took**, up
 
 ### D. Caller identity → test profile (camelCase keys — load-bearing)
 
-Pull the caller's identity from `metadata` (`enrollment_hello_data`, `*_data` blocks) and the transcript: name, DOB, ZIP, address, medications, etc. Create a test profile (`mcp__cekura__test_profiles_create`, `agent=<agent_id>`) whose `information` carries these as **dynamic variables**.
+Pull the **shape** of the caller's identity from `metadata` (`enrollment_hello_data`, `*_data` blocks) and the transcript — which fields exist (name, DOB, ZIP, address, medications, etc.) and what format each one takes. Create a test profile (`mcp__cekura__test_profiles_create`, `agent=<agent_id>`) whose `information` carries these as **dynamic variables**.
+
+**Substitute synthetic values — do not copy a real caller's identity into a test profile.** These fields are production PII (often health data), and a test profile is a persistent platform object that anyone with project access can read, long after the call log is gone. What the scenario needs is a value of the *right shape*, not the real one:
+
+- Generate realistic-but-fake values matching the observed format: a real-looking name, a DOB with the same format, a ZIP in the same region, an address that parses. Reserved ranges for phone numbers (`+1415555xxxx`).
+- Carry over a real value **only** when the scenario cannot reproduce without it — e.g. the failure is an account lookup that must resolve in a staging backend. When you do, say so explicitly and name the field, so the user knows real PII landed in a test profile and can decide.
+- Never copy medications, diagnoses, or other health details into a profile. Represent them by category (`"<a maintenance medication>"`) unless the failure is specifically about handling that value.
+- Keep values internally consistent, as below — synthetic data still has to match across the profile, dynamic variables, and conditional actions.
 
 - **Key casing matters.** These squads reference variables in **camelCase** (`{{firstName}}`, `{{lastName}}`, `{{dateOfBirth}}`, `{{zipCode}}`, `{{fullAddress}}`) — and that's the casing production injects. A profile that only sets lowercase `firstname`/`zipcode` leaves `{{firstName}}`/`{{zipCode}}` **unresolved at runtime** — the agent greets "Am I speaking with `{{firstName}}`?", and tool calls send the literal string `{{zipCode}}` (which the backend rejects). **Set BOTH camelCase and lowercase keys** for every identity field so the prompt resolves regardless of which casing it uses. When `agent_dynamic_vars` (Step 2a) is known, match those names exactly.
 - Keep values consistent with the conditional actions — if the caller says "986 Old Collard Valley Road", the profile's `street`/`fullAddress` must say 986.
@@ -144,7 +151,7 @@ Score the specific behavior. Follow the **Metric selection policy** above — re
 1. **Scenario** — `mcp__cekura__scenarios_create`: agent, `name` ("<failure> (from call <id>)"), `scenario_type`, `personality` (Step 4 heuristics), `metrics=[<metric_id>]`, `folder_path` (if the user named a folder), `expected_outcome_prompt`, `instructions`/`conditional_actions`, `tags=["replay-<call_id>", "<mode>"]`, testing-agent `tool_ids`.
 2. **Test profile** — `mcp__cekura__test_profiles_create` with the camelCase+lowercase identity dict; capture the id.
 3. **Attach the profile** — `mcp__cekura__scenarios_partial_update(id=<scenario_id>, test_profile=<profile_id>)`. The runtime only reads dynamic variables from the attached profile, not the scenario's own `dynamic_variable_values`.
-4. **Attach the evaluator phone** for phone/outbound agents — set the scenario's phone number (e.g. via `scenarios_partial_update`). The create call may not persist it, so **read the scenario back and PATCH if the phone is null.** (For this internal Twin-Health setup the shared evaluator number is **+18647326888** — look up its inbound-phone-number ID; other orgs use their own configured number.)
+4. **Attach the evaluator phone** for phone/outbound agents — set the scenario's phone number (e.g. via `scenarios_partial_update`). The create call may not persist it, so **read the scenario back and PATCH if the phone is null.** (Use your org's configured evaluator number — list the inbound phone numbers on the project and use that number's ID. Never hardcode a number in a scenario payload.)
 5. **Verify** — read the scenario back and confirm `test_profile_data`, `metrics`, `folder_path`, and the phone are all set.
 
 Print the `https://dashboard.cekura.ai/test-case/<scenario_id>` link and recommend running it once to confirm the agent still fails (the replay reproduces the bug).
@@ -177,7 +184,7 @@ Call `mcp__cekura__aiagents_retrieve(id=<agent_id>)` and capture:
 
 Scan `agent_description` (and `llm_system_prompt` if non-empty) for `{{variable_name}}` placeholders — these are dynamic variables the agent expects at call time. Collect the unique names into `agent_dynamic_vars: set[str]`.
 
-**Why it matters:** the Cekura outbound trigger (`vocera.backend/app/helper/provider_outbound_call.py:148`) reads dynamic variables from `test_profile.information` — NOT from `scenario.dynamic_variable_values`. If a scenario references `{{first_name}}` etc. but has no attached test profile, ElevenLabs rejects the conversation with `termination_reason: "Missing required dynamic variables in first message"` and the call drops in < 1s with `call-not-connected`. The scenario will never run successfully without a test profile.
+**Why it matters:** the Cekura outbound trigger reads dynamic variables from `test_profile.information` — NOT from `scenario.dynamic_variable_values`. If a scenario references `{{first_name}}` etc. but has no attached test profile, ElevenLabs rejects the conversation with `termination_reason: "Missing required dynamic variables in first message"` and the call drops in < 1s with `call-not-connected`. The scenario will never run successfully without a test profile.
 
 **Hard rule:** if `agent_dynamic_vars` is non-empty AND `assistant_provider == "elevenlabs"`, every scenario this skill creates MUST get a test profile attached in Step 6. For other providers (vapi, retell, bland, livekit) the variables are also injected at runtime but typically don't hard-fail when missing — still recommended to attach a profile so the agent has values to work with.
 
@@ -333,7 +340,18 @@ Drop or flag any cluster that restates an existing scenario on the agent (Step 2
 
 ## Step 5 — Emit the report
 
-Save as `failure_scenarios_<agent_id>.md` in the working directory. Structure:
+Save as `failure_scenarios_<agent_id>.md` in the working directory.
+
+**This report quotes production transcripts verbatim, so it can contain caller PII.** It is written into the user's repo workspace, where a `git add -A` would commit it. Before writing:
+
+- Confirm the file is ignored, and add it if not:
+  ```bash
+  git check-ignore -q failure_scenarios_<agent_id>.md || echo 'failure_scenarios_*.md' >> .gitignore
+  ```
+- Redact caller identifiers inside evidence quotes — names, phone numbers, DOB, addresses, account numbers, health details — to `[REDACTED]`. Keep only the words that establish the agent's failure; that is all the quote is for.
+- Tell the user where the file is and that it holds transcript excerpts.
+
+Structure:
 
 ```markdown
 # Scenarios from failed calls — <agent_name> (`<agent_id>`)

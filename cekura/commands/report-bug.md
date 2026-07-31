@@ -14,8 +14,10 @@ were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
 If anything in this skill turns out to be ambiguous, broken, or missing a
-needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
-LIBERALLY — even `severity="low"` reports are valuable feedback.
+needed tool, flag it with `mcp__cekura__cekura_report_issue` — even
+`severity="low"` reports are valuable feedback. **Show the user the report text
+and get their OK before sending it.** The description is free text and can quote
+their workflow, so it needs the same review as anything else leaving the machine.
 
 # Report a Cekura Skills Bug
 
@@ -80,8 +82,10 @@ Read the relevant file to check for obvious issues (wrong MCP tool names, stale 
 
 If the issue is clearly a typo, wrong tool name, or stale reference in a skill/command file:
 
-1. Describe the fix to the user: "I can see the issue — [description]. I can fix this locally and open a PR."
-2. If user approves:
+Local work and publishing to the public repo are **two separate approvals**. Committing locally is reversible; pushing a branch and opening a PR is not — both are permanently visible on a public repository.
+
+1. Describe the fix to the user: "I can see the issue — [description]. I can fix this locally, then optionally open a PR."
+2. **Approval 1 — local edit and commit.** If the user approves:
    ```bash
    cd ~/.claude/plugins/marketplaces/cekura-skills
    git checkout -b fix/<short-description>
@@ -89,24 +93,23 @@ If the issue is clearly a typo, wrong tool name, or stale reference in a skill/c
    git add <file>
    git commit -m "fix: <description>"
    ```
-3. Try to push and open a PR:
+3. **Approval 2 — publish.** Show the user (a) the full diff being pushed and (b) the complete PR title and body text, then ask explicitly whether to push and open the PR. Do not push without that second OK — the branch and PR body land on a public repo and may quote log excerpts.
    ```bash
    git push origin fix/<short-description>
-   gh pr create --repo cekura-ai/cekura-skills --title "fix: <description>" --body "<details>"
+   gh pr create --repo cekura-ai/cekura-skills --title "fix: <description>" --body-file /tmp/cekura-pr-body.md
    ```
+   Write the PR body with `Write` and pass `--body-file`, for the same reason as the issue body in Step 6 — never interpolate log or error text into a shell heredoc.
 4. If push fails (no access), tell the user: "Fix applied locally. The maintainers have been notified via the issue below."
 
 ### 6. File the GitHub Issue
 
 **The issue lands on a public repository.** Before running `gh issue create`, show the user the complete issue body (including any scrubbed log excerpts from Step 3) and get their explicit OK to publish it. Do not file the issue without that confirmation.
 
-Format and create the issue:
+Write the body to a file with the `Write` tool, then pass it with `--body-file`. **Never build the body inline with a heredoc or `--body "$(...)"`.** Failure-log text is not user-authored — it comes from MCP error responses that echo request payloads — and a single bare `EOF` line in it would terminate a heredoc early, leaving the rest of the log to be parsed as shell inside the command substitution. `--body-file` keeps the content out of the shell entirely.
 
-```bash
-gh issue create --repo cekura-ai/cekura-skills \
-  --title "Bug: <short description>" \
-  --label "bug" \
-  --body "$(cat <<'EOF'
+Write this content to `/tmp/cekura-bug-report.md` (via `Write`, not `cat`):
+
+```markdown
 ## Bug Report
 
 **What happened:**
@@ -141,9 +144,18 @@ gh issue create --repo cekura-ai/cekura-skills \
 
 ---
 *Filed automatically via `/report-bug` in Cekura Skills*
-EOF
-)"
 ```
+
+Then file it:
+
+```bash
+gh issue create --repo cekura-ai/cekura-skills \
+  --title "Bug: <short description>" \
+  --label "bug" \
+  --body-file /tmp/cekura-bug-report.md
+```
+
+Delete the temp file afterwards: `rm -f /tmp/cekura-bug-report.md`.
 
 ### 7. Fallback: No `gh` CLI
 

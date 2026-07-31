@@ -67,6 +67,17 @@ Every `cekura/skills/<name>/SKILL.md`:
 - Public provider names (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP) are fine — they're documented at https://docs.cekura.ai/documentation/integrations/
 - Aim for under 500 lines per file (Agent Skills spec recommendation)
 
+**Before merging any new or edited skill, grep for internal data.** The three call-log skills reached `main` with a customer name, two real phone numbers, and an internal repo path in them — the public-facing rule above was never checked. Run this and expect zero hits:
+
+```bash
+grep -rnE "\+1[0-9]{10}|vocera\.|localhost:[0-9]+" cekura/skills/ cekura/commands/ \
+  | grep -v "+1415555" | grep -v "websocket-server-scaffold.md"
+```
+
+(The one allowed exception is `ws://localhost:8765` in `websocket-server-scaffold.md` — that's the local dev server the user runs themselves, not a Cekura endpoint.)
+
+Use `+1415555xxxx` (the reserved documentation range) for example phone numbers, `<PLACEHOLDER>` for org-specific values, and describe internal behavior without citing internal file paths. Also add every new skill to the `README.md` "What's Included" table and the table above — a skill missing from both is a skill nobody reviewed.
+
 Operational MCP tool references belong in **command files** (`cekura/commands/*.md`), which are Claude Code–specific and only loaded by the plugin marketplace path. The `npx skills add` path doesn't fetch commands.
 
 ### Update workflow
@@ -126,6 +137,9 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
 | `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
+| `cekura-generate-scenarios` | Turn flagged production call logs into evaluator scenarios, clustered by failure mode |
+| `cekura-flag-call-log-failures` | Triage recent production calls against KPIs; report failure rates and outcome distribution |
+| `cekura-fixing-prod-issues` | Reproduce and fix a specific production call failure locally |
 
 ### Commands
 | Component | Purpose |

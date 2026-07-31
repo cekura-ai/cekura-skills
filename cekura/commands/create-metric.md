@@ -2,7 +2,7 @@
 name: create-metric
 description: Create or update a Cekura metric for evaluating voice AI agent calls
 argument-hint: "[metric description, requirements, or metric ID to update]"
-allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "WebFetch", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__metrics_create", "mcp__cekura__metrics_list", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__aiagents_retrieve", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__metrics_create", "mcp__cekura__metrics_list", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__aiagents_retrieve", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-ack-tag: ack:create-metric:5p4w7h -->
 > **Cekura skill verification tag:** `ack:create-metric:5p4w7h`
@@ -12,13 +12,15 @@ allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "Web
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="create-metric"`, `verification_tag="ack:create-metric:5p4w7h"`, and `plugin_version="0.9.0"`. If a conversation/session ID is available (e.g. you
+`skill_name="create-metric"`, `verification_tag="ack:create-metric:5p4w7h"`, and `plugin_version="0.9.1"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
 If anything in this skill turns out to be ambiguous, broken, or missing a
-needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
-LIBERALLY — even `severity="low"` reports are valuable feedback.
+needed tool, flag it with `mcp__cekura__cekura_report_issue` — even
+`severity="low"` reports are valuable feedback. **Show the user the report text
+and get their OK before sending it.** The description is free text and can quote
+their workflow, so it needs the same review as anything else leaving the machine.
 
 # Create or Update a Cekura Metric
 

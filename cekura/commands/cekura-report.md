@@ -30,7 +30,9 @@ allowed-tools:
     "mcp__cekura__results_retrieve",
     "mcp__cekura__results_rerun_create",
     "mcp__cekura__end_call",
-  , "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+    "mcp__cekura__cekura_skill_started",
+    "mcp__cekura__cekura_report_issue",
+  ]
 ---
 <!-- cekura-tracking-beacon -->
 
@@ -42,8 +44,10 @@ were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
 If anything in this skill turns out to be ambiguous, broken, or missing a
-needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
-LIBERALLY — even `severity="low"` reports are valuable feedback.
+needed tool, flag it with `mcp__cekura__cekura_report_issue` — even
+`severity="low"` reports are valuable feedback. **Show the user the report text
+and get their OK before sending it.** The description is free text and can quote
+their workflow, so it needs the same review as anything else leaving the machine.
 
 # /cekura-report
 
@@ -213,10 +217,20 @@ Mapping:
   > ⚠️ Agent has no provider, phone number, SIP endpoint, or websocket URL configured. Can't run evals. Configure a connection on the agent first.
 - **Exactly one candidate** — **auto-pick** it. Announce:
   > Auto-selected `<mode>` — only configured connection on this agent.
-  Skip `AskUserQuestion`.
+  Skip the mode question — there's nothing to choose. **This does not skip the run confirmation in 4b-bis.**
 - **Two or more candidates** — use `AskUserQuestion` with **only the configured options** (never the full 10-way list). Include a one-line speed/cost hint: text fastest/cheapest, WebRTC moderate, PSTN voice realistic but slowest.
 
 The user can still override by passing a mode explicitly in their initial command.
+
+### 4b-bis. Confirm the run before executing — always
+
+Auto-picking the *mode* is not permission to *start the run*. A `voice` or `sip` run places real outbound phone calls and consumes credits, and it is not cancellable per-call once dispatched. Before 4c, show the scope and get an explicit go-ahead:
+
+> About to run **N evaluators** against `<agent name>` over **`<mode>`**.
+> `<For voice/sip: "This places N real outbound phone calls and consumes call credits.">`
+> Estimated time: ~X min. Proceed?
+
+Wait for the answer. This applies even when the mode was auto-picked, and even when the user asked for the report in one shot — the cost is theirs to authorize. Skip it only if the user already stated the mode *and* pre-approved running in their initial command.
 
 ### 4c. Trigger the run
 
@@ -274,7 +288,7 @@ Then a table grouped **by issue category, not by scenario**:
 
 | Issue category | Result | What's going wrong | Affected runs |
 |---|---|---|---|
-| Auth blocked at account lookup | ❌ (6 runs) | Test profile (Jessica Miller / 9876543 / PIN 2468) doesn't resolve in the prod backend, so every authenticated workflow exits before PIN, address-confirm, or post-auth steps run. | [3056761](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056761) Data Balance Full-Auth · [3056762](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056762) Secondary Auth after PIN Fail · [3056763](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056763) Update Contact Info · [3056765](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056765) Device Internet Troubleshooting · [3056766](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056766) PIN Authentication · [3056767](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056767) Authenticated Plan Name Retrieval |
+| Auth blocked at account lookup | ❌ (6 runs) | Test profile (`<test caller name>` / `<account>` / `<PIN>`) doesn't resolve in the prod backend, so every authenticated workflow exits before PIN, address-confirm, or post-auth steps run. | [3056761](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056761) Data Balance Full-Auth · [3056762](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056762) Secondary Auth after PIN Fail · [3056763](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056763) Update Contact Info · [3056765](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056765) Device Internet Troubleshooting · [3056766](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056766) PIN Authentication · [3056767](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056767) Authenticated Plan Name Retrieval |
 
 Each row groups together every run that failed for the same underlying reason. Be explicit about whether the cause is config/data, tool/integration, or persona/knowledge/prompt.
 
@@ -302,7 +316,7 @@ Concrete example:
 
 > ### ❌ Auth blocked at account lookup (6 runs)
 >
-> The test profile's identity (Jessica Miller, phone 3105551234, account 9876543, PIN 2468) does not resolve in TruConnect's production backend. The agent reaches the lookup step and exits early — every downstream check (PIN, address confirms, balance, troubleshooting) is skipped. Configuration issue, not a model issue.
+> The test profile's identity (name, phone, account, PIN) does not resolve in the customer's production backend. The agent reaches the lookup step and exits early — every downstream check (PIN, address confirms, balance, troubleshooting) is skipped. Configuration issue, not a model issue.
 >
 > #### Run [3056766](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056766) — PIN Authentication Test
 > - ❌ "The main agent repeatedly stated the account could not be found, not that it was found." (01:16)
@@ -355,7 +369,7 @@ Mention: **re-run individual scenarios** that failed using `mcp__cekura__results
 - Don't invent metrics — only cite what's in the payload.
 - Tone: direct and analytical, not cheerleading.
 
-Save as `result_<result_id>_report.md` in the working directory and return the path.
+Save as `result_<result_id>_report.md` in the working directory and return the path. Use only the digits of `result_id` when building the filename, and write to the working directory explicitly — never let an API-supplied value introduce `/` or `..` into the path.
 
 ---
 

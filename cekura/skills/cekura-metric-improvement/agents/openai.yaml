@@ -4,4 +4,4 @@ interface:
   brand_color: "#8B5CF6"
 
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false  # explicit invocation only — this skill runs shell commands and/or writes live agent config

@@ -10,16 +10,27 @@ INPUT=$(cat)
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
 ERROR_MSG=$(echo "$INPUT" | jq -r '.tool_response.error // .tool_response.exception // .tool_response // "unknown error"' 2>/dev/null | head -c 500)
 
-# Mask obvious secret-shaped tokens before writing to disk — error bodies can
-# echo request payloads. (This log is also what /report-bug may publish.)
+# Mask secret-shaped tokens before writing to disk — error bodies can echo
+# request payloads, and this log is what /report-bug may publish to a public
+# issue. Patterns are ordered specific → generic. Char classes are spelled out
+# rather than using sed's `I` flag, which is GNU-only (macOS ships BSD sed).
 ERROR_MSG=$(echo "$ERROR_MSG" | sed -E \
   -e 's/sk-[A-Za-z0-9_-]{8,}/[REDACTED]/g' \
   -e 's/(Bearer )[A-Za-z0-9._~+\/=-]{8,}/\1[REDACTED]/g' \
-  -e 's/[A-Za-z0-9+\/_-]{40,}/[REDACTED]/g')
+  -e 's/eyJ[A-Za-z0-9_-]{6,}(\.[A-Za-z0-9_-]+){0,2}/[REDACTED-JWT]/g' \
+  -e 's/[A-Za-z0-9_-]*([Kk][Ee][Yy]|[Tt][Oo][Kk][Ee][Nn]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Pp][Aa][Ss][Ss][A-Za-z]*|[Aa][Uu][Tt][Hh][A-Za-z]*)[A-Za-z0-9_-]*("?[[:space:]]*[:=][[:space:]]*"?)[^"'"'"'&,}[:space:]]{6,}/[REDACTED-CREDENTIAL]/g' \
+  -e 's/\b[A-Z]{2}[0-9a-fA-F]{32}\b/[REDACTED]/g' \
+  -e 's/\b[0-9a-fA-F]{32,}\b/[REDACTED]/g' \
+  -e 's/[A-Za-z0-9+\/_-]{32,}/[REDACTED]/g')
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Log to failure file for /report-bug to pick up
+# Log to failure file for /report-bug to pick up. Refuse to append through a
+# symlink — error text is newline-rich, so a planted link turns this into an
+# arbitrary-file append.
 LOG_FILE="$HOME/.claude/cekura-mcp-failures.log"
+if [ -L "$LOG_FILE" ]; then
+  rm -f "$LOG_FILE" 2>/dev/null || true
+fi
 echo "${TIMESTAMP} | ${TOOL_NAME} | ${ERROR_MSG}" >> "$LOG_FILE"
 
 # Keep log file from growing unbounded (last 100 lines)
@@ -27,16 +38,15 @@ if [ -f "$LOG_FILE" ] && [ "$(wc -l < "$LOG_FILE")" -gt 100 ]; then
   tail -100 "$LOG_FILE" > "${LOG_FILE}.tmp" && mv "${LOG_FILE}.tmp" "$LOG_FILE"
 fi
 
-# Return context to Claude
-cat <<EOF
-{
-  "continue": true,
-  "suppressOutput": false,
-  "hookSpecificOutput": {
-    "hookEventName": "PostToolUseFailure",
-    "additionalContext": "A Cekura MCP tool failed (${TOOL_NAME}). Common causes: (1) MCP server not running — run /setup-mcp, (2) CEKURA_API_KEY not set, (3) network issue. If this seems like a bug in the skill, the user can run /report-bug to file an issue."
+# Return context to Claude. Built with jq so a quote or newline in the tool name
+# can't corrupt the JSON or inject crafted context into the agent.
+jq -n --arg tool "$TOOL_NAME" '{
+  continue: true,
+  suppressOutput: false,
+  hookSpecificOutput: {
+    hookEventName: "PostToolUseFailure",
+    additionalContext: ("A Cekura MCP tool failed (" + $tool + "). Common causes: (1) MCP server not running — run /setup-mcp, (2) CEKURA_API_KEY not set, (3) network issue. If this seems like a bug in the skill, the user can run /report-bug to file an issue.")
   }
-}
-EOF
+}'
 
 exit 0

@@ -72,7 +72,7 @@ Recommend enabling. If yes, include in the PATCH:
 
 ## 10d. Apply via PATCH
 
-Combine all relevant fields from 10a–10c into a single PATCH call:
+Combine all relevant fields from 10a–10c into a single PATCH call. Shown inline for readability — write the JSON to a file with `Write` and send `-d @agent_patch.json` instead, since these fields carry free text that can contain apostrophes.
 
 ```bash
 curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \

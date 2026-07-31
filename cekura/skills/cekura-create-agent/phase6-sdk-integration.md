@@ -180,10 +180,22 @@ If yes, edit the pipeline accordingly.
 
 ## 6g. Wire CEKURA_API_KEY into the runtime
 
-Set the env var so the SDK can pick it up:
+Set the env var so the SDK can pick it up.
 
-- If `.env` or `.env.example` exists in the repo, append `CEKURA_API_KEY=<key>` (or a placeholder with a comment).
-- Otherwise, tell the user explicitly how to set it for their runtime (shell export, deployment env, secret manager). Never hardcode the key in code.
+**Verify gitignore coverage before writing a key anywhere.** Check that the target file is actually ignored:
+
+```bash
+git check-ignore -q .env && echo "ignored — safe to write" || echo "NOT ignored — do not write the key"
+```
+
+Then:
+
+- **`.env` exists and is gitignored** → append `CEKURA_API_KEY=<key>`.
+- **`.env` exists but is NOT gitignored** → do not write the key. Tell the user the file is tracked, and offer to add `.env` to `.gitignore` first.
+- **`.env.example`** → append `CEKURA_API_KEY=` with a comment only. This file is meant to be committed; never put a real key in it.
+- **No `.env`** → tell the user explicitly how to set it for their runtime (shell export, deployment env, secret manager).
+
+Never hardcode the key in code, and never echo it back in chat output.
 
 ## 6h. Falling back when the user refuses the SDK
 

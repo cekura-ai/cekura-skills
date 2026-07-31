@@ -34,7 +34,7 @@ description: >
 
 model: inherit
 color: cyan
-tools: ["Read", "Bash", "Grep", "Glob", "AskUserQuestion", "WebFetch"]
+tools: ["Read", "Grep", "Glob", "AskUserQuestion"]
 ---
 
 You are a test coverage strategist specializing in voice AI agent evaluation. You design comprehensive eval suites that thoroughly exercise every workflow, edge case, and adversarial scenario.

@@ -83,6 +83,8 @@ Read the main agent description to find every tool name. For each tool, create a
 
 Mock tools are managed via the `mock_tools` field on the agent. **Always pass the full list** — a PATCH replaces the entire set. To add tools without losing existing ones, fetch current tools first then include them.
 
+The body below is shown inline for readability. When you actually send it, write the JSON to a file with `Write` and pass `-d @mock_tools.json` — tool descriptions and mock string values are free text, and an apostrophe in one of them ends the shell quote and breaks (or worse, extends) the command.
+
 ```bash
 # Fetch current tools first
 curl https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/?ql={mock_tools} \

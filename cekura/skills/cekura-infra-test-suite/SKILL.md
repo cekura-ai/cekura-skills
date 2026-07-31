@@ -19,7 +19,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-infra-test-suite:2h6r7k`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.9.1"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Voice AI Infrastructure Test Suite
 
@@ -40,12 +40,26 @@ components        values +          the analysis      criteria,         run scri
 | Phase | File | What happens |
 |---|---|---|
 | 1 — Explore the Stack | [phase1-explore.md](phase1-explore.md) | Survey the codebase: identify transport, STT, LLM, TTS, VAD, and all pipeline components; answer Q1–Q11 |
-| 2 — Analyze Each Layer | [phase2-analyze.md](phase2-analyze.md) | Deep-read each layer; extract exact values, class names, config keys, and code refs; write to `/tmp/infra-workflow-descriptions.md` |
-| 3 — Inventory What to Test | [phase3-inventory.md](phase3-inventory.md) | Derive every testable behavior from the analysis — happy paths, boundaries, failures, cross-component interactions; write to `/tmp/infra-test-list.md` |
-| 4 — Design the Test Plan | [phase4-plan.md](phase4-plan.md) | Ask config-change question; group TEST-NNN items into compact scenarios; write evaluation criteria (metrics + expected outcomes) in plain English to `/tmp/infra-test-plan.md` |
+| 2 — Analyze Each Layer | [phase2-analyze.md](phase2-analyze.md) | Deep-read each layer; extract exact values, class names, config keys, and code refs; write to `.cekura-infra/workflow-descriptions.md` |
+| 3 — Inventory What to Test | [phase3-inventory.md](phase3-inventory.md) | Derive every testable behavior from the analysis — happy paths, boundaries, failures, cross-component interactions; write to `.cekura-infra/test-list.md` |
+| 4 — Design the Test Plan | [phase4-plan.md](phase4-plan.md) | Ask config-change question; group TEST-NNN items into compact scenarios; write evaluation criteria (metrics + expected outcomes) in plain English to `.cekura-infra/test-plan.md` |
 | 5 — Build and Run | [phase5-build-run.md](phase5-build-run.md) | Create Cekura scenarios from the plan; write a CI run script batched by configuration with readiness gating and per-scenario timeout |
 
 ---
+
+## Working directory and secret hygiene
+
+Phases 2–5 write intermediate files to **`.cekura-infra/`** in the project workspace. Before writing the first one:
+
+```bash
+mkdir -p .cekura-infra
+grep -qxF '.cekura-infra/' .gitignore 2>/dev/null || echo '.cekura-infra/' >> .gitignore
+```
+
+These files are an infrastructure blueprint — credential variable names and where they load from, config paths, thresholds, dynamic-variable values. That is exactly what an attacker wants and what must not be committed or left world-readable. Two rules:
+
+- **Never `/tmp`.** A shared host makes `/tmp` readable by every local user, and the files aren't covered by any gitignore there.
+- **Never a credential value** in any file this skill writes — `.cekura-infra/*` or the generated run script. Record variable *names* and load locations only.
 
 ## Ground Rules
 

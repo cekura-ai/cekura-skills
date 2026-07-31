@@ -15,16 +15,21 @@ A new tool must exist before the assistant PATCH lands. Bundling `toolIds` + pro
 
 The id is the VAPI `assistant.id` from Phase 1 (for squads, each member's `assistantId` — **not** the squad id; you cannot PATCH a squad to change a member's prompt):
 
+Build the payload with `Write` into `/tmp/vapi-assistant-patch.json`, then:
+
 ```
 curl -fsS -X PATCH \
   -H "Authorization: Bearer $VAPI_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":{"provider":"<existing>","model":"<existing>","messages":[{"role":"system","content":"<NEW_PROMPT>"}, ... <other existing messages unchanged> ...],"toolIds":["<id1>","<id2>",...]}}' \
+  -d @/tmp/vapi-assistant-patch.json \
   https://api.vapi.ai/assistant/<assistant_id>
 ```
 
+The file contains `{"model":{"provider":"<existing>","model":"<existing>","messages":[{"role":"system","content":"<NEW_PROMPT>"}, ... <other existing messages unchanged> ...],"toolIds":["<id1>","<id2>",...]}}`.
+
 Construction rules:
 
+- **Always `-d @file`, never `-d '<json>'`.** The new prompt is model-generated prose and will contain apostrophes and newlines; inlining it into a single-quoted shell argument breaks the call and can execute the tail of the prompt as shell. Write the JSON with the `Write` tool (which handles escaping), not with `echo` or a heredoc.
 - Copy the current `model` object from the Phase 1 fetch unchanged (provider/model/temperature/inline tools/etc.) — VAPI PATCH replaces `model` wholesale; omitted fields are lost.
 - Replace **only** the system message's `content`. Preserve any other messages and their order.
 - If updating `toolIds`: send the **full new array**. Add or remove ids relative to the previous array.
@@ -38,9 +43,11 @@ Construction rules:
 curl -fsS -X PATCH \
   -H "Authorization: Bearer $VAPI_KEY" \
   -H "Content-Type: application/json" \
-  -d '<full tool body with edited fields>' \
+  -d @/tmp/vapi-tool-patch.json \
   https://api.vapi.ai/tool/$TOOL_ID
 ```
+
+Write the full tool body (with edited fields) to `/tmp/vapi-tool-patch.json` first — same `-d @file` rule as above.
 
 Construction rules:
 
@@ -69,9 +76,11 @@ Revert: PATCH with the backed-up body.
 curl -fsS -X POST \
   -H "Authorization: Bearer $VAPI_KEY" \
   -H "Content-Type: application/json" \
-  -d '<full tool body — type, function spec, messages, destinations as needed>' \
+  -d @/tmp/vapi-tool-new.json \
   https://api.vapi.ai/tool
 ```
+
+Write the full tool body (type, function spec, messages, destinations as needed) to `/tmp/vapi-tool-new.json` first — same `-d @file` rule as above.
 
 The response includes the new `id`. Use it in the subsequent assistant PATCH's `toolIds`. Don't reference an id that hasn't returned 2xx.
 

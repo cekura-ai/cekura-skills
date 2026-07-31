@@ -3,7 +3,7 @@
 > **ANNOUNCE FIRST:** Before reading any file or taking any action, output this exact line to the user:
 > `**Phase 5 — Build and Run: starting**`
 
-Read `/tmp/infra-test-plan.md` (written by Phase 4) before doing anything else. That file has the complete scenario plan — conversation flows, evaluation criteria, and configuration batches. This phase creates the Cekura scenarios from that plan and writes a script that runs them all.
+Read `.cekura-infra/test-plan.md` (written by Phase 4) before doing anything else. That file has the complete scenario plan — conversation flows, evaluation criteria, and configuration batches. This phase creates the Cekura scenarios from that plan and writes a script that runs them all.
 
 ---
 
@@ -35,7 +35,7 @@ Do not reconstruct this from memory or from the summary below. The reference is 
 
 The workflow:
 1. Read the agent ID from the Phase 1 gate output
-2. Read the full scenario list from `/tmp/infra-test-plan.md`
+2. Read the full scenario list from `.cekura-infra/test-plan.md`
 3. Set up test profiles, mock tool data, and dynamic variables (see subsection below — do this before building any payload)
 4. Create a test profile per scenario via `mcp__cekura__test_profiles_create` with `information.main_agent_variables` containing all dynamic variable values from Phase 4
 5. Build the complete payload for every scenario upfront (agent, conditional_actions, language, personality, folder_path, name, expected_outcome, metrics, test_profile ID)
@@ -150,7 +150,7 @@ Each scenario in Phase 4 has a set of plain-English evaluation pointers — what
    - Do not test call closing/farewells unless the test explicitly requires it
    - Attach the **Expected Outcome** predefined metric — the `expected_outcome_prompt` field alone does nothing without the metric
 
-   Additionally, before writing the expected outcome, open `/tmp/infra-workflow-descriptions.md` and find the Phase 2 section for the behavior being tested. Use the actual bot behavior documented there — not the Phase 4 pointers alone, which are summaries. If Phase 2 documents an exact phrase, use the meaning (not the verbatim quote) to avoid false failures from paraphrasing.
+   Additionally, before writing the expected outcome, open `.cekura-infra/workflow-descriptions.md` and find the Phase 2 section for the behavior being tested. Use the actual bot behavior documented there — not the Phase 4 pointers alone, which are summaries. If Phase 2 documents an exact phrase, use the meaning (not the verbatim quote) to avoid false failures from paraphrasing.
 
 2. **Predefined metrics** — **invoke the `cekura-predefined-metrics` skill now, before writing a single metric onto any scenario.** Do not guess metric names, do not use the matching table below as a substitute for the skill, and do not skip this step even if the evaluation pointers seem straightforward. The skill has the full catalog, cost, audio requirements, configuration options, and known constraints for every metric. Using it is mandatory.
 
@@ -187,7 +187,7 @@ After creating each scenario, record its ID and which configuration batch it bel
 
 ## 5c. Cross-verify every created scenario against the plan
 
-After all scenarios are created, fetch each one from Cekura using `mcp__cekura__scenarios_retrieve` and verify it against its entry in `/tmp/infra-test-plan.md`. Do this one scenario at a time — do not batch or skip any.
+After all scenarios are created, fetch each one from Cekura using `mcp__cekura__scenarios_retrieve` and verify it against its entry in `.cekura-infra/test-plan.md`. Do this one scenario at a time — do not batch or skip any.
 
 For each scenario, check every field listed below. If any field is wrong, patch it immediately before moving to the next scenario.
 
@@ -211,7 +211,7 @@ For each scenario, check every field listed below. If any field is wrong, patch 
 **Metrics and expected outcome**
 - Are all intended metrics attached and active at the project level?
 - Does the `expected_outcome` field reflect the Phase 4 evaluation pointers — not blank, not generic, not copied from a different scenario?
-- Does the `expected_outcome` use the actual bot phrases and behaviors from Phase 2 — not a paraphrase? Open `/tmp/infra-workflow-descriptions.md` and compare: if Phase 2 says the idle prompt is "Are you still with me?" and the expected_outcome says "bot prompts caller about silence", that is a mismatch — patch it with the exact phrase.
+- Does the `expected_outcome` use the actual bot phrases and behaviors from Phase 2 — not a paraphrase? Open `.cekura-infra/workflow-descriptions.md` and compare: if Phase 2 says the idle prompt is "Are you still with me?" and the expected_outcome says "bot prompts caller about silence", that is a mismatch — patch it with the exact phrase.
 - Do the `action` timing values in the conditions match the Phase 2 values exactly — not rounded, not estimated? A `<hold duration="10s"/>` that should be `<hold duration="12s"/>` based on Phase 2's documented threshold will cause the idle timer test to fail silently.
 
 **Dynamic variable values via test profile**
@@ -220,10 +220,10 @@ For each scenario, check every field listed below. If any field is wrong, patch 
 
 **What to do when a mismatch is found**
 - Fix it with `mcp__cekura__scenarios_partial_update` immediately.
-- Note the mismatch and the fix in a short verification log written to `/tmp/infra-verification-log.md` (create if it doesn't exist). Format: `SCENARIO-NNN: [field] was [wrong value], patched to [correct value]`.
-- If the mismatch cannot be fixed via PATCH (e.g. a fundamental structural problem requiring recreation), delete the scenario with `mcp__cekura__scenarios_destroy`, recreate it correctly, and update the scenario ID in the batch mapping.
+- Note the mismatch and the fix in a short verification log written to `.cekura-infra/verification-log.md` (create if it doesn't exist). Format: `SCENARIO-NNN: [field] was [wrong value], patched to [correct value]`.
+- If the mismatch cannot be fixed via PATCH (e.g. a fundamental structural problem requiring recreation), **ask the user before deleting.** Show the scenario name and ID and what is structurally wrong, then delete with `mcp__cekura__scenarios_destroy` only after they agree, recreate it correctly, and update the scenario ID in the batch mapping. Deletion is irreversible and discards any result history attached to that scenario — never do it autonomously mid-flow.
 
-At the end of the verification pass, write a summary line to `/tmp/infra-verification-log.md`:
+At the end of the verification pass, write a summary line to `.cekura-infra/verification-log.md`:
 ```
 Verification complete. N scenarios checked. M mismatches found and fixed. 0 unresolved.
 ```
@@ -313,7 +313,16 @@ print_summary   # pass/fail per scenario per transport, total pass rate
 
 **Default bot configuration** — the bot must start with its normal default configuration. Per-scenario variations are handled by the Cekura dynamic variables set on each evaluator; the script does not need to manage any configuration state.
 
-**Deployment steps verbatim** — embed the exact start/stop commands and env vars confirmed in 5d as executable lines (not comments). Label each block clearly so the user can edit them later.
+**Deployment steps verbatim, credentials by reference** — embed the exact start/stop commands confirmed in 5d as executable lines (not comments). Label each block clearly so the user can edit them later.
+
+**Never write a credential value into the script.** `infra_test_run.sh` lands in the user's repo workspace and is one `git add -A` away from a committed secret. Reference each required credential by name and let the script fail loudly if it is unset:
+
+```bash
+: "${OPENAI_API_KEY:?set OPENAI_API_KEY before running}"
+: "${TWILIO_AUTH_TOKEN:?set TWILIO_AUTH_TOKEN before running}"
+```
+
+If the user pasted actual key values during Phase 1, use only the variable *names* here and tell them the script expects those vars in the environment (via their existing `.env`, shell profile, or secret manager). Same rule for the stop command and any health-check URL that embeds a token.
 
 **Readiness gating** — use the exact readiness signal confirmed in 5d (log line, health endpoint, port). Do not use a fixed `sleep`.
 

@@ -13,8 +13,10 @@ were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
 If anything in this skill turns out to be ambiguous, broken, or missing a
-needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
-LIBERALLY — even `severity="low"` reports are valuable feedback.
+needed tool, flag it with `mcp__cekura__cekura_report_issue` — even
+`severity="low"` reports are valuable feedback. **Show the user the report text
+and get their OK before sending it.** The description is free text and can quote
+their workflow, so it needs the same review as anything else leaving the machine.
 
 # Set Up Cekura MCP Server
 
@@ -100,7 +102,11 @@ Third-party marketplaces like `cekura-skills` do **not** auto-update by default 
 
 Ask the user:
 
-> "Want Claude Code to pull new Cekura versions automatically at launch? It'll still prompt you to run `/reload-plugins` to apply them — nothing installs silently mid-session."
+> "Want Claude Code to pull new Cekura versions automatically at launch?
+>
+> What this means: at each launch, Claude Code fetches the latest `cekura-skills` from GitHub and re-pins your install to it. That includes **executable hook scripts** that run automatically — not just skill text — so you're trusting whatever is on the repo's `main` branch at that moment, without reviewing it first. Updates are applied at launch; nothing installs mid-session, and you'll still be prompted to `/reload-plugins`.
+>
+> Prefer to review changes before they run? Decline this and run `/upgrade-skills` when you want an update instead."
 
 If yes, merge the opt-in into `~/.claude/settings.json` (idempotent — preserves all other settings):
 
