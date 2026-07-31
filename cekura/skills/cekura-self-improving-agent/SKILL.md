@@ -6,7 +6,7 @@ description: >
   "auto-tune / iterate on my prompt", "fix my agent from test results",
   "optimize my prompt based on failures", "rewrite my prompt". ALSO for
   production-call bug fixing: "fix this prod call issue", "debug and fix
-  call ID", "reproduce this production bug". Works across VAPI, Retell, ElevenLabs,
+  call ID", "reproduce this production bug". Works across VAPI, Retell, ElevenLabs, Bland,
   and self-hosted agents, and across three fix surfaces — prompt, tool config,
   and (self-hosted) owned source code, including infra-flavored / forked-SDK
   bugs, which are reproduced and validated on Cekura (never a code test).
@@ -40,8 +40,8 @@ Every run resolves to a **target** described by three axes. Resolving these thre
   any vendored/forked SDK that lives inside the source tree the run-setup edits.
   Always out of scope: business logic, auth / secrets, dependencies, LLM-client
   config.
-- **Apply path** — how an edit goes live: a provider API PATCH (VAPI / Retell /
-  ElevenLabs — live immediately), an `Edit` plus a `redeploy_command` (self-hosted
+- **Apply path** — how an edit goes live: a managed-provider API/MCP update (VAPI /
+  Retell / ElevenLabs / Bland — live immediately), an `Edit` plus a `redeploy_command` (self-hosted
   live target), live-on-save (`"noop"`), or **render-only** (print the rewrite
   for the user to apply).
 - **Validation** — how a fix is proven: **always Cekura scenarios** run through
@@ -135,6 +135,8 @@ Resolved during Setup; detail in `providers/`.
   [`providers/elevenlabs/overview.md`](providers/elevenlabs/overview.md)
 - **`retell`** — agent configuration and tools editable through the Retell API/MCP;
   edits live immediately. [`providers/retell/overview.md`](providers/retell/overview.md)
+- **`bland`** — managed persona/tool configuration; preserve separate voice persona
+  and chat pathway identifiers. [`providers/bland/overview.md`](providers/bland/overview.md)
 - **`self_hosted`** — one bucket for any agent the user runs; the **run-setup** in
   `.claude/CLAUDE.md` / `.claude/MEMORY.md` defines how it's explored, edited, redeployed, and
   validated. The editable surface is whatever the run-setup points to (source file
@@ -152,7 +154,7 @@ diagnosed-code-bug / render-only run) plus exactly one signal.
 
 Optional: `dataset_size` (default 8, range 5–10) · `stochastic_runs` (default 8,
 5–10) · `repro_threshold` (default ⌈runs/2⌉) · `verify_threshold` (default
-⌈0.8·runs⌉) · `max_iterations` (default 10) · `mode` (`vapi` / `retell` / `elevenlabs` /
+⌈0.8·runs⌉) · `max_iterations` (default 10) · `mode` (`vapi` / `retell` / `elevenlabs` / `bland` /
 `self_hosted`) · `redeploy_command` (self-hosted; a shell command, `"manual"`,
 `"noop"`, or offline) · `auto_mode` (default **true** — skips the per-iteration
 diff-approval and cleanup pauses and routine restart pauses; the Setup hard gate,
@@ -207,6 +209,7 @@ phases/
 providers/
   vapi/{overview,phase-1-fetch,phase-4-apply}.md
   elevenlabs/{overview,phase-1-fetch,phase-4-apply,workflow-internals}.md
+  bland/overview.md
   self-hosted/overview.md
 references/
   phase-2-failure-collection.md · phase-3-diagnosis.md · dynamic-variables-debugging.md

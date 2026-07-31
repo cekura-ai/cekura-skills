@@ -8,7 +8,7 @@ Group by **scenario** (runs) or **metric** (call logs) — repeated failures on 
 
 ```
 Failure Summary
-  Agent: <name> (<id>) — provider <vapi | elevenlabs | self_hosted>
+  Agent: <name> (<id>) — provider <vapi | retell | elevenlabs | bland | self_hosted>
   Source: <input type> — <N items inspected>
   Verdict filter:
     - kept: <K> (failure: <F>, reviewed_failure: <R>)

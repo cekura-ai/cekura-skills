@@ -60,6 +60,12 @@ agent pointing to that clone and record the old/new ids. Keep the same agent
 type and active version. If a required operation is unavailable, stop rather
 than retargeting the original.
 
+### Bland
+
+Use the provider-supported persona/tool copy operation, preserving the active
+configuration and modality-specific identifiers. If copying is unavailable,
+stop rather than editing the original.
+
 Non-2xx response on any provider POST → **stop**, surface the error. A half-built clone is a hard stop, not a reason to retarget the live agent.
 
 ## Step CLONE.2 — Duplicate the Cekura agent
@@ -74,7 +80,7 @@ Non-2xx response on any provider POST → **stop**, surface the error. A half-bu
    ```
    mcp__cekura__aiagents_partial_update(
      id=<clone Cekura agent id>,
-     provider={ type:"<vapi|retell|elevenlabs>", agent_id:"<cloned provider agent id>",
+     provider={ type:"<vapi|retell|elevenlabs|bland>", agent_id:"<cloned provider agent id>",
                 credentials:{ ...same api_key/config as the original... } }
    )
    ```
