@@ -78,17 +78,6 @@ python3 cekura/scripts/validate_ack_tags.py
 
 Run it before every release and after any skill edit. Use `+1415555xxxx` (the reserved documentation range) for example phone numbers, `<PLACEHOLDER>` for org-specific values, and describe internal behavior without citing internal file paths.
 
-### Implicit invocation policy (`skills/<name>/agents/openai.yaml`)
-
-One rule decides `policy.allow_implicit_invocation`:
-
-- **`false`** — the skill autonomously mutates live state: platform objects, provider config, or the local machine. Currently `cekura-self-improving-agent`, `cekura-create-agent`, `cekura-onboarding`, `cekura-metric-improvement`.
-- **`true`** — the skill only authors guidance or routes to another skill, and never mutates live state itself. Currently `cekura-coordinator`, `cekura-eval-design`, `cekura-metric-design`.
-
-Implicit invocation means the host can route into a skill without the user naming it, so a `false` here is the difference between "the user asked for this" and "a transcript talked us into it".
-
-**Known gap:** five skills ship without an `agents/openai.yaml` at all — `cekura-predefined-metrics`, `cekura-infra-test-suite`, `cekura-generate-scenarios`, `cekura-flag-call-log-failures`, `cekura-fixing-prod-issues`. Three of those mutate live state and would be `false` under the rule above. Add the file (and a `policy:` stanza in `_template/SKILL.md.tmpl`) once the host's default for a missing policy file is confirmed — don't guess.
-
 Operational MCP tool references belong in **command files** (`cekura/commands/*.md`), which are Claude Code–specific and only loaded by the plugin marketplace path. The `npx skills add` path doesn't fetch commands.
 
 ### Update workflow

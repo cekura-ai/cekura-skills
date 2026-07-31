@@ -20,6 +20,7 @@ allowed-tools:
   - Bash
   - Read
   - Write
+  - Edit
   - Grep
   - Glob
   - Skill

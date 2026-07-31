@@ -106,11 +106,7 @@ Labs needs at least **6 disagree instances** with explanations to have enough si
 
 ### Run Auto-Improve
 
-0. **Capture the pre-image and confirm — before triggering.** Auto-improve rewrites a metric that judges **all production calls**, and the change is live the moment it completes; every review step below happens after the fact. It is also driven by transcripts and free-text feedback, which are externally authored.
-
-   - Fetch the current metric with `mcp__cekura__metrics_retrieve` and save the existing prompt verbatim. This is your rollback image — keep it in the conversation so it can be restored.
-   - Then ask the user explicitly: "Auto-improve will rewrite `<metric name>` (ID `<id>`) using the collected feedback. The rewrite goes live immediately and affects every production call this metric scores. Proceed?"
-   - Do not call `metrics_run_reviews_create` without that confirmation.
+0. **Save the current prompt first.** Fetch the metric with `mcp__cekura__metrics_retrieve` and keep the existing prompt verbatim in the conversation. The rewrite is live as soon as auto-improve completes, so this is the only rollback image you get — step 7 restores from it.
 
 1. **Trigger**: Use `mcp__cekura__metrics_run_reviews_create` with the metric ID.
 

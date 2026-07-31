@@ -15,13 +15,13 @@ A new tool must exist before the assistant PATCH lands. Bundling `toolIds` + pro
 
 The id is the VAPI `assistant.id` from Phase 1 (for squads, each member's `assistantId` — **not** the squad id; you cannot PATCH a squad to change a member's prompt):
 
-Build the payload with `Write` into `$CEKURA_WORK/vapi-assistant-patch.json`, then:
+Build the payload with `Write` into `/tmp/vapi-assistant-patch.json`, then:
 
 ```
 curl -fsS -X PATCH \
   -H "Authorization: Bearer $VAPI_KEY" \
   -H "Content-Type: application/json" \
-  -d @$CEKURA_WORK/vapi-assistant-patch.json \
+  -d @/tmp/vapi-assistant-patch.json \
   https://api.vapi.ai/assistant/<assistant_id>
 ```
 
@@ -43,11 +43,11 @@ Construction rules:
 curl -fsS -X PATCH \
   -H "Authorization: Bearer $VAPI_KEY" \
   -H "Content-Type: application/json" \
-  -d @$CEKURA_WORK/vapi-tool-patch.json \
+  -d @/tmp/vapi-tool-patch.json \
   https://api.vapi.ai/tool/$TOOL_ID
 ```
 
-Write the full tool body (with edited fields) to `$CEKURA_WORK/vapi-tool-patch.json` first — same `-d @file` rule as above.
+Write the full tool body (with edited fields) to `/tmp/vapi-tool-patch.json` first — same `-d @file` rule as above.
 
 Construction rules:
 
@@ -63,9 +63,9 @@ Construction rules:
 Back up the original tool body before PATCHing — one snapshot per tool per iteration:
 
 ```
-mkdir -p $CEKURA_WORK/vapi_tools
+mkdir -p /tmp/vapi_tools
 curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/tool/$TOOL_ID \
-  > $CEKURA_WORK/vapi_tools/${TOOL_ID}_pre_iter${N}.json
+  > /tmp/vapi_tools/${TOOL_ID}_pre_iter${N}.json
 ```
 
 Revert: PATCH with the backed-up body.
@@ -76,11 +76,11 @@ Revert: PATCH with the backed-up body.
 curl -fsS -X POST \
   -H "Authorization: Bearer $VAPI_KEY" \
   -H "Content-Type: application/json" \
-  -d @$CEKURA_WORK/vapi-tool-new.json \
+  -d @/tmp/vapi-tool-new.json \
   https://api.vapi.ai/tool
 ```
 
-Write the full tool body (type, function spec, messages, destinations as needed) to `$CEKURA_WORK/vapi-tool-new.json` first — same `-d @file` rule as above.
+Write the full tool body (type, function spec, messages, destinations as needed) to `/tmp/vapi-tool-new.json` first — same `-d @file` rule as above.
 
 The response includes the new `id`. Use it in the subsequent assistant PATCH's `toolIds`. Don't reference an id that hasn't returned 2xx.
 
@@ -154,5 +154,5 @@ Don't loop silently past the cap. The user can also stop or extend mid-loop.
 - **Don't widen the validation set mid-loop** without telling the user.
 - **Validation set must stay stable across iterations** — same scenarios; only prompts/tools change. Never quietly add scenarios.
 - **Don't stop just because the failure shape changed.** Fixing one bug often exposes the next (e.g., fixing the entry assistant reveals a self-handoff loop in the screener). That's the loop working.
-- **Always back up tool definitions before editing** — `GET /tool/{id}` and stash the full body to `$CEKURA_WORK/vapi_tools/{id}_pre_iter{N}.json` before any PATCH.
+- **Always back up tool definitions before editing** — `GET /tool/{id}` and stash the full body to `/tmp/vapi_tools/{id}_pre_iter{N}.json` before any PATCH.
 - **Cross-reference toolIds before deleting a tool** — all members' `toolIds` are already fetched in Phase 1; confirm no member references the tool before deleting.

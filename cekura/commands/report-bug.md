@@ -82,10 +82,8 @@ Read the relevant file to check for obvious issues (wrong MCP tool names, stale 
 
 If the issue is clearly a typo, wrong tool name, or stale reference in a skill/command file:
 
-Local work and publishing to the public repo are **two separate approvals**. Committing locally is reversible; pushing a branch and opening a PR is not — both are permanently visible on a public repository.
-
 1. Describe the fix to the user: "I can see the issue — [description]. I can fix this locally, then optionally open a PR."
-2. **Approval 1 — local edit and commit.** If the user approves:
+2. If the user approves:
    ```bash
    cd ~/.claude/plugins/marketplaces/cekura-skills
    git checkout -b fix/<short-description>
@@ -93,12 +91,12 @@ Local work and publishing to the public repo are **two separate approvals**. Com
    git add <file>
    git commit -m "fix: <description>"
    ```
-3. **Approval 2 — publish.** Show the user (a) the full diff being pushed and (b) the complete PR title and body text, then ask explicitly whether to push and open the PR. Do not push without that second OK — the branch and PR body land on a public repo and may quote log excerpts.
+3. Show the diff and the PR body, then push and open the PR:
    ```bash
    git push origin fix/<short-description>
-   gh pr create --repo cekura-ai/cekura-skills --title "fix: <description>" --body-file "$CEKURA_WORK/pr-body.md"
+   gh pr create --repo cekura-ai/cekura-skills --title "fix: <description>" --body-file /tmp/cekura-pr-body.md
    ```
-   Write the PR body to `$CEKURA_WORK/pr-body.md` with `Write` and pass `--body-file`, for the same reason as the issue body in Step 6 — never interpolate log or error text into a shell heredoc. `rm -rf "$CEKURA_WORK"` when done.
+   Write the PR body with `Write` and pass `--body-file`, same as the issue body in Step 6 — never interpolate log or error text into a shell heredoc.
 4. If push fails (no access), tell the user: "Fix applied locally. The maintainers have been notified via the issue below."
 
 ### 6. File the GitHub Issue
@@ -107,12 +105,7 @@ Local work and publishing to the public repo are **two separate approvals**. Com
 
 Write the body to a file with the `Write` tool, then pass it with `--body-file`. **Never build the body inline with a heredoc or `--body "$(...)"`.** Failure-log text is not user-authored — it comes from MCP error responses that echo request payloads — and a single bare `EOF` line in it would terminate a heredoc early, leaving the rest of the log to be parsed as shell inside the command substitution. `--body-file` keeps the content out of the shell entirely.
 
-Write this content to `$CEKURA_WORK/bug-report.md` (via `Write`, not `cat`). Set up the private dir first — the body can quote log excerpts, so it does not belong in world-readable `/tmp`:
-
-```bash
-export CEKURA_WORK="${XDG_RUNTIME_DIR:-$HOME/.cache/cekura}/report-bug"
-mkdir -m 700 -p "$CEKURA_WORK"
-```
+Write this content to `/tmp/cekura-bug-report.md` (via `Write`, not `cat`):
 
 ```markdown
 ## Bug Report
@@ -157,8 +150,8 @@ Then file it:
 gh issue create --repo cekura-ai/cekura-skills \
   --title "Bug: <short description>" \
   --label "bug" \
-  --body-file "$CEKURA_WORK/bug-report.md"
-rm -rf "$CEKURA_WORK"
+  --body-file /tmp/cekura-bug-report.md
+rm -f /tmp/cekura-bug-report.md
 ```
 
 ### 7. Fallback: No `gh` CLI

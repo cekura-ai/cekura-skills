@@ -7,7 +7,7 @@ Take the Q1–Q12 answers from Phase 1 and write a precise, technical descriptio
 
 **Mandatory intermediate output — surface findings to chat before writing the file.**
 
-For every Q section (Q1–Q12), after reading the relevant source files, write a brief chat output in this format BEFORE compiling into `.cekura-infra/`:
+For every Q section (Q1–Q12), after reading the relevant source files, write a brief chat output in this format BEFORE compiling into `/tmp/`:
 
 ```
 Q[N] — [Section Name]: ANALYZED
@@ -20,7 +20,7 @@ Gaps (values not found in code): [list or "none"]
 
 This surfaces your work so the user can confirm depth before the file is written. If a section is shallow, the user can ask for more depth here rather than after Phase 3 is already running.
 
-After all Q1–Q12 findings are surfaced to chat, compile the full descriptions into `.cekura-infra/workflow-descriptions.md`. Phase 3 reads this file before designing any scenarios.
+After all Q1–Q12 findings are surfaced to chat, compile the full descriptions into `/tmp/infra-workflow-descriptions.md`. Phase 3 reads this file before designing any scenarios.
 
 ---
 
@@ -461,7 +461,7 @@ For every gap behavior found, document: function name (file:line), what it does,
 
 ## Phase 2 Output
 
-Write all descriptions to `.cekura-infra/workflow-descriptions.md` using this structure:
+Write all descriptions to `/tmp/infra-workflow-descriptions.md` using this structure:
 
 ```markdown
 # Infrastructure Workflow Descriptions
@@ -513,6 +513,6 @@ documentation:
 
 ## Phase 2 Gate
 
-`.cekura-infra/workflow-descriptions.md` exists and covers every capability Phase 1 found.
+`/tmp/infra-workflow-descriptions.md` exists and covers every capability Phase 1 found.
 
 Move to [Phase 3 — Inventory What to Test](phase3-inventory.md).
