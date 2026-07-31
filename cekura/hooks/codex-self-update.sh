@@ -30,13 +30,11 @@ fi
 codex plugin marketplace upgrade cekura >/dev/null 2>&1 || true
 codex plugin add cekura@cekura >/dev/null 2>&1 || true
 
-# Create the dir only on the path that actually writes — the throttle above exits
-# without touching the filesystem on all but one launch per day. `[ -f ]` is
-# already false when the dir is absent, so the throttle still works on first run.
+# Touch the filesystem only on the path that actually writes — the throttle above
+# exits clean on all but one launch per day, and `[ -f ]` is already false when
+# the dir is absent. The rm is unconditional: same effect as truncating a regular
+# file, and it drops a symlink planted at the stamp path.
 mkdir -p "$stamp_dir" 2>/dev/null || true
-
-# Unconditional: equivalent to truncation for a regular file, and it drops a
-# symlink someone else planted at the stamp path.
 rm -f "$stamp" 2>/dev/null || true
 echo "$now" > "$stamp" 2>/dev/null || true
 exit 0

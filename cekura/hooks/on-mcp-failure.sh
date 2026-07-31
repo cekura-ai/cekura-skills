@@ -28,12 +28,11 @@ ERROR_MSG=$(echo "$ERROR_MSG" | sed -E \
   -e 's/[A-Za-z0-9+\/_-]{32,}/[REDACTED]/g')
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Log to failure file for /report-bug to pick up. Refuse to append through a
-# symlink — error text is newline-rich, so a planted link turns this into an
-# arbitrary-file append.
+# Log to the failure file for /report-bug to pick up. Never append through a
+# symlink — error text is newline-rich, so a planted link becomes an
+# arbitrary-file append. Unlink only when it IS a symlink: this log accumulates
+# across invocations, so an unconditional rm would discard the history.
 LOG_FILE="$HOME/.claude/cekura-mcp-failures.log"
-# Only unlink when it IS a symlink — this log is appended across invocations, so
-# an unconditional rm would discard the history /report-bug reads.
 if [ -L "$LOG_FILE" ]; then
   rm -f "$LOG_FILE" 2>/dev/null || true
 fi
