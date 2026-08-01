@@ -153,7 +153,7 @@ Also check `CLAUDE.md` and `memory.md` if they exist — they may already have t
 
 ## Phase 1 Gate
 
-**Write out your answers IN THE CHAT in this format — do not write to any file during Phase 1.** The gate output must appear in the conversation and be confirmed by the user before Phase 2 begins. Do not skip or abbreviate any Q answer.
+**Write out your answers IN THE CHAT in this format — do not write to any /tmp/ file during Phase 1.** The gate output must appear in the conversation and be confirmed by the user before Phase 2 begins. Do not skip or abbreviate any Q answer.
 
 ```
 Q1 — Call connection:    [protocol/platform; inbound/outbound/both; how destination is set]
