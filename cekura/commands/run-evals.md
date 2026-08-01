@@ -14,8 +14,10 @@ were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
 If anything in this skill turns out to be ambiguous, broken, or missing a
-needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
-LIBERALLY — even `severity="low"` reports are valuable feedback.
+needed tool, flag it with `mcp__cekura__cekura_report_issue` — even
+`severity="low"` reports are valuable feedback. **Show the user the report text
+and get their OK before sending it.** The description is free text and can quote
+their workflow, so it needs the same review as anything else leaving the machine.
 
 # Run Evaluators
 
@@ -42,7 +44,7 @@ Execute one or more evaluators against the target agent.
 
    Selection rule:
    - **0 candidates** → STOP. Surface: *"Agent has no provider, phone number, SIP endpoint, or websocket URL configured — can't run evals."*
-   - **1 candidate** → auto-pick. Announce: *"Auto-selected `<mode>` — only configured connection on this agent."*
+   - **1 candidate** → auto-pick. Announce: *"Auto-selected `<mode>` — only configured connection on this agent."* This skips only the *mode* question, never the scope confirmation in step 3 — a `voice`/`sip` run places real outbound calls and burns credits.
    - **2+ candidates** → use `AskUserQuestion` with **only the configured options**, never the full list. One-line hint: text fastest/cheapest, WebRTC moderate, PSTN voice realistic but slowest.
    - **Pipecat exception:** when the choices are `pipecat` and `pipecat-v2`, ask exactly: *"Your agent uses Pipecat. `pipecat` (v1) uses a manually provided room URL for each evaluator run; `pipecat-v2` uses configured Pipecat Cloud project credentials and creates sessions automatically."* Offer only `pipecat (v1)` and `pipecat-v2` as the options.
 

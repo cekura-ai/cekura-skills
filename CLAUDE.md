@@ -32,6 +32,9 @@ cekura-skills/
       cekura-predefined-metrics/
       cekura-eval-design/
       cekura-infra-test-suite/
+      cekura-generate-scenarios/
+      cekura-flag-call-log-failures/
+      cekura-fixing-prod-issues/
     commands/                    # Slash commands (Claude Code only)
     agents/                      # Sub-agent definitions (Claude Code only)
     hooks/                       # MCP failure detection + session-start auto-update (Claude Code CLI only)
@@ -49,12 +52,12 @@ cekura-skills/
 
 ### Two install paths, one source of truth
 
-The 10 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
+The 12 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
 
 1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
 2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 10 skills under `cekura/skills/`. The bare repo URL works cleanly.
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 12 skills under `cekura/skills/`. The bare repo URL works cleanly.
 
 ### Skill content rules
 
@@ -66,6 +69,14 @@ Every `cekura/skills/<name>/SKILL.md`:
 - Public API endpoint paths (e.g., `POST /test_framework/v1/...`) are fine — those are user-facing
 - Public provider names (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP) are fine — they're documented at https://docs.cekura.ai/documentation/integrations/
 - Aim for under 500 lines per file (Agent Skills spec recommendation)
+
+**The internal-data rule above is enforced, not just documented.** The three call-log skills reached `main` with a customer name, two real phone numbers, and an internal repo path — the prose rule was never checked. `cekura/scripts/validate_ack_tags.py` now scans every shipped file (skills, commands, agents, `codex/AGENTS.md`, `GEMINI.md`, `README.md`) for real phone numbers, internal repo paths, and non-public hostnames, alongside the ack-tag and version checks:
+
+```bash
+python3 cekura/scripts/validate_ack_tags.py
+```
+
+Run it before every release and after any skill edit. Use `+1415555xxxx` (the reserved documentation range) for example phone numbers, `<PLACEHOLDER>` for org-specific values, and describe internal behavior without citing internal file paths.
 
 Operational MCP tool references belong in **command files** (`cekura/commands/*.md`), which are Claude Code–specific and only loaded by the plugin marketplace path. The `npx skills add` path doesn't fetch commands.
 
@@ -90,6 +101,7 @@ Once installed, npx users have three ways to stay current:
 5. Update the "What's Included" table and Quick Reference table in `README.md`
 6. If the skill needs an operational counterpart, also add a slash command in `cekura/commands/`
 7. In the release notes / commit message, name the new skill so users know what to pass to `--skill`
+8. Run `python3 cekura/scripts/validate_ack_tags.py` — it gates ack tags, version sync across all manifests, and internal-data leaks
 
 ## MCP Integration
 
@@ -126,6 +138,9 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
 | `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
+| `cekura-generate-scenarios` | Turn flagged production call logs into evaluator scenarios, clustered by failure mode |
+| `cekura-flag-call-log-failures` | Triage recent production calls against KPIs; report failure rates and outcome distribution |
+| `cekura-fixing-prod-issues` | Reproduce and fix a specific production call failure locally |
 
 ### Commands
 | Component | Purpose |

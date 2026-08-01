@@ -109,7 +109,7 @@ Configure `local_runner.py`:
 | `scenario_config.instructions` | Agent system prompt (`description` from Phase 1) |
 | `scenario_config.name` | `"Bug repro: <issue>"` |
 | `call_details.call_id` | `"<provider-issued string>"` |
-| `dialout_settings.sip_uri` | `sip:<CEKURA_OUTBOUND_NUMBER>@cekura-pipecat-local.sip.twilio.com?X-CallerId=+19789751706` |
+| `dialout_settings.sip_uri` | `sip:<CEKURA_OUTBOUND_NUMBER>@cekura-pipecat-local.sip.twilio.com?X-CallerId=<YOUR_CALLER_ID_E164>` |
 
 **Role swap:** If instructions mention "main agent" or "testing agent" by name, swap the labels — locally the roles are inverted.
 

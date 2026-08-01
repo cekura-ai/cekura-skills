@@ -12,13 +12,15 @@ allowed-tools: ["AskUserQuestion", "mcp__cekura__metrics_retrieve", "mcp__cekura
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="improve-metric"`, `verification_tag="ack:improve-metric:4r6m2t"`, and `plugin_version="0.9.0"`. If a conversation/session ID is available (e.g. you
+`skill_name="improve-metric"`, `verification_tag="ack:improve-metric:4r6m2t"`, and `plugin_version="0.9.1"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
 If anything in this skill turns out to be ambiguous, broken, or missing a
-needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
-LIBERALLY — even `severity="low"` reports are valuable feedback.
+needed tool, flag it with `mcp__cekura__cekura_report_issue` — even
+`severity="low"` reports are valuable feedback. **Show the user the report text
+and get their OK before sending it.** The description is free text and can quote
+their workflow, so it needs the same review as anything else leaving the machine.
 
 # Improve a Metric
 
@@ -104,6 +106,8 @@ Labs needs at least **6 disagree instances** with explanations to have enough si
 
 ### Run Auto-Improve
 
+0. **Save the current prompt first.** Fetch the metric with `mcp__cekura__metrics_retrieve` and keep the existing prompt verbatim in the conversation. The rewrite is live as soon as auto-improve completes, so this is the only rollback image you get — step 7 restores from it.
+
 1. **Trigger**: Use `mcp__cekura__metrics_run_reviews_create` with the metric ID.
 
 2. **Poll for completion**: Use `mcp__cekura__metrics_run_reviews_progress` with the progress ID. Poll every 10 seconds.
@@ -124,6 +128,7 @@ Labs needs at least **6 disagree instances** with explanations to have enough si
 6. **If satisfied**: Confirm the improvement is deployed (changes are live immediately after auto-improve).
 
 7. **If not satisfied**: Options:
+   - **Roll back to the pre-image** — `mcp__cekura__metrics_partial_update` with the prompt you saved in Step 0. This is the fastest way back to known-good, and it's why the pre-image is captured before triggering. Offer it first whenever the rewrite made results worse.
    - Apply manual prompt fixes on top of the auto-improved version
    - Collect more feedback on remaining issues and run another improvement cycle
    - Consider converting to custom_code with section extraction for hard-isolation (Pythonic pattern)

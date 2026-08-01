@@ -201,9 +201,11 @@ If Q10 already captured the start command, readiness signal, and stop mechanism,
 If Q10 was incomplete, ask:
 
 > "To run the test suite I need to start and stop the bot automatically. Please provide:
-> 1. The exact command to start the bot (including env vars to set first)
+> 1. The exact command to start the bot, plus **the names of the env vars it needs** — don't paste the key values, just the variable names (e.g. `OPENAI_API_KEY`, `TWILIO_AUTH_TOKEN`)
 > 2. How to know when the bot is ready to accept calls (log line, health endpoint, port, or fixed wait)
 > 3. The command to stop the bot after a run"
+
+Record variable **names** only. The generated run script references them as `"${VAR:?}"` and reads values from the user's existing environment — no credential value should ever enter a file this skill writes. If the user pastes a value anyway, don't record it; confirm the variable name and move on.
 
 Record the confirmed deployment steps verbatim.
 

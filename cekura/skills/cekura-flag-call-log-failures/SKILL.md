@@ -180,6 +180,10 @@ Sub-split a bucket when it's useful (the agent/system slice often splits into e.
 
 ## Step 5 — Report
 
+**Redact caller identifiers in every `evidence_quote` before they reach the report.** The quotes are verbatim production transcript slices and routinely carry names, phone numbers, DOB, addresses, account numbers, and health details. Replace each with `[REDACTED]` — keep only the words that establish what the agent did wrong, which is the entire purpose of the quote. Verbatim means *don't paraphrase the agent's behavior*, not *preserve the caller's identity*.
+
+If the report goes to a file rather than chat, confirm the path is gitignored first (`git check-ignore -q <file>`) and tell the user it holds transcript excerpts.
+
 ```markdown
 # Call-log failure analysis — <agent_name> (`<agent_id>`)
 

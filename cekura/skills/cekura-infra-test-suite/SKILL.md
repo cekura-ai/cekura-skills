@@ -19,7 +19,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-infra-test-suite:2h6r7k`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.9.1"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Voice AI Infrastructure Test Suite
 
@@ -46,6 +46,10 @@ components        values +          the analysis      criteria,         run scri
 | 5 — Build and Run | [phase5-build-run.md](phase5-build-run.md) | Create Cekura scenarios from the plan; write a CI run script batched by configuration with readiness gating and per-scenario timeout |
 
 ---
+
+## Never write a credential value
+
+Phases 2–5 write intermediate files to `/tmp/infra-*.md`, and Phase 5 writes a run script into the repo workspace. Record credential **variable names** and where they load from — never the values. The run script references them as `"${VAR:?}"` and reads the values from the environment, so a committed script never carries a secret.
 
 ## Ground Rules
 

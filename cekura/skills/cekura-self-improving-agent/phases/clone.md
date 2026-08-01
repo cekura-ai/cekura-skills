@@ -25,11 +25,15 @@ When copying any provider body, strip server-owned fields before POSTing: `id`, 
    - Repoint handoff/transfer `destinations[].assistantId` on cloned tools **and** squad members through the member map — intra-squad handoffs must stay inside the clone.
    - `POST /squad` with `members` repointed to cloned member ids (inline members: clone the embedded `assistant` object in place). Capture the new squad id.
 
+   **Write each body to a file and post it with `-d @file`.** Never inline a fetched body into `-d '...'`: these payloads carry real prompts and tool descriptions, and a single apostrophe (`"customer's account"` — guaranteed in production prompts) closes the shell quote, breaking the call at best and executing the remainder at worst. Use `Write` for the payload, not `echo`/`cat`.
+
    ```
+   # Write the stripped tool body to /tmp/vapi-tool.json first, then:
    curl -fsS -X POST -H "Authorization: Bearer $VAPI_KEY" -H "Content-Type: application/json" \
-     -d '<fetched tool body, id/orgId/timestamps stripped>' https://api.vapi.ai/tool
+     -d @/tmp/vapi-tool.json https://api.vapi.ai/tool
+   # Write the stripped assistant body (toolIds repointed, name suffixed) to /tmp/vapi-assistant.json, then:
    curl -fsS -X POST -H "Authorization: Bearer $VAPI_KEY" -H "Content-Type: application/json" \
-     -d '<fetched assistant body, stripped, toolIds repointed, name suffixed>' https://api.vapi.ai/assistant
+     -d @/tmp/vapi-assistant.json https://api.vapi.ai/assistant
    ```
 
 ### ElevenLabs
@@ -42,12 +46,16 @@ Clone **every** agent in the graph:
 2. For each agent — `POST /v1/convai/agents/create` with `tool_ids` rewritten through the tool map, `name` suffixed. Record `old_agent_id → new_agent_id`.
 3. Repoint each clone's `built_in_tools.transfer_to_agent.transfers[].agent_id` through the agent map (`PATCH /v1/convai/agents/{clone_id}`) so transfers stay inside the clone graph — the same self-containment rule as VAPI cross-member handoffs.
 
+   Same rule as VAPI above — **write each body to a file, post with `-d @file`**, never inline a fetched config into `-d '...'`.
+
    ```
+   # Write <tool_config> to /tmp/el-tool.json first, then:
    curl -fsS -X POST -H "xi-api-key: $ELEVENLABS_API_KEY" -H "Content-Type: application/json" \
-     -d '<tool_config>' https://api.elevenlabs.io/v1/convai/tools
+     -d @/tmp/el-tool.json https://api.elevenlabs.io/v1/convai/tools
+   # Write {"name":"<name> [cekura-selfimprove-clone]","conversation_config":<fetched config, tool_ids repointed>}
+   # to /tmp/el-agent.json, then:
    curl -fsS -X POST -H "xi-api-key: $ELEVENLABS_API_KEY" -H "Content-Type: application/json" \
-     -d '{"name":"<name> [cekura-selfimprove-clone]","conversation_config":<fetched config, tool_ids repointed>}' \
-     https://api.elevenlabs.io/v1/convai/agents/create
+     -d @/tmp/el-agent.json https://api.elevenlabs.io/v1/convai/agents/create
    ```
 
 The cloned **entry** agent (the one the Cekura record was registered against) is what CLONE.2 repoints to.

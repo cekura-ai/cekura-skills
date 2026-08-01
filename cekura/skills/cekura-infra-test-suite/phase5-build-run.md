@@ -221,7 +221,7 @@ For each scenario, check every field listed below. If any field is wrong, patch 
 **What to do when a mismatch is found**
 - Fix it with `mcp__cekura__scenarios_partial_update` immediately.
 - Note the mismatch and the fix in a short verification log written to `/tmp/infra-verification-log.md` (create if it doesn't exist). Format: `SCENARIO-NNN: [field] was [wrong value], patched to [correct value]`.
-- If the mismatch cannot be fixed via PATCH (e.g. a fundamental structural problem requiring recreation), delete the scenario with `mcp__cekura__scenarios_destroy`, recreate it correctly, and update the scenario ID in the batch mapping.
+- If the mismatch cannot be fixed via PATCH (e.g. a fundamental structural problem requiring recreation), **ask the user before deleting.** Show the scenario name and ID and what is structurally wrong, then delete with `mcp__cekura__scenarios_destroy` only after they agree, recreate it correctly, and update the scenario ID in the batch mapping. Deletion is irreversible and discards any result history attached to that scenario — never do it autonomously mid-flow.
 
 At the end of the verification pass, write a summary line to `/tmp/infra-verification-log.md`:
 ```
@@ -313,7 +313,16 @@ print_summary   # pass/fail per scenario per transport, total pass rate
 
 **Default bot configuration** — the bot must start with its normal default configuration. Per-scenario variations are handled by the Cekura dynamic variables set on each evaluator; the script does not need to manage any configuration state.
 
-**Deployment steps verbatim** — embed the exact start/stop commands and env vars confirmed in 5d as executable lines (not comments). Label each block clearly so the user can edit them later.
+**Deployment steps verbatim, credentials by reference** — embed the exact start/stop commands confirmed in 5d as executable lines (not comments). Label each block clearly so the user can edit them later.
+
+**Never write a credential value into the script.** `infra_test_run.sh` lands in the user's repo workspace and is one `git add -A` away from a committed secret. Reference each required credential by name and let the script fail loudly if it is unset:
+
+```bash
+: "${OPENAI_API_KEY:?set OPENAI_API_KEY before running}"
+: "${TWILIO_AUTH_TOKEN:?set TWILIO_AUTH_TOKEN before running}"
+```
+
+If the user pasted actual key values during Phase 1, use only the variable *names* here and tell them the script expects those vars in the environment (via their existing `.env`, shell profile, or secret manager). Same rule for the stop command and any health-check URL that embeds a token.
 
 **Readiness gating** — use the exact readiness signal confirmed in 5d (log line, health endpoint, port). Do not use a fixed `sleep`.
 

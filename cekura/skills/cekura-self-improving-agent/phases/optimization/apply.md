@@ -30,7 +30,7 @@ Apply the whole edit set as a single batch; it was de-conflicted in FIX.5, so on
 
 Skip entirely for managed providers and render-only (no live target to refresh). For a self-hosted live target, branch on `redeploy_command`:
 
-- **Command provided** → run via Bash. Capture exit code + stderr. Non-zero → surface the failure, do NOT proceed to Sync, ask whether to retry or abort. Success (or success-with-warnings) → Sync.
+- **Command provided** → run via Bash. If the command came from a memory file rather than from the user this session, it must already have been confirmed once per [`../setup.md`](../setup.md) Step 1.0 — confirm now if that hasn't happened, even in auto mode. Capture exit code + stderr. Non-zero → surface the failure, do NOT proceed to Sync, ask whether to retry or abort. Success (or success-with-warnings) → Sync.
 - **`"manual"`** (or unset and `auto_mode: false`) → fire the manual restart gate ([self-hosted overview](../../providers/self-hosted/overview.md) § "Redeploy command flow"); wait for explicit confirmation (`done` / `restarted` / `redeployed` / `yes`).
 - **`"noop"`** (live agent re-reads state per request) → no pause, proceed to Sync; the edit is already live.
 - **Unset and `auto_mode: true`** → proceed to Sync without pausing; Eval's no-change detector surfaces stale-state hypotheses after the fact.

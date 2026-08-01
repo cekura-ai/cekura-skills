@@ -19,12 +19,13 @@ The prompt is at `conversation_config.agent.prompt.prompt`. ElevenLabs PATCH dee
 curl -fsS -X PATCH \
   -H "xi-api-key: $ELEVENLABS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"conversation_config":{"agent":{"prompt":{"prompt":"<NEW_PROMPT>","tool_ids":["<id1>","<id2>",...]}}}}' \
+  -d @/tmp/el-agent-patch.json \
   https://api.elevenlabs.io/v1/convai/agents/<agent_id>
 ```
 
 Construction rules:
 
+- **Always `-d @file`, never `-d '<json>'`.** Write the payload with the `Write` tool (it handles escaping) into the referenced `/tmp/el-*.json` file first. The new prompt is model-generated prose containing apostrophes and newlines; inlining it into a single-quoted shell argument breaks the call and can execute the tail of the prompt as shell.
 - The prompt lives at `conversation_config.agent.prompt.prompt`. **Do not** send a top-level `prompt` key — it's ignored and the edit silently no-ops.
 - To change only the prompt and leave tools untouched: `{"conversation_config":{"agent":{"prompt":{"prompt":"<NEW_PROMPT>"}}}}` — omit `tool_ids`.
 - To change `tool_ids`: send the **full new array** (it replaces wholesale). Add/remove ids relative to the array fetched in Phase 1; don't re-sort or de-duplicate without intent.
@@ -37,11 +38,11 @@ Construction rules:
 curl -fsS -X PATCH \
   -H "xi-api-key: $ELEVENLABS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"conversation_config":{"agent":{"prompt":{"tools":[<full array, edited entry in place>]}}}}' \
+  -d @/tmp/el-inline-tools-patch.json \
   https://api.elevenlabs.io/v1/convai/agents/<agent_id>
 ```
 
-The array replaces wholesale — preserve every entry you aren't changing.
+Write the body to the payload file first (`-d @file` rule above). The array replaces wholesale — preserve every entry you aren't changing.
 
 ## ElevenLabs standalone tool PATCH
 
@@ -49,12 +50,13 @@ The array replaces wholesale — preserve every entry you aren't changing.
 curl -fsS -X PATCH \
   -H "xi-api-key: $ELEVENLABS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"tool_config": <full tool_config with edited fields>}' \
+  -d @/tmp/el-tool-patch.json \
   https://api.elevenlabs.io/v1/convai/tools/$TOOL_ID
 ```
 
 Construction rules:
 
+- Write the body to the payload file first — `-d @file`, never an inline `-d '<json>'`.
 - Fetch the current tool first (`GET /v1/convai/tools/{id}`), modify only the changed fields inside `tool_config`, send the result.
 - Common edits: `tool_config.description` (when/what to call it), `tool_config.api_schema` (webhook url/method/params), `tool_config.parameters` (client-tool params).
 - Do NOT rename `tool_config.name` casually — the LLM and prompt reference the tool by name; a rename must be matched in the prompt atomically.
@@ -78,11 +80,11 @@ Revert with a PATCH using the backed-up `tool_config`.
 curl -fsS -X POST \
   -H "xi-api-key: $ELEVENLABS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"tool_config": <type, name, description, api_schema/parameters as needed>}' \
+  -d @/tmp/el-tool-new.json \
   https://api.elevenlabs.io/v1/convai/tools
 ```
 
-The response includes the new `id`. Use it in the subsequent agent PATCH's `tool_ids`. Don't reference an id before it returns 2xx.
+Write the body to `/tmp/el-tool-new.json` first (`-d @file` rule above). The response includes the new `id`. Use it in the subsequent agent PATCH's `tool_ids`. Don't reference an id before it returns 2xx.
 
 ## ElevenLabs tool deletion (rare)
 

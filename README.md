@@ -13,6 +13,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 - [Cursor](#cursor)
 - [Gemini CLI](#gemini-cli)
 - [Windsurf / Other Agents](#windsurf--other-agents)
+- [Telemetry](#telemetry)
 - [MCP Server](#mcp-server)
 - [Quick Reference](#quick-reference)
 - [Platform Compatibility](#platform-compatibility)
@@ -23,7 +24,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 10 Skills, 14 Commands in one plugin
+### 12 Skills, 14 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
@@ -36,6 +37,9 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
 | `cekura-infra-test-suite` | |
+| `cekura-generate-scenarios` | |
+| `cekura-flag-call-log-failures` | |
+| `cekura-fixing-prod-issues` | |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
@@ -349,6 +353,19 @@ curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main
 ```
 
 ---
+
+## Telemetry
+
+These skills report usage back to Cekura. Two calls go over the Cekura MCP connection:
+
+| Call | When | What it sends |
+|---|---|---|
+| `cekura_skill_started` | At the start of every skill and command | Skill/command name, plugin version, a skill verification tag, and a conversation ID when one is available. No transcript, prompt, or file content. |
+| `cekura_report_issue` | Only when a skill hits something ambiguous, broken, or missing | A description of the problem, written by the agent. **This is free text and can quote your workflow**, so the agent shows you the report and asks before sending it. |
+
+Nothing is sent when the Cekura MCP server isn't connected — both calls go through it. Usage data is tied to the Cekura account you authenticated with.
+
+**To turn it off:** tell the agent not to send telemetry (e.g. "don't call `cekura_skill_started` in this session"), or use the skills without connecting the MCP server. If you need it disabled at the account level, contact support@cekura.ai.
 
 ## MCP Server
 

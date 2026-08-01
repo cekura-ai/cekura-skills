@@ -6,7 +6,11 @@ For every file carrying a `<!-- cekura-ack-tag: ... -->` marker, checks:
   2. if the file's frontmatter declares `allowed-tools`, it includes the beacon tool, and
   3. every inline `plugin_version="..."` matches the package.json version — a
      mismatch makes released installs report a stale version and draw wrong
-     update nudges.
+     update nudges,
+  4. every shipped manifest `version` matches package.json too, and
+  5. no shipped file leaks internal data (real phone numbers, internal repo
+     paths, non-public hostnames). This repo ships publicly; the prose rule
+     alone let a customer name and two real numbers reach main.
 
 Exit non-zero on any drift. Safe to run locally or from CI.
 """
@@ -24,6 +28,30 @@ BEACON_TOOL = "mcp__cekura__cekura_skill_started"
 TAG_RE = re.compile(r"<!--\s*cekura-ack-tag:\s*(ack:[a-z0-9-]+:[a-z2-7]{6})\s*-->")
 SLUG_RE = re.compile(r"^ack:([a-z0-9-]+):[a-z2-7]{6}$")
 PLUGIN_VERSION_RE = re.compile(r'plugin_version="([^"]*)"')
+
+# Manifests that must carry the same version as package.json. A release that
+# bumps some and not others installs fine but reports the wrong version.
+VERSIONED_MANIFESTS = (
+    ".claude-plugin/marketplace.json",
+    "gemini-extension.json",
+    "cekura/.claude-plugin/plugin.json",
+    "cekura/.codex-plugin/plugin.json",
+    "cekura/.cursor-plugin/plugin.json",
+)
+
+# Internal-data patterns. Scoped to every *shipped* file, not just skills and
+# commands — AGENTS.md/GEMINI.md/README.md are shipped too and a grep limited to
+# cekura/skills would miss them.
+SHIPPED_GLOBS = ("cekura/skills", "cekura/commands", "cekura/agents", "codex")
+SHIPPED_FILES = ("GEMINI.md", "README.md")
+LEAK_PATTERNS = (
+    # Real E.164 numbers. +1415555xxxx is the reserved documentation range.
+    (re.compile(r"\+1(?!415555)\d{10}"), "real phone number (use +1415555xxxx)"),
+    (re.compile(r"\bvocera\.[a-z]"), "internal repo/module path"),
+    (re.compile(r"localhost:\d+"), "non-public hostname"),
+)
+# Files where a pattern is legitimately present.
+LEAK_ALLOW = {"websocket-server-scaffold.md": ("non-public hostname",)}
 
 
 def load_manifest():
@@ -92,6 +120,55 @@ def check_plugin_versions(errors):
                     )
 
 
+def check_manifest_versions(errors):
+    try:
+        pkg_version = json.loads(PACKAGE_JSON.read_text()).get("version")
+    except Exception:
+        return  # check_plugin_versions already reported it
+    for rel in VERSIONED_MANIFESTS:
+        path = REPO / rel
+        try:
+            data = json.loads(path.read_text())
+        except Exception as e:
+            errors.append(f"{rel}: unreadable ({e})")
+            continue
+        found = [data["version"]] if "version" in data else []
+        found += [p["version"] for p in data.get("plugins", []) if "version" in p]
+        if not found:
+            errors.append(f"{rel}: no 'version' field found")
+        for v in found:
+            if v != pkg_version:
+                errors.append(
+                    f"{rel}: version \"{v}\" != package.json \"{pkg_version}\" "
+                    f"(bump every manifest on release)"
+                )
+
+
+def iter_shipped_files():
+    for base in SHIPPED_GLOBS:
+        d = REPO / base
+        if d.is_dir():
+            for path in sorted(d.rglob("*.md")):
+                if path.name != "BUNDLE.md":
+                    yield path
+    for name in SHIPPED_FILES:
+        path = REPO / name
+        if path.is_file():
+            yield path
+
+
+def check_no_internal_data(errors):
+    for path in iter_shipped_files():
+        allowed = LEAK_ALLOW.get(path.name, ())
+        for lineno, line in enumerate(path.read_text().splitlines(), 1):
+            for pattern, label in LEAK_PATTERNS:
+                if label in allowed:
+                    continue
+                if pattern.search(line):
+                    rel = path.relative_to(REPO)
+                    errors.append(f"{rel}:{lineno}: {label} in a shipped file")
+
+
 def main():
     manifest = load_manifest()
     errors = []
@@ -113,6 +190,8 @@ def main():
     if seen == 0:
         errors.append("no tagged files found")
     check_plugin_versions(errors)
+    check_manifest_versions(errors)
+    check_no_internal_data(errors)
     if errors:
         print("ack-tag validation FAILED:")
         for e in errors:
