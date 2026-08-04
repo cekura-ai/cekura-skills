@@ -40,6 +40,12 @@ jobs:
       - name: Gemini context file in sync
         run: diff codex/AGENTS.md GEMINI.md
 
+      - name: claude plugin validate (strict)
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate ./cekura --strict
+          claude plugin validate . --strict
+
       - name: Version bump required for plugin-content changes
         if: github.event_name == 'pull_request'
         run: |
