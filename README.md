@@ -23,7 +23,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 10 Skills, 14 Commands in one plugin
+### 12 Skills, 14 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
@@ -36,6 +36,9 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
 | `cekura-infra-test-suite` | |
+| `cekura-fixing-prod-issues` | |
+| `cekura-flag-call-log-failures` | |
+| `cekura-generate-scenarios` | |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
@@ -96,6 +99,9 @@ Ten skills, scoped to specific Cekura workflows:
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
 | `cekura-infra-test-suite` | "Create CI/CD tests for my voice bot / test my voice AI infrastructure / E2E test my pipecat bot" |
+| `cekura-fixing-prod-issues` | "Fix this production call issue / debug what went wrong in prod" |
+| `cekura-flag-call-log-failures` | "Analyze the last N calls for issues / what % of calls have <problem>" |
+| `cekura-generate-scenarios` | "Create scenarios from failed calls / regression-test the agent on prod issues" |
 
 ### Want full functionality?
 
@@ -399,6 +405,9 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
 | `cekura-infra-test-suite` | Generating a CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
+| `cekura-fixing-prod-issues` | Diagnosing and fixing production call issues from observability data |
+| `cekura-flag-call-log-failures` | Triaging recent production call logs against KPIs — failure rates + outcome distribution |
+| `cekura-generate-scenarios` | Turning flagged production failures into regression evaluator scenarios |
 
 ### Getting Started Flow
 

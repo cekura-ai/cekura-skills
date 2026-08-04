@@ -18,9 +18,9 @@ cekura-skills/
     .claude-plugin/
       plugin.json                # Claude plugin manifest
     .codex-plugin/
-      plugin.json                # Codex plugin manifest (skills: ./skills/, mcpServers: ./.mcp.json)
+      plugin.json                # Codex plugin manifest (skills: ./skills/, mcpServers: ./codex-mcp.json)
     .cursor-plugin/
-      plugin.json                # Cursor plugin manifest (mcpServers: ./.mcp.json)
+      plugin.json                # Cursor plugin manifest (inlines mcpServers with the hosted MCP URL)
     .mcp.json                    # MCP auto-config (shared by all platforms)
     skills/                      # Single source of truth for skills
       cekura-coordinator/
@@ -49,12 +49,12 @@ cekura-skills/
 
 ### Two install paths, one source of truth
 
-The 10 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
+The 12 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
 
 1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
 2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 10 skills under `cekura/skills/`. The bare repo URL works cleanly.
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 12 skills under `cekura/skills/`. The bare repo URL works cleanly.
 
 ### Skill content rules
 
@@ -62,7 +62,7 @@ Every `cekura/skills/<name>/SKILL.md`:
 - `name` field must be lowercase kebab-case (`cekura-foo`) matching the directory name (per Agent Skills spec)
 - `description` includes trigger phrases for skill activation
 - `compatibility` field set to: `Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.`
-- Body is **public-facing**: no `mcp__cekura__*` tool references, no internal endpoints (e.g., `localhost:8001`), no MCP-bug curl workarounds
+- Body is **public-facing**: no internal endpoints (e.g., `localhost:8001`), no MCP-bug curl workarounds, no `cekura-internal:*` skill references, no customer-specific facts. `mcp__cekura__*` tool references are allowed where the skill is operational — including the `mcp__cekura__cekura_skill_started` ack-telemetry call and tool tables (tags validated by `cekura/scripts/validate_ack_tags.py`)
 - Public API endpoint paths (e.g., `POST /test_framework/v1/...`) are fine — those are user-facing
 - Public provider names (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP) are fine — they're documented at https://docs.cekura.ai/documentation/integrations/
 - Aim for under 500 lines per file (Agent Skills spec recommendation)
@@ -84,7 +84,7 @@ Once installed, npx users have three ways to stay current:
 ### Adding a new public skill (contributor checklist)
 
 1. Create `cekura/skills/cekura-<kebab-name>/SKILL.md` with spec-compliant frontmatter (`name` must be `cekura-<kebab-name>`, matching the directory)
-2. Body must be public-facing — no `mcp__cekura__*` references, no internal endpoints
+2. Body must be public-facing — no internal endpoints, no `cekura-internal:*` references, no customer-specific facts
 3. Stay under 500 lines per file
 4. Bump `package.json` version
 5. Update the "What's Included" table and Quick Reference table in `README.md`
@@ -126,6 +126,9 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
 | `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
+| `cekura-fixing-prod-issues` | Debug a failing prod call, reproduce with evaluators, fix, verify, regression-test, PR |
+| `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — flagged calls, failure rates, outcome distribution |
+| `cekura-generate-scenarios` | Cluster flagged production failures and create one evaluator scenario per failure mode |
 
 ### Commands
 | Component | Purpose |
@@ -170,7 +173,7 @@ Beyond the Claude Code plugin, the repo ships native plugin/extension manifests 
 
 | Platform | Files | What it delivers | MCP |
 |----------|-------|------------------|-----|
-| Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` (`hooks` → `cekura/hooks/codex-hooks.json`) | Skills + MCP + `SessionStart` auto-update hook (no slash commands — Codex plugins have no `commands` field). The hook needs a one-time `/hooks` trust. | reuses `cekura/.mcp.json` (`type: http`, OAuth on first use) |
+| Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` (`hooks` → `cekura/hooks/codex-hooks.json`) | Skills + MCP + `SessionStart` auto-update hook (no slash commands — Codex plugins have no `commands` field). The hook needs a one-time `/hooks` trust. | `cekura/codex-mcp.json` (snake_case `mcp_servers` map per OpenAI plugin packaging docs; OAuth on first use) |
 | Cursor | `.cursor-plugin/marketplace.json` (root) + `cekura/.cursor-plugin/plugin.json` | Skills + MCP | `mcpServers` override → `./.mcp.json` (Cursor's default discovery looks for `mcp.json`, ours is `.mcp.json`) |
 | Gemini CLI | `gemini-extension.json` (root) + `GEMINI.md` (root) | MCP + context file only — Gemini discovers skills from a root `skills/` dir, so the nested `cekura/skills/` isn't bundled; native skill bundling deferred | declared inline via `httpUrl` (native remote MCP + OAuth; no `mcp-remote` shim) |
 
@@ -182,13 +185,13 @@ diff codex/AGENTS.md GEMINI.md   # must report no differences
 
 When you edit `codex/AGENTS.md`, re-copy it: `cp codex/AGENTS.md GEMINI.md`.
 
-Bump the `version` in `cekura/.codex-plugin/plugin.json`, `cekura/.cursor-plugin/plugin.json`, and `gemini-extension.json` alongside the Claude plugin/marketplace version when cutting a release.
+Version policy: `cekura/.claude-plugin/plugin.json` is the single Claude version source — the marketplace plugin entry deliberately declares NO version (Claude Code resolves plugin.json first and silently ignores the marketplace value; an unchanged explicit version blocks all user updates regardless of new commits). Bump it on every release that changes plugin content, and bump the other destination manifests (`cekura/.codex-plugin/plugin.json`, `cekura/.cursor-plugin/plugin.json`, `gemini-extension.json`, `package.json`) when the change affects that destination (shared skill changes affect all).
 
 ## Conventions
 
 - **Skill versions** follow semver in the SKILL.md frontmatter. Bump minor for new sections/patterns, patch for fixes.
 - **Plugin version** is in `.claude-plugin/plugin.json`. Bump when adding new skills/commands.
-- **Marketplace version** is in `.claude-plugin/marketplace.json`. Match the plugin version.
+- **Marketplace version** (top-level, in `.claude-plugin/marketplace.json`) tracks the plugin version. The plugin *entry* inside `plugins[]` must NOT declare a `version` — plugin.json is the single source (see version policy above).
 - **Command frontmatter** must include `allowed-tools` listing the specific `mcp__cekura__*` tools the command needs.
 - **Skills** should have a `## API Access — Cekura MCP Server` section with prerequisites, tool table, docs lookup, and troubleshooting.
 

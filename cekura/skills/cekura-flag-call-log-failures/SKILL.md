@@ -13,18 +13,13 @@ description: |
   project ID and lists the problems or KPIs to measure. Applies attribution
   rules so caller-side endings and recovered calls are NOT counted as agent
   failures. This is the upstream triage step that feeds
-  `cekura-internal:generate-scenarios` — it does NOT create scenarios.
-argument-hint: "<agent_id | project_id | dashboard URL> [KPIs/issues/goals]"
-allowed-tools:
-  - AskUserQuestion
-  - Bash
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
-  - Skill
-version: 0.2.0
+  `cekura-generate-scenarios` — it does NOT create scenarios.
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
+allowed-tools: AskUserQuestion Bash Read Write Edit Grep Glob Skill
+metadata:
+  author: cekura
+  version: "0.3.0"
 ---
 
 # flag-call-log-failures
@@ -35,7 +30,7 @@ Go through an agent's recent **production call logs** and produce three things:
 2. **Failure rates** — what **percentage of all reviewed call logs** each failure represents.
 3. **Outcome distribution** — every remaining call bucketed into a **mutually-exclusive outcome taxonomy** (e.g. *not-answered / vetted / non-vetted caller-side / non-vetted agent-issue*), with per-bucket percentages, so the flagged failures are framed against the whole population.
 
-It is the triage front-end: hand the flagged set to `cekura-internal:generate-scenarios` to build evaluators, or give the user the distribution for a customer-facing quality report.
+It is the triage front-end: hand the flagged set to `cekura-generate-scenarios` to build evaluators, or give the user the distribution for a customer-facing quality report.
 
 This skill is **strictly read-only** — it never creates, updates, or deletes anything.
 
@@ -52,7 +47,7 @@ Reads through the Cekura MCP. Confirm these are present:
 - `mcp__cekura__call_logs_retrieve` — full transcript + metric evaluations for a single call
 - `mcp__cekura__metrics_list` — to find metrics that already grade the KPIs/issues (reuse these as the classification basis when they exist)
 
-If the `mcp__cekura__*` tools aren't connected, stop and tell the user to connect the Cekura MCP — don't fall back to DB queries.
+If the `mcp__cekura__*` tools aren't connected, stop and tell the user to connect the Cekura MCP (see `/setup-mcp` or https://docs.cekura.ai/mcp/overview).
 
 ---
 
@@ -218,14 +213,14 @@ Rules:
 
 ## Step 6 — Handoff
 
-> Flagged <d> agent/system calls (<d/A>% of answered). Want me to turn these into regression scenarios? I can hand the flagged set to `cekura-internal:generate-scenarios`, which clusters them and builds one evaluator per failure pattern.
+> Flagged <d> agent/system calls (<d/A>% of answered). Want me to turn these into regression scenarios? I can hand the flagged set to `cekura-generate-scenarios`, which clusters them and builds one evaluator per failure pattern.
 
-If yes, invoke `cekura-internal:generate-scenarios` and pass the flagged set — each entry already carries `{call_log_id, issue/mode, severity, evidence_quote, expected_behavior}`, exactly the per-call record it expects (it skips its own mining and goes straight to clustering). Don't re-triage there.
+If yes, invoke `cekura-generate-scenarios` and pass the flagged set — each entry already carries `{call_log_id, issue/mode, severity, evidence_quote, expected_behavior}`, exactly the per-call record it expects (it skips its own mining and goes straight to clustering). Don't re-triage there.
 
 ---
 
 ## When to stop / redirect
 
-- **Single known call → a scenario:** skip triage, go straight to `cekura-internal:generate-scenarios` (single-call fast path).
-- **Why did one run fail** (telephony, didn't connect, SIP, empty transcript) → `cekura-internal:debug-run`.
+- **Single known call → a scenario:** skip triage, go straight to `cekura-generate-scenarios` (single-call fast path).
+- **Why did one run fail** (telephony, didn't connect, SIP, empty transcript) → that's run debugging, not call-log triage; investigate the run's telephony/agent configuration or contact Cekura support.
 - **No prod call logs** (pre-production agent) → stop; nothing to triage.

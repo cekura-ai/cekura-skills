@@ -30,7 +30,9 @@ allowed-tools:
     "mcp__cekura__results_retrieve",
     "mcp__cekura__results_rerun_create",
     "mcp__cekura__end_call",
-  , "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+    "mcp__cekura__cekura_skill_started",
+    "mcp__cekura__cekura_report_issue",
+  ]
 ---
 <!-- cekura-tracking-beacon -->
 

@@ -8,41 +8,32 @@ description: |
   scenarios", "simulate the failures we saw in prod", "replay these bad
   calls as tests", "regression-test the agent on prod issues", or hands over
   a set of flagged call IDs to harden the agent against. The flagged set
-  normally comes from `cekura-internal:flag-call-log-failures` (which triages recent
-  calls against specified issues/goals and applies attribution rules); if
-  the user hasn't triaged yet, run that skill first. This skill takes the
-  flagged calls as given — it does NOT re-mine or re-triage — clusters by
-  failure mode, drafts one scenario per cluster, and optionally creates them
-  via the scenarios API (or the dedicated call-logs → scenarios endpoint).
-  Also supports a single-call fast path: given one specific call log ID (or
-  an observe URL), reproduce just that call as one evaluator scenario.
-argument-hint: "<agent_id | dashboard URL | call_log_id>"
-allowed-tools:
-  - AskUserQuestion
-  - Bash
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
-  - Skill
-  - mcp__cekura__cekura_skill_started
-version: 0.3.0
+  normally comes from `cekura-flag-call-log-failures`; if the user hasn't
+  triaged yet, run that skill first. This skill takes the flagged calls as
+  given — it does NOT re-mine or re-triage — clusters by failure mode,
+  drafts one scenario per cluster, and optionally creates them via the
+  scenarios API (or the call-logs → scenarios endpoint). Also supports a
+  single-call fast path: given one call log ID (or an observe URL),
+  reproduce just that call as one evaluator scenario.
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
+allowed-tools: AskUserQuestion Bash Read Write Edit Grep Glob Skill mcp__cekura__cekura_skill_started
+metadata:
+  author: cekura
+  version: "0.4.0"
 ---
 
-<!-- cekura-ack-tag: ack:cekura-generate-scenarios:4b6t2w -->
-> **Cekura skill verification tag:** `ack:cekura-generate-scenarios:4b6t2w`
+<!-- cekura-ack-tag: ack:cekura-generate-scenarios:7q3n6v -->
+> **Cekura skill verification tag:** `ack:cekura-generate-scenarios:7q3n6v`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:4b6t2w"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.10.0"`. It returns immediately and lets Cekura see which skills are in use.
 
 # generate-scenarios
 
 Convert real production failures into evaluator scenarios so the next regression run catches them. Signal is mined from **call logs** — what real callers did, where the agent broke, and what the right behavior would have been. Every scenario produced traces back to at least one call log; nothing is invented.
 
 This skill is **read-first**: it never creates a scenario without an explicit user OK on the proposed set.
-
----
 
 ## Step 0 — Prerequisites
 
@@ -63,9 +54,7 @@ This skill reads + writes through the Cekura MCP. Confirm these tools are presen
 - `mcp__cekura__predefined_metrics_copy_create` — copy a matching predefined metric into the project/agent instead of writing one from scratch
 - `mcp__cekura__metrics_create` — create a focused pass/fail metric for the reproduced failure — **only when no existing or predefined metric fits** (single-call fast path)
 
-If the `mcp__cekura__*` tools are not connected, stop and tell the user to connect the Cekura MCP — don't fall back to DB queries.
-
----
+If the `mcp__cekura__*` tools are not connected, stop and tell the user to connect the Cekura MCP (see `/setup-mcp` or https://docs.cekura.ai/mcp/overview).
 
 ## Metric selection policy — reuse before you create (applies to every scenario)
 
@@ -82,8 +71,6 @@ Whenever a scenario needs a metric to grade the failure, resolve it in this orde
 
 Record which path was taken for each scenario in the report (`reused #<id>` / `copied predefined "<name>"` / `created new`) so the user sees the metric isn't a silent duplicate.
 
----
-
 ## Step 1 — Identify the target agent and the flagged call set
 
 Use `AskUserQuestion` if not already supplied:
@@ -91,16 +78,14 @@ Use `AskUserQuestion` if not already supplied:
 1. **Agent ID** on Cekura (numeric, e.g. `16937`). If unknown, use `mcp__cekura__aiagents_list` to help find it.
 2. (Optional) **Project ID**, if the user manages multiple projects.
 3. **The flagged call set** — the calls these scenarios should reproduce. This skill does **not** mine or triage call logs itself; it expects a flagged set, normally one of:
-   - The output of **`cekura-internal:flag-call-log-failures`** — a list of `{call_log_id, issue/mode, severity, evidence_quote, expected_behavior}`. Each entry already has the per-call failure record this skill needs; go straight to clustering (Step 4).
+   - The output of **`cekura-flag-call-log-failures`** — a list of `{call_log_id, issue/mode, severity, evidence_quote, expected_behavior}`. Each entry already has the per-call failure record this skill needs; go straight to clustering (Step 4).
    - A **user-supplied list of call IDs** ("build scenarios from calls 801, 802, 803"). Retrieve each with `mcp__cekura__call_logs_retrieve` and read its transcript to recover the same per-call record before clustering.
 
-   **If the user wants scenarios from "the failures in prod" but hasn't triaged yet, run `cekura-internal:flag-call-log-failures` first** to produce the flagged set, then continue here. Don't re-implement triage.
+   **If the user wants scenarios from "the failures in prod" but hasn't triaged yet, run `cekura-flag-call-log-failures` first** to produce the flagged set, then continue here. Don't re-implement triage.
 
 Do not proceed until the agent ID is confirmed. If the user pasted a `dashboard.cekura.ai/<project>/observe/<call_log_id>` URL for a single call, use the single-call fast path below.
 
 **Single-call mode.** If the user supplies a specific **call log ID** (or an observe URL) and wants a scenario from *that* call — wording like "create a scenario for call log 7159402", "turn this call into an evaluator", "replay this call" — skip clustering (Step 4) and use the **Single-call fast path** below. You still need the agent context from Step 2a (agent description, dynamic-variable names, personalities, existing scenarios for dedup) and the `tool_ids` rules from Step 4. Confirm which agent the scenario should run against — it can differ from the agent that produced the call.
-
----
 
 ## Single-call fast path — one call ID → one scenario
 
@@ -112,7 +97,7 @@ Use this when the user wants a scenario reproduced from **one specific call** (n
 
 ### B. Pin the focal failure
 
-Identify the **failure point** — the turn where the agent did the wrong thing — using the failure-mode taxonomy in `cekura-internal:flag-call-log-failures` (or the user-stated issue). Record the verbatim `evidence_quote` and a one-sentence `expected_behavior` (→ becomes `expected_outcome_prompt`). If the call clearly contains several distinct failures, ask the user which one to target; don't silently fold them into one scenario.
+Identify the **failure point** — the turn where the agent did the wrong thing — using the failure-mode taxonomy in `cekura-flag-call-log-failures` (or the user-stated issue). Record the verbatim `evidence_quote` and a one-sentence `expected_behavior` (→ becomes `expected_outcome_prompt`). If the call clearly contains several distinct failures, ask the user which one to target; don't silently fold them into one scenario.
 
 ### C. Build a faithful replay (`conditional_actions`)
 
@@ -144,7 +129,7 @@ Score the specific behavior. Follow the **Metric selection policy** above — re
 1. **Scenario** — `mcp__cekura__scenarios_create`: agent, `name` ("<failure> (from call <id>)"), `scenario_type`, `personality` (Step 4 heuristics), `metrics=[<metric_id>]`, `folder_path` (if the user named a folder), `expected_outcome_prompt`, `instructions`/`conditional_actions`, `tags=["replay-<call_id>", "<mode>"]`, testing-agent `tool_ids`.
 2. **Test profile** — `mcp__cekura__test_profiles_create` with the camelCase+lowercase identity dict; capture the id.
 3. **Attach the profile** — `mcp__cekura__scenarios_partial_update(id=<scenario_id>, test_profile=<profile_id>)`. The runtime only reads dynamic variables from the attached profile, not the scenario's own `dynamic_variable_values`.
-4. **Attach the evaluator phone** for phone/outbound agents — set the scenario's phone number (e.g. via `scenarios_partial_update`). The create call may not persist it, so **read the scenario back and PATCH if the phone is null.** (For this internal Twin-Health setup the shared evaluator number is **+18647326888** — look up its inbound-phone-number ID; other orgs use their own configured number.)
+4. **Attach the evaluator phone** for phone/outbound agents — set the scenario's phone number (e.g. via `scenarios_partial_update`). The create call may not persist it, so **read the scenario back and PATCH if the phone is null.** (Look up the organization's configured evaluator inbound-phone-number ID and use that.)
 5. **Verify** — read the scenario back and confirm `test_profile_data`, `metrics`, `folder_path`, and the phone are all set.
 
 Print the `https://dashboard.cekura.ai/test-case/<scenario_id>` link and recommend running it once to confirm the agent still fails (the replay reproduces the bug).
@@ -152,8 +137,6 @@ Print the `https://dashboard.cekura.ai/test-case/<scenario_id>` link and recomme
 ### Alternative: platform transcript path
 
 To let the platform draft from the raw transcript instead, `mcp__cekura__scenarios_create_from_transcript(agent=<agent_id>, call_log_id=<id>, extra_instructions=<focal failure + expected behavior>)`. Lower control over wording; still attach a test profile (camelCase keys) + metric + phone afterward per D–F. This endpoint can be slow — if it times out, fall back to the `conditional_actions` build in C.
-
----
 
 ## Step 2 — Gather signal
 
@@ -191,11 +174,9 @@ Call `mcp__cekura__personalities_list(project_id=<project_id>)` so you have pers
 
 Only continue once description issues are resolved or the user explicitly opts to proceed on outcome signal alone.
 
----
-
 ## Step 3 — The flagged call set (input)
 
-This skill does **not** classify or triage calls — that is `cekura-internal:flag-call-log-failures`' job. By the time you reach this step you have a **flagged set**, each entry carrying:
+This skill does **not** classify or triage calls — that is `cekura-flag-call-log-failures`' job. By the time you reach this step you have a **flagged set**, each entry carrying:
 
 `{ call_log_id, mode/issue, severity, evidence_quote, expected_behavior }`
 
@@ -203,8 +184,6 @@ This skill does **not** classify or triage calls — that is `cekura-internal:fl
 - **From a user-supplied list of call IDs:** fetch each with `mcp__cekura__call_logs_retrieve(id=...)`, read the transcript, and build the same record yourself — pin the failure turn, capture a **verbatim** `evidence_quote` (no paraphrasing — if you can't quote it, it isn't a failure), and a one-sentence `expected_behavior` grounded in `agent_description`. Apply the same attribution sanity-check: if a "failure" was really the caller hanging up, or a call the agent recovered from, drop it. (If the user wants this done at scale across a window rather than a hand-picked list, that's `flag-call-log-failures` — run it first.)
 
 `expected_behavior` becomes the scenario's `expected_outcome_prompt`; `mode` drives `scenario_type` + personality (see the **Quick reference — failure modes** at the bottom, and `flag-call-log-failures` for the full taxonomy + detection signals). A single call may carry several flagged issues — treat each as its own record going into clustering.
-
----
 
 ## Step 4 — Cluster into scenarios
 
@@ -255,7 +234,7 @@ For every name in `agent_dynamic_vars`, pick a value that's *consistent with the
 - `comprehension` repeats → `Confused` or `Mumbling`.
 - `hallucination` where caller pressed for specifics → `Persistent` / `Inquisitive`.
 - Everything else → `Normal` male or female matching the agent's language.
-- **Never** pair `Interruptive` with `conditional_actions` — that's a known structural issue (see `cekura-internal:review-scenarios` R1).
+- **Never** pair `Interruptive` with `conditional_actions` — that pairing is a known structural issue: an interruptive caller derails the fixed turn sequence.
 
 ### Picking `tool_ids` — testing-agent tools (REQUIRED for end-of-call patterns)
 
@@ -265,34 +244,20 @@ For every name in `agent_dynamic_vars`, pick a value that's *consistent with the
 
 The most common silent failure of generated scenarios is omitting `end_call` on a cluster whose expected flow requires the testing agent to terminate. Symptom: the scenario hangs until the global call timeout fires (~60s+), `ended_reason` comes back as `silence-timeout` or `testing-agent-ended-call` from a wall-clock kill instead of from the intended condition, and the failure-mode metrics evaluate against a garbage trailing transcript.
 
-**Required tool by cluster flow:**
-
-| Cluster pattern | Testing-agent tools required |
-|---|---|
-| Voicemail / recorded-greeting (agent must call `voicemail_detection`, not speak) | `end_call` — testing agent terminates after the beep / after the "leave a message" prompt |
-| Indefinite hold music (agent must `end_call` after bounded `skip_turn`s) | `end_call` — testing agent kills the call when its bounded-hold loop expires, otherwise the scenario can't reach the "agent didn't end_call" failure state cleanly |
-| AI virtual receptionist / IVR-side simulation that gates on DOB or refuses transfer (agent must hang up) | `end_call` — testing agent terminates after the gating condition fires, so the scenario exits even if the agent stalls instead of ending |
-| Uncooperative receptionist / repeated refusal (agent must end politely) | `end_call` |
-| Wrong-script / "Got it, thanks" prematurely (agent must stay on the call) | `end_call` — testing agent hangs up at the natural close so the run terminates; without it the agent-under-test's premature `end_call` IS the only termination, which is exactly the failure being tested but masks the post-failure recovery turn |
-| Free-form instruction scenario where the testing agent just plays a caller and never needs to end first | **Still include `end_call`** (always-on rule) — harmless if never invoked, and lets the caller end cleanly if the conversation resolves |
+The always-on rule covers every cluster pattern — voicemail greetings, hold-music loops, IVR gating, uncooperative receptionists, premature-close scripts, and free-form instruction callers alike. `end_call` is harmless when never invoked and load-bearing everywhere else.
 
 **Hard rules:**
 
 1. **If any `condition.action` contains the inline marker `<endcall />` (XML in `fixed_message`), the scenario MUST include `end_call` in `tool_ids`.** The XML marker is sugar that compiles to an `end_call` tool invocation on the testing-agent side — it's a no-op when the underlying tool isn't wired in. Same applies to `<silence time="..." />` (no extra tool, just timing) — but `<endcall />` is the foot-gun.
 2. **If the cluster's `expected_behavior` reads "agent must hang up" / "agent must call end_call", the scenario MUST include `end_call` in `tool_ids`.** Reason: the run needs an authority that can force termination if the agent doesn't end, otherwise the scenario's success condition (which is "agent ended cleanly") can't be distinguished from "framework timeout fired because nobody ended."
-3. **DTMF is an agent-under-test concern, not a testing-agent concern — do NOT add `play_keypad_touch_tone` to scenario `tool_ids`.** When a scenario simulates an IVR menu that the agent-under-test must navigate, the testing agent's job is to *announce the menu options in its `fixed_message`* and loop or advance based on which digit the agent presses. The agent-under-test needs `play_keypad_touch_tone` (ElevenLabs `built_in_tools.play_keypad_touch_tone`, VAPI equivalent) wired into ITS config — that's an agent-creation concern handled by `cekura-internal:create-agent`, not this skill. If the agent under test lacks DTMF capability, surface that as a coverage gap in the report's "Recommendations" section — don't try to compensate via scenario `tool_ids`.
+3. **DTMF is an agent-under-test concern, not a testing-agent concern — do NOT add `play_keypad_touch_tone` to scenario `tool_ids`.** When a scenario simulates an IVR menu that the agent-under-test must navigate, the testing agent's job is to *announce the menu options in its `fixed_message`* and loop or advance based on which digit the agent presses. The agent-under-test needs `play_keypad_touch_tone` (ElevenLabs `built_in_tools.play_keypad_touch_tone`, VAPI equivalent) wired into ITS config — that's an agent-creation concern handled by `cekura-create-agent`, not this skill. If the agent under test lacks DTMF capability, surface that as a coverage gap in the report's "Recommendations" section — don't try to compensate via scenario `tool_ids`.
 4. **Don't invent tool IDs.** Provider-specific values differ — VAPI uses string constants like `"VAPI_TOOL_END_CALL"`, ElevenLabs / retell scenarios reference the platform's built-in system tool by its platform ID. Read `scenarios_list` output from Step 2a — copy the exact `tool_ids` value used by any existing scenario on the same agent that successfully terminates. If no existing scenario has `tool_ids` populated and you can't resolve the ID, ask the user for the end_call tool reference before creating; do not guess.
-
-This is the always-on rule restated: **add `end_call` to every generated scenario.** A scenario with `end_call` in `tool_ids` that never invokes it is harmless; a scenario that needs to invoke it and can't is the silent-timeout case above. So there's no "when in doubt" — it's always in.
 
 ### End the call promptly once the failure is demonstrated
 
 Having `end_call` wired in (above) is necessary but not sufficient — the testing agent also needs to be *instructed when to use it*. **Default rule: once the failure-revealing behavior has clearly manifested in the transcript, have the testing agent wrap up and `<endcall />` as early as possible. Don't let the call keep running.**
 
-**Why:**
-- **Tight transcript → clean evaluation.** The failure-mode metric judges the whole transcript. If the call drifts on for another 5 minutes of unrelated chatter after the failure already happened, the judge has to reason over a long noisy tail and the signal gets diluted (or a late recovery muddies a failure that genuinely occurred).
-- **Avoids timeout-masking.** A scenario that doesn't end after the failure tends to run into the provider/global call cap. The `ended_reason` then comes back as a wall-clock `silence-timeout` / forced kill instead of the intended clean termination — exactly the garbage-trailing-transcript problem from the section above, now happening *after* a real failure.
-- **Saves minutes/credits.** This matters most for loop-type failures (runaway questions, re-confirmation loops, agent-won't-end): left alone they burn to the provider max duration (e.g. ~20 min) every single run. Ending right after the loop is demonstrated cuts that to ~1–2 min.
+**Why:** a tight transcript keeps the metric judge's signal clean (no noisy tail, no late recovery muddying a real failure), avoids running into the wall-clock cap (which replaces the intended `ended_reason` with a garbage `silence-timeout`), and saves minutes/credits — loop-type failures otherwise burn to the provider max duration (~20 min) on every run.
 
 **Balance — give the failure room to manifest before ending (don't end too early):**
 - Let the behavior occur enough times that the judge can distinguish a *sustained* failure from a one-off. For loop/repetition clusters, let it repeat ~2–3 times before the testing agent ends. Ending on the very first sign can make a genuine loop look like a single benign re-ask.
@@ -328,8 +293,6 @@ Many call-log failures are driven not by *what* the caller said but by *how* it 
 ### Dedup against existing scenarios
 
 Drop or flag any cluster that restates an existing scenario on the agent (Step 2a). Near-duplicates surface in the report with `similar_to_existing` so the user decides.
-
----
 
 ## Step 5 — Emit the report
 
@@ -384,8 +347,6 @@ Save as `failure_scenarios_<agent_id>.md` in the working directory. Structure:
 
 **Similar to existing:** <none | scenario name + ID + one-line diff>
 
----
-
 (repeat per cluster)
 
 ## Coverage notes
@@ -407,8 +368,6 @@ Save as `failure_scenarios_<agent_id>.md` in the working directory. Structure:
 - If a failure mode has zero clusters (e.g. no hallucinations seen), omit the row from the summary table — don't pad.
 - Tone: direct and evidence-led. No "you might want to consider…" hedging.
 - Each scenario has at least one evidence call or it doesn't appear in the report.
-
----
 
 ## Step 6 — Offer to create
 
@@ -503,22 +462,18 @@ After creation, print one line per new scenario with `https://dashboard.cekura.a
 1. Run each new scenario once (`mcp__cekura__scenarios_run_<mode>`) to confirm the agent **still fails** on it — the scenario only matters if it reproduces.
 2. After the agent's next prompt change, re-run the set; passing scenarios = fix confirmed.
 
----
-
 ## When to escalate instead
 
 Don't create scenarios (and say so) if any of these are true:
 
 - The agent has **no `agent_description`** and the user opted to proceed on outcome signal alone — surface that the generated scenarios will be thin on "expected behavior" guidance and recommend fleshing out the description first.
-- All failures classify as `drop` with no transcript content — call-not-connected failures aren't a scenario-fixable problem; redirect to `cekura-internal:debug-run` for the underlying telephony/agent-config issue.
+- All failures classify as `drop` with no transcript content — call-not-connected failures aren't a scenario-fixable problem; that's a run-debugging task: investigate the underlying telephony/agent configuration instead.
 - The user asks for "one scenario per failed call" — push back. Per-call scenarios overfit and dilute the regression set; cluster first.
 - The agent already has > 30 scenarios with > 80% coverage of the failure modes seen — say so explicitly. "Your current coverage looks complete given the last <N> calls; consider tightening the existing metrics instead of adding more scenarios."
 
----
-
 ## Quick reference — failure modes → scenario construction
 
-The authoritative failure taxonomy + detection signals live in `cekura-internal:flag-call-log-failures` (the skill that classifies). This table is the **construction map** — given a flagged call's `mode`, how to build its scenario:
+The authoritative failure taxonomy + detection signals live in `cekura-flag-call-log-failures` (the skill that classifies). This table is the **construction map** — given a flagged call's `mode`, how to build its scenario:
 
 | Emoji | Code | Typical scenario_type | Cluster signal |
 |---|---|---|---|
