@@ -20,7 +20,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-metric-improvement:6t4d5m`
 > When you call a Cekura metric write tool from this skill (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-metric-improvement"`, `verification_tag="ack:cekura-metric-improvement:6t4d5m"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-metric-improvement"`, `verification_tag="ack:cekura-metric-improvement:6t4d5m"`, and `plugin_version="0.10.0"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Metric Improvement (Labs Workflow)
 
@@ -201,7 +201,7 @@ The response includes improved `description` and `evaluation_trigger` when compl
 ```json
 POST /test_framework/test-sets/create_from_call_log/
 {
-  "call_log_id": 3358270,
+  "call_log_id": 5550000,
   "metrics": [{"metric": 123, "feedback": "The metric incorrectly failed this call because..."}]
 }
 ```
@@ -228,7 +228,7 @@ POST /test_framework/test-sets/create_from_call_log/
 
 ```json
 {
-  "metric_id": 120069,
+  "metric_id": 111001,
   "vote": "disagree",
   "feedback": "Metric failed at 02:15 because the agent asked 'Can I get your postcode and first line of address?' which the metric flagged as two questions. However, these are related data points for address verification — a data cluster, not question stacking. The spirit of the one-question rule is to prevent cognitive overload, and asking for two parts of an address in one turn is natural and efficient. Should be TRUE."
 }
@@ -238,7 +238,7 @@ POST /test_framework/test-sets/create_from_call_log/
 
 ```json
 {
-  "metric_id": 120069,
+  "metric_id": 111001,
   "vote": "disagree",
   "feedback": "Metric passed this call but at 03:42 the agent said 'I'm running an internal process to check your account'. This exposes system internals in a way that should be flagged by the hard guardrails. 'Internal process' is functionally equivalent to the banned terms like 'system action'. Should be FALSE."
 }
@@ -250,7 +250,7 @@ POST /test_framework/test-sets/create_from_call_log/
 
 ```json
 {
-  "metric_id": 120072,
+  "metric_id": 111003,
   "vote": "disagree",
   "feedback": "The metric failed because the agent didn't explicitly say 'Let me confirm your booking' before creating the appointment. However, at 04:15 the agent said 'So that's Tuesday at 2pm for a boiler service at 123 High St — shall I go ahead and book that in?' which is functionally a confirmation, just phrased differently. The spirit of the confirmation step is to ensure the caller agrees before booking, which the agent achieved. Should be TRUE."
 }
@@ -260,7 +260,7 @@ POST /test_framework/test-sets/create_from_call_log/
 
 ```json
 {
-  "metric_id": 120072,
+  "metric_id": 111003,
   "vote": "disagree",
   "feedback": "Metric passed but the agent skipped the pricing step entirely. At no point between 02:00-05:30 did the agent quote a price or use the pricing tool. The booking was created without the caller knowing the cost. This is a clear workflow violation — the booking instructions require pricing before confirmation. Should be FALSE."
 }
@@ -272,7 +272,7 @@ POST /test_framework/test-sets/create_from_call_log/
 
 ```json
 {
-  "metric_id": 120070,
+  "metric_id": 111002,
   "vote": "disagree",
   "feedback": "Metric classified as 'new_customer' but the caller said 'I called last week about the same issue' at 00:45 and 'you should have my details on file' at 01:10. These are clear signals of an existing customer. The agent didn't ask the classification question but should have picked up on these signals. Correct classification: 'existing_customer'."
 }

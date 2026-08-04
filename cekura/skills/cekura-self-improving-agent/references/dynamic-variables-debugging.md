@@ -47,7 +47,7 @@ For a single suspect run (`run_id`):
 2. Check `provider_call_details.assistantOverrides.variableValues`:
    - **Key absent** → variable was never provided. Failure is upstream (test profile config, scenario setup, or production caller). Surface as a hand-off; decide separately whether to also harden the prompt to handle the missing-variable case.
    - **Key present with expected value** → variable was provided correctly. Move to step 3.
-   - **Key present with a different name than the prompt expects** (e.g. `phoneUpgrade` vs. `shouldAskForPhoneUpgrade`) → name mismatch. Pick whichever side is canonical and fix the other.
+   - **Key present with a different name than the prompt expects** (e.g. `deviceUpgrade` vs. `shouldAskForDeviceUpgrade`) → name mismatch. Pick whichever side is canonical and fix the other.
 3. Check `provider_call_details.artifact.messages[0].content` (rendered system message) for literal `{{...}}` placeholders:
    - **Literal placeholders present** → substitution failed despite the override being passed. Inspect the prompt for nested or escaped braces.
    - **Placeholders fully substituted** → the LLM saw the right input. Failure is downstream — a genuine prompt-following issue for Phase 3.
@@ -59,10 +59,10 @@ For a single suspect run (`run_id`):
 ## Output format (per-failure observation)
 
 ```
-- Run 3031835: appointment_rules=[] (empty), leadId=null, zipcode=null, currentDate=null;
-  rendered system message contains literal {{leadId}}, {{zipcode}}, {{currentDate}};
-  schedule_lab_appointment fired with leadId="{{leadId}}" (literal).
-- Same pattern across runs 3031836, 3031838.
+- Run 5550101: schedulingRules=[] (empty), customerId=null, zipcode=null, currentDate=null;
+  rendered system message contains literal {{customerId}}, {{zipcode}}, {{currentDate}};
+  schedule_appointment fired with customerId="{{customerId}}" (literal).
+- Same pattern across runs 5550102, 5550103.
 ```
 
 Group when patterns repeat — "all 3 failed runs show the same variable-injection failure" is more actionable than per-run repetition.
@@ -76,5 +76,5 @@ Group when patterns repeat — "all 3 failed runs show the same variable-injecti
 
 - `artifact.variableValues` and `assistantOverrides.variableValues` are **not** the same object. Overrides are what was passed in; artifact values are the merged result after the provider applied defaults. A variable can appear in artifact even if it wasn't in overrides — a project- or assistant-level default supplied it.
 - **Squad per-member messages.** The artifact's top-level `messages` may show only the entry assistant's view. Use `assistantActivations` and the per-activation message logs to inspect downstream members.
-- **`runs_bulk_retrieve` bare-string gotcha.** The `run_ids` parameter is a bare comma-separated string (e.g. `"3031399"`), not a JSON array. Passing `[3031399]` returns a 400.
+- **`runs_bulk_retrieve` bare-string gotcha.** The `run_ids` parameter is a bare comma-separated string (e.g. `"5550104"`), not a JSON array. Passing `[5550104]` returns a 400.
 - Direct VAPI fetches require `VAPI_KEY` (Phase 1 environment). Don't echo it to chat or write it to a file.

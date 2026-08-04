@@ -11,6 +11,7 @@ description: >
   and (self-hosted) owned source code, including infra-flavored / forked-SDK
   bugs, which are reproduced and validated on Cekura (never a code test).
 license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
   version: "2.2.0"
@@ -20,7 +21,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-self-improving-agent:5x7n3d`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-self-improving-agent"`, `verification_tag="ack:cekura-self-improving-agent:5x7n3d"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-self-improving-agent"`, `verification_tag="ack:cekura-self-improving-agent:5x7n3d"`, and `plugin_version="0.10.0"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Self-Improving Agent
 

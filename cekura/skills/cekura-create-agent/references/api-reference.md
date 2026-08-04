@@ -3,7 +3,7 @@
 ## Authentication
 All requests: `X-CEKURA-API-KEY: <key>` header. Base URL: `https://api.cekura.ai`
 
-Docs: https://vocera-v2-agent-api-restructure.mintlify.app/api-reference/test_framework/create-agent
+Docs: https://docs.cekura.ai/api-reference/test_framework/create-agent
 
 ## Agent CRUD
 

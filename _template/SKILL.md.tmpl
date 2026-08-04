@@ -65,7 +65,7 @@ After this skill, the user typically needs:
 ## Conventions for new skills
 
 1. **Directory name = `name` field.** Lowercase, hyphens only.
-2. **Body content stays public-safe.** No `mcp__cekura__*` tool refs, no internal endpoints, no MCP-server architecture details. Operational MCP details live in command files only.
+2. **Body content stays public-safe.** No internal endpoints, no `cekura-internal:*` references, no customer-specific facts, no MCP-server architecture details. `mcp__cekura__*` tool references are allowed where the skill is operational (see CLAUDE.md content rules).
 3. **Stay under ~400 lines.** Move detail to `references/` and link.
 4. **Public API endpoint paths are fine** (e.g., `POST /test_framework/v1/...`).
 5. **Public provider names are fine** (VAPI, Retell, ElevenLabs, LiveKit, Pipecat, SIP) — they're documented at https://docs.cekura.ai/documentation/integrations/.

@@ -36,8 +36,8 @@ Transitions are executed by the **workflow engine**, not by the model calling a 
 
 Every `{{var}}` in node prompts and `expression` / `llm` edge conditions is resolved from `conversation_initiation_client_data.dynamic_variables` passed by the calling system at call start. **In Cekura, those values are the test profile's `main_agent_variables`.**
 
-- The workflow author and profile author must agree on variable **names** — a node whose prompt is `{{allVettingQuestionsAgentPrompt}}` only works if the profile supplies that exact key.
-- A variable the profile **omits** falls back to the agent's placeholder default (often junk like `"init from langfuse"`), silently running the node on a garbage prompt or mis-evaluating an edge.
+- The workflow author and profile author must agree on variable **names** — a node whose prompt is `{{screeningQuestionsPrompt}}` only works if the profile supplies that exact key.
+- A variable the profile **omits** falls back to the agent's placeholder default (often a junk placeholder string), silently running the node on a garbage prompt or mis-evaluating an edge.
 - Supporting a new edge/prompt variable is a **two-sided change**: add the `{{var}}` in the workflow **and** the key in every profile that reaches that node.
 
 ## The `transfer_to_agent` trap (most important gotcha)
@@ -56,7 +56,7 @@ Inline nodes **inherit the base agent's `built_in_tools`**. If the base has `tra
 | One agent turn + a huge inter-turn gap (long TTS of repeated filler) | `transfer_to_agent` dead-end → repetition collapse | Remove the tool + prompt directive |
 | Many alternating agent/user turns stuck in one node | Node ignored its stop/short-circuit rule, OR inherited prior node's interview context | Harden the rule to absolute-override; add an expression bypass edge |
 | Last transcript turn far before `call_duration_secs`; trailing dead air; ended by "remote party" | `llm` edge never fired (final turn was interrupted — judge reads "still answering") → stall | Use a deterministic expression edge; don't gate a critical transition on an LLM judge |
-| Node runs on a garbage prompt like "init from langfuse" | A dynamic variable wasn't supplied by the profile → fell back to base placeholder | Add the variable to every profile that reaches this node |
+| Node runs on a garbage placeholder prompt | A dynamic variable wasn't supplied by the profile → fell back to base placeholder | Add the variable to every profile that reaches this node |
 
 ## Architectural principles
 
@@ -66,7 +66,7 @@ Inline nodes **inherit the base agent's `built_in_tools`**. If the base has `tra
 - **Inject ground truth into `llm` edges** via `{{…List}}` variables so the judge has a concrete completion test.
 - **Harden overriding rules** as "ABSOLUTE — OVERRIDES EVERY OTHER INSTRUCTION" when a conditional rule must beat the prompt's general goals.
 - **Data-completeness invariant**: every node a flow can reach must have all its variables supplied (prompt and edge condition vars). A missing var silently becomes a base placeholder.
-- **Reconnection / resume flows**: a node entered mid-conversation inherits the full prior transcript — route to skip vetting entirely via deterministic bypass rather than trusting a prompt to suppress re-interviewing.
+- **Reconnection / resume flows**: a node entered mid-conversation inherits the full prior transcript — route to skip the screening flow entirely via deterministic bypass rather than trusting a prompt to suppress re-asking.
 
 ## API gotchas
 

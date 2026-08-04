@@ -99,11 +99,11 @@ curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/ \
         "description": "Retrieves user data based on phone number",
         "mock_data": [
           {
-            "input": {"phone_number": "8645239892"},
+            "input": {"phone_number": "4155551234"},
             "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
           },
           {
-            "input": {"phone_number": "18645239892"},
+            "input": {"phone_number": "14155551234"},
             "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
           }
         ],

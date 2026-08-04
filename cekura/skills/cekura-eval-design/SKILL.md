@@ -22,7 +22,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.0"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
@@ -39,7 +39,7 @@ When this skill suggests creating, listing, updating, or evaluating something on
 - **Main agent**: The client's AI voice agent being tested
 - **Testing agent**: Cekura's simulated caller that exercises the main agent
 - **Evaluator/Scenario**: A test case defining what the simulated caller does and what success looks like
-- **Metric**: A post-call evaluation that scores a transcript (separate concept — see cekura-metrics plugin)
+- **Metric**: A post-call evaluation that scores a transcript (separate concept — see the cekura-metric-design skill)
 - **Personality**: Voice, language, accent, and behavioral traits for the simulated caller
 - **Test Profile**: Identity and context data passed to testing agent AND main agent (for chat/websocket runs)
 - **Conditional Action**: Structured, deterministic testing agent behavior with adaptive fallback

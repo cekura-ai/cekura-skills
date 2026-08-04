@@ -23,7 +23,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 10 Skills, 14 Commands in one plugin
+### 12 Skills, 14 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
@@ -36,6 +36,9 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
 | `cekura-infra-test-suite` | |
+| `cekura-fixing-prod-issues` | |
+| `cekura-flag-call-log-failures` | |
+| `cekura-generate-scenarios` | |
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
@@ -83,7 +86,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Ten skills, scoped to specific Cekura workflows:
+Twelve skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
@@ -96,6 +99,9 @@ Ten skills, scoped to specific Cekura workflows:
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
 | `cekura-infra-test-suite` | "Create CI/CD tests for my voice bot / test my voice AI infrastructure / E2E test my pipecat bot" |
+| `cekura-fixing-prod-issues` | "Fix this production call issue / debug what went wrong in prod" |
+| `cekura-flag-call-log-failures` | "Analyze the last N calls for issues / what % of calls have <problem>" |
+| `cekura-generate-scenarios` | "Create scenarios from failed calls / regression-test the agent on prod issues" |
 
 ### Want full functionality?
 
@@ -137,9 +143,9 @@ claude plugin update cekura@cekura-skills          # move the installed pin to l
 
 Then run `/reload-plugins` in your session to apply it. A plain `git pull` of the marketplace checkout does **not** move the version pin, so it won't upgrade you on its own — use the commands above.
 
-#### Auto-update (optional)
+#### Auto-update
 
-To have Claude Code pull new Cekura versions automatically at launch (it still prompts you to `/reload-plugins`), add this to your `~/.claude/settings.json` — or just run `/setup-mcp`, which offers to enable it for you:
+Installs from this marketplace (`cekura@cekura-skills`) keep themselves current: the plugin ships a `SessionStart` hook that runs Claude Code's own update commands at most once per day (best-effort — it never blocks or fails your session, and it no-ops for installs from any other marketplace). To also let Claude Code's native auto-update refresh the marketplace, add this to your `~/.claude/settings.json` — or just run `/setup-mcp`, which offers to enable it for you:
 
 ```json
 {
@@ -354,14 +360,11 @@ curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main
 
 All plugins connect to the Cekura API through an MCP (Model Context Protocol) server. This gives structured access to 84+ Cekura API operations as typed tools.
 
-**For Claude Code users:** Run `/setup-mcp` after installing the plugins. It walks you through:
-1. Setting the `CEKURA_API_KEY` environment variable
-2. Starting the MCP server
-3. Verifying connectivity
+**For Claude Code users:** the plugin auto-configures the MCP server; on first tool use you'll get a one-click browser OAuth sign-in (no API key stored). Run `/setup-mcp` if tools aren't available — it verifies connectivity and, if you prefer a key-based credential (e.g. for CI), walks you through the `X-CEKURA-API-KEY` setup.
 
 **For Codex, Cursor, and Gemini CLI:** the MCP server is wired up natively through each platform's plugin/extension manifest, authenticating via OAuth (no API key stored). The sign-in step differs per platform — in **Codex** run `codex mcp login cekura`; **Cursor** prompts for OAuth when you connect the server; **Gemini** runs the OAuth flow on first tool use. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
 
-**How it works:** Claude, Codex, and Cursor read the bundled `cekura/.mcp.json`, which points at the Cekura MCP server at `https://api.cekura.ai/mcp`; Gemini declares the same remote endpoint inline in `gemini-extension.json`. By default it authenticates via OAuth — on first use the client opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
+**How it works:** Claude Code reads the bundled `cekura/.mcp.json`; Codex reads `cekura/codex-mcp.json`; Cursor and Gemini declare the endpoint inline in their own manifests. All four point at the Cekura MCP server at `https://api.cekura.ai/mcp` (CI asserts they stay in sync). By default it authenticates via OAuth — on first use the client opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
 
 ---
 
@@ -399,6 +402,9 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
 | `cekura-infra-test-suite` | Generating a CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
+| `cekura-fixing-prod-issues` | Diagnosing and fixing production call issues from observability data |
+| `cekura-flag-call-log-failures` | Triaging recent production call logs against KPIs — failure rates + outcome distribution |
+| `cekura-generate-scenarios` | Turning flagged production failures into regression evaluator scenarios |
 
 ### Getting Started Flow
 
@@ -443,6 +449,18 @@ Step 3 is the critical one — it forces Claude Code to re-read the marketplace 
 **`/plugin install` errors with `Source path does not exist`:** Re-run step 3 (`/plugin marketplace update cekura-skills`) and retry step 4. If that doesn't clear it, fully restart Claude Code (close and reopen the session), then redo steps 2–4.
 
 **`claude plugin list` shows zero cekura entries after upgrading:** you've removed the old plugins but haven't installed the new one. Run steps 2–4 above.
+
+---
+
+## Data & privacy
+
+The plugin talks only to your own Cekura account via the Cekura MCP server (`https://api.cekura.ai/mcp`), with every call mediated by your client's MCP permission system.
+
+- **Skill-usage ping:** when a Cekura skill or command activates, it calls the `cekura_skill_started` MCP tool with the skill name, its verification tag, the plugin version, and (for some commands, when available) a conversation/session ID — so Cekura can see which skills are used and validate that the right playbook was loaded. Nothing else from your conversation is sent.
+- **Local failure log:** failures of Cekura MCP tools are logged to `~/.claude/cekura-mcp-failures.log` (secret-redacted, capped at 100 lines, never leaves your machine on its own). The `/report-bug` command may include redacted excerpts in a GitHub issue — only after showing you the full issue body and getting your explicit OK.
+- **Auto-update:** see the Auto-update sections above (Claude Code: daily self-update hook for installs from this marketplace; Codex: daily hook after a one-time `/hooks` trust).
+
+See Cekura's [Privacy Policy](https://www.cekura.ai/privacy-policy) and [Terms of Service](https://www.cekura.ai/terms-of-service). Questions or issues: **support@cekura.ai**.
 
 ---
 

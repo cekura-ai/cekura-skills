@@ -26,7 +26,7 @@ Produce a named list and **confirm with the user** before creating evaluators.
 
 ## 5b. Create evaluators for each case
 
-Use the `cekura-evals:conditional-actions` skill to build each evaluator. Design the conversation flow for each case.
+Use the the `cekura-eval-design` skill (`references/conditional-actions.md`) skill to build each evaluator. Design the conversation flow for each case.
 
 To **generate** voice-specific stress conditions, use XML tags in `fixed_message`: `<silence>`, `<interruption>`, `<background_noise>`, `<dtmf>`. These make the testing agent emit those conditions.
 

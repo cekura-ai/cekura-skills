@@ -8,7 +8,7 @@ single consolidated markdown report covering every kept failure with all five
 signals (especially Signal 5: `metadata.ended_reason`) wired up so the
 orchestrator can hand off straight to early-end-call-diagnose.
 
-The script wraps the same Cekura REST endpoints that the `cekura-local` MCP
+The script wraps the same Cekura REST endpoints that the `Cekura` MCP
 tools (`results_retrieve`, `runs_bulk_retrieve`) sit on top of:
 
     GET /test_framework/v2/results/{result_id}/      (Step A — minimal scan)
@@ -20,9 +20,9 @@ motivated this helper.
 
 USAGE
     CEKURA_API_KEY=… python3 fetch_failures.py <result_id> [--out FILE] [--json]
-    CEKURA_API_KEY=… python3 fetch_failures.py 534363
-    CEKURA_API_KEY=… python3 fetch_failures.py 534363 --out /tmp/r534363.md
-    CEKURA_API_KEY=… python3 fetch_failures.py 534363 --json > runs.json
+    CEKURA_API_KEY=… python3 fetch_failures.py 123456
+    CEKURA_API_KEY=… python3 fetch_failures.py 123456 --out /tmp/r123456.md
+    CEKURA_API_KEY=… python3 fetch_failures.py 123456 --json > runs.json
 
 EXIT CODES
     0  success — kept-failure summary written

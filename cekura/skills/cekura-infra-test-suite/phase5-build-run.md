@@ -68,7 +68,7 @@ Design test profile + mock tool entries + dynamic variable values as one synchro
 
 ### Register configurable parameters as Cekura dynamic variables
 
-Before building any scenario payload, register every parameter identified in Phase 4 4a as a Cekura dynamic variable on the agent. Follow `cekura/skills/cekura-create-agent/phase8-dynamic-variables.md` for the registration workflow, naming conventions, and how to write detailed descriptions.
+Before building any scenario payload, register every parameter identified in Phase 4 4a as a Cekura dynamic variable on the agent. Follow `cekura/skills/cekura-create-agent/phase9-dynamic-variables.md` for the registration workflow, naming conventions, and how to write detailed descriptions.
 
 Use `mcp__cekura__aiagents_partial_update` or the dynamic-variables endpoint to register each parameter with a detailed description (data type, valid range, how the bot uses it, what happens if missing, realistic example value).
 
