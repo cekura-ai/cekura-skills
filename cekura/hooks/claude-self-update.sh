@@ -19,12 +19,18 @@ stamp_dir="${CLAUDE_PLUGIN_DATA:-${TMPDIR:-/tmp}}"
 stamp="$stamp_dir/.cekura-claude-last-update"
 now="$(date +%s)"
 
+# First run (fresh install or first session after upgrade): stamp and skip so
+# the user's first launch never waits on the network. The install itself is
+# already current; update checks start with the next day's session.
+if [ ! -f "$stamp" ]; then
+  echo "$now" > "$stamp" 2>/dev/null || true
+  exit 0
+fi
+
 # Throttle: skip if we checked within the last 24h.
-if [ -f "$stamp" ]; then
-  last="$(cat "$stamp" 2>/dev/null || echo 0)"
-  if [ $(( now - last )) -lt 86400 ]; then
-    exit 0
-  fi
+last="$(cat "$stamp" 2>/dev/null || echo 0)"
+if [ $(( now - last )) -lt 86400 ]; then
+  exit 0
 fi
 
 # Refresh the marketplace snapshot, then update the pinned install. Never fail

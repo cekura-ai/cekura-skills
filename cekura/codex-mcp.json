@@ -1,7 +1,0 @@
-{
-  "mcp_servers": {
-    "cekura": {
-      "url": "https://api.cekura.ai/mcp"
-    }
-  }
-}

@@ -4,6 +4,21 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.10.1 — 2026-08-04
+
+Gate 0 acceptance-test fixes.
+
+- **Fixed** Codex MCP registration: `cekura/.codex-plugin/plugin.json` now
+  points at `cekura/.mcp.json` (camelCase `mcpServers`, the shape Codex
+  actually parses) and the snake_case `cekura/codex-mcp.json` was removed —
+  it registered zero servers because Codex read `mcp_servers` as a server
+  name. CI now asserts the referenced companion file uses the camelCase
+  wrapper.
+- **Fixed** first-launch delay on fresh Claude Code installs: the
+  SessionStart auto-update hook now stamps and skips its first run instead
+  of hitting the network (~7 s observed) before the first session. Daily
+  update checks begin with the next session at least 24h later.
+
 ## 0.10.0 — 2026-08-04
 
 Marketplace-eligibility release.

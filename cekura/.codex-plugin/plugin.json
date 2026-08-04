@@ -1,6 +1,6 @@
 {
   "name": "cekura",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from Codex.",
   "author": {
     "name": "Cekura",
@@ -22,7 +22,7 @@
     "platform"
   ],
   "skills": "./skills/",
-  "mcpServers": "./codex-mcp.json",
+  "mcpServers": "./.mcp.json",
   "hooks": "./hooks/codex-hooks.json",
   "interface": {
     "displayName": "Cekura",
