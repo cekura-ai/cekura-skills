@@ -244,8 +244,6 @@ For every name in `agent_dynamic_vars`, pick a value that's *consistent with the
 
 The most common silent failure of generated scenarios is omitting `end_call` on a cluster whose expected flow requires the testing agent to terminate. Symptom: the scenario hangs until the global call timeout fires (~60s+), `ended_reason` comes back as `silence-timeout` or `testing-agent-ended-call` from a wall-clock kill instead of from the intended condition, and the failure-mode metrics evaluate against a garbage trailing transcript.
 
-The always-on rule covers every cluster pattern — voicemail greetings, hold-music loops, IVR gating, uncooperative receptionists, premature-close scripts, and free-form instruction callers alike. `end_call` is harmless when never invoked and load-bearing everywhere else.
-
 **Hard rules:**
 
 1. **If any `condition.action` contains the inline marker `<endcall />` (XML in `fixed_message`), the scenario MUST include `end_call` in `tool_ids`.** The XML marker is sugar that compiles to an `end_call` tool invocation on the testing-agent side — it's a no-op when the underlying tool isn't wired in. Same applies to `<silence time="..." />` (no extra tool, just timing) — but `<endcall />` is the foot-gun.
