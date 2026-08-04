@@ -296,7 +296,7 @@ curl -s https://api.retellai.com/get-agent/{agent_id} \
 curl -s https://api.elevenlabs.io/v1/convai/agents/{agent_id} \
   -H "xi-api-key: {elevenlabs_api_key}" | jq '{name, description: .conversation_config.agent.prompt.prompt}'
 ```
-**Docs:** https://elevenlabs.io/docs/api-reference/conversational-ai/get-agent
+**Docs:** https://elevenlabs.io/docs/api-reference/agents/get
 
 ### Bland
 ```bash

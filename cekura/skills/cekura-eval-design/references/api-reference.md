@@ -217,7 +217,7 @@ POST /test_framework/v1/scenarios/create_folder/
 ```json
 POST /test_framework/v1/scenarios/from-transcript/
 {
-  "call_id": 3358270,
+  "call_id": 5550000,
   "agent": 12345
 }
 ```

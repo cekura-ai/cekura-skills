@@ -57,7 +57,7 @@ Build a full agent quality report from scratch: confirm target → validate conf
 
 Use `AskUserQuestion` to collect:
 
-1. **Agent ID** on Cekura (numeric, e.g. `16937`). If unknown, use `mcp__cekura__aiagents_list` to help find it.
+1. **Agent ID** on Cekura (numeric, e.g. `12345`). If unknown, use `mcp__cekura__aiagents_list` to help find it.
 2. (Optional) Project ID, if the user manages multiple projects.
 3. (Optional) Domain / product context — useful for generating realistic evaluators.
 
@@ -276,7 +276,7 @@ Then a table grouped **by issue category, not by scenario**:
 
 | Issue category | Result | What's going wrong | Affected runs |
 |---|---|---|---|
-| Auth blocked at account lookup | ❌ (6 runs) | Test profile (Jessica Miller / 9876543 / PIN 2468) doesn't resolve in the prod backend, so every authenticated workflow exits before PIN, address-confirm, or post-auth steps run. | [3056761](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056761) Data Balance Full-Auth · [3056762](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056762) Secondary Auth after PIN Fail · [3056763](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056763) Update Contact Info · [3056765](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056765) Device Internet Troubleshooting · [3056766](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056766) PIN Authentication · [3056767](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056767) Authenticated Plan Name Retrieval |
+| Auth blocked at account lookup | ❌ (6 runs) | Test profile (Jessica Miller / 9876543 / PIN 2468) doesn't resolve in the prod backend, so every authenticated workflow exits before PIN, address-confirm, or post-auth steps run. | [5551001](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=5551001) Data Balance Full-Auth · [5551002](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=5551002) Secondary Auth after PIN Fail · [5551003](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=5551003) Update Contact Info · [5551005](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=5551005) Device Internet Troubleshooting · [5551006](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=5551006) PIN Authentication · [5551007](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=5551007) Authenticated Plan Name Retrieval |
 
 Each row groups together every run that failed for the same underlying reason. Be explicit about whether the cause is config/data, tool/integration, or persona/knowledge/prompt.
 
@@ -304,12 +304,12 @@ Concrete example:
 
 > ### ❌ Auth blocked at account lookup (6 runs)
 >
-> The test profile's identity (Jessica Miller, phone 3105551234, account 9876543, PIN 2468) does not resolve in TruConnect's production backend. The agent reaches the lookup step and exits early — every downstream check (PIN, address confirms, balance, troubleshooting) is skipped. Configuration issue, not a model issue.
+> The test profile's identity (Jessica Miller, phone 3105551234, account 9876543, PIN 2468) does not resolve in the carrier's production backend. The agent reaches the lookup step and exits early — every downstream check (PIN, address confirms, balance, troubleshooting) is skipped. Configuration issue, not a model issue.
 >
-> #### Run [3056766](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056766) — PIN Authentication Test
+> #### Run [5551006](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=5551006) — PIN Authentication Test
 > - ❌ "The main agent repeatedly stated the account could not be found, not that it was found." (01:16)
 >
-> #### Run [3056767](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=3056767) — Authenticated Plan Name Retrieval
+> #### Run [5551007](https://dashboard.cekura.ai/<project_id>/results/<result_id>?call_id=5551007) — Authenticated Plan Name Retrieval
 > - ❌ "Agent stated locating account but did not ask for PIN or confirm authentication." (01:17)
 
 After all failure issues, add a **Passes** subsection grouping passing runs by what they validated:

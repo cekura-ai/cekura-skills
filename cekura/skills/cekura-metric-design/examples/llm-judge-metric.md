@@ -8,7 +8,7 @@
   "description": "<PROMPT BELOW>",
   "type": "llm_judge",
   "eval_type": "binary",
-  "agent": 12414,
+  "agent": 12345,
   "evaluation_trigger": "always"
 }
 ```

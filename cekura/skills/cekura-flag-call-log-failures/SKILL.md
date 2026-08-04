@@ -62,7 +62,7 @@ Use `AskUserQuestion` for anything not supplied:
    - **Explicit issues** — e.g. *"calls that ended before all vetting questions"*, *"agent looped on an unclear answer"*, *"background noise stalled the agent"*. Each becomes a flag bucket + a failure-rate number.
    - **A KPI / goal** — e.g. *"every call should fully vet the candidate"*, *"what % of answered calls can we improve"* — which you invert into the failure(s) that break it.
    - **Nothing specific** → *"any genuine agent failure,"* grounded in `agent_description`, classified against the **failure-mode taxonomy** in Step 3.
-5. **Outcome taxonomy** — the mutually-exclusive buckets to distribute ALL calls into. Derive these from the agent's job. For a Traba-style vetting agent the natural set is:
+5. **Outcome taxonomy** — the mutually-exclusive buckets to distribute ALL calls into. Derive these from the agent's job. For a candidate-vetting agent the natural set is:
    - `not answered` · `vetted` · `non-vetted — caller-side` · `non-vetted — agent/system issue`
 
    For other agents, adapt (e.g. `resolved / escalated / abandoned / agent-error`). Confirm the bucket set with the user before reporting.
@@ -73,7 +73,7 @@ Echo the issue list **and** the bucket set back so the user confirms before you 
 
 ## Step 2 — Fetch in batches, classify cheap-first
 
-**Agent context** — `mcp__cekura__aiagents_retrieve(id=...)`: capture `agent_description`, `agent_name`, `project_id`, and any `{{dynamic_variable}}` names that define a KPI (e.g. `hardRequirementQuestionsToVet`).
+**Agent context** — `mcp__cekura__aiagents_retrieve(id=...)`: capture `agent_description`, `agent_name`, `project_id`, and any `{{dynamic_variable}}` names that define a KPI (e.g. `requiredScreeningQuestions`).
 
 > ⚠️ If `agent_description` is empty/placeholder AND no explicit issue list was given, STOP — "failure" is ungrounded. Ask the user to name the issues or flesh out the description.
 

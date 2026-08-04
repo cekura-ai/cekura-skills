@@ -54,7 +54,7 @@ Ask: "What provider does your main agent run on?"
 - **`credentials.api_key`**: Profile → API Keys
 - **`provider.agent_id`**: Conversational AI → Select agent → ID in settings
 - **`credentials.config.trigger_url`** (optional)
-- **Docs:** https://elevenlabs.io/docs/api-reference/conversational-ai/get-agent
+- **Docs:** https://elevenlabs.io/docs/api-reference/agents/get
 
 > **Fast path:** ElevenLabs supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
 

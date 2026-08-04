@@ -143,9 +143,9 @@ claude plugin update cekura@cekura-skills          # move the installed pin to l
 
 Then run `/reload-plugins` in your session to apply it. A plain `git pull` of the marketplace checkout does **not** move the version pin, so it won't upgrade you on its own — use the commands above.
 
-#### Auto-update (optional)
+#### Auto-update
 
-To have Claude Code pull new Cekura versions automatically at launch (it still prompts you to `/reload-plugins`), add this to your `~/.claude/settings.json` — or just run `/setup-mcp`, which offers to enable it for you:
+Installs from this marketplace (`cekura@cekura-skills`) keep themselves current: the plugin ships a `SessionStart` hook that runs Claude Code's own update commands at most once per day (best-effort — it never blocks or fails your session, and it no-ops for installs from any other marketplace). To also let Claude Code's native auto-update refresh the marketplace, add this to your `~/.claude/settings.json` — or just run `/setup-mcp`, which offers to enable it for you:
 
 ```json
 {
@@ -360,10 +360,7 @@ curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main
 
 All plugins connect to the Cekura API through an MCP (Model Context Protocol) server. This gives structured access to 84+ Cekura API operations as typed tools.
 
-**For Claude Code users:** Run `/setup-mcp` after installing the plugins. It walks you through:
-1. Setting the `CEKURA_API_KEY` environment variable
-2. Starting the MCP server
-3. Verifying connectivity
+**For Claude Code users:** the plugin auto-configures the MCP server; on first tool use you'll get a one-click browser OAuth sign-in (no API key stored). Run `/setup-mcp` if tools aren't available — it verifies connectivity and, if you prefer a key-based credential (e.g. for CI), walks you through the `X-CEKURA-API-KEY` setup.
 
 **For Codex, Cursor, and Gemini CLI:** the MCP server is wired up natively through each platform's plugin/extension manifest, authenticating via OAuth (no API key stored). The sign-in step differs per platform — in **Codex** run `codex mcp login cekura`; **Cursor** prompts for OAuth when you connect the server; **Gemini** runs the OAuth flow on first tool use. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
 
@@ -452,6 +449,18 @@ Step 3 is the critical one — it forces Claude Code to re-read the marketplace 
 **`/plugin install` errors with `Source path does not exist`:** Re-run step 3 (`/plugin marketplace update cekura-skills`) and retry step 4. If that doesn't clear it, fully restart Claude Code (close and reopen the session), then redo steps 2–4.
 
 **`claude plugin list` shows zero cekura entries after upgrading:** you've removed the old plugins but haven't installed the new one. Run steps 2–4 above.
+
+---
+
+## Data & privacy
+
+The plugin talks only to your own Cekura account via the Cekura MCP server (`https://api.cekura.ai/mcp`), with every call mediated by your client's MCP permission system.
+
+- **Skill-usage ping:** when a Cekura skill or command activates, it calls the `cekura_skill_started` MCP tool with the skill name, its verification tag, the plugin version, and (for some commands, when available) a conversation/session ID — so Cekura can see which skills are used and validate that the right playbook was loaded. Nothing else from your conversation is sent.
+- **Local failure log:** failures of Cekura MCP tools are logged to `~/.claude/cekura-mcp-failures.log` (secret-redacted, capped at 100 lines, never leaves your machine on its own). The `/report-bug` command may include redacted excerpts in a GitHub issue — only after showing you the full issue body and getting your explicit OK.
+- **Auto-update:** see the Auto-update sections above (Claude Code: daily self-update hook for installs from this marketplace; Codex: daily hook after a one-time `/hooks` trust).
+
+See Cekura's [Privacy Policy](https://www.cekura.ai/privacy-policy) and [Terms of Service](https://www.cekura.ai/terms-of-service). Questions or issues: **support@cekura.ai**.
 
 ---
 

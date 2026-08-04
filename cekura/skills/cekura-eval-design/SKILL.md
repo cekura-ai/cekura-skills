@@ -39,7 +39,7 @@ When this skill suggests creating, listing, updating, or evaluating something on
 - **Main agent**: The client's AI voice agent being tested
 - **Testing agent**: Cekura's simulated caller that exercises the main agent
 - **Evaluator/Scenario**: A test case defining what the simulated caller does and what success looks like
-- **Metric**: A post-call evaluation that scores a transcript (separate concept — see cekura-metrics plugin)
+- **Metric**: A post-call evaluation that scores a transcript (separate concept — see the cekura-metric-design skill)
 - **Personality**: Voice, language, accent, and behavioral traits for the simulated caller
 - **Test Profile**: Identity and context data passed to testing agent AND main agent (for chat/websocket runs)
 - **Conditional Action**: Structured, deterministic testing agent behavior with adaptive fallback

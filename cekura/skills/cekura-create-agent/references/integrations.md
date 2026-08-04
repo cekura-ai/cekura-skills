@@ -141,7 +141,7 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 **Credentials:** ElevenLabs Dashboard → Profile → API Keys  
 **Agent ID:** Conversational AI → Select agent → ID in settings  
 **Auto-sync:** Fetches from `conversation_config.agent.prompt.prompt`  
-**Docs:** https://elevenlabs.io/docs/api-reference/conversational-ai/get-agent
+**Docs:** https://elevenlabs.io/docs/api-reference/agents/get
 
 ---
 

@@ -31,7 +31,7 @@ If the user didn't provide details in the arguments, ask:
 
 ### 2. Gather Environment Info Automatically
 
-Run these silently to collect system context:
+Run these (no need to narrate each one) to collect system context:
 
 ```bash
 # Claude Code version

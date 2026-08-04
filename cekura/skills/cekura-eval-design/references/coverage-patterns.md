@@ -16,7 +16,7 @@ When generating a batch of scenarios (auto-gen or manual), apply this distributi
 - **Every scenario must be grounded** in an actual agent capability — a workflow branch in the description, a configured tool, a KB fact, or a general conduct policy (professionalism, safety, escalation). Reach the target count by permuting grounded branches, value variants, friction positions, and personas — never by inventing capabilities the agent doesn't have. Friction may never be premised on environment failures the scenario can't control or on the main agent misbehaving.
 - **KB grounding**: when knowledge-base content exists, enrich scenarios with 1–2 concrete named facts from it ("asks whether the clinic accepts Blue Shield PPO", not "asks about insurance"). Not every scenario needs KB facts — workflow-only scenarios are equally valid. When NO KB exists, don't write scenarios expecting the agent to answer factual questions — the only valid expected behaviors are clarifying, saying it can't find that information, transferring, or redirecting to a defined workflow.
 
-## Example: Medical Clinic Agent (BCHS/Kouper — 54 evaluators)
+## Example: Medical Clinic Agent (anonymized — 54 evaluators)
 
 ### Category Breakdown
 
@@ -38,7 +38,7 @@ When generating a batch of scenarios (auto-gen or manual), apply this distributi
 - **Must-have**: 39 evaluators (72%) — core workflows that must work correctly
 - **Nice-to-have**: 15 evaluators (28%) — edge cases and enhancements
 
-### Coverage Principles from BCHS
+### Coverage Principles from the clinic deployment
 
 1. **Every workflow gets a happy path**: S-01 through S-10 cover all scheduling variants
 2. **Every workflow gets error paths**: RS-06 (tool fails 3+ times), CN-05 (cancel tool error)
@@ -46,21 +46,21 @@ When generating a batch of scenarios (auto-gen or manual), apply this distributi
 4. **Safety is heavily covered**: 9 scenarios for medical emergency handling (highest consequence of failure)
 5. **Cross-workflow scenarios exist**: CN-02 tests cancel → immediately rebook (two workflows in one call)
 
-## Example: Staffing Platform Agent (Traba — 3 metrics, implicit eval patterns)
+## Example: Staffing Platform Agent (anonymized — 3 metrics, implicit eval patterns)
 
 ### Coverage Areas
 
 | Area | What to Test |
 |------|-------------|
 | Interview Flow | Pay expectations, commute, availability, work experience questions |
-| Tool Performance | evaluate_transcript_prod timing, tool chain stalls |
+| Tool Performance | evaluate_interview timing, tool chain stalls |
 | Onboarding | App installation guidance, silence persistence, step-by-step navigation |
 | Escalation | Get Help redirect when user is stuck |
 | Multi-agent Transfer | Handoff between interview → evaluation → onboarding agents |
 
-### Key Insight: Traba has fewer evals but more metrics
+### Key Insight: this deployment has fewer evals but more metrics
 
-Traba's testing strategy relies more on metrics (measuring call quality on real production calls) than on simulated evals. This is appropriate for outbound calls where the agent initiates — you can't easily simulate the full multi-agent flow. Instead, real calls are evaluated by metrics.
+This deployment's testing strategy relies more on metrics (measuring call quality on real production calls) than on simulated evals. This is appropriate for outbound calls where the agent initiates — you can't easily simulate the full multi-agent flow. Instead, real calls are evaluated by metrics.
 
 ## Building a Coverage Matrix
 

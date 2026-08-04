@@ -1,6 +1,6 @@
 # Test Data Design — Mock Tools, Test Profiles, and Dynamic Variables
 
-Mock tools, test profiles, and dynamic variables form one cohesive test data set. They must be designed together — inconsistencies between them cause silent failures (wrong mock responses, failed authentication, improvised caller data). This guide covers all three and replaces `tool-strategies.md`, `test-profiles.md`, and `mock-tool-design.md`.
+Mock tools, test profiles, and dynamic variables form one cohesive test data set. They must be designed together — inconsistencies between them cause silent failures (wrong mock responses, failed authentication, improvised caller data). This guide covers all three.
 
 **Design order for Approach B:** mock tool data first → test profile derived from mock outputs → dynamic variables registered from profile fields.
 **Design order for Approach A:** discover staging data first → test profile matched to staging formats.
@@ -82,7 +82,7 @@ When setting up mock data for a new evaluator, add exactly one input/output entr
 
 ```json
 "information": [
-  {"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
+  {"input": {"phone": "4155551234"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
 ]
 ```
 
@@ -153,7 +153,7 @@ Test profile `information` is split into two sections so each value reaches only
   "information": {
     "main_agent_variables": {
       "account_id": "B001",
-      "customer_phone_number": "8645239892"
+      "customer_phone_number": "4155551234"
     },
     "testing_agent_variables": {
       "customer_name": "John Carter",
@@ -290,7 +290,7 @@ Update mock tools via the `mock_tools` field (GET full list first → merge → 
 ```json
 {
   "information": [
-    {"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
+    {"input": {"phone": "4155551234"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
   ]
 }
 ```

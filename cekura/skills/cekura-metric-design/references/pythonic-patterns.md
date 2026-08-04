@@ -230,4 +230,4 @@ The `METRIC_SECTIONS` dict maps metric names to expected heading patterns. When 
 3. The fuzzy matching handles non-standardized headings (e.g., `# job_booking` matches `## Booking Flow`)
 4. For significantly different structures, add custom entries to METRIC_SECTIONS
 
-If agents follow the standardized template (`Agent-Description-Template.md`), exact matching will work. Otherwise, fuzzy matching handles most variations.
+If agents follow a standardized description template (see the cekura-create-agent skill's `phase4-description.md`), exact matching will work. Otherwise, fuzzy matching handles most variations.

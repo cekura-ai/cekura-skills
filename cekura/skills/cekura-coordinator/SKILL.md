@@ -44,6 +44,10 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `cekura-metric-improvement` | Improve metric accuracy through feedback cycle (labs workflow) |
 | `cekura-predefined-metrics` | Catalog of built-in metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
+| `cekura-infra-test-suite` | Compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF |
+| `cekura-fixing-prod-issues` | Debug a failing prod call end-to-end — reproduce, fix, regression-test, PR |
+| `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — failure rates + outcome distribution |
+| `cekura-generate-scenarios` | Turn flagged production failures into regression evaluator scenarios |
 
 ### Commands
 
@@ -88,12 +92,15 @@ When the user describes what they need, route them:
 | "Help me improve this metric" | `/improve-metric` command |
 | "Leave feedback on a metric result" | `/improve-metric` command (Phase 1: feedback collection) |
 | "Set up production monitoring" | **cekura-onboarding** skill (Phase 6) + observability docs |
-| "Add mock tools" / "set up tools" | **cekura-create-agent** skill (Phase 4) |
-| "Upload knowledge base" | **cekura-create-agent** skill (Phase 5) |
+| "Add mock tools" / "set up tools" | **cekura-create-agent** skill (Phase 7) |
+| "Upload knowledge base" | **cekura-create-agent** skill (Phase 8) |
 | "Something's broken" / "file a bug" | `/report-bug` command |
 | "Improve my agent" / "auto-tune from eval results" | **cekura-self-improving-agent** skill |
 | "Which built-in metrics are available?" / "what does Hallucination Detection cost?" | **cekura-predefined-metrics** skill |
-| "Fix this prod call bug" / "reproduce and test a fix" | **cekura-self-improving-agent** skill |
+| "Fix this prod call bug" / "reproduce and test a fix" | **cekura-fixing-prod-issues** skill (or **cekura-self-improving-agent** for prompt auto-tuning) |
+| "CI/CD tests for my voice bot" / "test my voice infrastructure" | **cekura-infra-test-suite** skill |
+| "What % of calls have <problem>" / "analyze my recent calls" | **cekura-flag-call-log-failures** skill |
+| "Create scenarios from failed calls" / "replay prod failures as tests" | **cekura-generate-scenarios** skill |
 | "Run a full quality report" / "generate evals and run them end-to-end" | `/cekura-report` command |
 
 ## Typical User Journeys
@@ -139,7 +146,10 @@ This skill routes — it doesn't perform tasks itself. After confirming the user
 - Improving metric accuracy → **cekura-metric-improvement**
 - Picking which built-in metrics to use → **cekura-predefined-metrics**
 - Designing test scenarios → **cekura-eval-design**
-- Fixing a production call bug end-to-end → **cekura-self-improving-agent**
+- Fixing a production call bug end-to-end → **cekura-fixing-prod-issues**
+- CI/CD infra tests for a voice bot → **cekura-infra-test-suite**
+- Triaging production call logs → **cekura-flag-call-log-failures**
+- Turning prod failures into scenarios → **cekura-generate-scenarios**
 
 ## Documentation
 

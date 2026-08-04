@@ -75,7 +75,7 @@ Record which path was taken for each scenario in the report (`reused #<id>` / `c
 
 Use `AskUserQuestion` if not already supplied:
 
-1. **Agent ID** on Cekura (numeric, e.g. `16937`). If unknown, use `mcp__cekura__aiagents_list` to help find it.
+1. **Agent ID** on Cekura (numeric, e.g. `12345`). If unknown, use `mcp__cekura__aiagents_list` to help find it.
 2. (Optional) **Project ID**, if the user manages multiple projects.
 3. **The flagged call set** — the calls these scenarios should reproduce. This skill does **not** mine or triage call logs itself; it expects a flagged set, normally one of:
    - The output of **`cekura-flag-call-log-failures`** — a list of `{call_log_id, issue/mode, severity, evidence_quote, expected_behavior}`. Each entry already has the per-call failure record this skill needs; go straight to clustering (Step 4).
@@ -85,7 +85,7 @@ Use `AskUserQuestion` if not already supplied:
 
 Do not proceed until the agent ID is confirmed. If the user pasted a `dashboard.cekura.ai/<project>/observe/<call_log_id>` URL for a single call, use the single-call fast path below.
 
-**Single-call mode.** If the user supplies a specific **call log ID** (or an observe URL) and wants a scenario from *that* call — wording like "create a scenario for call log 7159402", "turn this call into an evaluator", "replay this call" — skip clustering (Step 4) and use the **Single-call fast path** below. You still need the agent context from Step 2a (agent description, dynamic-variable names, personalities, existing scenarios for dedup) and the `tool_ids` rules from Step 4. Confirm which agent the scenario should run against — it can differ from the agent that produced the call.
+**Single-call mode.** If the user supplies a specific **call log ID** (or an observe URL) and wants a scenario from *that* call — wording like "create a scenario for call log 9876543", "turn this call into an evaluator", "replay this call" — skip clustering (Step 4) and use the **Single-call fast path** below. You still need the agent context from Step 2a (agent description, dynamic-variable names, personalities, existing scenarios for dedup) and the `tool_ids` rules from Step 4. Confirm which agent the scenario should run against — it can differ from the agent that produced the call.
 
 ## Single-call fast path — one call ID → one scenario
 
@@ -106,7 +106,7 @@ Walk the caller's path **turn-by-turn in the same order the real call took**, up
 - **Anchor the failure.** The condition right before the failure must set it up exactly (the caller corrects a mis-heard value / declines an offer / mentions a medication / says the ambiguous phrase). Add an explicit condition for the FAIL branch (e.g. "the agent says it is transferring you to a human", "the agent ends the call") with a benign caller line, so the metric has a concrete signal to grade against.
 - **`fixed_message` choice (this bites):**
   - `true` for values that must be reproduced verbatim — DOB, ZIP, the literal trigger phrase ("Speak to me", "Can I talk to somebody?"), a mis-stated-then-corrected number.
-  - `false` (the action text becomes an **instruction the caller paraphrases**) for turns that must **adapt to what the agent offers** — e.g. *"Pick ONE of the specific times the agent offers (the earliest) and name it clearly."* A `fixed_message: true` reply that doesn't actually choose ("that works, thank you") makes the agent re-ask the same question forever — a real loop we hit on slot selection. When the agent presents choices, the caller MUST commit to one concrete option.
+  - `false` (the action text becomes an **instruction the caller paraphrases**) for turns that must **adapt to what the agent offers** — e.g. *"Pick ONE of the specific times the agent offers (the earliest) and name it clearly."* A `fixed_message: true` reply that doesn't actually choose ("that works, thank you") makes the agent re-ask the same question forever — a known slot-selection loop failure. When the agent presents choices, the caller MUST commit to one concrete option.
   - **`FIRST_MESSAGE` (id 0) MUST stay `fixed_message: true`** (API rejects otherwise). For outbound calls (agent speaks first) set its action to `""`.
 - **Always include the end-call tool in `tool_ids`** — it's a hard always-on rule for every scenario (Step 4). End the success path with `<endcall />` in the final action; the `<endcall />` marker is a no-op unless that tool is wired in.
 - **Never append `<silence>` (or `<hold>`) tags at the END of an action.** Those SSML pause tags are only for *mid-utterance* pacing (a beat inside a sentence). Trailing them on the end of a line — e.g. `"...thanks <silence time="1.0s" /> <endcall />"` or as the caller's last token — just injects dead air and serves no purpose. End actions on the spoken words; if the turn closes the call, the final action ends with `<endcall />` directly (no preceding `<silence>`). Do not pad actions with trailing silence by default.
@@ -115,10 +115,10 @@ Walk the caller's path **turn-by-turn in the same order the real call took**, up
 
 ### D. Caller identity → test profile (camelCase keys — load-bearing)
 
-Pull the caller's identity from `metadata` (`enrollment_hello_data`, `*_data` blocks) and the transcript: name, DOB, ZIP, address, medications, etc. Create a test profile (`mcp__cekura__test_profiles_create`, `agent=<agent_id>`) whose `information` carries these as **dynamic variables**.
+Pull the caller's identity from `metadata` (provider metadata blocks (`*_data`)) and the transcript: name, DOB, ZIP, address, medications, etc. Create a test profile (`mcp__cekura__test_profiles_create`, `agent=<agent_id>`) whose `information` carries these as **dynamic variables**.
 
 - **Key casing matters.** These squads reference variables in **camelCase** (`{{firstName}}`, `{{lastName}}`, `{{dateOfBirth}}`, `{{zipCode}}`, `{{fullAddress}}`) — and that's the casing production injects. A profile that only sets lowercase `firstname`/`zipcode` leaves `{{firstName}}`/`{{zipCode}}` **unresolved at runtime** — the agent greets "Am I speaking with `{{firstName}}`?", and tool calls send the literal string `{{zipCode}}` (which the backend rejects). **Set BOTH camelCase and lowercase keys** for every identity field so the prompt resolves regardless of which casing it uses. When `agent_dynamic_vars` (Step 2a) is known, match those names exactly.
-- Keep values consistent with the conditional actions — if the caller says "986 Old Collard Valley Road", the profile's `street`/`fullAddress` must say 986.
+- Keep values consistent with the conditional actions — if the caller says "123 Maple Street", the profile's `street`/`fullAddress` must say 123 Maple Street.
 
 ### E. Metric
 
@@ -160,7 +160,7 @@ Call `mcp__cekura__aiagents_retrieve(id=<agent_id>)` and capture:
 
 Scan `agent_description` (and `llm_system_prompt` if non-empty) for `{{variable_name}}` placeholders — these are dynamic variables the agent expects at call time. Collect the unique names into `agent_dynamic_vars: set[str]`.
 
-**Why it matters:** the Cekura outbound trigger (`vocera.backend/app/helper/provider_outbound_call.py:148`) reads dynamic variables from `test_profile.information` — NOT from `scenario.dynamic_variable_values`. If a scenario references `{{first_name}}` etc. but has no attached test profile, ElevenLabs rejects the conversation with `termination_reason: "Missing required dynamic variables in first message"` and the call drops in < 1s with `call-not-connected`. The scenario will never run successfully without a test profile.
+**Why it matters:** the Cekura outbound-call trigger reads dynamic variables from `test_profile.information` — NOT from `scenario.dynamic_variable_values`. If a scenario references `{{first_name}}` etc. but has no attached test profile, ElevenLabs rejects the conversation with `termination_reason: "Missing required dynamic variables in first message"` and the call drops in < 1s with `call-not-connected`. The scenario will never run successfully without a test profile.
 
 **Hard rule:** if `agent_dynamic_vars` is non-empty AND `assistant_provider == "elevenlabs"`, every scenario this skill creates MUST get a test profile attached in Step 6. For other providers (vapi, retell, bland, livekit) the variables are also injected at runtime but typically don't hard-fail when missing — still recommended to attach a profile so the agent has values to work with.
 

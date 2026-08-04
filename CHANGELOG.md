@@ -27,6 +27,10 @@ Marketplace-eligibility release.
   is authoritative.
 - **Fixed** invalid YAML frontmatter in `cekura/commands/cekura-report.md`
   that failed `claude plugin validate`.
+- **Changed** all example content to fully anonymized placeholders (customer
+  names, identifiers, and infrastructure details replaced with fictional
+  values); added a README "Data & privacy" section documenting the
+  skill-usage ping, the local failure log, and auto-update behavior.
 - **Docs** README/CLAUDE.md now list all 12 skills and describe the current
   per-platform MCP wiring.
 
