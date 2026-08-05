@@ -4,6 +4,20 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.10.2 — 2026-08-05
+
+Manifest version-parity release (no functional changes).
+
+- **Fixed** version drift found by the Gate 0 closure re-run: the 0.10.1
+  release bumped `package.json` and the Claude/Codex manifests but missed
+  `gemini-extension.json` and `cekura/.cursor-plugin/plugin.json`, so a
+  clean Gemini install resolved 0.10.0. All six version-bearing release
+  surfaces now declare 0.10.2.
+- **Changed** `validate_skills.py` `check_versions` to enforce equality
+  across every version-bearing manifest (package, top-level marketplace,
+  Claude, Codex, Gemini, Cursor) with path-specific mismatch errors, so CI
+  rejects any future partial release bump.
+
 ## 0.10.1 — 2026-08-04
 
 Gate 0 acceptance-test fixes.

@@ -54,12 +54,32 @@ def check_skill_frontmatter(errors):
             errors.append(f"{rel}: references internal plugin (cekura-internal:*)")
 
 
+# Every file that declares a release version. A partial bump ships stale
+# versions to whichever platform reads the missed manifest (Gate 0 re-run
+# 2026-08-05: a clean Gemini install resolved 0.10.0 after the 0.10.1
+# release bumped only package/Claude/Codex).
+VERSION_SURFACES = (
+    "package.json",
+    ".claude-plugin/marketplace.json",
+    "cekura/.claude-plugin/plugin.json",
+    "cekura/.codex-plugin/plugin.json",
+    "gemini-extension.json",
+    "cekura/.cursor-plugin/plugin.json",
+)
+
+
 def check_versions(errors):
-    plugin = json.loads((REPO / "cekura/.claude-plugin/plugin.json").read_text())
-    pkg = json.loads((REPO / "package.json").read_text())
-    if plugin["version"] != pkg["version"]:
+    versions = {
+        path: json.loads((REPO / path).read_text())["version"]
+        for path in VERSION_SURFACES
+    }
+    expected = versions["package.json"]
+    mismatches = {p: v for p, v in versions.items() if v != expected}
+    if mismatches:
+        listing = ", ".join(f"{p}={v}" for p, v in sorted(mismatches.items()))
         errors.append(
-            f"plugin.json {plugin['version']} != package.json {pkg['version']}"
+            f"version drift across release manifests: expected {expected} "
+            f"(package.json) but {listing}"
         )
     marketplace = json.loads((REPO / ".claude-plugin/marketplace.json").read_text())
     for entry in marketplace.get("plugins", []):
