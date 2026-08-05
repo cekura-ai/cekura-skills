@@ -18,11 +18,10 @@ cekura-skills/
     .claude-plugin/
       plugin.json                # Claude plugin manifest
     .codex-plugin/
-      plugin.json                # Codex plugin manifest (skills: ./skills/, mcpServers: ./codex-mcp.json)
+      plugin.json                # Codex plugin manifest (skills: ./skills/, mcpServers: ./.mcp.json)
     .cursor-plugin/
       plugin.json                # Cursor plugin manifest (inlines mcpServers with the hosted MCP URL)
-    .mcp.json                    # Claude Code MCP auto-config (camelCase mcpServers)
-    codex-mcp.json               # Codex MCP config (snake_case mcp_servers, same URL)
+    .mcp.json                    # MCP auto-config shared by Claude Code and Codex (camelCase mcpServers)
     skills/                      # Single source of truth for skills
       cekura-coordinator/
       cekura-onboarding/
@@ -49,7 +48,7 @@ cekura-skills/
 
 > **Note on the `cekura/` subdir:** Claude Code's marketplace validator rejects `"source": "."`, so the plugin contents live under `cekura/` and `marketplace.json` points to `"./cekura"`. The `.claude-plugin/marketplace.json` itself stays at the repo root; everything else (plugin.json, .mcp.json, skills/, commands/, agents/, hooks/) travels with the plugin root under `cekura/`.
 >
-> **Other platforms follow the same root-registry → `cekura/` pattern.** Cursor (`.cursor-plugin/marketplace.json`), Codex/generic (`.agents/plugins/marketplace.json`, via `source: "git-subdir"` + `path: "./cekura"`), and Gemini (`gemini-extension.json`) all live at the repo root and resolve into `cekura/`. Codex points at `cekura/codex-mcp.json`; Cursor and Gemini declare the MCP endpoint inline in their own manifests (all the same URL as `cekura/.mcp.json` — `validate_skills.py` asserts parity). These are purely additive — they don't touch `.claude-plugin/marketplace.json`, the `cekura/` assets, or the `npx skills add` path, so existing Claude + npx users are unaffected. See "Multi-platform plugin manifests" below.
+> **Other platforms follow the same root-registry → `cekura/` pattern.** Cursor (`.cursor-plugin/marketplace.json`), Codex/generic (`.agents/plugins/marketplace.json`, via `source: "git-subdir"` + `path: "./cekura"`), and Gemini (`gemini-extension.json`) all live at the repo root and resolve into `cekura/`. Codex reads the same `cekura/.mcp.json` as Claude Code (Codex accepts the camelCase `mcpServers` wrapper and strips the `type` field; snake_case `mcp_servers` would register zero servers — CI enforces the shape); Cursor and Gemini declare the MCP endpoint inline in their own manifests (all the same URL — `validate_skills.py` asserts parity). These are purely additive — they don't touch `.claude-plugin/marketplace.json`, the `cekura/` assets, or the `npx skills add` path, so existing Claude + npx users are unaffected. See "Multi-platform plugin manifests" below.
 
 ### Two install paths, one source of truth
 
@@ -177,7 +176,7 @@ Beyond the Claude Code plugin, the repo ships native plugin/extension manifests 
 
 | Platform | Files | What it delivers | MCP |
 |----------|-------|------------------|-----|
-| Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` (`hooks` → `cekura/hooks/codex-hooks.json`) | Skills + MCP + `SessionStart` auto-update hook (no slash commands — Codex plugins have no `commands` field). The hook needs a one-time `/hooks` trust. | `cekura/codex-mcp.json` (snake_case `mcp_servers` map per OpenAI plugin packaging docs; OAuth on first use) |
+| Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` (`hooks` → `cekura/hooks/codex-hooks.json`) | Skills + MCP + `SessionStart` auto-update hook (no slash commands — Codex plugins have no `commands` field). The hook needs a one-time `/hooks` trust. | `cekura/.mcp.json` (shared with Claude Code — Codex requires the camelCase `mcpServers` wrapper or a direct server map; OAuth on first use) |
 | Cursor | `.cursor-plugin/marketplace.json` (root) + `cekura/.cursor-plugin/plugin.json` | Skills + MCP | inline `mcpServers` in plugin.json (hosted MCP URL) |
 | Gemini CLI | `gemini-extension.json` (root) + `GEMINI.md` (root) | MCP + context file only — Gemini discovers skills from a root `skills/` dir, so the nested `cekura/skills/` isn't bundled; native skill bundling deferred | declared inline via `httpUrl` (native remote MCP + OAuth; no `mcp-remote` shim) |
 

@@ -71,11 +71,27 @@ def check_versions(errors):
 
 
 def check_mcp_url_parity(errors):
+    # Codex reads the file referenced by .codex-plugin/plugin.json's mcpServers
+    # field and requires the camelCase `mcpServers` wrapper (or a direct server
+    # map) — snake_case `mcp_servers` silently registers zero servers
+    # (openai/codex codex-rs/codex-mcp/src/plugin_config.rs).
+    codex_manifest = json.loads(
+        (REPO / "cekura/.codex-plugin/plugin.json").read_text()
+    )
+    codex_mcp_file = REPO / "cekura" / codex_manifest["mcpServers"]
+    codex_mcp = json.loads(codex_mcp_file.read_text())
+    if "mcpServers" not in codex_mcp:
+        errors.append(
+            f"{codex_mcp_file}: Codex MCP companion file must use camelCase "
+            "'mcpServers' (snake_case 'mcp_servers' registers zero servers)"
+        )
+        codex_url = None
+    else:
+        codex_url = codex_mcp["mcpServers"]["cekura"]["url"]
     urls = {
         "cekura/.mcp.json": json.loads((REPO / "cekura/.mcp.json").read_text())
         ["mcpServers"]["cekura"]["url"],
-        "cekura/codex-mcp.json": json.loads((REPO / "cekura/codex-mcp.json").read_text())
-        ["mcp_servers"]["cekura"]["url"],
+        f"codex ref {codex_manifest['mcpServers']}": codex_url,
         "cekura/.cursor-plugin/plugin.json": json.loads(
             (REPO / "cekura/.cursor-plugin/plugin.json").read_text()
         )["mcpServers"]["cekura"]["url"],

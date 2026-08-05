@@ -364,7 +364,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 **For Codex, Cursor, and Gemini CLI:** the MCP server is wired up natively through each platform's plugin/extension manifest, authenticating via OAuth (no API key stored). The sign-in step differs per platform — in **Codex** run `codex mcp login cekura`; **Cursor** prompts for OAuth when you connect the server; **Gemini** runs the OAuth flow on first tool use. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
 
-**How it works:** Claude Code reads the bundled `cekura/.mcp.json`; Codex reads `cekura/codex-mcp.json`; Cursor and Gemini declare the endpoint inline in their own manifests. All four point at the Cekura MCP server at `https://api.cekura.ai/mcp` (CI asserts they stay in sync). By default it authenticates via OAuth — on first use the client opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
+**How it works:** Claude Code and Codex read the bundled `cekura/.mcp.json`; Cursor and Gemini declare the endpoint inline in their own manifests. All four point at the Cekura MCP server at `https://api.cekura.ai/mcp` (CI asserts they stay in sync). By default it authenticates via OAuth — on first use the client opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
 
 ---
 
