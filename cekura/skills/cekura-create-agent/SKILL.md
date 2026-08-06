@@ -1,13 +1,15 @@
 ---
 name: cekura-create-agent
 description: >
-  Use when the user asks to "create a main agent", "set up a main agent", "add my main agent to Cekura",
-  "configure my main agent", "connect my main agent", "set up mock tools", "add tools to my agent",
+  Use when the user asks to "create a main agent", "create a new agent", "set up a main agent",
+  "add my main agent to Cekura", "configure my main agent", "connect my main agent",
+  "walk me through creating an agent", "walk me through agent setup",
+  "set up mock tools", "add tools to my agent",
   "upload knowledge base", "configure integration", "connect VAPI", "connect Retell",
-  "connect LiveKit", "connect ElevenLabs", "add dynamic variables", or needs to onboard
-  a voice AI agent onto the Cekura platform. Covers the full agent setup flow: project
-  selection, provider selection, basics and connection type, description, main agent creation,
-  mock tools, knowledge base, dynamic variables, and advanced configuration.
+  "connect LiveKit", "connect ElevenLabs", "add dynamic variables", or needs to connect
+  a voice AI agent to the Cekura platform for testing. Covers the full agent setup flow:
+  project selection, provider selection, basics and connection type, description, main agent
+  creation, mock tools, knowledge base, dynamic variables, and advanced configuration.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
