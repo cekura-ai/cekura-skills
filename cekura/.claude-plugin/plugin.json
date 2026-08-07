@@ -1,7 +1,7 @@
 {
   "name": "cekura",
   "displayName": "Cekura",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "description": "Cekura voice AI testing & evaluation — platform onboarding, agent setup, metric design and improvement, evaluator design and execution.",
   "author": {
     "name": "Cekura",
