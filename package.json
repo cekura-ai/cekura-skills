@@ -1,8 +1,15 @@
 {
   "name": "@cekura/skills",
-  "version": "0.9.0",
+  "version": "0.10.2",
   "description": "Cekura voice AI testing and evaluation skills for AI coding agents",
-  "keywords": ["agent-skills", "cekura", "voice-ai", "testing", "evaluation", "metrics"],
+  "keywords": [
+    "agent-skills",
+    "cekura",
+    "voice-ai",
+    "testing",
+    "evaluation",
+    "metrics"
+  ],
   "license": "MIT",
   "author": "Cekura <support@cekura.ai>",
   "repository": {

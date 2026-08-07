@@ -80,7 +80,7 @@ Up to three optional positional args, in any order — the parser classifies by 
 | Token shape | Meaning |
 |---|---|
 | `testing` \| `observability` | Variant override. If absent, default to `testing`. |
-| Numeric, e.g. `5242` | Project ID. Skip project picker. |
+| Numeric, e.g. `1234` | Project ID. Skip project picker. |
 | Alphabetic phase token | Phase override (testing-flow: `agent` \| `metrics` \| `evals` \| `run`; observability-flow: `agent` \| `ingest` \| `evaluate` \| `review`). Detection still runs to populate handoff context. |
 | Anything else | Ask one short clarifying question with `AskUserQuestion`. |
 
@@ -94,7 +94,7 @@ If the user passes a phase token that doesn't match the resolved variant, ask on
 
 ## Step 0 - Preflight
 
-Run silently unless broken.
+Run without narrating unless something breaks.
 
 1. Call `mcp__cekura__list_available_tools`.
    - On error: print `MCP not connected. Run /setup-mcp first.` and stop.

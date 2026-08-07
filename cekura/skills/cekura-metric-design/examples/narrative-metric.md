@@ -11,7 +11,7 @@ which works well for behavioral and timing metrics.
   "description": "<PROMPT BELOW>",
   "type": "llm_judge",
   "eval_type": "binary",
-  "agent": 10282,
+  "agent": 12345,
   "evaluation_trigger": "always"
 }
 ```
@@ -27,7 +27,7 @@ this nuance naturally by reading timestamps in context.
 
 ```
 You are an expert evaluator for voice AI calls. Your task is to measure whether the
-`evaluate_transcript_prod` tool call caused an unacceptable delay in the conversation.
+`evaluate_interview` tool call caused an unacceptable delay in the conversation.
 
 INPUTS:
 - Transcript: {{transcript}}
@@ -36,14 +36,14 @@ INPUTS:
 ---------------------------------------------------------
 CONTEXT
 ---------------------------------------------------------
-During Traba calls, there is a critical moment where the system needs to evaluate the
-transcript mid-call using a tool called `evaluate_transcript_prod`. The flow looks like this:
+During candidate-screening calls, there is a critical moment where the system needs to evaluate the
+transcript mid-call using a tool called `evaluate_interview`. The flow looks like this:
 
 1. The agent finishes the initial interview questions
 2. The agent says something like "Give me one moment to gather more information"
 3. Behind the scenes, a chain of tool calls fires: `notify_condition` calls,
-   `transfer_to_agent` calls, and the `evaluate_transcript_prod` call itself
-4. The `evaluate_transcript_prod` returns an "in_progress" status immediately,
+   `transfer_to_agent` calls, and the `evaluate_interview` call itself
+4. The `evaluate_interview` returns an "in_progress" status immediately,
    then a "Background task completed" result arrives later
 5. The agent (possibly after transferring to a new agent node) resumes the conversation
 
@@ -53,7 +53,7 @@ for an unacceptable amount of time. The threshold is **10 seconds**.
 ---------------------------------------------------------
 WHAT TO MEASURE
 ---------------------------------------------------------
-Find the `evaluate_transcript_prod` Function Call in the transcript.
+Find the `evaluate_interview` Function Call in the transcript.
 
 Once found, measure the gap the USER experienced:
 
@@ -74,9 +74,9 @@ IMPORTANT NUANCES
   matters is when the USER hears the agent speak again.
 - In slow cases, filler messages like "I'm still here" count as the next speech.
   If the first thing they hear is filler and it took 68 seconds, that's a 68-second gap.
-- There may be multiple `evaluate_transcript_prod` calls — focus on the initial call
+- There may be multiple `evaluate_interview` calls — focus on the initial call
   (large arguments with conversation transcript) for the start point.
-- If no `evaluate_transcript_prod` tool call exists, return N/A.
+- If no `evaluate_interview` tool call exists, return N/A.
 
 ---------------------------------------------------------
 OUTPUT INSTRUCTIONS
@@ -85,7 +85,7 @@ Return one of:
 
 * **TRUE (Pass):** Gap is less than 10 seconds. Include measured gap.
 * **FALSE (Fail):** Gap is 10+ seconds. Include the measured gap and the two timestamps used.
-* **N/A:** No `evaluate_transcript_prod` found in this conversation.
+* **N/A:** No `evaluate_interview` found in this conversation.
 ```
 
 ## Why This Works

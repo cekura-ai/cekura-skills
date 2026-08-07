@@ -15,7 +15,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.6.0"
+  version: "0.7.0"
 ---
 
 > **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
@@ -26,7 +26,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.2"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
@@ -43,7 +43,7 @@ When this skill suggests creating, listing, updating, or evaluating something on
 - **Main agent**: The client's AI voice agent being tested
 - **Testing agent**: Cekura's simulated caller that exercises the main agent
 - **Evaluator/Scenario**: A test case defining what the simulated caller does and what success looks like
-- **Metric**: A post-call evaluation that scores a transcript (separate concept — see cekura-metrics plugin)
+- **Metric**: A post-call evaluation that scores a transcript (separate concept — see the cekura-metric-design skill)
 - **Personality**: Voice, language, accent, and behavioral traits for the simulated caller
 - **Test Profile**: Identity and context data passed to testing agent AND main agent (for chat/websocket runs)
 - **Conditional Action**: Structured, deterministic testing agent behavior with adaptive fallback
@@ -329,6 +329,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 ### XML tag constraints (the ones you'll hit most)
 
 - **All XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text.
+- **`<client_message t="..." d='...' />`** sends an app-defined RTVI client message to a Pipecat agent. `t` is required, `d` is optional, and the message is silent.
 - **`<ivr text="..." />` and `<voicemail text="..." />`** (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags. Use a separate `action_followup` for post-IVR / post-beep content.
 - **`<ignore_interruptions>...</ignore_interruptions>`** protects a **span**, not the whole action: everything inside (text, attached `<audio>` clips, `<hold>`/`<silence>`) plays to completion; the main agent's speech during the span is transcribed but never interrupts or triggers a reply. Content goes between the tags — never in an attribute — and `<hold>`/`<audio>` inside `<ivr text="...">` are rejected at save time in favor of this tag.
 - **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
@@ -713,7 +714,7 @@ When generating a batch of scenarios (auto-gen or manual), apply this distributi
 - **Every scenario must be grounded** in an actual agent capability — a workflow branch in the description, a configured tool, a KB fact, or a general conduct policy (professionalism, safety, escalation). Reach the target count by permuting grounded branches, value variants, friction positions, and personas — never by inventing capabilities the agent doesn't have. Friction may never be premised on environment failures the scenario can't control or on the main agent misbehaving.
 - **KB grounding**: when knowledge-base content exists, enrich scenarios with 1–2 concrete named facts from it ("asks whether the clinic accepts Blue Shield PPO", not "asks about insurance"). Not every scenario needs KB facts — workflow-only scenarios are equally valid. When NO KB exists, don't write scenarios expecting the agent to answer factual questions — the only valid expected behaviors are clarifying, saying it can't find that information, transferring, or redirecting to a defined workflow.
 
-## Example: Medical Clinic Agent (BCHS/Kouper — 54 evaluators)
+## Example: Medical Clinic Agent (anonymized — 54 evaluators)
 
 ### Category Breakdown
 
@@ -735,7 +736,7 @@ When generating a batch of scenarios (auto-gen or manual), apply this distributi
 - **Must-have**: 39 evaluators (72%) — core workflows that must work correctly
 - **Nice-to-have**: 15 evaluators (28%) — edge cases and enhancements
 
-### Coverage Principles from BCHS
+### Coverage Principles from the clinic deployment
 
 1. **Every workflow gets a happy path**: S-01 through S-10 cover all scheduling variants
 2. **Every workflow gets error paths**: RS-06 (tool fails 3+ times), CN-05 (cancel tool error)
@@ -743,21 +744,21 @@ When generating a batch of scenarios (auto-gen or manual), apply this distributi
 4. **Safety is heavily covered**: 9 scenarios for medical emergency handling (highest consequence of failure)
 5. **Cross-workflow scenarios exist**: CN-02 tests cancel → immediately rebook (two workflows in one call)
 
-## Example: Staffing Platform Agent (Traba — 3 metrics, implicit eval patterns)
+## Example: Staffing Platform Agent (anonymized — 3 metrics, implicit eval patterns)
 
 ### Coverage Areas
 
 | Area | What to Test |
 |------|-------------|
 | Interview Flow | Pay expectations, commute, availability, work experience questions |
-| Tool Performance | evaluate_transcript_prod timing, tool chain stalls |
+| Tool Performance | evaluate_interview timing, tool chain stalls |
 | Onboarding | App installation guidance, silence persistence, step-by-step navigation |
 | Escalation | Get Help redirect when user is stuck |
 | Multi-agent Transfer | Handoff between interview → evaluation → onboarding agents |
 
-### Key Insight: Traba has fewer evals but more metrics
+### Key Insight: this deployment has fewer evals but more metrics
 
-Traba's testing strategy relies more on metrics (measuring call quality on real production calls) than on simulated evals. This is appropriate for outbound calls where the agent initiates — you can't easily simulate the full multi-agent flow. Instead, real calls are evaluated by metrics.
+This deployment's testing strategy relies more on metrics (measuring call quality on real production calls) than on simulated evals. This is appropriate for outbound calls where the agent initiates — you can't easily simulate the full multi-agent flow. Instead, real calls are evaluated by metrics.
 
 ## Building a Coverage Matrix
 

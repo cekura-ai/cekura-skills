@@ -6,7 +6,7 @@ description: >
   "auto-tune / iterate on my prompt", "fix my agent from test results",
   "optimize my prompt based on failures", "rewrite my prompt". ALSO for
   production-call bug fixing: "fix this prod call issue", "debug and fix
-  call ID", "reproduce this production bug". Works across VAPI, ElevenLabs,
+  call ID", "reproduce this production bug". Works across VAPI, Retell, ElevenLabs, Bland,
   and self-hosted agents, and across three fix surfaces — prompt, tool config,
   and (self-hosted) owned source code, including infra-flavored / forked-SDK
   bugs, which are reproduced and validated on Cekura (never a code test).
@@ -21,7 +21,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-self-improving-agent:5x7n3d`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-self-improving-agent"`, `verification_tag="ack:cekura-self-improving-agent:5x7n3d"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-self-improving-agent"`, `verification_tag="ack:cekura-self-improving-agent:5x7n3d"`, and `plugin_version="0.10.2"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Self-Improving Agent
 
@@ -41,8 +41,8 @@ Every run resolves to a **target** described by three axes. Resolving these thre
   any vendored/forked SDK that lives inside the source tree the run-setup edits.
   Always out of scope: business logic, auth / secrets, dependencies, LLM-client
   config.
-- **Apply path** — how an edit goes live: a provider API PATCH (VAPI /
-  ElevenLabs — live immediately), an `Edit` plus a `redeploy_command` (self-hosted
+- **Apply path** — how an edit goes live: a managed-provider API/MCP update (VAPI /
+  Retell / ElevenLabs / Bland — live immediately), an `Edit` plus a `redeploy_command` (self-hosted
   live target), live-on-save (`"noop"`), or **render-only** (print the rewrite
   for the user to apply).
 - **Validation** — how a fix is proven: **always Cekura scenarios** run through
@@ -75,7 +75,7 @@ phase entry (`Iteration N · <Phase>`) and re-read its phase file on entry.
    axes + signal + live-target simulation runner; for self-hosted live targets collect the `redeploy_command`
    (hard gate before the loop; skipped when render-only). Persist reusable
    run-setup to `.claude/MEMORY.md`. Runs once.
-2. **Clone** ([`phases/clone.md`](phases/clone.md)) — VAPI / ElevenLabs only:
+2. **Clone** ([`phases/clone.md`](phases/clone.md)) — managed providers only:
    stand up a disposable copy of the agent + its tools in the same org and rebind
    the run to it, so production is never touched. Every other target passes
    through. Runs once.
@@ -99,7 +99,7 @@ phase entry (`Iteration N · <Phase>`) and re-read its phase file on entry.
      all-KEEP → stop. (Owned code — including a forked SDK in the tree — is a CodeBug,
      not Upstream.)
    - **Apply** ([`phases/optimization/apply.md`](phases/optimization/apply.md)) —
-     land edits via the apply path, then redeploy (VAPI / ElevenLabs / render-only
+     land edits via the apply path, then redeploy (managed providers / render-only
      skip it). Non-zero redeploy exit halts.
    - **Sync** ([`phases/optimization/sync.md`](phases/optimization/sync.md)) —
      re-fetch and verify every changed field landed. Drift rolls back to Apply.
@@ -134,6 +134,10 @@ Resolved during Setup; detail in `providers/`.
   `conversation_config.agent.prompt.prompt` + tools editable via `xi-api-key`;
   edits live immediately; no squads / spoken per-tool utterances.
   [`providers/elevenlabs/overview.md`](providers/elevenlabs/overview.md)
+- **`retell`** — agent configuration and tools editable through the Retell API/MCP;
+  edits live immediately. [`providers/retell/overview.md`](providers/retell/overview.md)
+- **`bland`** — managed persona/tool configuration; preserve separate voice persona
+  and chat pathway identifiers. [`providers/bland/overview.md`](providers/bland/overview.md)
 - **`self_hosted`** — one bucket for any agent the user runs; the **run-setup** in
   `.claude/CLAUDE.md` / `.claude/MEMORY.md` defines how it's explored, edited, redeployed, and
   validated. The editable surface is whatever the run-setup points to (source file
@@ -141,8 +145,8 @@ Resolved during Setup; detail in `providers/`.
   `llm_system_prompt` are NOT the source of truth.
   [`providers/self-hosted/overview.md`](providers/self-hosted/overview.md)
 
-Prefer Cekura platform tools for Cekura actions; VAPI / ElevenLabs writes go
-directly to their APIs. Retell is intentionally disabled.
+Prefer Cekura platform tools for Cekura actions; provider writes use the
+provider API/MCP documented in `providers/`.
 
 ## Inputs & parameters
 
@@ -151,7 +155,7 @@ diagnosed-code-bug / render-only run) plus exactly one signal.
 
 Optional: `dataset_size` (default 8, range 5–10) · `stochastic_runs` (default 8,
 5–10) · `repro_threshold` (default ⌈runs/2⌉) · `verify_threshold` (default
-⌈0.8·runs⌉) · `max_iterations` (default 10) · `mode` (`vapi` / `elevenlabs` /
+⌈0.8·runs⌉) · `max_iterations` (default 10) · `mode` (`vapi` / `retell` / `elevenlabs` / `bland` /
 `self_hosted`) · `redeploy_command` (self-hosted; a shell command, `"manual"`,
 `"noop"`, or offline) · `auto_mode` (default **true** — skips the per-iteration
 diff-approval and cleanup pauses and routine restart pauses; the Setup hard gate,
@@ -206,6 +210,7 @@ phases/
 providers/
   vapi/{overview,phase-1-fetch,phase-4-apply}.md
   elevenlabs/{overview,phase-1-fetch,phase-4-apply,workflow-internals}.md
+  bland/overview.md
   self-hosted/overview.md
 references/
   phase-2-failure-collection.md · phase-3-diagnosis.md · dynamic-variables-debugging.md

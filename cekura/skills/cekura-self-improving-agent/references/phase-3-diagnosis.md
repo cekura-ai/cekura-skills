@@ -7,10 +7,10 @@ Full classification table with examples, before/after templates per edit surface
 | Bucket | What it looks like | Example |
 |--------|--------------------|---------|
 | **Gap** | No prompt section addresses this situation AND variable state is healthy. The agent improvised and got it wrong. | Prompt never says what to do if caller asks for a manager → agent makes up a transfer policy. |
-| **Conflict** | Two clauses contradict each other, OR a clause contradicts the tool definition (e.g. tool description says "wait for X", prompt says "don't ask for X"), OR a clause contradicts the behavior the failure expects. | Lab Availability prompt says "skip the question gate, fire handoff immediately"; handoff tool description says "wait for user confirms no questions" → agent stalls. |
+| **Conflict** | Two clauses contradict each other, OR a clause contradicts the tool definition (e.g. tool description says "wait for X", prompt says "don't ask for X"), OR a clause contradicts the behavior the failure expects. | The scheduling-node prompt says "skip the question gate, fire handoff immediately"; handoff tool description says "wait for user confirms no questions" → agent stalls. |
 | **Ambiguity** | One section addresses it but wording is vague enough the agent could read it either way AND variable state is healthy. | "Wrap up the call politely" — no concrete steps, agent skipped a legally required disclosure. |
 | **CodeBug** | Owned source code (incl. any vendored/forked SDK inside the source tree the run-setup edits) has a verifiable bug causing the failure. Fix via Edit + redeploy, validated on Cekura (trigger forced in-sim per REPRO.3e), shipped as a PR. | Self-hosted agent: an SDK fork in the repo is double-encoding a payload, causing tool calls to fail. |
-| **Upstream/data** | Variable state shows the runtime lacked what the prompt or tool requires: a placeholder is `null` / absent / empty, a key name mismatches, or literal `{{...}}` strings survived into rendered messages or tool-call arguments. No prompt or tool edit fixes the root cause. | Lab Availability prompt depends on `{{leadId}}`, `{{appointment_rules}}`; runtime shows `appointment_rules=[]`, `leadId=null`; tool calls fire with literal `leadId="{{leadId}}"`. |
+| **Upstream/data** | Variable state shows the runtime lacked what the prompt or tool requires: a placeholder is `null` / absent / empty, a key name mismatches, or literal `{{...}}` strings survived into rendered messages or tool-call arguments. No prompt or tool edit fixes the root cause. | The scheduling-node prompt depends on `{{customerId}}`, `{{schedulingRules}}`; runtime shows `schedulingRules=[]`, `customerId=null`; tool calls fire with literal `customerId="{{customerId}}"`. |
 
 **When both Upstream/data AND a Gap/Conflict/Ambiguity are present**, pick the bucket that produces the larger behavior change if fixed — usually Upstream/data, because a phantom prompt fix against broken variable state will fail re-validation the same way. Surface the secondary component as "deferred — re-evaluate after upstream fix."
 
@@ -25,9 +25,9 @@ Full classification table with examples, before/after templates per edit surface
 | 1 | `handoff-destination-request` → HTTP **400 `"Only in-progress status accepted"`**, OR a `handoff_to_*` tool with `destinations: [{type:"dynamic"}]` errors and control never transfers (agent stalls after "let me move you to the next step"). | Cekura sim harness does not implement VAPI's dynamic `handoff-destination-request`. | **Upstream (harness gap).** Don't edit the prompt. Test-env mitigation only: hardcode the handoff to a concrete member id — note it as a sim fix, not an agent-quality fix. |
 | 2 | Agent repeatedly calls a generic fallback tool instead of the intended data tool; the intended MCP sub-tool name appears **zero times** in the call log. | VAPI failed to connect/list the MCP server's sub-tools at runtime; the needed function wasn't in the exposed tool set. | **Upstream (VAPI MCP load failure).** Do NOT write "use tool X" prompt edits. |
 | 3 | `"Couldn't get tool for hook. toolId … does not exist"` at call creation / handoff. | Tool wiring / mock-clone churn left a dangling toolId reference. | **Upstream (tool wiring / call assembly).** |
-| 4 | Tool results like `"No matching input found"`, `"No matching mock input found for tool: X"`, `{"success": false, "message": "recordId is required"}`, empty `availableSlots`, or stale dates (e.g. 2024 slots in a 2026 call). The agent made the right call; the mock returned an error/blank. | Mock/test-data gap: missing `freetext_params`, missing fields, stale dates, or stringified-arg extraction failing to match. | **Upstream (test/mock data).** Fix the mock, never the prompt. See [[reference-vapi-squad-mcp-tool-mocking]] for the freetext_params / catch-all fix. |
-| 6 | A tool fails because the backend requires a field that is neither in the tool schema nor a provided variable (e.g. `reschedule_enrollment_call` needs a `recordId` that exists nowhere) → guaranteed failure → transfer. | Tool/backend contract gap. | **Upstream (tool/backend contract).** Route to the backend/tool team; not promptable. |
-| 7 | Caller asks for something the agent has no tool for (e.g. reschedule a twin appointment when only lab/enrollment-call reschedule tools exist) and the prompt's documented behavior is "transfer to human." | Missing capability — the transfer is the designed behavior. | **Upstream / working-as-designed.** Don't propose a prompt edit telling the agent to use a tool it doesn't have. |
+| 4 | Tool results like `"No matching input found"`, `"No matching mock input found for tool: X"`, `{"success": false, "message": "recordId is required"}`, empty `availableSlots`, or stale dates (e.g. 2024 slots in a 2026 call). The agent made the right call; the mock returned an error/blank. | Mock/test-data gap: missing `freetext_params`, missing fields, stale dates, or stringified-arg extraction failing to match. | **Upstream (test/mock data).** Fix the mock, never the prompt. Fix via the mock tool's `freetext_params` / catch-all entry. |
+| 6 | A tool fails because the backend requires a field that is neither in the tool schema nor a provided variable (e.g. `reschedule_intake_call` needs a `recordId` that exists nowhere) → guaranteed failure → transfer. | Tool/backend contract gap. | **Upstream (tool/backend contract).** Route to the backend/tool team; not promptable. |
+| 7 | Caller asks for something the agent has no tool for (e.g. reschedule an appointment type it has no reschedule tool for) and the prompt's documented behavior is "transfer to human." | Missing capability — the transfer is the designed behavior. | **Upstream / working-as-designed.** Don't propose a prompt edit telling the agent to use a tool it doesn't have. |
 | 8 | Run verdict reads `success: true` / `status: completed` but the call actually stalled into dead air / timeout. | Verdict flag doesn't always catch silence/stall. | Don't trust the flag alone — but equally **don't reclassify an infra stall (rows 1–4) as a prompt failure**. Confirm the failure shape against the transcript first. |
 | 9 | `"Model request attempt #1 failed"` (category `model`) in the log. | Transient LLM-provider hiccup / retry. | **Ignore** — not an agent or harness defect. |
 
@@ -65,7 +65,7 @@ Full classification table with examples, before/after templates per edit surface
 **Placement.** Pair with the existing "if you hear menu options, do X" / "Initial Audio Triage" guidance so the rules are read together.
 
 **Apply path notes:**
-- Provider API PATCH (VAPI/ElevenLabs): prompt edit only, lands live.
+- Managed-provider API/MCP update: prompt edit only, lands live.
 - Self-hosted source code: verify the code allows agent text + DTMF tool invocation on the same turn; if the source routes DTMF before speech (split paths for tool vs. speech turns), add an orchestration-code edit in the same iteration. For non-source-edit targets (DB row / mock tools / render-only), surface a paired hand-off asking the user to enable speech + DTMF on the same turn.
 
 ### Over-eager transfer / premature-exit patterns (scheduling & support flows)
@@ -80,7 +80,7 @@ These recur on enrollment / appointment-scheduling squads. All are genuine promp
 
 ## Tool-config edit sub-types
 
-The four sub-types apply regardless of provider. Mechanics differ by apply path: VAPI uses PATCH endpoints; ElevenLabs uses `PATCH /v1/convai/tools/{id}` for standalone tools and the agent's `prompt.tool_ids` for references; self-hosted edits owned source and redeploys. ElevenLabs has no spoken `messages`, `destinations`, or per-member scoping. See [`../providers/elevenlabs/phase-4-apply.md`](../providers/elevenlabs/phase-4-apply.md) for ElevenLabs mechanics.
+The four sub-types apply regardless of provider. Managed providers use their live API/MCP; self-hosted edits owned source and redeploys. Preserve provider-specific routing and tool-reference semantics.
 
 | Sub-type | When to propose | Mechanics |
 |---|---|---|
@@ -118,14 +118,14 @@ Proposed Change 1 of 4 — Gap (prompt)
 
 ```
 Proposed Change 2 of 4 — Conflict (tool)
-  Surface: tool handoff_to_screener (id 880d...3177), messages[request-start].content
+  Surface: tool handoff_to_specialist (id abc1...9999), messages[request-start].content
   Addresses: 8 failures (replays once per user turn after handoff)
   Diagnosis: request-start message fires on every chat-mode rerouting event,
              producing a repeated "Perfect, thank you..." utterance.
 
   Before:
-    "Perfect, thank you for that! Your identity is verified. Now let's get
-     into the exciting part - understanding your health goals..."
+    "Great, you're verified! Next let's go over your goals for the
+     program..."
 
   After:
     "" (empty — squad transitions are handled by the destination's first
@@ -142,7 +142,7 @@ Proposed Change 3 of 4 — Conflict (tool reference)
              LLM calls it as a no-op routing affordance.
 
   Before:
-    toolIds: [..., "880d2980-...", ...]
+    toolIds: [..., "abc12345-...", ...]
 
   After:
     toolIds: [..., (removed), ...]   # tool definition stays — other members may still use it
@@ -154,9 +154,9 @@ Proposed Change 3 of 4 — Conflict (tool reference)
 Upstream Finding 1 of 1 — Upstream/data (no edit, hand off)
   Surface: NOT EDITABLE FROM THIS SKILL — test profile / squad-level dynamic variables
   Affects: 3 of 3 failed runs
-  Diagnosis: Prompt depends on {{leadId}}, {{zipcode}}, {{labVendors}},
+  Diagnosis: Prompt depends on {{customerId}}, {{zipcode}}, {{vendorList}},
              {{appointment_rules}}, {{currentDate}}. Runtime shows all null/empty.
-             Tool calls fire with literal placeholders (e.g. leadId="{{leadId}}").
+             Tool calls fire with literal placeholders (e.g. customerId="{{customerId}}").
 
   Recommendation:
     Inject these variables in the test profile (preferred for test runs) or the
@@ -167,7 +167,7 @@ Upstream Finding 1 of 1 — Upstream/data (no edit, hand off)
                   scenario / test-profile config.
 
   Deferred (re-evaluate after upstream fix):
-    - Lab Availability prompt + handoff tool description conflict around the
+    - The scheduling-node prompt + handoff tool description conflict around the
       "no questions?" gate. Looks like a real prompt-following bug but cannot
       be confirmed against broken variable state.
 ```

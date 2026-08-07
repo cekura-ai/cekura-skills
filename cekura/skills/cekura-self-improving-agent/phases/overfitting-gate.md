@@ -38,7 +38,7 @@ When in doubt, **flag but propose REVISE, not STRIP** — generalizing a borderl
 
 Pull this iteration's diff (generic surfaces; provider detail differs only in where the field lives):
 
-- **Prompt / tool config (VAPI · ElevenLabs · self-hosted DB row / Cekura mock tools)** — diff the system prompt(s), tool `description` / `parameters` / schema, and (VAPI) spoken `messages` + handoff `destinations`, tool-id deltas.
+- **Prompt / tool config (managed providers · self-hosted DB row / Cekura mock tools)** — diff the system prompt(s), tool `description` / `parameters` / schema, and provider-specific routing/tool references.
 - **Owned source (self-hosted)** — diff the source regions APPLY.1 touched: system-prompt string literals and tool-definition blocks (score these), orchestration control-flow (do NOT score).
 - **Render-only** — diff the previously-rendered prompt vs the just-rendered rewrite.
 

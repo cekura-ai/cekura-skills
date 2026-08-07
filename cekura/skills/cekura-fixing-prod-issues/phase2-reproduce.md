@@ -16,7 +16,7 @@ Build a controlled reproduction of the bug on Cekura **before writing any fix**.
 
 ## 2a. Create the evaluator using conditional actions
 
-Use the `cekura-evals:conditional-actions` skill to build a deterministic evaluator.
+Use the the `cekura-eval-design` skill (`references/conditional-actions.md`) skill to build a deterministic evaluator.
 
 Extract **Testing Agent** turns from `transcript_object` verbatim. Do **not** clean up or paraphrase — garbled text, truncated words, STT artifacts are exactly what the main agent's LLM received in production and are the bug trigger.
 
@@ -109,7 +109,7 @@ Configure `local_runner.py`:
 | `scenario_config.instructions` | Agent system prompt (`description` from Phase 1) |
 | `scenario_config.name` | `"Bug repro: <issue>"` |
 | `call_details.call_id` | `"<provider-issued string>"` |
-| `dialout_settings.sip_uri` | `sip:<CEKURA_OUTBOUND_NUMBER>@cekura-pipecat-local.sip.twilio.com?X-CallerId=+19789751706` |
+| `dialout_settings.sip_uri` | `sip:<CEKURA_OUTBOUND_NUMBER>@<your-sip-domain>.sip.twilio.com?X-CallerId=+14155551234` |
 
 **Role swap:** If instructions mention "main agent" or "testing agent" by name, swap the labels — locally the roles are inverted.
 

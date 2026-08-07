@@ -117,7 +117,7 @@ X-CEKURA-API-KEY: <key>
 Content-Type: application/json
 
 {
-  "call_log_ids": [3358270, 3358271, 3358272],
+  "call_log_ids": [5550000, 5550001, 5550002],
   "predefined_metric_codes": ["CSAT", "SENTIMENT"]
 }
 ```

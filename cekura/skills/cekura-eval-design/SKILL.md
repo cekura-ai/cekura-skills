@@ -15,14 +15,14 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.6.0"
+  version: "0.7.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-eval-design:7k3m4q -->
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.9.0"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.2"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
@@ -39,7 +39,7 @@ When this skill suggests creating, listing, updating, or evaluating something on
 - **Main agent**: The client's AI voice agent being tested
 - **Testing agent**: Cekura's simulated caller that exercises the main agent
 - **Evaluator/Scenario**: A test case defining what the simulated caller does and what success looks like
-- **Metric**: A post-call evaluation that scores a transcript (separate concept — see cekura-metrics plugin)
+- **Metric**: A post-call evaluation that scores a transcript (separate concept — see the cekura-metric-design skill)
 - **Personality**: Voice, language, accent, and behavioral traits for the simulated caller
 - **Test Profile**: Identity and context data passed to testing agent AND main agent (for chat/websocket runs)
 - **Conditional Action**: Structured, deterministic testing agent behavior with adaptive fallback
@@ -325,6 +325,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 ### XML tag constraints (the ones you'll hit most)
 
 - **All XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text.
+- **`<client_message t="..." d='...' />`** sends an app-defined RTVI client message to a Pipecat agent. `t` is required, `d` is optional, and the message is silent.
 - **`<ivr text="..." />` and `<voicemail text="..." />`** (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags. Use a separate `action_followup` for post-IVR / post-beep content.
 - **`<ignore_interruptions>...</ignore_interruptions>`** protects a **span**, not the whole action: everything inside (text, attached `<audio>` clips, `<hold>`/`<silence>`) plays to completion; the main agent's speech during the span is transcribed but never interrupts or triggers a reply. Content goes between the tags — never in an attribute — and `<hold>`/`<audio>` inside `<ivr text="...">` are rejected at save time in favor of this tag.
 - **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
