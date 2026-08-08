@@ -4,6 +4,18 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.10.3 — 2026-08-07
+
+- **Added** the `<voice provider="P" id="X" model="Y" />` conditional-action tag
+  to `cekura-eval-design` (SKILL.md, `references/conditional-actions.md`) and
+  `codex/AGENTS.md` / `GEMINI.md`. It switches the testing agent's TTS voice
+  mid-call, which is the only way to put a second speaker in one simulated call
+  — a caller handing the phone over, a supervisor taking the line. Previously
+  this needed an attached audio recording, which also fixes the dialogue.
+  Documents the provider/voice-id format pairing (Cartesia ids are UUIDs,
+  ElevenLabs ids are alphanumeric), the per-provider default models, and that
+  the provider itself cannot change mid-call.
+
 ## 0.10.2 — 2026-08-05
 
 Manifest version-parity release (no functional changes).

@@ -15,7 +15,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.7.0"
+  version: "0.8.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-eval-design:7k3m4q -->
@@ -334,6 +334,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 - **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
 - **`<spell>TEXT</spell>`** wraps text to spell letter by letter (good for IDs, account numbers).
 - **`<speed ratio="N" />`** range **0.8–1.2**; **`<volume ratio="N" />`** range **0–2** (Cartesia voices only) — both must be at the **start** of the action.
+- **`<voice provider="P" id="X" model="Y" />`** switches the testing agent's TTS voice from that point on — **the only way to put a second speaker in one call** (caller hands the phone over, supervisor takes over). `provider` and `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). The provider itself cannot change mid-call. Prefer this over an attached audio clip when you only need a different *voice* — a recording also fixes the dialogue.
 - **`<network_simulation packet_loss="N" />`** — only `packet_loss` is supported.
 
 ### Worked example — Linear verification flow

@@ -144,6 +144,39 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 | `<spell>TEXT</spell>` | Spell text letter-by-letter (no attributes) | Wrap target text |
 | `<speed ratio="N" />` | Speech rate; ratio range **0.8–1.2** (0.8 = 20% slower, 1.2 = 20% faster) | **Must start the action** |
 | `<volume ratio="N" />` | Volume; ratio range **0–2** (0 = silent, 1 = normal, 2 = double) | **Must start the action. Cartesia voices only.** |
+| `<voice provider="P" id="X" model="Y" />` | Switch the testing agent's TTS voice from this point on — everything spoken after the tag, **including later conditions**, uses the new voice until another `<voice>` tag changes it. This is how you put a second speaker in one call. | `provider` + `id` required and must match each other (see below); `model` optional. Embeddable mid-action. |
+
+#### `<voice>` — simulating multiple speakers
+
+The one way to get more than one voice into a simulated call. Use it for a caller handing the
+phone over ("let me get my husband"), a supervisor taking over, or a different person picking up.
+
+```json
+{
+  "id": 2,
+  "condition": "agent asks to speak to the account holder",
+  "action": "Hold on, let me get my husband. <voice provider=\"11labs\" id=\"21m00Tcm4TlvDq8ikWAM\" /> Hi, this is Mark speaking.",
+  "type": "standard",
+  "fixed_message": true
+}
+```
+
+**`provider` and `id` must belong together** — a voice id is issued by one provider and is
+meaningless to any other. A mismatched pair is rejected when you save the evaluator:
+
+| Provider | Voice ID format | Example | Default model |
+|---|---|---|---|
+| `cartesia` | UUID | `b7d50908-b17c-442d-ad8d-810c63997ed9` | `sonic-3.5` |
+| `11labs` | Alphanumeric, no dashes | `21m00Tcm4TlvDq8ikWAM` | `eleven_turbo_v2_5` |
+
+**The provider cannot change mid-call.** `provider` states which provider the id belongs to; it
+must be the provider the evaluator already runs on. To use a voice from a different provider,
+change the evaluator's voice configuration instead.
+
+Omit `model` to take the provider default from the table above.
+
+Prefer `<voice>` over an attached audio clip when you only need a *different speaker* — a
+recording also fixes the dialogue, so the testing agent can no longer adapt.
 
 #### `<silence>` vs `<hold>`
 
@@ -749,6 +782,10 @@ XML tags (fixed_message:true only):
                                      AND at the very start of the action string
   <speed ratio="N" />               Speech rate 0.8–1.2; must start the action
   <volume ratio="N" />              Volume 0–2; must start the action; Cartesia only
+  <voice provider="P" id="X" model="Y" />   Switch TTS voice from here on — the way to get a
+                                     second speaker. provider+id must match (cartesia=UUID,
+                                     11labs=alphanumeric); model optional (sonic-3.5 /
+                                     eleven_turbo_v2_5); provider can't change mid-call
   <send_sms text="..." />           Trigger SMS for SMS workflows
   <network_simulation packet_loss="N" />   Only packet_loss supported (% value)
   <background_noise sound="NAME" volume="N">spoken text</background_noise>   volume multiplier 0.5–2 (optional)
