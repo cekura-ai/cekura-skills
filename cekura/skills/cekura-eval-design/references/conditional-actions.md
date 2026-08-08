@@ -82,6 +82,7 @@ The `role` and `conditions[]` fields inside `conditional_actions`:
 - Actions whose entire payload is `<ivr text="..." />` (must occupy the whole action by validation rule).
 - Actions whose entire payload is `<voicemail text="..." />` or `<voicemail />` (must occupy the whole action by validation rule).
 - Actions that lead with `<interruption time="Xs" />` (the testing agent is itself cutting in on the main agent, so the main agent cannot interrupt back — the spoken text after the tag is protected).
+- Any content wrapped in `<ignore_interruptions>...</ignore_interruptions>` (span-scoped, so unlike `<ivr>`/`<voicemail>` it does NOT have to be the entire action — and the main agent's speech during the span is still transcribed for evaluation, just never acted on).
 
 `<hold>` is **only** uninterruptible during the hold period itself; any spoken text before or after `<hold>` in the same action remains interruptible (so `"sentence <hold time=\"3s\" /> sentence"` is not safe inside an `action_followup`).
 
@@ -129,8 +130,9 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<ivr text="..." />` | Uninterruptible IVR menu played **by the testing agent**. Can appear in any condition. **When the scenario contains the `<ivr>` tag, any DTMF digits pressed by the main agent appear in the transcript** — use this to write conditions that detect which digit the main agent pressed (e.g., `"The main agent pressed 1"`). | **Must be the entire action.** No surrounding text or other tags. |
+| `<ivr text="..." />` | Uninterruptible IVR menu played **by the testing agent**. Can appear in any condition. **When the scenario contains the `<ivr>` tag, any DTMF digits pressed by the main agent appear in the transcript** — use this to write conditions that detect which digit the main agent pressed (e.g., `"The main agent pressed 1"`). | **Must be the entire action.** No surrounding text or other tags. `<hold>` and `<audio>` inside `text` are rejected at save time — use `<ignore_interruptions>` for clip sequences. |
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible voicemail greeting + auto-beep at end. `text` is optional (silent voicemail allowed). | **Must be the entire action.** Post-beep message goes in a separate `action_followup` condition. |
+| `<ignore_interruptions>...</ignore_interruptions>` | Protected playback span: everything inside — text, attached `<audio>` clips, `<hold>`/`<silence>` pauses, or any mix — plays to completion. The main agent's speech during the span **is still transcribed and evaluated**; it just never interrupts playback or triggers a reply. | Block tag scoped to a **span**: content goes between the tags (never in an attribute), it may appear more than once per action with text/tags before and after, and spans cannot nest. |
 | `<endcall />` | Terminates the call | **May be combined with surrounding text** (the only "communication-class" tag that allows this — useful for natural sign-offs like `Thanks, that's all I needed <endcall />`). |
 
 ### Speech Control
@@ -228,7 +230,7 @@ A user can attach **pre-recorded audio clips** to a fixed-message condition. Man
 
 - **Never emit an `<audio>` tag yourself.** The `id` must reference a real uploaded clip; a hand-written id points at nothing and fails reference validation (`"audio id '…' does not reference an uploaded clip"`).
 - Audio is attached via `POST /test_framework/v1/scenarios/{id}/condition-audio/` (multipart `condition_id` + `file`; ≤25MB; wav/mp3/m4a/ogg/webm/flac). Pass `action_template` with one `<audio />` marker to choose the insertion point; pass `replace_audio_id` to replace one existing clip. `GET`/`DELETE` on the same path list/detach clips.
-- **Rules:** fixed-message conditions only; multiple clips and sibling tags are allowed and run left to right; do not nest `<audio>` inside a wrapping tag.
+- **Rules:** fixed-message conditions only; multiple clips and sibling tags are allowed and run left to right; do not nest `<audio>` inside a wrapping tag (`<spell>`, `<background_noise>`, `<voicemail>`, `<ivr>`). Inside `<ignore_interruptions>` is fine — an uninterruptible clip sequence is that tag's main use.
 - **Run gating:** a scenario can't run while any attached clip is not `ready` (pending/processing/failed all block).
 
 ## Test Profile Template Variables (fixed_message: true only)
@@ -426,6 +428,22 @@ Use this pattern only when the **main agent makes outbound calls** and the scena
   ]
 }
 ```
+
+### 2c. Uninterruptible Clip Sequence (multi-part IVR menu of attached audio)
+
+Use when the testing agent must play several pre-recorded clips separated by pauses and nothing the main agent says may cut the sequence short. The main agent's speech during the span still lands in the transcript, so metrics can judge what it said over the menu.
+
+```json
+{
+  "role": "You are simulating a third-party IVR system playing a recorded menu",
+  "conditions": [
+    { "id": 0, "condition": "FIRST_MESSAGE", "action": "", "type": "standard", "fixed_message": true },
+    { "id": 1, "condition": 0, "action": "<ignore_interruptions> <audio id=\"clip1\"/> <hold time=\"5s\" /> <audio id=\"clip2\"/> <hold time=\"5s\" /> <audio id=\"clip3\"/> </ignore_interruptions> <endcall />", "type": "action_followup", "fixed_message": true }
+  ]
+}
+```
+
+The `<audio>` ids come from the audio-upload flow (see "Attached Audio") — never hand-write them. `<endcall />` sits after the span so the call ends only once the full sequence has played.
 
 ### 3. Voicemail with Post-Beep Message
 

@@ -1,6 +1,6 @@
 {
   "name": "cekura",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from Codex.",
   "author": {
     "name": "Cekura",
@@ -27,7 +27,7 @@
   "interface": {
     "displayName": "Cekura",
     "shortDescription": "Voice AI agent testing & evaluation",
-    "longDescription": "Design metrics and evaluators, run tests, and improve voice AI agents on the Cekura platform — skills and MCP tools directly inside Codex.",
+    "longDescription": "Design metrics and evaluators, run tests, and improve voice AI agents on the Cekura platform \u2014 skills and MCP tools directly inside Codex.",
     "developerName": "Cekura",
     "category": "Productivity",
     "capabilities": [

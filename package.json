@@ -1,6 +1,6 @@
 {
   "name": "@cekura/skills",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "Cekura voice AI testing and evaluation skills for AI coding agents",
   "keywords": [
     "agent-skills",

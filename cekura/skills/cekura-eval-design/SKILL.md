@@ -22,7 +22,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.3"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.4"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
@@ -327,6 +327,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 - **All XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text.
 - **`<client_message t="..." d='...' />`** sends an app-defined RTVI client message to a Pipecat agent. `t` is required, `d` is optional, and the message is silent.
 - **`<ivr text="..." />` and `<voicemail text="..." />`** (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags. Use a separate `action_followup` for post-IVR / post-beep content.
+- **`<ignore_interruptions>...</ignore_interruptions>`** protects a **span**, not the whole action: everything inside (text, attached `<audio>` clips, `<hold>`/`<silence>`) plays to completion; the main agent's speech during the span is transcribed but never interrupts or triggers a reply. Content goes between the tags — never in an attribute — and `<hold>`/`<audio>` inside `<ivr text="...">` are rejected at save time in favor of this tag.
 - **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
 - **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. Supports decimal seconds (`"0.5s"`) for sub-second precision. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
 - **`<dtmf digits="..." />`** supports `0–9`, `#`, `*`; combinable with surrounding text.
