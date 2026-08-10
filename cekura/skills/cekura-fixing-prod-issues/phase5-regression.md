@@ -44,13 +44,13 @@ create_scenario '{
   "personality": PERSONALITY_ID,
   "name": "Regression: <case name>",
   "scenario_type": "conditional_actions",
-  "instructions": "...",
+  "scenario_language": "<language code of the prod call, e.g. en>",
   "metrics": [METRIC_ID_1, METRIC_ID_2],
   "conditional_actions": { "role": "caller", "conditions": [...] }
 }'
 ```
 
-**`scenario_type: "conditional_actions"` is required, not optional.** Omit it and the API defaults the scenario to `instruction`, silently ignoring the `conditions` you just built — the replay then improvises instead of reproducing the bug. (Behavioral scenarios are the one type this direct-create path is not for; those are always generated.)
+**`scenario_type: "conditional_actions"` is required, not optional.** Omit it and the API defaults the scenario to `instruction`, silently ignoring the `conditions` you just built — the replay then improvises instead of reproducing the bug. (Behavioral scenarios are the one type this direct-create path is not for; those are always generated.) `scenario_language` is required on this type, and `instructions`/`first_message` must stay unset — the conditions carry the whole flow.
 
 
 ---

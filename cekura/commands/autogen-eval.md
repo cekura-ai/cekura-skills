@@ -61,6 +61,8 @@ Use the folder path for the `folder_path` parameter in the generate call.
 
 Default: `workflow`. Can combine by running generation multiple times with different types.
 
+**How the choice reaches the generator:** there is no scenario-category field on `scenarios_generate_bg` — the answer here shapes the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts"). Don't pass it as a `scenario_type`; that field belongs to the create schema and accepts only `instruction` / `real_world_smart` / `real_world_fixed` / `conditional_actions`.
+
 ### 4. Number of Scenarios and Instructions
 
 **Ask:** "How many scenarios do you want? If you have specific scenario descriptions in mind, list them — the number should match."
@@ -251,4 +253,4 @@ Missing coverage (behavioral gaps → another generation run; deterministic gaps
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
 - **Metrics are required** — PATCH them on after generation
-- **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps (or `scenario_type: redteaming` for adversarial coverage). Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.
+- **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which is expressed in that guidance text rather than a category field. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.

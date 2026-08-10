@@ -420,9 +420,8 @@ This is the path for every `conditional_actions` cluster (drop, tool_error, work
    | `name` | From the cluster |
    | `scenario_type` | `conditional_actions` — an `instruction` scenario does not belong on this path (generate it instead) |
    | `personality` | From the cluster |
-   | `scenario_language` | Required on CA scenarios |
-   | `first_message` | From the cluster |
-   | `conditions` | The drafted turn-by-turn list |
+   | `scenario_language` | Required on CA scenarios — the cluster's language code (`en`, `es`, …) |
+   | `conditional_actions` | `{"role": "<caller role from the cluster>", "conditions": [<drafted turn-by-turn list>]}` — the turns go in **this wrapper**, not a top-level `conditions` field, or they are dropped and the scenario improvises. The cluster's `first_message` is condition `id: 0` (`condition: "FIRST_MESSAGE"`), not a separate field: `first_message` and `instructions` must stay unset on CA scenarios. |
    | `tool_ids` | From the cluster |
    | `expected_outcome_prompt` | From the cluster |
 
