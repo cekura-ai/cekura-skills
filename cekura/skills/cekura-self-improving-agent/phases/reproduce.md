@@ -56,11 +56,15 @@ create_scenario '{
   "agent": AGENT_ID,
   "personality": PERSONALITY_ID,
   "name": "Bug repro: <brief issue>",
+  "scenario_type": "conditional_actions",
   "instructions": "Replay the production call that caused <issue>.",
   "expected_outcome": "<behavioral bullets derived from the prod failure>",
   "conditional_actions": { "role": "caller", "conditions": [ /* verbatim testing-agent turns from REPRO.3d */ ] }
 }'
 ```
+
+**`scenario_type: "conditional_actions"` is required, not optional.** Omit it and the API defaults the scenario to `instruction`, silently ignoring the `conditions` you just built — the replay then improvises instead of reproducing the bug. (Behavioral scenarios are the one type this direct-create path is not for; those are always generated.)
+
 
 (Fallback path: omit inexpressible bullets and attach `"metrics": [METRIC_ID_1, ...]`.) Save the `scenario_id`(s).
 

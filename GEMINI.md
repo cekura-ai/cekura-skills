@@ -274,10 +274,10 @@ On `evaluation.metrics[]` entries: `score` field (0 = FAIL, 5 = PASS, None = N/A
 2. **Choose a tool strategy** — Ask the user which of the three approaches below
 3. **Create a folder first** — Always create a folder before generating or creating scenarios
 4. **Run the pre-creation checkpoint** — Confirm tool strategy, test profile, run mode, personality, adaptive vs conditional, folder, metrics
-5. **Auto-generate first (recommended)** — Use the generate endpoint with `folder_path` set
+5. **Write by type — behavioral ⇒ generate, conditional actions ⇒ create directly** (see "Auto-Generation" below; the generate endpoint cannot emit conditional actions). Set `folder_path` either way
 6. **Review and fix** — PATCH `scenario_language` for non-English, fix `first_message` if auto-gen added greetings
 7. **Set up test infrastructure** — Test profiles + tool data per chosen strategy
-8. **Supplement manually** — Add edge cases, red-team, deterministic tests
+8. **Supplement by type, same rule as step 5** — behavioral gaps (edge cases, free-form red-team) ⇒ another generation run with `extra_instructions` naming the gaps; deterministic gaps ⇒ author conditional-action scenarios directly. Never hand-write an `instruction` scenario to close a gap
 9. **Attach metrics** — Always include baseline metrics
 10. **Run and validate** — Execute, review transcripts, iterate
 
@@ -294,9 +294,18 @@ Cekura intercepts tool calls and returns pre-configured responses. Your job: **a
 ### C) No Mock Data
 Agent doesn't use tools, or tools aren't relevant to these tests. Use test profiles for caller identity only. Focus scenarios on conversational behavior, not tool outcomes.
 
-## Auto-Generation (Primary Path)
+## Auto-Generation (the only path for behavioral scenarios)
 
-The fastest path to test scenarios. Use the generate endpoint with category guidance:
+**The write path follows `scenario_type`, and it is not a preference:**
+
+| `scenario_type` | Path |
+|---|---|
+| `instruction` (behavioral — natural conversation, edge cases, free-form red-team) | **Always** `POST /test_framework/v1/scenarios/generate-bg/`. Never hand-author, not even for a single scenario — use `num_scenarios: 1` with the description as `extra_instructions`. |
+| `conditional_actions` (scripted, deterministic, regression, IVR/DTMF/voicemail, compliance, infra) | **Always** `POST /test_framework/v1/scenarios/` directly. The generate endpoint cannot emit conditional actions. |
+
+Only exception on the behavioral side: the user supplies the instruction text themselves (CSV/JSON list, or "create this exact scenario") — generating would discard their wording. Generation gotchas below are routine post-generation PATCHes, not reasons to hand-author.
+
+Use the generate endpoint with category guidance:
 
 ```json
 POST /test_framework/v1/scenarios/generate-bg/
@@ -465,15 +474,16 @@ The `?call_id=` query param holds a `run_id` — use that format only when const
 Use conditional actions when the user needs a scenario that runs identically each time: unit tests, regression tests, IVR navigation, compliance testing. For adaptive/exploratory scenarios use behavioral instructions instead.
 
 **When to use:** Exact flow validation, deterministic regression, IVR nav, compliance.
-**When NOT to use:** Natural conversation quality, edge cases, red-team — use behavioral instructions.
+**When NOT to use:** Natural conversation quality, edge cases, red-team — those are behavioral scenarios, which are generated via `generate-bg`, not authored here.
 
 ### Structure
 
-The `instructions` field of the scenario payload becomes a JSON object (not a string):
+Set `scenario_type: "conditional_actions"` and pass the structured payload in the **`conditional_actions`** field — not in `instructions`. Omitting `scenario_type` defaults the scenario to `instruction`, which silently ignores the conditions.
 
 ```json
 {
-  "instructions": {
+  "scenario_type": "conditional_actions",
+  "conditional_actions": {
     "role": "You are a patient calling to cancel their appointment",
     "conditions": [...]
   }

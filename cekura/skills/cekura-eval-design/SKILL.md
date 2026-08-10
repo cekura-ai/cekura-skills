@@ -22,7 +22,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.4"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.5"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
@@ -50,11 +50,13 @@ When this skill suggests creating, listing, updating, or evaluating something on
 2. **Choose a tool strategy** — Ask the user which approach they want for handling the agent's external tool calls. This is a fundamental decision that shapes everything else. See "Tool Strategy — Three Approaches" below.
 3. **Always create a folder first** — Before generating or creating scenarios, create a folder to organize them. Never dump scenarios into the root. POST to the scenarios folder endpoint with `name`, `project_id`, and optionally `parent_path`. Then pass the `folder_path` to the generate endpoint or set it on individual scenarios.
 4. **Run the pre-creation checkpoint** — Confirm all key decisions with the user before building anything. See "Pre-Creation Checkpoint" below.
-5. **Author evaluators — pick the path based on the mode** (per "Choosing Authoring Mode" below):
-   - **Behavioral mode (default):** start with auto-generate via `POST /test_framework/v1/scenarios/generate-bg/`. Provide category-level guidance in `extra_instructions`. If using Cekura mock tools, the generator creates tool-aware scenarios automatically. See "Auto-Generation" section below.
-   - **Conditional-actions mode:** auto-gen can produce either behavioral or conditional-action scenarios — check the `scenario_type` of generated output and proceed accordingly. When you need full structural control (verbatim phrasing, exact-sequence regression, IVR/voicemail/DTMF flows), author each scenario directly via `POST /test_framework/v1/scenarios/` with `scenario_type: "conditional_actions"` and the `conditional_actions` payload. See "Designing Conditional Actions" below.
-6. **Review and fix generation artifacts (only if you ran auto-gen in step 5)** — Check the `scenario_type` of each generated scenario and inspect the corresponding payload (`instructions` for behavioral, `conditional_actions` for conditional-action). PATCH `scenario_language` for non-English scenarios (defaults to "en" regardless of content). PATCH `first_message` if auto-gen added greetings instead of exact questions. Check for partial completion (generation may produce fewer than requested).
-7. **Supplement manually** — Add edge cases, red-team scenarios, and deterministic tests that the generator didn't cover, or author additional scenarios directly when you need full structural control.
+5. **Author evaluators — the mode determines the write path, and there is no choice within a mode** (per "Choosing Authoring Mode" below):
+   - **Behavioral mode (`scenario_type: "instruction"`) → ALWAYS generate.** Use `POST /test_framework/v1/scenarios/generate-bg/` with category-level guidance in `extra_instructions`. Do NOT hand-author behavioral scenarios via the create endpoint — generation grounds them in the agent description, hand-written ones depend on improvisation. If using Cekura mock tools, the generator creates tool-aware scenarios automatically. See "Auto-Generation" below.
+   - **Conditional-actions mode (`scenario_type: "conditional_actions"`) → ALWAYS create directly.** The generate endpoint does **not** produce conditional-action scenarios, so this is the only path: `POST /test_framework/v1/scenarios/` with the `conditional_actions` payload. See "Designing Conditional Actions" below.
+
+   **The one exception to the behavioral rule:** the user supplies the scenario text themselves (a CSV/JSON scenario list, or an explicit "create this exact scenario"). Generating would discard their wording — create those directly and say so.
+6. **Review and fix generation artifacts (only if you ran auto-gen in step 5)** — Generated scenarios are behavioral (`instructions`). PATCH `scenario_language` for non-English scenarios (defaults to "en" regardless of content). PATCH `first_message` if auto-gen added greetings instead of exact questions. Check for partial completion (generation may produce fewer than requested). These are routine post-generation fixups, not reasons to hand-author instead.
+7. **Supplement** — Fill remaining gaps by mode, same rule as step 5: **behavioral gaps (edge cases, free-form red-team) → another `generate-bg` run** with `extra_instructions` targeting exactly the missing categories; **deterministic/structural gaps → author conditional-action scenarios directly.** Never close a behavioral gap by hand-writing an `instruction` scenario.
 8. **Set up test infrastructure** — Check existing test profiles first, then create new ones. Configure tool data according to the chosen tool strategy.
 9. **Attach metrics** — ALWAYS include baseline metrics (Expected Outcome, Infrastructure Issues, Tool Call Success, Latency) on every evaluator. Without metrics, runs only report call completion, not correctness.
 10. **Run and validate** — Execute via `run_scenarios`, review transcripts, iterate
@@ -76,6 +78,8 @@ When this skill suggests creating, listing, updating, or evaluating something on
 ## Choosing Authoring Mode
 
 The default authoring mode is **behavioral instructions** (free-form, first-person scenario instructions). Switch to **conditional actions** in two situations:
+
+**This choice also fixes the write path — it is not a second decision.** Behavioral ⇒ `generate-bg` (`scenarios_generate_bg`), always. Conditional actions ⇒ the create endpoint (`scenarios_create`), always, because generation cannot produce them. If you find yourself about to hand-author an `instruction` scenario, you have either picked the wrong mode or you are in the user-supplied-text exception (step 5).
 
 ### Switch immediately, no confirmation, when the user says any of:
 
@@ -142,6 +146,8 @@ See `references/test-data-design.md` for the full profile creation guide, decisi
 
 Instructions tell the testing agent what to do. Write in **first person** from the testing agent's perspective.
 
+**These are quality rules, not an authoring path.** Behavioral scenarios are generated, so use this section for the three things you legitimately do with instruction text: (1) shaping the `extra_instructions` you pass to `generate-bg`, (2) reviewing and PATCHing what generation returns, and (3) the verbatim exception where the user supplied the text. It is not a licence to hand-author an `instruction` scenario via the create endpoint.
+
 ### Instruction Style
 
 - First person: "State your name when asked" NOT "The caller should state their name"
@@ -199,11 +205,11 @@ KEY INTERACTION POINTS:
 
 ### Bad vs Good Instructions
 
-Full worked bad-vs-good examples (wrong-number scenario, new-patient scheduling) live in **`references/instruction-patterns.md`** — load it before authoring behavioral scenarios.
+Full worked bad-vs-good examples (wrong-number scenario, new-patient scheduling) live in **`references/instruction-patterns.md`** — load it before writing `extra_instructions` or reviewing generated output.
 
 ## Auto-Generation
 
-The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the preferred workflow for bulk scenario creation. Generated scenarios may come back as either behavioral (`scenario_type: "instruction"`) or conditional-action (`scenario_type: "conditional_actions"`) — check what was created and proceed accordingly. When you need full structural control (verbatim phrasing, exact-sequence regression, IVR/voicemail/DTMF flows), author conditional-action evaluators directly via the create endpoint — see "Designing Conditional Actions" below.
+The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the **only** workflow for behavioral scenarios — one at a time or in bulk. Generated scenarios always come back behavioral (`scenario_type: "instruction"`); **this endpoint does not emit `conditional_actions`.** So the split is absolute: behavioral → generate here; conditional actions (verbatim phrasing, exact-sequence regression, IVR/voicemail/DTMF flows) → author directly via the create endpoint, see "Designing Conditional Actions" below. Needing one behavioral scenario rather than ten is not a reason to hand-author it — call this endpoint with `num_scenarios: 1` and a specific `extra_instructions`.
 
 **Full schema:**
 | Field | Type | Required | Description |

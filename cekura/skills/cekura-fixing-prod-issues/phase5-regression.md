@@ -43,11 +43,15 @@ create_scenario '{
   "agent": AGENT_ID,
   "personality": PERSONALITY_ID,
   "name": "Regression: <case name>",
+  "scenario_type": "conditional_actions",
   "instructions": "...",
   "metrics": [METRIC_ID_1, METRIC_ID_2],
   "conditional_actions": { "role": "caller", "conditions": [...] }
 }'
 ```
+
+**`scenario_type: "conditional_actions"` is required, not optional.** Omit it and the API defaults the scenario to `instruction`, silently ignoring the `conditions` you just built — the replay then improvises instead of reproducing the bug. (Behavioral scenarios are the one type this direct-create path is not for; those are always generated.)
+
 
 ---
 

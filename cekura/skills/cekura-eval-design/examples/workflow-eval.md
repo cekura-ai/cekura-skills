@@ -1,6 +1,8 @@
 # Example: Workflow Evaluator (Scheduling)
 
-## API Payload
+This is a **behavioral** (`instruction`) evaluator, so it is **generated**, not hand-created: run `generate-bg` with this scenario described in `extra_instructions`. The payload is shown as the **quality target** — what good generated output looks like, and what to check when reviewing/PATCHing it. Do not POST it to the create endpoint unless the user supplied this text verbatim.
+
+## Payload Shape
 
 ```json
 {

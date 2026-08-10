@@ -120,9 +120,11 @@ Returns a result object with `id`, `status`, and `runs` array.
 }
 ```
 
-### Authoring a Behavioral Evaluator
+### Behavioral Evaluators — generated, not authored here
 
-Set `scenario_type` to `"instruction"` (or omit — it's the default). Pass `instructions` as a free-form string.
+**Do not create behavioral scenarios through this endpoint.** `scenario_type: "instruction"` scenarios are produced by `POST /test_framework/v1/scenarios/generate-bg/` (see `references/auto-generation.md`), including single ones. The only exception is scenario text the user supplied verbatim (a CSV/JSON list, or "create this exact scenario") — generating would discard their wording.
+
+The payload shape below is documented for that exception and for reading back / PATCHing generated scenarios. `scenario_type` is `"instruction"` (also the default when omitted); `instructions` is a free-form string.
 
 ```json
 {

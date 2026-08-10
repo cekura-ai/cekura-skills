@@ -12,7 +12,7 @@ allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestio
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.10.4"`. If a conversation/session ID is available (e.g. you
+`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.10.5"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
@@ -22,7 +22,9 @@ LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 # Manually Create or Update an Evaluator
 
-Create a new evaluator (test scenario) or update an existing one on Cekura. This command walks through every field with the user — use it when you need precise control over the scenario configuration. For bulk/auto-generation, use `/autogen-eval` instead.
+Create a new evaluator (test scenario) or update an existing one on Cekura. This command walks through every field with the user — use it when you need precise control over the scenario configuration.
+
+**Creating a behavioral (`instruction`) scenario is not what this command is for** — those are always generated via `/autogen-eval` → `scenarios_generate_bg`, even a single one. This command's create path is for **conditional-action** scenarios, where direct create is the only option because generation cannot emit them. See the Step 2 gate below for the one narrow exception. Updating any existing scenario, of either type, belongs here.
 
 ## Scope Gate
 
@@ -76,7 +78,16 @@ For updates: show the current agent/project assignment.
 | **Adaptive (instructions)** | Most evals — testing natural conversations, edge cases, red-team | Testing agent follows behavioral instructions, adapts to agent responses naturally |
 | **Deterministic (conditional actions)** | Unit tests, regression tests, exact flow validation | Testing agent follows predefined condition→action pairs, repeats identically each run |
 
-**For adaptive:** Write instructions in first-person, behavioral, wrapped in `<scenario>` tags. See the eval-design skill for patterns.
+**The answer decides whether this command is even the right tool:**
+
+- **Deterministic (conditional actions) → stay here.** `scenarios_create` is the only path; the generate endpoint cannot emit conditional actions.
+- **Adaptive (instructions) → hand off to `/autogen-eval`**, which calls `scenarios_generate_bg`. Behavioral scenarios are always generated, including a single one (`num_scenarios: 1` with the user's description as `extra_instructions`) — generation grounds them in the agent description, hand-writing depends on improvisation. Say so and switch:
+
+  > That's a behavioral scenario, so it should be generated rather than hand-written — I'll run `/autogen-eval` with your description as the generation guidance, then walk the result through the remaining fields with you.
+
+  **Stay here for an adaptive scenario in exactly one case: the user supplies the instruction text themselves and wants it verbatim** — generating would discard their wording. Note in the summary that it bypassed generation. "Just hand-write it" is not that case: offer to generate from their description instead, and if they insist, ask them for the instruction text so the verbatim path applies. Updates to an existing adaptive scenario are unaffected — patching is always direct.
+
+**For adaptive (the exception cases above):** Write instructions in first-person, behavioral, wrapped in `<scenario>` tags. See the eval-design skill for patterns.
 
 **For conditional actions:** Build a conditions array. Each condition has: `id`, `condition` (trigger), `action` (what to say/do), `type` ("say" or "do"), `fixed_message` (true for exact scripted lines, false for general instructions). See the cekura-eval-design skill's `references/conditional-actions.md` for full structure.
 
@@ -86,7 +97,7 @@ Max 80 characters. Use format: `"[ID] - [Brief description]"` (e.g., `"RS-01: Re
 
 ### 4. Instructions or Conditions
 
-**For adaptive scenarios:** Write step-by-step instructions wrapped in `<scenario>` tags.
+**For adaptive scenarios** (only the verbatim exception from Step 2, or an update to an existing scenario)**:** Write step-by-step instructions wrapped in `<scenario>` tags.
 
 Key rules:
 - First person: "State your name when asked" NOT "The caller should state their name"

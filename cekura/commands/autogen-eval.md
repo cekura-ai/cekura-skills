@@ -13,7 +13,7 @@ allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mc
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.10.4"`. If a conversation/session ID is available (e.g.
+`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.10.5"`. If a conversation/session ID is available (e.g.
 you were invoked from Cekura sandbox), also pass it as `conversation_id`. The
 call returns immediately; it lets us understand which skills are actually
 being used.
@@ -189,9 +189,9 @@ Review each generated evaluator:
 - Is coverage balanced across the agent's workflows?
 
 If output is poor, offer to:
-- Re-run with different `extra_instructions`
-- Supplement with manual creation via `/manual-create-update-eval`
-- Use generated evals as a starting point and improve individually
+- Re-run with different `extra_instructions` (**the default fix** — sharper, category-specific guidance, smaller batches)
+- Use generated evals as a starting point and PATCH them individually
+- Supplement via `/manual-create-update-eval` **only for conditional-action scenarios** — deterministic/scripted tests the generator can't produce. A weak behavioral scenario gets re-generated or patched, never replaced with a hand-authored `instruction` scenario.
 
 ## Bulk Creation from Structured Input (CSV/JSON)
 
@@ -203,7 +203,9 @@ ID,Category,Name,Instructions,Expected Outcome,Priority
 S-01,Scheduling,New adult patient,Calls as new patient...,Agent books appointment...,must-have
 ```
 
-This is a post-generation create path — it uses `mcp__cekura__scenarios_create` to write each row of the user's CSV/JSON into a scenario directly. The Auto-Generate flow above does not apply here, and unlike that flow, `scenarios_create` needs `personalities` and `tool_ids` as explicit per-scenario fields (they aren't inferred from the agent).
+This is a direct-create path — it uses `mcp__cekura__scenarios_create` to write each row of the user's CSV/JSON into a scenario. It is the **named exception** to the rule that behavioral scenarios are always generated: the user already authored the instruction text, and generating would discard their wording. It applies only when the rows carry actual scenario text. If the CSV is really a *list of topics or titles* ("scheduling", "cancellation edge case") rather than authored instructions, that's generation input — feed it as `extra_instructions` to the Auto-Generate flow above instead of creating stub scenarios from it.
+
+The Auto-Generate flow does not apply on this path, and unlike that flow, `scenarios_create` needs `personalities` and `tool_ids` as explicit per-scenario fields (they aren't inferred from the agent).
 
 ### Process
 1. Parse the input file
@@ -237,7 +239,7 @@ Post-generation fixes applied:
   - [X] scenarios: metrics attached
   - [X] scenarios: test profiles assigned
 
-Missing coverage (consider manual creation):
+Missing coverage (behavioral gaps → another generation run; deterministic gaps → conditional-action evaluators):
   - [workflow not covered]
   - [edge case not covered]
 ```
@@ -249,4 +251,4 @@ Missing coverage (consider manual creation):
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
 - **Metrics are required** — PATCH them on after generation
-- Consider running `/manual-create-update-eval` for edge cases and red-team scenarios that the generator doesn't cover
+- **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps (or `scenario_type: redteaming` for adversarial coverage). Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.

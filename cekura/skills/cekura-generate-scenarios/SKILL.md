@@ -27,13 +27,22 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-generate-scenarios:7q3n6v`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.10.4"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.10.5"`. It returns immediately and lets Cekura see which skills are in use.
 
 # generate-scenarios
 
 Convert real production failures into evaluator scenarios so the next regression run catches them. Signal is mined from **call logs** — what real callers did, where the agent broke, and what the right behavior would have been. Every scenario produced traces back to at least one call log; nothing is invented.
 
 This skill is **read-first**: it never creates a scenario without an explicit user OK on the proposed set.
+
+## Write path — decided by `scenario_type`, not by preference
+
+| `scenario_type` | Write path |
+|---|---|
+| `conditional_actions` — drop, tool_error, workflow_miss (turn-by-turn replays) | `mcp__cekura__scenarios_create` with the drafted `conditions`. The generation endpoints **cannot emit conditional actions**; direct create is the only path. |
+| `instruction` — drift, hallucination, comprehension, refusal, safety (free-form) | **Generate:** `mcp__cekura__call_logs_create_scenarios` (preferred — grounded in the evidence calls) or `scenarios_generate_bg`, passing the drafted `expected_behavior` + failure mode as `extra_instructions`. Behavioral instructions are never hand-authored. |
+
+A mixed report takes **both** paths in one pass; say which clusters went which way in the summary. The only reason to hand-author an `instruction` scenario is that the user dictated its text themselves.
 
 ## Step 0 — Prerequisites
 
@@ -111,7 +120,7 @@ Walk the caller's path **turn-by-turn in the same order the real call took**, up
 - **Always include the end-call tool in `tool_ids`** — it's a hard always-on rule for every scenario (Step 4). End the success path with `<endcall />` in the final action; the `<endcall />` marker is a no-op unless that tool is wired in.
 - **Never append `<silence>` (or `<hold>`) tags at the END of an action.** Those SSML pause tags are only for *mid-utterance* pacing (a beat inside a sentence). Trailing them on the end of a line — e.g. `"...thanks <silence time="1.0s" /> <endcall />"` or as the caller's last token — just injects dead air and serves no purpose. End actions on the spoken words; if the turn closes the call, the final action ends with `<endcall />` directly (no preceding `<silence>`). Do not pad actions with trailing silence by default.
 
-(Use `scenario_type: instruction` instead only for free-form red-team calls — hallucination/drift/refusal — where the caller needs latitude.)
+(For free-form calls — hallucination/drift/refusal, where the caller needs latitude — the scenario is `scenario_type: instruction` instead, and per **Write path** above it must be **generated**, not hand-written: skip C and use `mcp__cekura__call_logs_create_scenarios` with this one `call_log_id`, or `scenarios_generate_bg` with `num_scenarios: 1` and the focal failure + expected behavior as `extra_instructions`. Then attach the test profile, metric, and phone per D–F exactly as below.)
 
 ### D. Caller identity → test profile (camelCase keys — load-bearing)
 
@@ -126,7 +135,7 @@ Score the specific behavior. Follow the **Metric selection policy** above — re
 
 ### F. Create (after user OK)
 
-1. **Scenario** — `mcp__cekura__scenarios_create`: agent, `name` ("<failure> (from call <id>)"), `scenario_type`, `personality` (Step 4 heuristics), `metrics=[<metric_id>]`, `folder_path` (if the user named a folder), `expected_outcome_prompt`, `instructions`/`conditional_actions`, `tags=["replay-<call_id>", "<mode>"]`, testing-agent `tool_ids`.
+1. **Scenario** — this is the `conditional_actions` replay built in C, so it takes the direct-create path: `mcp__cekura__scenarios_create` with agent, `name` ("<failure> (from call <id>)"), **explicit `scenario_type: "conditional_actions"`** (omitting it defaults to `instruction` and the `conditions` are ignored), `personality` (Step 4 heuristics), `metrics=[<metric_id>]`, `folder_path` (if the user named a folder), `expected_outcome_prompt`, `conditions`, `tags=["replay-<call_id>", "<mode>"]`, testing-agent `tool_ids`. If the focal failure was free-form instead (the `instruction` case flagged at the end of C), you generated the scenario there — skip to step 2 and attach to the returned scenario.
 2. **Test profile** — `mcp__cekura__test_profiles_create` with the camelCase+lowercase identity dict; capture the id.
 3. **Attach the profile** — `mcp__cekura__scenarios_partial_update(id=<scenario_id>, test_profile=<profile_id>)`. The runtime only reads dynamic variables from the attached profile, not the scenario's own `dynamic_variable_values`.
 4. **Attach the evaluator phone** for phone/outbound agents — set the scenario's phone number (e.g. via `scenarios_partial_update`). The create call may not persist it, so **read the scenario back and PATCH if the phone is null.** (Look up the organization's configured evaluator inbound-phone-number ID and use that.)
@@ -225,8 +234,10 @@ For every name in `agent_dynamic_vars`, pick a value that's *consistent with the
 
 ### Picking `scenario_type`
 
-- **`instruction`** for free-form / red-teamy clusters: hallucinations, drift, refusal, comprehension, safety. The testing agent needs latitude to push.
-- **`conditional_actions`** for sequential workflow clusters: workflow_miss, tool_error, drop-mid-workflow. Walk the exact failure path turn by turn.
+- **`instruction`** for free-form / red-teamy clusters: hallucinations, drift, refusal, comprehension, safety. The testing agent needs latitude to push. → **generated** (see **Write path**); the draft becomes `extra_instructions`.
+- **`conditional_actions`** for sequential workflow clusters: workflow_miss, tool_error, drop-mid-workflow. Walk the exact failure path turn by turn. → **created directly**; generation can't emit these.
+
+Picking the type therefore picks the write path. Don't pick `conditional_actions` for a free-form cluster just to keep control of the wording.
 
 ### Picking the personality
 
@@ -321,7 +332,7 @@ Save as `failure_scenarios_<agent_id>.md` in the working directory. Structure:
 - 📞 Call [<call_log_id>](https://dashboard.cekura.ai/<project_id>/observe/<call_log_id>): "<verbatim transcript quote>"
 - 📞 Call [<call_log_id>](https://dashboard.cekura.ai/<project_id>/observe/<call_log_id>): "<verbatim transcript quote>"
 
-**Draft scenario:**
+**Draft scenario** — this cluster is `instruction`, so the draft is a **spec, not a create payload**: its `instructions` + `expected_outcome_prompt` become the `extra_instructions` passed to the generation endpoint (see **Write path**). Shown in payload form only so the user can review the intent.
 
 ```json
 {
@@ -369,34 +380,37 @@ Save as `failure_scenarios_<agent_id>.md` in the working directory. Structure:
 
 ## Step 6 — Offer to create
 
-After printing the report, ask the user:
+After printing the report, split the clusters by `scenario_type` per **Write path** above. That split is already decided — state it, don't offer it as a choice:
 
-> Want me to create these scenarios? Options:
+> Want me to build these? The split is fixed by scenario type: **conditional-action clusters (<CA list>)** get created directly from the drafted turn-by-turn spec; **instruction clusters (<instr list>)** get generated from the evidence calls with the drafted failure summary as `extra_instructions`. Options:
 >
-> 1. **Hand the failing call IDs to the platform endpoint** — call `mcp__cekura__call_logs_create_scenarios` with the failing `call_log_ids` and let Cekura's scenario-generation job produce scenarios server-side. Lowest control, fastest.
-> 2. **Create each draft scenario directly** — bulk-create the <S> draft scenarios from the report via `mcp__cekura__scenarios_create` per cluster. Uses the spec we just drafted (you keep control over wording).
-> 3. **Generate from one transcript at a time** — for each cluster, pick the best evidence call and run `mcp__cekura__scenarios_create_from_transcript` against that call's transcript. Trades draft fidelity for transcript-grounded phrasing.
-> 4. **Custom subset** — pick specific cluster IDs (e.g. "create C1, C3, C7 only").
-> 5. **No** — leave the report, I'll create them manually.
+> 1. **Build all of them** — both halves, one pass.
+> 2. **Custom subset** — pick cluster IDs; each still follows its own type's path.
+> 3. **Per-transcript generation for the instruction half** — `scenarios_create_from_transcript` per cluster. Closer to the original flow, less control over phrasing.
+> 4. **No** — leave the report, I'll build them myself.
 
-### Option 1 — platform endpoint
+Do not collapse the instruction half into direct creates because the drafted wording looks good — the draft becomes `extra_instructions`, not the scenario body.
 
-Call `mcp__cekura__call_logs_create_scenarios` with:
+### The instruction half — generate via the platform endpoint
+
+This is the path for every `instruction` cluster (drift, hallucination, comprehension, refusal, safety). Call `mcp__cekura__call_logs_create_scenarios` with:
 
 | Field | Value |
 |---|---|
 | `agent_id` | From Step 2a |
 | `project_id` | From Step 2a |
-| `call_log_ids` | Union of all evidence call IDs across clusters (deduped) |
-| `extra_instructions` | A condensed version of the report's failure summary — one bullet per cluster: "<mode>: <expected_behavior>". The server-side generator uses this to bias scenario phrasing toward the failure modes we found. |
+| `call_log_ids` | Union of the evidence call IDs belonging to the **instruction clusters** (deduped) |
+| `extra_instructions` | A condensed version of the report's failure summary — one bullet per instruction cluster: "<mode>: <expected_behavior>", plus the verbatim `evidence_quote` where it pins the failure. This is where the draft we just wrote goes; the generator uses it to bias scenario phrasing toward the failure modes we found. |
 
 Poll `mcp__cekura__call_logs_create_scenarios_progress` until completed. Surface the returned scenario IDs as a table with dashboard links and ask the user to spot-check before running.
 
-**After completion, audit each returned scenario for `test_profile == null`.** The server-side generator may or may not attach a test profile. For any returned scenario whose agent has `agent_dynamic_vars` non-empty and `test_profile` is null, derive `dynamic_variable_values` from the matching cluster (or the evidence call) and run steps 2 + 3 from Option 2 to attach a profile. Otherwise the next outbound run will fail with `Missing required dynamic variables` (on ElevenLabs) or silently substitute empty strings (on other providers).
+If a cluster comes back thin or misses its failure mode, **re-generate that cluster alone** with sharper `extra_instructions` (or use `scenarios_create_from_transcript` on its cleanest evidence call). Do not "fix" it by hand-authoring the `instruction` body.
 
-### Option 2 — direct create per cluster
+**After completion, audit each returned scenario for `test_profile == null`.** The server-side generator may or may not attach a test profile. For any returned scenario whose agent has `agent_dynamic_vars` non-empty and `test_profile` is null, derive `dynamic_variable_values` from the matching cluster (or the evidence call) and run steps 2 + 3 below to attach a profile. Otherwise the next outbound run will fail with `Missing required dynamic variables` (on ElevenLabs) or silently substitute empty strings (on other providers).
 
-For each cluster, do **three calls in sequence**:
+### The conditional-action half — direct create per cluster
+
+This is the path for every `conditional_actions` cluster (drop, tool_error, workflow_miss). For each, do **three calls in sequence**:
 
 1. **Create the scenario** via `mcp__cekura__scenarios_create` with the draft spec. Required fields:
 
@@ -404,12 +418,11 @@ For each cluster, do **three calls in sequence**:
    |---|---|
    | `agent_id` / `project_id` | From Step 2a |
    | `name` | From the cluster |
-   | `scenario_type` | `instruction` or `conditional_actions` |
+   | `scenario_type` | `conditional_actions` — an `instruction` scenario does not belong on this path (generate it instead) |
    | `personality` | From the cluster |
-   | `scenario_language` | Required on CA scenarios; carry through on instruction too |
+   | `scenario_language` | Required on CA scenarios |
    | `first_message` | From the cluster |
-   | `instructions` | Required for `instruction` type |
-   | `conditions` | Required for `conditional_actions` type |
+   | `conditions` | The drafted turn-by-turn list |
    | `tool_ids` | From the cluster |
    | `expected_outcome_prompt` | From the cluster |
 
@@ -437,9 +450,9 @@ For each cluster, do **three calls in sequence**:
 
 Don't silently drop fields — echo the final spec before each create if the user has edited any cluster.
 
-### Option 3 — per-transcript path
+### Alternative for the instruction half — per-transcript generation
 
-For each cluster, pick the evidence call with the cleanest representation of the failure mode. Call `mcp__cekura__scenarios_create_from_transcript` with:
+Menu option 3. Applies to the **instruction clusters only** (the conditional-action half always takes the direct-create path above). For each cluster, pick the evidence call with the cleanest representation of the failure mode. Call `mcp__cekura__scenarios_create_from_transcript` with:
 
 | Field | Value |
 |---|---|
@@ -449,11 +462,11 @@ For each cluster, pick the evidence call with the cleanest representation of the
 
 This path produces scenarios that more closely match the original call's flow at the cost of less control over phrasing.
 
-Same caveat as Option 1: after each scenario is returned, check `test_profile` and attach one (Option 2 steps 2 + 3) if the agent has dynamic variables and the field is null.
+Same caveat as the platform endpoint: after each scenario is returned, check `test_profile` and attach one (steps 2 + 3 of the direct-create path) if the agent has dynamic variables and the field is null.
 
-### Option 4 — custom subset
+### Custom subset
 
-User picks cluster IDs. Apply the matching option (1/2/3) only to those clusters.
+Menu option 2. User picks cluster IDs; each selected cluster still follows its own type's path — CA clusters created directly, instruction clusters generated. A subset never changes the write path.
 
 After creation, print one line per new scenario with `https://dashboard.cekura.ai/test-case/<scenario_id>` so the user can spot-check, and recommend they:
 
@@ -473,14 +486,14 @@ Don't create scenarios (and say so) if any of these are true:
 
 The authoritative failure taxonomy + detection signals live in `cekura-flag-call-log-failures` (the skill that classifies). This table is the **construction map** — given a flagged call's `mode`, how to build its scenario:
 
-| Emoji | Code | Typical scenario_type | Cluster signal |
-|---|---|---|---|
-| 🛑 | drop | conditional_actions | ended_reason + short duration |
-| 🌀 | drift | instruction | content outside `agent_description` |
-| 👻 | hallucination | instruction | fact not in KB/description |
-| 🔧 | tool_error | conditional_actions | tool error / unused tool result |
-| 🎯 | workflow_miss | conditional_actions | required step skipped |
-| 🤔 | comprehension | instruction | caller repeats themselves |
-| 🚪 | refusal | instruction | "I can't help with that" inside scope |
-| ⚡ | latency | (metric, not scenario) | latency metric outliers |
-| 🧨 | safety | instruction | PII / disallowed content |
+| Emoji | Code | Typical scenario_type | Write path | Cluster signal |
+|---|---|---|---|---|
+| 🛑 | drop | conditional_actions | `scenarios_create` | ended_reason + short duration |
+| 🌀 | drift | instruction | generate | content outside `agent_description` |
+| 👻 | hallucination | instruction | generate | fact not in KB/description |
+| 🔧 | tool_error | conditional_actions | `scenarios_create` | tool error / unused tool result |
+| 🎯 | workflow_miss | conditional_actions | `scenarios_create` | required step skipped |
+| 🤔 | comprehension | instruction | generate | caller repeats themselves |
+| 🚪 | refusal | instruction | generate | "I can't help with that" inside scope |
+| ⚡ | latency | (metric, not scenario) | — | latency metric outliers |
+| 🧨 | safety | instruction | generate | PII / disallowed content |
