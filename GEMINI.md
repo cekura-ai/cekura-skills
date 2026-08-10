@@ -505,7 +505,7 @@ Sibling tags can be combined with text and run left to right. Do not nest tags; 
 |-----|---------|
 | `<ivr text="..." />` | Uninterruptible IVR message. **Must be entire action.** |
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible + beep at end. **Must be entire action.** `text` optional (silent voicemail allowed). Post-beep message goes in a separate action_followup. |
-| `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`) |
+| `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`), or a `{{test_profile.key}}` placeholder for caller data (`digits="{{test_profile.pin}}#"`) |
 | `<endcall />` | Terminate call. **May be combined with surrounding text** (only "communication-class" tag that allows this). |
 | `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues. Supports decimal seconds (`"0.5s"`) for sub-second precision. |
 | `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |

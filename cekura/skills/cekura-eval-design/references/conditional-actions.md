@@ -190,7 +190,7 @@ recording also fixes the dialogue, so the testing agent can no longer adapt.
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<dtmf digits="..." />` | Send touch-tone digits. Supports digits, `#`, and `*` (e.g. `digits="123"`, `digits="456#"`, `digits="*9"`). | Combinable with text |
+| `<dtmf digits="..." />` | Send touch-tone digits. Supports digits, `#`, and `*` (e.g. `digits="123"`, `digits="456#"`, `digits="*9"`), or a `{{test_profile.key}}` placeholder for caller data (`digits="{{test_profile.pin}}#"`). | Combinable with text |
 | `<send_sms text="..." />` | Trigger an SMS for testing SMS-driven workflows | `text` required |
 | `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent | `t` required; `d` optional; `fixed_message: true` |
 | `<interruption time="Xs" />` | Cuts in `Xs` after the **main agent starts its next turn** (shorter = more aggressive) | **Must be `type: "action_followup"` AND must appear at the very start of the action string.** |
@@ -404,11 +404,13 @@ This is the canonical pattern: the **main agent owns the IVR audio**. The testin
     { "id": 0, "condition": "FIRST_MESSAGE", "action": "", "type": "standard", "fixed_message": true },
     { "id": 1, "condition": "The IVR menu finishes playing the options", "action": "<dtmf digits=\"2\" />", "type": "standard", "fixed_message": true },
     { "id": 2, "condition": "The agent greets you and asks how they can help", "action": "I have a question about a charge on my last bill", "type": "standard", "fixed_message": false },
-    { "id": 3, "condition": "The agent asks for your account number", "action": "<dtmf digits=\"123456#\" />", "type": "standard", "fixed_message": true },
+    { "id": 3, "condition": "The agent asks for your account number", "action": "<dtmf digits=\"{{test_profile.account_number}}#\" />", "type": "standard", "fixed_message": true },
     { "id": 4, "condition": "The agent resolves your billing question", "action": "Thanks, that clears it up <endcall />", "type": "standard", "fixed_message": true }
   ]
 }
 ```
+
+Note the split between the two `<dtmf>` tags: `id: 1` is a **menu choice** the IVR itself dictates, so it stays a literal `2`. `id: 3` is **caller data**, so it references the test profile — the same evaluator then works for every profile you run it against instead of needing a copy per account number. Applies to any keyed-in caller data: account/customer number, PIN, DOB, zip.
 
 For the less-common case where the testing agent simulates an external IVR for the main agent to navigate (outbound flows), see "Worked Example 2b" below.
 
