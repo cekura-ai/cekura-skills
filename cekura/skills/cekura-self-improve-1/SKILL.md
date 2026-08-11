@@ -67,10 +67,13 @@ every project:
 
 **Layer 2 — the capability manifest.** A per-project file,
 `.cekura/selfimprove.yaml`, declaring typed capabilities: `source_of_truth`
-(a **component list** — prompt in repo, tools in DB, registry in Langfuse…),
-`render_intended`, `read_live`, `apply`, `validate` (dry-run), `deploy`,
-`run_eval`, `reset_fixtures`, `rollback`, `promote`, plus `environments` and
-`authority` (allowed/forbidden paths, registered commands, secrets policy).
+(a **component list** — prompt in repo, tools in DB, registry in Langfuse…,
+each with its own `read` / `apply` / `rollback`), `render_intended`,
+`read_live`, `validate` (dry-run), `deploy`, `evidence`, `simulate` (Cekura
+runner + `reset_fixtures` + `flake_policy`), `promote`, `attestation`
+(acceptable differences, trace correlation), `audit`, plus `environments` and
+`authority` (allowed/forbidden paths, secrets policy; **absent
+`allowed_paths` means no file writes**).
 Schema: `references/manifest.schema.json`; field-by-field rules:
 `references/manifest-guide.md`. Provider-dashboard-managed agents are just a
 pre-filled manifest (`recipes/provider-managed.md`) — this skill is a superset,
@@ -96,6 +99,18 @@ re-run the Setup self-test after any change.
 
 Announce every phase entry as `Iteration N · <Phase>`. Re-read the phase file on
 entry. Never parallelize across a phase boundary.
+
+**Dependency:** the reused phases live in `cekura-self-improving-agent`, which
+must be installed alongside this skill (the plugin ships both; standalone
+installs must include both directories). If those files are missing, stop and
+ask the user to install the classic skill — do not improvise the collect /
+debug / reproduce / regression semantics.
+
+**Tool fallback:** if the Cekura MCP tools are not available in the session,
+`cekura_skill_started` is skipped (it never blocks the skill) and Cekura reads
+fall back to the public REST API with `X-CEKURA-API-KEY` — but simulation runs
+require the platform tools; without them, stop before Reproduce and tell the
+user to set up MCP (`setup-mcp` command).
 
 ## Drift and failure classification
 

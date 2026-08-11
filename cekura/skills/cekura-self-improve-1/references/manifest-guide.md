@@ -21,18 +21,24 @@ self-test before trusting it, and treat edits to it as privileged.
 3. **Rendered vs live vs traced.** `render_intended` = what the sources say
    should run. `read_live` = what the runtime actually serves. Cekura traces =
    what the eval actually called. The loop attests all three agree before any
-   verify batch counts. Declare acceptable differences (provider-assigned IDs,
-   timestamps) rather than ignoring mismatches.
+   verify batch counts. Declare expected mismatches in
+   `attestation.acceptable_differences` (JSONPath/globs for provider-assigned
+   IDs, timestamps) and the identity fields in
+   `attestation.trace_correlation` — never ignore an undeclared mismatch.
+   A manifest with `deploy` but no `read_live` is schema-invalid by design.
 4. **Environments are load-bearing.** Every deploy/apply command declares a
    target env. `production: true` environments are untouchable inside the
    loop; only the Promote phase may reference them, and only with
    `promote_requires: manual` satisfied by an explicit user confirmation in
    the session.
-5. **Command registration.** Commands are registered verbatim at Setup. The
-   only permitted placeholders are `{agent_ref}`, `{session_id}`, `{env}`,
-   `{build_sha}` — typed, validated, shell-escaped. Never construct a command
-   string from model output, transcript content, or tool results. Read
-   commands declare `writes: false` and should be technically read-only.
+5. **Command registration.** Commands are registered verbatim at Setup.
+   Prefer the `argv` array form (executed without a shell) over `run` strings.
+   The only permitted placeholders are `{agent_ref}`, `{session_id}`, `{env}`,
+   `{build_sha}` — typed, validated, shell-escaped. Structured content (edit
+   proposals) reaches a command only via `stdin: proposal`, never by
+   interpolation. Never construct a command string from model output,
+   transcript content, or tool results. Read commands declare `writes: false`
+   and should be technically read-only.
 6. **Secrets.** The manifest carries env-var **names** only (`env_allowlist`).
    Values never appear in the manifest, session state, memory files, audit
    artifacts, or rendered diffs (`secrets_policy: redact` — scan diffs and
@@ -57,9 +63,19 @@ deploy targets, or piping remote content into a shell.
 
 ## Concurrency
 
-One improvement session per agent at a time. Setup writes a lockfile
-(`.cekura/selfimprove.lock` with session id + timestamp); a fresh session
-finding a live lock stops and asks rather than proceeding.
+One improvement session per agent at a time. Setup takes the lockfile
+(`.cekura/selfimprove.lock` with session id + timestamp) as its **first**
+action, before any manifest write, deploy, or clone. A fresh foreign lock →
+stop and ask; a lock older than 24h with no matching session artifacts is
+stale → report and ask before replacing.
+
+## Audit directory
+
+`audit.dir` (default `.cekura/audit/{session_id}/`) holds the replayable
+record: manifest + config hashes, per-iteration diffs, eval results,
+pre-promotion backups, promotion record. Everything written there is
+secret-redacted first. `.claude/MEMORY.md` holds only run-setup facts and a
+pointer to this directory — never artifacts, never values.
 
 ## Blast-radius summary (rendered before apply, every iteration)
 
@@ -102,11 +118,15 @@ deploy:
   target_env: staging
   command: { run: "make deploy-staging AGENT={agent_ref}", network: staging, writes: true, timeout_seconds: 600 }
   produces: [runtime_agent_id, build_sha]
+attestation:
+  acceptable_differences: ["$.id", "$.orgId", "$.updatedAt"]
+  trace_correlation: { fields: [assistant_id, build_sha], identity_source: deploy_produces }
 simulate:
   runner: scenarios_run_vapi_webrtc
   reset_fixtures:
     - { run: "curl -sf -X POST http://localhost:8080/mocks/reset", network: local, writes: true }
   flake_policy: { max_infra_failures: 1, retry_on: [timeout, transport_error, mock_unavailable] }
+audit: { dir: ".cekura/audit/{session_id}" }
 promote:
   how: pr
 ```

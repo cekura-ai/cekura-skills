@@ -5,15 +5,34 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "agent", "environments", "authority", "source_of_truth", "simulate"],
+  "if": { "required": ["deploy"] },
+  "then": {
+    "required": ["read_live"],
+    "$comment": "A deploy step without runtime readback makes attestation impossible; verification would run against an unverified runtime."
+  },
   "$defs": {
     "command": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["run"],
+      "minProperties": 1,
+      "not": { "required": ["run", "argv"] },
+      "anyOf": [{ "required": ["run"] }, { "required": ["argv"] }],
       "properties": {
         "run": {
           "type": "string",
-          "description": "Registered command template. Placeholders ({agent_ref}, {session_id}, {env}, {build_sha}) are typed and shell-escaped by the runner; no other interpolation is permitted."
+          "description": "Registered shell command template. Placeholders ({agent_ref}, {session_id}, {env}, {build_sha}) are typed and shell-escaped by the runner; no other interpolation is permitted. Prefer argv where possible.",
+          "pattern": "^[^`]*$"
+        },
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Preferred form: argv array executed without a shell. Same placeholder rules as run. Mutually exclusive with run."
+        },
+        "stdin": {
+          "enum": ["none", "proposal"],
+          "default": "none",
+          "description": "proposal: the structured edit proposal is fed on stdin (apply commands). Never interpolate proposal content into run/argv."
         },
         "cwd": { "type": "string", "description": "Working directory relative to repo root. Default: repo root." },
         "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 3600, "default": 120 },
@@ -30,6 +49,13 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["name", "kind"],
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "repo" } } },
+          "then": { "required": ["paths"] },
+          "else": { "required": ["read"] }
+        }
+      ],
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z0-9_]+$" },
         "kind": { "enum": ["repo", "db", "langfuse", "provider", "other"] },
@@ -58,7 +84,12 @@
             "command": { "$ref": "#/$defs/command" },
             "notes": { "type": "string" }
           },
-          "description": "Per-component rollback. 'git' is only valid for kind=repo. 'none' blocks Promote for edits touching this component unless the user explicitly accepts."
+          "description": "Per-component rollback. 'git' is only valid for kind=repo. 'none' blocks Promote for edits touching this component unless accept_no_rollback is true."
+        },
+        "accept_no_rollback": {
+          "type": "boolean",
+          "default": false,
+          "description": "Explicit, user-confirmed acceptance that this component can be promoted without a rollback path."
         }
       }
     }
@@ -86,10 +117,12 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["production"],
+        "if": { "properties": { "production": { "const": true } } },
+        "then": { "required": ["promote_requires"] },
         "properties": {
           "kind": { "enum": ["local", "deployed"] },
           "production": { "type": "boolean" },
-          "promote_requires": { "enum": ["manual"], "description": "production: true environments must set this." }
+          "promote_requires": { "enum": ["manual"], "description": "Required on every production: true environment." }
         }
       }
     },
@@ -97,7 +130,11 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "allowed_paths": { "type": "array", "items": { "type": "string" } },
+        "allowed_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths the skill may write. ABSENT MEANS NO FILE WRITES ARE PERMITTED — required whenever any repo component uses apply mode file_patch."
+        },
         "forbidden_paths": { "type": "array", "items": { "type": "string" } },
         "secrets_policy": { "enum": ["redact"], "default": "redact" },
         "approvers": { "type": "array", "items": { "type": "string" }, "description": "Who may confirm promotion / manifest changes." }
@@ -125,7 +162,7 @@
       "additionalProperties": false,
       "required": ["target_env"],
       "properties": {
-        "target_env": { "type": "string" },
+        "target_env": { "type": "string", "description": "Must name a declared environment with production: false. Validated at Setup; the loop refuses a production target unconditionally." },
         "command": { "$ref": "#/$defs/command", "description": "Omit for live-on-save (noop)." },
         "sandbox_command": { "$ref": "#/$defs/command", "description": "Optional ephemeral/per-session deploy (clone equivalent)." },
         "produces": { "type": "array", "items": { "type": "string" }, "description": "Identity outputs to capture: runtime_agent_id, build_sha, prompt_version…" }
@@ -153,6 +190,44 @@
             "max_infra_failures": { "type": "integer", "minimum": 0, "default": 1 },
             "retry_on": { "type": "array", "items": { "type": "string" }, "description": "Error classes retried without counting: timeout, transport_error, mock_unavailable…" }
           }
+        }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "acceptable_differences": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "JSONPath/glob expressions for render-vs-live fields expected to differ (provider-assigned ids, timestamps). Anything else that differs is drift."
+        },
+        "trace_correlation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fields": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Fields in call traces/metadata that carry runtime identity (e.g. assistant_id, build_sha, prompt_version)."
+            },
+            "identity_source": {
+              "enum": ["deploy_produces", "runtime_refs", "read_live"],
+              "description": "Where the expected identity value comes from for comparison."
+            }
+          }
+        }
+      },
+      "description": "How render ↔ live ↔ trace comparison is performed. Strongly recommended whenever a deploy step exists."
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dir": {
+          "type": "string",
+          "default": ".cekura/audit/{session_id}",
+          "description": "Directory for session audit artifacts (hashes, diffs, eval results, pre-promotion backups). Secrets are redacted before writing."
         }
       }
     },

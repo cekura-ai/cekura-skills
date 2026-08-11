@@ -24,9 +24,11 @@ Render before applying anything:
    possible, else after apply but before deploy — template expansion can turn
    a small source edit into a large runtime change.
 3. **Blast-radius summary**: components, files, environments touched.
-4. Hard checks: nothing outside `authority.allowed_paths`; nothing in
-   `forbidden_paths`; no secret-looking strings in the diff (redact policy);
-   no `production: true` environment referenced.
+4. Hard checks: nothing outside `authority.allowed_paths` — and if
+   `allowed_paths` is absent, **no file writes at all** (component `apply`
+   commands are then the only mutation path); nothing in `forbidden_paths`;
+   no secret-looking strings in the diff (redact policy); no
+   `production: true` environment referenced.
 
 `auto_mode: true`: render and proceed. `auto_mode: false`: wait for approval.
 Zero edits (all Upstream) → stop the loop, report.
@@ -46,8 +48,8 @@ Zero edits (all Upstream) → stop the loop, report.
 1. Deploy to the session's non-production target (or noop for live-on-save).
    Non-zero exit halts the iteration — never swallow it.
 2. `read_live`; compare against the fresh `render_intended` output. Mismatch
-   beyond declared acceptable differences = **drift**: do not verify; re-apply
-   once, then stop as `manifest_invalid` if it persists.
+   beyond `attestation.acceptable_differences` = **drift**: do not verify;
+   re-apply once, then stop as `manifest_invalid` if it persists.
 3. Confirm identity continuity: the runtime identity (`produces`) matches what
    the simulation runner will hit. Record all three hashes (source, rendered,
    live) in the audit trail — verify batches only count against these hashes.

@@ -3,6 +3,20 @@
 Goal: leave this phase with a validated `.cekura/selfimprove.yaml`, a passing
 self-test, and the session recorded. No failure collection, no edits here.
 
+## SETUP.0 — take the concurrency lock FIRST
+
+Before touching the manifest, deploying, or cloning anything: write
+`.cekura/selfimprove.lock` (session id + ISO timestamp). If a lock already
+exists: a lock older than 24h with no matching session artifacts is stale —
+report it and ask before replacing; a fresh lock means another session is
+live — stop and ask. Everything below happens under the lock so two sessions
+can never race through Setup's deploy/clone steps.
+
+Also create the session audit directory now — `audit.dir` from the manifest
+when it exists, else the default `.cekura/audit/{session_id}/`. All hashes,
+diffs, eval results, and pre-promotion backups land there, secrets redacted.
+`.claude/MEMORY.md` gets only the pointer + run-setup facts, never artifacts.
+
 ## SETUP.1 — locate or build the manifest
 
 1. If `manifest_path` (default `.cekura/selfimprove.yaml`) exists: load it,
@@ -37,18 +51,21 @@ repair offer (never continue on guessed mechanics):
 3. **Deploy or noop**: run `deploy.sandbox_command` if present, else
    `deploy.command` against the non-production `target_env`, else noop for
    live-on-save. Capture `produces` identities (runtime_agent_id, build_sha).
-4. **Read live**: `read_live` returns config; compare to the render. Declared
-   acceptable differences aside, a mismatch here is drift — surface it now.
+4. **Read live**: `read_live` returns config; compare to the render using
+   `attestation.acceptable_differences` (provider-assigned ids, timestamps).
+   Any other mismatch is drift — surface it now.
 5. **Smoke scenario**: run one Cekura scenario through `simulate.runner`
    against the deployed target; confirm it connects and produces a transcript.
 6. **Trace correlation**: confirm the smoke run's trace/metadata points at the
-   identity captured in step 3 (the eval hit the thing we deployed, not an
-   older build or a different agent).
+   identity captured in step 3, using `attestation.trace_correlation.fields`
+   compared against the declared `identity_source` (the eval hit the thing we
+   deployed, not an older build or a different agent).
 
 ## SETUP.4 — session bookkeeping
 
-- Take the concurrency lock (`.cekura/selfimprove.lock`); a live foreign lock
-  → stop and ask.
+- Verify `deploy.target_env` names a declared environment with
+  `production: false` (schema can't cross-check this; the loop refuses a
+  production target unconditionally).
 - Repo components: create the session worktree/branch
   (`cekura/selfimprove-{session_id}`); one commit per iteration.
 - Persist run setup to `.claude/MEMORY.md`: manifest path + hash, environment,

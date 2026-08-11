@@ -11,8 +11,11 @@ session, satisfying the environment's `promote_requires: manual`.
 2. Production baseline unchanged: read the production config (via `read_live`
    with the prod env, or the component `read`s); its hash must equal the
    session's recorded baseline, or the user explicitly approves the drift.
-3. Every touched component has a rollback path (`how != none`), or the user
-   explicitly accepts promotion without one, per component.
+3. Rollback coverage, scoped by promotion mode: for **pr**, the merge/revert
+   is the customer pipeline's responsibility — the skill's obligation ends at
+   an accurate PR (this precondition is satisfied by the PR itself); for
+   **pipeline / provider_publish / manual**, every touched component needs
+   `rollback.how != none` or `accept_no_rollback: true`, per component.
 4. Blast-radius summary + full rendered diff (source and rendered) presented,
    secrets redacted.
 
@@ -26,8 +29,9 @@ session, satisfying the environment's `promote_requires: manual`.
   object via the component's apply mode; respect draft/publish semantics.
 - **manual**: print an exact, copy-pasteable change list and stop.
 
-Back up the production config (component `read` outputs to the session audit
-dir) **before** any non-PR promotion.
+Back up the production config **before** any non-PR promotion: component
+`read` outputs written to the session audit directory (`audit.dir`, default
+`.cekura/audit/{session_id}/`), secrets redacted.
 
 ## PROMOTE.3 — post-promotion verification
 

@@ -41,6 +41,11 @@ deploy:
   target_env: staging
   command: { run: "<deploy command>", network: staging, writes: true, timeout_seconds: 600 }
   produces: [runtime_agent_id, build_sha]
+attestation:
+  acceptable_differences: ["$.id", "$.updatedAt"]   # provider-assigned fields
+  trace_correlation:
+    fields: [assistant_id, build_sha]
+    identity_source: deploy_produces
 evidence:
   traces: { run: "<langfuse/trace fetch by call id>", writes: false }
 simulate:
