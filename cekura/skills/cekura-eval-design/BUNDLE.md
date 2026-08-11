@@ -26,7 +26,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.5"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.6"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
@@ -344,7 +344,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 - **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
 - **`<spell>TEXT</spell>`** wraps text to spell letter by letter (good for IDs, account numbers).
 - **`<speed ratio="N" />`** range **0.8–1.2**; **`<volume ratio="N" />`** range **0–2** (Cartesia voices only) — both must be at the **start** of the action.
-- **`<voice provider="P" id="X" model="Y" />`** switches the testing agent's TTS voice from that point on — **the only way to put a second speaker in one call** (caller hands the phone over, supervisor takes over). `provider` and `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). The provider itself cannot change mid-call. Prefer this over an attached audio clip when you only need a different *voice* — a recording also fixes the dialogue.
+- **`<voice provider="P" id="X" model="Y" />`** switches the testing agent's TTS voice persistently — **the only way to put a second speaker in one call**. Add `text="..."` for a temporary regional voice, or use `<voice ...>...</voice>` when regional text contains inline tags; the prior voice resumes after the region. `provider` and `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric; `model` is optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`); the provider itself cannot change mid-call. Do not combine `text` with the block form. Prefer this over an attached audio clip when you only need a different *voice* — a recording also fixes the dialogue.
 - **`<network_simulation packet_loss="N" />`** — only `packet_loss` is supported.
 
 ### Worked example — Linear verification flow
