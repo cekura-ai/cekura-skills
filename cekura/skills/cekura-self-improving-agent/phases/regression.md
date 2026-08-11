@@ -19,16 +19,22 @@ Produce a named list. **Confirm with the user before creating evaluators** *(in 
 
 **Cekura-scenario targets:** build one evaluator per case, reusing the Reproduce harness machinery (the agent already has mock tools + dynamic variables, so cases inherit a faithful environment). Follow REPRO.4: **prefer `expected_outcome` bullets; fall back to a predefined metric only when the case is out of scope for behavioral bullets** (silence/non-response → Infrastructure Issues; slow replies → Latency; tool behavior → Tool Call Success). To *generate* voice stress, use XML tags in `fixed_message` (`<silence>`, `<interruption>`, `<background_noise>`, `<dtmf>`).
 
-```bash
-create_scenario '{
+Call `mcp__cekura__scenarios_create` with:
+
+```json
+{
   "agent": AGENT_ID,
   "personality": PERSONALITY_ID,
   "name": "Regression: <case name>",
-  "instructions": "...",
+  "scenario_type": "conditional_actions",
+  "scenario_language": "<language code of the prod call, e.g. en>",
   "expected_outcome": "<behavioral bullets>",
   "conditional_actions": { "role": "caller", "conditions": [...] }
-}'
+}
 ```
+
+**`scenario_type: "conditional_actions"` is required, not optional.** Omit it and the API defaults the scenario to `instruction`, silently ignoring the `conditions` you just built — the replay then improvises instead of reproducing the bug. (Behavioral scenarios are the one type this direct-create path is not for; those are always generated.) `scenario_language` is required on this type, and `instructions`/`first_message` must stay unset — the conditions carry the whole flow.
+
 
 Run each case with the saved runner one at a time (restore modified conditions between cases), then poll all results.
 

@@ -96,7 +96,7 @@ Keep names under 80 chars (API limit on the `name` field).
 
 ## Eval Types
 
-A complete suite has coverage across these categories. Each type can be authored as **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule.
+A complete suite has coverage across these categories. Each type can be **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule. That choice also fixes how the scenario gets written: behavioral ⇒ generated via `generate-bg`; conditional actions ⇒ created directly, since generation cannot emit them.
 
 ### Workflow Evals (Core)
 

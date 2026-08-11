@@ -1,6 +1,8 @@
 # Behavioral Instruction Patterns
 
-Detailed guidance for authoring behavioral evaluators (`scenario_type: "instruction"`). Loaded on demand from `SKILL.md`'s "Writing Instructions" section.
+Detailed guidance on what good behavioral instruction text (`scenario_type: "instruction"`) looks like. Loaded on demand from `SKILL.md`'s "Writing Instructions" section.
+
+**Behavioral scenarios are generated, not hand-authored** (`generate-bg` — the create endpoint is for conditional actions). Use these patterns to write the `extra_instructions` you pass to the generator, to judge and PATCH what it returns, and for the verbatim exception where the user supplied the text.
 
 ## Instruction Style
 
