@@ -51,8 +51,10 @@ If unsure whether `expected_outcome` can express the failure, prefer it and add 
 
 Create the scenario(s) under the agent that handled the failing call:
 
-```bash
-create_scenario '{
+Call `mcp__cekura__scenarios_create` with:
+
+```json
+{
   "agent": AGENT_ID,
   "personality": PERSONALITY_ID,
   "name": "Bug repro: <brief issue>",
@@ -60,7 +62,7 @@ create_scenario '{
   "scenario_language": "<language code of the prod call, e.g. en>",
   "expected_outcome": "<behavioral bullets derived from the prod failure>",
   "conditional_actions": { "role": "caller", "conditions": [ /* verbatim testing-agent turns from REPRO.3d */ ] }
-}'
+}
 ```
 
 **`scenario_type: "conditional_actions"` is required, not optional.** Omit it and the API defaults the scenario to `instruction`, silently ignoring the `conditions` you just built — the replay then improvises instead of reproducing the bug. (Behavioral scenarios are the one type this direct-create path is not for; those are always generated.) `scenario_language` is required on this type, and `instructions`/`first_message` must stay unset — the conditions carry the whole flow.

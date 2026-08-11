@@ -26,16 +26,17 @@ Map each turn to a fixed condition:
 
 **Use `metadata.agent_id` from the production call as the `agent` field — not the top-level `agent_id` which may be the monitoring agent.** The evaluator must be created under the same agent that handled the failing call so it runs against the correct agent configuration.
 
-```bash
+Call `mcp__cekura__scenarios_create` with:
 
-create_scenario '{
+```json
+{
   "agent": METADATA_AGENT_ID,
   "personality": PERSONALITY_ID,
   "name": "Bug repro: <brief issue description>",
   "scenario_type": "conditional_actions",
   "scenario_language": "<language code of the prod call, e.g. en>",
   "conditional_actions": { "role": "caller", "conditions": [...] }
-}'
+}
 ```
 
 **`scenario_type: "conditional_actions"` is required, not optional.** Omit it and the API defaults the scenario to `instruction`, silently ignoring the `conditions` you just built — the replay then improvises instead of reproducing the bug. (Behavioral scenarios are the one type this direct-create path is not for; those are always generated.) `scenario_language` is required on this type, and `instructions`/`first_message` must stay unset — the conditions carry the whole flow.
