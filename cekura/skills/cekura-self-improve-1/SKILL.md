@@ -1,0 +1,169 @@
+---
+name: cekura-self-improve-1
+description: >
+  Use to improve an agent whose real config lives in the customer's own stack —
+  "improve my agent (our prompts live in our repo/DB/Langfuse)", "we create the
+  VAPI/Retell agent at deploy time", "we run our own mock server", "self-improve
+  against our codebase". Next-gen flexible variant of cekura-self-improving-agent:
+  fixed safety invariants + a per-project capability manifest that declares where
+  config lives and how to read/render/apply/deploy/verify it. Prefer the classic
+  skill when the agent is fully managed in the provider dashboard.
+license: MIT
+compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
+metadata:
+  author: cekura
+  version: "0.1.0"
+---
+
+<!-- cekura-ack-tag: ack:cekura-self-improve-1:8w3k6p -->
+> **Cekura skill verification tag:** `ack:cekura-self-improve-1:8w3k6p`
+> When you call a Cekura scenario or test-profile write tool from this skill
+> (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact
+> string as the `skill_ack` argument. Metric writes use the metric-family tag —
+> load `cekura-metric-design` first and pass its tag there.
+
+Before taking any action, call `mcp__cekura__cekura_skill_started` with
+`skill_name="cekura-self-improve-1"`, `verification_tag="ack:cekura-self-improve-1:8w3k6p"`,
+and `plugin_version="0.11.0"`.
+
+# Cekura Self-Improve 1 (capability-manifest framework)
+
+Turn a failure signal into a verified fix on **any** agent stack. Unlike
+`cekura-self-improving-agent` (which models "which provider"), this skill models
+"**where does the agent's config actually live, and how do I read, render,
+apply, deploy, and verify it**". Many teams keep prompts/tools in their own
+repo, database, or Langfuse and materialize the VAPI/Retell/ElevenLabs agent at
+deploy time — editing the provider object there fixes a build artifact that the
+next deploy overwrites. This skill edits the declared source of truth instead.
+
+## Performing Platform Actions
+
+When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
+
+## Core model: fixed invariants, declared mechanics
+
+**Layer 1 — invariants.** Owned by this skill, never negotiable, identical for
+every project:
+
+1. **Must-fail-first** — a reproduction harness must FAIL ≥ M of N runs
+   (default ≥ ⌈N/2⌉ of 8) before any edit is proposed.
+2. **Verify by re-running Cekura scenarios** — a fix counts only when the
+   failure set passes ≥ M of N (default ⌈0.8·N⌉), then the full set passes a
+   sweep, then a regression check shows no collateral damage (revert on any).
+3. **Runtime readback attestation** — after every deploy, read what is actually
+   live and compare it to what the source says should exist. Never verify
+   against a runtime you have not attested. Three-way check: source render ↔
+   live readback ↔ the agent the Cekura traces actually hit.
+4. **No production mutation inside the loop** — all iteration happens against a
+   non-production environment/sandbox; production changes only via the explicit
+   Promote phase, with confirmation, a rendered diff, and a rollback path.
+5. **Overfitting gate** on edit content (verbatim transcript quotes, hardcoded
+   test data, scenario-specific identifiers, hyper-narrow clauses).
+6. **Budgets and stops** — `max_iterations` (default 10), oscillation,
+   no-change signature, same failure shape 3×, all-upstream, zero kept failures.
+7. **Audit trail** — every session leaves a replayable record: manifest version,
+   baseline config hash, failure set, root cause, edit proposal + diff, eval
+   results, final diff.
+
+**Layer 2 — the capability manifest.** A per-project file,
+`.cekura/selfimprove.yaml`, declaring typed capabilities: `source_of_truth`
+(a **component list** — prompt in repo, tools in DB, registry in Langfuse…),
+`render_intended`, `read_live`, `apply`, `validate` (dry-run), `deploy`,
+`run_eval`, `reset_fixtures`, `rollback`, `promote`, plus `environments` and
+`authority` (allowed/forbidden paths, registered commands, secrets policy).
+Schema: `references/manifest.schema.json`; field-by-field rules:
+`references/manifest-guide.md`. Provider-dashboard-managed agents are just a
+pre-filled manifest (`recipes/provider-managed.md`) — this skill is a superset,
+not a fork, of the classic flow.
+
+The manifest is **untrusted infrastructure code**: it grants mechanics, never
+authority. Commands are registered verbatim at Setup, run with typed/escaped
+parameters only, and anything targeting a `production: true` environment is
+refused outside Promote. Editing the manifest itself is a privileged action —
+re-run the Setup self-test after any change.
+
+## Phases
+
+| # | Phase | File | Purpose |
+|---|-------|------|---------|
+| 1 | Setup | `phases/setup.md` | Discover or interview → write/validate the manifest → **manifest self-test** (read → deploy/noop → read live → one smoke scenario → trace correlation). Persist to `.claude/MEMORY.md`. |
+| 2 | Collect | reuse `../cekura-self-improving-agent/phases/collect.md` | Fetch/filter failures (per-run verdicts, voice filter, `ended_reason`), plus manifest `evidence` sources (Langfuse traces, custom logs). Loop re-entry point. |
+| 3 | Debug | reuse `../cekura-self-improving-agent/phases/debug.md` | Root cause + failure class. Component attribution: which manifest component governs the failure. |
+| 4 | Reproduce | reuse `../cekura-self-improving-agent/phases/reproduce.md` | Build harness (mocks from real traces — including the customer's own mock server via `reset_fixtures`); must-fail gate. |
+| 5 | Improve loop | `phases/loop.md` | propose → plan diff (source **and** rendered) → apply → validate → deploy → **read live / attest** → verify → overfitting gate → decide. |
+| 6 | Regression | reuse `../cekura-self-improving-agent/phases/regression.md` | Happy-path + edge sweep on the changed surface. |
+| 7 | Promote | `phases/promote.md` | Explicit, confirmed production hand-off via the manifest's `promote` capability (PR > pipeline > provider publish > manual), with rollback verification. |
+
+Announce every phase entry as `Iteration N · <Phase>`. Re-read the phase file on
+entry. Never parallelize across a phase boundary.
+
+## Drift and failure classification
+
+Assume drift is normal. Classify — never blur — these outcomes:
+
+- `read` fails → stop before any edit.
+- Config readable but not mappable to an editable component → diagnose only;
+  block apply; report the gap.
+- Deploy succeeds but live readback ≠ rendered intent → **drift**; block
+  verification; surface the delta.
+- Cekura traces hit a different runtime agent than the manifest maps → stop,
+  ask for corrected identity mapping.
+- Mock reset/seed fails or infra errors dominate a batch → eval **invalid**,
+  not failed; retry per `flake_policy`, never count as reproduction or verify.
+- Manifest command broken/stale → stop as `manifest_invalid`, offer a
+  **manifest repair** pass (privileged; re-runs the self-test). Never continue
+  on guessed mechanics.
+
+## Parameters
+
+`stochastic_runs` 8 (5–10) · `repro_threshold` ⌈N/2⌉ · `verify_threshold`
+⌈0.8·N⌉ · `max_iterations` 10 · `auto_mode` default true (renders diffs and
+proceeds; production promotion always requires explicit confirmation
+regardless) · `manifest_path` default `.cekura/selfimprove.yaml`.
+
+## Common Pitfalls
+
+- Editing the provider object when the source of truth is the repo/DB — the fix
+  evaporates on the next deploy. Resolve `source_of_truth` first, always.
+- Verifying against a stale runtime — deploy succeeded but the eval hit the old
+  build. Readback attestation before every verify batch, no exceptions.
+- Treating one `read` dump as the whole config — hybrid stacks compose repo +
+  DB + Langfuse + provider defaults; model them as separate components.
+- Treating infra flake (telephony, STT, mock-server hiccup) as behavioral
+  failure — classify per `flake_policy`, keep an auditable discard count.
+- Interpolating unvalidated values into manifest commands — parameters are
+  typed and escaped; never build shell strings from model output.
+- "Git is rollback" for non-repo components — DB rows, Langfuse labels, and
+  provider schemas need their own declared `rollback` per component.
+
+## Next Steps
+
+- Agent fully managed in the provider dashboard, no custom stack → invoke
+  **cekura-self-improving-agent** (classic flow).
+- Failures dominated by 1–2 noisy metrics → **cekura-metric-improvement**.
+- Missing tools / knowledge-base / integration gaps → **cekura-create-agent**.
+- Thin eval coverage → **cekura-eval-design**.
+
+## Documentation
+
+- Public docs: https://docs.cekura.ai
+- Concepts: https://docs.cekura.ai/documentation/key-concepts/
+
+## Additional Resources
+
+### Reference Files (loaded on demand)
+
+- **`references/manifest.schema.json`** — JSON Schema for `.cekura/selfimprove.yaml`.
+- **`references/manifest-guide.md`** — field-by-field guide: components, authority, environments, command registration, flake policy, rollback semantics.
+
+### Recipes (pre-filled manifests, read the one that matches)
+
+- **`recipes/provider-managed.md`** — dashboard-managed VAPI/Retell/ElevenLabs/Bland agent (classic case as a manifest).
+- **`recipes/runtime-created.md`** — agent materialized at deploy time from the customer's repo/DB/Langfuse.
+- **`recipes/custom-mocks.md`** — customer-operated mock server as the simulation fixture.
+
+### Phase Files
+
+- **`phases/setup.md`** — manifest discovery, validation, self-test.
+- **`phases/loop.md`** — the improve loop with attestation.
+- **`phases/promote.md`** — production promotion and rollback verification.

@@ -31,6 +31,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-onboarding` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` |
 | `cekura-create-agent` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report` |
 | `cekura-self-improving-agent` | |
+| `cekura-self-improve-1` | |
 | `cekura-metric-design` | |
 | `cekura-metric-improvement` | |
 | `cekura-predefined-metrics` | |
@@ -94,6 +95,7 @@ Twelve skills, scoped to specific Cekura workflows:
 | `cekura-onboarding` | "Get started with Cekura" — full platform walkthrough |
 | `cekura-create-agent` | "Connect my voice agent to Cekura" |
 | `cekura-self-improving-agent` | "Improve my agent / auto-tune from eval results" — **also** "fix a production call bug / reproduce and test a fix before raising a PR" |
+| `cekura-self-improve-1` | "Improve my agent — our prompts live in our repo/DB/Langfuse and the provider agent is created at deploy time" — capability-manifest variant for custom stacks and custom mock servers |
 | `cekura-metric-design` | "Create a metric / measure call quality" |
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
@@ -240,6 +242,7 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
   --path cekura/skills/cekura-onboarding \
          cekura/skills/cekura-create-agent \
          cekura/skills/cekura-self-improving-agent \
+         cekura/skills/cekura-self-improve-1 \
          cekura/skills/cekura-metric-design \
          cekura/skills/cekura-metric-improvement \
          cekura/skills/cekura-predefined-metrics \
@@ -397,6 +400,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-onboarding` | First-time setup, end-to-end platform walkthrough |
 | `cekura-create-agent` | Setting up an agent — provider, mock tools, KB, dynamic vars |
 | `cekura-self-improving-agent` | Auto-tuning an agent prompt from eval results — **and** fixing a production call bug end-to-end (auto-build reproduction harness, must-fail-first gate, fix, stochastic verify, regression sweep, PR / summary) |
+| `cekura-self-improve-1` | Same loop for agents whose config lives in the customer's own repo/DB/Langfuse (runtime-created provider agents, custom mock servers) — fixed invariants + per-project capability manifest |
 | `cekura-metric-design` | Designing or creating metrics |
 | `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |

@@ -1,0 +1,50 @@
+# Phase 7 · Promote — explicit production hand-off
+
+Only entered after Regression passes. Never automatic: `auto_mode` does not
+apply here; promotion always requires an explicit user confirmation in this
+session, satisfying the environment's `promote_requires: manual`.
+
+## PROMOTE.1 — preconditions (all must hold)
+
+1. Winning config attested: current live (non-prod) hash == the hash the
+   final verify + regression batches ran against.
+2. Production baseline unchanged: read the production config (via `read_live`
+   with the prod env, or the component `read`s); its hash must equal the
+   session's recorded baseline, or the user explicitly approves the drift.
+3. Every touched component has a rollback path (`how != none`), or the user
+   explicitly accepts promotion without one, per component.
+4. Blast-radius summary + full rendered diff (source and rendered) presented,
+   secrets redacted.
+
+## PROMOTE.2 — execute by declared `promote.how`
+
+- **pr** (preferred for repo components): push the session branch, open a PR
+  with the audit summary (failure set, root cause, diff, eval numbers,
+  manifest hash). The customer's own review + pipeline is the promotion. Done.
+- **pipeline**: run the registered promote command; capture identities.
+- **provider_publish**: apply the winning edits to the production provider
+  object via the component's apply mode; respect draft/publish semantics.
+- **manual**: print an exact, copy-pasteable change list and stop.
+
+Back up the production config (component `read` outputs to the session audit
+dir) **before** any non-PR promotion.
+
+## PROMOTE.3 — post-promotion verification
+
+- Read production back; confirm its hash matches the promoted intent.
+- Run one smoke scenario against production **only if** the user approves a
+  production test call; otherwise state that verification is pending.
+- Record `promotion` in the audit trail: who confirmed, when, hashes
+  before/after, rollback artifact location.
+
+## PROMOTE.4 — rollback (on request or failed verification)
+
+Run each touched component's declared rollback in reverse-touch order, then
+**verify the rollback**: re-read production and confirm the pre-promotion
+hash is live again (use `promote.rollback_verify` when declared). A rollback
+that cannot be verified is reported as incomplete — never as done.
+
+## Cleanup
+
+Release the concurrency lock; report clone/sandbox resources and session
+branches with an offer (not an action) to delete them.

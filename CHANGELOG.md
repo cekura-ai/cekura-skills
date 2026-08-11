@@ -4,6 +4,20 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.11.0 — 2026-08-11
+
+- **Added** `cekura-self-improve-1`, a capability-manifest variant of the
+  self-improve loop for agents whose real config lives in the customer's own
+  stack (prompts in a repo, tools in a DB, prompt registry in Langfuse,
+  provider agents created at deploy time, customer-operated mock servers).
+  Fixed safety invariants (must-fail-first, runtime readback attestation,
+  no production mutation inside the loop, overfitting gate, budgets, audit
+  trail) plus a per-project `.cekura/selfimprove.yaml` declaring typed
+  read/render/apply/deploy/verify capabilities. Ships a JSON schema, a
+  manifest guide, setup/loop/promote phases, and three recipes
+  (provider-managed, runtime-created, custom-mocks). Collect/Debug/Reproduce/
+  Regression semantics are reused from `cekura-self-improving-agent`.
+
 ## 0.10.3 — 2026-08-07
 
 - **Added** the `<voice provider="P" id="X" model="Y" />` conditional-action tag
