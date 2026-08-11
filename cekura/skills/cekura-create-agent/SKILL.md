@@ -1,8 +1,9 @@
 ---
 name: cekura-create-agent
 description: >
-  Use when the user asks to "create a main agent", "set up a main agent", "add my main agent to Cekura",
-  "configure my main agent", "connect my main agent", "set up mock tools", "add tools to my agent",
+  Use when the user asks to "create a new agent", "create a main agent", "set up a new agent",
+  "set up a main agent", "add my main agent to Cekura", "configure my main agent",
+  "connect my main agent", "set up mock tools", "add tools to my agent",
   "upload knowledge base", "configure integration", "connect VAPI", "connect Retell",
   "connect LiveKit", "connect ElevenLabs", "add dynamic variables", or needs to onboard
   a voice AI agent onto the Cekura platform. Covers the full agent setup flow: project
