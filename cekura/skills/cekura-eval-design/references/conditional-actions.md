@@ -124,7 +124,7 @@ Think of conditions as stage directions: *what does the agent do that prompts th
 
 ## XML Tags (fixed_message: true only)
 
-XML tags are interpreted as syntax only when `fixed_message: true`. With `false`, the testing agent reads the angle brackets as literal instructions.
+XML tags are interpreted as syntax only when `fixed_message: true`. With `false`, the testing agent reads the angle brackets as literal instructions. Tags run left to right and are not nested, except inside a regional `<voice ...>...</voice>` block.
 
 ### Communication
 
@@ -134,6 +134,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible voicemail greeting + auto-beep at end. `text` is optional (silent voicemail allowed). | **Must be the entire action.** Post-beep message goes in a separate `action_followup` condition. |
 | `<ignore_interruptions>...</ignore_interruptions>` | Protected playback span: everything inside — text, attached `<audio>` clips, `<hold>`/`<silence>` pauses, or any mix — plays to completion. The main agent's speech during the span **is still transcribed and evaluated**; it just never interrupts playback or triggers a reply. | Block tag scoped to a **span**: content goes between the tags (never in an attribute), it may appear more than once per action with text/tags before and after, and spans cannot nest. |
 | `<endcall />` | Terminates the call | **May be combined with surrounding text** (the only "communication-class" tag that allows this — useful for natural sign-offs like `Thanks, that's all I needed <endcall />`). |
+| `<voice provider="P" id="X" model="Y" />` | Changes the testing agent's TTS voice. Add `text="..."` to speak only that text in the selected voice, or use `<voice ...>...</voice>` for a regional block. | `provider` and `id` required; `model` optional. Provider must match the active voice provider. Self-closing without `text` persists until another voice tag; regional forms restore the prior voice afterward. `text` is self-closing only; use the block form for nested tags. |
 
 ### Speech Control
 
@@ -144,18 +145,47 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 | `<spell>TEXT</spell>` | Spell text letter-by-letter (no attributes) | Wrap target text |
 | `<speed ratio="N" />` | Speech rate; ratio range **0.8–1.2** (0.8 = 20% slower, 1.2 = 20% faster) | **Must start the action** |
 | `<volume ratio="N" />` | Volume; ratio range **0–2** (0 = silent, 1 = normal, 2 = double) | **Must start the action. Cartesia voices only.** |
-| `<voice provider="P" id="X" model="Y" />` | Switch the testing agent's TTS voice from this point on — everything spoken after the tag, **including later conditions**, uses the new voice until another `<voice>` tag changes it. This is how you put a second speaker in one call. | `provider` + `id` required and must match each other (see below); `model` optional. Embeddable mid-action. |
 
 #### `<voice>` — simulating multiple speakers
 
 The one way to get more than one voice into a simulated call. Use it for a caller handing the
 phone over ("let me get my husband"), a supervisor taking over, or a different person picking up.
 
+Use the self-closing form without `text` to switch voices persistently: all later speech uses the
+new voice until another persistent `<voice />` tag changes it. For a temporary voice, use either
+`text="..."` or an opening/closing regional block; the prior voice resumes immediately afterward.
+The `text` form must be self-closing and cannot be combined with the block form.
+
 ```json
 {
   "id": 2,
   "condition": "agent asks to speak to the account holder",
   "action": "Hold on, let me get my husband. <voice provider=\"11labs\" id=\"21m00Tcm4TlvDq8ikWAM\" /> Hi, this is Mark speaking.",
+  "type": "standard",
+  "fixed_message": true
+}
+```
+
+For a single temporary line, use `text`:
+
+```json
+{
+  "id": 3,
+  "condition": "agent asks to speak to the account holder again",
+  "action": "<voice provider=\"11labs\" id=\"21m00Tcm4TlvDq8ikWAM\" text=\"Hi, this is Mark speaking.\" /> How can I help?",
+  "type": "standard",
+  "fixed_message": true
+}
+```
+
+For regional speech containing inline tags, use the block form. This is the allowed nesting
+exception, so pauses and other inline tags remain inside the temporary voice region:
+
+```json
+{
+  "id": 4,
+  "condition": "agent asks Mark for more details",
+  "action": "<voice provider=\"11labs\" id=\"21m00Tcm4TlvDq8ikWAM\">Let me check. <silence time=\"1s\" /> Yes, that is correct.</voice> Thanks for waiting.",
   "type": "standard",
   "fixed_message": true
 }
@@ -703,6 +733,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - [ ] Every `action_followup` references a condition where the main agent produces a reply (if the main agent is silent — hold, voicemail mid-sequence, back-to-back caller actions — the actions are merged into one condition instead)
 - [ ] If the scenario is intentionally designed to invite an interruption (long `<silence>` tag, opening-line-then-silence pattern, or any other deliberate pause the main agent is expected to speak through), the condition uses `type: "standard"` so the testing agent re-evaluates conditions on interruption instead of looping on the same `action_followup`.
 - [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
+- [ ] Every `<voice>` has a compatible `provider` and `id`; use either `text="..."` or an opening/closing block for regional speech, never both
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
 - [ ] `<network_simulation>` only uses `packet_loss`
 - [ ] No XML tags used with `fixed_message: false`
@@ -784,8 +815,10 @@ XML tags (fixed_message:true only):
                                      AND at the very start of the action string
   <speed ratio="N" />               Speech rate 0.8–1.2; must start the action
   <volume ratio="N" />              Volume 0–2; must start the action; Cartesia only
-  <voice provider="P" id="X" model="Y" />   Switch TTS voice from here on — the way to get a
-                                     second speaker. provider+id must match (cartesia=UUID,
+  <voice provider="P" id="X" model="Y" />   Persistently switch TTS voice. Add text="..." for
+                                     a temporary line, or wrap text in <voice ...>...</voice> for
+                                     a temporary region (nested inline tags allowed); prior voice
+                                     resumes afterward. provider+id must match (cartesia=UUID,
                                      11labs=alphanumeric); model optional (sonic-3.5 /
                                      eleven_turbo_v2_5); provider can't change mid-call
   <send_sms text="..." />           Trigger SMS for SMS workflows
