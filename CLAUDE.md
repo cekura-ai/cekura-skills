@@ -89,7 +89,7 @@ Once installed, npx users have three ways to stay current:
 1. Create `cekura/skills/cekura-<kebab-name>/SKILL.md` with spec-compliant frontmatter (`name` must be `cekura-<kebab-name>`, matching the directory)
 2. Body must be public-facing — no internal endpoints, no `cekura-internal:*` references, no customer-specific facts
 3. Stay under 500 lines per file and 1024 description chars (CI-enforced)
-4. Bump the version in `cekura/.claude-plugin/plugin.json` AND `package.json` (kept equal; CI requires a bump whenever `cekura/**` changes)
+4. Bump the version: `python3 scripts/bump_version.py --patch` (or `--minor`). It rewrites all six version-bearing manifests plus every inline `plugin_version="..."` string and runs the validators — never hand-edit versions across files. CI requires a bump whenever `cekura/**` changes. Add a CHANGELOG.md entry.
 5. Update the "What's Included" table and Quick Reference table in `README.md`
 6. If the skill needs an operational counterpart, also add a slash command in `cekura/commands/`
 7. In the release notes / commit message, name the new skill so users know what to pass to `--skill`
@@ -188,7 +188,7 @@ diff codex/AGENTS.md GEMINI.md   # must report no differences
 
 When you edit `codex/AGENTS.md`, re-copy it: `cp codex/AGENTS.md GEMINI.md`.
 
-Version policy: `cekura/.claude-plugin/plugin.json` is the single Claude version source — the marketplace plugin entry deliberately declares NO version (Claude Code resolves plugin.json first and silently ignores the marketplace value; an unchanged explicit version blocks all user updates regardless of new commits). Bump it on every release that changes plugin content, and bump the other destination manifests (`cekura/.codex-plugin/plugin.json`, `cekura/.cursor-plugin/plugin.json`, `gemini-extension.json`, `package.json`) when the change affects that destination (shared skill changes affect all).
+Version policy: `cekura/.claude-plugin/plugin.json` is the single Claude version source — the marketplace plugin entry deliberately declares NO version (Claude Code resolves plugin.json first and silently ignores the marketplace value; an unchanged explicit version blocks all user updates regardless of new commits). Bump it on every release that changes plugin content. All six version-bearing surfaces (package, top-level marketplace, Claude, Codex, Cursor, Gemini) are kept equal — CI enforces it — so use `python3 scripts/bump_version.py --patch|--minor|X.Y.Z`, which rewrites all of them plus the inline `plugin_version="..."` telemetry strings in one command.
 
 ## Conventions
 

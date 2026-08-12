@@ -66,6 +66,8 @@ jobs:
           if old_version == version:
               print(f"plugin content changed but plugin.json version is still {version} - "
                     "bump it (users only receive updates when the version changes).")
+              print("run: python3 scripts/bump_version.py --patch  "
+                    "(updates all manifests + inline plugin_version strings)")
               print("changed cekura/** files:")
               for f in plugin_files:
                   print(f"  - {f}")
