@@ -74,19 +74,21 @@ Users describe these as agent problems. They are personality settings.
 ### How to change it
 
 1. `GET /test_framework/v1/personalities/` (`personalities_list`) — read the current `message_plan` on the candidate personality. Its `idle_timeout_seconds` / `idle_message_max_spoken_count` come back in the response, so check before assuming the 10s / 3 defaults.
-2. **The personality is global** (no `project` / `organization` owner — every pre-defined personality is): it is shared across all organizations and cannot be edited. Fork it into the user's project, overriding idle behavior in the same call:
+2. **The personality is global** (no `project` / `organization` owner — every pre-defined personality is): it is shared across all organizations and cannot be edited. Fork it into the user's project first, then update the copy — two calls:
 
-   `POST /test_framework/v1/personalities/{id}/fork/` (`personalities_fork_create`)
+   ```
+   POST /test_framework/v1/personalities/{id}/fork/   (`personalities_fork_create`)
+   {"project_id": 1234}
 
-   ```json
-   {"project_id": 1234, "message_plan": {"idle_timeout_seconds": 45}}
+   PATCH /test_framework/v1/personalities/{fork_id}/  (`personalities_partial_update`)
+   {"message_plan": {"idle_timeout_seconds": 45}}
    ```
 
-   Voice, accent, language and interruption settings are inherited; the fork is enabled for the project automatically. Assign the returned id to the scenario.
-3. **The personality is already owned by the user's org**: patch it in place with `PATCH /test_framework/v1/personalities/{id}/` (`personalities_partial_update`) and the same `message_plan` body. Note this affects every scenario already using it — if that is not wanted, fork instead.
-4. Confirm the change with the user before creating a fork if they did not ask for one ("I'll fork Normal Male into this project with a 45s idle timeout — the shared one can't be edited"). A fork is a new resource in their workspace.
+   The fork inherits every setting from its source and is enabled for the project automatically. Assign the fork's id to the scenario.
+3. **The personality is already owned by the user's org** (including a fork made earlier): patch it in place with `personalities_partial_update`. Note this affects every scenario already using it — if that is not wanted, fork it first.
+4. Confirm the change with the user before creating a fork if they did not ask for one ("Normal Male is shared and can't be edited, so I'll copy it into this project and set the idle timeout to 45s on the copy"). A fork is a new resource in their workspace.
 
-Both idle fields must be positive integers. Idle behavior cannot be switched off entirely — to keep the testing agent silent through a long pause, raise the timeout past the expected silence.
+`personalities_partial_update` is where every one of these settings is changed — not just idle. `personalities_fork_create` only copies; it takes no setting overrides. Both idle fields must be positive integers, and idle behavior cannot be switched off entirely — to keep the testing agent silent through a long pause, raise the timeout past the expected silence.
 
 ### `<hold>` vs. idle timeout
 
@@ -220,8 +222,8 @@ What's the scenario language?
 
 Is the needed behavior about idle/stall timing, interruption, speed or noise?
   Yes → is there an enabled personality that already has it?
-          No → fork the closest match with a `message_plan` override
-               (or patch one the org owns) — never encode it in instructions
+          No → patch one the org owns, or fork the closest match
+               and patch the copy — never encode it in instructions
   No ↓
 
 Is there a sustained behavioral cue?
