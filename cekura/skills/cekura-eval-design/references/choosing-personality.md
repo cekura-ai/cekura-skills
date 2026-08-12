@@ -86,7 +86,6 @@ Users describe these as agent problems. They are personality settings.
 
    The fork inherits every setting from its source and is enabled for the project automatically. Assign the fork's id to the scenario.
 3. **The personality is already owned by the user's org** (including a fork made earlier): patch it in place with `personalities_partial_update`. Note this affects every scenario already using it — if that is not wanted, fork it first.
-4. Confirm the change with the user before creating a fork if they did not ask for one ("Normal Male is shared and can't be edited, so I'll copy it into this project and set the idle timeout to 45s on the copy"). A fork is a new resource in their workspace.
 
 `personalities_partial_update` is where every one of these settings is changed — not just idle. `personalities_fork_create` only copies; it takes no setting overrides. Both idle fields must be positive integers, and idle behavior cannot be switched off entirely — to keep the testing agent silent through a long pause, raise the timeout past the expected silence.
 
