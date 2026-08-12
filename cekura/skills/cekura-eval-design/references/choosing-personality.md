@@ -90,7 +90,15 @@ Both idle fields must be positive integers. Idle behavior cannot be switched off
 
 ### `<hold>` vs. idle timeout
 
-For a pause in **one specific step** of a conditional-actions scenario, `<hold time="Xs" />` is the right tool — it is a non-interruptible wait in the action text (see `references/conditional-actions.md`). For a pause that must hold **call-wide**, or one longer than the personality's idle timeout, change the personality: a hold does not raise the idle timeout, so pair the two when the pause is longer than the timeout.
+Both are valid; they solve different shapes of the problem.
+
+| | `<hold time="Xs" />` | Personality idle timeout |
+|---|---|---|
+| Scope | One step of a conditional-actions scenario | Every silence in the call |
+| Idle prompt | Suppressed — the idle timer is paused for the hold's duration, so a hold longer than the timeout is safe | Deferred until the new timeout elapses |
+| Use when | The silence is scripted and you know where it falls | The silence is open-ended, or the scenario is behavioral (no `conditions[]` to hang a tag on) |
+
+So a `<hold>` does not need a matching timeout change — it is the better tool for a known, bounded pause (see `references/conditional-actions.md`). Reach for the personality when the wait is not inside a hold: a behavioral scenario, or an unpredictable wait on the main agent.
 
 ---
 

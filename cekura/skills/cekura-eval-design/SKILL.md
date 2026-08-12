@@ -254,7 +254,7 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the **only** wo
 
 Instructions cannot alter actual speaking style — they only affect what the testing agent says, not how it sounds.
 
-**When the user wants the testing agent to stay silent** — through a long lookup, hold music, or a question it should not answer — that is the idle timeout, not an instruction. Adding "remain silent" or "do not respond" anywhere in the instructions, expected outcome, or the agent's description has no effect: the idle prompt fires anyway. Fix it on the personality (`personalities_fork_create` with a `message_plan` override, since pre-defined personalities are shared and cannot be edited; `personalities_partial_update` for one the org already owns), or use `<hold time="Xs" />` for a single scripted step. Full recipe and the symptom→cause table: **`references/choosing-personality.md`**.
+**When the user wants the testing agent to stay silent** — through a long lookup, hold music, or a question it should not answer — that is the idle timeout, not an instruction. Adding "remain silent" or "do not respond" anywhere in the instructions, expected outcome, or the agent's description has no effect: the idle prompt fires anyway. Fix it on the personality (`personalities_fork_create` with a `message_plan` override, since pre-defined personalities are shared and cannot be edited; `personalities_partial_update` for one the org already owns), or, for a bounded pause in one step of a conditional-actions scenario, use `<hold time="Xs" />` — the idle timer is paused for the hold's duration, so a hold needs no matching timeout change. Full recipe and the symptom→cause table: **`references/choosing-personality.md`**.
 
 ### Picking the Right Personality
 
