@@ -65,7 +65,6 @@ Users describe these as agent problems. They are personality settings.
 |---|---|---|
 | "The testing agent keeps asking 'Are you still there?' mid-test" | Idle timeout (default 10s) | Raise `message_plan.idle_timeout_seconds` on a personality they own |
 | "I told it to stay silent / not answer and it responds anyway" | Idle timeout — the idle prompt fires regardless of instructions | Same. Also see `<hold>` below for a single-step pause |
-| "It hangs up while my agent is still working" | Idle prompts exhausted | Raise `idle_message_max_spoken_count`, and/or the timeout |
 | "It talks over my agent" | Interruption preset | Personality with a lower `interruption_level` |
 | "It speaks too fast / wrong accent / no background noise" | Voice config | Different personality, or fork and adjust |
 
@@ -86,6 +85,7 @@ Users describe these as agent problems. They are personality settings.
 
    The fork inherits every setting from its source and is enabled for the project automatically. Assign the fork's id to the scenario.
 3. **The personality is already owned by the user's org** (including a fork made earlier): patch it in place with `personalities_partial_update`. Note this affects every scenario already using it — if that is not wanted, fork it first.
+4. Confirm before creating a fork the user did not ask for — "I'll fork it into this project and set the idle timeout to 45s." A fork is a new resource in their workspace.
 
 `personalities_partial_update` is where every one of these settings is changed — not just idle. `personalities_fork_create` only copies; it takes no setting overrides. Both idle fields must be positive integers, and idle behavior cannot be switched off entirely — to keep the testing agent silent through a long pause, raise the timeout past the expected silence.
 
