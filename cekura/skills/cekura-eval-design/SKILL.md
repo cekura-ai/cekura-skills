@@ -7,10 +7,12 @@ description: >
   actions", "write a conditional action evaluator", "build a deterministic test", "design an
   IVR test", "IVR navigation test", "write a unit test for a voice agent", "build a regression
   test", "scripted scenario", "scripted voice test", "structured evaluator", "exact flow test",
-  "sequential conditions", "fixed sequence test", or "run evals". Covers individual evaluator design, suite coverage
-  strategy, test profiles, mock-tool data design, conditional actions (deterministic / unit
-  test / regression / IVR navigation flows), and best practices for workflow / red-team /
-  edge-case / deterministic test types.
+  "sequential conditions", "fixed sequence test", or "run evals". Also for debugging how the
+  testing agent speaks — "why did it read the number as a word", "make it spell digits",
+  "wrong language" — via scenario_language, personality, and XML tags. Covers evaluator
+  design, coverage strategy, test profiles, mock-tool data, conditional actions
+  (deterministic / unit test / regression / IVR flows), and workflow / red-team / edge-case
+  best practices.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
@@ -22,7 +24,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.7"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.8"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
