@@ -53,6 +53,47 @@ Network simulation is especially useful for testing how the main agent handles r
 
 ---
 
+## Changing Personality Behavior (Not Just Selecting One)
+
+Selection is not the only lever. When no available personality has the behavior a test needs, **create or fork one** — do not fall back to writing the behavior into instructions, the expected outcome, or the agent's description. Those surfaces cannot override the voice layer, so that attempt always fails silently: the test runs, the personality wins, and the user is left debugging prose.
+
+### Symptom → cause
+
+Users describe these as agent problems. They are personality settings.
+
+| What the user reports | Actual cause | Fix |
+|---|---|---|
+| "The testing agent keeps asking 'Are you still there?' mid-test" | Idle timeout (default 10s) | Raise `message_plan.idle_timeout_seconds` on a personality they own |
+| "I told it to stay silent / not answer and it responds anyway" | Idle timeout — the idle prompt fires regardless of instructions | Same. Also see `<hold>` below for a single-step pause |
+| "It hangs up while my agent is still working" | Idle prompts exhausted | Raise `idle_message_max_spoken_count`, and/or the timeout |
+| "It talks over my agent" | Interruption preset | Personality with a lower `interruption_level` |
+| "It speaks too fast / wrong accent / no background noise" | Voice config | Different personality, or fork and adjust |
+
+**Never** propose an Agent Description or evaluator-instruction edit as the fix for any row in this table.
+
+### How to change it
+
+1. `GET /test_framework/v1/personalities/` (`personalities_list`) — read the current `message_plan` on the candidate personality. Its `idle_timeout_seconds` / `idle_message_max_spoken_count` come back in the response, so check before assuming the 10s / 3 defaults.
+2. **The personality is global** (no `project` / `organization` owner — every pre-defined personality is): it is shared across all organizations and cannot be edited. Fork it into the user's project, overriding idle behavior in the same call:
+
+   `POST /test_framework/v1/personalities/{id}/fork/` (`personalities_fork_create`)
+
+   ```json
+   {"project_id": 1234, "message_plan": {"idle_timeout_seconds": 45}}
+   ```
+
+   Voice, accent, language and interruption settings are inherited; the fork is enabled for the project automatically. Assign the returned id to the scenario.
+3. **The personality is already owned by the user's org**: patch it in place with `PATCH /test_framework/v1/personalities/{id}/` (`personalities_partial_update`) and the same `message_plan` body. Note this affects every scenario already using it — if that is not wanted, fork instead.
+4. Confirm the change with the user before creating a fork if they did not ask for one ("I'll fork Normal Male into this project with a 45s idle timeout — the shared one can't be edited"). A fork is a new resource in their workspace.
+
+Both idle fields must be positive integers. Idle behavior cannot be switched off entirely — to keep the testing agent silent through a long pause, raise the timeout past the expected silence.
+
+### `<hold>` vs. idle timeout
+
+For a pause in **one specific step** of a conditional-actions scenario, `<hold time="Xs" />` is the right tool — it is a non-interruptible wait in the action text (see `references/conditional-actions.md`). For a pause that must hold **call-wide**, or one longer than the personality's idle timeout, change the personality: a hold does not raise the idle timeout, so pair the two when the pause is longer than the timeout.
+
+---
+
 ## Core Selection Rule: Sustained vs. Temporary Behaviors
 
 Only map a **sustained, call-wide behavior** to personality. A temporary state for a single utterance does not define the personality — it's just a scripted line.
@@ -130,7 +171,7 @@ Always list available personalities via `GET /test_framework/v1/personalities/` 
 
 Rules:
 - **Only assign personalities that are currently enabled for the project.**
-- **Never use a personality name not returned by the API.**
+- **Never use a personality name not returned by the API.** Inventing a name is different from creating one: if the behavior needed does not exist yet, fork or create a personality (see "Changing Personality Behavior" above) and assign the id the API returns.
 - **If the ideal personality is disabled:** tell the user which personality would be a better fit, ask if they want to enable it in project settings, and wait for their response. Do not write the scenario with a disabled personality — always use an enabled one in the final payload.
 
 Example flow when the best match is disabled:
@@ -168,6 +209,12 @@ Is it a conditional-actions scenario?
 
 What's the scenario language?
   → GET /test_framework/v1/personalities/ → filter by language
+
+Is the needed behavior about idle/stall timing, interruption, speed or noise?
+  Yes → is there an enabled personality that already has it?
+          No → fork the closest match with a `message_plan` override
+               (or patch one the org owns) — never encode it in instructions
+  No ↓
 
 Is there a sustained behavioral cue?
   No → Normal (fallback)

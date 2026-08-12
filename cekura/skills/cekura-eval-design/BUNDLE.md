@@ -15,7 +15,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.8.0"
+  version: "0.9.0"
 ---
 
 > **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
@@ -26,7 +26,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.6"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.7"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
@@ -251,11 +251,14 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the **only** wo
 - Interruption level (how often the caller interrupts)
 - Background noise (office, street, etc.)
 - Speech speed and patterns
+- Idle/stall behavior — seconds of silence before the testing agent prompts "Are you still there?" (`message_plan.idle_timeout_seconds`, default 10) and how many times it prompts before giving up (`message_plan.idle_message_max_spoken_count`, default 3)
 
 **Wrong:** putting `"speak in a mumbling voice and interrupt frequently"` in the instructions.
 **Right:** select or create a personality with the desired interruption level and voice characteristics.
 
 Instructions cannot alter actual speaking style — they only affect what the testing agent says, not how it sounds.
+
+**When the user wants the testing agent to stay silent** — through a long lookup, hold music, or a question it should not answer — that is the idle timeout, not an instruction. Adding "remain silent" or "do not respond" anywhere in the instructions, expected outcome, or the agent's description has no effect: the idle prompt fires anyway. Fix it on the personality (`personalities_fork_create` with a `message_plan` override, since pre-defined personalities are shared and cannot be edited; `personalities_partial_update` for one the org already owns), or use `<hold time="Xs" />` for a single scripted step. Full recipe and the symptom→cause table: **`references/choosing-personality.md`**.
 
 ### Picking the Right Personality
 
