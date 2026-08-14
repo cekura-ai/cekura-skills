@@ -7,6 +7,23 @@ smallest-scoped-change, same-shape escape hatch) are identical to
 `cekura-self-improving-agent` `phases/optimization/fix.md` — reuse them. This
 file defines what changes under the manifest framework.
 
+## LOOP.0 — reproduction gate check (every iteration, before anything else)
+
+Read `repro.json` from the audit dir. Refuse to propose — return to
+Reproduce — unless ALL hold:
+
+1. The file exists and its `result_id` retrieves via
+   `mcp__cekura__results_retrieve`.
+2. `fails ≥ repro_threshold` on `n_runs` per-run verdicts from that result.
+3. The gate line is restated verbatim at the top of this iteration's output:
+   `Repro gate: result <result_id> — <fails>/<n_runs> failed`.
+
+A proposal without a passing LOOP.0 is invalid regardless of how compelling
+the diagnosis is. Failing unit/code tests, log analysis, or the original
+production calls do not pass this check — only the Cekura simulation result
+does. This check repeats every iteration precisely because agents under time
+pressure reinterpret prose gates; the artifact is the gate.
+
 ## LOOP.1 — propose
 
 - Re-read each touched component's source if stale (>few minutes).
@@ -24,7 +41,8 @@ Render before applying anything:
    possible, else after apply but before deploy — template expansion can turn
    a small source edit into a large runtime change.
 3. **Blast-radius summary**: components, files, environments touched.
-4. Hard checks: nothing outside `authority.allowed_paths` — and if
+4. The LOOP.0 gate line is present in the presented diff header.
+5. Hard checks: nothing outside `authority.allowed_paths` — and if
    `allowed_paths` is absent, **no file writes at all** (component `apply`
    commands are then the only mutation path); nothing in `forbidden_paths`;
    no secret-looking strings in the diff (redact policy); no

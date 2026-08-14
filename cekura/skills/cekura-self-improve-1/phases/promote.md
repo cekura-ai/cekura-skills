@@ -23,7 +23,11 @@ session, satisfying the environment's `promote_requires: manual`.
 
 - **pr** (preferred for repo components): push the session branch, open a PR
   with the audit summary (failure set, root cause, diff, eval numbers,
-  manifest hash). The customer's own review + pipeline is the promotion. Done.
+  manifest hash). The PR body MUST cite the Cekura artifacts a reviewer can
+  check: the `repro.json` gate line (`Repro gate: result <id> — X/N failed`)
+  and the final verify/sweep `result_id`s with pass counts. A PR whose
+  verification section cites only unit tests is incomplete — do not open it;
+  return to Reproduce. The customer's own review + pipeline is the promotion.
 - **pipeline**: run the registered promote command; capture identities.
 - **provider_publish**: apply the winning edits to the production provider
   object via the component's apply mode; respect draft/publish semantics.

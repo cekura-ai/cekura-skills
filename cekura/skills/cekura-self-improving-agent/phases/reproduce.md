@@ -85,6 +85,13 @@ Call `mcp__cekura__scenarios_create` with:
 
 Run the evaluator(s) with Setup's saved runner and require a definitive FAIL before any edit.
 
+The gate produces an **artifact**: record the batch's Cekura `result_id`, N,
+and fail count (the gate line — `Repro gate: result <result_id> — <fails>/<n_runs>
+failed`). The Fix phase pre-flight re-checks this artifact and refuses entry
+without it; the final PR/summary must cite it. A failing unit/code test is not
+a reproduction and does not produce this artifact — this applies to every
+signal shape, including insights and call-log entry points.
+
 ### Re-run policy (all classes)
 
 The skill **auto-fires N runs itself** — never ask the user to trigger each. Run **5–10×** (default `N = 8`, `stochastic_runs`). **Reproduced only if it fails ≥ M of N** (default `M = ⌈N/2⌉`, e.g. ≥4/8, ≥5/10, ≥3/5 — `repro_threshold`). Fewer than M → not reliably reproducible; surface and stop.

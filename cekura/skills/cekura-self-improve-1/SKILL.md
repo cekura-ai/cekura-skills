@@ -12,7 +12,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-self-improve-1:8w3k6p -->
@@ -45,8 +45,15 @@ When this skill suggests creating, listing, updating, or evaluating something on
 **Layer 1 — invariants.** Owned by this skill, never negotiable, identical for
 every project:
 
-1. **Must-fail-first** — a reproduction harness must FAIL ≥ M of N runs
-   (default ≥ ⌈N/2⌉ of 8) before any edit is proposed.
+1. **Must-fail-first, proven by artifact** — before any edit is proposed, a
+   Cekura simulation batch must FAIL ≥ M of N runs (default ≥ ⌈N/2⌉ of 8),
+   recorded as `repro.json` in the audit dir: `{signal, scenario_ids,
+   result_id, n_runs, fails, config_hash, timestamp}`. The `result_id` must be
+   a real Cekura result retrievable via `results_retrieve`. **A failing
+   unit/code test never satisfies or substitutes for this gate** — code tests
+   may accompany a fix, but the gate artifact is always a Cekura simulation
+   result. Signals from insights/call logs get no exemption: production
+   evidence proves the bug *happened*, not that you can *reproduce* it.
 2. **Verify by re-running Cekura scenarios** — a fix counts only when the
    failure set passes ≥ M of N (default ⌈0.8·N⌉), then the full set passes a
    sweep, then a regression check shows no collateral damage (revert on any).
@@ -92,7 +99,7 @@ re-run the Setup self-test after any change.
 | 1 | Setup | `phases/setup.md` | Discover or interview → write/validate the manifest → **manifest self-test** (read → deploy/noop → read live → one smoke scenario → trace correlation). Persist to `.claude/MEMORY.md`. |
 | 2 | Collect | reuse `../cekura-self-improving-agent/phases/collect.md` | Fetch/filter failures (per-run verdicts, voice filter, `ended_reason`), plus manifest `evidence` sources (Langfuse traces, custom logs). Loop re-entry point. |
 | 3 | Debug | reuse `../cekura-self-improving-agent/phases/debug.md` | Root cause + failure class. Component attribution: which manifest component governs the failure. |
-| 4 | Reproduce | reuse `../cekura-self-improving-agent/phases/reproduce.md` | Build harness (mocks from real traces — including the customer's own mock server via `reset_fixtures`); must-fail gate. |
+| 4 | Reproduce | reuse `../cekura-self-improving-agent/phases/reproduce.md` | Build harness (mocks from real traces — including the customer's own mock server via `reset_fixtures`); must-fail gate. On pass, **write `repro.json`** (invariant 1) to the audit dir — the loop refuses to start without it. |
 | 5 | Improve loop | `phases/loop.md` | propose → plan diff (source **and** rendered) → apply → validate → deploy → **read live / attest** → verify → overfitting gate → decide. |
 | 6 | Regression | reuse `../cekura-self-improving-agent/phases/regression.md` | Happy-path + edge sweep on the changed surface. |
 | 7 | Promote | `phases/promote.md` | Explicit, confirmed production hand-off via the manifest's `promote` capability (PR > pipeline > provider publish > manual), with rollback verification. |

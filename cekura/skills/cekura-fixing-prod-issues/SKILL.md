@@ -49,9 +49,13 @@ Each phase has a gate. A gate is not passed by assumption — it is passed by ev
 - You cannot trust a fix without first proving the bug exists in a controlled way (Phase 2 gate)
 - You cannot call regression tests meaningful without a passing fix verification (Phase 4 gate)
 
-### Rule 2 — Phase 2 is the hardest gate. Treat it as such.
+### Rule 2 — Phase 2 is the hardest gate, and it is passed only by an artifact.
 
 Reproducing the bug is the most critical step. **Do not move to Phase 3 until the eval definitively fails on Cekura with metric scores showing the failure.** If there is any doubt about whether the bug is truly reproduced, stop and ask the user. Do not guess.
+
+The gate is an **artifact, not a judgment**: the Cekura `result_id` of the failing eval run, with its failing per-run metric scores. Phase 3 MUST open by restating it verbatim — `Repro gate: result <result_id> — FAILED (<metric>: <score>)` — and the final PR body must carry both this line and the passing verification `result_id` from Phase 4. If you cannot write that line from a real result retrievable via `mcp__cekura__results_retrieve`, you are still in Phase 2, no matter how confident the diagnosis is.
+
+Explicitly NOT reproduction, ever: ❌ a failing unit/code test (write them in Phase 3 to accompany the fix if useful — they never open it); ❌ the original production call, insight, logs, or traces (they prove the bug *happened*, not that you can *reproduce* it); ❌ a reasoned argument that the bug "must" reproduce. Coding agents under time pressure reinterpret prose gates — the result_id line is deliberately mechanical so skipping Phase 2 is impossible to hide from a reviewer.
 
 ### Rule 3 — When in doubt, ask.
 

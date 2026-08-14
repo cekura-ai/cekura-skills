@@ -6,6 +6,15 @@ All notable changes to the Cekura plugin. Versions follow
 
 ## 0.11.0 — 2026-08-11
 
+- **Changed** the reproduction gate to be artifact-based across
+  `cekura-self-improve-1`, `cekura-self-improving-agent`, and
+  `cekura-fixing-prod-issues`: reproduction is passed only by a recorded
+  Cekura `result_id` with fail counts (`repro.json` / gate line), restated
+  verbatim by every downstream phase and cited in the final PR. Failing
+  unit/code tests, logs, and original production calls explicitly never
+  satisfy the gate — closes the observed insight-entry shortcut where a
+  coding agent substituted pytest for simulation reproduction.
+
 - **Added** `cekura-self-improve-1`, a capability-manifest variant of the
   self-improve loop for agents whose real config lives in the customer's own
   stack (prompts in a repo, tools in a DB, prompt registry in Langfuse,
