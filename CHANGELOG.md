@@ -6,6 +6,15 @@ All notable changes to the Cekura plugin. Versions follow
 
 ## 0.11.0 — 2026-08-11
 
+- **Changed** reproduction to run the minimum simulations the failure allows
+  (`cekura-self-improve-1`, `cekura-self-improving-agent`,
+  `cekura-fixing-prod-issues`): classify the reproduction mode first —
+  deterministic failures (trigger forced via scenario construction or
+  temporary `CEKURA-REPRO-INJECT` fault injection in the local bot) reproduce
+  with a single must-fail run and verify 2/2 with the trigger active;
+  stochastic LLM prompt/workflow failures size the batch from the observed
+  failure rate (`clamp(⌈2/p̂⌉, 4, 10)`) and must fail at least twice.
+
 - **Changed** the reproduction gate to be artifact-based across
   `cekura-self-improve-1`, `cekura-self-improving-agent`, and
   `cekura-fixing-prod-issues`: reproduction is passed only by a recorded

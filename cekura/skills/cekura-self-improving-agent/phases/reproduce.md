@@ -18,14 +18,19 @@ Owned-source-code bugs (orchestration / STT / transport / timing / forked-SDK) a
 
 ## Step REPRO.2 — Classify the failure class (drives harness shape only)
 
-This drives **one** decision — harness shape (REPRO.5). The re-run policy is the **same 5–10× ≥ M of N gate** for every class. The class is a *preview* from prod evidence, not the authoritative Fix verdict (per-failure, in-loop — see [`optimization/fix.md`](optimization/fix.md) FIX.4).
+This drives **two** decisions — harness shape (REPRO.5) and the **reproduction mode**, which sets the run count (REPRO.6). The class is a *preview* from prod evidence, not the authoritative Fix verdict (per-failure, in-loop — see [`optimization/fix.md`](optimization/fix.md) FIX.4).
+
+**Reproduction mode — decide before sizing the batch. Run the minimum simulations the mode allows.**
+
+- **Deterministic**: the trigger can be forced so the failure occurs on *every* run — via scenario construction (forced timeout, malformed mock response, injected `<silence>`/`<interruption>`, lowered `maxDurationSeconds`, replayed garbled transcript) or, for self-hosted / owned code, **temporary fault injection in the local bot** (simulate the LLM/provider failure, drop the tool result, stall the transport — in code). Prefer making the bug deterministic over sampling it: if a small local change can force it, make that change. Injection rules: mark every injected line `# CEKURA-REPRO-INJECT`, record the injection in the gate artifact, keep it active through Eval (the fix must pass *with the trigger still firing*), remove it before Regression, and never let it into the fix diff or PR.
+- **Stochastic**: only LLM-behavior failures (prompt / workflow / wording — Gap, Conflict, Ambiguity) that genuinely cannot be forced. Also use stochastic when you *think* a trigger is forced but it depends on transport timing races (telephony/SIP/WebRTC audio timing) — a trigger you can't guarantee per-run is not deterministic.
 
 | Class / target | Fix buckets | Harness shape |
 |---|---|---|
 | **LLM-based** on a managed provider | Gap / Conflict / Ambiguity (over-eager-transfer, premature-exit) | **dataset** of N varied scenarios |
 | **Infra**, or **any self-hosted target** | CodeBug (source truncation, broken state, missing tool-result forwarding) / Upstream-infra (mock wiring, idle timer, DTMF, telephony) | **single** evaluator |
 
-All classes re-run 5–10× at the gate because real behavior — LLM and real-transport infra alike — is intermittent: a bug that's deterministic in *cause* still fires only sometimes over telephony/SIP/WebRTC (timing/audio/latency/interruption races), so a single run can false-PASS. When symptoms mix, default to a **dataset** (larger sample is the safe error) unless the target is self-hosted.
+When symptoms mix, default to a **dataset** (larger sample is the safe error) unless the target is self-hosted. When in doubt about the *mode*, stochastic is the safe error — a false "deterministic" costs a wasted single run and an immediate reclassify; a false single-run PASS that gets trusted costs the whole loop.
 
 ---
 
@@ -86,22 +91,36 @@ Call `mcp__cekura__scenarios_create` with:
 Run the evaluator(s) with Setup's saved runner and require a definitive FAIL before any edit.
 
 The gate produces an **artifact**: record the batch's Cekura `result_id`, N,
-and fail count (the gate line — `Repro gate: result <result_id> — <fails>/<n_runs>
-failed`). The Fix phase pre-flight re-checks this artifact and refuses entry
-without it; the final PR/summary must cite it. A failing unit/code test is not
-a reproduction and does not produce this artifact — this applies to every
-signal shape, including insights and call-log entry points.
+fail count, and mode (the gate line — `Repro gate: result <result_id> —
+<fails>/<n_runs> failed (mode: deterministic|stochastic)`, plus any active
+`CEKURA-REPRO-INJECT` injections). The Fix phase pre-flight re-checks this
+artifact and refuses entry without it; the final PR/summary must cite it. A
+failing unit/code test is not a reproduction and does not produce this
+artifact — this applies to every signal shape, including insights and
+call-log entry points.
 
-### Re-run policy (all classes)
+### Run-count policy — minimum runs the mode allows
 
-The skill **auto-fires N runs itself** — never ask the user to trigger each. Run **5–10×** (default `N = 8`, `stochastic_runs`). **Reproduced only if it fails ≥ M of N** (default `M = ⌈N/2⌉`, e.g. ≥4/8, ≥5/10, ≥3/5 — `repro_threshold`). Fewer than M → not reliably reproducible; surface and stop.
+The skill **auto-fires the runs itself** — never ask the user to trigger each.
 
-- **LLM-based (managed provider):** dataset of N varied scenarios.
-- **Infra / self-hosted:** the same single evaluator ×N.
+- **Deterministic mode: exactly 1 run**, which must FAIL (1/1). If it PASSES,
+  the trigger is not actually forced — do not run more copies hoping for a
+  fail. Fix the forcing (or the injection) and retry once; if it still
+  passes, reclassify as stochastic or stop and surface. Repeated
+  deterministic runs add cost, not information.
+- **Stochastic mode: smallest batch expected to fail at least twice.**
+  Estimate the failure rate p̂ from the collected evidence (e.g. 11 flagged
+  of 40 calls → p̂ ≈ 0.28). Fire `N = clamp(⌈2/p̂⌉, 4, 10)`; with no usable
+  estimate, start at N = 5. **Reproduced only if ≥ 2 runs fail.** Exactly 1
+  fail → extend the batch by 2 runs at a time up to 10 total. Still < 2
+  fails → not reliably reproducible; surface and stop. (An explicit
+  `stochastic_runs` / `repro_threshold` override from the user replaces this
+  sizing.)
 
-The only thing the class changes is harness shape, not the run count.
-
-Fire N runs with the saved runner and poll each result to terminal.
+Harness shape still follows the class: LLM-based (managed provider) = dataset
+of varied scenarios; infra / self-hosted = the same single evaluator, run per
+the mode above. Poll each run to terminal; infra-errored runs don't count on
+either side — rerun them.
 
 **Self-hosted targets:** launch the main agent with the per-run Cekura connection details using the run-setup steps in `.claude/CLAUDE.md` / `.claude/MEMORY.md` (Setup 1.4a), with any REPRO.3e trigger conditions active. If those weren't captured, ask now and persist before the first run — don't guess how to start the agent.
 

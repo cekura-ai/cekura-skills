@@ -14,9 +14,11 @@ Reproduce — unless ALL hold:
 
 1. The file exists and its `result_id` retrieves via
    `mcp__cekura__results_retrieve`.
-2. `fails ≥ repro_threshold` on `n_runs` per-run verdicts from that result.
+2. The fail count satisfies the recorded mode's gate: `deterministic` → 1/1
+   failed; `stochastic` → ≥ 2 fails on the batch (or the user's explicit
+   `repro_threshold` override).
 3. The gate line is restated verbatim at the top of this iteration's output:
-   `Repro gate: result <result_id> — <fails>/<n_runs> failed`.
+   `Repro gate: result <result_id> — <fails>/<n_runs> failed (mode: <mode>)`.
 
 A proposal without a passing LOOP.0 is invalid regardless of how compelling
 the diagnosis is. Failing unit/code tests, log analysis, or the original
@@ -81,7 +83,9 @@ Zero edits (all Upstream) → stop the loop, report.
   retried up to `max_infra_failures`, discarded runs are counted and reported.
 - Trace correlation per batch: the traces must reference the attested runtime
   identity. A batch that hit something else is invalid.
-- Pass = scenario passes ≥ `verify_threshold` of N.
+- Pass follows the reproduction mode: `deterministic` → 2/2 passes with the
+  forced trigger / `CEKURA-REPRO-INJECT` injection still active; `stochastic`
+  → passes ≥ `verify_threshold` of N.
 
 ## LOOP.6 — overfitting gate
 

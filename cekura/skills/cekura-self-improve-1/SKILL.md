@@ -12,7 +12,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-self-improve-1:8w3k6p -->
@@ -45,15 +45,22 @@ When this skill suggests creating, listing, updating, or evaluating something on
 **Layer 1 — invariants.** Owned by this skill, never negotiable, identical for
 every project:
 
-1. **Must-fail-first, proven by artifact** — before any edit is proposed, a
-   Cekura simulation batch must FAIL ≥ M of N runs (default ≥ ⌈N/2⌉ of 8),
-   recorded as `repro.json` in the audit dir: `{signal, scenario_ids,
-   result_id, n_runs, fails, config_hash, timestamp}`. The `result_id` must be
-   a real Cekura result retrievable via `results_retrieve`. **A failing
-   unit/code test never satisfies or substitutes for this gate** — code tests
-   may accompany a fix, but the gate artifact is always a Cekura simulation
-   result. Signals from insights/call logs get no exemption: production
-   evidence proves the bug *happened*, not that you can *reproduce* it.
+1. **Must-fail-first, proven by artifact, at minimum cost** — before any edit
+   is proposed, the failure must reproduce in Cekura simulation, recorded as
+   `repro.json` in the audit dir: `{signal, mode, scenario_ids, result_id,
+   n_runs, fails, injections, config_hash, timestamp}`. Classify the
+   **reproduction mode first** and run the minimum the mode allows:
+   *deterministic* (the trigger can be forced every run — by scenario
+   construction or temporary fault injection in the local bot, marked
+   `CEKURA-REPRO-INJECT`) → **exactly 1 run, must fail 1/1**; *stochastic*
+   (LLM prompt/workflow behavior that can't be forced) → smallest batch
+   expected to fail twice, `N = clamp(⌈2/p̂⌉, 4, 10)` from the observed
+   failure rate, gate = **≥ 2 fails**. The `result_id` must be a real Cekura
+   result retrievable via `results_retrieve`. **A failing unit/code test
+   never satisfies or substitutes for this gate** — code tests may accompany
+   a fix, but the gate artifact is always a Cekura simulation result.
+   Signals from insights/call logs get no exemption: production evidence
+   proves the bug *happened*, not that you can *reproduce* it.
 2. **Verify by re-running Cekura scenarios** — a fix counts only when the
    failure set passes ≥ M of N (default ⌈0.8·N⌉), then the full set passes a
    sweep, then a regression check shows no collateral damage (revert on any).
@@ -138,8 +145,11 @@ Assume drift is normal. Classify — never blur — these outcomes:
 
 ## Parameters
 
-`stochastic_runs` 8 (5–10) · `repro_threshold` ⌈N/2⌉ · `verify_threshold`
-⌈0.8·N⌉ · `max_iterations` 10 · `auto_mode` default true (renders diffs and
+Reproduction/verification run counts follow the **mode** (invariant 1):
+deterministic → 1 must-fail run, 2/2 verify with the trigger active;
+stochastic → `N = clamp(⌈2/p̂⌉, 4, 10)` with ≥2 fails to reproduce,
+`stochastic_runs` 8 (5–10) and `verify_threshold` ⌈0.8·N⌉ to verify.
+Explicit user overrides replace the sizing. · `max_iterations` 10 · `auto_mode` default true (renders diffs and
 proceeds; production promotion always requires explicit confirmation
 regardless) · `manifest_path` default `.cekura/selfimprove.yaml`.
 

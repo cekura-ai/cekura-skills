@@ -41,7 +41,10 @@ Never widen either set mid-loop without telling the user — the stop criterion 
 
 Run the failure set with Setup's saved simulation runner. For self-hosted targets, use the saved launch/connect steps and keep REPRO.3e triggers active. Capture `result_id` and poll to terminal (as COLLECT.1).
 
-**Stochastic re-run policy — mirror REPRO.6 on the verification side.** A single passing run never ends the iteration (that's the source of most "looked good in dev, regressed in prod" miscalls). The skill **auto-triggers the verification runs itself** (do NOT ask the user to fire each). Run **5–10 times** (default `N = 8`, `stochastic_runs`); a scenario is **verified only if it passes in ≥ M of N** (default `M = ⌈0.8·N⌉` — e.g. ≥7/8, ≥4/5; tune via `verify_threshold`). Below M → not fixed, stays in the failure set. Report pass-rate per scenario (`7/8 pass`), not a single verdict.
+**Re-run policy — mirror REPRO.6's mode on the verification side.** The skill **auto-triggers the verification runs itself** (do NOT ask the user to fire each).
+
+- **Deterministic-mode reproductions** (forced trigger / `CEKURA-REPRO-INJECT` fault injection): verify with **2 runs, both passing (2/2), with the trigger still active**. The bug fired every time before the fix; two clean runs under the same forced trigger is conclusive, and more runs add cost, not confidence. Any fail → not fixed.
+- **Stochastic-mode reproductions**: a single passing run never ends the iteration (that's the source of most "looked good in dev, regressed in prod" miscalls). Run **5–10 times** (default `N = 8`, `stochastic_runs`); a scenario is **verified only if it passes in ≥ M of N** (default `M = ⌈0.8·N⌉` — e.g. ≥7/8, ≥4/5; tune via `verify_threshold`). Below M → not fixed, stays in the failure set. Report pass-rate per scenario (`7/8 pass`), not a single verdict.
 
 This is uniform across classes — the only difference is harness shape:
 

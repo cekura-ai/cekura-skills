@@ -14,7 +14,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "2.3.0"
+  version: "2.4.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-self-improving-agent:5x7n3d -->
@@ -153,9 +153,11 @@ provider API/MCP documented in `providers/`.
 Required: a target (`agent_id` + the resolvable axes above, or a source file for a
 diagnosed-code-bug / render-only run) plus exactly one signal.
 
-Optional: `dataset_size` (default 8, range 5–10) · `stochastic_runs` (default 8,
-5–10) · `repro_threshold` (default ⌈runs/2⌉) · `verify_threshold` (default
-⌈0.8·runs⌉) · `max_iterations` (default 10) · `mode` (`vapi` / `retell` / `elevenlabs` / `bland` /
+Optional: `dataset_size` (default 8, range 5–10) · `stochastic_runs` (stochastic
+mode only — default 8, 5–10; deterministic-mode reproduction is always 1 run
+must-fail, verification 2/2, per REPRO.2/REPRO.6) · `repro_threshold`
+(stochastic default: ≥2 fails on the minimal batch `N = clamp(⌈2/p̂⌉, 4, 10)`) ·
+`verify_threshold` (stochastic default ⌈0.8·runs⌉) · `max_iterations` (default 10) · `mode` (`vapi` / `retell` / `elevenlabs` / `bland` /
 `self_hosted`) · `redeploy_command` (self-hosted; a shell command, `"manual"`,
 `"noop"`, or offline) · `auto_mode` (default **true** — skips the per-iteration
 diff-approval and cleanup pauses and routine restart pauses; the Setup hard gate,
