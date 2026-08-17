@@ -60,7 +60,14 @@ every project:
    never satisfies or substitutes for this gate** — code tests may accompany
    a fix, but the gate artifact is always a Cekura simulation result.
    Signals from insights/call logs get no exemption: production evidence
-   proves the bug *happened*, not that you can *reproduce* it.
+   proves the bug *happened*, not that you can *reproduce* it. On Claude Code
+   plugin installs this gate is also **mechanically enforced**: a PreToolUse
+   hook (`hooks/repro-gate.sh`) denies file edits and provider-mutating
+   requests while `.cekura/selfimprove.lock` is present and `repro.json` is
+   missing or below its mode's threshold (fault-injection edits marked
+   `CEKURA-REPRO-INJECT` and `.cekura/` / `.claude/` writes stay allowed).
+   If a tool call is denied with the gate message, do not work around it —
+   complete Reproduce.
 2. **Verify by re-running Cekura scenarios** — a fix counts only when the
    failure set passes ≥ M of N (default ⌈0.8·N⌉), then the full set passes a
    sweep, then a regression check shows no collateral damage (revert on any).

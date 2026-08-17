@@ -6,6 +6,14 @@ All notable changes to the Cekura plugin. Versions follow
 
 ## 0.11.0 — 2026-08-11
 
+- **Added** a deterministic reproduction-gate hook (`hooks/repro-gate.sh`,
+  `PreToolUse`): while a `.cekura/selfimprove.lock` session is active with no
+  valid `repro.json`, file edits and provider-mutating requests are denied at
+  the tool layer — prose gates were reinterpreted twice in the wild (pytest
+  substituted for simulation reproduction). Fault-injection edits marked
+  `CEKURA-REPRO-INJECT` and `.cekura`/`.claude` writes remain allowed;
+  sessions without the lockfile are untouched. Claude Code installs only.
+
 - **Changed** reproduction to run the minimum simulations the failure allows
   (`cekura-self-improve-1`, `cekura-self-improving-agent`,
   `cekura-fixing-prod-issues`): classify the reproduction mode first —

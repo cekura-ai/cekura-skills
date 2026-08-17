@@ -163,6 +163,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | Component | Purpose |
 |-----------|---------|
 | MCP failure hook | Auto-detects `mcp__cekura__*` failures, logs them, suggests `/report-bug` |
+| Reproduction gate hook (`hooks/repro-gate.sh`, `PreToolUse` on Edit/Write/Bash) | Denies file edits and provider-mutating requests while a `.cekura/selfimprove.lock` session has no valid `repro.json` gate artifact (deterministic: 1/1 fail; stochastic: ≥2 fails). Allows `.cekura/`/`.claude/` writes and `CEKURA-REPRO-INJECT` fault-injection edits. No lockfile → inert. |
 | Auto-update hook — Claude Code CLI (`hooks/hooks.json` → `SessionStart` → `claude-self-update.sh`) | **Legacy-channel only.** No-ops instantly unless the plugin was installed as `cekura@cekura-skills` (the self-hosted marketplace, where third-party auto-update defaults off); throttled to once/day; never fails the session. Installs from other marketplaces (e.g. claude-community) rely on the platform's own catalog re-pin + auto-update instead. Does **not** affect Claude Desktop, which keeps a separate plugin store under `~/Library/Application Support/Claude/local-agent-mode-sessions/.../rpm/` governed by its own `installationPreference` (the CLI hook writes to `~/.claude/plugins/`). |
 | Auto-update hook — Codex (`hooks/codex-hooks.json` → `codex-self-update.sh`) | `SessionStart` hook running `codex plugin marketplace upgrade cekura && codex plugin add cekura@cekura`, throttled to once/day. **Codex requires the user to trust it once via `/hooks`** before it runs — there is no manifest field to pre-trust. Wired via the `hooks` field in `cekura/.codex-plugin/plugin.json`. |
 
@@ -224,7 +225,8 @@ Two mechanisms for catching issues:
 
 ```
 cekura/hooks/
-  hooks.json             # Hook registration (SessionStart → CLI auto-update; PostToolUseFailure → mcp__cekura__.*)
+  hooks.json             # Hook registration (SessionStart → CLI auto-update; PreToolUse → repro gate; PostToolUseFailure → mcp__cekura__.*)
+  repro-gate.sh          # Deterministic must-fail-first gate for self-improve sessions (see table above)
   claude-self-update.sh  # Legacy-channel auto-update: guarded (cekura@cekura-skills installs only), 24h-throttled, best-effort
   on-mcp-failure.sh      # Logs failure, returns additionalContext to Claude
 ```
