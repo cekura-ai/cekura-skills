@@ -27,7 +27,12 @@ session, satisfying the environment's `promote_requires: manual`.
   check: the `repro.json` gate line (`Repro gate: result <id> — X/N failed`)
   and the final verify/sweep `result_id`s with pass counts. A PR whose
   verification section cites only unit tests is incomplete — do not open it;
-  return to Reproduce. The customer's own review + pipeline is the promotion.
+  return to Reproduce. **Never apply workflow-triggering labels or otherwise
+  fire the target repo's CI eval machinery yourself** — those runs cost real
+  deploys and real calls, and triggering them is a maintainer's deliberate
+  call. Your session's Cekura `result_id`s ARE the verification evidence; if
+  a repo-side eval suite exists, recommend it in the PR body and let a human
+  apply it. The customer's own review + pipeline is the promotion.
 - **pipeline**: run the registered promote command; capture identities.
 - **provider_publish**: apply the winning edits to the production provider
   object via the component's apply mode; respect draft/publish semantics.

@@ -41,3 +41,13 @@ The `project_id` is the `project` field from the agent config fetched in Phase 1
 Prod call: #CALL_ID — https://dashboard.cekura.ai/PROJECT_ID/call-logs/CALL_ID
 Edge conditions used to reproduce: <e.g. invalid API key, 2s sleep in handler>
 ```
+
+### Labels and repo CI
+
+Do **not** apply labels to the PR — especially workflow-triggering ones (e.g.
+a repo's `pr-eval`-style label that deploys the PR and runs a live scenario
+suite). Those runs cost real deploys and real calls; firing them is a
+maintainer's deliberate decision, and your Cekura result URLs above already
+carry the verification evidence. If the repo has such a suite and a full
+regression pass would add value, say so in the PR body ("ready for a pr-eval
+run if a maintainer wants one") and leave the label to a human.
