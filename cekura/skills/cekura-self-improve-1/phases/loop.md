@@ -20,6 +20,12 @@ Reproduce — unless ALL hold:
 3. The gate line is restated verbatim at the top of this iteration's output:
    `Repro gate: result <result_id> — <fails>/<n_runs> failed (mode: <mode>)`.
 
+Sole exception: `repro.json` carries a recorded user `gate_override`
+(invariant 1's blocked-reproduction rule). Then the restated line is
+`Repro gate: OVERRIDDEN by user — UNVERIFIED HYPOTHESIS`, and that marking
+follows every diff and the PR. An override you were not explicitly given
+this session is a fabrication — never write one.
+
 A proposal without a passing LOOP.0 is invalid regardless of how compelling
 the diagnosis is. Failing unit/code tests, log analysis, or the original
 production calls do not pass this check — only the Cekura simulation result

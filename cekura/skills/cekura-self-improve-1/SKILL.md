@@ -68,6 +68,17 @@ every project:
    `CEKURA-REPRO-INJECT` and `.cekura/` / `.claude/` writes stay allowed).
    If a tool call is denied with the gate message, do not work around it —
    complete Reproduce.
+   **Blocked reproduction:** when reproducing requires an action only a human
+   may take (the sandbox/deploy path is a maintainer-applied CI label, prod
+   credentials, a gated environment), Reproduce **parks**: write the full
+   repro plan to the audit dir (scenario spec, mode, N, what human action is
+   needed), ask for that action, and stop. "Please just fix it" does not
+   silently waive the gate — an explicit user override is honored only when
+   recorded in `repro.json` as `{"gate_override": {"by": "user", "reason":
+   ...}}`, every subsequent output (diff header, PR title and body) is marked
+   **UNVERIFIED HYPOTHESIS — reproduction gate overridden**, and the PR must
+   state that no Cekura reproduction or verification ran. Never record an
+   override the user did not explicitly give in this session.
 2. **Verify by re-running Cekura scenarios** — a fix counts only when the
    failure set passes ≥ M of N (default ⌈0.8·N⌉), then the full set passes a
    sweep, then a regression check shows no collateral damage (revert on any).

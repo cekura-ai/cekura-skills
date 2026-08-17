@@ -64,6 +64,11 @@ gate_ok() {
   fi
   [ -z "$f" ] && return 1
   local result_id mode fails n_runs
+  # Recorded, explicit user override (blocked-reproduction rule): the human
+  # decided; the skill marks all output UNVERIFIED HYPOTHESIS. Honor it.
+  if [ "$(jq -r '.gate_override.by // empty' "$f" 2>/dev/null)" = "user" ]; then
+    return 0
+  fi
   result_id=$(jq -r '.result_id // empty' "$f" 2>/dev/null)
   mode=$(jq -r '.mode // empty' "$f" 2>/dev/null)
   fails=$(jq -r '.fails // 0' "$f" 2>/dev/null)
