@@ -201,6 +201,7 @@ When no sustained behavioral cue is present, or no personality matches the descr
 
 **Safe defaults (always look up the ID — never hardcode one):**
 - Every scenario → pick the "Normal" personality matching the scenario's language via `personalities_list` with `language=<code>` (English included: `language=en`), and set `scenario_language` to the correct code so TTS uses the right language for pronunciation
+- **Never pass `project_id` on these language lookups** — predefined personalities are global (no project owner), and a `project_id` filter silently excludes all of them, making it look like no language-matched personality exists
 - Multiple languages / code-switching in one scenario → use a multilingual personality (`language=multi`, e.g. "Normal (Spanish + English)")
 - Language-matched personality returns "Personality is not enabled" → fall back to a normal English personality (`personalities_list language=en`) and keep `scenario_language` set to the target language
 
