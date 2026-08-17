@@ -312,7 +312,7 @@ POST /test_framework/v1/scenarios/generate-bg/
 {
   "agent_id": <id>,
   "num_scenarios": 10,
-  "personalities": [693],
+  "personalities": [<personality_id from personalities_list, matched to the agent's language>],
   "generate_expected_outcomes": true,
   "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"],
   "extra_instructions": "Focus on: scheduling workflows, error handling, edge cases",
@@ -323,7 +323,7 @@ POST /test_framework/v1/scenarios/generate-bg/
 Poll progress at `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.
 
 **Gotchas:**
-- `personality` is required (400 without it). Default: 693 (Normal Male, English) — ONLY for purely English scenarios; for other languages pick a language-matched personality via personalities_list (language=<code>), or a multilingual (language=multi) one when languages are mixed
+- `personality` is required (400 without it). Default: the "Normal" personality matched to the scenario's language — always look it up via personalities_list (language=<code>, English included: language=en), or a multilingual (language=multi) one when languages are mixed. If the language-matched personality returns "Personality is not enabled", fall back to a normal English personality and set scenario_language to the target language
 - Generation can partially complete — check progress, generate remainder in smaller batch
 - `scenario_language` defaults to "en" regardless of content — PATCH to correct code after generation
 - Auto-gen may add greetings to `first_message` instead of exact questions — PATCH after
@@ -386,7 +386,7 @@ Create mock tools with input/output mappings. **Critical rules:**
 1. **Tool strategy** — A (client-side staging), B (Cekura mock tools), or C (no mocks)?
 2. **Test profile** — Show the full `information` dict. For A: match client's staging data formats. For B: derive FROM mock tool outputs. For C: caller identity only.
 3. **Run mode** — Default to text/chat (cheapest, same logic coverage). Voice only when explicitly needed.
-4. **Personality** — Default: 693 (Normal Male English) ONLY for purely English scenarios; use a language-matched personality for non-English scenarios and a multilingual (language=multi) one for mixed-language scenarios. Note exceptions but don't change without asking.
+4. **Personality** — Default: the "Normal" personality matched to the scenario's language (look it up via personalities_list, English included) and a multilingual (language=multi) one for mixed-language scenarios. Note exceptions but don't change without asking.
 5. **Adaptive vs conditional** — Default to adaptive. Only use conditional actions for explicit unit-test needs.
 6. **Folder** — Name the folder.
 7. **Metrics** — Confirm baseline metrics attachment.

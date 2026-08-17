@@ -199,11 +199,10 @@ When no sustained behavioral cue is present, or no personality matches the descr
 | Multilingual agent, specific personality set on the agent | Use that personality ID |
 | Multilingual agent, no personality set | Most appropriate available personality for the detected language |
 
-**Safe hardcoded defaults:**
-- Purely English scenarios → ID 693 (Normal Male, en/American). Use 693 ONLY when the scenario is entirely in English.
-- Spanish → ID 362 (Normal Spanish Male)
-- Other non-English languages → pick a personality matching the scenario's language via `personalities_list` with `language=<code>`, and set `scenario_language` to the correct code so TTS uses the right language for pronunciation
-- Multiple languages / code-switching in one scenario → use a multilingual personality (`language=multi`, e.g. ID 4710 "Normal (Spanish + English)")
+**Safe defaults (always look up the ID — never hardcode one):**
+- Every scenario → pick the "Normal" personality matching the scenario's language via `personalities_list` with `language=<code>` (English included: `language=en`), and set `scenario_language` to the correct code so TTS uses the right language for pronunciation
+- Multiple languages / code-switching in one scenario → use a multilingual personality (`language=multi`, e.g. "Normal (Spanish + English)")
+- Language-matched personality returns "Personality is not enabled" → fall back to a normal English personality (`personalities_list language=en`) and keep `scenario_language` set to the target language
 
 ---
 
