@@ -12,6 +12,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 - [Codex](#codex)
 - [Cursor](#cursor)
 - [Gemini CLI](#gemini-cli)
+- [OpenCode](#opencode)
 - [Windsurf / Other Agents](#windsurf--other-agents)
 - [MCP Server](#mcp-server)
 - [Quick Reference](#quick-reference)
@@ -334,6 +335,59 @@ gemini extensions update cekura
 
 ---
 
+## OpenCode
+
+Skills load natively; MCP is a one-time config paste. (OpenCode has no plugin-marketplace manifest, so MCP can't auto-install the way it does for Codex/Cursor/Gemini. No slash commands either — the skills cover those workflows.)
+
+### Install skills
+
+```bash
+npx skills add cekura-ai/cekura-skills -a opencode
+```
+
+OpenCode auto-discovers the installed `SKILL.md` files (it reads `.opencode/skills/`, `.claude/skills/`, and `.agents/skills/`). Add `--all` to install every skill non-interactively.
+
+### Connect MCP
+
+Add the Cekura MCP server to your OpenCode config — `~/.config/opencode/opencode.json` (global, applies to every project) or a project-level `opencode.json`:
+
+```json
+{
+  "mcp": {
+    "cekura": {
+      "type": "remote",
+      "url": "https://api.cekura.ai/mcp",
+      "enabled": true
+    }
+  }
+}
+```
+
+Then authenticate (OpenCode also prompts on first tool use, but you can complete it explicitly):
+
+```bash
+opencode mcp auth cekura   # opens a browser for OAuth sign-in
+opencode mcp list          # confirm cekura shows as connected
+```
+
+OAuth tokens are stored in `~/.local/share/opencode/mcp-auth.json` — no API key needed. (To use an API key instead, add `"headers": { "X-CEKURA-API-KEY": "{env:CEKURA_API_KEY}" }` to the server entry.) If sign-in fails, `opencode mcp debug cekura` surfaces the OAuth error.
+
+### Behavior preset (optional)
+
+For the single-file domain knowledge, place the preset where OpenCode reads rules — project root or `~/.config/opencode/AGENTS.md`:
+
+```bash
+curl -o AGENTS.md https://raw.githubusercontent.com/cekura-ai/cekura-skills/main/codex/AGENTS.md
+```
+
+### Upgrade
+
+```bash
+npx skills add cekura-ai/cekura-skills -a opencode --all
+```
+
+---
+
 ## Windsurf / Other Agents
 
 Copy `codex/AGENTS.md` to wherever your agent reads context files from (project root, `.windsurf/rules/`, etc.):
@@ -428,6 +482,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | **Codex** | `codex plugin marketplace add` | Yes | Yes | No |
 | **Cursor** | Plugin marketplace install | Yes | Yes | No |
 | **Gemini CLI** | `gemini extensions install` | Context file only | Yes | No |
+| **OpenCode** | `npx skills add … -a opencode` + MCP config | Yes | Yes (manual config) | No |
 | **Windsurf** | Rules file | Behavior preset | No | No |
 | **Other agents** | Copy AGENTS.md | Behavior preset | No | No |
 
