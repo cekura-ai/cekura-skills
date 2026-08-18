@@ -4,6 +4,37 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.10.11 — 2026-08-18
+
+Adds **GitHub Copilot** as a natively supported platform. Purely additive — the
+Claude, Codex, Cursor, Gemini, and `npx skills add` paths are untouched.
+
+- **Added** `.github/plugin/marketplace.json` (root) and
+  `cekura/.github/plugin/plugin.json` — a Copilot CLI plugin registry and
+  manifest (Open Plugin Spec) resolving into the same `cekura/` plugin root, so
+  `copilot plugin marketplace add cekura-ai/cekura-skills` +
+  `copilot plugin install cekura@cekura-skills` installs all 12 skills and the
+  Cekura MCP server (OAuth on first tool use).
+- **Why separate manifests:** Copilot CLI falls back to `.claude-plugin/` for
+  both marketplace and plugin manifests, so it would have half-worked off
+  Claude's files. Its own `.github/plugin/` files rank higher in Copilot's
+  resolution order, which keeps the two platforms from constraining each other.
+- **Deferred:** slash commands (Copilot plugins have no equivalent) and
+  subagents (Copilot only discovers `agents/*.agent.md`; ours are Claude-style
+  `*.md`). Copilot hooks (camelCase `sessionStart`, `version: 1`) are not
+  shipped, so there is no daily auto-update hook on Copilot yet — use
+  `copilot plugin update cekura`.
+- **Changed** `validate_skills.py` to treat the Copilot manifest as a seventh
+  version-bearing surface, assert its MCP URL matches the other four, and
+  reject a `version` on either marketplace's plugin entries;
+  `scripts/bump_version.py` now rewrites it too.
+- **Documented** the Copilot CLI install, the `.github/skills/` path for the
+  Copilot coding agent / code review / IDE extensions
+  (`npx skills add ... --agent github-copilot --output .github/skills`), and a
+  Copilot row in the platform compatibility table. The coding agent and code
+  review don't support OAuth remote MCP, so those surfaces need the
+  `X-CEKURA-API-KEY` credential — noted in the README.
+
 ## 0.10.10 — 2026-08-12
 
 Release-tooling change; no skill content changes.

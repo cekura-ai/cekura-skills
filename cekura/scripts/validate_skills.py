@@ -5,10 +5,10 @@
      matches its directory, description present and <= 1024 chars, body
      <= 500 lines, no `cekura-internal:*` references
   2. version declarations are consistent: plugin.json == package.json, and
-     the marketplace plugin entry declares no version (plugin.json is the
-     single source -- Claude Code silently prefers it, so a stale duplicate
-     would mask releases)
-  3. all four platform manifests point at the same MCP URL
+     no marketplace plugin entry declares a version (the platform plugin.json
+     is the single source -- Claude Code and Copilot CLI silently prefer it,
+     so a stale duplicate would mask releases)
+  3. all five platform manifests point at the same MCP URL
   4. every skill directory is listed in README.md and CLAUDE.md
 
 Usage:
@@ -65,6 +65,7 @@ VERSION_SURFACES = (
     "cekura/.codex-plugin/plugin.json",
     "gemini-extension.json",
     "cekura/.cursor-plugin/plugin.json",
+    "cekura/.github/plugin/plugin.json",
 )
 
 
@@ -81,13 +82,17 @@ def check_versions(errors):
             f"version drift across release manifests: expected {expected} "
             f"(package.json) but {listing}"
         )
-    marketplace = json.loads((REPO / ".claude-plugin/marketplace.json").read_text())
-    for entry in marketplace.get("plugins", []):
-        if "version" in entry:
-            errors.append(
-                "marketplace plugin entry must not declare a version - "
-                "plugin.json is the single source"
-            )
+    # Both registries: Claude Code and Copilot CLI resolve the plugin's own
+    # manifest first and ignore the marketplace value, so an entry version can
+    # only ever go stale and mask a release.
+    for registry in (".claude-plugin/marketplace.json", ".github/plugin/marketplace.json"):
+        marketplace = json.loads((REPO / registry).read_text())
+        for entry in marketplace.get("plugins", []):
+            if "version" in entry:
+                errors.append(
+                    f"{registry}: plugin entry must not declare a version - "
+                    "plugin.json is the single source"
+                )
 
 
 def check_mcp_url_parity(errors):
@@ -108,10 +113,20 @@ def check_mcp_url_parity(errors):
         codex_url = None
     else:
         codex_url = codex_mcp["mcpServers"]["cekura"]["url"]
+    # Copilot CLI reads the file referenced by .github/plugin/plugin.json's
+    # mcpServers field (a path, per the Open Plugin Spec) — same shape as Codex.
+    copilot_manifest = json.loads(
+        (REPO / "cekura/.github/plugin/plugin.json").read_text()
+    )
+    copilot_mcp = json.loads(
+        (REPO / "cekura" / copilot_manifest["mcpServers"]).read_text()
+    )
     urls = {
         "cekura/.mcp.json": json.loads((REPO / "cekura/.mcp.json").read_text())
         ["mcpServers"]["cekura"]["url"],
         f"codex ref {codex_manifest['mcpServers']}": codex_url,
+        f"copilot ref {copilot_manifest['mcpServers']}":
+            copilot_mcp["mcpServers"]["cekura"]["url"],
         "cekura/.cursor-plugin/plugin.json": json.loads(
             (REPO / "cekura/.cursor-plugin/plugin.json").read_text()
         )["mcpServers"]["cekura"]["url"],
