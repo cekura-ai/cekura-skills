@@ -330,7 +330,7 @@ Poll progress at `GET /test_framework/v1/scenarios/generate-progress/?progress_i
 
 **Generation reliability rules:**
 - HARD GATE: never call the generate endpoint before the user approves the plan — even when the request names an agent and a count, and especially when it says "first ask me" / "show the plan first". Only an explicit "proceed autonomously" skips the gate.
-- Verify inputs are readable (attached files, KB, agent prompt) before planning; never generate from a guessed/stand-in description without an explicit user OK. When scenarios come from a file, count its items and confirm if it differs from the requested count.
+- Verify inputs are readable (attached files, KB, agent prompt) before planning. An unreadable source means STOP and ask for a usable copy — even in autonomous mode ("proceed autonomously" covers defaults, not substituting a different source for the one the user supplied); a stand-in needs an explicit user OK. When scenarios come from a file, count its items and confirm if it differs from the requested count.
 - Batch >10 scenarios into sequential batches of ≤10; "N per language" = one batch per language with that language's personality.
 - Poll every ~10s, report progress every ~30s; if 0/N after ~2 min, stop, tell the user, retry once with a batch ≤5 — never loop "keep waiting" indefinitely.
 - Post-generation verification before claiming success: count matches (generate remainder if short); 1:1 diff vs the approved plan (no merged/dropped cases); language of first_message/instructions matches the request and first_message is literal caller dialogue (not a meta-instruction); instructions are caller-side first person (roles not inverted); every scenario has expected_outcome_prompt, the right tools, and baseline metrics.

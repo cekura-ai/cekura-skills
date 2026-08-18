@@ -52,7 +52,7 @@ The generator is a background pipeline that can stall, partially complete, or dr
 
 **Before triggering:**
 - **Hard confirmation gate** — never call `scenarios_generate_bg` before the user approves the plan (see the Pre-Creation Checkpoint in SKILL.md). "Proceed autonomously" from the user is the only exception.
-- **Verify inputs are readable** — if the plan is based on an attached file, knowledge base, or agent prompt, confirm you can actually read its content first. Never generate from a stand-in or guessed description without telling the user and getting an explicit OK.
+- **Verify inputs are readable** — if the plan is based on an attached file, knowledge base, or agent prompt, confirm you can actually read its content first. If the source is unreadable (corrupt, unparseable, empty), **stop and ask for a usable copy — even in autonomous mode**: "proceed autonomously" licenses sensible defaults, not substituting a different source (the agent description, your own guesses) for the one the user supplied. Generating from a stand-in requires the user's explicit OK after being told the source is unreadable.
 - **Reconcile counts with the source** — when scenarios come from a file/list, count the actual items. If the user asked for 15 but the source has 14, say so and confirm the real number before generating.
 - **Batch large requests** — for `num_scenarios` > 10, split into batches of ≤ 10 (per category or per language) and run them sequentially. Large single batches are the main cause of stalls and partial completion.
 

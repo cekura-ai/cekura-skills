@@ -114,7 +114,7 @@ Tags are applied uniformly to all generated scenarios. Common patterns:
 **No `scenarios_generate_bg` call until the user replies approving this checkpoint.** That holds even when the request already names an agent and a count, and *especially* when the user said "first ask me…" or "show me the plan before making changes" — starting generation before their answer is the single worst failure mode of this command. The only exception: the user explicitly said to proceed autonomously / without confirmation.
 
 Also before proposing the plan:
-- **Readable inputs** — if scenarios derive from an attached file, KB, or agent prompt, confirm you can actually read it. Never plan from a guessed/stand-in description without an explicit user OK.
+- **Readable inputs** — if scenarios derive from an attached file, KB, or agent prompt, confirm you can actually read it. If it's unreadable, **stop and ask for a usable copy — even when the user said to proceed autonomously**: autonomy licenses defaults, not swapping in a different source (agent description, guesses) for the one they supplied. A stand-in needs their explicit OK after being told the source is unreadable.
 - **Real counts** — when the source is a file/list, count its items; if it disagrees with the requested count (asked 15, file has 14), surface that in the plan.
 - **Agent exists** — if `aiagents_list` is empty, stop and route the user to agent creation first; there is nothing to attach scenarios to.
 
