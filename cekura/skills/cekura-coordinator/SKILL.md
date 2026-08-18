@@ -80,8 +80,10 @@ When the user describes what they need, route them:
 | "Create metrics for my agent" | **cekura-metric-design** skill |
 | "My metrics are giving wrong results" | `/improve-metric` command (or **cekura-metric-improvement** skill for full cycle) |
 | "I need to test my agent" | **cekura-eval-design** skill |
-| "Generate test scenarios" | `/autogen-eval` command |
-| "Create a specific test scenario" | `/manual-create-update-eval` command |
+| "Generate test scenarios" / any behavioral scenario, one or many | `/autogen-eval` command (behavioral scenarios are always generated) |
+| "Create a specific test scenario" — scripted / deterministic / regression / IVR / DTMF / compliance flow | `/manual-create-update-eval` command (conditional actions — generation can't emit them) |
+| "Create a specific test scenario" — natural conversation, edge case, red-team | `/autogen-eval` command with `num_scenarios: 1` and the description as `extra_instructions` |
+| "Update / duplicate an existing scenario" | `/manual-create-update-eval` command (either type) |
 | "Run my tests" | `/run-evals` command |
 | "Check test results" | `/eval-results` command |
 | "Create a metric that checks X" | `/create-metric` command (or **cekura-metric-design** skill for complex metrics) |

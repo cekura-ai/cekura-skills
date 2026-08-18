@@ -23,9 +23,10 @@ Generate the first evaluators with the **background generation endpoint**:
 2. Poll **`scenarios_generate_progress`** with the returned `progress_id` until complete.
 3. List and review the generated scenarios.
 
-**Do NOT hand-author evaluators with `scenarios_create` during onboarding.** Generation grounds evaluators in the agent description; hand-written ones depend entirely on improvisation. The only exceptions:
-- `scenarios_generate_bg` failed after a retry (report the failure, then hand-write as a stopgap and say so), or
-- the user explicitly asks for a specific hand-written scenario.
+**Do NOT hand-author evaluators with `scenarios_create` during onboarding.** Generation grounds evaluators in the agent description; hand-written ones depend entirely on improvisation. These evaluators are behavioral (`instruction`), and behavioral scenarios are always generated.
+
+- **If `scenarios_generate_bg` fails**, retry once with a smaller `num_scenarios` and sharper `extra_instructions`. If it still fails, **stop and report the failure** — do not hand-write a stopgap set. A hand-written set looks like progress while leaving the user with evaluators nobody grounded in their agent. Offer `/report-bug`.
+- **The one exception:** the user supplies the scenario text themselves and wants it verbatim. Create that one directly and say that it bypassed generation.
 
 If the agent description is a flagged placeholder from Phase 2, **stop and resolve the description first** — generation from a placeholder produces junk.
 

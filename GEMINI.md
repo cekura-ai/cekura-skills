@@ -274,10 +274,10 @@ On `evaluation.metrics[]` entries: `score` field (0 = FAIL, 5 = PASS, None = N/A
 2. **Choose a tool strategy** — Ask the user which of the three approaches below
 3. **Create a folder first** — Always create a folder before generating or creating scenarios
 4. **Run the pre-creation checkpoint** — Confirm tool strategy, test profile, run mode, personality, adaptive vs conditional, folder, metrics
-5. **Auto-generate first (recommended)** — Use the generate endpoint with `folder_path` set
+5. **Write by type — behavioral ⇒ generate, conditional actions ⇒ create directly** (see "Auto-Generation" below; the generate endpoint cannot emit conditional actions). Set `folder_path` either way
 6. **Review and fix** — PATCH `scenario_language` for non-English, fix `first_message` if auto-gen added greetings
 7. **Set up test infrastructure** — Test profiles + tool data per chosen strategy
-8. **Supplement manually** — Add edge cases, red-team, deterministic tests
+8. **Supplement by type, same rule as step 5** — behavioral gaps (edge cases, free-form red-team) ⇒ another generation run with `extra_instructions` naming the gaps; deterministic gaps ⇒ author conditional-action scenarios directly. Never hand-write an `instruction` scenario to close a gap
 9. **Attach metrics** — Always include baseline metrics
 10. **Run and validate** — Execute, review transcripts, iterate
 
@@ -294,16 +294,25 @@ Cekura intercepts tool calls and returns pre-configured responses. Your job: **a
 ### C) No Mock Data
 Agent doesn't use tools, or tools aren't relevant to these tests. Use test profiles for caller identity only. Focus scenarios on conversational behavior, not tool outcomes.
 
-## Auto-Generation (Primary Path)
+## Auto-Generation (the only path for behavioral scenarios)
 
-The fastest path to test scenarios. Use the generate endpoint with category guidance:
+**The write path follows `scenario_type`, and it is not a preference:**
+
+| `scenario_type` | Path |
+|---|---|
+| `instruction` (behavioral — natural conversation, edge cases, free-form red-team) | **Always** `POST /test_framework/v1/scenarios/generate-bg/`. Never hand-author, not even for a single scenario — use `num_scenarios: 1` with the description as `extra_instructions`. |
+| `conditional_actions` (scripted, deterministic, regression, IVR/DTMF/voicemail, compliance, infra) | **Always** `POST /test_framework/v1/scenarios/` directly. The generate endpoint cannot emit conditional actions. |
+
+Only exception on the behavioral side: the user supplies the instruction text themselves (CSV/JSON list, or "create this exact scenario") — generating would discard their wording. Generation gotchas below are routine post-generation PATCHes, not reasons to hand-author.
+
+Use the generate endpoint with category guidance:
 
 ```json
 POST /test_framework/v1/scenarios/generate-bg/
 {
   "agent_id": <id>,
   "num_scenarios": 10,
-  "personalities": [693],
+  "personalities": [<personality_id from personalities_list, matched to the agent's language>],
   "generate_expected_outcomes": true,
   "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"],
   "extra_instructions": "Focus on: scheduling workflows, error handling, edge cases",
@@ -314,7 +323,7 @@ POST /test_framework/v1/scenarios/generate-bg/
 Poll progress at `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.
 
 **Gotchas:**
-- `personality` is required (400 without it). Default: 693 (Normal Male, English) — ONLY for purely English scenarios; for other languages pick a language-matched personality via personalities_list (language=<code>), or a multilingual (language=multi) one when languages are mixed
+- `personality` is required (400 without it). Default: the "Normal" personality matched to the scenario's language — always look it up via personalities_list (language=<code>, English included: language=en; language is the only filter needed), or a multilingual (language=multi) one when languages are mixed. If the language-matched personality returns "Personality is not enabled", enable it for the project or create/fork a Normal personality in the target language and use it (scenario_language is coupled to the personality's language by design — mismatches are rejected; multilingual voice models handle any supported language)
 - Generation can partially complete — check progress, generate remainder in smaller batch
 - `scenario_language` defaults to "en" regardless of content — PATCH to correct code after generation
 - Auto-gen may add greetings to `first_message` instead of exact questions — PATCH after
@@ -377,7 +386,7 @@ Create mock tools with input/output mappings. **Critical rules:**
 1. **Tool strategy** — A (client-side staging), B (Cekura mock tools), or C (no mocks)?
 2. **Test profile** — Show the full `information` dict. For A: match client's staging data formats. For B: derive FROM mock tool outputs. For C: caller identity only.
 3. **Run mode** — Default to text/chat (cheapest, same logic coverage). Voice only when explicitly needed.
-4. **Personality** — Default: 693 (Normal Male English) ONLY for purely English scenarios; use a language-matched personality for non-English scenarios and a multilingual (language=multi) one for mixed-language scenarios. Note exceptions but don't change without asking.
+4. **Personality** — Default: the "Normal" personality matched to the scenario's language (look it up via personalities_list, English included) and a multilingual (language=multi) one for mixed-language scenarios. Note exceptions but don't change without asking.
 5. **Adaptive vs conditional** — Default to adaptive. Only use conditional actions for explicit unit-test needs.
 6. **Folder** — Name the folder.
 7. **Metrics** — Confirm baseline metrics attachment.
@@ -465,15 +474,16 @@ The `?call_id=` query param holds a `run_id` — use that format only when const
 Use conditional actions when the user needs a scenario that runs identically each time: unit tests, regression tests, IVR navigation, compliance testing. For adaptive/exploratory scenarios use behavioral instructions instead.
 
 **When to use:** Exact flow validation, deterministic regression, IVR nav, compliance.
-**When NOT to use:** Natural conversation quality, edge cases, red-team — use behavioral instructions.
+**When NOT to use:** Natural conversation quality, edge cases, red-team — those are behavioral scenarios, which are generated via `generate-bg`, not authored here.
 
 ### Structure
 
-The `instructions` field of the scenario payload becomes a JSON object (not a string):
+Set `scenario_type: "conditional_actions"` and pass the structured payload in the **`conditional_actions`** field — not in `instructions`. Omitting `scenario_type` defaults the scenario to `instruction`, which silently ignores the conditions.
 
 ```json
 {
-  "instructions": {
+  "scenario_type": "conditional_actions",
+  "conditional_actions": {
     "role": "You are a patient calling to cancel their appointment",
     "conditions": [...]
   }
@@ -499,13 +509,13 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 
 ### XML Tags (fixed_message:true only)
 
-Sibling tags can be combined with text and run left to right. Do not nest tags; `<ivr>` and `<voicemail>` remain whole-action exceptions.
+Sibling tags can be combined with text and run left to right. Do not nest tags, except inside a regional `<voice ...>...</voice>` block; `<ivr>` and `<voicemail>` remain whole-action exceptions.
 
 | Tag | Behavior |
 |-----|---------|
 | `<ivr text="..." />` | Uninterruptible IVR message. **Must be entire action.** |
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible + beep at end. **Must be entire action.** `text` optional (silent voicemail allowed). Post-beep message goes in a separate action_followup. |
-| `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`) |
+| `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`), or a `{{test_profile.key}}` placeholder for caller data (`digits="{{test_profile.pin}}#"`) |
 | `<endcall />` | Terminate call. **May be combined with surrounding text** (only "communication-class" tag that allows this). |
 | `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues. Supports decimal seconds (`"0.5s"`) for sub-second precision. |
 | `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |
@@ -513,7 +523,7 @@ Sibling tags can be combined with text and run left to right. Do not nest tags; 
 | `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be action_followup AND at start of action string.** |
 | `<speed ratio="N" />` | Speech rate 0.8–1.2. Must start action. |
 | `<volume ratio="N" />` | Volume 0–2. Must start action. Cartesia only. |
-| `<voice provider="P" id="X" model="Y" />` | Switch the testing agent's TTS voice from here on — **the only way to put a second speaker in one call** (caller hands the phone over, supervisor takes over). `provider` + `id` required and must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). Provider cannot change mid-call. |
+| `<voice provider="P" id="X" model="Y" />` | Switch the testing agent's TTS voice persistently — **the only way to put a second speaker in one call**. Add `text="..."` for a temporary regional voice, or wrap regional text in `<voice ...>...</voice>` (supports nested inline tags); the prior voice resumes afterward. `provider` + `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). Provider cannot change mid-call. |
 | `<send_sms text="..." />` | Trigger an SMS for SMS-driven workflows |
 | `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent; `t` required, `d` optional, `fixed_message: true` |
 | `<network_simulation packet_loss="N" />` | Only `packet_loss` supported — `jitter`/`latency` are ignored. |

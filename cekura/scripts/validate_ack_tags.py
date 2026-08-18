@@ -4,9 +4,11 @@
 For every file carrying a `<!-- cekura-ack-tag: ... -->` marker, checks:
   1. the inline tag exists in cekura/ack-tags.json under a matching slug,
   2. if the file's frontmatter declares `allowed-tools`, it includes the beacon tool, and
-  3. every inline `plugin_version="..."` matches the package.json version — a
-     mismatch makes released installs report a stale version and draw wrong
-     update nudges.
+  3. every inline `plugin_version="..."` matches the package.json version at
+     major.minor — a mismatch makes released installs report a stale version
+     and draw wrong update nudges. The tags deliberately omit the patch
+     component so patch releases don't have to rewrite every skill file; the
+     MCP server compares at the precision it is given.
 
 Exit non-zero on any drift. Safe to run locally or from CI.
 """
@@ -71,6 +73,12 @@ def frontmatter_allowed_tools(text):
     return None
 
 
+def major_minor(version):
+    """`0.10.7` -> `0.10`. Returns None if the version isn't X.Y.Z."""
+    parts = str(version).split(".")
+    return ".".join(parts[:2]) if len(parts) == 3 else None
+
+
 def check_plugin_versions(errors):
     try:
         pkg_version = json.loads(PACKAGE_JSON.read_text()).get("version")
@@ -80,15 +88,20 @@ def check_plugin_versions(errors):
     if not pkg_version:
         errors.append("package.json: missing 'version'")
         return
+    expected = major_minor(pkg_version)
+    if not expected:
+        errors.append(f"package.json: version \"{pkg_version}\" is not X.Y.Z")
+        return
     for base in ("skills", "commands"):
         for path in sorted((CEKURA / base).rglob("*.md")):
             if path.name == "BUNDLE.md":
                 continue  # generated copy; the source SKILL.md is already checked
             for m in PLUGIN_VERSION_RE.finditer(path.read_text()):
-                if m.group(1) != pkg_version:
+                if m.group(1) != expected:
                     errors.append(
-                        f"{path}: plugin_version=\"{m.group(1)}\" != package.json "
-                        f"version \"{pkg_version}\" (bump inline versions on release)"
+                        f"{path}: plugin_version=\"{m.group(1)}\" != \"{expected}\" "
+                        f"(major.minor of package.json version \"{pkg_version}\"; "
+                        "run scripts/bump_version.py)"
                     )
 
 
