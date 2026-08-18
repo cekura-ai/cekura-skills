@@ -4,6 +4,30 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.10.12 — 2026-08-18
+
+Generation reliability, driven by production call-log triage (18 conversations)
+and validated with recorded E2E runs plus a repeated-trial failure hunt
+(cekura-ai/cekura-skills#138).
+
+- **Added** a hard confirmation gate to the pre-creation checkpoint: no
+  `scenarios_generate_bg`/`scenarios_create` before the user approves the plan
+  (only an explicit "proceed autonomously" skips it). Unreadable source files
+  override autonomy — stop and ask, never generate from a stand-in.
+- **Added** § Reliability Protocol to the eval-design auto-generation
+  reference: readable-input checks, source-count reconciliation, per-language
+  generation batches, ~10s polling with ~30s progress reports stating real
+  elapsed time, a 5-minute 0/N stall rule (one smaller retry, then a clear
+  stop — overrides autonomous mode), a 4-minute frozen-short-of-total rule,
+  and post-generation verification (count, 1:1 plan diff, language/roles,
+  expected outcomes, tools, metrics).
+- **Added** "generate scenarios" trigger phrasings to the eval-design skill
+  description — the most common generation wording previously never loaded
+  the skill.
+- **Added** fail-fast rules to `run-evals` (billing errors, capped dialing
+  waits, verbatim LiveKit/SIP errors) and to `create-agent` phase 5 (max two
+  provider-credential attempts; never build an agent on a guessed prompt).
+
 ## 0.10.11 — 2026-08-18
 
 Adds **GitHub Copilot** as a natively supported platform. Purely additive — the
