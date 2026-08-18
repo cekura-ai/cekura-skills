@@ -31,10 +31,11 @@ and `plugin_version="0.11.0"`.
 Turn a failure signal into a verified fix on **any** agent stack. Unlike
 `cekura-self-improving-agent` (which models "which provider"), this skill models
 "**where does the agent's config actually live, and how do I read, render,
-apply, deploy, and verify it**". Many teams keep prompts/tools in their own
-repo, database, or Langfuse and materialize the VAPI/Retell/ElevenLabs agent at
-deploy time — editing the provider object there fixes a build artifact that the
-next deploy overwrites. This skill edits the declared source of truth instead.
+apply, deploy, and verify it**". Many teams keep their agent's config in
+their own stack — a repo, a database, a prompt registry (Langfuse and similar) —
+and materialize the runtime provider agent at deploy time; editing the provider
+object there fixes a build artifact that the next deploy overwrites. This skill
+edits the declared source of truth instead, whatever it is.
 
 ## Performing Platform Actions
 
@@ -47,15 +48,18 @@ every project:
 
 1. **Must-fail-first, proven by artifact, at minimum cost** — before any edit
    is proposed, the failure must reproduce in Cekura simulation, recorded as
-   `repro.json` in the audit dir: `{signal, mode, scenario_ids, result_id,
-   n_runs, fails, injections, config_hash, timestamp}`. Classify the
+   `repro.json` in the audit dir: `{session_id, signal, mode, scenario_ids,
+   result_id, n_runs, fails, injections, config_hash, timestamp}` —
+   `session_id` must match the active lock; artifacts from other sessions
+   never satisfy the gate. Classify the
    **reproduction mode first** and run the minimum the mode allows:
    *deterministic* (the trigger can be forced every run — by scenario
    construction or temporary fault injection in the local bot, marked
    `CEKURA-REPRO-INJECT`) → **exactly 1 run, must fail 1/1**; *stochastic*
    (LLM prompt/workflow behavior that can't be forced) → smallest batch
    expected to fail twice, `N = clamp(⌈2/p̂⌉, 4, 10)` from the observed
-   failure rate, gate = **≥ 2 fails**. The `result_id` must be a real Cekura
+   failure rate, gate = **≥ 2 fails** (all numbers are defaults, overridable
+   via the manifest's `policy.reproduction`). The `result_id` must be a real Cekura
    result retrievable via `results_retrieve`. **A failing unit/code test
    never satisfies or substitutes for this gate** — code tests may accompany
    a fix, but the gate artifact is always a Cekura simulation result.
@@ -75,7 +79,7 @@ every project:
    needed), ask for that action, and stop. "Please just fix it" does not
    silently waive the gate — an explicit user override is honored only when
    recorded in `repro.json` as `{"gate_override": {"by": "user", "reason":
-   ...}}`, every subsequent output (diff header, PR title and body) is marked
+   ..., "session_id": <active session>}}` (all three fields required), every subsequent output (diff header, PR title and body) is marked
    **UNVERIFIED HYPOTHESIS — reproduction gate overridden**, and the PR must
    state that no Cekura reproduction or verification ran. Never record an
    override the user did not explicitly give in this session.
@@ -99,11 +103,14 @@ every project:
 
 **Layer 2 — the capability manifest.** A per-project file,
 `.cekura/selfimprove.yaml`, declaring typed capabilities: `source_of_truth`
-(a **component list** — prompt in repo, tools in DB, registry in Langfuse…,
-each with its own `read` / `apply` / `rollback`), `render_intended`,
+(a **component list** — kinds `repo`, `database`, `prompt_registry`,
+`runtime_provider`, `external`, each with its own `read` / `apply` /
+`rollback`), `render_intended`,
 `read_live`, `validate` (dry-run), `deploy`, `evidence`, `simulate` (Cekura
 runner + `reset_fixtures` + `flake_policy`), `promote`, `attestation`
-(acceptable differences, trace correlation), `audit`, plus `environments` and
+(acceptable differences, trace correlation), `audit`, `policy` (numeric
+defaults: run counts, thresholds, iteration caps, lock staleness), plus
+`environments` and
 `authority` (allowed/forbidden paths, secrets policy; **absent
 `allowed_paths` means no file writes**).
 Schema: `references/manifest.schema.json`; field-by-field rules:
@@ -121,7 +128,7 @@ re-run the Setup self-test after any change.
 
 | # | Phase | File | Purpose |
 |---|-------|------|---------|
-| 1 | Setup | `phases/setup.md` | Discover or interview → write/validate the manifest → **manifest self-test** (read → deploy/noop → read live → one smoke scenario → trace correlation). Persist to `.claude/MEMORY.md`. |
+| 1 | Setup | `phases/setup.md` | Discover or interview → write/validate the manifest → **manifest self-test** (read → deploy/noop → read live → one smoke scenario → trace correlation). Persist run-setup to the host agent's memory file (`.claude/MEMORY.md` on Claude Code; the audit dir otherwise). |
 | 2 | Collect | reuse `../cekura-self-improving-agent/phases/collect.md` | Fetch/filter failures (per-run verdicts, voice filter, `ended_reason`), plus manifest `evidence` sources (Langfuse traces, custom logs). Loop re-entry point. |
 | 3 | Debug | reuse `../cekura-self-improving-agent/phases/debug.md` | Root cause + failure class. Component attribution: which manifest component governs the failure. |
 | 4 | Reproduce | reuse `../cekura-self-improving-agent/phases/reproduce.md` | Build harness (mocks from real traces — including the customer's own mock server via `reset_fixtures`); must-fail gate. On pass, **write `repro.json`** (invariant 1) to the audit dir — the loop refuses to start without it. |
@@ -163,6 +170,7 @@ Assume drift is normal. Classify — never blur — these outcomes:
 
 ## Parameters
 
+All numbers below are defaults; the manifest's `policy.*` overrides them.
 Reproduction/verification run counts follow the **mode** (invariant 1):
 deterministic → 1 must-fail run, 2/2 verify with the trigger active;
 stochastic → `N = clamp(⌈2/p̂⌉, 4, 10)` with ≥2 fails to reproduce,

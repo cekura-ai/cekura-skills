@@ -9,8 +9,9 @@ self-test before trusting it, and treat edits to it as privileged.
 
 ## Design rules
 
-1. **Components, not a monolith.** Real stacks compose repo prompts + DB tool
-   rows + Langfuse prompt versions + provider defaults. Each is a
+1. **Components, not a monolith.** Real stacks compose sources of several
+   kinds — `repo` files, `database` rows, `prompt_registry` versions (e.g.
+   Langfuse), `runtime_provider` objects, `external` systems. Each is a
    `source_of_truth.components[]` entry with its own `read`, `apply`, and
    `rollback`. A single dump command "lies by omission" — if a failure maps to
    config no component covers, that is a manifest gap, not an editing target.
@@ -61,6 +62,11 @@ echoing (`env`, `printenv`, `cat` on key files), broad cluster mutation
 (`kubectl delete/apply` without a namespaced resource), direct production
 deploy targets, or piping remote content into a shell.
 
+## Policy
+
+All numeric gates (run counts, fail/pass thresholds, iteration caps, lock
+staleness) are skill defaults overridable under `policy.*` — see the schema.
+
 ## Concurrency
 
 One improvement session per agent at a time. Setup takes the lockfile
@@ -74,8 +80,8 @@ stale → report and ask before replacing.
 `audit.dir` (default `.cekura/audit/{session_id}/`) holds the replayable
 record: manifest + config hashes, per-iteration diffs, eval results,
 pre-promotion backups, promotion record. Everything written there is
-secret-redacted first. `.claude/MEMORY.md` holds only run-setup facts and a
-pointer to this directory — never artifacts, never values.
+secret-redacted first. The host agent's memory file holds only run-setup
+facts and a pointer to this directory — never artifacts, never values.
 
 ## Blast-radius summary (rendered before apply, every iteration)
 
@@ -84,7 +90,10 @@ pointer to this directory — never artifacts, never values.
   small source edit large at runtime).
 - Fail the iteration if anything outside `authority.allowed_paths` changed.
 
-## Worked example (runtime-created VAPI agent, prompts in repo, tools in DB)
+## Worked example — one concrete stack, purely illustrative
+
+This happens to use VAPI + repo prompts + DB tools; substitute your own kinds,
+vendors, and commands — nothing below is assumed by the skill.
 
 ```yaml
 version: 1
@@ -107,16 +116,16 @@ source_of_truth:
       paths: ["prompts/sales_agent.md"]
       rollback: { how: git }
     - name: tools
-      kind: db
+      kind: database
       read:  { run: "python scripts/dump_tools.py --agent {agent_ref}", writes: false }
       apply: { mode: command, command: { run: "python scripts/update_tools.py --agent {agent_ref} --from -", writes: true } }
       rollback: { how: command, command: { run: "python scripts/restore_tools.py --agent {agent_ref} --snapshot {session_id}", writes: true } }
 render_intended: { run: "python scripts/render_agent.py --agent {agent_ref} --env {env}", writes: false }
-read_live:       { run: "python scripts/dump_live_agent.py --env {env} --agent {agent_ref}", network: staging, writes: false }
+read_live:       { run: "python scripts/dump_live_agent.py --env {env} --agent {agent_ref}", network: environment, writes: false }
 validate:        { run: "python scripts/validate_agent.py --agent {agent_ref}", writes: false }
 deploy:
   target_env: staging
-  command: { run: "make deploy-staging AGENT={agent_ref}", network: staging, writes: true, timeout_seconds: 600 }
+  command: { run: "make deploy-staging AGENT={agent_ref}", network: environment, writes: true, timeout_seconds: 600 }
   produces: [runtime_agent_id, build_sha]
 attestation:
   acceptable_differences: ["$.id", "$.orgId", "$.updatedAt"]

@@ -26,8 +26,8 @@ authority:
 source_of_truth:
   components:
     - name: agent_config
-      kind: provider
-      read: { argv: ["<provider GET command, e.g. curl .../assistant/{agent_ref}>"], network: provider, writes: false }
+      kind: runtime_provider
+      read: { argv: ["<provider GET command, e.g. curl .../assistant/{agent_ref}>"], network: external, writes: false }
       # read/apply via provider API exactly as the classic skill's
       # providers/<mode> files describe (VAPI /assistant, ElevenLabs
       # conversation_config.agent.prompt.prompt, Retell response_engine, …)

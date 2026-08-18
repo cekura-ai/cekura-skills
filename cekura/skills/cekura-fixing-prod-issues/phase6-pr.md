@@ -49,5 +49,6 @@ a repo's `pr-eval`-style label that deploys the PR and runs a live scenario
 suite). Those runs cost real deploys and real calls; firing them is a
 maintainer's deliberate decision, and your Cekura result URLs above already
 carry the verification evidence. If the repo has such a suite and a full
-regression pass would add value, say so in the PR body ("ready for a pr-eval
-run if a maintainer wants one") and leave the label to a human.
+regression pass would add value, say so in the PR body ("ready for the repo's
+maintainer-triggered eval workflow, if a maintainer wants a run") and leave
+the trigger to a human.

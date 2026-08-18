@@ -1,7 +1,8 @@
 # Recipe · runtime-created agent (source in the customer's stack)
 
-For teams that keep prompts/tools in their own repo, DB, or Langfuse and
-materialize the VAPI/Retell/ElevenLabs agent at deploy time. **Never edit the
+For teams that keep agent config in their own stack (repo, database, or a
+prompt registry such as Langfuse) and materialize the runtime provider agent
+(VAPI, Retell, ElevenLabs, or any other) at deploy time. **Never edit the
 provider object** — it is a build artifact; the next deploy overwrites it.
 
 Discovery hints: provider SDK calls in deploy scripts
@@ -30,16 +31,16 @@ source_of_truth:
       paths: [<prompt file(s)>]
       rollback: { how: git }
     - name: tools            # only if tools live outside the repo
-      kind: db | langfuse
+      kind: database | prompt_registry   # add vendor: langfuse etc. if useful
       read:  { run: "<dump command>", writes: false }
       apply: { mode: command, command: { run: "<update command>", writes: true } }
       rollback: { how: command | versioned }
 render_intended: { run: "<render command>", writes: false }   # strongly recommended
-read_live:       { run: "<live dump command>", network: staging, writes: false }  # REQUIRED
+read_live:       { run: "<live dump command>", network: environment, writes: false }  # REQUIRED
 validate:        { run: "<dry-run/schema check>", writes: false }
 deploy:
   target_env: staging
-  command: { run: "<deploy command>", network: staging, writes: true, timeout_seconds: 600 }
+  command: { run: "<deploy command>", network: environment, writes: true, timeout_seconds: 600 }
   produces: [runtime_agent_id, build_sha]
 attestation:
   acceptable_differences: ["$.id", "$.updatedAt"]   # provider-assigned fields

@@ -7,7 +7,8 @@ self-test, and the session recorded. No failure collection, no edits here.
 
 Before touching the manifest, deploying, or cloning anything: write
 `.cekura/selfimprove.lock` (session id + ISO timestamp). If a lock already
-exists: a lock older than 24h with no matching session artifacts is stale —
+exists: a lock older than `policy.concurrency.lock_stale_after_hours` (default
+24h) with no matching session artifacts is stale —
 report it and ask before replacing; a fresh lock means another session is
 live — stop and ask. Everything below happens under the lock so two sessions
 can never race through Setup's deploy/clone steps.
@@ -15,7 +16,8 @@ can never race through Setup's deploy/clone steps.
 Also create the session audit directory now — `audit.dir` from the manifest
 when it exists, else the default `.cekura/audit/{session_id}/`. All hashes,
 diffs, eval results, and pre-promotion backups land there, secrets redacted.
-`.claude/MEMORY.md` gets only the pointer + run-setup facts, never artifacts.
+The host agent's memory file (`.claude/MEMORY.md` on Claude Code; skip on
+hosts without one) gets only the pointer + run-setup facts, never artifacts.
 
 ## SETUP.1 — locate or build the manifest
 
@@ -68,7 +70,7 @@ repair offer (never continue on guessed mechanics):
   production target unconditionally).
 - Repo components: create the session worktree/branch
   (`cekura/selfimprove-{session_id}`); one commit per iteration.
-- Persist run setup to `.claude/MEMORY.md`: manifest path + hash, environment,
+- Persist run setup to the host agent's memory file: manifest path + hash, environment,
   runner, identities, thresholds. **No secret values, env-var names only.**
 - Record the audit-trail header: manifest hash, source baseline hash, rendered
   hash, live hash, smoke scenario id.

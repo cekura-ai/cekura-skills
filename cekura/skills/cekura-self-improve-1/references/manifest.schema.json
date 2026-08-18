@@ -41,7 +41,7 @@
           "items": { "type": "string" },
           "description": "Env var NAMES the command may receive. Values are never written to the manifest, logs, or memory."
         },
-        "network": { "enum": ["none", "local", "staging", "provider"], "default": "local" },
+        "network": { "enum": ["none", "local", "environment", "external"], "default": "local", "description": "local = loopback only; environment = the declared non-production target env; external = any remote host." },
         "writes": { "type": "boolean", "default": false, "description": "Whether the command mutates state. Read commands must declare false." }
       }
     },
@@ -58,7 +58,8 @@
       ],
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-        "kind": { "enum": ["repo", "db", "langfuse", "provider", "other"] },
+        "kind": { "enum": ["repo", "database", "prompt_registry", "runtime_provider", "external"] },
+        "vendor": { "type": "string", "description": "Optional concrete product for this component (e.g. langfuse, vapi, postgres). Informational — behavior is driven by kind and the declared commands." },
         "paths": {
           "type": "array",
           "items": { "type": "string" },
@@ -190,6 +191,42 @@
             "max_infra_failures": { "type": "integer", "minimum": 0, "default": 1 },
             "retry_on": { "type": "array", "items": { "type": "string" }, "description": "Error classes retried without counting: timeout, transport_error, mock_unavailable…" }
           }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Overridable numeric policy. Omitted fields use the skill defaults shown here.",
+      "properties": {
+        "reproduction": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "deterministic_runs": { "type": "integer", "const": 1, "default": 1 },
+            "stochastic_min_fails": { "type": "integer", "minimum": 1, "default": 2 },
+            "stochastic_batch_min": { "type": "integer", "minimum": 1, "default": 4 },
+            "stochastic_batch_max": { "type": "integer", "minimum": 1, "default": 10 }
+          }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "deterministic_passes": { "type": "integer", "minimum": 1, "default": 2 },
+            "stochastic_runs": { "type": "integer", "minimum": 3, "default": 8 },
+            "pass_ratio": { "type": "number", "exclusiveMinimum": 0.5, "maximum": 1, "default": 0.8 }
+          }
+        },
+        "iteration_limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "max_iterations": { "type": "integer", "minimum": 1, "default": 10 } }
+        },
+        "concurrency": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "lock_stale_after_hours": { "type": "integer", "minimum": 1, "default": 24 } }
         }
       }
     },
