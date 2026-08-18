@@ -323,7 +323,7 @@ POST /test_framework/v1/scenarios/generate-bg/
 Poll progress at `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.
 
 **Gotchas:**
-- `personality` is required (400 without it). Default: the "Normal" personality matched to the scenario's language — always look it up via personalities_list (language=<code>, English included: language=en; never pass project_id — it hides global predefined personalities), or a multilingual (language=multi) one when languages are mixed. If the language-matched personality returns "Personality is not enabled", fall back to a normal English personality and set scenario_language to the target language
+- `personality` is required (400 without it). Default: the "Normal" personality matched to the scenario's language — always look it up via personalities_list (language=<code>, English included: language=en; never pass project_id — it hides global predefined personalities), or a multilingual (language=multi) one when languages are mixed. If the language-matched personality returns "Personality is not enabled", first try enabling or creating/forking a personality in the target language (scenario_language is coupled to the personality's language by design — mismatches are rejected); only if that isn't possible, fall back to a normal English personality (scenario_language stays en), keep the content in the target language, and disclose the TTS limitation
 - Generation can partially complete — check progress, generate remainder in smaller batch
 - `scenario_language` defaults to "en" regardless of content — PATCH to correct code after generation
 - Auto-gen may add greetings to `first_message` instead of exact questions — PATCH after
