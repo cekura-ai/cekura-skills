@@ -233,11 +233,11 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the **only** wo
 
 1. **Generation can partially complete** — May produce fewer scenarios than requested (e.g., 15/18) with the remainder stuck. After a reasonable timeout, generate the remainder in a smaller batch with more specific `extra_instructions`.
 
-2. **`scenario_language` defaults to "en"** — Auto-gen sets all scenarios to English even when `extra_instructions` specify non-English languages. PATCH each scenario with the correct language code (`ru`, `hi`, `es`, `zh`, `ko`, `pt`, `de`, etc.) after generation. This is required for correct TTS voice/pronunciation.
+2. **`scenario_language` defaults to "en"** — Auto-gen sets all scenarios to English even when `extra_instructions` specify non-English languages. PATCH each scenario with the correct language code (`ru`, `hi`, `es`, `zh`, `ko`, `pt`, `de`, etc.) after generation, matching the personality's language.
 
 3. **Auto-gen may add greetings to `first_message`** — When `extra_instructions` specify exact verbatim questions, some scenarios get a greeting (e.g., "Здравствуйте") as the `first_message` while the actual question is in instructions as a follow-up. PATCH `first_message` after generation.
 
-4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Always try the language-matched personality first (via `personalities_list` with `language=<code>`, or a multilingual `language=multi` personality when the scenario mixes languages); only on that error fall back to personality 693 (Normal Male English) and rely on `scenario_language` to drive TTS and pronunciation. See "Checking Available Personalities" under the Personality section.
+4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Always try the language-matched personality first (via `personalities_list` with `language=<code>`, or a multilingual `language=multi` personality when the scenario mixes languages); only on that error ask for that personality to be enabled — do not pair personality 693 (Normal Male English) with a non-English `scenario_language`, which is rejected, and would leave the caller speaking English anyway. See "Checking Available Personalities" under the Personality section.
 
 5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.
 
