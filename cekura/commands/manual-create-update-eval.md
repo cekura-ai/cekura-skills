@@ -137,7 +137,7 @@ Default: `en`. Set via `scenario_language` field on the scenario.
 
 **After confirming language**, select a personality. The API returns 400 without one.
 
-Use `mcp__cekura__personalities_list` to list available personalities, filtered by the chosen language if possible. `language=<code>` is the only filter you need; `project_id` is optional (it scopes to the project's own plus globally available personalities). If a `project_id`-filtered lookup comes back empty for a language you expect, retry once without `project_id` before concluding nothing matches.
+Use `mcp__cekura__personalities_list` to list available personalities, filtered by the chosen language if possible. `language=<code>` is the only filter you need (`project_id` is optional — it scopes to the project's own plus globally available personalities).
 
 **Recommended defaults (always look up the ID — never hardcode one):**
 - **Every scenario:** pick the "Normal" personality matching the scenario's language from `mcp__cekura__personalities_list` (filter with `language=<code>`, English included: `language=en`), and set `scenario_language` to the correct code (platform uses `scenario_language` for TTS). When several "Normal" variants exist, default to the **male** one ("Normal Male …") unless the scenario's persona implies otherwise.
