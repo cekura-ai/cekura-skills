@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Bump the plugin version everywhere it is declared, in one command.
 
-The repo is the distribution artifact (Claude, Codex, Cursor, Gemini, and
-`npx skills` all read git directly), so the version must be materialized
+The repo is the distribution artifact (Claude, Codex, Cursor, Gemini,
+Copilot, and `npx skills` all read git directly), so the version must be
+materialized
 in-tree in several places. This script rewrites all of them together:
 
-  1. the six version-bearing manifests (see VERSION_SURFACES)
+  1. the seven version-bearing manifests (see VERSION_SURFACES)
   2. the inline `plugin_version="X.Y"` telemetry tags in cekura/**/*.md, which
      carry major.minor only -- a patch release leaves every skill, bundle, and
      command file untouched
@@ -45,6 +46,7 @@ VERSION_SURFACES = (
     "cekura/.codex-plugin/plugin.json",
     "gemini-extension.json",
     "cekura/.cursor-plugin/plugin.json",
+    "cekura/.github/plugin/plugin.json",
 )
 
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")

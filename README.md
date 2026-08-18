@@ -1,6 +1,6 @@
 # Cekura AI Skills
 
-AI-powered skills for building and improving voice agent tests and metrics on the [Cekura](https://cekura.ai) platform. Works with Claude Code, Codex, Cursor, Gemini CLI, and other AI coding assistants.
+AI-powered skills for building and improving voice agent tests and metrics on the [Cekura](https://cekura.ai) platform. Works with Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot, and other AI coding assistants.
 
 ## Table of Contents
 
@@ -12,6 +12,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 - [Codex](#codex)
 - [Cursor](#cursor)
 - [Gemini CLI](#gemini-cli)
+- [GitHub Copilot](#github-copilot)
 - [Windsurf / Other Agents](#windsurf--other-agents)
 - [MCP Server](#mcp-server)
 - [Quick Reference](#quick-reference)
@@ -83,6 +84,8 @@ npx skills add cekura-ai/cekura-skills --all
 npx skills remove cekura-coordinator   # one skill
 npx skills remove --all                 # everything
 ```
+
+> **GitHub Copilot:** Copilot loads skills from a repository's `.github/skills/` directory, so target it explicitly — `npx skills add cekura-ai/cekura-skills --all --agent github-copilot --output .github/skills`. For the Copilot CLI plugin (skills **and** MCP tools), see [GitHub Copilot](#github-copilot) below.
 
 ### What gets installed
 
@@ -334,6 +337,52 @@ gemini extensions update cekura
 
 ---
 
+## GitHub Copilot
+
+Native plugin support for **Copilot CLI** — skills **and** MCP tools. (Copilot plugins don't carry Claude-style slash commands; the skills cover those workflows.) Copilot reads its own registry at `.github/plugin/marketplace.json`, separate from the Claude manifest, so the two installs never interfere.
+
+### Install (Copilot CLI)
+
+```bash
+copilot plugin marketplace add cekura-ai/cekura-skills
+```
+
+```bash
+copilot plugin install cekura@cekura-skills
+```
+
+Prefer an interactive session? Run `copilot`, then `/plugin marketplace add cekura-ai/cekura-skills` followed by `/plugin install cekura@cekura-skills`.
+
+The plugin ships the Cekura MCP endpoint, so Copilot runs a browser OAuth sign-in the first time a Cekura tool is used — no API key stored. Verify with:
+
+```bash
+copilot plugin list
+```
+
+### Copilot coding agent, code review, and the IDE extensions
+
+Those surfaces load skills from a repository's `.github/skills/` directory rather than from CLI plugins. Install the skill files into the repo you want them active in and commit the result:
+
+```bash
+npx skills add cekura-ai/cekura-skills --all --agent github-copilot --output .github/skills
+```
+
+To give those surfaces Cekura MCP access as well, register `https://api.cekura.ai/mcp` in your repository's Copilot MCP configuration — see GitHub's docs on [configuring MCP servers for your repository](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/configure-mcp-servers). Note that the Copilot coding agent and Copilot code review don't support OAuth-authenticated remote MCP servers, so use the API-key credential there: send your key in an `X-CEKURA-API-KEY` header. (Copilot CLI does support OAuth — that path needs no key.)
+
+### Get Started
+
+Ask Copilot to help with Cekura metrics or evals — skills load automatically when the conversation matches.
+
+### Upgrade
+
+```bash
+copilot plugin update cekura
+```
+
+If a release adds a brand-new skill, refresh the marketplace snapshot first: `copilot plugin marketplace add cekura-ai/cekura-skills` (re-adding refreshes it), then `copilot plugin update cekura`. For the `.github/skills/` path, re-run the `npx skills add` command above.
+
+---
+
 ## Windsurf / Other Agents
 
 Copy `codex/AGENTS.md` to wherever your agent reads context files from (project root, `.windsurf/rules/`, etc.):
@@ -362,9 +411,9 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 
 **For Claude Code users:** the plugin auto-configures the MCP server; on first tool use you'll get a one-click browser OAuth sign-in (no API key stored). Run `/setup-mcp` if tools aren't available — it verifies connectivity and, if you prefer a key-based credential (e.g. for CI), walks you through the `X-CEKURA-API-KEY` setup.
 
-**For Codex, Cursor, and Gemini CLI:** the MCP server is wired up natively through each platform's plugin/extension manifest, authenticating via OAuth (no API key stored). The sign-in step differs per platform — in **Codex** run `codex mcp login cekura`; **Cursor** prompts for OAuth when you connect the server; **Gemini** runs the OAuth flow on first tool use. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
+**For Codex, Cursor, Gemini CLI, and GitHub Copilot:** the MCP server is wired up natively through each platform's plugin/extension manifest, authenticating via OAuth (no API key stored). The sign-in step differs per platform — in **Codex** run `codex mcp login cekura`; **Cursor** prompts for OAuth when you connect the server; **Gemini** and **Copilot CLI** run the OAuth flow on first tool use. For agents using only the `AGENTS.md` behavior preset (Windsurf, etc.), the MCP server is optional — the preset includes API reference with curl examples as a fallback.
 
-**How it works:** Claude Code and Codex read the bundled `cekura/.mcp.json`; Cursor and Gemini declare the endpoint inline in their own manifests. All four point at the Cekura MCP server at `https://api.cekura.ai/mcp` (CI asserts they stay in sync). By default it authenticates via OAuth — on first use the client opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
+**How it works:** Claude Code, Codex, and Copilot CLI read the bundled `cekura/.mcp.json`; Cursor and Gemini declare the endpoint inline in their own manifests. All five point at the Cekura MCP server at `https://api.cekura.ai/mcp` (CI asserts they stay in sync). By default it authenticates via OAuth — on first use the client opens a browser for a one-click sign-in, with no API key stored. To use an API key instead, run `/setup-mcp` and choose the API-key path. See the [MCP overview](https://docs.cekura.ai/mcp/overview).
 
 ---
 
@@ -428,6 +477,8 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | **Codex** | `codex plugin marketplace add` | Yes | Yes | No |
 | **Cursor** | Plugin marketplace install | Yes | Yes | No |
 | **Gemini CLI** | `gemini extensions install` | Context file only | Yes | No |
+| **GitHub Copilot (CLI)** | `copilot plugin marketplace add` | Yes | Yes | No |
+| **GitHub Copilot (coding agent / code review / IDE)** | `npx skills add --output .github/skills` | Yes | Repo MCP config | No |
 | **Windsurf** | Rules file | Behavior preset | No | No |
 | **Other agents** | Copy AGENTS.md | Behavior preset | No | No |
 
