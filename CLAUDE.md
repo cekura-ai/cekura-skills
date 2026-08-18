@@ -89,7 +89,7 @@ Once installed, npx users have three ways to stay current:
 1. Create `cekura/skills/cekura-<kebab-name>/SKILL.md` with spec-compliant frontmatter (`name` must be `cekura-<kebab-name>`, matching the directory)
 2. Body must be public-facing — no internal endpoints, no `cekura-internal:*` references, no customer-specific facts
 3. Stay under 500 lines per file and 1024 description chars (CI-enforced)
-4. Bump the version: `python3 scripts/bump_version.py --patch` (or `--minor`). It rewrites all six version-bearing manifests plus every inline `plugin_version="..."` string and runs the validators — never hand-edit versions across files. CI requires a bump whenever `cekura/**` changes. Add a CHANGELOG.md entry.
+4. Bump the version: `python3 scripts/bump_version.py --patch` (or `--minor`). It rewrites all six version-bearing manifests and, on a minor/major bump, the inline `plugin_version="X.Y"` tags — never hand-edit versions across files. CI (`scripts/check_version_bump.py`) requires a version strictly greater than `origin/main`'s whenever `cekura/**` changes. Add a CHANGELOG.md entry.
 5. Update the "What's Included" table and Quick Reference table in `README.md`
 6. If the skill needs an operational counterpart, also add a slash command in `cekura/commands/`
 7. In the release notes / commit message, name the new skill so users know what to pass to `--skill`
@@ -188,7 +188,11 @@ diff codex/AGENTS.md GEMINI.md   # must report no differences
 
 When you edit `codex/AGENTS.md`, re-copy it: `cp codex/AGENTS.md GEMINI.md`.
 
-Version policy: `cekura/.claude-plugin/plugin.json` is the single Claude version source — the marketplace plugin entry deliberately declares NO version (Claude Code resolves plugin.json first and silently ignores the marketplace value; an unchanged explicit version blocks all user updates regardless of new commits). Bump it on every release that changes plugin content. All six version-bearing surfaces (package, top-level marketplace, Claude, Codex, Cursor, Gemini) are kept equal — CI enforces it — so use `python3 scripts/bump_version.py --patch|--minor|X.Y.Z`, which rewrites all of them plus the inline `plugin_version="..."` telemetry strings in one command.
+Version policy: `cekura/.claude-plugin/plugin.json` is the single Claude version source — the marketplace plugin entry deliberately declares NO version (Claude Code resolves plugin.json first and silently ignores the marketplace value; an unchanged explicit version blocks all user updates regardless of new commits). Bump it on every release that changes plugin content. All six version-bearing surfaces (package, top-level marketplace, Claude, Codex, Cursor, Gemini) are kept equal — CI enforces it — so use `python3 scripts/bump_version.py --patch|--minor|X.Y.Z`, which rewrites all of them in one command.
+
+The inline `plugin_version="X.Y"` telemetry tags in skills/bundles/commands carry **major.minor only**, so a patch release touches 6 files instead of 21. `validate_ack_tags.py` compares them against the major.minor of `package.json`. This depends on the MCP server comparing at the precision it is given (cekura-ai/docs#872) — do not re-add the patch component.
+
+`scripts/check_version_bump.py` gates PRs that touch `cekura/**`: the version must be **strictly greater than the one on `origin/main` at CI time**, not merely different from the PR's merge base. Two PRs branched off the same release can otherwise both bump to the same number, and whichever merges second ships its content under a version users already have. Note the `validate` workflow is not currently a *required* status check in the branch ruleset, so this gate is advisory until it is made required (with "branches up to date" enabled so it re-runs when main moves).
 
 ## Conventions
 

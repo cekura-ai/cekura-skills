@@ -6,7 +6,9 @@ The repo is the distribution artifact (Claude, Codex, Cursor, Gemini, and
 in-tree in several places. This script rewrites all of them together:
 
   1. the six version-bearing manifests (see VERSION_SURFACES)
-  2. every inline `plugin_version="..."` telemetry string in cekura/**/*.md
+  2. the inline `plugin_version="X.Y"` telemetry tags in cekura/**/*.md, which
+     carry major.minor only -- a patch release leaves every skill, bundle, and
+     command file untouched
 
 then runs the CI validators to confirm parity. It never reformats JSON --
 each manifest edit is an exact single-occurrence string replacement.
@@ -39,6 +41,10 @@ VERSION_SURFACES = (
 )
 
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
+
+
+def major_minor(version):
+    return ".".join(version.split(".")[:2])
 
 
 def next_version(current, bump):
@@ -83,18 +89,20 @@ def main():
         replace_exactly(path, f'"version": "{current}"', f'"version": "{new}"', 1)
         changed.append(surface)
 
-    old_inline = f'plugin_version="{current}"'
-    new_inline = f'plugin_version="{new}"'
-    md_files = subprocess.run(
-        ["git", "ls-files", "cekura/*.md"],
-        capture_output=True, text=True, check=True, cwd=REPO,
-    ).stdout.splitlines()
-    for rel in md_files:
-        path = REPO / rel
-        text = path.read_text()
-        if old_inline in text:
-            path.write_text(text.replace(old_inline, new_inline))
-            changed.append(rel)
+    # Telemetry tags carry major.minor, so patch releases touch no markdown.
+    old_inline = f'plugin_version="{major_minor(current)}"'
+    new_inline = f'plugin_version="{major_minor(new)}"'
+    if old_inline != new_inline:
+        md_files = subprocess.run(
+            ["git", "ls-files", "cekura/*.md"],
+            capture_output=True, text=True, check=True, cwd=REPO,
+        ).stdout.splitlines()
+        for rel in md_files:
+            path = REPO / rel
+            text = path.read_text()
+            if old_inline in text:
+                path.write_text(text.replace(old_inline, new_inline))
+                changed.append(rel)
 
     print(f"bumped {current} -> {new} in {len(changed)} files:")
     for rel in changed:
