@@ -219,7 +219,7 @@ The Auto-Generate flow does not apply on this path, and unlike that flow, `scena
 
 **Gathering personality and tools for this path** (the main walkthrough above does not cover these — they belong only to the bulk-create path):
 
-- **Personality:** ask which personality the bulk scenarios should use. Default to the "Normal" personality matched to the agent's language — always look it up with `mcp__cekura__personalities_list` `language=<code>` (English included: `language=en`; never pass `project_id` — it hides global predefined personalities); for agents mixing languages use a multilingual (`language=multi`) one. (The Auto-Generate flow above intentionally does *not* pass a personality — it lets the backend infer one from the agent. Only the bulk-create path needs this explicit.)
+- **Personality:** ask which personality the bulk scenarios should use. Default to the "Normal" personality matched to the agent's language — always look it up with `mcp__cekura__personalities_list` `language=<code>` (English included: `language=en`; `language` is the only filter needed — if a `project_id`-filtered lookup comes back empty, retry without it); for agents mixing languages use a multilingual (`language=multi`) one. (The Auto-Generate flow above intentionally does *not* pass a personality — it lets the backend infer one from the agent. Only the bulk-create path needs this explicit.)
 - **Tools:** ask which tools the testing agent should have enabled. Default `["TOOL_END_CALL"]`; add `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows and `TOOL_DTMF` for IVR. VAPI agents use prefixed names (`VAPI_TOOL_END_CALL`, etc.).
 
 ## Summary Report
