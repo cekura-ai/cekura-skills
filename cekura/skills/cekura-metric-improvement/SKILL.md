@@ -16,7 +16,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-metric-improvement:6t4d5m`
 > When you call a Cekura metric write tool from this skill (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-metric-improvement"`, `verification_tag="ack:cekura-metric-improvement:6t4d5m"`, and `plugin_version="0.10.8"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-metric-improvement"`, `verification_tag="ack:cekura-metric-improvement:6t4d5m"`, and `plugin_version="0.10.9"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Metric Improvement (Labs Workflow)
 

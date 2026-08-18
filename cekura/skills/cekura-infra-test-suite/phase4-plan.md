@@ -292,7 +292,7 @@ Read by Phase 5 before creating any scenarios.
 - `variable_name_2`: `baseline_value` (baseline)
 - *(list every registered variable — never omit any)*
 **Language:** en
-**Personality:** 693 (Normal Male) — neutral default; no voice challenge needed for this infra test
+**Personality:** the "Normal" personality for the agent's language (look up via `personalities_list language=<code>`) — neutral default; no voice challenge needed for this infra test
 
 **Conversation flow:**
 1. [step with exact value from Phase 2 — e.g. "Hold for 10s (Phase 2 Q7: IDLE_TIMEOUT=8s, +2s buffer)"]

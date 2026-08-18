@@ -181,7 +181,7 @@ POST /test_framework/v1/scenarios/generate-bg/
   "agent_id": 12345,
   "num_scenarios": 10,
   "extra_instructions": "Focus on cancellation edge cases and tool failure scenarios",
-  "personalities": [693],
+  "personalities": [<personality_id from personalities_list, matched to the agent's language>],
   "generate_expected_outcomes": true,
   "folder_path": "My Test Folder",
   "tags": ["generated", "cancellation"],
