@@ -4,6 +4,26 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.10.10 — 2026-08-12
+
+Release-tooling change; no skill content changes.
+
+- **Changed** the inline `plugin_version="..."` telemetry tags in skills,
+  bundles, and commands to carry **major.minor only** (`"0.10"`). A patch
+  release now rewrites 6 files instead of 21 — the tags only change on a
+  minor/major bump. `validate_ack_tags.py` compares them against the
+  major.minor of `package.json`. Requires the MCP server to compare versions
+  at the precision reported (cekura-ai/docs#872), otherwise every install on
+  the latest patch would get a spurious update nudge.
+- **Added** `scripts/bump_version.py` — one command rewrites all six
+  version-bearing manifests (and the telemetry tags when major.minor moves),
+  then runs the validators. Never hand-edit versions across files.
+- **Added** `scripts/check_version_bump.py`, replacing the inline CI gate. The
+  version must now be strictly greater than the one on `origin/main` at CI
+  time, not merely different from the PR's merge base — two PRs branched off
+  the same release could otherwise both bump to the same number, and whichever
+  merged second shipped content under an already-published version.
+
 ## 0.10.3 — 2026-08-07
 
 - **Added** the `<voice provider="P" id="X" model="Y" />` conditional-action tag
