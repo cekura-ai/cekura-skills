@@ -157,9 +157,7 @@ progress_id: <uuid>
 
 Keep polling until status is `completed` or `failed`. **Do NOT give up after one check** — generation can take 30-60 seconds for 10+ scenarios. Report progress to the user about every 30s; never poll silently for minutes. State elapsed time and progress from the actual data (real counts, real wall-clock waited) — never estimate or inflate elapsed time.
 
-**Batching:** for more than 10 scenarios, split into sequential batches of ≤10 (per category or per language) — large single batches are the main cause of stalls and partial completion. For "N per language" requests, run one batch per language with that language's personality.
-
-**Stall rule — overrides "proceed autonomously":** if `completed_scenarios` is still 0 after ~2 minutes, stop waiting. Autonomy is never a license to keep waiting past the threshold — the correct autonomous action IS the stall response: retry once with a smaller batch (≤5) and tighter `extra_instructions`; if the retry also stalls at 0, stop with a clear report (progress id, real elapsed time, next steps). Never take a second wait on the same stalled job.
+**Stall rule — overrides "proceed autonomously":** if `completed_scenarios` is still 0 after ~5 minutes, stop waiting. Autonomy is never a license to keep waiting past the threshold — the correct autonomous action IS the stall response: retry once with a smaller batch (≤5) and tighter `extra_instructions`; if the retry also stalls at 0, stop with a clear report (progress id, real elapsed time, next steps). Never take a second wait on the same stalled job.
 
 **Partial completion:** Generation may produce fewer scenarios than requested (e.g., 15/18) with the remainder stuck indefinitely. If progress freezes short of the total for ~2 minutes, treat the batch as done, then generate the remainder in a smaller batch with `extra_instructions` naming exactly the missing cases.
 
