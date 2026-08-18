@@ -48,27 +48,4 @@ jobs:
 
       - name: Version bump required for plugin-content changes
         if: github.event_name == 'pull_request'
-        run: |
-          python3 - << 'EOF'
-          import json, subprocess, sys
-          base = subprocess.run(['git', 'merge-base', 'origin/main', 'HEAD'],
-                                capture_output=True, text=True, check=True).stdout.strip()
-          changed = subprocess.run(['git', 'diff', '--name-only', base, 'HEAD'],
-                                   capture_output=True, text=True, check=True).stdout.splitlines()
-          plugin_files = [f for f in changed if f.startswith('cekura/')]
-          if not plugin_files:
-              print('no cekura/** changes; bump not required')
-              sys.exit(0)
-          version = json.load(open('cekura/.claude-plugin/plugin.json'))['version']
-          old = subprocess.run(['git', 'show', f'{base}:cekura/.claude-plugin/plugin.json'],
-                               capture_output=True, text=True)
-          old_version = json.loads(old.stdout)['version'] if old.returncode == 0 else None
-          if old_version == version:
-              print(f"plugin content changed but plugin.json version is still {version} - "
-                    "bump it (users only receive updates when the version changes).")
-              print("changed cekura/** files:")
-              for f in plugin_files:
-                  print(f"  - {f}")
-              sys.exit(1)
-          print(f'version bumped: {old_version} -> {version}')
-          EOF
+        run: python3 scripts/check_version_bump.py

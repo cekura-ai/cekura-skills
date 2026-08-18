@@ -36,6 +36,6 @@ The auto-generator produces **behavioral** evaluators (`scenario_type: "instruct
 
 3. **Auto-gen may add greetings to `first_message`** — When `extra_instructions` specify exact verbatim questions, some scenarios get a greeting (e.g., "Здравствуйте") as the `first_message` while the actual question is in instructions as a follow-up. PATCH `first_message` after generation.
 
-4. **Language-specific personalities may not be enabled per-project** — Non-English personalities (e.g., ID 4566 for Russian) may return "Personality is not enabled" errors. Always try the language-matched personality first (or a multilingual `language=multi` one when the scenario mixes languages); only on that error fall back to personality 693 (Normal Male English) and rely on `scenario_language` + instructions to drive the language.
+4. **Language-specific personalities may not be enabled per-project** — Non-English personalities (e.g., ID 4566 for Russian) may return "Personality is not enabled" errors. Always try the language-matched personality first (or a multilingual `language=multi` one when the scenario mixes languages); on that error, enable the predefined one for the project or create/fork a Normal personality in the target language and use it (`scenario_language` is coupled to the personality's language by design — mismatches are rejected; multilingual voice models handle any supported language).
 
 5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.

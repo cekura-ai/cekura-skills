@@ -12,7 +12,7 @@ allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestio
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.10.8"`. If a conversation/session ID is available (e.g. you
+`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.10"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
@@ -137,15 +137,13 @@ Default: `en`. Set via `scenario_language` field on the scenario.
 
 **After confirming language**, select a personality. The API returns 400 without one.
 
-Use `mcp__cekura__personalities_list` to list available personalities, filtered by the chosen language if possible.
+Use `mcp__cekura__personalities_list` to list available personalities, filtered by the chosen language if possible. `language=<code>` is the only filter you need (`project_id` is optional — it scopes to the project's own plus globally available personalities).
 
-**Recommended defaults:**
-- **Purely English scenarios:** 693 (Normal Male, en/American). Use 693 ONLY when the scenario is entirely in English.
-- **Spanish:** 362 (Normal Spanish Male)
-- **Other non-English languages:** pick a personality matching the scenario's language from `mcp__cekura__personalities_list` (filter with `language=<code>`), and set `scenario_language` to the correct code (platform uses `scenario_language` for TTS).
-- **Multiple languages / code-switching in one scenario:** use a multilingual personality (filter with `language=multi`, e.g. 4710 "Normal (Spanish + English)").
+**Recommended defaults (always look up the ID — never hardcode one):**
+- **Every scenario:** pick the "Normal" personality matching the scenario's language from `mcp__cekura__personalities_list` (filter with `language=<code>`, English included: `language=en`), and set `scenario_language` to the correct code (platform uses `scenario_language` for TTS). When several "Normal" variants exist, default to the **plain one with background noise disabled** ("Normal Male …", not the "Bg Noise" variants; male when both genders exist) unless the scenario's persona implies otherwise.
+- **Multiple languages / code-switching in one scenario:** use a multilingual personality (filter with `language=multi`, e.g. "Normal (Spanish + English)").
 
-**Note:** Language-specific personalities may not be enabled on all projects. Only if the language-matched personality returns a "Personality is not enabled" error, fall back to 693 with `scenario_language` set — never default to 693 for a non-English scenario without trying the language-matched personality first.
+**Note:** Language-specific personalities may not be enabled on all projects. Only if the language-matched personality returns a "Personality is not enabled" error, remember `scenario_language` is **coupled to the personality's language by design** (the API rejects a mismatch — don't work around it): enable the predefined one for the project, or create/fork a Normal personality in the target language and use it (multilingual voice models handle any supported language; mention the new personality in your summary) — never default to an English personality for a non-English scenario.
 
 ### 9. Metrics
 

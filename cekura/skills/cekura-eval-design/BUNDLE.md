@@ -28,7 +28,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.8"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
@@ -241,7 +241,7 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the **only** wo
 
 3. **Auto-gen may add greetings to `first_message`** — When `extra_instructions` specify exact verbatim questions, some scenarios get a greeting (e.g., "Здравствуйте") as the `first_message` while the actual question is in instructions as a follow-up. PATCH `first_message` after generation.
 
-4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Always try the language-matched personality first (via `personalities_list` with `language=<code>`, or a multilingual `language=multi` personality when the scenario mixes languages); only on that error fall back to personality 693 (Normal Male English) and rely on `scenario_language` to drive TTS and pronunciation. See "Checking Available Personalities" under the Personality section.
+4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Always try the language-matched personality first (via `personalities_list` with `language=<code>` — the only filter needed — or a multilingual `language=multi` personality when the scenario mixes languages); on that error, remember `scenario_language` is **coupled to the personality's language by design** (mismatched creates are rejected — don't work around it): enable the predefined one for the project, or create/fork a Normal personality in the target language (`personalities_create` — multilingual voice models handle any supported language) and use it. See "Checking Available Personalities" under the Personality section.
 
 5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.
 
@@ -392,7 +392,7 @@ Present a checkpoint like this before proceeding:
 
 3. **Run mode** — "Default to text/chat for the first pass? It's cheapest, and since tools are mocked the results are the same as voice for logic validation." Recommend text unless the user specifically needs voice testing (latency, interruption handling, TTS quality).
 
-4. **Personality** — For **conditional-actions** scenarios, default to the normal personality for the target language (693 ONLY for purely English scenarios; for other languages pick the language-matched "Normal" personality via `personalities_list language=<code>`, or a multilingual `language=multi` one when the scenario mixes languages) — behavioral logic is in the conditions, not the personality. For **behavioral** scenarios, propose a mix: ~60% normal, ~20% challenging (interrupter/background noise), ~10% non-native, ~10% edge cases. Confirm with the user before using anything other than the normal default. See "Picking the Right Personality" above.
+4. **Personality** — For **conditional-actions** scenarios, default to the "Normal" personality for the scenario's language — always look it up via `personalities_list language=<code>` (English included; when several Normal variants exist, prefer the plain no-background-noise one — "Normal Male …", not the "Bg Noise" variants — male when both genders exist, unless the persona implies otherwise), or pick a multilingual `language=multi` one when the scenario mixes languages — behavioral logic is in the conditions, not the personality. For **behavioral** scenarios, propose a mix: ~60% normal, ~20% challenging (interrupter/background noise), ~10% non-native, ~10% edge cases. Confirm with the user before using anything other than the normal default. See "Picking the Right Personality" above.
 
 5. **Authoring mode** — Default is **behavioral instructions**. Switch automatically when the user's request used a direct trigger phrase ("conditional actions", "structured", "scripted", "deterministic test", "regression test", "compliance test", "exact flow", "fixed sequence"). Ask the user when the scenario mentions a tag-supported feature (voicemail, IVR, DTMF, hold, interruption, network simulation, background noise) without specifying a mode. See "Choosing Authoring Mode" above.
 

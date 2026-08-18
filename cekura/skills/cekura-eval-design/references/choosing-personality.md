@@ -199,11 +199,12 @@ When no sustained behavioral cue is present, or no personality matches the descr
 | Multilingual agent, specific personality set on the agent | Use that personality ID |
 | Multilingual agent, no personality set | Most appropriate available personality for the detected language |
 
-**Safe hardcoded defaults:**
-- Purely English scenarios → ID 693 (Normal Male, en/American). Use 693 ONLY when the scenario is entirely in English.
-- Spanish → ID 362 (Normal Spanish Male)
-- Other non-English languages → pick a personality matching the scenario's language via `personalities_list` with `language=<code>`, and set `scenario_language` to the correct code so TTS uses the right language for pronunciation
-- Multiple languages / code-switching in one scenario → use a multilingual personality (`language=multi`, e.g. ID 4710 "Normal (Spanish + English)")
+**Safe defaults (always look up the ID — never hardcode one):**
+- Every scenario → pick the "Normal" personality matching the scenario's language via `personalities_list` with `language=<code>` (English included: `language=en`), and set `scenario_language` to the correct code so TTS uses the right language for pronunciation. When several "Normal" variants exist for the language, default to the **plain one with background noise disabled** ("Normal Male …", not the "Bg Noise" variants) — noise is a deliberate test condition, never a default — and the male variant when both genders exist, unless the scenario's persona implies otherwise
+- `language=<code>` is the only filter you need on these lookups (`project_id` is optional — it scopes to the project's own personalities plus the globally available predefined ones)
+- Multiple languages / code-switching in one scenario → use a multilingual personality (`language=multi`, e.g. "Normal (Spanish + English)")
+- Language-matched personality returns "Personality is not enabled" (or none exists) → `scenario_language` is **coupled to the personality's language by design** (the API rejects a mismatch — do not try to work around it). Resolve it: enable the predefined one for the project (`enable_personalities`), or create/fork a Normal personality in the target language (`personalities_create` / fork — multilingual voice models like `eleven_turbo_v2_5` handle any supported language) and use it; mention the newly created personality in your summary
+- Mixed-language scenario but no multilingual (`language=multi`) personality available → fall back to the Normal Male personality of the scenario's dominant non-English language (its voice model usually handles the English portions), note the limitation in your summary
 
 ---
 

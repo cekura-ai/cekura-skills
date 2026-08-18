@@ -1,0 +1,81 @@
+# Adding the `sync-version` label to a PR bumps the release version on that
+# PR's branch. Runs `scripts/bump_version.py --sync-with-main`, which sets the
+# version to origin/main's + 1 patch, so the result beats whatever is published
+# at that moment. It deliberately does NOT rebase or merge main: the version
+# only has to be greater than main's, and merging would conflict on exactly the
+# lines being rewritten.
+#
+# Re-labelling is safe -- the bump is a no-op when the branch is already ahead
+# of main. The label is removed after each run so it can be re-applied.
+name: sync version
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    if: github.event.label.name == 'sync-version'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR: ${{ github.event.pull_request.number }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+    steps:
+      - name: Remove the label
+        run: gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label sync-version
+
+      - name: Refuse fork PRs
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body \
+          'Cannot bump on a fork branch — CI has no write access to it. Run `python3 scripts/bump_version.py --sync-with-main` locally and push.'
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump, validate, and push
+        run: |
+          set -euo pipefail
+          git fetch origin main
+
+          base=$(git merge-base origin/main HEAD)
+          if ! git diff --name-only "$base" HEAD | grep -q '^cekura/'; then
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body \
+            'No `cekura/**` changes on this PR, so a bump would ship users an empty release. Not bumping.'
+            exit 0
+          fi
+
+          python3 scripts/bump_version.py --sync-with-main
+          if git diff --quiet; then
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body \
+            'Already ahead of `origin/main` — no bump needed.'
+            exit 0
+          fi
+
+          # bump_version.py already ran both validators; check the generated
+          # bundles and the Gemini context copy too, because this commit will
+          # not re-trigger the validate workflow (pushes made with
+          # GITHUB_TOKEN never trigger workflows).
+          python3 cekura/scripts/build_bundles.py --check
+          diff codex/AGENTS.md GEMINI.md
+
+          version=$(python3 -c "import json;print(json.load(open('package.json'))['version'])")
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -aqm "chore(release): bump plugin to $version"
+          git push origin "HEAD:$HEAD_REF"
+
+          printf '%s\n\n%s\n' \
+            "Bumped the plugin version to \`$version\`." \
+            'The `validate` workflow does not re-run on this commit (pushes made with `GITHUB_TOKEN` never trigger workflows), so this job ran the validators itself. If main moves again before you merge, re-apply the label.' \
+            > /tmp/body.md
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file /tmp/body.md

@@ -783,7 +783,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 
 - **Name**: `"[ID]: [Brief description]"` — e.g. `"CA-01: Appointment verification — success path"`
 - **Expected outcome**: what the main agent should do by the end (LLM-judged — keep behavioral, not over-specific on dates/times)
-- **Personality**: 693 (Normal Male English) is the default ONLY for purely English scenarios; for non-English scenarios pick the language-matched personality (`personalities_list language=<code>`), for mixed-language scenarios use a multilingual (`language=multi`) one, and change for specific voice traits
+- **Personality**: default to the "Normal" personality for the scenario's language — always look it up via `personalities_list language=<code>` (English included); for mixed-language scenarios use a multilingual (`language=multi`) one, and change for specific voice traits
 - **Tools**: at minimum `TOOL_END_CALL`; add `TOOL_DTMF` for IVR flows, `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer scenarios
 - **Metrics**: attach Expected Outcome, Infrastructure Issues, Tool Call Success, and Latency to every evaluator
 - **Folder**: place in an organized folder (create one first if needed)
