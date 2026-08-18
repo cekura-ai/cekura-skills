@@ -1,5 +1,7 @@
 # Phase 5 — Create the Main Agent
 
+
+> **Description values in every example below are placeholders.** The real value is the agent's COMPLETE system prompt collected in [Phase 4](phase4-description.md) — often hundreds of lines. NEVER copy these example shapes into a real ask or payload as a one-line description; auto-import providers (`configure_from_provider: true`) omit the field entirely.
 **Endpoint:** `POST https://api.cekura.ai/test_framework/v2/aiagents/`
 
 **Required fields:** `name`, `description`, `project` — everything else is optional.
@@ -8,16 +10,16 @@
 
 > **Start:** Announce "Starting Phase 5 — Create the Main Agent" before doing anything in this phase.
 
-## Auto-import path (VAPI / Retell / ElevenLabs / Synthflow)
+## Auto-import path (VAPI / Retell / ElevenLabs / Bland / Synthflow)
 
-For these four providers, use `configure_from_provider: true`. The backend imports name, description (system prompt), language, phone number, connection type, tools, knowledge base, and dynamic variables automatically. Phases 3, 4, 6, 7, and 8 are all skipped.
+For these five providers, use `configure_from_provider: true`. The backend imports name, description (system prompt), language, phone number, connection type, supported tools, knowledge base, and dynamic variables automatically. Phases 3, 4, 6, 7, 8, and 9 are skipped.
 
 **Minimal payload:**
 ```json
 {
   "project": 123,
   "provider": {
-    "type": "vapi|retell|elevenlabs|synthflow",
+    "type": "vapi|retell|elevenlabs|bland|synthflow",
     "agent_id": "<assistant/agent ID on provider platform>",
     "credentials": {
       "api_key": "<provider API key>"
@@ -135,6 +137,8 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 | `telephony.inbound` | boolean, default `false` |
 | `telephony.sip_uri` | e.g. `sip:agent@domain.com` |
 | `telephony.sip_auth` | `{"username": "...", "password": "..."}` |
+| `telephony.websocket_url` | Raw-PCM 16 kHz WebSocket voice endpoint (`wss://…`); runs via `scenarios_run_chirp` |
+| `telephony.websocket_auth` | `{"username": "...", "password": "..."}` basic-auth for the WebSocket endpoint |
 | `telephony.outbound_numbers` | Array of E.164 numbers for outbound webhook validation |
 
 ---
@@ -143,7 +147,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 
 ```json
 "provider": {
-  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|chirp|koreai|genesys|cisco|self_hosted",
+  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|agora|koreai|genesys|cisco|amazon_connect|telnyx|self_hosted|custom",
   "agent_id": "<voice agent ID on provider platform>",
   "credentials": {
     "api_key": "<provider API key (write-only)>",
@@ -170,7 +174,6 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 | `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
 | `pipecat` | — | `pipecat_agent_name`, `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
 | `synthflow` | `agent_id` (top-level `provider.agent_id`) | `synthflow_base_url_override` |
-| `chirp` | `chirp_websocket_url` | `chirp_basic_auth_username`, `chirp_basic_auth_password` |
 | `koreai` | `client_id`, `bot_id` | `host` |
 | `genesys` | `client_id`, `region` | — |
 | `cisco` | — | — |
@@ -183,7 +186,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 | `type` | Config keys |
 |--------|-------------|
 | `retell` | `agent_id` (required) |
-| `bland` | `agent_id` (required, = pathway_id) |
+| `bland` | `agent_id` (required, = Pathway ID) |
 | `vapi` | `agent_id` |
 | `elevenlabs` | `agent_id` |
 | `agentforce` | `agent_id`, `client_id`, `client_secret`, `domain` (all required) |
@@ -197,7 +200,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 ```json
 {
   "name": "Support Bot",
-  "description": "Handles inbound support calls for ACME Inc.",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {"type": "self_hosted"},
@@ -212,7 +215,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 ```json
 {
   "name": "Internal Test Agent",
-  "description": "Staging build of the support flow",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -235,7 +238,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 ```json
 {
   "name": "VAPI Sales Agent",
-  "description": "Auto-syncing from provider",
+  "description": "<omit — auto-imported from the provider via configure_from_provider>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -264,7 +267,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Retell Booking Agent",
-  "description": "Auto-syncing from provider",
+  "description": "<omit — auto-imported from the provider via configure_from_provider>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -295,7 +298,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "ElevenLabs Voice Agent",
-  "description": "Auto-syncing from provider",
+  "description": "<omit — auto-imported from the provider via configure_from_provider>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -315,7 +318,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "LiveKit Concierge",
-  "description": "Multi-modal front-desk agent",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -324,32 +327,39 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
       "api_key": "APIxxx",
       "config": {
         "api_secret": "secret_xxx",
-        "url": "wss://acme.livekit.cloud"
+        "url": "wss://acme.livekit.cloud",
+        "agent_name": "concierge",
+        "config": {"empty_timeout": 300},
+        "tracing_enabled": true
       }
     }
   },
-  "telephony": {"inbound": true}
+  "telephony": {"phone_number": "+14155551234", "inbound": true}
 }
 ```
+
+- **`tracing_enabled: true`** — Phase 6 will integrate the SDK. If the user refuses the SDK integration in Phase 6, that phase flips this back to `false`.
+- **`agent_name`** — must match what the LiveKit worker registers (`@server.rtc_session(agent_name=...)`). Required for WebRTC Automated and Chat; optional otherwise but still worth collecting.
+- **`api_key`, `api_secret`, `url`** — required for WebRTC Automated, Chat, and SDK-based observability. Skip only if every connection mode is telephony-only and the SDK isn't in scope.
+- **`credentials.config.config`** — optional JSON injected into `ctx.room.metadata` for WebRTC sessions. Populate only with the keys the agent actually reads; omit if the agent doesn't read room metadata.
+- **`telephony`** — include the phone block only when telephony is one of the connection modes from Phase 3.
 
 ### Bland
 ```json
 {
-  "name": "Bland Support Agent",
-  "description": "Handles tier-1 billing questions",
   "project": 123,
-  "language": "en",
   "provider": {
     "type": "bland",
-    "agent_id": "bland_pathway_xyz",
+    "agent_id": "<Bland Persona ID>",
     "credentials": {
       "api_key": "bland_xxx",
       "config": {"encrypted_key": "twilio_bundle_xxx"}
-    }
+    },
+    "configure_from_provider": true
   },
-  "telephony": {
-    "phone_number": "+14155551234",
-    "inbound": true
+  "chat_agent_details": {
+    "type": "bland",
+    "config": {"agent_id": "<Bland Pathway ID — optional, chat only>"}
   }
 }
 ```
@@ -358,10 +368,10 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Pipecat Support Agent",
-  "description": "Voice agent deployed on Pipecat Cloud",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
-  "telephony": {"inbound": true},
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "pipecat",
     "credentials": {
@@ -371,35 +381,37 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
         "webhook_url": "<optional — webhook URL for call events>",
         "config": {},
         "room_properties": {},
-        "tracing_enabled": false
+        "tracing_enabled": true
       }
     }
   }
 }
 ```
 
-- `pipecat_agent_name` — required when `tracing_enabled` is false; the name of the agent as deployed in Pipecat Cloud
-- `config` — additional agent configuration as JSON (optional)
-- `room_properties` — Daily.co room properties configuration as JSON (optional)
-- `webhook_url` — webhook URL for Pipecat call events (optional)
-- `tracing_enabled` — enable Pipecat tracing (optional, default false)
+- **`tracing_enabled: true`** — Phase 6 will integrate the SDK. If the user refuses the SDK integration in Phase 6, that phase flips this back to `false`.
+- **`pipecat_agent_name`** — the agent name as deployed in Pipecat Cloud. Required for WebRTC Automated; collect it anyway so it's available later.
+- **`api_key`** — required for WebRTC Automated; not needed for telephony-only or SDK-based observability.
+- **`credentials.config.config`** — optional Pipecat agent configuration JSON used when Cekura starts a session. Populate only with the keys the agent reads.
+- **`credentials.config.room_properties`** — optional Daily.co room properties JSON applied when Cekura creates the room.
+- **`webhook_url`** — optional webhook URL for Pipecat call events.
+- **`telephony`** — include the phone block only when telephony is one of the connection modes from Phase 3.
 
-### Chirp
+### WebSocket voice (raw-PCM)
+Cekura dials your `wss://` endpoint and streams 16 kHz raw PCM (the CHIRP protocol).
+Create it as `provider.type = "custom"` with the endpoint under `telephony`:
 ```json
 {
-  "name": "Chirp Voice Agent",
-  "description": "WebSocket voice agent",
+  "name": "WebSocket Voice Agent",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
-    "type": "chirp",
-    "credentials": {
-      "config": {
-        "chirp_websocket_url": "wss://your-host/voice",
-        "chirp_basic_auth_username": "user",
-        "chirp_basic_auth_password": "pass"
-      }
-    }
+    "type": "custom"
+  },
+  "telephony": {
+    "websocket_url": "wss://your-host/voice",
+    "inbound": true,
+    "websocket_auth": { "username": "user", "password": "pass" }
   }
 }
 ```
@@ -426,7 +438,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "KoreAI Agent",
-  "description": "...",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -447,7 +459,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Genesys Agent",
-  "description": "...",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "provider": {
@@ -467,7 +479,7 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```json
 {
   "name": "Cisco Agent",
-  "description": "...",
+  "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
   "telephony": {"phone_number": "+14155551234", "inbound": true},
@@ -510,7 +522,8 @@ The response `id` is needed for all subsequent steps.
 
 **Creating the main agent record is NOT the end of setup.** Move immediately to the next phase.
 
-- **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** Tools, KB, and dynamic variables were auto-populated. Skip Phases 6, 7, and 8. Go directly to [Phase 9 — Advanced Configuration](phase9-advanced.md).
-- **All other providers:** Mock tools, knowledge base, and dynamic variables still need manual setup. Proceed to [Phase 6 — Mock Tools](phase6-mock-tools.md).
+- **Auto-import providers (VAPI / Retell / ElevenLabs / Bland / Synthflow):** Tools, KB, and dynamic variables were auto-populated. Skip Phases 7, 8, and 9. Phase 6 is also a no-op for these providers. Go directly to [Phase 10 — Advanced Configuration](phase10-advanced.md).
+- **LiveKit / Pipecat:** Proceed to [Phase 6 — SDK Integration](phase6-sdk-integration.md). The SDK adds rich agent-side data and is integrated into the user's repo unless they explicitly opt out.
+- **All other providers:** Phase 6 is a no-op. Proceed to [Phase 7 — Mock Tools](phase7-mock-tools.md).
 
 Announce: "Phase 5 complete." Then immediately begin the next applicable phase without waiting for the user.

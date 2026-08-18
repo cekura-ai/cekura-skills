@@ -1,12 +1,12 @@
-# Phase 9 — Advanced Configuration
+# Phase 10 — Advanced Configuration
 
 Optional provider settings. Work through each section in order — apply what's relevant, skip what isn't.
 
 ---
 
-> **Start:** Announce "Starting Phase 9 — Advanced Configuration" before doing anything in this phase.
+> **Start:** Announce "Starting Phase 10 — Advanced Configuration" before doing anything in this phase.
 
-## 9a. Outbound main agent config
+## 10a. Outbound main agent config
 
 `auto_dial_outbound` is inside the `provider` block; `outbound_numbers` is inside the `telephony` block:
 
@@ -28,7 +28,7 @@ Supported for: VAPI, Retell, ElevenLabs, Bland, LiveKit. Test profile fields are
 
 ---
 
-## 9b. Auto-sync prompt (VAPI / Retell / ElevenLabs / Synthflow only)
+## 10b. Auto-sync prompt (VAPI / Retell / ElevenLabs / Bland / Synthflow only)
 
 **Skip this section for all other providers.**
 
@@ -50,7 +50,7 @@ If yes, include in the PATCH:
 
 ---
 
-## 9c. Auto-import production calls (VAPI / Retell / ElevenLabs / Synthflow only)
+## 10c. Auto-import production calls (VAPI / Retell / ElevenLabs / Synthflow only)
 
 **Skip this section for all other providers.**
 
@@ -70,9 +70,9 @@ Recommend enabling. If yes, include in the PATCH:
 
 ---
 
-## 9d. Apply via PATCH
+## 10d. Apply via PATCH
 
-Combine all relevant fields from 9a–9c into a single PATCH call:
+Combine all relevant fields from 10a–10c into a single PATCH call:
 
 ```bash
 curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{id}/ \
@@ -92,8 +92,8 @@ Only include fields that apply — omit any section the user declined or that do
 
 ---
 
-## Phase 9 Gate
+## Phase 10 Gate
 
 **Apply whichever settings are relevant. Skip any that don't apply.**
 
-Announce: "Phase 9 complete." Then immediately begin [Phase 10 — Verify Setup](phase10-verify.md) without waiting for the user.
+Announce: "Phase 10 complete." Then immediately begin [Phase 11 — Verify Setup](phase11-verify.md) without waiting for the user.

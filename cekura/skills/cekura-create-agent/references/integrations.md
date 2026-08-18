@@ -141,27 +141,32 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 **Credentials:** ElevenLabs Dashboard → Profile → API Keys  
 **Agent ID:** Conversational AI → Select agent → ID in settings  
 **Auto-sync:** Fetches from `conversation_config.agent.prompt.prompt`  
-**Docs:** https://elevenlabs.io/docs/api-reference/conversational-ai/get-agent
+**Docs:** https://elevenlabs.io/docs/api-reference/agents/get
 
 ---
 
 ## LiveKit
+
+Keep `provider.type = livekit` regardless of connection mode (phone, WebRTC, chat). LiveKit/Pipecat phone agents should not be classified as `self_hosted`.
+
+**Recommended payload (SDK integration + WebRTC Automated, also covers Telephony):**
 
 ```json
 {
   "name": "LiveKit Agent",
   "description": "...",
   "project": 123,
-  "telephony": {"inbound": true},
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "livekit",
     "credentials": {
       "api_key": "<LiveKit API Key>",
       "config": {
-        "api_secret": "<LiveKit API Secret — required>",
-        "url": "<wss://your-server.livekit.cloud — required>",
-        "agent_name": "<optional>",
-        "tracing_enabled": false
+        "api_secret": "<LiveKit API Secret>",
+        "url": "<wss://your-server.livekit.cloud>",
+        "agent_name": "<worker agent_name>",
+        "config": {"empty_timeout": 300},
+        "tracing_enabled": true
       }
     },
     "auto_dial_outbound": true
@@ -169,20 +174,33 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 }
 ```
 
+- `tracing_enabled: true` — Cekura waits for the Cekura SDK to confirm test-run data. Phase 6 of `cekura-create-agent` integrates the SDK in the user's agent code. If the SDK is not integrated, set this to `false`.
+- `agent_name` must match `@server.rtc_session(agent_name=...)` in the agent code (required for WebRTC Automated and Chat connections).
+- `credentials.config.config` — JSON injected into `ctx.room.metadata` during dispatch. Populate with the keys the agent reads.
+- Required credentials by connection mode:
+  - **Telephony only:** none on the agent record (Cekura dials the phone number).
+  - **WebRTC Automated or Chat:** `api_key`, `api_secret`, `url`, `agent_name` all required.
+  - **WebRTC Manual:** none on the agent record (room URL + token per scenario run via the scenarios-external API).
+  - **Observability via Cekura SDK:** `api_key`, `api_secret`, `url` required for LiveKit egress audio recording; `agent_name` optional.
+
 **Credentials:** LiveKit Cloud Dashboard → Settings → Keys  
-**Connection:** WebRTC — Cekura manages room creation and token generation automatically  
+**SDK setup:** see `references/livekit-tracing.md`  
 **Latency metrics:** `metadata.raw_metrics` with per-component latency (LLM TTFT, TTS TTFB, EOU delay)
 
 ---
 
 ## Pipecat Cloud
 
+Keep `provider.type = pipecat` regardless of connection mode.
+
+**Recommended payload (SDK integration + WebRTC Automated, also covers Telephony):**
+
 ```json
 {
   "name": "Pipecat Agent",
   "description": "...",
   "project": 123,
-  "telephony": {"inbound": true},
+  "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "pipecat",
     "credentials": {
@@ -191,15 +209,26 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
         "pipecat_agent_name": "<agent name from Pipecat dashboard>",
         "webhook_url": "<optional>",
         "config": {},
-        "room_properties": {}
+        "room_properties": {},
+        "tracing_enabled": true
       }
     }
   }
 }
 ```
 
+- `tracing_enabled: true` — Cekura waits for the Cekura SDK to confirm test-run data. Phase 6 of `cekura-create-agent` integrates the SDK in the user's agent code. If the SDK is not integrated, set this to `false`.
+- `credentials.config.config` — optional Pipecat agent configuration JSON used when Cekura starts the session.
+- `credentials.config.room_properties` — optional Daily.co room properties JSON applied when Cekura creates the room.
+- Required credentials by connection mode:
+  - **Telephony only:** none on the agent record (Cekura dials the phone number).
+  - **WebRTC Automated:** `api_key`, `pipecat_agent_name` both required.
+  - **WebRTC Manual:** none on the agent record (room URL + token per scenario run via the scenarios-external API).
+  - **Observability via Cekura SDK:** none on the agent record — the SDK records audio in-process via its own audio frame processor.
+
 **Credentials:** pipecat.daily.co → Settings → API Keys  
 **Agent name:** use the name given when deploying to Pipecat Cloud  
+**SDK setup:** see `references/pipecat-tracing.md`  
 **Docs:** https://docs.pipecat.ai
 
 ---
@@ -214,20 +243,31 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
   "telephony": {"phone_number": "+14155551234", "inbound": true},
   "provider": {
     "type": "bland",
-    "agent_id": "<Bland pathway_id>",
+    "agent_id": "<Bland Persona ID>",
     "credentials": {
       "api_key": "<Bland API Key>",
       "config": {
         "encrypted_key": "<Twilio credential bundle — optional>"
       }
     },
+    "configure_from_provider": true,
     "auto_dial_outbound": true
+  },
+  "chat_agent_details": {
+    "type": "bland",
+    "config": {"agent_id": "<Bland Pathway ID — optional, chat only>"}
   }
 }
 ```
 
-**Credentials:** Bland Dashboard → API Keys  
-**`agent_id`:** Bland pathway_id — Pathways → Select → copy ID  
+**Credentials:** Bland Dashboard → API Keys
+
+**`provider.agent_id`:** Bland Persona ID for voice configuration and outbound calls
+
+**`chat_agent_details.config.agent_id`:** Bland Pathway ID for text-mode test runs (optional)
+
+**Auto-import:** Set `configure_from_provider: true` to import the persona's prompt, settings, phone number, supported tools, knowledge base, and dynamic variables.
+
 **Docs:** https://docs.bland.ai
 
 ---
@@ -256,22 +296,23 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 
 ---
 
-## Chirp
+## WebSocket voice (raw-PCM)
+
+Cekura dials your `wss://` endpoint and streams 16 kHz raw PCM (the CHIRP protocol).
+Create as `provider.type = "custom"` with the endpoint under `telephony`:
 
 ```json
 {
-  "name": "Chirp Agent",
+  "name": "WebSocket Voice Agent",
   "description": "...",
   "project": 123,
   "provider": {
-    "type": "chirp",
-    "credentials": {
-      "config": {
-        "chirp_websocket_url": "<wss://your-host/voice — required, raw PCM 16 kHz>",
-        "chirp_basic_auth_username": "<optional>",
-        "chirp_basic_auth_password": "<optional>"
-      }
-    }
+    "type": "custom"
+  },
+  "telephony": {
+    "websocket_url": "<wss://your-host/voice — required, raw PCM 16 kHz>",
+    "inbound": true,
+    "websocket_auth": { "username": "<optional>", "password": "<optional>" }
   }
 }
 ```
@@ -348,7 +389,7 @@ Contact Cekura support to set up the Cisco Webex integration for your organizati
 }
 ```
 
-SIP headers injected by Cekura: `X-Run-Id`, `X-Scenario-Id`, `X-Result-Id`, any test profile field starting with `X-`.
+SIP headers: Cekura injects `X-Run-Id`, `X-Scenario-Id`, and `X-Result-Id` on every test call. To send your own custom headers, add `X-` prefixed keys to a test profile's `main_agent_variables` and attach that profile to the run (`test_profile_ids`) — headers cannot be configured on the agent itself or in the run request.
 
 ---
 
@@ -435,15 +476,15 @@ Message roles: `bot`, `user`, `system`, `function_call`, `function_call_result`
 
 Provider rows only. Connection modes (SIP, WebSocket, chat, PSTN, WebRTC) are picked independently.
 
-| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Cisco | Chirp | KoreAI | Genesys | Self-hosted |
-|---------|------|--------|------------|---------|---------|-------|-----------|-------|-------|--------|---------|-------------|
-| Phone (PSTN) | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | No | No | Yes |
-| WebRTC | Yes | Yes | No | Yes | Yes | No | No | No | No | No | No | No |
-| WebSocket voice | No | No | No | No | No | No | No | No | Yes | No | No | No |
-| Chat / Text | Yes | Yes | Yes | Yes | No | Yes | No | No | No | Yes | Yes | Yes |
-| **Auto-import agent** | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
-| Auto-fetch calls | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
-| Auto-fetch tools | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No | No |
-| Auto-sync prompt | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No | No |
-| Outbound auto-call | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | No | No |
-| Latency metrics | No | No | No | Yes | No | No | No | No | No | No | No | No |
+| Feature | VAPI | Retell | ElevenLabs | LiveKit | Pipecat | Bland | Synthflow | Cisco | KoreAI | Genesys | Self-hosted |
+|---------|------|--------|------------|---------|---------|-------|-----------|-------|--------|---------|-------------|
+| Phone (PSTN) | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Yes | No | No | Yes |
+| WebRTC | Yes | Yes | No | Yes | Yes | No | No | No | No | No | No |
+| WebSocket voice | No | No | No | No | No | No | No | No | No | No | Yes |
+| Chat / Text | Yes | Yes | Yes | Yes | No | Yes | No | No | Yes | Yes | Yes |
+| **Auto-import agent** | Yes | Yes | Yes | No | No | Yes | Yes | No | No | No | No |
+| Auto-fetch calls | Yes | Yes | Yes | No | No | No | Yes | No | No | No | No |
+| Auto-fetch tools | Yes | Yes | Yes | No | Yes | Yes | No | No | No | No | No |
+| Auto-sync prompt | Yes | Yes | Yes | No | No | Yes | Yes | No | No | No | No |
+| Outbound auto-call | Yes | Yes | Yes | Yes | No | Yes | No | No | No | No | No |
+| Latency metrics | No | No | No | Yes | No | No | No | No | No | No | No |

@@ -8,11 +8,11 @@ single consolidated markdown report covering every kept failure with all five
 signals (especially Signal 5: `metadata.ended_reason`) wired up so the
 orchestrator can hand off straight to early-end-call-diagnose.
 
-The script wraps the same Cekura REST endpoints that the `cekura-local` MCP
+The script wraps the same Cekura REST endpoints that the `Cekura` MCP
 tools (`results_retrieve`, `runs_bulk_retrieve`) sit on top of:
 
-    GET /test_framework/v1/results/{result_id}/      (Step A — minimal scan)
-    GET /test_framework/v1/runs/bulk/?run_ids=…      (Step B — per-run shape)
+    GET /test_framework/v2/results/{result_id}/      (Step A — minimal scan)
+    GET /test_framework/v2/runs/bulk/?run_ids=…      (Step B — per-run shape)
 
 By doing both fetches in one process we make it structurally impossible to skip
 Step B and lose `metadata.ended_reason`, which is the failure mode that
@@ -20,9 +20,9 @@ motivated this helper.
 
 USAGE
     CEKURA_API_KEY=… python3 fetch_failures.py <result_id> [--out FILE] [--json]
-    CEKURA_API_KEY=… python3 fetch_failures.py 534363
-    CEKURA_API_KEY=… python3 fetch_failures.py 534363 --out /tmp/r534363.md
-    CEKURA_API_KEY=… python3 fetch_failures.py 534363 --json > runs.json
+    CEKURA_API_KEY=… python3 fetch_failures.py 123456
+    CEKURA_API_KEY=… python3 fetch_failures.py 123456 --out /tmp/r123456.md
+    CEKURA_API_KEY=… python3 fetch_failures.py 123456 --json > runs.json
 
 EXIT CODES
     0  success — kept-failure summary written
@@ -67,7 +67,7 @@ def _http_get(url: str, api_key: str, timeout: int = 60) -> Any:
 
 def fetch_result_run_index(api_base: str, api_key: str, result_id: int) -> tuple[list[dict], dict[str, int]]:
     """Step A — minimal scan of /results/{id}/. Returns (run_index, funnel)."""
-    url = f"{api_base}/test_framework/v1/results/{result_id}/"
+    url = f"{api_base}/test_framework/v2/results/{result_id}/"
     data = _http_get(url, api_key)
     runs_field = data.get("runs") if isinstance(data, dict) else None
     index: list[dict] = []
@@ -113,7 +113,7 @@ def fetch_runs_bulk(api_base: str, api_key: str, run_ids: list[int]) -> list[dic
     if not run_ids:
         return []
     qs = urllib.parse.urlencode({"run_ids": ",".join(str(rid) for rid in run_ids)})
-    url = f"{api_base}/test_framework/v1/runs/bulk/?{qs}"
+    url = f"{api_base}/test_framework/v2/runs/bulk/?{qs}"
     data = _http_get(url, api_key)
     if isinstance(data, list):
         return [r for r in data if isinstance(r, dict)]

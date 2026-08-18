@@ -1,6 +1,6 @@
 # Phase 4 — Main Agent Description
 
-> **Skip this phase** if the provider is VAPI, Retell, ElevenLabs, or Synthflow. These providers use `configure_from_provider: true` — the description (system prompt) is imported automatically during agent creation in Phase 5. Go directly to [Phase 5](phase5-create.md).
+> **Skip this phase** if the provider is VAPI, Retell, ElevenLabs, Bland, or Synthflow. These providers use `configure_from_provider: true` — the description (system prompt) is imported automatically during agent creation in Phase 5. Go directly to [Phase 5](phase5-create.md).
 
 For all other providers, or if the user prefers to provide the description manually, continue below.
 
@@ -44,7 +44,9 @@ Accept the paste as-is. Do not truncate — descriptions >10 KB are fine.
 
 If the codebase is already visible in the current session (e.g. open in the editor, files already read, or the user is working in the repo), proceed directly to Step 1 — do not ask the user to share code you can already see.
 
-Only ask the user to share code if it is genuinely not accessible. If no code access is possible at all, fall back to structured questioning — skip to Step 2-fallback below.
+Only ask the user to share code if it is genuinely not accessible.
+
+**No file access in this session (e.g. the platform UI chat)? PASTE-FIRST, never interview-first.** The system prompt still exists — as a string constant, prompt file, or config in their project. Ask the user to **paste the prompt file's contents or attach the file** ("open the file where your agent's system prompt lives and paste it here — however long"). This is one action for the user and yields the exact prompt; a structured interview yields a lossy reconstruction. Fall back to structured questioning (Step 2-fallback) ONLY after the user says they cannot retrieve the prompt at all.
 
 #### Step 1 — Trace the full call chain and read everything
 
@@ -61,14 +63,14 @@ At each layer, read:
 - Transfer/escalation conditions and what is said before transferring
 - Language/locale branching — different responses per language
 
-**While reading, maintain a running list of dynamic variable candidates** — flag any per-run input that shapes the main agent's observable behaviour, not just string interpolations. Anything supplied at call-start that changes what the main agent does qualifies: headers, config payloads, structured parameters, and template variables alike. These will be registered in Phase 8.
+**While reading, maintain a running list of dynamic variable candidates** — flag any per-run input that shapes the main agent's observable behaviour, not just string interpolations. Anything supplied at call-start that changes what the main agent does qualifies: headers, config payloads, structured parameters, and template variables alike. These will be registered in Phase 9.
 
 **Skip and ignore:**
 - LLM provider selection, model names, temperature settings, retry logic, fallback chains
 - Session management, keepalive, context window management, token limits
 - Infrastructure code, logging, monitoring, deployment configuration
 - Anything the caller cannot observe or experience
-- **Knowledge base files** — do NOT read their content here. Just note their filenames/paths. They will be uploaded in Phase 7. Reading KB file contents in Phase 4 is wasted work.
+- **Knowledge base files** — do NOT read their content here. Just note their filenames/paths. They will be uploaded in Phase 8. Reading KB file contents in Phase 4 is wasted work.
 
 #### Step 2 — Fill gaps (after reading code — only ask when code doesn't answer)
 
@@ -94,7 +96,7 @@ Ask the user these questions one at a time. Do not move to the next until the cu
 8. "Are there any special cases — VIP callers, after-hours, returning customers, specific languages?"
 9. "What configuration does your main agent need at the start of each call to work correctly? For example — caller data, account information, session context, feature flags, or anything else that changes per call or per customer?"
 
-For each answer, ask follow-up questions until you have enough detail to write a complete description. Note all runtime configuration values from question 9 as dynamic variables — they will be registered in Phase 8. Then proceed to Step 3.
+For each answer, ask follow-up questions until you have enough detail to write a complete description. Note all runtime configuration values from question 9 as dynamic variables — they will be registered in Phase 9. Then proceed to Step 3.
 
 #### Step 3 — Use the actual content, not a synthesis
 
@@ -157,7 +159,7 @@ Iterate until the user confirms it is complete.
 
 ## 4c. Note dynamic variable patterns
 
-If the description contains `{{variableName}}` placeholders, flag them — Cekura will auto-detect them after main agent creation. These are handled in [Phase 8](phase8-dynamic-variables.md).
+If the description contains `{{variableName}}` placeholders, flag them — Cekura will auto-detect them after main agent creation. These are handled in [Phase 9](phase9-dynamic-variables.md).
 
 ---
 

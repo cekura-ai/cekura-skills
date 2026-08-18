@@ -4,7 +4,7 @@ Collect the fields needed to identify the main agent and determine how Cekura wi
 
 ---
 
-> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** Skip this phase entirely. All fields — name, language, description, phone number, connection type — are fetched automatically by `configure_from_provider` during agent creation. Go directly to [Phase 5 — Create the Agent](phase5-create.md).
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Bland / Synthflow):** Skip this phase entirely. All fields — name, language, description, phone number, connection type — are fetched automatically by `configure_from_provider` during agent creation. Go directly to [Phase 5 — Create the Agent](phase5-create.md).
 
 > **Start:** Announce "Starting Phase 3 — Main Agent Basics & Connection Type" before doing anything in this phase.
 
@@ -23,7 +23,7 @@ Collect the fields needed to identify the main agent and determine how Cekura wi
 | Field | Notes |
 |-------|-------|
 | **Language** | Always — see 3a-lang |
-| **Connection type** | Decide this first (see 3c) — it determines everything else below |
+| **Connection mode(s)** | Decide this first (see 3c) — it determines everything else below. **An agent can support more than one connection mode** — collect every mode that's applicable, even if the user only plans to use one right now. Adding the rest later means re-collecting credentials. |
 
 Connection type sets what telephony fields to collect:
 
@@ -32,7 +32,7 @@ Connection type sets what telephony fields to collect:
 | **Phone (PSTN)** | `telephony.phone_number` (E.164) + `telephony.inbound` |
 | **SIP** | `telephony.sip_uri` + `telephony.inbound` + optional `telephony.sip_auth` |
 | **WebRTC** | Provider-specific credential (see 3c) — no telephony block |
-| **WebSocket (voice)** | e.g. Chirp raw PCM, ElevenLabs voice WebSocket — may include `telephony.phone_number` if phone-linked; set `credentials.config` for the WebSocket endpoint |
+| **WebSocket (voice)** | raw-PCM voice WebSocket (`provider.type = custom`) — set `telephony.websocket_url` (+ optional `telephony.websocket_auth`); may include `telephony.phone_number` if phone-linked |
 | **WebSocket (chat/text)** | `provider.chat_agent_details` — no telephony block |
 | **Chat (provider)** | `provider.chat_agent_details` — no telephony block |
 
@@ -110,10 +110,10 @@ Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja
 | **Retell** | Yes | Auto-fetch or paste | Separate `agent_id` (voice) and `chat_agent_id` (text) |
 | **ElevenLabs** | Yes | Auto-fetch or paste | |
 | **Synthflow** | Yes | Auto-fetch or paste | `agent_id` required for auto-import |
-| **Bland** | Yes | Fetch prompt, ask user for name | `agent_id` = pathway_id; name not returned by API |
+| **Bland** | Yes | Auto-fetch | `agent_id` = Persona ID; separate Pathway ID for chat |
 | **LiveKit** | No | Ask user | WebRTC only |
 | **Pipecat** | No | Ask user | Agent identified by `credentials.config.pipecat_agent_name` |
-| **Chirp** | No | Ask user | Connects via `chirp_websocket_url` |
+| **WebSocket voice (raw-PCM)** | No | Ask user | `provider.type = custom`; connects via `telephony.websocket_url` |
 | **KoreAI** | No | Ask user | Text/chat only |
 | **Genesys** | No | Ask user | Text/chat only |
 | **Cisco** | Yes | Ask user | Pre-configured integration |
@@ -260,7 +260,7 @@ Wire it up with:
 
 **Step 3 — Register all parameters as dynamic variables in Cekura**
 
-Every value the server reads per-run that isn't hardcoded must be registered as a dynamic variable (Phase 8). Cekura will generate appropriate values and pass them to the server at the start of each run.
+Every value the server reads per-run that isn't hardcoded must be registered as a dynamic variable (Phase 9). Cekura will generate appropriate values and pass them to the server at the start of each run.
 
 **Step 4 — Expose publicly**
 
@@ -296,18 +296,18 @@ curl -s https://api.retellai.com/get-agent/{agent_id} \
 curl -s https://api.elevenlabs.io/v1/convai/agents/{agent_id} \
   -H "xi-api-key: {elevenlabs_api_key}" | jq '{name, description: .conversation_config.agent.prompt.prompt}'
 ```
-**Docs:** https://elevenlabs.io/docs/api-reference/conversational-ai/get-agent
+**Docs:** https://elevenlabs.io/docs/api-reference/agents/get
 
 ### Bland
 ```bash
-curl -s https://api.bland.ai/agents/{pathway_id} \
-  -H "authorization: {bland_api_key}" | jq '{prompt, language, voice}'
+curl -s https://api.bland.ai/v1/personas/{persona_id} \
+  -H "authorization: {bland_api_key}" | jq '.data | {name, current_production_version, inbound_numbers}'
 ```
-Returns `prompt` (description) but NOT `name` — ask the user for a display name.
+The active persona version contains the prompt, language, tool IDs, and knowledge-base IDs. The persona also returns its name and attached phone numbers.
 
 ---
 
-## 3f. Auto-sync description (VAPI / Retell / ElevenLabs / Synthflow)
+## 3f. Auto-sync description (VAPI / Retell / ElevenLabs / Bland / Synthflow)
 
 Enable `provider.auto_sync_prompt: true` at create time (Phase 5). Cekura fetches the description from the provider within ~30 seconds. Pass a placeholder for the required `description` field.
 

@@ -1,12 +1,23 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/claude-self-update.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
     "PostToolUseFailure": [
       {
         "matcher": "mcp__cekura__.*",
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-mcp-failure.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/on-mcp-failure.sh",
             "timeout": 10
           }
         ]

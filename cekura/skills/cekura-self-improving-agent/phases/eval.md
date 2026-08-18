@@ -1,83 +1,89 @@
 # Eval Phase — Validate, Re-collect, Decide
 
-The Eval phase is the "verify the change and decide" half of the loop. It builds the validation set, runs it against the live agent (or asks for pasted failures in the offline variant), re-collects failures with the same logic the Optimization phase used, and decides whether to exit the loop (success / oscillation / cap / all-upstream), trigger a regression sweep, or hand back to the Optimization phase with a fresh failure summary.
+The "verify the change and decide" half of the loop. Builds the validation set, runs it under the **must-pass stochastic gate**, re-collects failures with Collect's logic, and decides: **exit**, **hand back to Optimization · Collect**, or **pause for the user**. Eval never edits the agent.
 
-The Eval phase never edits the agent. Its outputs are decisions: **exit**, **hand back to Optimization**, or **pause for the user**.
+**Validation mechanism** is **always Cekura scenarios** (simulation over the agent's transport) — never a code / unit test. Gates stochastically (≥ M of N). Everywhere below, "scenario" = one validation unit.
 
 ## Pre-flight check
 
-Before any Step EVAL.x work, verify the upstream Overfitting Gate phase is complete:
+Before any EVAL.x work, verify:
 
-- Optimization edits were applied (Optimization · Apply Step APPLY.1) AND sync was confirmed (Optimization · Sync Step SYNC.1), OR — for the offline variant — the rewritten prompt was rendered and the user has been asked for new pasted failures.
-- The Overfitting Gate phase ran (Steps GATE.1–GATE.7). Either the gate found nothing and was a pass-through, OR cleanup edits were applied + synced. Either way the live state Eval is about to validate against is the gate-cleaned state, not the raw Optimization output.
-- The failure set and full set are recorded on the run state (handed forward through Collect → diagnose sub-phases → Apply → Sync → Gate → Eval).
-- The current iteration number is known (for cap tracking and oscillation detection).
-- The cumulative iteration diff includes both Optimization edits (early-end + rest) AND any gate cleanup edits, so the orchestrator's iteration log is correct.
+- Optimization edits applied (APPLY.1) AND sync confirmed (SYNC.1); OR — render-only (no live target) — the rewrite was rendered and the user asked for new pasted failures.
+- Overfitting Gate ran (GATE.1–GATE.7): either a clean pass-through, or cleanup edits applied + synced. Eval validates the gate-cleaned state.
+- Failure set and full set are on the run state; current iteration number known.
+- Cumulative diff includes Optimization edits (early-end + rest) AND gate cleanup edits.
 
-If any of the above is missing, return control to the orchestrator — one of the upstream sub-phases did not complete cleanly.
+Any missing → return control to the orchestrator; an upstream sub-phase didn't complete cleanly.
 
 ## Step EVAL.1 — Build the validation set
 
-Pick the validation set based on the **original input type** (recorded on iteration 1, never changes):
+Pick by **original input type** (recorded iter 1, never changes):
 
-| Original input | Validation set (full) |
-|----------------|----------------|
-| `scenario_ids` | Reuse the same scenario IDs. |
-| `result_id` / `run_ids` | Extract `scenario_id` from every run (already fetched in Optimization · Collect Step COLLECT.2). De-duplicate. |
-| `call_ids` | Synthesize one scenario per call from its transcript. Cache new scenario IDs on the first iteration so subsequent iterations reuse them. |
-| Pasted failures (offline variant) | The validation set is whatever the user re-runs after applying the prompt — Step EVAL.3 collects new pasted failures (or zero, if everything passed). Record on iteration 1 which scenarios the user is testing against and ask before letting them silently widen the set. |
+| Original input | Full set |
+|---|---|
+| `scenario_ids` | Same scenario IDs. |
+| `result_id` / `run_ids` | `scenario_id` from every run (fetched in COLLECT.2), de-duped. |
+| `call_ids` | One scenario synthesized per call from its transcript; cache IDs iter 1, reuse after. |
+| Pasted failures (render-only) | Whatever the user re-runs after applying the rewrite; EVAL.3 collects new pasted failures (zero = 100%). Record iter 1 which scenarios are tested; ask before widening. |
 
-The skill tracks **two distinct sets** derived from the table above:
+Two tracked sets:
 
-- **Full set** — every scenario in the original input batch (the table column above). Recorded on iteration 1; never changes mid-loop.
-- **Failure set** — the subset of the full set that failed in the most recent iteration's Optimization · Collect Step COLLECT.3 (initial failure analysis) or in the most recent iteration's Step EVAL.3 re-collection.
+- **Full set** — every unit in the original input batch. Recorded iter 1; never changes mid-loop.
+- **Failure set** — the subset that failed in the most recent COLLECT.3 (initial) or EVAL.3 (re-collection).
 
-**Iteration cadence:** Per iteration (Steps EVAL.2 → EVAL.3), run the **failure set only**. This is the cleanest signal that the edit fixed *those specific failures* and keeps iteration latency / cost down. If the failure set is exactly equal to the full set (every scenario failed initially), the two are the same and the distinction is moot until Step EVAL.4's regression sweep.
+**Iteration cadence:** per iteration (EVAL.2 → EVAL.3), run the **failure set only** — cleanest signal the edit fixed those failures, lower latency/cost. If failure set ≡ full set (all failed iter 1), the distinction is moot until EVAL.4's sweep.
 
-**Final regression sweep (Step EVAL.4):** Once an iteration achieves 100% on the failure set, the skill does NOT exit immediately. Instead it runs the **full set** as a one-shot confirmation pass to catch any regression in scenarios that had been passing all along (e.g., a prompt edit that fixes scenario A but breaks scenario B). The sweep only happens once, on the iteration that hits 100% on the failure set; see Step EVAL.4 for the exit logic. Skip the sweep when failure set ≡ full set on iteration 1 (no scenarios were previously passing, so there's nothing to regress).
+**Final sweep (EVAL.4):** hitting 100% on the failure set does NOT exit. Run the **full set** once to catch regressions in previously-passing units. Sweep runs only once, on the iteration that hits 100% on the failure set. Skip when failure set ≡ full set iter 1 (nothing was passing).
 
-Never widen the failure set or the full set mid-loop without telling the user — the stopping criterion depends on stable comparison sets.
+Never widen either set mid-loop without telling the user — the stop criterion depends on stable comparison sets.
 
-## Step EVAL.2 — Run validation
+## Step EVAL.2 — Run validation (must-pass stochastic gate)
 
-Execute the validation set in voice mode for VAPI and ElevenLabs (both are voice agents whose edits already landed live). Capture `result_id`, poll until terminal (same 30s cadence and 15-min cap as Optimization · Collect Step COLLECT.1). For self-hosted / pipecat and self-hosted / websocket / `file`, the same Cekura-driven execution applies — the validation runs hit the live agent the user just (hopefully) redeployed / restarted.
+Run the failure set with Setup's saved simulation runner. For self-hosted targets, use the saved launch/connect steps and keep REPRO.3e triggers active. Capture `result_id` and poll to terminal (as COLLECT.1).
 
-In **self-hosted / websocket / `offline` variant**, the skill does not run validation itself. Step EVAL.2 collapses into "ask the user for the new failure set" — a fresh batch of pasted `{transcript, expected_outcome, verdict}` blocks. Treat zero new failures as a 100% pass.
+**Stochastic re-run policy — mirror REPRO.6 on the verification side.** A single passing run never ends the iteration (that's the source of most "looked good in dev, regressed in prod" miscalls). The skill **auto-triggers the verification runs itself** (do NOT ask the user to fire each). Run **5–10 times** (default `N = 8`, `stochastic_runs`); a scenario is **verified only if it passes in ≥ M of N** (default `M = ⌈0.8·N⌉` — e.g. ≥7/8, ≥4/5; tune via `verify_threshold`). Below M → not fixed, stays in the failure set. Report pass-rate per scenario (`7/8 pass`), not a single verdict.
 
-## Step EVAL.3 — Re-collect failures with the same Optimization-phase logic
+This is uniform across classes — the only difference is harness shape:
 
-Run the new result through Optimization · Collect end to end — verdict pre-filter (keep `failure` + `reviewed_failure`, drop `success` + `reviewed_success`), accumulate, voice filter, **and re-run Step COLLECT.4 provider-call-state inspection** against the new runs. Re-running Step COLLECT.4 each iteration matters: a Step APPLY.1 edit only changes prompts and tool definitions; it cannot change variable injection. If iteration N-1's failures were rooted upstream, iteration N's variable state should look identical — that's the signal the upstream issue is unresolved (and the loop should stop and surface, not iterate further). Re-running COLLECT.4 also re-captures Signal 5 (end-of-call attribution) so the early-end-call-diagnose sub-phase can detect whether the iteration's edits actually closed the early-end pattern.
+- **LLM-based failures** (managed provider) — dataset of N varied scenarios.
+- **Infra failures / self-hosted targets** — the single evaluator, re-run N times (over real transport, timing/audio/latency/interruption failures are intermittent; a deterministic fix passes all N).
 
-In **self-hosted modes**, also watch for the "no-change" signature: if the new failures look identical to the prior iteration's (same scenarios fail with same transcript shapes), the most likely cause is that the live agent didn't pick up the new state — pipecat redeploy didn't happen, websocket server wasn't restarted, or (offline variant) the rewritten prompt didn't land in the user's system. Surface this hypothesis explicitly in Step EVAL.4 before iterating further. Self-hosted / websocket / `offline` is the most prone to this — the user has to apply the rewritten prompt to *their* system manually.
+In a **render-only run** the skill runs nothing: EVAL.2 collapses to "ask the user for the new failure set" (fresh pasted `{transcript, expected_outcome, verdict}` blocks). Zero new failures = 100%. The gate degrades to whatever the user re-pastes.
 
-In **VAPI and ElevenLabs modes** the edit always lands live (no redeploy), so a no-change signature does NOT point at a stale deploy. For ElevenLabs specifically, an identical-failures repeat most often means the prompt PATCH silently no-op'd at the wrong JSON path — verify the Sync re-fetch (Step SYNC.1) actually showed the new `conversation_config.agent.prompt.prompt` value before concluding the edit "didn't help". If the re-fetch confirmed the new prompt is live, treat the no-change signature as a genuine "this edit didn't address the root cause" signal and follow the normal oscillation / 3×-same-shape handling.
+## Step EVAL.3 — Re-collect failures (same Collect logic)
+
+Run the new result through Collect end to end: verdict pre-filter (keep `failure` + `reviewed_failure`, drop `success` + `reviewed_success`), accumulate, voice filter, **and re-run COLLECT.4 provider-call-state inspection** on the new runs. Re-running COLLECT.4 matters — an APPLY.1 edit changes prompts/tool defs, never variable injection; if iter N-1's failures were upstream, iter N's variable state looks identical (signal the upstream issue is unresolved → stop and surface, don't iterate). COLLECT.4 also re-captures Signal 5 (end-of-call attribution) so the FIX.1 early-end triage can tell whether the edits closed the early-end pattern.
+
+**No-change signature** (new failures identical to prior — same scenarios, same transcript shapes):
+
+- **Self-hosted / render-only** — most likely the live agent didn't pick up the new state (redeploy skipped, server not restarted, or the user never applied the rewrite). Surface this hypothesis in EVAL.4 before iterating. Render-only is most prone — the user applies the rewrite manually.
+- **Managed providers** — edits land live, so no-change is NOT a stale deploy. First confirm SYNC.1 showed the changed provider field. If it is confirmed live, treat the result as a genuine "this edit didn't address the root cause" and follow oscillation / 3×-same-shape handling.
 
 ## Step EVAL.4 — Decide: exit, sweep, or loop
 
-The final exit criterion is **100% pass rate on the full set** (not just the failure set) — zero failures of any class on every scenario the user originally provided. Reaching 100% on the failure set is a necessary but not sufficient milestone; the regression sweep is what closes the loop.
+Final exit criterion: **100% pass on the full set** — zero failures of any class, every unit clearing its **must-pass stochastic gate** from EVAL.2 (≥ M of N, all classes), not a single lucky pass. 100% on the failure set is necessary but not sufficient; the sweep + Regression phase close the loop.
 
 Decision tree, in order:
 
-1. **Failure set < 100%** → **hand back to Optimization · Collect.** Treat this as a *full iteration restart*, not a "small tweak and re-validate" shortcut. Re-enter the Collect sub-phase with the new failure signal AND walk every subsequent phase in order on the way back here: Collect → Early-End-Call Diagnose → Diagnose → Apply → Sync → **Overfitting Gate** → Eval. Re-load each phase file (`Read` on `phases/...md`) at its boundary and announce the boundary in your output (e.g., `Iteration 3 · Overfitting Gate`) per the phase-announcement rule in SKILL.md's Orchestration flow section — a missing announcement is the same signal as a missing phase. The Overfitting Gate is mandatory whenever Optimization produced non-zero edits, *especially* on iter 2+ where the LLM has now diagnosed the same failing transcripts multiple times and transcript-leak risk has compounded. The only case where the Gate is skipped is when this iteration produced literally zero prompt/tool/orchestration edits (all-Upstream); a single prompt-shaped change — including a new or revised system-prompt string literal embedded in source code, even when it sits next to control-flow code — must be inventoried and scored. Diagnose Step DIAGNOSE.5 surfaces a fresh combined proposal and **waits for explicit approval** before Apply (in `auto_mode: false`; in auto mode, render and proceed). The failure set may shrink across iterations (some failing scenarios start passing) — track that as progress but stay on the same set; don't drop now-passing scenarios from the in-loop failure set until the sweep, or you lose the ability to detect oscillation.
+1. **Failure set < 100% → hand back to Optimization · Collect.** A *full iteration restart*, not a tweak-and-revalidate: re-enter Collect with the new failure signal and walk every phase in order back to here — Collect → Fix → Apply → Sync → **Overfitting Gate** → Eval. Re-`Read` each phase file at its boundary and announce it (e.g. `Iteration 3 · Overfitting Gate`) per SKILL.md's phase-announcement rule — a missing announcement is the same signal as a missing phase. The Gate is mandatory whenever Optimization produced non-zero edits, *especially* iter 2+ (transcript-leak risk compounds); the only skip is an iteration with literally zero prompt/tool/orchestration edits (all-Upstream). A single prompt-shaped change — including a system-prompt string literal embedded in source, even beside control-flow code — must be inventoried and scored. FIX.6 surfaces a fresh combined proposal and **waits for explicit approval** before Apply (`auto_mode: false`; in auto mode, render and proceed). The failure set may shrink across iterations — track as progress but stay on the same set; don't drop now-passing scenarios until the sweep, or you lose oscillation detection.
 
-2. **Failure set = 100% AND a sweep has not yet been run this loop** → **trigger the final regression sweep.**
-   - Build the **full set** (every scenario in the original input batch, per the Step EVAL.1 table).
-   - If the full set equals the failure set (no scenarios were initially passing), skip the sweep and treat as case 3 (100% on full).
-   - Otherwise: announce the sweep to the user ("All N originally-failing scenarios now pass — running the full M-scenario set as a regression check"), then execute Steps EVAL.2 → EVAL.3 once against the full set.
-   - On the result:
-     - **Full set = 100%** → case 3 (success).
-     - **Full set < 100%** → case 4 (hand back to Optimization · Collect with the new failures as the new failure set, regardless of whether each scenario had been passing originally or had been failing-then-fixed). Previously-failing-now-fixed scenarios stay in the validation set so the loop catches re-regressions.
+2. **Failure set = 100% AND no sweep yet this loop → trigger the final regression sweep.**
+   - Build the **full set** (EVAL.1 table).
+   - Full set ≡ failure set (nothing was passing) → skip, treat as case 3.
+   - Else: announce ("All N originally-failing scenarios now pass — running the full M-scenario set as a regression check"), run EVAL.2 → EVAL.3 once against the full set.
+     - **Full set = 100%** → case 3.
+     - **Full set < 100%** → case 4 (hand back with the new failures as the failure set, whether each was originally passing or failing-then-fixed). Fixed scenarios stay in the validation set so re-regressions are caught.
 
-3. **Full set = 100%** → **success — exit the loop.** Report final pass rate, cumulative diff, total iterations used, and which scenarios changed verdict during the loop. Stop.
+3. **Full set = 100% → converged. Hand off to Regression.** Do NOT exit yet. The in-loop sweep only confirms the reproduction dataset is green; [`regression.md`](regression.md) runs the happy-path + edge-case sweep that catches collateral damage the dataset can't see. Pass forward: cumulative diff, iterations used, which scenarios changed verdict, and all result URLs (REPRO.6 fail-runs + EVAL.2 pass-runs). After Regression passes, hand the validated diff and evidence to the apply-diff workflow and stop.
 
-4. **Regression detected during sweep** → do NOT exit. **Hand back to Optimization · Collect** with the new failure set = the scenarios that regressed. Mention explicitly that this iteration's edit broke a previously-passing scenario, so Diagnose can consider scoping the fix more narrowly (e.g., conditional clauses for the specific failing scenario type rather than blanket prompt-wide changes).
+4. **Regression detected during sweep → do NOT exit. Hand back to Optimization · Collect** with the regressed scenarios as the new failure set. State explicitly that this iteration's edit broke a previously-passing scenario, so Fix can scope the fix more narrowly (conditional clauses for the specific type rather than blanket prompt-wide changes).
 
 ## Iteration cap
 
-Default 10. The user can override with `max_iterations` or stop / extend mid-loop ("keep going" / "stop"). The regression sweep counts as part of the iteration that triggered it (not a separate iteration). Don't loop silently past the cap. After hitting the cap, surface what's been fixed, what's still failing, and a recommended next skill.
+Default 10; override with `max_iterations` or stop/extend mid-loop ("keep going" / "stop"). The sweep counts as part of its triggering iteration, not a separate one. Don't loop silently past the cap — surface what's fixed, what's still failing, and a recommended next skill.
 
 ## Early-exit shortcut
 
-If Optimization · Collect's first pass collected zero failures of any class from the initial input, the diagnose sub-phases were skipped — the orchestrator reports success before the Eval phase runs at all. If everything was filtered out (e.g. all voice/infra failures), Collect surfaces the situation and stops the loop directly — see [`optimization/collect.md`](optimization/collect.md).
+If Collect's first pass collected zero failures of any class, the fix sub-phases were skipped and the orchestrator reports success before Eval runs. If everything was filtered out (e.g. all voice/infra failures), Collect surfaces and stops the loop directly — see [`collect.md`](collect.md).
 
-For the full PATCH curl bodies, the tool-backup pattern, the loop guardrails (oscillation detection, validation-set stability, cumulative-diff tracking), and the per-iteration scope rules, see [`../providers/vapi/phase-4-apply.md`](../providers/vapi/phase-4-apply.md) (VAPI specifics) or [`../providers/elevenlabs/phase-4-apply.md`](../providers/elevenlabs/phase-4-apply.md) (ElevenLabs specifics) — the loop guardrails apply across modes.
+For PATCH curl bodies, the tool-backup pattern, loop guardrails (oscillation detection, validation-set stability, cumulative-diff tracking), and per-iteration scope rules, see [`../providers/vapi/phase-4-apply.md`](../providers/vapi/phase-4-apply.md) or [`../providers/elevenlabs/phase-4-apply.md`](../providers/elevenlabs/phase-4-apply.md) — the guardrails apply across modes.

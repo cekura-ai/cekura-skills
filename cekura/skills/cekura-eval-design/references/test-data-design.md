@@ -1,6 +1,6 @@
 # Test Data Design — Mock Tools, Test Profiles, and Dynamic Variables
 
-Mock tools, test profiles, and dynamic variables form one cohesive test data set. They must be designed together — inconsistencies between them cause silent failures (wrong mock responses, failed authentication, improvised caller data). This guide covers all three and replaces `tool-strategies.md`, `test-profiles.md`, and `mock-tool-design.md`.
+Mock tools, test profiles, and dynamic variables form one cohesive test data set. They must be designed together — inconsistencies between them cause silent failures (wrong mock responses, failed authentication, improvised caller data). This guide covers all three.
 
 **Design order for Approach B:** mock tool data first → test profile derived from mock outputs → dynamic variables registered from profile fields.
 **Design order for Approach A:** discover staging data first → test profile matched to staging formats.
@@ -50,13 +50,39 @@ The agent doesn't use external tools, or tools aren't relevant to what you're te
 
 ## Step 2 — Design Mock Tool Data (Approach B only)
 
+### Input vs Output Semantics
+
+Each mock entry maps **caller input → tool output**. The `input` keys are values the CALLER provides that trigger the tool (phone number, account ID, member number); the `output` keys are values the tool returns — some of which the caller states back for verification (DOB, name). Design steps accordingly: a lookup step has the caller provide `{{test_profile.<input_field>}}`; a verification step has the caller state `{{test_profile.<output_field>}}`.
+
+### When a Scenario Gets a Mock Entry — Trigger Closure
+
+Include an entry for a tool ONLY if a caller step actually COMPLETES its trigger — requests, accepts, selects, confirms, or provides the required info. Both directions must close:
+
+- A completed tool-backed step with NO entry is as invalid as an entry with no causing step.
+- A caller merely ASKING a question does not imply a tool call (asking about a balance ≠ raising a dispute).
+- Offered ≠ completed; an explicit refusal excludes the entry; a threatened-then-abandoned action gets no entry; caller hostility does not cancel a completed trigger.
+- Triggers completed before a call exit or terminal transfer still get their entry; anything after the exit does not.
+- **It is valid and often correct for a scenario to have NO mock entries** — prefer an empty list over a speculative entry.
+
+**One input → one output.** Mock lookup is deterministic — if the scenario needs a different outcome, it needs a different input. Never create two entries with the same input and different outputs.
+
+**Edge-case fidelity.** Don't normalize deliberately unusual values (impossible dates, malformed IDs) when the edge value IS the test. And if correct agent behavior is rejecting the value BEFORE calling the tool, emit no entry at all.
+
+### Reuse First — Verbatim
+
+Before generating new data, scan existing entries. Reuse rules:
+- Copy an existing entry VERBATIM — never recombine fields across entries (each entry is an atomic record).
+- Derive in the right direction: pick the existing entry first, then set profile fields FROM it — never edit an entry to match a story value.
+- A new identity is the exception, not the default, and must be distinct enough for fuzzy matching (see below).
+- Invented categorical values (statuses, plan names) must come from the agent description's or KB's own vocabulary — never free-form.
+
 ### One Entry Per Tool Per Evaluator
 
 When setting up mock data for a new evaluator, add exactly one input/output entry per tool — the mapping for this scenario's test user. Do not add multiple entries for the same user.
 
 ```json
 "information": [
-  {"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
+  {"input": {"phone": "4155551234"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
 ]
 ```
 
@@ -127,7 +153,7 @@ Test profile `information` is split into two sections so each value reaches only
   "information": {
     "main_agent_variables": {
       "account_id": "B001",
-      "customer_phone_number": "8645239892"
+      "customer_phone_number": "4155551234"
     },
     "testing_agent_variables": {
       "customer_name": "John Carter",
@@ -213,7 +239,14 @@ For each variable, read its description — this specifies the expected format, 
 - **If the variable is not exercised by this scenario**: use a sensible default (`null`, `false`, `[]`) — never omit a variable.
 - **Format must match the description exactly**: if the description says "MM/DD/YYYY", the value must be in that format — not "YYYY-MM-DD". If existing mock data uses a specific format, match it.
 
-Every registered variable must have a value — never skip a key.
+Every registered variable must have a value — never skip a key, **even if the variable isn't central to the scenario** (dynamic-variable closure).
+
+**Value priority order** when filling each variable:
+1. A field from the reused mock-tool entry (exact same string — no format conversion)
+2. The test profile / selected source profile
+3. A new scenario value, only if nothing else supplies it — and a new caller-facing value must then be made explicit: added to the profile and referenced in steps/outcomes. Never create hidden values that appear only in the variable payload, unless the variable's description clearly says it is system/runtime context (current time, transfer numbers).
+
+Persona/identity variables (name, DOB, member ID) mirror into the test profile; system/runtime context does not.
 
 ### Generating the Data Trio
 
@@ -257,7 +290,7 @@ Update mock tools via the `mock_tools` field (GET full list first → merge → 
 ```json
 {
   "information": [
-    {"input": {"phone": "8645239892"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
+    {"input": {"phone": "4155551234"}, "output": {"id": "B001", "name": "John Carter", "dob": "03/14/1982"}}
   ]
 }
 ```

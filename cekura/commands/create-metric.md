@@ -4,12 +4,15 @@ description: Create or update a Cekura metric for evaluating voice AI agent call
 argument-hint: "[metric description, requirements, or metric ID to update]"
 allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "WebFetch", "mcp__cekura__call_logs_list", "mcp__cekura__call_logs_retrieve", "mcp__cekura__metrics_create", "mcp__cekura__metrics_list", "mcp__cekura__metrics_retrieve", "mcp__cekura__metrics_partial_update", "mcp__cekura__aiagents_retrieve", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
+<!-- cekura-ack-tag: ack:create-metric:5p4w7h -->
+> **Cekura skill verification tag:** `ack:create-metric:5p4w7h`
+> When you call a Cekura metric write tool from this command (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
 <!-- cekura-tracking-beacon -->
 
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="create-metric"`. If a conversation/session ID is available (e.g. you
+`skill_name="create-metric"`, `verification_tag="ack:create-metric:5p4w7h"`, and `plugin_version="0.10"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
@@ -41,7 +44,7 @@ For **updates**: fetch the current metric with `mcp__cekura__metrics_retrieve` a
 2. **Understand the requirement**: Clarify what the user wants to measure. Determine:
    - What workflow or KPI does this metric track?
    - Which agent(s) will it apply to?
-   - What eval type is appropriate (binary_qualitative, binary_workflow_adherence, enum, numeric)?
+   - What eval type is appropriate (binary, enum, numeric)?
    - What trigger type (always, custom)?
 
 3. **Identify the agent**: Ask for agent ID or project ID if not provided. Use the list-metrics command to check existing metrics and avoid duplication.
@@ -111,5 +114,5 @@ Beyond baseline metrics, these are commonly valuable:
 
 - API key: `CEKURA_API_KEY` env var (configured via .mcp.json)
 - Base URL: `https://api.cekura.ai`
-- Create: `POST /test_framework/v1/metrics/`
-- Update: `PATCH /test_framework/v1/metrics/{id}/`
+- Create: `POST /test_framework/v2/metrics/`
+- Update: `PATCH /test_framework/v2/metrics/{id}/`

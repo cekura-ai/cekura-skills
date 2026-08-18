@@ -1,7 +1,8 @@
 {
   "name": "cekura",
-  "version": "0.7.1",
-  "description": "Cekura voice AI testing & evaluation — platform onboarding, agent setup, metric design and improvement, evaluator design and execution.",
+  "displayName": "Cekura",
+  "version": "0.10.10",
+  "description": "Cekura voice AI testing & evaluation \u2014 platform onboarding, agent setup, metric design and improvement, evaluator design and execution.",
   "author": {
     "name": "Cekura",
     "email": "support@cekura.ai",
@@ -17,5 +18,8 @@
     "scenarios",
     "onboarding",
     "platform"
-  ]
+  ],
+  "homepage": "https://docs.cekura.ai/mcp/overview",
+  "repository": "https://github.com/cekura-ai/cekura-skills",
+  "license": "MIT"
 }

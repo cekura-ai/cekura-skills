@@ -1,52 +1,56 @@
 # Optimization · Sync — Verify the Edits Landed
 
-Final sub-phase of optimization. Re-reads the just-edited artifacts and verifies the intended changes are present. This is the last gate before handing off to the Overfitting Gate phase, and it catches three classes of silent failures:
+Final sub-phase of optimization. Re-reads the just-edited artifacts and verifies the intended changes are present — the last gate before the Overfitting Gate. Catches four classes of silent failure:
 
-- **VAPI PATCH nested-object replacement**: a malformed `messages` or `destinations` body can wipe the entire nested object while returning 200 OK.
-- **ElevenLabs wrong-path prompt no-op**: a PATCH that nests the prompt at the wrong path (e.g. top-level `prompt` instead of `conversation_config.agent.prompt.prompt`) returns 200 OK and changes nothing; an array (`tool_ids` / `prompt.tools`) sent partially replaces the whole array.
-- **Ambiguous `Edit` anchors** (websocket / `file`): an `old_string` that matched a near-identical block elsewhere in the file landed the change in the wrong region. Apply may have succeeded against a "lookalike" line set.
-- **Stale-cache reads in Cekura platform tools** (pipecat): the post-PATCH re-fetch may serve a cached pre-PATCH view; re-read after the platform tool's response, not from any local cache.
+- **VAPI PATCH nested-object replacement** — a malformed `messages` / `destinations` body wipes the nested object while returning 200 OK.
+- **ElevenLabs wrong-path prompt no-op** — a PATCH nesting the prompt at the wrong path (top-level `prompt` instead of `conversation_config.agent.prompt.prompt`) returns 200 OK and changes nothing; a partial array (`tool_ids` / `prompt.tools`) replaces the whole array.
+- **Ambiguous `Edit` anchors** (self-hosted source-file / owned-code edits) — an `old_string` matching a near-identical block elsewhere landed the change in the wrong region.
+- **Stale-cache reads** (self-hosted mock-tool edits) — the post-PATCH re-fetch may serve a cached pre-PATCH view; re-read from the platform tool's response, not any local cache.
 
-If Sync detects drift, do NOT proceed to the Overfitting Gate. Roll back to Apply, fix the offending edit, and re-run Apply + Sync.
+On drift, do NOT proceed to the Overfitting Gate — roll back to Apply, fix the edit, re-run Apply + Sync.
 
 ## Pre-flight check
 
-Before any Step SYNC.x work, verify Apply completed:
+Before any SYNC.x work, verify Apply completed:
 
-- Apply Step APPLY.1 emitted no errors (per-provider apply machinery returned success).
-- Apply Step APPLY.2 redeploy succeeded (for self-hosted live targets) — or was skipped because mode is VAPI / ElevenLabs / offline, or because `redeploy_command` is unset in `auto_mode: true`.
-- The list of edited artifacts and the combined edit set are available from Apply's hand-off.
+- APPLY.1 emitted no errors.
+- APPLY.2 redeploy succeeded (self-hosted live target) — or was skipped (managed provider / render-only / `"noop"`, or `redeploy_command` unset in `auto_mode: true`).
+- The edited-artifact list and combined edit set are available from Apply's hand-off.
 
 If Apply errored, return control to the orchestrator — Sync has nothing to verify.
 
-## Step SYNC.1 — Re-fetch and verify (branch by mode + sub-flavor)
+## Step SYNC.1 — Re-fetch and verify (branch by apply path)
 
-- **VAPI** — re-fetch `/assistant/{id}` and every edited / created `/tool/{id}` and verify the changed fields landed. Don't skip the tool re-fetch — VAPI's tool PATCH semantics replace nested objects wholesale; a malformed body can silently wipe `messages` or `destinations` while returning 200.
-- **ElevenLabs** — re-fetch `GET /v1/convai/agents/{id}` and every edited / created `GET /v1/convai/tools/{id}` and verify the changed fields landed. Critically: confirm `conversation_config.agent.prompt.prompt` actually equals the new prompt string (a 200 on the PATCH proves nothing if the body nested the prompt at the wrong path — it no-ops silently), and that `prompt.tool_ids` matches the intended array (arrays replace wholesale). For edited tools, confirm `tool_config` fields match.
-- **Self-hosted / pipecat** — re-fetch via `mcp__cekura__aiagents_retrieve` with `ql={mock_tools}` and verify the updated `mock_tools` list matches what was patched. There is no "live agent" sync to verify on Cekura's side; the redeploy gate (non-auto) or the no-change detector (auto) covers the live state.
-- **Self-hosted / websocket / `file`** — re-read the source file (Read tool, not cached) and verify the changed regions match the intended `Edit` output. If a tool-definition edit was supposed to extend `TOOLS` but the post-edit file shows the old length, the edit landed in the wrong place or matched a partial-but-ambiguous `old_string` — roll back to Apply and retry with more surrounding context in the anchor.
-- **Self-hosted / websocket / `offline`** — skip; nothing to sync server-side. The user's reply to the apply gate is the only confirmation.
+For each artifact, verify **each individual changed field** — not just "the artifact was re-fetched." A 200 on the PATCH plus a 200 on the re-fetch is necessary but not sufficient; the new value must equal the intended `new_string` / prompt section / tool description.
 
-For each artifact, verify each individual changed field — not just "the artifact was re-fetched successfully". A 200 OK on the PATCH plus a 200 OK on the re-fetch is necessary but not sufficient evidence; the new field values must match the intended `new_string` / new prompt section / new tool description.
+- **VAPI** — re-fetch `/assistant/{id}` and every edited/created `/tool/{id}`; verify changed fields. Don't skip the tool re-fetch — VAPI tool PATCH replaces nested objects wholesale; a malformed body silently wipes `messages` / `destinations` at 200.
+- **ElevenLabs** — re-fetch `GET /v1/convai/agents/{id}` and every edited/created `GET /v1/convai/tools/{id}`. Confirm `conversation_config.agent.prompt.prompt` equals the new prompt (a 200 proves nothing if the body nested it wrong — silent no-op), `prompt.tool_ids` matches the intended array (arrays replace wholesale), and edited tools' `tool_config` fields match.
+- **Bland** — re-fetch the live persona and every edited tool through the provider API/MCP; verify each changed field and preserve the active version.
+- **Self-hosted** — re-read whatever was edited:
+  - **Source file / owned code** (incl. vendored/forked SDK) — re-read (Read tool, not cached) and verify the changed regions match the `Edit` output. If a tool-list extension shows the old length, the edit matched an ambiguous/partial `old_string` — roll back and retry with more surrounding context.
+  - **Database row** — re-run the fetch query; the returned prompt must equal the intended new prompt (whitespace-only diffs OK; content drift = wrong row or a trigger rewrote it).
+  - **Cekura mock tools** — re-fetch via `mcp__cekura__aiagents_retrieve` with `ql={mock_tools}`; verify the updated `mock_tools` list matches. There is no "live agent" sync on Cekura's side; the redeploy gate (non-auto) / no-change detector (auto) covers live state.
+  - **Render-only (no live target)** — skip; nothing to sync server-side. The user's reply to the apply gate is the only confirmation.
 
 ## Drift handling
 
 If any field doesn't match its intended value:
 
-- **VAPI: nested object wiped** → the most likely cause is a PATCH body that replaced (rather than merged) a nested `messages` or `destinations` object. Rebuild the PATCH body with the full nested structure preserved (per the VAPI apply doc) and re-issue via Apply.
-- **ElevenLabs: prompt unchanged after 200 OK** → the PATCH body almost certainly nested the prompt at the wrong path. Rebuild with `{"conversation_config":{"agent":{"prompt":{"prompt":"..."}}}}` (per the ElevenLabs apply doc) and re-issue via Apply. If `tool_ids` came back missing entries, the array was sent partially — re-send the full intended array.
-- **Websocket / `file`: edit landed in wrong region** → the `old_string` matched a lookalike elsewhere in the file. Roll back by inverting the `Edit` (swap `old_string` and `new_string`) at the wrong location, then re-issue Apply with a more uniquely-anchored `old_string` (5–10 lines of surrounding context).
-- **Pipecat: re-fetch shows old description** → wait 2-3 seconds and re-fetch once more (eventual-consistency window). If still stale, re-issue the PATCH; the original may not have committed.
+- **VAPI: nested object wiped** → PATCH body replaced rather than merged a nested `messages` / `destinations`. Rebuild with the full nested structure preserved (VAPI apply doc) and re-issue via Apply.
+- **ElevenLabs: prompt unchanged after 200** → body nested the prompt at the wrong path. Rebuild with `{"conversation_config":{"agent":{"prompt":{"prompt":"..."}}}}` and re-issue. If `tool_ids` lost entries, the array was sent partially — re-send the full array.
+- **Self-hosted source file / owned code: edit in wrong region** → `old_string` matched a lookalike. Invert the `Edit` (swap `old_string`/`new_string`) at the wrong location, then re-issue Apply with a uniquely-anchored `old_string` (5–10 lines of context).
+- **Self-hosted DB row: re-fetch shows pre-edit prompt** → wrong row (stale WHERE/bind), a trigger/view rewrote it, or fetch and write point at different environments. Re-issue the UPDATE against the correct row (self-hosted overview DB notes), or in render-only re-render and wait.
+- **Self-hosted mock tools: re-fetch shows old description** → wait 2–3s and re-fetch once (eventual-consistency window). Still stale → re-issue the PATCH; the original may not have committed.
 
-In all three drift cases, the Overfitting Gate must NOT run on the failed state — return to Apply, fix the edit, re-run Sync, and only hand off when Sync confirms.
+In every drift case, the Overfitting Gate must NOT run on the failed state — return to Apply, fix the edit, re-run Sync, hand off only when Sync confirms.
 
-## Hand-off to the Overfitting Gate phase
+## Hand-off to the Overfitting Gate
 
-After Step SYNC.1 confirms every changed field landed correctly, the Optimization phase is complete for this iteration. Hand off to [`../overfitting-gate.md`](../overfitting-gate.md) with:
+After SYNC.1 confirms every changed field landed, Optimization is complete for this iteration. Hand off to [`../overfitting-gate.md`](../overfitting-gate.md) with:
 
-- The edits that were applied this iteration, with `old_string` + `new_string` per edit (the gate needs this to score whether any new text quotes the failing transcripts verbatim or otherwise overfits).
-- The failing transcripts from Collect Step COLLECT.4 (also gate input — the gate compares added text against these).
-- The early-end-call diagnose summary (the gate's signature scorer excludes orchestration-code edits and pure deletions, and may also want to know which edits came from the early-end sub-phase so it can apply tighter heuristics on those — they're prone to quoting farewell phrasing).
-- The kept failure set, the full set (recorded on iteration 1, never changes mid-loop), and the iteration number for cap tracking and oscillation/no-change detection.
+- The applied edits, `old_string` + `new_string` per edit (the gate scores whether new text quotes failing transcripts verbatim / overfits; code control-flow and pure deletions are not scored, embedded prompt string literals are).
+- The failing transcripts from COLLECT.4 (gate compares added text against these).
+- The FIX.1 early-end summary (the gate applies tighter heuristics to early-end edits — they're prone to quoting farewell phrasing).
+- The kept failure set, the full set (recorded on iteration 1, never changes mid-loop), and the iteration number (cap tracking + oscillation/no-change detection).
 
-If the iteration produced zero edits and reached Sync only via the "early-end pass-through" + "diagnose all-Upstream" path, the diagnose hand-off should have already short-circuited the loop. Reaching Sync with an empty edit set is a contract violation upstream — surface to the user and stop.
+If the iteration produced zero edits and reached Sync via "early-end pass-through" + "fix all-Upstream", the fix hand-off should have already short-circuited the loop. Reaching Sync with an empty edit set is an upstream contract violation — surface to the user and stop.

@@ -1,48 +1,46 @@
 # Optimization · Apply — Land the Combined Edit Set
 
-Fourth sub-phase of optimization. Applies the approved combined edit set (early-end-call edits from EARLY.3 + diagnose edits from DIAGNOSE.4) to the appropriate live surface, then runs `redeploy_command` (or fires the manual restart gate) so the live agent picks up the changes.
-
-This sub-phase performs writes — every step is a real PATCH / `Edit` against live state. The Sync sub-phase ([`sync.md`](sync.md)) immediately follows to verify the writes landed.
+Third sub-phase of optimization. Lands the approved combined edit set (early-end edits from FIX.1 + the rest from FIX.5) via the target's **apply path**, then — for a live self-hosted target — runs `redeploy_command` (or fires the manual restart gate) so the live agent picks up the change. Every step is a real write against live state. Sync ([`sync.md`](sync.md)) immediately follows to verify.
 
 ## Pre-flight check
 
-Before any Step APPLY.x work, verify diagnose handed off cleanly:
+Before any APPLY.x work, verify fix handed off cleanly:
 
-- Combined approved edit set is non-empty (if empty, the diagnose hand-off should have already stopped the loop — do not reach Apply).
-- In `auto_mode: false`, the user explicitly confirmed the Step DIAGNOSE.5 proposal.
-- All edits are de-conflicted — no two edits target the same prompt section / source-file lines without being merged into a single combined edit.
-- `redeploy_command` is recorded on run state (set during Setup Step 1.4) — either a real shell command, the literal `"manual"`, or VAPI / ElevenLabs (managed providers, which don't need one).
+- Combined approved edit set is non-empty (empty → fix should have already stopped the loop; do not reach Apply).
+- In `auto_mode: false`, the user confirmed the FIX.6 proposal.
+- Edits are de-conflicted — no two target the same prompt section / source-file lines without being merged.
+- The apply path is recorded on run state (Setup Step 1.4): provider API PATCH (managed provider), `Edit` + `redeploy_command` (self-hosted live, including source-code edits), live-on-save (`"noop"`), or render-only.
 
-If any of the above is missing, return control to the orchestrator.
+If any is missing, return control to the orchestrator.
 
-## Step APPLY.1 — Apply the edits (branch by mode + sub-flavor)
+## Step APPLY.1 — Apply the edits (branch by apply path)
 
-Apply-order details, gate wording, and edge cases live in each provider's doc:
+Apply the whole edit set as a single batch; it was de-conflicted in FIX.5, so only apply *order* (tools before prompt) matters, not which stream an edit came from. Per-path machinery:
 
-- **VAPI** — [`../../providers/vapi/phase-4-apply.md`](../../providers/vapi/phase-4-apply.md): tool PATCH → new-tool POST → assistant PATCH (prompt + `toolIds` bundled). No redeploy step (edits land live; skip Step APPLY.2).
-- **ElevenLabs** — [`../../providers/elevenlabs/phase-4-apply.md`](../../providers/elevenlabs/phase-4-apply.md): tool PATCH (`/v1/convai/tools/{id}`) → new-tool POST (`/v1/convai/tools`) → agent PATCH (`conversation_config.agent.prompt.prompt` + `prompt.tool_ids` bundled). No redeploy step (edits land live; skip Step APPLY.2).
-- **Self-hosted / pipecat** — [`../../providers/self-hosted/pipecat.md`](../../providers/self-hosted/pipecat.md) § "Phase 4.1b — apply order": mock-tool PATCH → new mock-tool POST → description PATCH → redeploy step (Step APPLY.2).
-- **Self-hosted / websocket / `file`** — [`../../providers/self-hosted/websocket.md`](../../providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `file`): tool-definition `Edit`s → new-tool `Edit` → system-prompt `Edit` → optional Cekura description sync → redeploy step (Step APPLY.2).
-- **Self-hosted / websocket / `offline`** — [`../../providers/self-hosted/websocket.md`](../../providers/self-hosted/websocket.md) § "Phase 4.1d — Apply" (variant `offline`): render the rewritten prompt; auto-mode asks once for new pasted failures concisely; non-auto fires the full manual-apply gate. No redeploy step (no live agent; skip Step APPLY.2).
-- **Self-hosted / database** — [`../../providers/self-hosted/database.md`](../../providers/self-hosted/database.md) § "Phase 4.1e — Apply (DB write)": write-query variant runs the user's UPDATE / `updateOne` via the appropriate CLI client (psql / mysql / sqlite3 / sqlcmd / mongosh), passing the new prompt via env var or stdin (never a positional arg), then runs `redeploy_command` (Step APPLY.2) — `"noop"` skips the pause when the live agent re-reads the row on every request. Render-only variant (no write query supplied) prints the new prompt and waits for the user to update the DB themselves; no redeploy step.
-
-Apply early-end-call edits and diagnose edits as a single batch in the order above (per-mode). They were already de-conflicted in Step DIAGNOSE.4, so order between the two diagnose sub-phases' edits doesn't matter — only the per-mode apply order (tools before prompt, or per-doc instructions) matters.
+- **VAPI** — [`../../providers/vapi/phase-4-apply.md`](../../providers/vapi/phase-4-apply.md): tool PATCH → new-tool POST → assistant PATCH (prompt + `toolIds` bundled). Edits land live; skip APPLY.2.
+- **ElevenLabs** — [`../../providers/elevenlabs/phase-4-apply.md`](../../providers/elevenlabs/phase-4-apply.md): tool PATCH (`/v1/convai/tools/{id}`) → new-tool POST (`/v1/convai/tools`) → agent PATCH (`conversation_config.agent.prompt.prompt` + `prompt.tool_ids` bundled). Edits land live; skip APPLY.2.
+- **Retell** — [`../../providers/retell/overview.md`](../../providers/retell/overview.md): update the owning LLM/flow configuration, then re-fetch it and the agent. Edits land live; skip APPLY.2.
+- **Bland** — [`../../providers/bland/overview.md`](../../providers/bland/overview.md): update the live persona/tool configuration, then re-fetch it. Edits land live; skip APPLY.2.
+- **Self-hosted** — [`../../providers/self-hosted/overview.md`](../../providers/self-hosted/overview.md) § "Apply order, Sync, and exit framing" + "Edit mechanisms". Apply via the mechanism the run-setup names, in order: tool/mock-tool edits → new tools → system-prompt edit → owned source-code edits (orchestration or vendored/forked SDK in the tree), then APPLY.2. DB row: run the UPDATE through the right CLI client (psql / mysql / sqlite3 / sqlcmd / mongosh), passing the new prompt via env var or stdin (never a positional arg). Then branch on the apply path:
+  - **`Edit` + `redeploy_command`** (live target — including owned source-code edits, incl. a forked/vendored SDK in the tree, which are a CodeBug and in-scope) → apply the edits, then APPLY.2.
+  - **live-on-save (`"noop"`)** → the running agent re-reads state per request; apply the edits and go straight to Sync (APPLY.2 is a skip — see below).
+  - **render-only** (no reachable live target) → print the rewritten prompt/diff. Auto-mode asks once, concisely, for new pasted failures; non-auto fires the full manual-apply gate. Skip APPLY.2.
 
 ## Step APPLY.2 — Redeploy step (self-hosted with live target only)
 
-Skip entirely for VAPI, for ElevenLabs, and for the websocket `offline` variant. For pipecat, websocket / `file`, and database (write-query variant), branch on `redeploy_command`:
+Skip entirely for managed providers and render-only (no live target to refresh). For a self-hosted live target, branch on `redeploy_command`:
 
-- **Command provided** → run it via the Bash tool. Capture exit code and stderr. On non-zero exit, surface the failure to the user, do NOT proceed to [`sync.md`](sync.md), and ask whether to retry the redeploy or abort. On success (or success-with-warnings), proceed to Sync.
-- **`redeploy_command == "manual"` (or unset and `auto_mode: false`)** → fire the per-sub-flavor manual restart gate (pipecat redeploy gate, websocket restart gate, database restart-or-reload gate). Wait for explicit user confirmation (`done` / `restarted` / `redeployed` / `yes`).
-- **`redeploy_command == "noop"` (database sub-flavor, live agent re-reads the row on every request)** → skip the pause and proceed straight to Sync. The UPDATE has already made the new prompt live.
-- **Unset and `auto_mode: true`** → proceed straight to Sync without pausing. The Eval phase's no-change detector surfaces stale-state hypotheses after the fact.
+- **Command provided** → run via Bash. Capture exit code + stderr. Non-zero → surface the failure, do NOT proceed to Sync, ask whether to retry or abort. Success (or success-with-warnings) → Sync.
+- **`"manual"`** (or unset and `auto_mode: false`) → fire the manual restart gate ([self-hosted overview](../../providers/self-hosted/overview.md) § "Redeploy command flow"); wait for explicit confirmation (`done` / `restarted` / `redeployed` / `yes`).
+- **`"noop"`** (live agent re-reads state per request) → no pause, proceed to Sync; the edit is already live.
+- **Unset and `auto_mode: true`** → proceed to Sync without pausing; Eval's no-change detector surfaces stale-state hypotheses after the fact.
 
-Treat the redeploy step as a critical path: a failed redeploy means validation will reflect the pre-edit live state. Never silently swallow a non-zero exit code and proceed to Sync — that produces results indistinguishable from "the prompt edit didn't help" and burns iteration cap.
+The redeploy step is critical path: a failed redeploy means validation reflects pre-edit live state. Never swallow a non-zero exit and proceed — that's indistinguishable from "the edit didn't help" and burns iteration cap.
 
 ## Hand-off to sync
 
-After Step APPLY.2 (or after Step APPLY.1 for VAPI / ElevenLabs / offline), hand off to [`sync.md`](sync.md) with:
+After APPLY.2 (or after APPLY.1 for managed providers / render-only / noop), hand off to [`sync.md`](sync.md) with:
 
-- The list of artifacts that were edited (assistant IDs, tool IDs, file paths) — Sync re-fetches these to verify.
-- The combined edit set (used by Sync to confirm the specific changed fields landed correctly).
-- The redeploy outcome (succeeded / skipped / manual-confirmed) so Sync can correctly attribute any drift it detects.
+- The list of edited artifacts (assistant IDs, tool IDs, file paths) — Sync re-fetches these.
+- The combined edit set (Sync confirms each changed field landed).
+- The redeploy outcome (succeeded / skipped / manual-confirmed) so Sync attributes drift correctly.

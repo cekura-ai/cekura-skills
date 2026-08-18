@@ -5,12 +5,15 @@ argument-hint: "[agent ID] [count] [scenario type]"
 allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 
+<!-- cekura-ack-tag: ack:autogen-eval:3w6k5b -->
+> **Cekura skill verification tag:** `ack:autogen-eval:3w6k5b`
+> When you call a Cekura scenario or test-profile write tool from this command (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 <!-- cekura-tracking-beacon -->
 
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="autogen-eval"`. If a conversation/session ID is available (e.g.
+`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.10"`. If a conversation/session ID is available (e.g.
 you were invoked from Cekura sandbox), also pass it as `conversation_id`. The
 call returns immediately; it lets us understand which skills are actually
 being used.
@@ -57,6 +60,8 @@ Use the folder path for the `folder_path` parameter in the generate call.
 | **knowledge_base** | Tests the agent's knowledge (FAQs, product info, policies) | Accuracy and completeness of information |
 
 Default: `workflow`. Can combine by running generation multiple times with different types.
+
+**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category, and it accepts only `workflow`, `red_teaming_voice`, `red_teaming_text`, `knowledge_base` (default `workflow`; the red-teaming values also take an optional `attack_type`). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
 
 ### 4. Number of Scenarios and Instructions
 
@@ -186,9 +191,9 @@ Review each generated evaluator:
 - Is coverage balanced across the agent's workflows?
 
 If output is poor, offer to:
-- Re-run with different `extra_instructions`
-- Supplement with manual creation via `/manual-create-update-eval`
-- Use generated evals as a starting point and improve individually
+- Re-run with different `extra_instructions` (**the default fix** — sharper, category-specific guidance, smaller batches)
+- Use generated evals as a starting point and PATCH them individually
+- Supplement via `/manual-create-update-eval` **only for conditional-action scenarios** — deterministic/scripted tests the generator can't produce. A weak behavioral scenario gets re-generated or patched, never replaced with a hand-authored `instruction` scenario.
 
 ## Bulk Creation from Structured Input (CSV/JSON)
 
@@ -200,7 +205,9 @@ ID,Category,Name,Instructions,Expected Outcome,Priority
 S-01,Scheduling,New adult patient,Calls as new patient...,Agent books appointment...,must-have
 ```
 
-This is a post-generation create path — it uses `mcp__cekura__scenarios_create` to write each row of the user's CSV/JSON into a scenario directly. The Auto-Generate flow above does not apply here, and unlike that flow, `scenarios_create` needs `personalities` and `tool_ids` as explicit per-scenario fields (they aren't inferred from the agent).
+This is a direct-create path — it uses `mcp__cekura__scenarios_create` to write each row of the user's CSV/JSON into a scenario. It is the **named exception** to the rule that behavioral scenarios are always generated: the user already authored the instruction text, and generating would discard their wording. It applies only when the rows carry actual scenario text. If the CSV is really a *list of topics or titles* ("scheduling", "cancellation edge case") rather than authored instructions, that's generation input — feed it as `extra_instructions` to the Auto-Generate flow above instead of creating stub scenarios from it.
+
+The Auto-Generate flow does not apply on this path, and unlike that flow, `scenarios_create` needs `personalities` and `tool_ids` as explicit per-scenario fields (they aren't inferred from the agent).
 
 ### Process
 1. Parse the input file
@@ -212,7 +219,7 @@ This is a post-generation create path — it uses `mcp__cekura__scenarios_create
 
 **Gathering personality and tools for this path** (the main walkthrough above does not cover these — they belong only to the bulk-create path):
 
-- **Personality:** ask which personality the bulk scenarios should use. Default `693` (Normal Male, en/American) for English agents. Use `mcp__cekura__personalities_list` to surface other options when language or persona needs to differ. (The Auto-Generate flow above intentionally does *not* pass a personality — it lets the backend infer one from the agent. Only the bulk-create path needs this explicit.)
+- **Personality:** ask which personality the bulk scenarios should use. Default to the "Normal" personality matched to the agent's language — always look it up with `mcp__cekura__personalities_list` `language=<code>` (English included: `language=en`; `language` is the only filter needed); for agents mixing languages use a multilingual (`language=multi`) one. (The Auto-Generate flow above intentionally does *not* pass a personality — it lets the backend infer one from the agent. Only the bulk-create path needs this explicit.)
 - **Tools:** ask which tools the testing agent should have enabled. Default `["TOOL_END_CALL"]`; add `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows and `TOOL_DTMF` for IVR. VAPI agents use prefixed names (`VAPI_TOOL_END_CALL`, etc.).
 
 ## Summary Report
@@ -234,7 +241,7 @@ Post-generation fixes applied:
   - [X] scenarios: metrics attached
   - [X] scenarios: test profiles assigned
 
-Missing coverage (consider manual creation):
+Missing coverage (behavioral gaps → another generation run; deterministic gaps → conditional-action evaluators):
   - [workflow not covered]
   - [edge case not covered]
 ```
@@ -246,4 +253,4 @@ Missing coverage (consider manual creation):
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
 - **Metrics are required** — PATCH them on after generation
-- Consider running `/manual-create-update-eval` for edge cases and red-team scenarios that the generator doesn't cover
+- **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which uses `scenario_type: "red_teaming_voice"` or `"red_teaming_text"` alongside that guidance text. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.

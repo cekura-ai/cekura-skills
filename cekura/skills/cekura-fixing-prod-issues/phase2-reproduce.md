@@ -16,7 +16,7 @@ Build a controlled reproduction of the bug on Cekura **before writing any fix**.
 
 ## 2a. Create the evaluator using conditional actions
 
-Use the `cekura-evals:conditional-actions` skill to build a deterministic evaluator.
+Use the the `cekura-eval-design` skill (`references/conditional-actions.md`) skill to build a deterministic evaluator.
 
 Extract **Testing Agent** turns from `transcript_object` verbatim. Do **not** clean up or paraphrase — garbled text, truncated words, STT artifacts are exactly what the main agent's LLM received in production and are the bug trigger.
 
@@ -26,16 +26,21 @@ Map each turn to a fixed condition:
 
 **Use `metadata.agent_id` from the production call as the `agent` field — not the top-level `agent_id` which may be the monitoring agent.** The evaluator must be created under the same agent that handled the failing call so it runs against the correct agent configuration.
 
-```bash
+Call `mcp__cekura__scenarios_create` with:
 
-create_scenario '{
+```json
+{
   "agent": METADATA_AGENT_ID,
   "personality": PERSONALITY_ID,
   "name": "Bug repro: <brief issue description>",
-  "instructions": "Replay the production call that caused <issue>.",
+  "scenario_type": "conditional_actions",
+  "scenario_language": "<language code of the prod call, e.g. en>",
   "conditional_actions": { "role": "caller", "conditions": [...] }
-}'
+}
 ```
+
+**`scenario_type: "conditional_actions"` is required, not optional.** Omit it and the API defaults the scenario to `instruction`, silently ignoring the `conditions` you just built — the replay then improvises instead of reproducing the bug. (Behavioral scenarios are the one type this direct-create path is not for; those are always generated.) `scenario_language` is required on this type, and `instructions`/`first_message` must stay unset — the conditions carry the whole flow.
+
 
 Save the `scenario_id`.
 
@@ -109,7 +114,7 @@ Configure `local_runner.py`:
 | `scenario_config.instructions` | Agent system prompt (`description` from Phase 1) |
 | `scenario_config.name` | `"Bug repro: <issue>"` |
 | `call_details.call_id` | `"<provider-issued string>"` |
-| `dialout_settings.sip_uri` | `sip:<CEKURA_OUTBOUND_NUMBER>@cekura-pipecat-local.sip.twilio.com?X-CallerId=+19789751706` |
+| `dialout_settings.sip_uri` | `sip:<CEKURA_OUTBOUND_NUMBER>@<your-sip-domain>.sip.twilio.com?X-CallerId=+14155551234` |
 
 **Role swap:** If instructions mention "main agent" or "testing agent" by name, swap the labels — locally the roles are inverted.
 

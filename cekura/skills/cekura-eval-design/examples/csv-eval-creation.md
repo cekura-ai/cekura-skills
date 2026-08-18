@@ -1,4 +1,4 @@
-# CSV-to-Evaluator Workflow (Kouper BCHS Pattern)
+# CSV-to-Evaluator Workflow (Medical Clinic Pattern)
 
 ## CSV Structure
 

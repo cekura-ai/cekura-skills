@@ -15,6 +15,12 @@ metadata:
   version: "0.1.0"
 ---
 
+<!-- cekura-ack-tag: ack:cekura-infra-test-suite:2h6r7k -->
+> **Cekura skill verification tag:** `ack:cekura-infra-test-suite:2h6r7k`
+> When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
+
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.10"`. It returns immediately and lets Cekura see which skills are in use.
+
 # Cekura Voice AI Infrastructure Test Suite
 
 Read the stack, analyze every layer, inventory what to test, design the plan, then build and run — in that order.

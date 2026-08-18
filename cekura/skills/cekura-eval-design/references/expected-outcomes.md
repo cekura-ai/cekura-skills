@@ -56,8 +56,25 @@ The main agent should respond to DTMF input 7 as a single digit flushed after 2 
 The main agent should respond to the DTMF input 123 sent with the hash terminator. The main agent should respond to DTMF input 45 sent without a terminator after the 2 second timeout flush. The main agent should respond to DTMF input 7 as a single digit flushed after 2 seconds.
 ```
 
-### 1. Max 2 actions per statement
-Each string may describe at most two distinct actions. If a logical step has three or more sub-actions, break it into multiple sequential statements.
+### 1. Atomic statements — one verifiable demand per line
+Prefer exactly one verifiable demand per statement; never more than two distinct actions. Split every "and"-joined aggregate ("confirms the booking **and** mentions the document requirement" → two lines). Splitting never creates new obligations — each fragment must itself be required by the agent description, and a fragment may not be NARROWER than the description's wording.
+
+Keep the list short: 2–6 statements for a typical scenario, up to 5 for legacy suites. A short scenario that ends at its last deterministic point gets FEW lines — never pad to a target count.
+
+### 1a. Every statement must be fired by a written step
+Each outcome must be triggered by an explicit scenario step (or the opening). Drop conditional lines whose condition the script never produces — they will come back `blocked` on every run. If the scenario offers multiple valid branches, accept any of them in one either/or line rather than demanding one side.
+
+### 1b. Verb AND object must both be licensed
+Both the action verb and its object must come from the same source — the agent description, a mock-tool output the agent verbalizes, or a KB fact. "Transfer" being mentioned doesn't license "transfer **to a manager**" if the description only defines transfers elsewhere. Adjacent workflow steps license only timing, never new content: "ask for X" does NOT license "explain X", "handle refusal of X", or "reassure about X". Topics the caller may raise don't license the agent raising them. When a behavior isn't licensed, omit the line — never invent a fallback.
+
+### 1c. Offering is not executing — match the tool state
+If the action doesn't complete in the scripted flow (caller hesitates, defers, hangs up, or a terminal handoff happens first), describe only the partial state reached — "offered", "gathered", "discussed" — never "booked"/"completed". For a terminal transfer, outcomes end at "the main agent transfers the call with appropriate context"; nothing post-transfer.
+
+### 1d. Never grade who hung up
+Write no outcome for the end-call step, hangup attribution, or call-end reason unless the user explicitly asked to test termination. Grade only a mandated verbal closing phrase, if the description requires one. (End-call is structural, not behavior under test.)
+
+### 1e. Order lines
+When the description mandates X before Y within the scenario's deterministic span, write ONE order line naming both events with scenario-scoped anchors ("The main agent should ask for the date of birth before providing any account details"). The order line evaluates order only — the events themselves get their own atomic lines if independently required.
 
 ### 2. Semantic content only — except for fact lookups
 Outcomes test functional intent, not verbatim wording. The agent paraphrasing a response is still a pass. Do not quote expected sentences.
@@ -145,6 +162,8 @@ The main agent should greet the caller using the name {{test_profile.caller_name
 
 This lets the expected outcome stay accurate across different test profiles without hardcoding identity data.
 
+**Copy the token, don't paraphrase.** When a scenario step uses `{{test_profile.field}}`, any outcome referencing that value must use the IDENTICAL token — do not re-describe the value in prose. A paraphrase ("should confirm the caller's premium plan") still counts as hardcoding and breaks when the profile changes; write "should confirm the caller's {{test_profile.selected_plan}}".
+
 ---
 
 ## Good vs Bad Examples
@@ -170,3 +189,8 @@ This lets the expected outcome stay accurate across different test profiles with
 - **Testing call closing** — farewell statements are out of scope unless the test explicitly requires it
 - **3+ actions in one statement** — split into multiple statements, each with max 2 distinct actions
 - **Test-setup rationale in expected outcome** — dynamic variable values, timeout thresholds, hold durations, and explanations of why the test is structured a certain way are not observable behavior; move them to the scenario Instructions field
+- **Outcomes no step triggers** — a line whose condition the scripted flow never produces returns `blocked` on every run; either add the causing step or delete the line
+- **Bundled demands** — "and"-joined aggregates fail as a unit; one verifiable demand per line
+- **Grading completion the flow never reaches** — if the caller defers or a transfer happens first, demand "offered/gathered", not "booked/completed"
+- **Grading who hung up** — end-call mechanics are structural; don't test them unless explicitly asked
+- **Paraphrased profile values** — restating a `{{test_profile.*}}` value in prose is still hardcoding; copy the token

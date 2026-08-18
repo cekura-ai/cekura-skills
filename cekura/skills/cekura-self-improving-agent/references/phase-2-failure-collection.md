@@ -1,19 +1,19 @@
 # Phase 2 — Failure Collection Reference
 
-Full failure-summary template, the metric-improvement hand-off wording, edge cases, and the no-overfitting-caveats rule.
+Full failure-summary template, metric-improvement hand-off wording, edge cases, and the no-overfitting-caveats rule.
 
 ## Step 2.5 — Full summary template
 
-Group failures by **scenario** (for runs) or by **metric** (for call logs), since repeated failures on the same scenario or the same metric are stronger signals than scattered one-offs.
+Group by **scenario** (runs) or **metric** (call logs) — repeated failures on the same scenario/metric are stronger signals than scattered one-offs.
 
 ```
 Failure Summary
-  Agent: <name> (<id>) — provider <vapi | elevenlabs | pipecat | websocket>
+  Agent: <name> (<id>) — provider <vapi | retell | elevenlabs | bland | self_hosted>
   Source: <input type> — <N items inspected>
   Verdict filter:
     - kept: <K> (failure: <F>, reviewed_failure: <R>)
-    - dropped: <D> (success: <S>, reviewed_success: <RS>)  ← reviewed_success = human-reviewed pass; metric/outcome verdicts on these items ignored
-  Failures on kept items: <total collected> — <voice-related discarded> voice-related discarded — <prompt-following kept>
+    - dropped: <D> (success: <S>, reviewed_success: <RS>)
+  Failures on kept items: <total> — <voice-related discarded> voice-related discarded — <prompt-following kept>
 
   Expected-Outcome Failures (M of N runs):
     - Scenario: <name>
@@ -26,44 +26,37 @@ Failure Summary
     - Metric: <name> (id <metric_id>) — <count> failures
       Sample explanations:
         - <run/call id>: <explanation excerpt>
-        - <run/call id>: <explanation excerpt>
 
   Provider Call State Observations (from Step 2.4):
-    - <observation grouping — e.g., "all 3 failed runs share the following pattern:">
+    - <pattern grouping>
       assistantOverrides.variableValues: <relevant fields>
-      artifact.variableValues: <relevant fields, especially absent / null / empty>
+      artifact.variableValues: <relevant fields — especially absent / null / empty>
       Rendered system message: <literal {{...}} placeholders found, or "all substituted">
       Tool-call arguments: <literal placeholders / empty arrays / hallucinations, or "clean">
-    - <or "no provider state available for these items — text-mode runs">
+    - <or "no provider state available — text-mode runs">
 ```
 
-Phase 2's job is to surface failures, not to commit to a fix shape — that belongs to Phase 3.
+Phase 2 surfaces failures; fix shape belongs in Phase 3.
 
-## Routing to metric improvement (the one Phase 2 exception)
+## Routing to metric improvement
 
-The user-facing gate is at every Phase 3 → Phase 4 transition (after they see proposed edits), not at Phase 2. **The one exception**: if the failures are dominated by one or two metrics with thin signal (i.e. most kept failures come from the same metric and the explanations look subjective), stop and suggest hand-off to `cekura-metric-improvement`. Those are metric-quality issues, not agent-quality issues, and Phase 3 won't fix them — the loop will keep "fixing" the prompt to satisfy a flawed judge.
+The Phase 3 → Phase 4 user gate is the standard checkpoint. **One exception:** if failures are dominated by one or two metrics with thin, subjective signal, stop and suggest hand-off to `cekura-metric-improvement` before entering Phase 3 — the loop will keep "fixing" the prompt to satisfy a flawed judge.
 
-If the verdict pre-filter dropped multiple `reviewed_success` items where the same metric flagged FAIL, that's another flavor of the same signal (a human overrode a machine fail on the same judge repeatedly — the judge is probably miscalibrated) — surface the metric ids with their FAIL-on-reviewed-success counts and recommend `cekura-metric-improvement` for those metrics specifically. But do not act on it from this skill.
+Additional signal to route: if the verdict pre-filter dropped multiple `reviewed_success` items where the same metric flagged FAIL, surface those metric ids with their FAIL-on-reviewed-success counts and recommend `cekura-metric-improvement` for those metrics specifically. Do not act on it from this skill.
 
-Symmetrically, do **not** route `reviewed_failure` items to `cekura-metric-improvement` just because they cluster on one metric — those are kept failures with explicit human confirmation, and they belong in Phase 3 as the strongest available signal.
+**Do not** route `reviewed_failure` items to metric improvement just because they cluster on one metric — those carry explicit human confirmation and belong in Phase 3 as the strongest available signal.
 
 ## No small-sample / overfitting caveats (user-facing)
 
-Even when the input is a single run, do **not** include lines like:
-
-- "with N runs any fix risks overfitting"
-- "5–10+ items would be a healthier signal"
-- "consider expanding the input set first"
-
-…in the user-facing summary. Internal calibration of confidence is fine — weight the diagnosis with less confidence and prefer minimal, narrowly-scoped edits — but **user-facing hedging reads as a stall** and the user has already chosen to act on the input they have. The summary should report the failure shape and move on.
+Even on a single run, do **not** include lines like "with N runs any fix risks overfitting", "5–10+ items would be a healthier signal", or "consider expanding the input set first" in the user-facing summary. Internal calibration is fine — weight the diagnosis with less confidence and prefer minimal scoped edits — but user-facing hedging reads as a stall. Report the failure shape and move on.
 
 ## Edge cases
 
-- **No failures found**: report this and stop. There's nothing to improve from this input. Suggest expanding the input set (more scenarios, more calls).
-- **All runs errored** (vs failed): an errored run never produced a transcript — usually a provider/connection issue, not an agent prompt issue. Don't include errored runs in the failure summary; surface them separately so the user can fix infrastructure before iterating on the prompt.
-- **Mixed input types**: not supported in a single invocation. If the user gives both `scenario_ids` and `call_ids`, ask them to pick one source per iteration — mixing test runs and production calls muddles the signal.
-- **Text-mode runs without provider artifacts** and some chat call logs don't expose `provider_call_details`. Skip Step 2.4 inspection for those items and surface the gap in Step 2.5 — Phase 3 should know it's diagnosing on partial data.
+- **No failures found**: report and stop. Suggest expanding the input set (more scenarios, more calls).
+- **All runs errored** (vs failed): an errored run produced no transcript — usually a provider/connection issue, not a prompt issue. Exclude from the failure summary; surface separately so the user can fix infrastructure first.
+- **Mixed input types**: not supported in a single invocation. If the user provides both `scenario_ids` and `call_ids`, ask them to pick one source per iteration.
+- **Text-mode runs / chat call logs without provider artifacts**: skip Step 2.4 inspection for those items; note the gap in Step 2.5 so Phase 3 knows it's diagnosing on partial data.
 
 ## What "kept" means downstream
 
-The kept failure summary (with provider-call-state observations) is the input to Phase 3. The verdict-drop counts (`success` + `reviewed_success`) and the voice-discard count are tracked separately because they're distinct reasons for ignoring an item — the summary should report them on different lines so the user can see the full pipeline (items → verdict-dropped → voice-discarded → kept) at a glance. Within the kept set, `reviewed_failure` items are not separated out for processing (they flow into Phase 3 the same as `failure` items) but the count is surfaced in the summary because the user often wants to know how many of the kept failures carry explicit human confirmation.
+The kept failure summary (with provider-call-state observations) is Phase 3's input. Report verdict-drop counts (`success` + `reviewed_success`) and voice-discard count on separate lines so the full pipeline (items → verdict-dropped → voice-discarded → kept) is visible. Within the kept set, `reviewed_failure` items flow into Phase 3 the same as `failure` items — the count is surfaced because users want to know how many kept failures carry explicit human confirmation.

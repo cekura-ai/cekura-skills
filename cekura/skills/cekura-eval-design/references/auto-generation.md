@@ -2,11 +2,14 @@
 
 Detailed schema and gotchas for the scenario auto-generator. Loaded on demand from `SKILL.md`'s "Auto-Generation" section.
 
-The auto-generator can produce either **behavioral** evaluators (`scenario_type: "instruction"`) or **conditional-action** evaluators (`scenario_type: "conditional_actions"`). Always inspect what came back and handle each scenario by its actual type. When you need full structural control over conditional-action evaluators, author them directly via the create endpoint — see `references/conditional-actions.md`.
+The auto-generator produces **behavioral** evaluators (`scenario_type: "instruction"`) — it **cannot emit conditional-action** evaluators (`scenario_type: "conditional_actions"`). That makes the split absolute:
+
+- **Behavioral scenarios are always generated here**, never hand-authored via the create endpoint — including a single one (`num_scenarios: 1` with a specific `extra_instructions`).
+- **Conditional-action evaluators are always authored directly** via the create endpoint, because generation has no way to produce them — see `references/conditional-actions.md`.
 
 ## Endpoint
 
-`POST /test_framework/v1/scenarios/generate-bg/` — preferred workflow for bulk scenario creation (output may be behavioral or conditional-action depending on the agent).
+`POST /test_framework/v1/scenarios/generate-bg/` — the path for every behavioral scenario, one or many.
 
 ## Full schema
 
@@ -33,6 +36,6 @@ The auto-generator can produce either **behavioral** evaluators (`scenario_type:
 
 3. **Auto-gen may add greetings to `first_message`** — When `extra_instructions` specify exact verbatim questions, some scenarios get a greeting (e.g., "Здравствуйте") as the `first_message` while the actual question is in instructions as a follow-up. PATCH `first_message` after generation.
 
-4. **Language-specific personalities may not be enabled per-project** — Non-English personalities (e.g., ID 4566 for Russian) may return "Personality is not enabled" errors. Workaround: use personality 693 (Normal Male English) and rely on `scenario_language` + instructions to drive the language.
+4. **Language-specific personalities may not be enabled per-project** — Non-English personalities (e.g., ID 4566 for Russian) may return "Personality is not enabled" errors. Always try the language-matched personality first (or a multilingual `language=multi` one when the scenario mixes languages); on that error, enable the predefined one for the project or create/fork a Normal personality in the target language and use it (`scenario_language` is coupled to the personality's language by design — mismatches are rejected; multilingual voice models handle any supported language).
 
 5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.

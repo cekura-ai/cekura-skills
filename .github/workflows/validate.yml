@@ -1,0 +1,51 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate JSON files
+        run: |
+          git ls-files '*.json' | xargs python3 -c '
+          import json, sys
+          bad = []
+          for f in sys.argv[1:]:
+              try:
+                  json.load(open(f))
+              except Exception as e:
+                  bad.append(f"{f}: {e}")
+          if bad:
+              print("\n".join(bad)); sys.exit(1)
+          print(f"{len(sys.argv) - 1} JSON files OK")
+          '
+
+      - name: Ack tags and plugin_version consistency
+        run: python3 cekura/scripts/validate_ack_tags.py
+
+      - name: Skills, versions, MCP URLs, docs inventory
+        run: python3 cekura/scripts/validate_skills.py
+
+      - name: Bundles up to date
+        run: python3 cekura/scripts/build_bundles.py --check
+
+      - name: Gemini context file in sync
+        run: diff codex/AGENTS.md GEMINI.md
+
+      - name: claude plugin validate (strict)
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate ./cekura --strict
+          claude plugin validate . --strict
+
+      - name: Version bump required for plugin-content changes
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/check_version_bump.py

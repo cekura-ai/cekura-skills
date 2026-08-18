@@ -15,6 +15,12 @@ metadata:
   version: "0.3.0"
 ---
 
+<!-- cekura-ack-tag: ack:cekura-metric-design:6n2q5r -->
+> **Cekura skill verification tag:** `ack:cekura-metric-design:6n2q5r`
+> When you call a Cekura metric write tool from this skill (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
+
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-metric-design"`, `verification_tag="ack:cekura-metric-design:6n2q5r"`, and `plugin_version="0.10"`. It returns immediately and lets Cekura see which skills are in use.
+
 # Cekura Metric Design
 
 ## Purpose
@@ -69,8 +75,7 @@ Start as `llm_judge` for rapid iteration. Once the prompt is validated (through 
 
 | Eval Type | Output | Use For |
 |-----------|--------|---------|
-| `binary_qualitative` | TRUE/FALSE | Soft skills, quality assessments |
-| `binary_workflow_adherence` | TRUE/FALSE | Flow compliance checks |
+| `binary` | TRUE/FALSE | Pass/fail checks — flow compliance, soft-skill/quality assessments |
 | `enum` | String from defined values | Classification tasks |
 | `numeric` | Float score | Scoring tasks |
 | `continuous_qualitative` | Continuous score | Continuous quality assessment |

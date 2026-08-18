@@ -1,4 +1,4 @@
-# Phase 8 — Main Agent Dynamic Variables
+# Phase 9 — Main Agent Dynamic Variables
 
 Register all variables the main agent requires to run. Cekura uses these to generate appropriate values alongside evaluators, then passes them to the agent at runtime so it runs with the right configuration for each test.
 
@@ -6,11 +6,11 @@ Registering a variable tells Cekura's evaluator generator to produce a value for
 
 ---
 
-> **Auto-import providers (VAPI / Retell / ElevenLabs / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — dynamic variables were extracted automatically during import. Go directly to [Phase 9](phase9-advanced.md).
+> **Auto-import providers (VAPI / Retell / ElevenLabs / Bland / Synthflow):** If you used `configure_from_provider: true` in Phase 5, skip this phase entirely — dynamic variables were extracted automatically during import. Go directly to [Phase 10](phase10-advanced.md).
 
-> **Start:** Announce "Starting Phase 8 — Main Agent Dynamic Variables" before doing anything in this phase.
+> **Start:** Announce "Starting Phase 9 — Main Agent Dynamic Variables" before doing anything in this phase.
 
-## 8a. Identify variables
+## 9a. Identify variables
 
 **Source is irrelevant. No exceptions.** If a value changes per run and the main agent reads it, register it. This includes:
 
@@ -56,7 +56,7 @@ If none found: "I found no values the main agent reads at runtime that vary per 
 
 ---
 
-## 8b. For each variable, establish:
+## 9b. For each variable, establish:
 
 1. **`name`** — identifier in snake_case
 2. **`description`** — write the most detailed description possible. Cover everything: what the variable represents, its data type, its full structure (every field and sub-field for objects), all constraints (required fields, allowed values, value ranges, format rules), how it is used by the agent, what happens if it is missing or malformed, and the most complete realistic example with all fields populated. Length is not a concern — completeness is. Never use trivial placeholders.
@@ -64,7 +64,7 @@ If none found: "I found no values the main agent reads at runtime that vary per 
 
 ---
 
-## 8c. Register via the API
+## 9c. Register via the API
 
 **Auth header for all Cekura API calls: `X-CEKURA-API-KEY: $CEKURA_API_KEY`** — never use `Authorization: Api-Key` or `Authorization: Bearer`.
 
@@ -92,8 +92,8 @@ curl -X POST https://api.cekura.ai/test_framework/v1/aiagents/{agent_id}/dynamic
 
 ---
 
-## Phase 8 Gate
+## Phase 9 Gate
 
 **Do not proceed until the user has confirmed the variable list and all variables are registered via the API.**
 
-Announce: "Phase 8 complete." Then immediately begin [Phase 9 — Advanced Configuration](phase9-advanced.md) without waiting for the user.
+Announce: "Phase 9 complete." Then immediately begin [Phase 10 — Advanced Configuration](phase10-advanced.md) without waiting for the user.

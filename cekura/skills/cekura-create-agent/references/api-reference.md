@@ -3,7 +3,7 @@
 ## Authentication
 All requests: `X-CEKURA-API-KEY: <key>` header. Base URL: `https://api.cekura.ai`
 
-Docs: https://vocera-v2-agent-api-restructure.mintlify.app/api-reference/test_framework/create-agent
+Docs: https://docs.cekura.ai/api-reference/test_framework/create-agent
 
 ## Agent CRUD
 
@@ -43,13 +43,15 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `inbound` | boolean | Default `false` |
 | `sip_uri` | string\|null | e.g. `sip:user@domain.com` |
 | `sip_auth` | object\|null | `{username, password}` |
+| `websocket_url` | string\|null | Raw-PCM 16 kHz WebSocket voice endpoint (`wss://…`); runs via `scenarios_run_chirp` |
+| `websocket_auth` | object\|null | `{username, password}` basic-auth for the WebSocket endpoint |
 | `outbound_numbers` | string[] | E.164 numbers for outbound webhook validation |
 
 ### AgentProvider
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `type` | enum | `vapi\|retell\|elevenlabs\|bland\|livekit\|pipecat\|synthflow\|chirp\|koreai\|genesys\|trillet\|cisco\|self_hosted` |
+| `type` | enum | `vapi\|retell\|elevenlabs\|bland\|livekit\|pipecat\|synthflow\|agora\|koreai\|genesys\|cisco\|amazon_connect\|telnyx\|self_hosted\|custom` |
 | `agent_id` | string\|null | Voice agent ID on provider platform |
 | `credentials` | AgentCredentials\|null | `{api_key (write-only), config}` |
 | `chat_agent_details` | ChatAgentDetails\|null | `{type, config}` |
@@ -68,10 +70,8 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
 | `pipecat` | — | `pipecat_agent_name`, `webhook_url`, `config`, `room_properties`, `tracing_enabled` |
 | `synthflow` | — | `synthflow_base_url_override` |
-| `chirp` | `chirp_websocket_url` | `chirp_basic_auth_username`, `chirp_basic_auth_password` |
 | `koreai` | `client_id`, `bot_id` | `host` (default: https://bots.kore.ai) |
 | `genesys` | `client_id`, `region` | — |
-| `trillet` | `workspace_id` | — |
 | `cisco` | — | — |
 | `self_hosted` | — | — (use `provider.send_post_conversation_metadata` at provider level) |
 
@@ -80,7 +80,7 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `type` | Required config | Optional config |
 |--------|----------------|----------------|
 | `retell` | `agent_id` | — |
-| `bland` | `agent_id` (= pathway_id) | — |
+| `bland` | `agent_id` (= Pathway ID) | — |
 | `vapi` | — | `agent_id` |
 | `elevenlabs` | — | `agent_id` |
 | `agentforce` | `agent_id`, `client_id`, `client_secret`, `domain` | — |
@@ -97,7 +97,7 @@ Mock tools are managed via the agent's `mock_tools` field:
 | GET | `/test_framework/v2/aiagents/{id}/?ql={mock_tools}` | List mock tools |
 | PATCH | `/test_framework/v2/aiagents/{id}/` | Create / update / delete mock tools (via `mock_tools` field) |
 | POST | `/test_framework/v2/aiagents/{id}/auto-fetch/` | Auto-fetch tools from provider |
-| POST | `/test_framework/v2/aiagents/{id}/toggle-mock-tools/` | Enable / disable mock mode |
+| POST | `/test_framework/v1/aiagents/{id}/run_scenarios/` | Run scenarios — pass `mock_tool_names` to activate per-run mocking |
 
 ### Update Mock Tools Schema
 
@@ -116,6 +116,21 @@ PATCH /test_framework/v2/aiagents/{agent_id}/
 ```
 
 **Critical: Full-list replace** — always include all tools; omitting a tool removes it. GET existing `mock_tools` first, merge, then PATCH the full list.
+
+### Custom (self-hosted) MCP mock endpoints — REST only
+
+For self-hosted agents with their own MCP server, use `provider="custom"` to auto-discover tools; Cekura hosts a drop-in mock MCP endpoint the agent points at. These are **REST-only** (not exposed as MCP tools) — call with the `X-CEKURA-API-KEY` header. There is **no enable/disable step** for custom: auto-fetch sets up the mock MCP, and enabling/disabling is customer-side (point the agent's MCP client at the URL, or back at the real server).
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/test_framework/v1/aiagents/{agent_id}/tools/auto-fetch/` | Discover tools + generate mock data + register the mock MCP endpoint. `provider` ∈ `vapi\|retell\|elevenlabs\|custom`; custom needs `mcp_server_url` (+ optional `mcp_server_headers`) |
+| GET | `/test_framework/v1/aiagents/{agent_id}/tools/auto-fetch-progress/` | Poll auto-fetch (`?progress_id=`) |
+| GET | `/test_framework/v1/aiagents/{agent_id}/tools/mock-status/` | Current state; custom agents surface the stable `/mcp/1/` under `mcp_endpoints[]` (env-correct URLs) |
+
+**Runtime endpoint** (called by the agent under test; no auth):
+- `POST /test_framework/v1/aiagents/{agent_id}/mcp/{mock_index}/` — mock MCP server (JSON-RPC 2.0: `initialize`, `tools/list`, `tools/call`). Custom agents point their MCP client here.
+
+For custom agents: `mcp_server_url` is SSRF-validated (http/https only; private/loopback/metadata IPs blocked; `Host`/`Cookie`/`X-Forwarded-*` headers rejected), headers are stored encrypted, and an agent is pinned to a single MCP server.
 
 ## Knowledge Base
 

@@ -44,7 +44,10 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `cekura-metric-improvement` | Improve metric accuracy through feedback cycle (labs workflow) |
 | `cekura-predefined-metrics` | Catalog of built-in metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
-| `cekura-fixing-prod-issues` | Debug a failing production call, reproduce with evals, fix, regression test, raise PR |
+| `cekura-infra-test-suite` | Compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF |
+| `cekura-fixing-prod-issues` | Debug a failing prod call end-to-end — reproduce, fix, regression-test, PR |
+| `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — failure rates + outcome distribution |
+| `cekura-generate-scenarios` | Turn flagged production failures into regression evaluator scenarios |
 
 ### Commands
 
@@ -77,8 +80,10 @@ When the user describes what they need, route them:
 | "Create metrics for my agent" | **cekura-metric-design** skill |
 | "My metrics are giving wrong results" | `/improve-metric` command (or **cekura-metric-improvement** skill for full cycle) |
 | "I need to test my agent" | **cekura-eval-design** skill |
-| "Generate test scenarios" | `/autogen-eval` command |
-| "Create a specific test scenario" | `/manual-create-update-eval` command |
+| "Generate test scenarios" / any behavioral scenario, one or many | `/autogen-eval` command (behavioral scenarios are always generated) |
+| "Create a specific test scenario" — scripted / deterministic / regression / IVR / DTMF / compliance flow | `/manual-create-update-eval` command (conditional actions — generation can't emit them) |
+| "Create a specific test scenario" — natural conversation, edge case, red-team | `/autogen-eval` command with `num_scenarios: 1` and the description as `extra_instructions` |
+| "Update / duplicate an existing scenario" | `/manual-create-update-eval` command (either type) |
 | "Run my tests" | `/run-evals` command |
 | "Check test results" | `/eval-results` command |
 | "Create a metric that checks X" | `/create-metric` command (or **cekura-metric-design** skill for complex metrics) |
@@ -89,12 +94,15 @@ When the user describes what they need, route them:
 | "Help me improve this metric" | `/improve-metric` command |
 | "Leave feedback on a metric result" | `/improve-metric` command (Phase 1: feedback collection) |
 | "Set up production monitoring" | **cekura-onboarding** skill (Phase 6) + observability docs |
-| "Add mock tools" / "set up tools" | **cekura-create-agent** skill (Phase 4) |
-| "Upload knowledge base" | **cekura-create-agent** skill (Phase 5) |
+| "Add mock tools" / "set up tools" | **cekura-create-agent** skill (Phase 7) |
+| "Upload knowledge base" | **cekura-create-agent** skill (Phase 8) |
 | "Something's broken" / "file a bug" | `/report-bug` command |
 | "Improve my agent" / "auto-tune from eval results" | **cekura-self-improving-agent** skill |
 | "Which built-in metrics are available?" / "what does Hallucination Detection cost?" | **cekura-predefined-metrics** skill |
-| "Fix this prod call bug" / "reproduce and test a fix" | **cekura-fixing-prod-issues** skill |
+| "Fix this prod call bug" / "reproduce and test a fix" | **cekura-fixing-prod-issues** skill (or **cekura-self-improving-agent** for prompt auto-tuning) |
+| "CI/CD tests for my voice bot" / "test my voice infrastructure" | **cekura-infra-test-suite** skill |
+| "What % of calls have <problem>" / "analyze my recent calls" | **cekura-flag-call-log-failures** skill |
+| "Create scenarios from failed calls" / "replay prod failures as tests" | **cekura-generate-scenarios** skill |
 | "Run a full quality report" / "generate evals and run them end-to-end" | `/cekura-report` command |
 
 ## Typical User Journeys
@@ -141,6 +149,9 @@ This skill routes — it doesn't perform tasks itself. After confirming the user
 - Picking which built-in metrics to use → **cekura-predefined-metrics**
 - Designing test scenarios → **cekura-eval-design**
 - Fixing a production call bug end-to-end → **cekura-fixing-prod-issues**
+- CI/CD infra tests for a voice bot → **cekura-infra-test-suite**
+- Triaging production call logs → **cekura-flag-call-log-failures**
+- Turning prod failures into scenarios → **cekura-generate-scenarios**
 
 ## Documentation
 
