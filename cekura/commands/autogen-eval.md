@@ -109,7 +109,14 @@ Tags are applied uniformly to all generated scenarios. Common patterns:
 - `["workflow", "must-have"]` — category and priority
 - `["2026-04-sprint"]` — sprint tracking
 
-## Pre-Generation Checkpoint
+## Pre-Generation Checkpoint — HARD GATE
+
+**No `scenarios_generate_bg` call until the user replies approving this checkpoint.** That holds even when the request already names an agent and a count, and *especially* when the user said "first ask me…" or "show me the plan before making changes" — starting generation before their answer is the single worst failure mode of this command. The only exception: the user explicitly said to proceed autonomously / without confirmation.
+
+Also before proposing the plan:
+- **Readable inputs** — if scenarios derive from an attached file, KB, or agent prompt, confirm you can actually read it. Never plan from a guessed/stand-in description without an explicit user OK.
+- **Real counts** — when the source is a file/list, count its items; if it disagrees with the requested count (asked 15, file has 14), surface that in the plan.
+- **Agent exists** — if `aiagents_list` is empty, stop and route the user to agent creation first; there is nothing to attach scenarios to.
 
 Present the full configuration for approval:
 
@@ -148,9 +155,25 @@ Poll every 10 seconds with `mcp__cekura__scenarios_generate_progress`:
 progress_id: <uuid>
 ```
 
-Keep polling until status is `completed` or `failed`. **Do NOT give up after one check** — generation can take 30-60 seconds for 10+ scenarios.
+Keep polling until status is `completed` or `failed`. **Do NOT give up after one check** — generation can take 30-60 seconds for 10+ scenarios. Report progress to the user about every 30s; never poll silently for minutes.
 
-**Partial completion:** Generation may produce fewer scenarios than requested (e.g., 15/18) with the remainder stuck indefinitely. After 2 minutes, check what was generated. If short, generate the remainder in a smaller batch with more specific `extra_instructions` targeting the missing categories.
+**Batching:** for more than 10 scenarios, split into sequential batches of ≤10 (per category or per language) — large single batches are the main cause of stalls and partial completion. For "N per language" requests, run one batch per language with that language's personality.
+
+**Stall rule:** if `completed_scenarios` is still 0 after ~2 minutes, stop polling, tell the user, and retry once with a smaller batch (≤5) and tighter `extra_instructions` — do not loop "keep waiting" indefinitely.
+
+**Partial completion:** Generation may produce fewer scenarios than requested (e.g., 15/18) with the remainder stuck indefinitely. If progress freezes short of the total for ~2 minutes, treat the batch as done, then generate the remainder in a smaller batch with `extra_instructions` naming exactly the missing cases.
+
+## Post-Generation Verification — before reporting success
+
+Fetch the created scenarios and verify (full checklist: eval-design `references/auto-generation.md` § Reliability Protocol):
+
+1. **Count** matches the request — if short, generate the remainder (small batch, missing cases named).
+2. **Plan diff 1:1** — no requested case merged into another or silently dropped; create missing standalone cases.
+3. **Language** — `scenario_language`, personality language, and the actual text of `first_message`/`instructions` all match the requested language; `first_message` is literal caller dialogue, not a meta-instruction.
+4. **Roles** — instructions describe the caller (first person), not the main agent.
+5. **Scaffolding** — non-empty `expected_outcome_prompt` on every scenario, correct tools (`TOOL_END_CALL`, `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows, `TOOL_DTMF` for IVR), baseline metrics attached.
+
+Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched") — never report success on the trigger alone.
 
 ## Post-Generation Fixup
 

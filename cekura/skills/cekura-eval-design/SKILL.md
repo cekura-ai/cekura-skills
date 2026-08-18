@@ -373,7 +373,7 @@ The reference is `references/conditional-actions.md`. Read it once at the start 
 
 ## Pre-Creation Checkpoint — Confirm Before Building
 
-**Before creating scenarios or generating them, always pause and confirm key decisions with the user.** Do not assume defaults — present your plan and get explicit approval. AI agents that skip this step make costly assumptions that waste credits and require rework.
+**Before creating scenarios or generating them, always pause and confirm key decisions with the user.** This is a hard gate: no `scenarios_create` / `scenarios_generate_bg` call until the user has replied approving the plan — even when the first message already names an agent and a count, and *especially* when it says "first ask me" or "show me the plan". The only exception is an explicit "proceed autonomously / don't ask me" from the user. Do not assume defaults — present your plan and get explicit approval. After generation, run the verification pass in `references/auto-generation.md` § Reliability Protocol (count reconciliation, language/role checks, expected outcomes, tools).
 
 ### What to Confirm
 

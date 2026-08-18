@@ -39,3 +39,33 @@ The auto-generator produces **behavioral** evaluators (`scenario_type: "instruct
 4. **Language-specific personalities may not be enabled per-project** — Non-English personalities (e.g., ID 4566 for Russian) may return "Personality is not enabled" errors. Always try the language-matched personality first (or a multilingual `language=multi` one when the scenario mixes languages); on that error, enable the predefined one for the project or create/fork a Normal personality in the target language and use it (`scenario_language` is coupled to the personality's language by design — mismatches are rejected; multilingual voice models handle any supported language).
 
 5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.
+
+6. **First messages can come back as meta-instructions** — especially for non-English batches: `first_message` sometimes reads like a directive ("Speak in Tamil and ask about…") instead of actual caller dialogue. Verify every `first_message` is a literal caller utterance in the target language; PATCH the ones that aren't.
+
+7. **Roles can come back inverted** — generated `instructions` occasionally describe the MAIN agent's behavior instead of the caller's. Instructions must be first-person testing-agent (caller) behavior; regenerate or rewrite any scenario whose instructions read like the main agent's script.
+
+8. **Multilingual batches: generate per language** — for "N per language" requests, run one generation per language with that language's personality (see `choosing-personality.md`) instead of one mixed batch. Mixed batches tend to stamp every scenario with a single language and drift the per-language counts.
+
+## Reliability Protocol
+
+The generator is a background pipeline that can stall, partially complete, or drift from the plan. Every generation run follows this protocol:
+
+**Before triggering:**
+- **Hard confirmation gate** — never call `scenarios_generate_bg` before the user approves the plan (see the Pre-Creation Checkpoint in SKILL.md). "Proceed autonomously" from the user is the only exception.
+- **Verify inputs are readable** — if the plan is based on an attached file, knowledge base, or agent prompt, confirm you can actually read its content first. Never generate from a stand-in or guessed description without telling the user and getting an explicit OK.
+- **Reconcile counts with the source** — when scenarios come from a file/list, count the actual items. If the user asked for 15 but the source has 14, say so and confirm the real number before generating.
+- **Batch large requests** — for `num_scenarios` > 10, split into batches of ≤ 10 (per category or per language) and run them sequentially. Large single batches are the main cause of stalls and partial completion.
+
+**While polling** (`scenarios_generate_progress`, ~10s interval):
+- Report progress to the user roughly every 30s — never poll silently for minutes.
+- **Stall rule:** if `completed_scenarios` is still 0 after ~2 minutes, stop polling. Tell the user, then retry once with a smaller batch (≤ 5) and tighter `extra_instructions`. Do not loop "keep waiting" indefinitely.
+- If progress advances but freezes short of the total (e.g. 53/58) for ~2 minutes, treat the batch as done and handle the shortfall below.
+
+**After completion — verify before reporting success:**
+1. **Count** — fetch the created scenarios and compare to the request. If short, generate the remainder in a small batch whose `extra_instructions` name exactly the missing cases.
+2. **Plan diff** — map generated scenarios 1:1 against the approved plan. If the generator merged two requested cases into one or invented an extra, create the missing standalone case and flag the extra.
+3. **Language** — for non-English requests, check `scenario_language`, the personality's language, and that `first_message`/`instructions` are actually written in the target language (gotchas 2, 6, 8).
+4. **Roles** — instructions are caller-side, first person (gotcha 7).
+5. **Scaffolding** — every scenario has a non-empty `expected_outcome_prompt` (pass `generate_expected_outcomes: true`; patch any that came back empty), the right tools (`TOOL_END_CALL`; `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows; `TOOL_DTMF` for IVR), and the baseline metrics.
+
+Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched") — never report success on the trigger alone.
