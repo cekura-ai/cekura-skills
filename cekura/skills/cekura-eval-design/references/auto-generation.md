@@ -57,7 +57,7 @@ The generator is a background pipeline that can stall, partially complete, or dr
 - **Batch large requests** — for `num_scenarios` > 10, split into batches of ≤ 10 (per category or per language) and run them sequentially. Large single batches are the main cause of stalls and partial completion.
 
 **While polling** (`scenarios_generate_progress`, ~10s interval):
-- Report progress to the user roughly every 30s — never poll silently for minutes.
+- Report progress to the user roughly every 30s — never poll silently for minutes. When stating elapsed time or progress, use the actual numbers from the progress responses (counts, real wall-clock waited) — never estimate or round elapsed time up; an inflated "waited ~4 minutes" when the wait was 2 misleads the user's next decision.
 - **Stall rule:** if `completed_scenarios` is still 0 after ~2 minutes, stop polling. Tell the user, then retry once with a smaller batch (≤ 5) and tighter `extra_instructions`. Do not loop "keep waiting" indefinitely.
 - If progress advances but freezes short of the total (e.g. 53/58) for ~2 minutes, treat the batch as done and handle the shortfall below.
 

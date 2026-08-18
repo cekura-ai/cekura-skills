@@ -155,7 +155,7 @@ Poll every 10 seconds with `mcp__cekura__scenarios_generate_progress`:
 progress_id: <uuid>
 ```
 
-Keep polling until status is `completed` or `failed`. **Do NOT give up after one check** — generation can take 30-60 seconds for 10+ scenarios. Report progress to the user about every 30s; never poll silently for minutes.
+Keep polling until status is `completed` or `failed`. **Do NOT give up after one check** — generation can take 30-60 seconds for 10+ scenarios. Report progress to the user about every 30s; never poll silently for minutes. State elapsed time and progress from the actual data (real counts, real wall-clock waited) — never estimate or inflate elapsed time.
 
 **Batching:** for more than 10 scenarios, split into sequential batches of ≤10 (per category or per language) — large single batches are the main cause of stalls and partial completion. For "N per language" requests, run one batch per language with that language's personality.
 
