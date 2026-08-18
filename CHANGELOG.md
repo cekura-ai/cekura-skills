@@ -6,6 +6,15 @@ All notable changes to the Cekura plugin. Versions follow
 
 ## 0.11.0 — 2026-08-11
 
+- **Added** two reproduce-phase guards from observed multi-run money pits:
+  a **metric-fit check** (a thresholded prod metric can be structurally blind
+  in sim when the testing agent's timing differs from the prod counterpart —
+  assert the defect itself via expected_outcome bullets or a custom-code
+  metric instead) and a **mechanics-doc consult** (read cekura-eval-design's
+  `conditional-actions.md` before authoring tag-driven scenarios; two
+  consecutive non-triggering runs with an unchanged harness → stop firing
+  and re-diagnose the harness, not the bug).
+
 - **Added** a deterministic reproduction-gate hook (`hooks/repro-gate.sh`,
   `PreToolUse`): while a `.cekura/selfimprove.lock` session is active with no
   valid `repro.json`, file edits and provider-mutating requests are denied at
