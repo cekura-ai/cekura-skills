@@ -159,7 +159,7 @@ Keep polling until status is `completed` or `failed`. **Do NOT give up after one
 
 **Stall rule — overrides "proceed autonomously":** if `completed_scenarios` is still 0 after ~5 minutes, stop waiting. Autonomy is never a license to keep waiting past the threshold — the correct autonomous action IS the stall response: retry once with a smaller batch (≤5) and tighter `extra_instructions`; if the retry also stalls at 0, stop with a clear report (progress id, real elapsed time, next steps). Never take a second wait on the same stalled job.
 
-**Partial completion:** Generation may produce fewer scenarios than requested (e.g., 15/18) with the remainder stuck indefinitely. If progress freezes short of the total for ~2 minutes, treat the batch as done, then generate the remainder in a smaller batch with `extra_instructions` naming exactly the missing cases.
+**Partial completion:** Generation may produce fewer scenarios than requested (e.g., 15/18) with the remainder stuck indefinitely. If progress freezes short of the total for ~4 minutes, treat the batch as done, then generate the remainder in a smaller batch with `extra_instructions` naming exactly the missing cases.
 
 ## Post-Generation Verification — before reporting success
 

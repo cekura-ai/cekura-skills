@@ -58,7 +58,7 @@ The generator is a background pipeline that can stall, partially complete, or dr
 **While polling** (`scenarios_generate_progress`, ~10s interval):
 - Report progress to the user roughly every 30s — never poll silently for minutes. When stating elapsed time or progress, use the actual numbers from the progress responses (counts, real wall-clock waited) — never estimate or round elapsed time up; an inflated "waited ~4 minutes" when the wait was 2 misleads the user's next decision.
 - **Stall rule — overrides "proceed autonomously":** if `completed_scenarios` is still 0 after ~5 minutes, stop waiting. Autonomy is never a reason to keep waiting past the threshold — in autonomous mode the correct autonomous action IS the stall response: cancel the mental "keep waiting" option, retry once with a smaller batch (≤ 5) and tighter `extra_instructions`, and if the retry also stalls at 0, stop with a clear report (progress id, real elapsed time, what to try next). Never take a second or third wait on the same stalled job.
-- If progress advances but freezes short of the total (e.g. 53/58) for ~2 minutes, treat the batch as done and handle the shortfall below.
+- If progress advances but freezes short of the total (e.g. 53/58) for ~4 minutes, treat the batch as done and handle the shortfall below.
 
 **After completion — verify before reporting success:**
 1. **Count** — fetch the created scenarios and compare to the request. If short, generate the remainder in a small batch whose `extra_instructions` name exactly the missing cases.
