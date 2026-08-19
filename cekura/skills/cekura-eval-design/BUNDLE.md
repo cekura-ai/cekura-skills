@@ -1,13 +1,15 @@
 ---
 name: cekura-eval-design
 description: >
-  Use when the user asks to "create an evaluator", "create evals", "create a scenario",
-  "write a test scenario", "design a test case", "test my agent", "build eval coverage",
+  Use when the user asks to "generate (test) scenarios", "generate evaluators",
+  "create an evaluator", "create evals",
+  "create a scenario", "write a test scenario", "design a test case", "test my agent",
+  "build eval coverage",
   "plan a test suite", "create red team tests", "set up test profiles", "configure conditional
   actions", "write a conditional action evaluator", "build a deterministic test", "design an
   IVR test", "IVR navigation test", "write a unit test for a voice agent", "build a regression
   test", "scripted scenario", "scripted voice test", "structured evaluator", "exact flow test",
-  "sequential conditions", "fixed sequence test", or "run evals". Also for debugging how the
+  "sequential conditions", or "run evals". Also for debugging how the
   testing agent speaks — "why did it read the number as a word", "make it spell digits",
   "wrong language" — via scenario_language, personality, and XML tags. Covers evaluator
   design, coverage strategy, test profiles, mock-tool data, conditional actions
@@ -377,7 +379,7 @@ The reference is `references/conditional-actions.md`. Read it once at the start 
 
 ## Pre-Creation Checkpoint — Confirm Before Building
 
-**Before creating scenarios or generating them, always pause and confirm key decisions with the user.** Do not assume defaults — present your plan and get explicit approval. AI agents that skip this step make costly assumptions that waste credits and require rework.
+**Before creating scenarios or generating them, always pause and confirm key decisions with the user.** This is a hard gate: no `scenarios_create` / `scenarios_generate_bg` call until the user has replied approving the plan — even when the first message already names an agent and a count, and *especially* when it says "first ask me" or "show me the plan". The only exception is an explicit "proceed autonomously / don't ask me" from the user. Do not assume defaults — present your plan and get explicit approval. After generation, run the verification pass in `references/auto-generation.md` § Reliability Protocol (count reconciliation, language/role checks, expected outcomes, tools).
 
 ### What to Confirm
 

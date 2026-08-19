@@ -53,6 +53,8 @@ Import stages (in order):
 
 Keep polling until `status` is `completed`. The response at `finalize` includes the created agent's `id` — save it for all subsequent steps.
 
+**Credential failures fail fast.** If the `validate` stage rejects the provider API key (invalid key, wrong workspace, 401 from the provider), stop after at most **two** attempts with distinct keys: quote the provider's exact error, tell the user precisely what to check (key value, workspace/region, agent ID belongs to that key), and wait for a corrected key. Never loop retries on the same key, and never fall back to creating the agent from a guessed description — an agent built on a stand-in prompt produces misleading scenarios downstream.
+
 **Example: VAPI auto-import**
 ```json
 {
