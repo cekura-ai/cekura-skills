@@ -1,0 +1,37 @@
+{
+  "name": "cekura-skills",
+  "owner": {
+    "name": "Cekura",
+    "email": "support@cekura.ai"
+  },
+  "metadata": {
+    "description": "GitHub Copilot CLI plugin marketplace for Cekura AI voice agent testing and evaluation"
+  },
+  "plugins": [
+    {
+      "name": "cekura",
+      "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals — all in one plugin.",
+      "source": "./cekura",
+      "author": {
+        "name": "Cekura",
+        "email": "support@cekura.ai",
+        "url": "https://cekura.ai"
+      },
+      "homepage": "https://docs.cekura.ai/mcp/overview",
+      "repository": "https://github.com/cekura-ai/cekura-skills",
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "cekura",
+        "voice-ai",
+        "evaluation",
+        "metrics",
+        "evaluators",
+        "testing",
+        "scenarios",
+        "onboarding",
+        "platform"
+      ]
+    }
+  ]
+}

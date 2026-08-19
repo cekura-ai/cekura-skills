@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Bump the plugin version everywhere it is declared, in one command.
 
-The repo is the distribution artifact (Claude, Codex, Cursor, Gemini, and
-`npx skills` all read git directly), so the version must be materialized
+The repo is the distribution artifact (Claude, Codex, Cursor, Gemini,
+Copilot, and `npx skills` all read git directly), so the version must be
+materialized
 in-tree in several places. This script rewrites all of them together:
 
-  1. the six version-bearing manifests (see VERSION_SURFACES)
+  1. the seven version-bearing manifests (see VERSION_SURFACES)
   2. the inline `plugin_version="X.Y"` telemetry tags in cekura/**/*.md, which
      carry major.minor only -- a patch release leaves every skill, bundle, and
      command file untouched
@@ -18,6 +19,13 @@ Usage:
   python3 scripts/bump_version.py --minor          # 0.10.6 -> 0.11.0
   python3 scripts/bump_version.py --major          # 0.10.6 -> 1.0.0
   python3 scripts/bump_version.py 0.11.2           # explicit version
+  python3 scripts/bump_version.py --sync-with-main # origin/main's version + 1
+                                                   # patch; no-op if already
+                                                   # ahead of main
+
+`--sync-with-main` is what CI runs for the `sync-version` label: it needs no
+rebase (the version only has to beat what is published) and re-running it is a
+no-op, so re-labelling a PR never inflates the version.
 
 Remember to add a CHANGELOG.md entry for the new version (the script
 reminds you but does not write it).
@@ -38,6 +46,7 @@ VERSION_SURFACES = (
     "cekura/.codex-plugin/plugin.json",
     "gemini-extension.json",
     "cekura/.cursor-plugin/plugin.json",
+    "cekura/.github/plugin/plugin.json",
 )
 
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -45,6 +54,20 @@ SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 
 def major_minor(version):
     return ".".join(version.split(".")[:2])
+
+
+def parse(version):
+    return tuple(int(x) for x in str(version).split("."))
+
+
+def origin_main_version():
+    out = subprocess.run(
+        ["git", "show", "origin/main:package.json"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    if out.returncode != 0:
+        sys.exit("error: cannot read package.json on origin/main (fetch it first)")
+    return json.loads(out.stdout)["version"]
 
 
 def next_version(current, bump):
@@ -74,12 +97,20 @@ def main():
     arg = sys.argv[1]
 
     current = json.loads((REPO / "package.json").read_text())["version"]
-    if arg in ("--patch", "--minor", "--major"):
+    if arg == "--sync-with-main":
+        main_version = origin_main_version()
+        if parse(current) > parse(main_version):
+            print(f"{current} is already ahead of origin/main ({main_version}); "
+                  "nothing to do")
+            return 0
+        new = next_version(main_version, "--patch")
+    elif arg in ("--patch", "--minor", "--major"):
         new = next_version(current, arg)
     elif SEMVER_RE.match(arg):
         new = arg
     else:
-        sys.exit(f"error: expected --patch/--minor/--major or X.Y.Z, got {arg!r}")
+        sys.exit("error: expected --patch/--minor/--major/--sync-with-main "
+                 f"or X.Y.Z, got {arg!r}")
     if new == current:
         sys.exit(f"error: new version {new} equals current version")
 

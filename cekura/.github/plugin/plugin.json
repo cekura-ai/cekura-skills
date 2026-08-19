@@ -1,15 +1,16 @@
 {
   "name": "cekura",
-  "displayName": "Cekura",
   "version": "0.10.12",
-  "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from Cursor.",
+  "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from GitHub Copilot.",
   "author": {
     "name": "Cekura",
-    "email": "support@cekura.ai"
+    "email": "support@cekura.ai",
+    "url": "https://cekura.ai"
   },
   "homepage": "https://cekura.ai",
   "repository": "https://github.com/cekura-ai/cekura-skills",
   "license": "MIT",
+  "category": "development",
   "keywords": [
     "cekura",
     "voice-ai",
@@ -21,9 +22,6 @@
     "onboarding",
     "platform"
   ],
-  "mcpServers": {
-    "cekura": {
-      "url": "https://api.cekura.ai/mcp"
-    }
-  }
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
 }
