@@ -18,6 +18,14 @@ Before any FIX.x work, verify Collect completed: kept set populated and provider
 call state recorded (COLLECT.1–5), **including Signal 5 (end-of-call attribution)** —
 FIX.1 depends on it. If any is missing, return control to the orchestrator.
 
+Also verify the REPRO.6 gate artifact: a Cekura `result_id` from the harness
+batch, failing ≥ `repro_threshold` of N, retrievable via
+`mcp__cekura__results_retrieve`. Restate it verbatim in the FIX.6 presentation
+header: `Repro gate: result <result_id> — <fails>/<n_runs> failed`. No such
+result id ⇒ return to Reproduce before proposing anything. A failing code/unit
+test, log analysis, or the original production call never substitutes for this
+artifact — this holds for every entry signal, including insights and call logs.
+
 ## Step FIX.1 — Triage early-end-call failures first
 
 Screen the kept set for one pattern before anything else: the **main agent ended the

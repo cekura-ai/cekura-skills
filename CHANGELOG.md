@@ -4,6 +4,71 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.12.0 — 2026-08-20
+
+**Breaking — skill consolidation.** `cekura-self-improving-agent` is rewritten
+around a per-project **capability manifest** (`.cekura/selfimprove.yaml`): it
+now covers agents whose config lives in the customer's own stack (repo,
+database, prompt registry, runtime-created provider agents, custom mock
+servers) as well as dashboard-managed providers, with hard safety invariants —
+artifact-based must-fail-first reproduction (mode-aware run counts), runtime
+readback attestation, no production mutation inside the loop, and an explicit
+Promote phase. **`cekura-fixing-prod-issues` is removed** — prod-call bug
+fixing is covered by the rewritten skill (same must-fail-first gate and PR
+hand-off). npx users: run `npx skills add cekura-ai/cekura-skills --all` to
+pick up the rewrite and drop the removed skill.
+
+- **Added** run labeling: every `scenarios_run_*` call now passes `name`
+  (`[selfimprove:<session>] <phase> — <detail>` / `[prod-fix <call_id>]
+  phase<N> ...`) so dashboard results map back to session and phase across the
+  self-improve and prod-fix workflows.
+
+- **Added** two reproduce-phase guards from observed multi-run money pits:
+  a **metric-fit check** (a thresholded prod metric can be structurally blind
+  in sim when the testing agent's timing differs from the prod counterpart —
+  assert the defect itself via expected_outcome bullets or a custom-code
+  metric instead) and a **mechanics-doc consult** (read cekura-eval-design's
+  `conditional-actions.md` before authoring tag-driven scenarios; two
+  consecutive non-triggering runs with an unchanged harness → stop firing
+  and re-diagnose the harness, not the bug).
+
+- **Added** a deterministic reproduction-gate hook (`hooks/repro-gate.sh`,
+  `PreToolUse`): while a `.cekura/selfimprove.lock` session is active with no
+  valid `repro.json`, file edits and provider-mutating requests are denied at
+  the tool layer — prose gates were reinterpreted twice in the wild (pytest
+  substituted for simulation reproduction). Fault-injection edits marked
+  `CEKURA-REPRO-INJECT` and `.cekura`/`.claude` writes remain allowed;
+  sessions without the lockfile are untouched. Claude Code installs only.
+
+- **Changed** reproduction to run the minimum simulations the failure allows
+  (self-improve and prod-fix workflows): classify the reproduction mode first —
+  deterministic failures (trigger forced via scenario construction or
+  temporary `CEKURA-REPRO-INJECT` fault injection in the local bot) reproduce
+  with a single must-fail run and verify 2/2 with the trigger active;
+  stochastic LLM prompt/workflow failures size the batch from the observed
+  failure rate (`clamp(⌈2/p̂⌉, 4, 10)`) and must fail at least twice.
+
+- **Changed** the reproduction gate to be artifact-based across
+  the self-improve and prod-fix
+  workflows: reproduction is passed only by a recorded
+  Cekura `result_id` with fail counts (`repro.json` / gate line), restated
+  verbatim by every downstream phase and cited in the final PR. Failing
+  unit/code tests, logs, and original production calls explicitly never
+  satisfy the gate — closes the observed insight-entry shortcut where a
+  coding agent substituted pytest for simulation reproduction.
+
+- **Added** the capability-manifest framework underpinning the rewritten
+  self-improve loop for agents whose real config lives in the customer's own
+  stack (prompts in a repo, tools in a DB, prompt registry in Langfuse,
+  provider agents created at deploy time, customer-operated mock servers).
+  Fixed safety invariants (must-fail-first, runtime readback attestation,
+  no production mutation inside the loop, overfitting gate, budgets, audit
+  trail) plus a per-project `.cekura/selfimprove.yaml` declaring typed
+  read/render/apply/deploy/verify capabilities. Ships a JSON schema, a
+  manifest guide, setup/loop/promote phases, and three recipes
+  (provider-managed, runtime-created, custom-mocks). Collect/Debug/Reproduce/
+  Regression semantics are reused from `cekura-self-improving-agent`.
+
 ## 0.10.12 — 2026-08-18
 
 Generation reliability, driven by production call-log triage (18 conversations)
