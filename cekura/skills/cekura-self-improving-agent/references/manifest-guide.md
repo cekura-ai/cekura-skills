@@ -46,7 +46,7 @@ self-test before trusting it, and treat edits to it as privileged.
    logs before persisting).
 7. **Rollback is per component and honest.** `git` only for repo components
    (session work happens on an isolated branch/worktree, commit per
-   iteration). DB rows, Langfuse labels, provider schemas need `command` or
+   iteration). Database rows, prompt-registry versions, provider schemas need `command` or
    `versioned` rollback. `none` is allowed but blocks Promote for edits
    touching that component unless the user explicitly accepts the risk.
 8. **Flake policy.** Telephony/STT/WebRTC and customer mock servers flake.

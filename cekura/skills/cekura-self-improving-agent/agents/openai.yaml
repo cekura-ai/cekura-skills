@@ -1,6 +1,6 @@
 interface:
   display_name: "Cekura: Self-Improve 1"
-  short_description: "Self-improve loop for agents whose config lives in your own repo/DB/Langfuse — fixed safety invariants plus a per-project capability manifest for read/apply/deploy/verify."
+  short_description: "Self-improve loop for agents whose config lives in your own repo, database, or prompt registry — fixed safety invariants plus a per-project capability manifest for read/apply/deploy/verify."
   brand_color: "#6366F1"
 
 policy:

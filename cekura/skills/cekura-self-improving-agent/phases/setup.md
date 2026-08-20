@@ -78,5 +78,5 @@ repair offer (never continue on guessed mechanics):
   hash, live hash, smoke scenario id.
 
 Then announce `Iteration 1 · Collect` and continue with `phases/collect.md` (same verdict filters and funnel rules), adding
-any manifest `evidence` sources (Langfuse traces, custom logs) to COLLECT.4's
+any manifest `evidence` sources (trace registries, custom logs) to COLLECT.4's
 inspection inputs.

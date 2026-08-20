@@ -48,7 +48,7 @@ attestation:
     fields: [assistant_id, build_sha]
     identity_source: deploy_produces
 evidence:
-  traces: { run: "<langfuse/trace fetch by call id>", writes: false }
+  traces: { run: "<trace fetch by call id (e.g. Langfuse)>", writes: false }
 simulate:
   runner: <scenarios_run_* for the provider/transport>
   flake_policy: { max_infra_failures: 1, retry_on: [timeout, transport_error] }

@@ -36,7 +36,7 @@ Turn a failure signal into a verified fix on **any** agent stack. Rather than
 modeling "which provider", this skill models
 "**where does the agent's config actually live, and how do I read, render,
 apply, deploy, and verify it**". Many teams keep their agent's config in
-their own stack — a repo, a database, a prompt registry (Langfuse and similar) —
+their own stack — a repo, a database, a prompt registry (e.g. Langfuse) —
 and materialize the runtime provider agent at deploy time; editing the provider
 object there fixes a build artifact that the next deploy overwrites. This skill
 edits the declared source of truth instead, whatever it is.
@@ -137,7 +137,7 @@ re-run the Setup self-test after any change.
 | # | Phase | File | Purpose |
 |---|-------|------|---------|
 | 1 | Setup | `phases/setup.md` | Discover or interview → write/validate the manifest → **manifest self-test** (read → deploy/noop → read live → one smoke scenario → trace correlation). Persist run-setup to the host agent's memory file (`.claude/MEMORY.md` on Claude Code; the audit dir otherwise). |
-| 2 | Collect | `phases/collect.md` | Fetch/filter failures (per-run verdicts, voice filter, `ended_reason`), plus manifest `evidence` sources (Langfuse traces, custom logs). Loop re-entry point. |
+| 2 | Collect | `phases/collect.md` | Fetch/filter failures (per-run verdicts, voice filter, `ended_reason`), plus manifest `evidence` sources (trace registries, custom logs). Loop re-entry point. |
 | 3 | Debug | `phases/debug.md` | Root cause + failure class. Component attribution: which manifest component governs the failure. |
 | 4 | Reproduce | `phases/reproduce.md` | Build harness (mocks from real traces — including the customer's own mock server via `reset_fixtures`); must-fail gate. On pass, **write `repro.json`** (invariant 1) to the audit dir — the loop refuses to start without it. |
 | 5 | Improve loop | `phases/loop.md` | propose → plan diff (source **and** rendered) → apply → validate → deploy → **read live / attest** → verify → overfitting gate → decide. |
@@ -188,12 +188,14 @@ regardless) · `manifest_path` default `.cekura/selfimprove.yaml`.
 - Verifying against a stale runtime — deploy succeeded but the eval hit the old
   build. Readback attestation before every verify batch, no exceptions.
 - Treating one `read` dump as the whole config — hybrid stacks compose repo +
-  DB + Langfuse + provider defaults; model them as separate components.
+  database + prompt registry + provider defaults; model them as separate
+  components.
 - Treating infra flake (telephony, STT, mock-server hiccup) as behavioral
   failure — classify per `flake_policy`, keep an auditable discard count.
 - Interpolating unvalidated values into manifest commands — parameters are
   typed and escaped; never build shell strings from model output.
-- "Git is rollback" for non-repo components — DB rows, Langfuse labels, and
+- "Git is rollback" for non-repo components — database rows, prompt-registry
+  versions, and
   provider schemas need their own declared `rollback` per component.
 
 ## Next Steps
@@ -217,7 +219,7 @@ regardless) · `manifest_path` default `.cekura/selfimprove.yaml`.
 ### Recipes (pre-filled manifests, read the one that matches)
 
 - **`recipes/provider-managed.md`** — dashboard-managed provider agent as a pre-filled manifest (uses `providers/<mode>/` playbooks).
-- **`recipes/runtime-created.md`** — agent materialized at deploy time from the customer's repo/DB/Langfuse.
+- **`recipes/runtime-created.md`** — agent materialized at deploy time from the customer's repo, database, or prompt registry.
 - **`recipes/custom-mocks.md`** — customer-operated mock server as the simulation fixture.
 
 ### Phase Files
