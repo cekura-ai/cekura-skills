@@ -10,8 +10,10 @@
 # under momentum; this one is a script.
 #
 # Generic by design: no provider host list. During an ungated session, ANY
-# mutating HTTP verb to a non-local host and any DB-CLI write is denied —
-# whatever the provider or stack. After the gate passes, writes are still
+# mutating HTTP verb to a non-local host, any DB-CLI write, and shell-level
+# file writes (redirection / sed -i / tee) outside session dirs are denied —
+# whatever the provider or stack. Bash coverage is HEURISTIC: it raises the
+# cost of the obvious workarounds, it does not enumerate every mutation path. After the gate passes, writes are still
 # checked against the manifest's authority.allowed_paths / forbidden_paths
 # (best-effort YAML parse; skipped when unparseable).
 #
@@ -26,6 +28,17 @@
 # normal, non-improve sessions.
 
 set -uo pipefail
+
+# Fail-visible, not fail-silent: without jq we cannot parse hook input, so the
+# gate cannot run. Surface that once per user instead of being inert forever.
+if ! command -v jq >/dev/null 2>&1; then
+  MARKER="$HOME/.claude/cekura-repro-gate-nojq"
+  if [ ! -f "$MARKER" ]; then
+    mkdir -p "$HOME/.claude" 2>/dev/null; touch "$MARKER" 2>/dev/null
+    printf '{"systemMessage":"cekura repro-gate hook: jq not found on PATH — the reproduction gate is NOT being enforced. Install jq to restore it."}'
+  fi
+  exit 0
+fi
 
 INPUT=$(cat)
 
@@ -82,11 +95,17 @@ PY
 }
 
 path_matches() {  # $1 = file path, $2 = newline list of prefixes/globs
-  local f="$1" rel p
+  local f="$1" rel p base
   rel="${f#"$ROOT"/}"
   while IFS= read -r p; do
     [ -z "$p" ] && continue
-    case "$rel" in $p|$p*|${p%/}/*) return 0 ;; esac
+    base="${p%/}"
+    case "$p" in
+      *[\*\?]*)  # explicit glob: match as written, nothing wider
+        case "$rel" in $p) return 0 ;; esac ;;
+      *)          # plain path: exact file or anchored directory prefix only
+        case "$rel" in "$base"|"$base"/*) return 0 ;; esac ;;
+    esac
   done <<< "$2"
   return 1
 }
@@ -113,7 +132,7 @@ gate_state() {  # echoes: ok | override | open
   [ -z "$result_id" ] && { echo open; return; }
   [ -n "$rsid" ] && [ "$rsid" != "$SESSION_ID" ] && { echo open; return; }
   case "$mode" in
-    deterministic) [ "$fails" = "1" ] && [ "$n_runs" = "1" ] && { echo ok; return; } ;;
+    deterministic) [ "$fails" -ge 1 ] 2>/dev/null && [ "$fails" = "$n_runs" ] && { echo ok; return; } ;;
     stochastic)    [ "$fails" -ge 2 ] 2>/dev/null && { echo ok; return; } ;;
   esac
   echo open
@@ -168,6 +187,26 @@ case "$TOOL_NAME" in
     if echo "$CMD" | grep -qE '^[^|]*\b(psql|mysql|mongosh|sqlcmd|sqlite3)\b' \
        && echo "$CMD" | grep -qiE '\b(UPDATE|INSERT|DELETE|DROP|ALTER)\b'; then
       deny "$GATE_MSG (blocked: database write while the gate is open)"
+    fi
+    # other mutating HTTP clients (heuristic)
+    if echo "$CMD" | grep -qiE '\bwget\b.*--(post-data|post-file|method[= ](PATCH|POST|PUT|DELETE))|\bhttps?\b +(PATCH|POST|PUT|DELETE) |\bgh api\b.*(-X *(PATCH|POST|PUT|DELETE)|--method +(PATCH|POST|PUT|DELETE)|-[fF] )'; then
+      deny "$GATE_MSG (blocked: mutating HTTP request while the gate is open)"
+    fi
+    # shell-level file writes that would bypass the Edit gate: sed -i, tee,
+    # and redirects targeting anything outside session/temp dirs
+    if echo "$CMD" | grep -qE '\bsed\b[^|;]*-i|\btee\b +(-a +)?/?[A-Za-z0-9_.]'; then
+      if ! echo "$CMD" | grep -qE '(sed[^|;]*-i[^|;]*|tee +(-a +)?)([^ ]*/)?(\.cekura|\.claude|\.codex|\.cursor|\.gemini|\.agents)/' ; then
+        deny "$GATE_MSG (blocked: shell file write (sed -i/tee) while the gate is open — use the Reproduce flow, not Bash editing)"
+      fi
+    fi
+    TARGETS=$(echo "$CMD" | grep -oE '>>?[[:space:]]*[^ ;|&)]+' | sed -E 's/^>>?[[:space:]]*//')
+    if [ -n "$TARGETS" ]; then
+      while IFS= read -r tgt; do
+        case "$tgt" in
+          /dev/*|/tmp/*|/proc/*|*'.cekura/'*|*'.claude/'*|*'.codex/'*|*'.cursor/'*|*'.gemini/'*|*'.agents/'*|'&'*|2*) ;;
+          *) deny "$GATE_MSG (blocked: shell redirect into $tgt while the gate is open — use the Reproduce flow, not Bash editing)" ;;
+        esac
+      done <<< "$TARGETS"
     fi
     exit 0
     ;;

@@ -16,7 +16,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.4.0"
+  version: "3.0.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-self-improving-agent:6w3k4p -->
@@ -69,7 +69,9 @@ every project:
    a fix, but the gate artifact is always a Cekura simulation result.
    Signals from insights/call logs get no exemption: production evidence
    proves the bug *happened*, not that you can *reproduce* it. On Claude Code
-   plugin installs this gate is also **mechanically enforced**: a PreToolUse
+   plugin installs this gate is also **mechanically backstopped** (best-effort — a
+   fabricated artifact defeats it; LOOP.0's retrieval check is the
+   authoritative gate): a PreToolUse
    hook (`hooks/repro-gate.sh`) denies file edits and provider-mutating
    requests while `.cekura/selfimprove.lock` is present and `repro.json` is
    missing or below its mode's threshold (fault-injection edits marked
