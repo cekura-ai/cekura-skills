@@ -44,9 +44,9 @@ Edge conditions used to reproduce: <e.g. invalid API key, 2s sleep in handler>
 
 ### Labels and repo CI
 
-Do **not** apply labels to the PR — especially workflow-triggering ones (e.g.
-a repo's `pr-eval`-style label that deploys the PR and runs a live scenario
-suite). Those runs cost real deploys and real calls; firing them is a
+Do **not** apply labels to the PR — especially workflow-triggering ones (any
+label that deploys the PR or launches a CI evaluation suite against it).
+Those runs cost real deploys and real calls; firing them is a
 maintainer's deliberate decision, and your Cekura result URLs above already
 carry the verification evidence. If the repo has such a suite and a full
 regression pass would add value, say so in the PR body ("ready for the repo's
