@@ -6,7 +6,7 @@
 # present in cwd or an ancestor), file edits and mutating remote commands are
 # DENIED until the session's reproduction artifact exists and passes its
 # mode's gate (.cekura/audit/<session_id>/repro.json — see the
-# cekura-self-improve-1 skill, invariant 1). Prose gates get reinterpreted
+# cekura-self-improving-agent skill, invariant 1). Prose gates get reinterpreted
 # under momentum; this one is a script.
 #
 # Generic by design: no provider host list. During an ungated session, ANY
@@ -119,7 +119,7 @@ gate_state() {  # echoes: ok | override | open
   echo open
 }
 
-GATE_MSG="Reproduction gate not satisfied for the active self-improve session (lock: $LOCK). Invariant 1 of cekura-self-improve-1: no edit until the failure reproduces in a Cekura simulation, recorded at .cekura/audit/$SESSION_ID/repro.json with a real result_id and this session's session_id (mode deterministic: exactly 1/1 failed; stochastic: >=2 fails). A failing unit/code test never substitutes. If reproduction needs a human action, PARK and ask; an explicit user override must be recorded as gate_override{by:user, reason, session_id}. If this session is stale, remove the lockfile with the user's approval."
+GATE_MSG="Reproduction gate not satisfied for the active self-improve session (lock: $LOCK). Invariant 1 of cekura-self-improving-agent: no edit until the failure reproduces in a Cekura simulation, recorded at .cekura/audit/$SESSION_ID/repro.json with a real result_id and this session's session_id (mode deterministic: exactly 1/1 failed; stochastic: >=2 fails). A failing unit/code test never substitutes. If reproduction needs a human action, PARK and ask; an explicit user override must be recorded as gate_override{by:user, reason, session_id}. If this session is stale, remove the lockfile with the user's approval."
 
 STATE=$(gate_state)
 

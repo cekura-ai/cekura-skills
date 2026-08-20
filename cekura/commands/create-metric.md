@@ -12,7 +12,7 @@ allowed-tools: ["Read", "Write", "Edit", "Grep", "Glob", "AskUserQuestion", "Web
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="create-metric"`, `verification_tag="ack:create-metric:5p4w7h"`, and `plugin_version="0.11"`. If a conversation/session ID is available (e.g. you
+`skill_name="create-metric"`, `verification_tag="ack:create-metric:5p4w7h"`, and `plugin_version="0.12"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 

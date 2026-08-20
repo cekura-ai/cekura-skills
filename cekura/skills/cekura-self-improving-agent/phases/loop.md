@@ -4,7 +4,7 @@ Entered after Reproduce's must-fail gate passes. One pass below = one
 iteration; announce `Iteration N · Improve`. Diagnosis semantics (failure
 classes Gap / Conflict / Ambiguity / CodeBug / Upstream, early-end triage,
 smallest-scoped-change, same-shape escape hatch) are identical to
-`cekura-self-improving-agent` `phases/optimization/fix.md` — reuse them. This
+`phases/optimization/fix.md` — reuse them. This
 file defines what changes under the manifest framework.
 
 ## LOOP.0 — reproduction gate check (every iteration, before anything else)
@@ -96,7 +96,7 @@ Zero edits (all Upstream) → stop the loop, report.
 
 ## LOOP.6 — overfitting gate
 
-Identical to `cekura-self-improving-agent` `phases/overfitting-gate.md` (five
+Identical to `phases/overfitting-gate.md` (five
 signatures, STRIP/REVISE/KEEP), applied to the **source** edits. Cleanup edits
 re-enter LOOP.3–4 (including a fresh attest) before re-verify.
 

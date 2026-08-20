@@ -31,13 +31,11 @@ cekura-skills/
       cekura-onboarding/
       cekura-create-agent/
       cekura-self-improving-agent/
-      cekura-self-improve-1/
       cekura-metric-design/
       cekura-metric-improvement/
       cekura-predefined-metrics/
       cekura-eval-design/
       cekura-infra-test-suite/
-      cekura-fixing-prod-issues/
       cekura-flag-call-log-failures/
       cekura-generate-scenarios/
     commands/                    # Slash commands (Claude Code only)
@@ -128,14 +126,12 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-coordinator` | Route users to the right skill/command |
 | `cekura-onboarding` | Walk new users through full platform setup |
 | `cekura-create-agent` | Set up a voice AI agent — provider, mock tools, KB, dynamic vars |
-| `cekura-self-improving-agent` | Auto-tune agent prompts from eval results — diagnose → propose → apply → re-validate loop |
-| `cekura-self-improve-1` | Capability-manifest variant of the self-improve loop for custom stacks — config in repo/DB/Langfuse, runtime-created provider agents, custom mock servers |
+| `cekura-self-improving-agent` | Self-improve loop for any stack (dashboard-managed or config in repo/DB/prompt registry) — must-fail-first reproduction, capability manifest, attestation, promote; also covers prod-call bug fixing end-to-end |
 | `cekura-metric-design` | Core metric design patterns and best practices |
 | `cekura-metric-improvement` | Metric improvement through feedback iteration |
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
 | `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
-| `cekura-fixing-prod-issues` | Debug a failing prod call, reproduce with evaluators, fix, verify, regression-test, PR |
 | `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — flagged calls, failure rates, outcome distribution |
 | `cekura-generate-scenarios` | Cluster flagged production failures and create one evaluator scenario per failure mode |
 

@@ -4,7 +4,17 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
-## 0.11.0 — 2026-08-11
+## 0.12.0 — 2026-08-20
+
+**Breaking — skill consolidation.** `cekura-self-improve-1` (capability-manifest
+framework) is now **`cekura-self-improving-agent`**, replacing the previous
+skill of that name; its provider playbooks (`providers/<mode>/`) and phase
+files (collect/debug/reproduce/eval/regression/optimization/overfitting-gate)
+moved into the merged skill unchanged. **`cekura-fixing-prod-issues` is
+removed** — prod-call bug fixing is covered by the merged skill (same
+must-fail-first gate, reproduction modes, PR hand-off). npx users: run
+`npx skills add cekura-ai/cekura-skills --all` to pick up the replacement and
+drop stale copies of the removed skills.
 
 - **Added** run labeling: every `scenarios_run_*` call now passes `name`
   (`[selfimprove:<session>] <phase> — <detail>` / `[prod-fix <call_id>]
