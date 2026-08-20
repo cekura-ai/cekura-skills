@@ -6,21 +6,22 @@ All notable changes to the Cekura plugin. Versions follow
 
 ## 0.12.0 — 2026-08-20
 
-**Breaking — skill consolidation.** `cekura-self-improve-1` (capability-manifest
-framework) is now **`cekura-self-improving-agent`**, replacing the previous
-skill of that name; its provider playbooks (`providers/<mode>/`) and phase
-files (collect/debug/reproduce/eval/regression/optimization/overfitting-gate)
-moved into the merged skill unchanged. **`cekura-fixing-prod-issues` is
-removed** — prod-call bug fixing is covered by the merged skill (same
-must-fail-first gate, reproduction modes, PR hand-off). npx users: run
-`npx skills add cekura-ai/cekura-skills --all` to pick up the replacement and
-drop stale copies of the removed skills.
+**Breaking — skill consolidation.** `cekura-self-improving-agent` is rewritten
+around a per-project **capability manifest** (`.cekura/selfimprove.yaml`): it
+now covers agents whose config lives in the customer's own stack (repo,
+database, prompt registry, runtime-created provider agents, custom mock
+servers) as well as dashboard-managed providers, with hard safety invariants —
+artifact-based must-fail-first reproduction (mode-aware run counts), runtime
+readback attestation, no production mutation inside the loop, and an explicit
+Promote phase. **`cekura-fixing-prod-issues` is removed** — prod-call bug
+fixing is covered by the rewritten skill (same must-fail-first gate and PR
+hand-off). npx users: run `npx skills add cekura-ai/cekura-skills --all` to
+pick up the rewrite and drop the removed skill.
 
 - **Added** run labeling: every `scenarios_run_*` call now passes `name`
   (`[selfimprove:<session>] <phase> — <detail>` / `[prod-fix <call_id>]
-  phase<N> ...`) so dashboard results map back to session and phase across
-  cekura-self-improve-1, cekura-self-improving-agent, and
-  cekura-fixing-prod-issues.
+  phase<N> ...`) so dashboard results map back to session and phase across the
+  self-improve and prod-fix workflows.
 
 - **Added** two reproduce-phase guards from observed multi-run money pits:
   a **metric-fit check** (a thresholded prod metric can be structurally blind
@@ -40,8 +41,7 @@ drop stale copies of the removed skills.
   sessions without the lockfile are untouched. Claude Code installs only.
 
 - **Changed** reproduction to run the minimum simulations the failure allows
-  (`cekura-self-improve-1`, `cekura-self-improving-agent`,
-  `cekura-fixing-prod-issues`): classify the reproduction mode first —
+  (self-improve and prod-fix workflows): classify the reproduction mode first —
   deterministic failures (trigger forced via scenario construction or
   temporary `CEKURA-REPRO-INJECT` fault injection in the local bot) reproduce
   with a single must-fail run and verify 2/2 with the trigger active;
@@ -49,15 +49,15 @@ drop stale copies of the removed skills.
   failure rate (`clamp(⌈2/p̂⌉, 4, 10)`) and must fail at least twice.
 
 - **Changed** the reproduction gate to be artifact-based across
-  `cekura-self-improve-1`, `cekura-self-improving-agent`, and
-  `cekura-fixing-prod-issues`: reproduction is passed only by a recorded
+  the self-improve and prod-fix
+  workflows: reproduction is passed only by a recorded
   Cekura `result_id` with fail counts (`repro.json` / gate line), restated
   verbatim by every downstream phase and cited in the final PR. Failing
   unit/code tests, logs, and original production calls explicitly never
   satisfy the gate — closes the observed insight-entry shortcut where a
   coding agent substituted pytest for simulation reproduction.
 
-- **Added** `cekura-self-improve-1`, a capability-manifest variant of the
+- **Added** the capability-manifest framework underpinning the rewritten
   self-improve loop for agents whose real config lives in the customer's own
   stack (prompts in a repo, tools in a DB, prompt registry in Langfuse,
   provider agents created at deploy time, customer-operated mock servers).
