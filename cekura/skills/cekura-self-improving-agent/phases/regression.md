@@ -36,7 +36,7 @@ Call `mcp__cekura__scenarios_create` with:
 **`scenario_type: "conditional_actions"` is required, not optional.** Omit it and the API defaults the scenario to `instruction`, silently ignoring the `conditions` you just built — the replay then improvises instead of reproducing the bug. (Behavioral scenarios are the one type this direct-create path is not for; those are always generated.) `scenario_language` is required on this type, and `instructions`/`first_message` must stay unset — the conditions carry the whole flow.
 
 
-Run each case with the saved runner one at a time (restore modified conditions between cases), then poll all results.
+Run each case with the saved runner one at a time (restore modified conditions between cases), then poll all results. Label each via the run call's `name`: `[selfimprove] regression — <case>`.
 
 Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM and infra alike — must pass in ≥ M of N runs (a single clean pass is never enough), re-run under the ≥ M of N logic when a trigger is intermittent.
 

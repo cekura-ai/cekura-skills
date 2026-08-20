@@ -85,7 +85,8 @@ Zero edits (all Upstream) → stop the loop, report.
 - `reset_fixtures` before the batch (customer mock server reset/seed). A
   failed reset → batch invalid, retry; never count invalid batches.
 - Run the failure set via `simulate.runner`, N runs per scenario
-  (`stochastic_runs`). Apply `flake_policy`: infra-classified errors are
+  (`stochastic_runs`), labeled `[selfimprove:<session_id>] verify iter<N> —
+  <failure set | full-set sweep>` via the run call's `name`. Apply `flake_policy`: infra-classified errors are
   retried up to `max_infra_failures`, discarded runs are counted and reported.
 - Trace correlation per batch: the traces must reference the attested runtime
   identity. A batch that hit something else is invalid.

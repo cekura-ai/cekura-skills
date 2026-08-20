@@ -12,7 +12,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-self-improve-1:8w3k6p -->
@@ -99,7 +99,11 @@ every project:
    no-change signature, same failure shape 3×, all-upstream, zero kept failures.
 7. **Audit trail** — every session leaves a replayable record: manifest version,
    baseline config hash, failure set, root cause, edit proposal + diff, eval
-   results, final diff.
+   results, final diff. **Every simulation batch is labeled**: pass `name` on
+   each `scenarios_run_*` call — `[selfimprove:<session_id>] <phase> — <detail>`
+   (e.g. `[selfimprove:s-0818] repro attempt 2 (must-fail)`, `verify iter3 —
+   failure set`, `regression — happy path`) — so dashboard results map back to
+   the session and phase without opening transcripts.
 
 **Layer 2 — the capability manifest.** A per-project file,
 `.cekura/selfimprove.yaml`, declaring typed capabilities: `source_of_truth`

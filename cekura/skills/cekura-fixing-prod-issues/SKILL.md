@@ -59,6 +59,10 @@ The gate is an **artifact, not a judgment**: the Cekura `result_id` of the faili
 
 Explicitly NOT reproduction, ever: ❌ a failing unit/code test (write them in Phase 3 to accompany the fix if useful — they never open it); ❌ the original production call, insight, logs, or traces (they prove the bug *happened*, not that you can *reproduce* it); ❌ a reasoned argument that the bug "must" reproduce. Coding agents under time pressure reinterpret prose gates — the result_id line is deliberately mechanical so skipping Phase 2 is impossible to hide from a reviewer.
 
+### Rule 2b — Label every simulation you fire.
+
+Every `scenarios_run_*` call takes a `name` that becomes the Result's dashboard name. Always pass one: `[prod-fix <call_id>] phase2 repro`, `[prod-fix <call_id>] phase4 verify`, `[prod-fix <call_id>] phase5 regression — <case>`. The PR links results by URL; the labels make them identifiable in the dashboard list without opening each.
+
 ### Rule 3 — When in doubt, ask.
 
 If you are unsure which metrics to use, whether the root cause is correct, whether the edge conditions are right, or whether a result is ambiguous — **stop and ask the user**. A wrong assumption here wastes the entire workflow.

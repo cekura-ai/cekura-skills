@@ -6,6 +6,12 @@ All notable changes to the Cekura plugin. Versions follow
 
 ## 0.11.0 — 2026-08-11
 
+- **Added** run labeling: every `scenarios_run_*` call now passes `name`
+  (`[selfimprove:<session>] <phase> — <detail>` / `[prod-fix <call_id>]
+  phase<N> ...`) so dashboard results map back to session and phase across
+  cekura-self-improve-1, cekura-self-improving-agent, and
+  cekura-fixing-prod-issues.
+
 - **Added** two reproduce-phase guards from observed multi-run money pits:
   a **metric-fit check** (a thresholded prod metric can be structurally blind
   in sim when the testing agent's timing differs from the prod counterpart —

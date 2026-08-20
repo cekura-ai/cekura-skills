@@ -57,7 +57,9 @@ repair offer (never continue on guessed mechanics):
    `attestation.acceptable_differences` (provider-assigned ids, timestamps).
    Any other mismatch is drift — surface it now.
 5. **Smoke scenario**: run one Cekura scenario through `simulate.runner`
-   against the deployed target; confirm it connects and produces a transcript.
+   against the deployed target (label it: `name` =
+   `[selfimprove:<session_id>] setup smoke`); confirm it connects and
+   produces a transcript.
 6. **Trace correlation**: confirm the smoke run's trace/metadata points at the
    identity captured in step 3, using `attestation.trace_correlation.fields`
    compared against the declared `identity_source` (the eval hit the thing we
