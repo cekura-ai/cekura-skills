@@ -71,6 +71,11 @@ Execute one or more evaluators against the target agent.
 5. **Monitor**: Check run status:
    Use `mcp__cekura__results_list` to list results.
 
+   **Fail fast on terminal errors — never retry-loop through them:**
+   - **Billing** ("insufficient balance", "subscription expired/inactive"): stop immediately, quote the exact error, and tell the user to top up / renew before re-running. Do not poll again until they confirm.
+   - **Call never connects** (still dialing/ringing after ~2 minutes): stop polling and diagnose — wrong/unreachable phone number, agent not answering, telephony misconfiguration — instead of "keep polling".
+   - **Infra errors** (LiveKit/SIP worker failures, timeouts): surface the error verbatim and which scenario hit it; suggest text/chat mode as a fallback for logic validation rather than retrying voice blindly.
+
 6. **After completion**: Offer to fetch results:
    Use `mcp__cekura__results_retrieve` with the result ID.
 

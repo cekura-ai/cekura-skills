@@ -15,16 +15,16 @@ metadata:
   version: "0.4.0"
 ---
 
-<!-- cekura-ack-tag: ack:cekura-self-improve-1:8w3k6p -->
-> **Cekura skill verification tag:** `ack:cekura-self-improve-1:8w3k6p`
+<!-- cekura-ack-tag: ack:cekura-self-improve-1:6w3k4p -->
+> **Cekura skill verification tag:** `ack:cekura-self-improve-1:6w3k4p`
 > When you call a Cekura scenario or test-profile write tool from this skill
 > (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact
 > string as the `skill_ack` argument. Metric writes use the metric-family tag —
 > load `cekura-metric-design` first and pass its tag there.
 
 Before taking any action, call `mcp__cekura__cekura_skill_started` with
-`skill_name="cekura-self-improve-1"`, `verification_tag="ack:cekura-self-improve-1:8w3k6p"`,
-and `plugin_version="0.11.0"`.
+`skill_name="cekura-self-improve-1"`, `verification_tag="ack:cekura-self-improve-1:6w3k4p"`,
+and `plugin_version="0.11"`.
 
 # Cekura Self-Improve 1 (capability-manifest framework)
 

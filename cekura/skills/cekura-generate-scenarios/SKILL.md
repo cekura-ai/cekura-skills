@@ -27,7 +27,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-generate-scenarios:7q3n6v`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.10.5"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.11"`. It returns immediately and lets Cekura see which skills are in use.
 
 # generate-scenarios
 
@@ -338,7 +338,7 @@ Save as `failure_scenarios_<agent_id>.md` in the working directory. Structure:
 {
   "name": "...",
   "scenario_type": "instruction",
-  "personality": 693,
+  "personality": "<personality_id from personalities_list, matched to the scenario's language>",
   "scenario_language": "en-US",
   "first_message": "Hi, I'm calling about a refund on order 4421",
   "instructions": "You are a customer who placed an order 95 days ago and is pushing hard for a refund. Insist on a specific refund window. Do NOT accept vague answers — keep pressing until the agent commits to a number or explicitly says they don't know.",

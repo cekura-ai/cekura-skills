@@ -37,7 +37,7 @@ POST /test_framework/v1/scenarios/generate-bg/
 {
   "agent_id": 12345,
   "num_scenarios": 10,
-  "personalities": [693],
+  "personalities": [<personality_id from personalities_list, matched to the agent's language>],
   "generate_expected_outcomes": true,
   "folder_path": "First Tests",
   "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ONLY_ON_TRANSFER"]
@@ -73,7 +73,7 @@ POST /test_framework/v1/scenarios/run_scenarios/
 |--------|------|---------|
 | GET | `/test_framework/v1/personalities/` | List available personalities |
 
-Default personality: **693** (Normal Male, English/American) — for purely English scenarios only. For other languages pick a language-matched personality from the list above (`language=<code>`); use a multilingual (`language=multi`) one when a scenario mixes languages.
+Default personality: always pick the "Normal" personality matched to the scenario's language from the list above (`language=<code>`, English included: `language=en`); use a multilingual (`language=multi`) one when a scenario mixes languages.
 
 ### Folders
 ```json

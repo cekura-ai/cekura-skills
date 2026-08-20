@@ -312,7 +312,7 @@ POST /test_framework/v1/scenarios/generate-bg/
 {
   "agent_id": <id>,
   "num_scenarios": 10,
-  "personalities": [693],
+  "personalities": [<personality_id from personalities_list, matched to the agent's language>],
   "generate_expected_outcomes": true,
   "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"],
   "extra_instructions": "Focus on: scheduling workflows, error handling, edge cases",
@@ -323,10 +323,19 @@ POST /test_framework/v1/scenarios/generate-bg/
 Poll progress at `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.
 
 **Gotchas:**
-- `personality` is required (400 without it). Default: 693 (Normal Male, English) — ONLY for purely English scenarios; for other languages pick a language-matched personality via personalities_list (language=<code>), or a multilingual (language=multi) one when languages are mixed
+- `personality` is required (400 without it). Default: the "Normal" personality matched to the scenario's language — always look it up via personalities_list (language=<code>, English included: language=en; language is the only filter needed), or a multilingual (language=multi) one when languages are mixed. If the language-matched personality returns "Personality is not enabled", enable it for the project or create/fork a Normal personality in the target language and use it (scenario_language is coupled to the personality's language by design — mismatches are rejected; multilingual voice models handle any supported language)
 - Generation can partially complete — check progress, generate remainder in smaller batch
 - `scenario_language` defaults to "en" regardless of content — PATCH to correct code after generation
 - Auto-gen may add greetings to `first_message` instead of exact questions — PATCH after
+
+**Generation reliability rules:**
+- HARD GATE: never call the generate endpoint before the user approves the plan — even when the request names an agent and a count, and especially when it says "first ask me" / "show the plan first". Only an explicit "proceed autonomously" skips the gate.
+- Verify inputs are readable (attached files, KB, agent prompt) before planning. An unreadable source means STOP and ask for a usable copy — even in autonomous mode ("proceed autonomously" covers defaults, not substituting a different source for the one the user supplied); a stand-in needs an explicit user OK. When scenarios come from a file, count its items and confirm if it differs from the requested count.
+- "N per language" requests = one generation batch per language with that language's personality.
+- Poll every ~10s, report progress every ~30s; if 0/N after ~5 min, stop — this overrides "proceed autonomously" (the autonomous action IS the stall response, never another wait on the same job): retry once with a batch ≤5; if that also stalls at 0, stop with a clear report. Report elapsed time and counts from the actual progress data — never estimate or inflate elapsed time.
+- Post-generation verification before claiming success: count matches (generate remainder if short); 1:1 diff vs the approved plan (no merged/dropped cases); language of first_message/instructions matches the request and first_message is literal caller dialogue (not a meta-instruction); instructions are caller-side first person (roles not inverted); every scenario has expected_outcome_prompt, the right tools, and baseline metrics.
+- Run failures: stop immediately on billing errors (insufficient balance / expired subscription) and quote them; stop dialing waits after ~2 min and diagnose; surface LiveKit/SIP errors verbatim instead of retrying blindly.
+- Provider credential failures during agent import: max two attempts with distinct keys, then stop with the provider's exact error — never create the agent from a guessed prompt.
 
 ## Test Profiles — Always Use Them
 
@@ -386,7 +395,7 @@ Create mock tools with input/output mappings. **Critical rules:**
 1. **Tool strategy** — A (client-side staging), B (Cekura mock tools), or C (no mocks)?
 2. **Test profile** — Show the full `information` dict. For A: match client's staging data formats. For B: derive FROM mock tool outputs. For C: caller identity only.
 3. **Run mode** — Default to text/chat (cheapest, same logic coverage). Voice only when explicitly needed.
-4. **Personality** — Default: 693 (Normal Male English) ONLY for purely English scenarios; use a language-matched personality for non-English scenarios and a multilingual (language=multi) one for mixed-language scenarios. Note exceptions but don't change without asking.
+4. **Personality** — Default: the "Normal" personality matched to the scenario's language (look it up via personalities_list, English included) and a multilingual (language=multi) one for mixed-language scenarios. Note exceptions but don't change without asking.
 5. **Adaptive vs conditional** — Default to adaptive. Only use conditional actions for explicit unit-test needs.
 6. **Folder** — Name the folder.
 7. **Metrics** — Confirm baseline metrics attachment.
@@ -509,7 +518,7 @@ When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the 
 
 ### XML Tags (fixed_message:true only)
 
-Sibling tags can be combined with text and run left to right. Do not nest tags; `<ivr>` and `<voicemail>` remain whole-action exceptions.
+Sibling tags can be combined with text and run left to right. Do not nest tags, except inside a regional `<voice ...>...</voice>` block; `<ivr>` and `<voicemail>` remain whole-action exceptions.
 
 | Tag | Behavior |
 |-----|---------|
@@ -523,7 +532,7 @@ Sibling tags can be combined with text and run left to right. Do not nest tags; 
 | `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be action_followup AND at start of action string.** |
 | `<speed ratio="N" />` | Speech rate 0.8–1.2. Must start action. |
 | `<volume ratio="N" />` | Volume 0–2. Must start action. Cartesia only. |
-| `<voice provider="P" id="X" model="Y" />` | Switch the testing agent's TTS voice from here on — **the only way to put a second speaker in one call** (caller hands the phone over, supervisor takes over). `provider` + `id` required and must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). Provider cannot change mid-call. |
+| `<voice provider="P" id="X" model="Y" />` | Switch the testing agent's TTS voice persistently — **the only way to put a second speaker in one call**. Add `text="..."` for a temporary regional voice, or wrap regional text in `<voice ...>...</voice>` (supports nested inline tags); the prior voice resumes afterward. `provider` + `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). Provider cannot change mid-call. |
 | `<send_sms text="..." />` | Trigger an SMS for SMS-driven workflows |
 | `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent; `t` required, `d` optional, `fixed_message: true` |
 | `<network_simulation packet_loss="N" />` | Only `packet_loss` supported — `jitter`/`latency` are ignored. |

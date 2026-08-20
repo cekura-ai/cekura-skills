@@ -1,28 +1,32 @@
 ---
 name: cekura-eval-design
 description: >
-  Use when the user asks to "create an evaluator", "create evals", "create a scenario",
-  "write a test scenario", "design a test case", "test my agent", "build eval coverage",
+  Use when the user asks to "generate (test) scenarios", "generate evaluators",
+  "create an evaluator", "create evals",
+  "create a scenario", "write a test scenario", "design a test case", "test my agent",
+  "build eval coverage",
   "plan a test suite", "create red team tests", "set up test profiles", "configure conditional
   actions", "write a conditional action evaluator", "build a deterministic test", "design an
   IVR test", "IVR navigation test", "write a unit test for a voice agent", "build a regression
   test", "scripted scenario", "scripted voice test", "structured evaluator", "exact flow test",
-  "sequential conditions", "fixed sequence test", or "run evals". Covers individual evaluator design, suite coverage
-  strategy, test profiles, mock-tool data design, conditional actions (deterministic / unit
-  test / regression / IVR navigation flows), and best practices for workflow / red-team /
-  edge-case / deterministic test types.
+  "sequential conditions", or "run evals". Also for debugging how the
+  testing agent speaks — "why did it read the number as a word", "make it spell digits",
+  "wrong language" — via scenario_language, personality, and XML tags. Covers evaluator
+  design, coverage strategy, test profiles, mock-tool data, conditional actions
+  (deterministic / unit test / regression / IVR flows), and workflow / red-team / edge-case
+  best practices.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.8.0"
+  version: "0.9.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-eval-design:7k3m4q -->
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.10.5"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.11"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Eval Design
 
@@ -235,7 +239,7 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the **only** wo
 
 3. **Auto-gen may add greetings to `first_message`** — When `extra_instructions` specify exact verbatim questions, some scenarios get a greeting (e.g., "Здравствуйте") as the `first_message` while the actual question is in instructions as a follow-up. PATCH `first_message` after generation.
 
-4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Always try the language-matched personality first (via `personalities_list` with `language=<code>`, or a multilingual `language=multi` personality when the scenario mixes languages); only on that error fall back to personality 693 (Normal Male English) and rely on `scenario_language` to drive TTS and pronunciation. See "Checking Available Personalities" under the Personality section.
+4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Always try the language-matched personality first (via `personalities_list` with `language=<code>` — the only filter needed — or a multilingual `language=multi` personality when the scenario mixes languages); on that error, remember `scenario_language` is **coupled to the personality's language by design** (mismatched creates are rejected — don't work around it): enable the predefined one for the project, or create/fork a Normal personality in the target language (`personalities_create` — multilingual voice models handle any supported language) and use it. See "Checking Available Personalities" under the Personality section.
 
 5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.
 
@@ -247,11 +251,14 @@ The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the **only** wo
 - Interruption level (how often the caller interrupts)
 - Background noise (office, street, etc.)
 - Speech speed and patterns
+- Idle/stall behavior — seconds of silence before the testing agent prompts "Are you still there?" (`message_plan.idle_timeout_seconds`, default 10) and how many times it prompts before giving up (`message_plan.idle_message_max_spoken_count`, default 3)
 
 **Wrong:** putting `"speak in a mumbling voice and interrupt frequently"` in the instructions.
 **Right:** select or create a personality with the desired interruption level and voice characteristics.
 
 Instructions cannot alter actual speaking style — they only affect what the testing agent says, not how it sounds.
+
+**When the user wants the testing agent to stay silent** — through a long lookup, hold music, or a question it should not answer — that is the idle timeout, not an instruction. Adding "remain silent" or "do not respond" anywhere in the instructions, expected outcome, or the agent's description has no effect: the idle prompt fires anyway. Fix it on the personality with `personalities_partial_update` — for a pre-defined one, which is shared and cannot be edited, `personalities_fork_create` first and patch the copy, or, for a bounded pause in one step of a conditional-actions scenario, use `<hold time="Xs" />` — the idle timer is paused for the hold's duration, so a hold needs no matching timeout change. Full recipe and the symptom→cause table: **`references/choosing-personality.md`**.
 
 ### Picking the Right Personality
 
@@ -340,7 +347,7 @@ All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`)
 - **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
 - **`<spell>TEXT</spell>`** wraps text to spell letter by letter (good for IDs, account numbers).
 - **`<speed ratio="N" />`** range **0.8–1.2**; **`<volume ratio="N" />`** range **0–2** (Cartesia voices only) — both must be at the **start** of the action.
-- **`<voice provider="P" id="X" model="Y" />`** switches the testing agent's TTS voice from that point on — **the only way to put a second speaker in one call** (caller hands the phone over, supervisor takes over). `provider` and `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). The provider itself cannot change mid-call. Prefer this over an attached audio clip when you only need a different *voice* — a recording also fixes the dialogue.
+- **`<voice provider="P" id="X" model="Y" />`** switches the testing agent's TTS voice persistently — **the only way to put a second speaker in one call**. Add `text="..."` for a temporary regional voice, or use `<voice ...>...</voice>` when regional text contains inline tags; the prior voice resumes after the region. `provider` and `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric; `model` is optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`); the provider itself cannot change mid-call. Do not combine `text` with the block form. Prefer this over an attached audio clip when you only need a different *voice* — a recording also fixes the dialogue.
 - **`<network_simulation packet_loss="N" />`** — only `packet_loss` is supported.
 
 ### Worked example — Linear verification flow
@@ -368,7 +375,7 @@ The reference is `references/conditional-actions.md`. Read it once at the start 
 
 ## Pre-Creation Checkpoint — Confirm Before Building
 
-**Before creating scenarios or generating them, always pause and confirm key decisions with the user.** Do not assume defaults — present your plan and get explicit approval. AI agents that skip this step make costly assumptions that waste credits and require rework.
+**Before creating scenarios or generating them, always pause and confirm key decisions with the user.** This is a hard gate: no `scenarios_create` / `scenarios_generate_bg` call until the user has replied approving the plan — even when the first message already names an agent and a count, and *especially* when it says "first ask me" or "show me the plan". The only exception is an explicit "proceed autonomously / don't ask me" from the user. Do not assume defaults — present your plan and get explicit approval. After generation, run the verification pass in `references/auto-generation.md` § Reliability Protocol (count reconciliation, language/role checks, expected outcomes, tools).
 
 ### What to Confirm
 
@@ -383,7 +390,7 @@ Present a checkpoint like this before proceeding:
 
 3. **Run mode** — "Default to text/chat for the first pass? It's cheapest, and since tools are mocked the results are the same as voice for logic validation." Recommend text unless the user specifically needs voice testing (latency, interruption handling, TTS quality).
 
-4. **Personality** — For **conditional-actions** scenarios, default to the normal personality for the target language (693 ONLY for purely English scenarios; for other languages pick the language-matched "Normal" personality via `personalities_list language=<code>`, or a multilingual `language=multi` one when the scenario mixes languages) — behavioral logic is in the conditions, not the personality. For **behavioral** scenarios, propose a mix: ~60% normal, ~20% challenging (interrupter/background noise), ~10% non-native, ~10% edge cases. Confirm with the user before using anything other than the normal default. See "Picking the Right Personality" above.
+4. **Personality** — For **conditional-actions** scenarios, default to the "Normal" personality for the scenario's language — always look it up via `personalities_list language=<code>` (English included; when several Normal variants exist, prefer the plain no-background-noise one — "Normal Male …", not the "Bg Noise" variants — male when both genders exist, unless the persona implies otherwise), or pick a multilingual `language=multi` one when the scenario mixes languages — behavioral logic is in the conditions, not the personality. For **behavioral** scenarios, propose a mix: ~60% normal, ~20% challenging (interrupter/background noise), ~10% non-native, ~10% edge cases. Confirm with the user before using anything other than the normal default. See "Picking the Right Personality" above.
 
 5. **Authoring mode** — Default is **behavioral instructions**. Switch automatically when the user's request used a direct trigger phrase ("conditional actions", "structured", "scripted", "deterministic test", "regression test", "compliance test", "exact flow", "fixed sequence"). Ask the user when the scenario mentions a tag-supported feature (voicemail, IVR, DTMF, hold, interruption, network simulation, background noise) without specifying a mode. See "Choosing Authoring Mode" above.
 

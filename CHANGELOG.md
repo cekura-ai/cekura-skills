@@ -59,6 +59,81 @@ All notable changes to the Cekura plugin. Versions follow
   (provider-managed, runtime-created, custom-mocks). Collect/Debug/Reproduce/
   Regression semantics are reused from `cekura-self-improving-agent`.
 
+## 0.10.12 — 2026-08-18
+
+Generation reliability, driven by production call-log triage (18 conversations)
+and validated with recorded E2E runs plus a repeated-trial failure hunt
+(cekura-ai/cekura-skills#138).
+
+- **Added** a hard confirmation gate to the pre-creation checkpoint: no
+  `scenarios_generate_bg`/`scenarios_create` before the user approves the plan
+  (only an explicit "proceed autonomously" skips it). Unreadable source files
+  override autonomy — stop and ask, never generate from a stand-in.
+- **Added** § Reliability Protocol to the eval-design auto-generation
+  reference: readable-input checks, source-count reconciliation, per-language
+  generation batches, ~10s polling with ~30s progress reports stating real
+  elapsed time, a 5-minute 0/N stall rule (one smaller retry, then a clear
+  stop — overrides autonomous mode), a 4-minute frozen-short-of-total rule,
+  and post-generation verification (count, 1:1 plan diff, language/roles,
+  expected outcomes, tools, metrics).
+- **Added** "generate scenarios" trigger phrasings to the eval-design skill
+  description — the most common generation wording previously never loaded
+  the skill.
+- **Added** fail-fast rules to `run-evals` (billing errors, capped dialing
+  waits, verbatim LiveKit/SIP errors) and to `create-agent` phase 5 (max two
+  provider-credential attempts; never build an agent on a guessed prompt).
+
+## 0.10.11 — 2026-08-18
+
+Adds **GitHub Copilot** as a natively supported platform. Purely additive — the
+Claude, Codex, Cursor, Gemini, and `npx skills add` paths are untouched.
+
+- **Added** `.github/plugin/marketplace.json` (root) and
+  `cekura/.github/plugin/plugin.json` — a Copilot CLI plugin registry and
+  manifest (Open Plugin Spec) resolving into the same `cekura/` plugin root, so
+  `copilot plugin marketplace add cekura-ai/cekura-skills` +
+  `copilot plugin install cekura@cekura-skills` installs all 12 skills and the
+  Cekura MCP server (OAuth on first tool use).
+- **Why separate manifests:** Copilot CLI falls back to `.claude-plugin/` for
+  both marketplace and plugin manifests, so it would have half-worked off
+  Claude's files. Its own `.github/plugin/` files rank higher in Copilot's
+  resolution order, which keeps the two platforms from constraining each other.
+- **Deferred:** slash commands (Copilot plugins have no equivalent) and
+  subagents (Copilot only discovers `agents/*.agent.md`; ours are Claude-style
+  `*.md`). Copilot hooks (camelCase `sessionStart`, `version: 1`) are not
+  shipped, so there is no daily auto-update hook on Copilot yet — use
+  `copilot plugin update cekura`.
+- **Changed** `validate_skills.py` to treat the Copilot manifest as a seventh
+  version-bearing surface, assert its MCP URL matches the other four, and
+  reject a `version` on either marketplace's plugin entries;
+  `scripts/bump_version.py` now rewrites it too.
+- **Documented** the Copilot CLI install, the `.github/skills/` path for the
+  Copilot coding agent / code review / IDE extensions
+  (`npx skills add ... --agent github-copilot --output .github/skills`), and a
+  Copilot row in the platform compatibility table. The coding agent and code
+  review don't support OAuth remote MCP, so those surfaces need the
+  `X-CEKURA-API-KEY` credential — noted in the README.
+
+## 0.10.10 — 2026-08-12
+
+Release-tooling change; no skill content changes.
+
+- **Changed** the inline `plugin_version="..."` telemetry tags in skills,
+  bundles, and commands to carry **major.minor only** (`"0.10"`). A patch
+  release now rewrites 6 files instead of 21 — the tags only change on a
+  minor/major bump. `validate_ack_tags.py` compares them against the
+  major.minor of `package.json`. Requires the MCP server to compare versions
+  at the precision reported (cekura-ai/docs#872), otherwise every install on
+  the latest patch would get a spurious update nudge.
+- **Added** `scripts/bump_version.py` — one command rewrites all six
+  version-bearing manifests (and the telemetry tags when major.minor moves),
+  then runs the validators. Never hand-edit versions across files.
+- **Added** `scripts/check_version_bump.py`, replacing the inline CI gate. The
+  version must now be strictly greater than the one on `origin/main` at CI
+  time, not merely different from the PR's merge base — two PRs branched off
+  the same release could otherwise both bump to the same number, and whichever
+  merged second shipped content under an already-published version.
+
 ## 0.10.3 — 2026-08-07
 
 - **Added** the `<voice provider="P" id="X" model="Y" />` conditional-action tag

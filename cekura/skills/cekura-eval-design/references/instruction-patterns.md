@@ -43,6 +43,8 @@ Sole exception — the **volunteer pattern**: "when asked <guaranteed question>,
 
 Never use "Wait", "Listen", "Remain silent", "Stay silent", "Mumble", "Interrupt", "Pause", or "Acknowledge" in any step. Non-verbal behaviors — silence, interruption, background noise, speaking style — are **personality attributes**, not steps. Do not create steps for passively receiving information (hearing a wait time, hearing a goodbye). Hanging up IS allowed as a step.
 
+Dropping the step is not the whole fix. If the user actually needs the testing agent to stay quiet, the silence is bounded by the personality's idle timeout (default 10s), after which it prompts "Are you still there?" regardless of what the instructions say. For a bounded pause in one step of a conditional-actions scenario use `<hold time="Xs" />`, which pauses the idle timer for its duration; for open-ended silence, or a behavioral scenario with no `conditions[]` to hang a tag on, raise `message_plan.idle_timeout_seconds` on a personality they own — see `references/choosing-personality.md`.
+
 Never script intra-utterance timing ("interrupt before the disclaimer finishes") — sub-utterance timing is not schedulable; every trigger anchors to a completed turn. Want interruptions? Pick an interruptive personality.
 
 ### Action closure — every graded behavior needs a causing step
