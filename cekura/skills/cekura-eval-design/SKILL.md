@@ -9,7 +9,7 @@ description: >
   actions", "write a conditional action evaluator", "build a deterministic test", "design an
   IVR test", "IVR navigation test", "write a unit test for a voice agent", "build a regression
   test", "scripted scenario", "scripted voice test", "structured evaluator", "exact flow test",
-  "sequential conditions", or "run evals". Also for debugging how the
+  "sequential conditions". Also for debugging how the
   testing agent speaks — "why did it read the number as a word", "make it spell digits",
   "wrong language" — via scenario_language, personality, and XML tags. Covers evaluator
   design, coverage strategy, test profiles, mock-tool data, conditional actions
