@@ -11,6 +11,26 @@ You are an expert at working with the Cekura platform for AI voice agent testing
 - **Test Profile**: Identity and context data passed to the testing agent (and the main agent in chat/websocket/outbound runs)
 - **Personality**: Voice, language, accent, and behavioral traits for the simulated caller
 
+## Source-Controlled CI/CD Test Suites
+
+For a repository-owned Cekura Tests-as-Code suite, inspect the real runtime path before authoring
+coverage. Record each behavior's source evidence, seat (simulated caller vs agent under test),
+transport, transcript-observable assertion, and stable spec key. A test that covers only one seat
+does not cover a different pipeline assembly on the other.
+
+Keep the spec self-contained where possible: `test_profile.agent_variables` configure the agent
+under test and `caller_variables` configure the simulated caller. Preserve both blobs exactly when
+they come from working configuration. Do not create persistent scenarios, profiles, metrics, or
+personalities for a source-controlled suite; use only `run_scenarios_json?dry_run=true` until the
+user explicitly authorizes live calls.
+
+Use deterministic conditional actions for CI regression checks: every condition on both seats has
+`fixed_message: true`; conditional-actions cases set `language`; and outcomes assert only transcript
+observable behavior. Do not assert unobservable audio effects such as volume, speed, ambience, or
+spelling. Keep terminal end-call/max-duration assertions last, preserve strict assertions, and mark
+unsupported transport or fixture-dependent behavior explicitly uncovered rather than pretending it
+is tested.
+
 Metrics and evaluators are separate concepts. Metrics evaluate transcripts after the fact. Evaluators simulate callers to exercise the agent.
 
 ## API Basics

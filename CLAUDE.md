@@ -131,7 +131,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-metric-improvement` | Metric improvement through feedback iteration |
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
-| `cekura-infra-test-suite` | Generate a compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
+| `cekura-infra-test-suite` | Generate or update source-controlled JSON Tests-as-Code CI/CD suites from a voice-agent repository |
 | `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — flagged calls, failure rates, outcome distribution |
 | `cekura-generate-scenarios` | Cluster flagged production failures and create one evaluator scenario per failure mode |
 

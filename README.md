@@ -100,7 +100,7 @@ Twelve skills, scoped to specific Cekura workflows:
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
-| `cekura-infra-test-suite` | "Create CI/CD tests for my voice bot / test my voice AI infrastructure / E2E test my pipecat bot" |
+| `cekura-infra-test-suite` | "Create a committed JSON CI/CD suite / add Tests-as-Code to my voice-agent repo / update test coverage for this PR" |
 | `cekura-flag-call-log-failures` | "Analyze the last N calls for issues / what % of calls have <problem>" |
 | `cekura-generate-scenarios` | "Create scenarios from failed calls / regression-test the agent on prod issues" |
 
@@ -485,7 +485,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
-| `cekura-infra-test-suite` | Generating a CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF, local bot orchestration |
+| `cekura-infra-test-suite` | Creating or updating source-controlled Cekura JSON Tests-as-Code suites for a voice-agent repository |
 | `cekura-flag-call-log-failures` | Triaging recent production call logs against KPIs — failure rates + outcome distribution |
 | `cekura-generate-scenarios` | Turning flagged production failures into regression evaluator scenarios |
 
