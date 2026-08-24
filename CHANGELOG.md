@@ -35,6 +35,35 @@ into `references/discovery.md`, and the parts that planned dashboard folders,
 evaluator creation and scenario-id run scripts are gone with the output they
 served. npx users: run `npx skills add cekura-ai/cekura-skills --all`.
 
+**`cekura-infra-test-suite` now writes expected outcomes to the judge's
+contract.** Two end-to-end tests — one Pipecat repo, one LiveKit repo, fresh
+agent each time — produced 14 cases whose turn lists were flawless and whose
+judge criteria broke five rules in
+`cekura-eval-design/references/expected-outcomes.md`, in all 14. The cause was a
+missing pointer: step 4 routed to the conditional-actions reference, which
+teaches turn syntax, and never to the expected-outcomes reference, which teaches
+the criteria. The skill got what it asked for.
+
+Step 4 now names that reference and states the rules a CI suite breaks most
+often: every statement starts with "The main agent should", one per line, 2–6
+atomic lines; "main agent" and "testing agent" are the only speaker labels; no
+test-setup rationale; no subjective descriptors; no grading of farewells or call
+termination unless that is the case's declared point; and every statement must
+be fired by a written turn, since one whose trigger never occurs returns
+`blocked` on every run.
+
+`scripts/lint_suite.py` enforces the mechanical half as warnings, so `--strict`
+catches them in CI: speaker-label leakage, statements that are narrative rather
+than "The main agent should…", subjective descriptors, embedded test rationale,
+and closing/termination grading outside a case that declares itself about it.
+The bundled `examples/cekura.tests.json` is rewritten to the contract and lints
+clean under `--strict`.
+
+Also documents that `expected_outcome` is scored only when the Expected Outcome
+metric is attached, and that an infrastructure suite should attach the agent's
+enabled numeric metrics — latency, interruption — which measure what a judge
+reading a transcript cannot.
+
 **Version surfaces resynced.** The inline `plugin_version` telemetry tags had
 drifted a minor behind the manifests, which `bump_version.py` cannot repair on
 its own — it only rewrites tags matching the current major.minor. All 14 are

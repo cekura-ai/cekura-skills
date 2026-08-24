@@ -81,14 +81,23 @@ an already-executed condition and you have traded a replay loop for a re-match l
 The repeat is an echo-absorption tripwire: a pipeline that dedupes or swallows a repeated user turn
 fails here and nowhere else.
 
-## 5. End-call discipline
+## 5. Premature disengagement
 
 | | |
 |---|---|
-| **Shape** | caller says "that's everything I needed" **without** a goodbye (agent must NOT hang up) → caller then asks one more question (must be answered) → real goodbye (one farewell, then the agent ends the call) |
-| **Sequence asserts** | no premature end; exactly one farewell; no duplicate consecutive agent lines |
-| **Threshold asserts** | the exact closing phrase from the prompt |
-| **Drop if** | the agent can never end a call itself |
+| **Shape** | caller signals completion — "that's everything I needed" — **without** a goodbye → caller then asks one more real question → caller closes |
+| **Sequence asserts** | the agent answers the extra question rather than treating the completion signal as the end; no agent turn repeats the previous agent turn |
+| **Threshold asserts** | — |
+| **Drop if** | never |
+
+The gradeable behavior is **whether the agent keeps engaging**, and that holds whether or not the
+agent can hang up. Do not grade the farewell wording, who ended the call, or the call-end reason:
+those are structural, and the judge rules exclude them. An agent *with* an end-call tool can also
+assert the agent-driven end here, because then termination is this case's declared point — but that
+is the extra half, not the case.
+
+The second assertion catches the filler loop: an LLM retry path that emits the same short line
+("Okay.") on consecutive turns reads on a call as a hung agent.
 
 Also catches the "Okay." loop — an agent repeating a filler line to itself.
 

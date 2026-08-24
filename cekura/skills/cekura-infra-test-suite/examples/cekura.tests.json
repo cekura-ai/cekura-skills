@@ -9,7 +9,9 @@
     "language": "en",
     "max_duration": 180,
     "frequency": 1,
-    "metrics": ["expected_outcome"]
+    "metrics": [
+      "expected_outcome"
+    ]
   },
   "scenarios": [
     {
@@ -17,7 +19,10 @@
       "name": "Interruption gauntlet",
       "type": "conditional_actions",
       "language": "en",
-      "tags": ["ci", "turn-taking"],
+      "tags": [
+        "ci",
+        "turn-taking"
+      ],
       "conditional_actions": {
         "role": "You are Priya, calling to ask about opening hours and then to book a slot.",
         "conditions": [
@@ -58,14 +63,17 @@
           }
         ]
       },
-      "expected_outcome": "Checks, in order:\n1. The agent answers the opening-hours question.\n2. BACKCHANNEL: the caller says a single word (\"mhm\") while the agent is speaking. The agent must NOT stop — it finishes the sentence it was saying. If it abandons its turn here, this check FAILS.\n3. DECISIVE INTERRUPT: the caller then says \"stop — wait\". The agent must stop speaking promptly and hand the turn back; it must not talk over the caller or resume the abandoned sentence afterwards.\n4. RECOVERY: the agent answers the booking question that follows, without asking the caller to repeat it.\n5. No literal tag text (for example \"<interruption\") appears anywhere in what either party says."
+      "expected_outcome": "The main agent should answer the testing agent's question about opening hours.\nThe main agent should keep speaking through the testing agent's single-word backchannel instead of abandoning its turn.\nThe main agent should stop speaking and hand the turn back when the testing agent cuts in with a two-word instruction to stop.\nThe main agent should answer the booking question that follows without asking for it to be repeated.\nThe main agent should never speak literal tag text such as `<interruption`."
     },
     {
       "key": "idle-escalation-to-hangup",
       "name": "Idle escalation to hangup",
       "type": "conditional_actions",
       "language": "en",
-      "tags": ["ci", "idle-timer"],
+      "tags": [
+        "ci",
+        "idle-timer"
+      ],
       "conditional_actions": {
         "role": "You are a caller who goes quiet after the first question and never speaks again.",
         "conditions": [
@@ -92,18 +100,26 @@
           }
         ]
       },
-      "expected_outcome": "The caller falls silent mid-conversation and never speaks again. Checks:\n1. The agent prompts the silent caller at least once, in words that ask whether they are still there.\n2. The prompts escalate rather than repeating one line forever, and the agent does not invent an answer on the caller's behalf.\n3. TERMINAL: the agent ends the call itself after its final prompt. The call must not simply run to the time limit with dead air. If the call ends only because the duration cap was reached, this check FAILS."
+      "expected_outcome": "The main agent should prompt the testing agent after the silence, asking whether they are still on the line.\nThe main agent should change its wording across successive prompts rather than repeating one line.\nThe main agent should not answer the booking question on the testing agent's behalf.\nThe main agent should end the call after its final prompt rather than leaving the line open to the duration limit."
     },
     {
       "key": "refund-happy-path",
       "name": "Refund happy path",
       "instructions": "You are {{test_profile.user_name}}. Order {{test_profile.order_id}} arrived damaged and you want a refund. Be polite but firm, and give the order number when asked.",
-      "expected_outcome": "The agent verifies the order number, acknowledges the damage, and confirms a refund. It does not promise a timeline it was not given.",
-      "tags": ["ci", "workflow"],
+      "expected_outcome": "The main agent should confirm the order number as `ORD-4471`.\nThe main agent should acknowledge that the order arrived damaged.\nThe main agent should confirm that a refund will be issued.\nThe main agent should not state a refund timeline.",
+      "tags": [
+        "ci",
+        "workflow"
+      ],
       "test_profile": {
         "name": "damaged-order-refund",
-        "agent_variables": { "order_id": "ORD-4471" },
-        "caller_variables": { "user_name": "Maria", "order_id": "ORD-4471" }
+        "agent_variables": {
+          "order_id": "ORD-4471"
+        },
+        "caller_variables": {
+          "user_name": "Maria",
+          "order_id": "ORD-4471"
+        }
       }
     }
   ]

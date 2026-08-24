@@ -207,13 +207,48 @@ python3 cekura/lint_suite.py cekura.tests.json --strict
 It mirrors the server's own tag validators, so a clean lint means the dry run fails only for
 reasons a local check genuinely cannot see — an unenabled metric, an agent that lacks the channel.
 
-Every `expected_outcome` must be narrow and transcript-verifiable: required spoken content, absence
-of leaked literal tag text, turn order, tool-visible outcome when it appears in the transcript, or
-the terminal end of a call. Terminal assertions such as end-call and max-duration go last. Do not
-weaken an assertion to turn a real failure green.
+### The expected outcome is the judge's prompt — write it to that contract
+
+`expected_outcome` is not a note to the reader. An LLM judge reads the call transcript and scores
+each statement in it independently as `yes`, `no`, or `blocked`. A criterion written as narrative
+prose scores worse than the same criterion written to the contract, so **read
+`cekura-eval-design/references/expected-outcomes.md` before writing the first one.** These are its
+rules that a CI suite breaks most often:
+
+- **Every statement starts with "The main agent should", one statement per line.** Not a numbered
+  essay, not a paragraph of prose. 2–6 atomic lines per case; never pad to a count.
+- **"main agent" and "testing agent" are the only speaker labels.** Never "the agent", "the bot",
+  "the caller", "the user", or "the assistant" — the judge reads a transcript with labelled
+  speakers, and renaming them in the criteria costs accuracy on every run.
+- **No test-setup rationale.** Why the case is built this way, what the tag does, what the
+  threshold is — none of it belongs here. The judge should be told what to look for, not why you
+  are looking.
+- **No subjective descriptors** — "promptly", "briefly", "warmly", "clearly", "appropriately".
+  Replace each with what the main agent observably says or does.
+- **No grading of farewells, or who ended the call**, unless termination is the declared point of
+  that case. What is *always* in scope, and is a different thing, is whether the main agent keeps
+  engaging: when the testing agent signals completion ("that's everything I needed") and then asks
+  one more question, an agent that has already disengaged fails a legitimate check. Grade the
+  answering, never the goodbye.
+- **Every statement must be fired by a written turn.** A statement whose trigger the script never
+  produces comes back `blocked` on every run — it is dead weight, not a strict test. Where the turn
+  list genuinely permits two acceptable behaviors, write one either/or line rather than demanding
+  one of them.
+
+Narrow and transcript-verifiable throughout: spoken content, absence of leaked literal tag text,
+turn order. Do not weaken an assertion to turn a real failure green.
+
+`scripts/lint_suite.py` flags the mechanical half of this — label leakage, missing "The main agent
+should", subjective descriptors, closing grading — as warnings. Run it with `--strict`.
+
+### Metrics
 
 Select metrics by their enabled slug or ID only after checking the target agent. A missing or
 disabled metric is a validation error to fix, not a reason to remove that metric from the case.
+
+`expected_outcome` needs the Expected Outcome metric attached to be scored at all. For an
+infrastructure suite, read the agent's enabled metrics and attach the numeric ones too — latency and
+interruption metrics measure what an LLM judge reading a transcript cannot.
 
 ### 5. Review changes safely
 

@@ -70,6 +70,19 @@ RATIO_TAGS = {
     "volume": (re.compile(r'<volume\s+ratio=(["\'])([0-9]+(?:\.[0-9]+)?)\1\s*/>'), 0.0, 2.0),
 }
 NETSIM_ATTRS = {"packet_loss": (0, 100), "jitter": (0, None), "latency": (0, None)}
+# The judge reads a transcript with labelled speakers; naming them differently in
+# the criteria costs accuracy on every run.
+SPEAKER_LEAK = re.compile(r"\b(the agent|the bot|the caller|the user|the assistant|the AI)\b",
+                          re.I)
+CANONICAL = re.compile(r"\b(main agent|testing agent)\b", re.I)
+OPENER = re.compile(r"^\s*(?:[-*\d.)\s]*)the main agent should\b", re.I)
+SUBJECTIVE = re.compile(r"\b(promptly|briefly|warmly|politely|clearly|naturally|appropriately|"
+                        r"professionally|empathetically|gracefully|smoothly)\b", re.I)
+CLOSING = re.compile(r"\b(farewell|says goodbye|sign-?off|hangs? up|hang ?up|who ended the call|"
+                     r"ends? the call)\b", re.I)
+RATIONALE = re.compile(r"\b(this case|this test|the scenario (?:is|exercises)|exercises the|"
+                       r"checks,? in order|do not (?:check|assert|fail)|not asserted|"
+                       r"the point of this)\b", re.I)
 
 
 class Report:
@@ -287,6 +300,49 @@ def check_conditions(conditions, where, report):
         check_action_tags(action, ctype, spot, report)
 
 
+def check_expected_outcome(text, where, report, is_endcall_case):
+    """The judge scores each statement independently, so the criteria have a shape.
+
+    Rules from cekura-eval-design/references/expected-outcomes.md; all warnings,
+    because the API accepts any string — it is the score that suffers."""
+    lines = [ln for ln in text.split("\n") if ln.strip()]
+
+    leaked = sorted({m.group(0).lower() for m in SPEAKER_LEAK.finditer(text)})
+    if leaked:
+        report.warn(where, "call the speakers \"main agent\" and \"testing agent\" — found "
+                           + ", ".join(repr(x) for x in leaked))
+    elif not CANONICAL.search(text):
+        report.warn(where, 'name the party under test as "the main agent"')
+
+    opened = sum(1 for ln in lines if OPENER.match(ln))
+    if lines and opened < max(1, len(lines) // 2):
+        report.warn(where, f'only {opened} of {len(lines)} lines start with "The main agent '
+                           'should" — the judge scores statements, not narrative')
+
+    if len(lines) == 1 and len(text) > 300:
+        report.warn(where, "one long paragraph — put each statement on its own line so the judge "
+                           "can score them independently")
+    elif len(lines) > 8:
+        report.warn(where, f"{len(lines)} statements — aim for 2–6 atomic lines; a long list is "
+                           "usually narrative that should be trimmed")
+
+    subjective = sorted({m.group(0).lower() for m in SUBJECTIVE.finditer(text)})
+    if subjective:
+        report.warn(where, "subjective descriptors are not binary-verifiable: "
+                           + ", ".join(subjective))
+
+    rationale = sorted({m.group(0).lower() for m in RATIONALE.finditer(text)})
+    if rationale:
+        report.warn(where, "test-setup rationale belongs in the turn list, not in the judge's "
+                           "criteria: " + ", ".join(repr(x) for x in rationale))
+
+    if CLOSING.search(text) and not is_endcall_case:
+        report.warn(where, "leave farewells and call termination out of the criteria entirely "
+                           "unless they are this case's declared point — that means not grading "
+                           "them, and equally not spending a line telling the judge to ignore "
+                           "them")
+
+
 def check_personality(personality, where, report):
     if isinstance(personality, int) and not isinstance(personality, bool):
         return
@@ -379,9 +435,16 @@ def check_case(case, index, defaults, report):
         if not (case.get("instructions") or "").strip():
             report.error(where, f'a "{ctype}" case requires instructions')
 
-    if not (case.get("expected_outcome") or "").strip():
+    outcome = (case.get("expected_outcome") or "").strip()
+    if not outcome:
         report.warn(where, "no expected_outcome — the judge has no criterion, so this case can "
                            "only fail on a metric or a dropped call")
+    else:
+        blob = " ".join([str(key or ""), str(name or ""), " ".join(case.get("tags") or [])]).lower()
+        endcall = any(w in blob for w in ("endcall", "end-call", "hangup", "hang-up",
+                                          "lifecycle", "termination", "closing", "goodbye",
+                                          "farewell"))
+        check_expected_outcome(outcome, where + ".expected_outcome", report, endcall)
 
     if "metrics" in case:
         check_metrics(case["metrics"], where + ".metrics", report)
