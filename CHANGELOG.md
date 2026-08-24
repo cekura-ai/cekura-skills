@@ -4,6 +4,43 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.14.0 — 2026-08-24
+
+**`cekura-infra-test-suite` now produces a Tests-as-Code suite in the
+repository, not dashboard evaluators.** The skill reads the voice-agent
+codebase and writes a committed JSON spec that CI submits to
+`run_scenarios_json`, so a prompt change and the cases covering it land in the
+same pull request. It creates the spec, the runner and the CI workflow, or
+updates them in place when they already exist — and `no suite change` is a
+valid, common outcome of an update. Cekura stays read-only throughout: the only
+permitted write-like request is a `dry_run=true` validation.
+
+Bundled with the skill:
+
+- `scripts/lint_suite.py` — offline spec and authoring-rule validator. No API
+  key, no network, so it runs on every push including fork pull requests. Its
+  tag rules mirror the server's own validators.
+- `scripts/run_suite.py` — CI runner that posts the spec, polls every run to a
+  terminal state and exits non-zero on failure. Runs are asynchronous, so a
+  workflow that stops at the POST reports success before any call is judged;
+  this is what makes the gate able to fail.
+- `references/discovery.md`, `references/case-catalog.md`,
+  `references/ci-wiring.md` and `examples/cekura.tests.json` — the stack
+  questions and what each answer lets you assert, nine proven case shapes with
+  the conditions under which each is a dead test, workflow templates for GitHub
+  Actions and GitLab, and a worked three-case suite.
+
+The five `phase*.md` files are removed; their discovery content is condensed
+into `references/discovery.md`, and the parts that planned dashboard folders,
+evaluator creation and scenario-id run scripts are gone with the output they
+served. npx users: run `npx skills add cekura-ai/cekura-skills --all`.
+
+**Version surfaces resynced.** The inline `plugin_version` telemetry tags had
+drifted a minor behind the manifests, which `bump_version.py` cannot repair on
+its own — it only rewrites tags matching the current major.minor. All 14 are
+now level with the manifests, and `cekura/.github/plugin/plugin.json` rejoins
+the other six.
+
 ## 0.12.0 — 2026-08-20
 
 **Breaking — skill consolidation.** `cekura-self-improving-agent` is rewritten

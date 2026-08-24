@@ -1,0 +1,110 @@
+{
+  "$schema": "https://docs.cekura.ai/schemas/test-suite/v1.json",
+  "version": "1",
+  "suite": {
+    "name": "Voice agent CI gate",
+    "description": "Deterministic pipeline coverage. Every turn on both sides is a fixed message, so a red result means the agent, not the test."
+  },
+  "defaults": {
+    "language": "en",
+    "max_duration": 180,
+    "frequency": 1,
+    "metrics": ["expected_outcome"]
+  },
+  "scenarios": [
+    {
+      "key": "interruption-gauntlet",
+      "name": "Interruption gauntlet",
+      "type": "conditional_actions",
+      "language": "en",
+      "tags": ["ci", "turn-taking"],
+      "conditional_actions": {
+        "role": "You are Priya, calling to ask about opening hours and then to book a slot.",
+        "conditions": [
+          {
+            "id": 0,
+            "condition": "FIRST_MESSAGE",
+            "action": "",
+            "type": "standard",
+            "fixed_message": true
+          },
+          {
+            "id": 1,
+            "condition": "The agent greets the caller and offers help",
+            "action": "Hi — could you tell me what your opening hours are, and whether you take walk-ins?",
+            "type": "standard",
+            "fixed_message": true
+          },
+          {
+            "id": 2,
+            "condition": 1,
+            "action": "<interruption time=\"1.5s\" />mhm",
+            "type": "action_followup",
+            "fixed_message": true
+          },
+          {
+            "id": 3,
+            "condition": 2,
+            "action": "<interruption time=\"1.2s\" />stop — wait.",
+            "type": "action_followup",
+            "fixed_message": true
+          },
+          {
+            "id": 4,
+            "condition": "The agent has stopped talking and is waiting for the caller",
+            "action": "Sorry about that. Can I book the Friday ten o'clock slot?",
+            "type": "standard",
+            "fixed_message": true
+          }
+        ]
+      },
+      "expected_outcome": "Checks, in order:\n1. The agent answers the opening-hours question.\n2. BACKCHANNEL: the caller says a single word (\"mhm\") while the agent is speaking. The agent must NOT stop — it finishes the sentence it was saying. If it abandons its turn here, this check FAILS.\n3. DECISIVE INTERRUPT: the caller then says \"stop — wait\". The agent must stop speaking promptly and hand the turn back; it must not talk over the caller or resume the abandoned sentence afterwards.\n4. RECOVERY: the agent answers the booking question that follows, without asking the caller to repeat it.\n5. No literal tag text (for example \"<interruption\") appears anywhere in what either party says."
+    },
+    {
+      "key": "idle-escalation-to-hangup",
+      "name": "Idle escalation to hangup",
+      "type": "conditional_actions",
+      "language": "en",
+      "tags": ["ci", "idle-timer"],
+      "conditional_actions": {
+        "role": "You are a caller who goes quiet after the first question and never speaks again.",
+        "conditions": [
+          {
+            "id": 0,
+            "condition": "FIRST_MESSAGE",
+            "action": "",
+            "type": "standard",
+            "fixed_message": true
+          },
+          {
+            "id": 1,
+            "condition": "The agent greets the caller and offers help",
+            "action": "I wanted to ask about a booking. <silence time=\"45s\" />",
+            "type": "standard",
+            "fixed_message": true
+          },
+          {
+            "id": 2,
+            "condition": "The agent has asked more than once whether the caller is still there",
+            "action": "<silence time=\"45s\" />",
+            "type": "standard",
+            "fixed_message": true
+          }
+        ]
+      },
+      "expected_outcome": "The caller falls silent mid-conversation and never speaks again. Checks:\n1. The agent prompts the silent caller at least once, in words that ask whether they are still there.\n2. The prompts escalate rather than repeating one line forever, and the agent does not invent an answer on the caller's behalf.\n3. TERMINAL: the agent ends the call itself after its final prompt. The call must not simply run to the time limit with dead air. If the call ends only because the duration cap was reached, this check FAILS."
+    },
+    {
+      "key": "refund-happy-path",
+      "name": "Refund happy path",
+      "instructions": "You are {{test_profile.user_name}}. Order {{test_profile.order_id}} arrived damaged and you want a refund. Be polite but firm, and give the order number when asked.",
+      "expected_outcome": "The agent verifies the order number, acknowledges the damage, and confirms a refund. It does not promise a timeline it was not given.",
+      "tags": ["ci", "workflow"],
+      "test_profile": {
+        "name": "damaged-order-refund",
+        "agent_variables": { "order_id": "ORD-4471" },
+        "caller_variables": { "user_name": "Maria", "order_id": "ORD-4471" }
+      }
+    }
+  ]
+}

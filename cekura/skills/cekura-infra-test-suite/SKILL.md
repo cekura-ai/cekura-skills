@@ -4,13 +4,14 @@ description: >
   Use when the user asks to create, update, or review a source-controlled Cekura JSON CI/CD test
   suite for a voice AI repository; create Tests-as-Code specs; turn a voice-agent code change into
   regression coverage; add deterministic Cekura voice tests to CI; or test an STT, LLM, TTS, VAD,
-  interruption, idle-timer, DTMF, or call-lifecycle pipeline. Inspects the repository before
-  authoring a compact JSON suite and validates it safely with Cekura dry-run.
+  interruption, idle-timer, DTMF, or call-lifecycle pipeline; or set up a CI gate that blocks a
+  merge when the voice pipeline regresses. Inspects the repository before authoring a compact JSON
+  suite, validates it safely with Cekura dry-run, and wires the workflow that runs it.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Cekura Voice AI Infrastructure CI/CD Suite
@@ -42,8 +43,9 @@ fall back to creating dashboard evaluators.
   asks for it after reviewing the spec and accepts the cost.
 - Never place API keys, phone numbers, production customer data, or deployment secrets in a spec or
   committed workflow. Use CI secrets and non-sensitive, staging-compatible profile data.
-- Preserve existing unrelated repository changes. Limit edits to the agreed spec, its coverage note,
-  and CI files explicitly requested by the user.
+- Preserve existing unrelated repository changes. Edits are limited to the spec, its coverage note,
+  the two bundled scripts, and the CI file that runs them. Extend an existing Cekura workflow rather
+  than adding a second one, and confirm the trigger before committing a job that places real calls.
 
 ## Required inputs
 
@@ -64,6 +66,24 @@ plan and mark that case blocked. Do not silently substitute a weaker check.
 
 ## Workflow
 
+### 0. Decide whether this is a create or an update
+
+Run this first; it decides everything after it.
+
+```bash
+grep -rl 'schemas/test-suite' --include='*.json' .       # definitive: a spec's $schema line
+git ls-files | grep -Ei '(cekura|tests?).*\.json$'       # candidates
+git ls-files '.github/workflows/*' '.gitlab-ci.yml' 'Jenkinsfile' | xargs grep -ln 'cekura' 2>/dev/null
+```
+
+- **No spec** → create. Work through steps 1–7.
+- **A spec exists** → update it in place. Read it in full, keep every `key`, and go to step 5. Do
+  not regenerate the file: an existing suite is reviewed source code whose results are comparable
+  across commits only while its keys hold still. The most common correct outcome of an update is
+  **no change**.
+- **A workflow already calls Cekura** → extend that file in step 7 rather than adding a second one,
+  reusing its secret names and trigger conventions.
+
 ### 1. Read the actual agent path
 
 Start from the runtime entrypoint and trace the call path rather than searching only for provider
@@ -75,6 +95,11 @@ names. Inventory, with source references:
 - tools, handoff/end-call behavior, DTMF/IVR, voicemail, idle/timeout, retry, and error handling;
 - supported languages and any code paths that switch language/provider; and
 - test fixtures, mocks, staging dependencies, and existing Cekura JSON or workflow files.
+
+`references/discovery.md` carries the question set — what to look for at each layer and, for each
+answer, which assertion it unlocks. Its rule: record every threshold and every quoted agent phrase
+with a `file:line`. A sourced number turns "the idle timer eventually fires" into "it fires at 8s
+and says *Are you still there?*"; an unsourced one is a guess that will fail the suite, not the bot.
 
 For every candidate behavior, record its **seat and transport**. The simulated caller and the
 agent-under-test can execute different code. Coverage that exercises only one seat does not prove a
@@ -91,6 +116,11 @@ Only include behavior that the suite can exercise and judge. For example, assert
 spoken response occurs after an interruption; do not assert that a volume tag, ambient sound, or
 internal processor itself ran. Mark a row `uncovered` when it needs a different transport, test
 fixture, metric, or backend capability, and state what is missing.
+
+`references/case-catalog.md` holds nine proven case shapes, each with what it asserts at sequence
+level versus threshold level, and the **drop-if** condition that makes it a dead test. Start there,
+then add the cases this repository's own bug history argues for. Do not port a case whose drop-if
+condition fires — a suite of 6 that covers the real pipeline beats 12 with 6 dead tests.
 
 Prefer one 10–12 case deploy-grade suite unless the user asks for tiers. If a fast PR suite is also
 needed, keep it compact (typically 4–6 cases) and make the broad suite a superset. Merge compatible
@@ -114,19 +144,30 @@ Use the live schema returned by the target environment as the authority. A v1 sp
 Keep stable, descriptive `key` values. Put reusable defaults at the suite level only when every
 case actually shares them. Set `language` explicitly on every conditional-actions case.
 
-For configuration that controls the agent under test, preserve the entire discovered session blob:
+Supply test data only where a case needs it:
 
 ```json
 "test_profile": {
-  "name": "staging-caller-and-agent-config",
-  "agent_variables": { "...": "full agent-under-test configuration" },
-  "caller_variables": { "...": "simulated caller context" }
+  "name": "returning-caller-gold-tier",
+  "agent_variables":  { "order_id": "ORD-4471" },
+  "caller_variables": { "user_name": "Maria" }
 }
 ```
 
-`agent_variables` become the agent-under-test configuration; `caller_variables` drive the simulated
-caller and `{{test_profile.key}}` substitution. Do not move fields between them. Do not invent a
-profile simply to make the JSON look self-contained.
+`agent_variables` reach the agent under test as **dynamic variables** at call time, so a key does
+something only if the agent already reads a variable by that name. Discovery tells you which exist;
+inventing keys produces a profile the agent silently ignores. `caller_variables` never reach the
+agent at all — they are context for the simulated caller and the source for `{{test_profile.key}}`
+substitution inside a scripted action.
+
+Do not move fields between the two sections, and do not invent a profile to make the JSON look
+self-contained.
+
+**One exception, which is not the common case:** a bot written to self-configure per call — taking
+its prompt, providers and limits from the variables it is handed under an explicit test-harness mode
+in its own source — receives its whole configuration through `agent_variables`. Preserve that blob
+verbatim where the repository has such a mode. Where it does not, `agent_variables` are dynamic
+variables and nothing more.
 
 An inline personality is intentionally limited. If the required saved personality uses network
 simulation, speaking plans, message plans, generation config, background volume, or interruption
@@ -142,14 +183,29 @@ condition is `id: 0`, `condition: "FIRST_MESSAGE"`.
 
 Use the public `cekura-eval-design` skill and its conditional-actions reference while authoring:
 
-- `<interruption time="Xs" />` begins an `action_followup`; use a positive time after a greeting or
-  lead-in, and `0s` only when speech is already in progress.
-- `<ivr ... />` and `<voicemail ... />` occupy the entire action. Put follow-on speech in a later
+- `<interruption time="Xs" />` must open the action and its condition must be `action_followup`.
+  Use a positive time after a greeting or lead-in; `0s` only when speech is already in progress.
+- `<ivr text="…" />` and `<voicemail text="…" />` are self-closing and occupy the entire action —
+  the block form `<voicemail>…</voicemail>` is rejected. Put follow-on speech in a later
   `action_followup`.
-- `<silence>` can be interrupted; `<hold>` cannot. Test the behavior selected by the code path.
-- `<speed>` and `<volume>` start the action and require quoted, valid ratios. Use them to exercise
-  the path, but never make an inaudible property the assertion.
-- Do not reference stored audio clips. Do not hand-author unsupported tags.
+- `<silence>` can be interrupted; `<hold>` cannot. Test the behavior the code path actually selects.
+- `<speed ratio="N" />` (0.1–2.0) and `<volume ratio="N" />` (0–2.0) are self-closing and apply from
+  where they appear, so put them first. Use them to exercise a path; never make an inaudible
+  property the assertion.
+- `<network_simulation … />` takes `packet_loss` (0–100), `jitter` and `latency` (ms), and is
+  self-closing. It degrades the audio — it never proves anything by itself.
+- Do not reference stored audio clips: an `<audio>` id cannot be versioned in git and blocks the run
+  until the clip is marked ready.
+
+**Lint before you validate.** `scripts/lint_suite.py` checks all of the above plus spec structure,
+duplicate keys, and inline-personality limits, offline and free:
+
+```bash
+python3 cekura/lint_suite.py cekura.tests.json --strict
+```
+
+It mirrors the server's own tag validators, so a clean lint means the dry run fails only for
+reasons a local check genuinely cannot see — an unenabled metric, an agent that lacks the channel.
 
 Every `expected_outcome` must be narrow and transcript-verifiable: required spoken content, absence
 of leaked literal tag text, turn order, tool-visible outcome when it appears in the transcript, or
@@ -181,6 +237,13 @@ Use a dry run for the whole file. It validates syntax, metrics, personalities, p
 compatibility, planned runs, and estimated cost without creating objects or placing a call:
 
 ```bash
+python3 cekura/lint_suite.py cekura.tests.json --strict     # free, offline, first
+CEKURA_API_KEY=… python3 cekura/run_suite.py --dry-run --agent-id 123
+```
+
+The runner posts the file and prints the returned plan. The raw form, when you want it:
+
+```bash
 curl -sS -X POST \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
@@ -193,15 +256,59 @@ profile when an inline `test_profile` was supplied. Save the validation response
 no credentials or sensitive caller data. If dry-run validation needs a write beyond `dry_run=true`,
 stop and report the blocker.
 
+### 7. Wire CI so the gate can fail
+
+A validated spec is not yet a gate. Runs are asynchronous: the POST returns as soon as they are
+queued, so a job that ends at `curl` reports success before a single call has been judged — a gate
+that cannot fail, which is worse than none because it reads as coverage.
+
+Install the two bundled scripts into the repository and wire them:
+
+```bash
+mkdir -p cekura && cp <skill>/scripts/{lint_suite.py,run_suite.py} cekura/
+```
+
+`run_suite.py` posts the spec, polls every run to a terminal state, writes `cekura-report.md`, and
+exits non-zero when any case fails, errors or times out. Both scripts are Python 3 standard library
+only — nothing to install on a runner.
+
+Then create `.github/workflows/cekura-tests.yml`, **or extend the workflow that already calls
+Cekura** — never add a second one. `references/ci-wiring.md` has the GitHub Actions and GitLab
+templates, the fork-PR rule (a job needing secrets must not run on forks), how to point a run at a
+per-PR deployment with `pipecat_v2` / `livekit_v2`, and how to pick a trigger that does not spend
+credit on every push.
+
+Confirm the trigger with the user before committing a workflow that places real calls.
+
 ## Handoff
 
 Leave the repository with:
 
 - the JSON spec or specs, formatted and source-controlled;
 - a coverage note mapping code paths to stable case keys, including explicit uncovered rows;
+- `cekura/lint_suite.py` and `cekura/run_suite.py`, and the workflow that runs them — created, or
+  the existing Cekura workflow extended;
 - a short README note describing the target assumptions, Cekura dependencies (metrics,
-  personalities, channels), and how CI invokes the endpoint; and
-- the dry-run result or the exact validation blocker.
+  personalities, channels), and how CI invokes the suite; and
+- the dry-run result, or the exact validation blocker.
 
 Report case count, target channel/seat coverage, dependencies, and anything that needs a live run or
 a backend capability. A dry-run proves the spec is valid; it does not prove a bot deployment works.
+
+## Bundled assets
+
+Reference files, read when the step calls for them:
+
+- **`references/discovery.md`** — the stack questions, and which assertion each answer unlocks
+- **`references/case-catalog.md`** — nine proven case shapes with their drop-if conditions
+- **`references/ci-wiring.md`** — workflow templates, run targets, per-PR deployments, triggers
+
+Example, read when the shape of a case is in question:
+
+- **`examples/cekura.tests.json`** — a three-case suite: an interruption gauntlet, an idle
+  escalation, and an instruction case with test data. Lints clean in `--strict`
+
+Scripts, copied into the user's repository:
+
+- **`scripts/lint_suite.py`** — offline spec and authoring-rule validator; no key, no network
+- **`scripts/run_suite.py`** — CI runner: posts, polls, reports, exits non-zero on failure
