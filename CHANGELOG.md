@@ -64,6 +64,24 @@ metric is attached, and that an infrastructure suite should attach the agent's
 enabled numeric metrics — latency, interruption — which measure what a judge
 reading a transcript cannot.
 
+Two fixes from testing the skill against a 101,836-line repository and a
+3,742-line TypeScript one. **Scope now has a stop condition:** if covering a
+behavior would need a change outside the spec, its coverage note, the scripts
+and the CI file — runtime code, a deploy workflow, a Cekura record, a metric
+that does not exist — the skill reports the blocker instead of making the
+change to enable its own test. On the large repo it had edited runtime code to
+make a feature reachable from CI: sound reasoning, minimal diff, still not its
+call. Updating a guard that exists to police the suite itself, such as a
+workflow step asserting the case count, is explicitly not a scope change.
+
+**New step 1b: read the agent record.** Enabled metrics, usable personalities,
+the agent's provider and channel, and the live schema were listed as required
+inputs but no workflow step fetched them, so a session with a working API key
+still authored as though it had none — `expected_outcome` alone and no pinned
+personality. The numeric metrics are the ones that measure what a
+transcript-reading judge cannot, which for an infrastructure suite is most of
+the point.
+
 **Version surfaces resynced.** The inline `plugin_version` telemetry tags had
 drifted a minor behind the manifests, which `bump_version.py` cannot repair on
 its own — it only rewrites tags matching the current major.minor. All 14 are

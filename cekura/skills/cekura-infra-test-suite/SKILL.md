@@ -46,6 +46,12 @@ fall back to creating dashboard evaluators.
 - Preserve existing unrelated repository changes. Edits are limited to the spec, its coverage note,
   the two bundled scripts, and the CI file that runs them. Extend an existing Cekura workflow rather
   than adding a second one, and confirm the trigger before committing a job that places real calls.
+- **If covering a behavior would need a change outside that set — runtime code, a deploy workflow,
+  a Cekura record, a metric that does not exist — stop and report the blocker.** Do not make the
+  change in order to make your own test possible, however small the diff and however sound the
+  reasoning. Name what is untestable, say what it would take, and let the user decide. The one
+  thing that is not a scope change is a guard whose whole job is policing this suite — a workflow
+  step asserting the case count, say. Updating that is part of adding a case.
 
 ## Required inputs
 
@@ -104,6 +110,29 @@ and says *Are you still there?*"; an unsourced one is a guess that will fail the
 For every candidate behavior, record its **seat and transport**. The simulated caller and the
 agent-under-test can execute different code. Coverage that exercises only one seat does not prove a
 regression is covered in the other.
+
+### 1b. Read the agent record before choosing metrics or a personality
+
+Discovery has two halves. The repository says what the agent does; **Cekura says what the suite is
+allowed to assert with.** Where a key or an authenticated session is available, read these before
+authoring. They are all reads, and each turns a guess into a fact:
+
+- **The enabled metrics for the target agent.** A spec can only reference metrics that already
+  exist and are enabled for that agent, so this list is the ceiling on what the suite can measure.
+  Attach the numeric ones — latency, interruption — alongside `expected_outcome`. They measure what
+  a transcript-reading judge cannot, which for an infrastructure suite is most of the point.
+- **Usable personalities.** Pin one by id so results stay comparable across commits, and note
+  whether it carries settings an inline personality cannot (network simulation, speaking plans,
+  message plans) — that decides reference-by-id versus inline.
+- **The agent itself** — provider, channel, inbound or outbound, contact number, max duration.
+  This confirms the channel the CI job should target *before* it is wired, rather than after a run
+  is rejected for a channel the agent was never configured for.
+- **The live spec schema**, which outranks any example in this skill.
+
+With no credentials, say so plainly: use `expected_outcome` alone, pin no personality, and mark the
+suite unvalidated. Never invent a metric slug or a personality id to fill the gap — an unenabled
+slug is a hard rejection at the dry run, which is the right place to find out, but a guessed one
+only wastes the round trip.
 
 ### 2. Make a coverage matrix before editing
 
