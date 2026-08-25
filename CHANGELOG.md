@@ -4,6 +4,18 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.12.1 — 2026-08-25
+
+**Attached audio can be referenced, not just uploaded.** A recording now
+belongs to the scenario rather than to one step, so `<audio id="…"/>` may appear
+in several conditions and more than once in one action, and a recording's id is
+a name chosen at upload. `cekura-eval-design` no longer says never to emit an
+`<audio>` tag: it says to reference recordings that already exist, reading the
+available ids from the scenario's `condition_audio` map, and to reuse one rather
+than asking for the same audio twice. A referenced recording that does not exist
+now blocks the run rather than the save, so the guidance says what to do when
+the wanted audio is not there.
+
 ## 0.12.0 — 2026-08-20
 
 **Breaking — skill consolidation.** `cekura-self-improving-agent` is rewritten
