@@ -4,6 +4,17 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.12.1 — 2026-08-26
+
+**`cekura-eval-design` — session notes stop assuming a persistent disk.** The
+skill offered a session memory document early in every multi-session project
+and kept a file updated as it worked. In a hosted chat that file lives in a
+per-conversation sandbox: the user never sees it, the next session cannot read
+it, and each update costs a round producing nothing that was asked for. The
+document is now created only where a working directory persists AND the user
+asked for it; elsewhere the decisions go in the reply. Updates are batched per
+phase instead of written after each decision.
+
 ## 0.12.0 — 2026-08-20
 
 **Breaking — skill consolidation.** `cekura-self-improving-agent` is rewritten
