@@ -1,10 +1,24 @@
 # Session Memory Document
 
-When working on a multi-session eval project, offer to create a **session memory document** for the user. This persistent file captures key decisions made during the session so future conversations can pick up where you left off.
+A session memory document is a file that captures the decisions behind a
+multi-session eval project — eval strategy, mock-tool approach, profile
+mappings — so a later session does not have to rediscover them.
 
-**Ask early in the session:** "Would you like me to create a session memory doc? It logs key decisions (eval strategy, mock tool approach, test profile mappings, etc.) so future sessions don't have to rediscover this context."
+**It needs somewhere durable to live, and only some clients have one.** In an
+editor or a terminal, the user's working directory persists and the file is
+worth having. In a hosted chat (the Cekura dashboard assistant, or anything
+running in a per-conversation sandbox) the filesystem is discarded when the
+conversation ends: a file written there is invisible to the user, unreadable
+next session, and every update to it costs a round that produces nothing. In
+that setting the conversation itself is the memory — put the decisions in your
+reply, where the user can see them and the thread keeps them.
 
-**If yes, create a file** in the user's working directory (or wherever they prefer) with this structure:
+**Create the file only when both hold:** the user has a persistent working
+directory, AND they have asked for session notes. Do not offer it unprompted —
+an unasked question early in a session displaces the work the user actually
+came for, and this one is not needed to do any of that work.
+
+**When you do create it**, use this structure:
 
 ```markdown
 # [Project Name] — Eval Session Notes
@@ -34,6 +48,9 @@ When working on a multi-session eval project, offer to create a **session memory
 - [Date]: [What was done]
 ```
 
-**Update throughout the session:** As decisions are made, scenarios created, or mock data configured, append to the relevant section. At the end of the session, summarize what was accomplished.
+**Updating it:** batch the updates. Rewrite the file when a phase of work
+finishes, not after each individual decision — a write between every tool call
+is what turns a working session into a narrated one.
 
-**In future sessions:** Read this file first to restore context. If the user says "continue from last session" or "pick up where we left off", check for this document.
+**In future sessions:** if the user says "continue from last session" or "pick
+up where we left off", check for this document before re-deriving anything.

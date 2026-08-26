@@ -471,7 +471,7 @@ Focus on the main agent's behavior, not the caller's experience:
 
 ## Session Memory Document
 
-For multi-session eval projects, offer to create a session memory document that captures key decisions (tool strategy, profiles, scenarios, open items) so future sessions don't re-derive context.
+For multi-session eval projects run from a persistent working directory, a session memory document captures key decisions (tool strategy, profiles, scenarios, open items) so future sessions don't re-derive context. Create it when the user asks for it — not unprompted — and never in a hosted chat sandbox, whose filesystem is discarded with the conversation; there, put the decisions in your reply instead.
 
 **See `references/session-memory.md`** for the template and update workflow.
 
