@@ -4,6 +4,13 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.12.3 — 2026-08-26
+
+**Python maintenance scripts now work with UTF-8 repositories on Windows.**
+All text and JSON file I/O uses an explicit UTF-8 encoding instead of the
+machine locale, preventing validators and bundle/version utilities from
+crashing on non-ASCII skill content under legacy Windows code pages.
+
 ## 0.12.2 — 2026-08-26
 
 Also corrects the `PUT` description: replacing a recording can rename it, and

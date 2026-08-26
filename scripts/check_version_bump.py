@@ -45,7 +45,7 @@ def main():
         print("no cekura/** changes; bump not required")
         return 0
 
-    head_version = json.loads((REPO / PLUGIN_JSON).read_text())["version"]
+    head_version = json.loads((REPO / PLUGIN_JSON).read_text(encoding="utf-8"))["version"]
     main_raw = git("show", f"origin/main:{PLUGIN_JSON}", check=False)
     if main_raw.returncode != 0:
         print(f"{PLUGIN_JSON} absent on origin/main; nothing to compare")

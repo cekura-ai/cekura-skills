@@ -29,7 +29,7 @@ MAX_SKILL_LINES = 500
 
 def check_skill_frontmatter(errors):
     for path in sorted(SKILLS.glob("*/SKILL.md")):
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         rel = path.relative_to(REPO)
         if not text.startswith("---\n") or "\n---\n" not in text[4:]:
             errors.append(f"{rel}: missing frontmatter")
@@ -71,7 +71,7 @@ VERSION_SURFACES = (
 
 def check_versions(errors):
     versions = {
-        path: json.loads((REPO / path).read_text())["version"]
+        path: json.loads((REPO / path).read_text(encoding="utf-8"))["version"]
         for path in VERSION_SURFACES
     }
     expected = versions["package.json"]
@@ -86,7 +86,7 @@ def check_versions(errors):
     # manifest first and ignore the marketplace value, so an entry version can
     # only ever go stale and mask a release.
     for registry in (".claude-plugin/marketplace.json", ".github/plugin/marketplace.json"):
-        marketplace = json.loads((REPO / registry).read_text())
+        marketplace = json.loads((REPO / registry).read_text(encoding="utf-8"))
         for entry in marketplace.get("plugins", []):
             if "version" in entry:
                 errors.append(
@@ -101,10 +101,10 @@ def check_mcp_url_parity(errors):
     # map) — snake_case `mcp_servers` silently registers zero servers
     # (openai/codex codex-rs/codex-mcp/src/plugin_config.rs).
     codex_manifest = json.loads(
-        (REPO / "cekura/.codex-plugin/plugin.json").read_text()
+        (REPO / "cekura/.codex-plugin/plugin.json").read_text(encoding="utf-8")
     )
     codex_mcp_file = REPO / "cekura" / codex_manifest["mcpServers"]
-    codex_mcp = json.loads(codex_mcp_file.read_text())
+    codex_mcp = json.loads(codex_mcp_file.read_text(encoding="utf-8"))
     if "mcpServers" not in codex_mcp:
         errors.append(
             f"{codex_mcp_file}: Codex MCP companion file must use camelCase "
@@ -116,21 +116,21 @@ def check_mcp_url_parity(errors):
     # Copilot CLI reads the file referenced by .github/plugin/plugin.json's
     # mcpServers field (a path, per the Open Plugin Spec) — same shape as Codex.
     copilot_manifest = json.loads(
-        (REPO / "cekura/.github/plugin/plugin.json").read_text()
+        (REPO / "cekura/.github/plugin/plugin.json").read_text(encoding="utf-8")
     )
     copilot_mcp = json.loads(
-        (REPO / "cekura" / copilot_manifest["mcpServers"]).read_text()
+        (REPO / "cekura" / copilot_manifest["mcpServers"]).read_text(encoding="utf-8")
     )
     urls = {
-        "cekura/.mcp.json": json.loads((REPO / "cekura/.mcp.json").read_text())
+        "cekura/.mcp.json": json.loads((REPO / "cekura/.mcp.json").read_text(encoding="utf-8"))
         ["mcpServers"]["cekura"]["url"],
         f"codex ref {codex_manifest['mcpServers']}": codex_url,
         f"copilot ref {copilot_manifest['mcpServers']}":
             copilot_mcp["mcpServers"]["cekura"]["url"],
         "cekura/.cursor-plugin/plugin.json": json.loads(
-            (REPO / "cekura/.cursor-plugin/plugin.json").read_text()
+            (REPO / "cekura/.cursor-plugin/plugin.json").read_text(encoding="utf-8")
         )["mcpServers"]["cekura"]["url"],
-        "gemini-extension.json": json.loads((REPO / "gemini-extension.json").read_text())
+        "gemini-extension.json": json.loads((REPO / "gemini-extension.json").read_text(encoding="utf-8"))
         ["mcpServers"]["cekura"]["httpUrl"],
     }
     if len(set(urls.values())) != 1:
@@ -139,8 +139,8 @@ def check_mcp_url_parity(errors):
 
 
 def check_docs_inventory(errors):
-    readme = (REPO / "README.md").read_text()
-    claude_md = (REPO / "CLAUDE.md").read_text()
+    readme = (REPO / "README.md").read_text(encoding="utf-8")
+    claude_md = (REPO / "CLAUDE.md").read_text(encoding="utf-8")
     for path in sorted(SKILLS.iterdir()):
         if not (path / "SKILL.md").exists():
             continue
