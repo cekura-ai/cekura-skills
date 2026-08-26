@@ -6,6 +6,10 @@ All notable changes to the Cekura plugin. Versions follow
 
 ## 0.12.2 — 2026-08-26
 
+Also corrects the `PUT` description: replacing a recording can rename it, and
+repoints every tag, so it — not delete-and-re-add — is the way to change the
+audio of a clip several steps use.
+
 **Recording names follow one convention everywhere.** The upload endpoint now
 derives a readable id from the filename when `name` is omitted, matching what the
 editor proposes, so an evaluator created through MCP names its recordings the way
