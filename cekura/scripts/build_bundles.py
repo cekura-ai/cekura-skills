@@ -59,7 +59,7 @@ def build_bundle(slug, refs):
         "> Any other `references/…` file mentioned below ships only with the installed "
         "plugin — install it for the complete set: https://docs.cekura.ai/mcp/overview"
     )
-    parts = [_insert_after_frontmatter(skill_md.read_text().rstrip(), preamble)]
+    parts = [_insert_after_frontmatter(skill_md.read_text(encoding="utf-8").rstrip(), preamble)]
 
     for ref in refs:
         ref_path = skill_dir / "references" / ref
@@ -67,7 +67,7 @@ def build_bundle(slug, refs):
             return None, f"{slug}: reference {ref!r} missing"
         parts.append(
             f"\n\n\n---\n\n## Appended reference — {ref}\n\n"
-            + ref_path.read_text().rstrip()
+            + ref_path.read_text(encoding="utf-8").rstrip()
         )
     # Trailing newline so the file is POSIX-clean.
     return "\n".join(parts) + "\n", None
@@ -83,11 +83,11 @@ def main():
             continue
         bundle_path = SKILLS / slug / "BUNDLE.md"
         if check:
-            current = bundle_path.read_text() if bundle_path.exists() else None
+            current = bundle_path.read_text(encoding="utf-8") if bundle_path.exists() else None
             if current != content:
                 stale.append(slug)
         else:
-            bundle_path.write_text(content)
+            bundle_path.write_text(content, encoding="utf-8")
             written.append(f"{slug} ({len(content.splitlines())} lines)")
 
     if errors:

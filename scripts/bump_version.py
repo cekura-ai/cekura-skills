@@ -80,14 +80,14 @@ def next_version(current, bump):
 
 
 def replace_exactly(path, old, new, expected):
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     count = text.count(old)
     if count != expected:
         sys.exit(
             f"error: {path.relative_to(REPO)}: expected {expected} "
             f"occurrence(s) of {old!r}, found {count}"
         )
-    path.write_text(text.replace(old, new))
+    path.write_text(text.replace(old, new), encoding="utf-8")
 
 
 def main():
@@ -96,7 +96,7 @@ def main():
         return 1
     arg = sys.argv[1]
 
-    current = json.loads((REPO / "package.json").read_text())["version"]
+    current = json.loads((REPO / "package.json").read_text(encoding="utf-8"))["version"]
     if arg == "--sync-with-main":
         main_version = origin_main_version()
         if parse(current) > parse(main_version):
@@ -130,9 +130,9 @@ def main():
         ).stdout.splitlines()
         for rel in md_files:
             path = REPO / rel
-            text = path.read_text()
+            text = path.read_text(encoding="utf-8")
             if old_inline in text:
-                path.write_text(text.replace(old_inline, new_inline))
+                path.write_text(text.replace(old_inline, new_inline), encoding="utf-8")
                 changed.append(rel)
 
     print(f"bumped {current} -> {new} in {len(changed)} files:")
