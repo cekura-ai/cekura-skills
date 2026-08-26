@@ -4,6 +4,14 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.12.2 — 2026-08-26
+
+**Recording names follow one convention everywhere.** The upload endpoint now
+derives a readable id from the filename when `name` is omitted, matching what the
+editor proposes, so an evaluator created through MCP names its recordings the way
+a person would instead of getting an opaque generated id. `cekura-eval-design`
+says to omit `name` and documents the shape to follow when overriding it.
+
 ## 0.12.1 — 2026-08-25
 
 **Attached audio can be referenced, not just uploaded.** A recording now
