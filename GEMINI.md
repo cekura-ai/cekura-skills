@@ -538,7 +538,7 @@ Sibling tags can be combined with text and run left to right. Do not nest tags, 
 | `<network_simulation packet_loss="N" />` | Only `packet_loss` supported — `jitter`/`latency` are ignored. |
 | `<background_noise sound="NAME" volume="0.x">text</background_noise>` | Continuous ambient sound (e.g. `coffee-shop`, `office-ambience`, `rain-thunder`, `vacuum-cleaner`, `construction-site`) |
 | `<noise sound="NAME" volume="N" time="Xms" />` | One-shot effect: `office`, `beep`, `cough1`, `cough2`. `volume` and `time` (milliseconds) are optional. |
-| `<audio id="..." />` | Managed uploaded recording. Multiple clips may appear inline; never fabricate an id. |
+| `<audio id="..." />` | Plays an uploaded recording. One recording can be referenced from several steps and more than once per action; read the scenario's `condition_audio` for the available ids and never fabricate one. |
 
 ### Test Profile Variables in Fixed Messages
 

@@ -248,20 +248,22 @@ recording also fixes the dialogue, so the testing agent can no longer adapt.
 
 `office`, `beep`, `cough1`, `cough2`
 
-## Attached Audio (`<audio>` — managed, do NOT hand-author)
+## Attached Audio (`<audio>` — reference an existing recording by name)
 
-A user can attach **pre-recorded audio clips** to a fixed-message condition. Managed `<audio>` references can appear inline with text and sibling tags:
+**Pre-recorded audio clips** belong to the scenario, and a fixed-message condition plays one by referencing it. One recording can be referenced from as many steps as needed, and more than once in a single action:
 
 ```json
-{ "id": 2, "condition": "The agent greets you", "action": "Before <audio id=\"ab12cd34\"/> <silence time=\"1s\"/> continue", "type": "standard", "fixed_message": true }
+{ "id": 2, "condition": "The agent greets you", "action": "Before <audio id=\"hold-music\"/> <silence time=\"1s\"/> continue", "type": "standard", "fixed_message": true }
 ```
 
-**This tag is created by the audio-upload flow, not written by hand.** When authoring or generating conditional-actions scenarios:
+**Only reference recordings that already exist.** Read the scenario's `condition_audio` map (returned by `GET /test_framework/v1/scenarios/{id}/`) for the available ids — each entry carries a ready-to-paste `tag`, the `condition_ids` currently using it, and its `transcript`. Reuse a recording rather than asking for the same audio twice.
 
-- **Never emit an `<audio>` tag yourself.** The `id` must reference a real uploaded clip; a hand-written id points at nothing and fails reference validation (`"audio id '…' does not reference an uploaded clip"`).
-- Audio is attached via `POST /test_framework/v1/scenarios/{id}/condition-audio/` (multipart `condition_id` + `file`; ≤25MB; wav/mp3/m4a/ogg/webm/flac). Pass `action_template` with one `<audio />` marker to choose the insertion point; pass `replace_audio_id` to replace one existing clip. `GET`/`DELETE` on the same path list/detach clips.
-- **Rules:** fixed-message conditions only; multiple clips and sibling tags are allowed and run left to right; do not nest `<audio>` inside a wrapping tag (`<spell>`, `<background_noise>`, `<voicemail>`, `<ivr>`). Inside `<ignore_interruptions>` is fine — an uninterruptible clip sequence is that tag's main use.
-- **Run gating:** a scenario can't run while any attached clip is not `ready` (pending/processing/failed all block).
+- **Never invent an id.** Referencing a recording that does not exist saves fine but blocks every run of that scenario (`"references recording 'X', which does not exist"`). If the audio you want is not in `condition_audio`, write the step as ordinary text and tell the user which recording to upload.
+- **Uploading** (only when you have the audio file): `POST /test_framework/v1/scenarios/{id}/condition-audio/`, multipart, `file` required, ≤25MB, wav/mp3/m4a/ogg/webm/flac. Omit `condition_id` to add the recording without touching any action, then reference it yourself; pass `condition_id` (with optional `action_template` carrying one `<audio />` marker) to have the tag inserted for you.
+- **Naming.** Omit `name` and the id is derived from the filename using the same convention the editor proposes, so an evaluator you create matches one a person creates. Pass `name` only to override it, and follow the same shape: lowercase, hyphen-separated words, derived from what the clip *is* (`hold-music`, `clinic-greeting`, `ivr-menu-option-2`), letters/digits/`_`/`-` only, ≤64 characters (the editor keeps its own proposals ≤32), unique per scenario case-insensitively. Do not invent opaque ids — the id is what a human reads in the action text.
+- `PUT .../condition-audio/{audio_id}/` replaces that recording's audio, so every step using it plays the new file. Send `name` to rename it at the same time — the ids follow filenames, so a new file usually means a new name — and every `<audio>` tag pointing at it is repointed for you; the response carries `previous_audio_id` and the rewritten `actions`. Omit `name` to keep the current id. `DELETE` removes the recording and every reference to it, returning 409 without deleting anything if that would leave a non-opening action empty — so prefer `PUT` over delete-and-re-add for a clip several steps use.
+- **Rules:** fixed-message conditions only; multiple recordings and sibling tags are allowed and run left to right; do not nest `<audio>` inside a wrapping tag (`<spell>`, `<background_noise>`, `<voicemail>`, `<ivr>`). Inside `<ignore_interruptions>` is fine — an uninterruptible clip sequence is that tag's main use.
+- **Run gating:** a scenario can't run while a referenced recording is missing, or is not `ready` (pending/processing/failed all block).
 
 ## Test Profile Template Variables (fixed_message: true only)
 
