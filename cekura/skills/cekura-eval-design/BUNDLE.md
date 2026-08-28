@@ -237,7 +237,7 @@ Rules — 2–6 lines, each starting `The main agent should`:
 - **Contingent branches stay contingent.** If a correct agent may skip the action ("if the caller has insurance…"), phrase the line with the condition or demand only what every branch shares. An unconditional demand fails an agent that correctly took the other path.
 - **Never demand success that runtime state controls.** No "transfers to a manager" / "books the slot" unless the scenario's mock data or profile fixes that availability; otherwise allow the documented fallback.
 - **Offering is not executing** — if the flow stops early, demand "offered"/"gathered", not "booked".
-- **Nothing after a terminal transfer**, and **never grade who hung up** unless the user explicitly asked to test termination.
+- **End-call is structural, not behaviour under test.** Write no outcome line for the end-call step, for who hung up, or for the call-end reason — not even "The main agent should end the call after …" — unless the user explicitly asked to test termination. A closing phrase the description *mandates* may be graded as speech. **Nothing after a terminal transfer.**
 - **Binary and objective.** Ban "appropriately", "professionally", "warmly", "politely", "clearly". Semantic content, not verbatim phrasing — except an exact KB fact, which goes in backticks: `` `123 Medical Lane, Suite 100` ``.
 - **Copy placeholder tokens** from the steps (`{{test_profile.selected_plan}}`); a prose paraphrase is still hardcoding. `{{transcript}}`, `{{call_end_reason}}` and duration are injected automatically.
 - No test-setup rationale (timeouts, variable values) in the outcome — that belongs in the scenario body.
