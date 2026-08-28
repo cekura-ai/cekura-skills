@@ -5,7 +5,7 @@ Detailed schema and gotchas for the scenario auto-generator. Loaded on demand fr
 The auto-generator emits whichever output format `simulation_type` asks for:
 
 - **Behavioral scenarios are always generated here**, never hand-authored via the create endpoint — including a single one (`num_scenarios: 1` with a specific `extra_instructions`). `simulation_type: "instruction"` is the default.
-- **Conditional actions can also be generated** — pass `simulation_type: "conditional_actions"` and the same grounding pipeline (agent description, KB, mock tools) emits validated `conditions[]`. Use it for grounded, workflow-shaped flows; author directly with `scenarios_create` when the test is tag-driven, short, exact-script or infrastructure — see `references/conditional-actions.md`.
+- **Conditional actions can also be generated** — pass `simulation_type: "conditional_actions"` and the same grounding pipeline (agent description, KB, mock tools) emits validated `conditions[]`. It is the default path for conditional actions too, tags included — the generator knows the full tag set and honours tag requirements written into `extra_instructions`. Author directly only when the user dictates the exact script or a timing value must be exact — see `references/conditional-actions.md`.
 - Red-team categories (`scenario_type: "red_teaming_voice" / "red_teaming_text"`) always come back as conditional actions carrying a multi-turn attack plan; review them, never rewrite them into instructions.
 
 ## Endpoint
@@ -24,6 +24,10 @@ The auto-generator emits whichever output format `simulation_type` asks for:
 | `folder_path` | string | No | Folder to place generated scenarios in (**always set this** — create the folder first) |
 | `tags` | array[string] | No | Tags to apply to all generated scenarios |
 | `tool_ids` | array[string] | No | Tools to enable (e.g., `TOOL_END_CALL`) |
+| `scenario_type` | string | No | Category: `workflow` (default), `red_teaming_voice`, `red_teaming_text` |
+| `attack_type` | string | Red team | One of the six attack types (see `SKILL.md`); one generation call per type |
+| `simulation_type` | string | No | Output format: `instruction` (default) or `conditional_actions` |
+| `generation_files` | files | No | KB/context uploads, workflow category only |
 
 **Returns:** `{"progress_id": "<uuid>"}`. Poll with `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.
 

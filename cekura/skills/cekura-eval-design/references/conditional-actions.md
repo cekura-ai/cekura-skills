@@ -229,7 +229,7 @@ recording also fixes the dialogue, so the testing agent can no longer adapt.
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<background_noise sound="NAME" volume="N">spoken text</background_noise>` | Continuous ambient sound behind the caller's voice | Wraps the spoken text. `volume` optional, range **0–1.0** (validator rejects anything above 1.0; docs examples use 0.3). |
+| `<background_noise sound="NAME" volume="N">spoken text</background_noise>` | Continuous ambient sound behind the caller's voice | Wraps the spoken text. `volume` optional, range **0–1.0** (e.g. `0.3`). |
 | `<noise sound="NAME" volume="N" time="Xs" />` | One-shot sound effect at a point in the action | `volume` (range **0–1.0**, optional) and `time` (seconds e.g. `"1.1s"`, optional) |
 | `<network_simulation packet_loss="N" />` | Simulate degraded connection (percentage value, e.g. `packet_loss="5"`) | **Only `packet_loss` is supported.** |
 
@@ -574,7 +574,7 @@ The Cekura API rejects requests that violate these rules. Each rule maps to a sp
 6. **Unique condition IDs** — every condition's `id` must be unique across the array. Duplicate IDs are rejected. Use non-negative integers.
 7. **`action_followup` `condition` field must be an integer** — the integer must match the `id` of an existing earlier condition. String values like `"1"` are rejected. Self-references (`condition: <own id>`) are rejected.
 8. **`scenario_language` required** — Conditional Actions evaluators require a language. Set it via a personality with a configured language (inferred automatically) or set `scenario_language` explicitly. This also applies when changing an existing evaluator's type to Conditional Actions.
-9. **`personality` required** — every scenario needs a personality assigned, conditional-actions or otherwise. The API returns 400 without one.
+9. **`personality` required** — every scenario needs a personality assigned, conditional-actions or otherwise.
 10. **`<audio>` tags must reference uploaded clips** — every id must reference a real uploaded clip and the condition must be `fixed_message: true`. Hand-written `<audio>` tags fail this. Don't author them — audio is attached via the [upload endpoint](#attached-audio-audio--managed-do-not-hand-author).
 
 ### Extra rules at generation time (LLM-generated scenarios only)
@@ -746,7 +746,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - [ ] Updates send the FULL `conditional_actions` object including existing `functions[]` (updates are full-replace, not a merge)
 - [ ] The last condition ends the conversation (via `<endcall />` or a natural close)
 - [ ] `scenario_language` is set (either explicitly or via a personality with a configured language — required by validation rule 6)
-- [ ] A `personality` is set (API returns 400 without one)
+- [ ] A `personality` is set
 
 ## Troubleshooting (error message → fix)
 

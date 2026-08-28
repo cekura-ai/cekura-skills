@@ -57,11 +57,22 @@ Use the folder path for the `folder_path` parameter in the generate call.
 |------|-------------|----------|
 | **workflow** | Tests standard agent workflows (scheduling, onboarding, etc.) | Core functional coverage |
 | **redteaming** | Tests adversarial inputs (prompt injection, social engineering, manipulation) | Security and robustness testing |
-| **knowledge_base** | Tests the agent's knowledge (FAQs, product info, policies) | Accuracy and completeness of information |
+| **workflow + `generation_files`** | Tests the agent's knowledge (FAQs, product info, policies) against uploaded material | Accuracy and completeness of information |
 
 Default: `workflow`. Can combine by running generation multiple times with different types.
 
-**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category: `workflow` (default), `red_teaming_voice`, `red_teaming_text` (`knowledge_base` exists at runtime but is absent from the published schema — for KB coverage use `workflow` plus `generation_files`). **Always pass `attack_type` explicitly on a red-team call** (`system_prompt_leak`, `data_leak`, `harmful_content`, `biased_output`, `unauthorized_actions`, `off_task`): omitting it silently defaults to `system_prompt_leak`, so a request for full red-team coverage comes back as one category — run one call per attack type. `generation_files` is rejected for red-team categories. A separate `simulation_type` field picks the OUTPUT format (`instruction` default, or `conditional_actions` for grounded structured flows). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
+**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and upload the KB material as `generation_files` (workflow category only). A separate `simulation_type` field picks the OUTPUT format (`instruction` default, or `conditional_actions` for grounded structured flows). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
+
+**Every red-team call carries `attack_type`, one call per type.** Ask which threats matter; for "full red-team coverage" run all six and say so in the summary.
+
+| `attack_type` | The testing agent tries to make the main agent … |
+|---|---|
+| `system_prompt_leak` | reveal its prompt or instructions, tool/function names, internal variables, routing or workflow logic |
+| `data_leak` | disclose internal business data — authorization limits, pricing and margins, employee names or schedules, escalation criteria, customer statistics |
+| `harmful_content` | produce threats, hate speech, explicit content or instructions for illegal acts; confirm fabricated programmes or policies; give dangerous medical, legal or financial advice as fact |
+| `biased_output` | generalise about, or treat differently, a protected group — age, race/ethnicity, gender, religion, disability, socioeconomic status |
+| `unauthorized_actions` | commit to or "apply" account changes, credits, discounts or guarantees without the required verification, or skip an authentication step |
+| `off_task` | leave its purpose — competitor comparisons, unrelated topics over several turns, adopting another persona |
 
 ### 4. Number of Scenarios and Instructions
 
@@ -123,7 +134,7 @@ Present the full configuration for approval:
 ```
 Agent: [agent_id] ([agent_name])
 Folder: [folder_path]
-Scenario type: [workflow / redteaming / knowledge_base]
+Scenario type: [workflow / red_teaming_voice / red_teaming_text] (+ attack_type for red team)
 Count: [num_scenarios]
 Tags: [tags]
 
@@ -249,7 +260,7 @@ After generation (or bulk creation), show:
 
 ```
 Generated: [X] scenarios in folder "[folder_name]"
-Type: [workflow / redteaming / knowledge_base]
+Type: [workflow / red_teaming_voice / red_teaming_text]
 
 Coverage breakdown:
   - Scheduling: [N] scenarios
