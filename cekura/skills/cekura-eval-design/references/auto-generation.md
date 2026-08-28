@@ -2,11 +2,13 @@
 
 Detailed schema and gotchas for the scenario auto-generator. Loaded on demand from `SKILL.md`'s "Auto-Generation" section.
 
-The auto-generator emits whichever output format `simulation_type` asks for:
+The generator is the default write path in every mode; `simulation_type` selects the output format:
 
-- **Behavioral scenarios are always generated here**, never hand-authored via the create endpoint — including a single one (`num_scenarios: 1` with a specific `extra_instructions`). `simulation_type: "instruction"` is the default.
-- **Conditional actions can also be generated** — pass `simulation_type: "conditional_actions"` and the same grounding pipeline (agent description, KB, mock tools) emits validated `conditions[]`. It is the default path for conditional actions too, tags included — the generator knows the full tag set and honours tag requirements written into `extra_instructions`. Author directly only when the user dictates the exact script or a timing value must be exact — see `references/conditional-actions.md`.
-- Red-team categories (`scenario_type: "red_teaming_voice" / "red_teaming_text"`) always come back as conditional actions carrying a multi-turn attack plan; review them, never rewrite them into instructions.
+- `"instruction"` (default) — behavioural scenarios, one or many (`num_scenarios: 1` with a specific `extra_instructions` is normal).
+- `"conditional_actions"` — validated `conditions[]` from the same grounding pipeline (agent description, KB, mock tools), tags included: the generator knows the full tag set and honours tag requirements written into `extra_instructions`.
+- Red-team categories (`scenario_type: "red_teaming_voice" / "red_teaming_text"`) return conditional actions carrying a multi-turn attack plan; review them, never rewrite them into instructions.
+
+Create directly only when the user dictates the exact text or script, when a timing value must be exact, or when patching an existing scenario — see `references/conditional-actions.md`.
 
 ## Endpoint
 
