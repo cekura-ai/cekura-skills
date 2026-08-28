@@ -47,6 +47,18 @@ components        values +          the analysis      criteria,         run scri
 
 ---
 
+## Two different things are called "infrastructure tests"
+
+Before Phase 1, make sure which one the user wants — the A/B run showed this request is
+ambiguous and the wrong reading costs a whole discovery pass:
+
+| Ask | What it is | What to do |
+|---|---|---|
+| "add Cekura's **predefined** infrastructure suite" | 18+ ready-made latency / interruption / noise / packet-loss / hold scenarios Cekura ships | **Not reachable from the MCP tools.** Point the user at the dashboard's Evaluators → Infrastructure Suite → *Add to my Project* (or the `add_infrastructure_suite` API). Tell them it also adds an *AI Interrupting user = 0* rubric rule to the project, and tag the copies `infrastructure-suite` so CI can select them. Do not hand-build copies, and do not start the phases below. |
+| "build infra/CI tests **for my bot**" | tests derived from the customer's own pipeline code | Run the five phases below. |
+
+If the request could be either, ask once — one short question — before Phase 1.
+
 ## Ground Rules
 
 ### Rule 1 — Discover before designing. No exceptions.
