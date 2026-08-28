@@ -88,13 +88,15 @@ Do not ask about personality, metrics or tags — pick the documented defaults b
 | Mode | When | Write path |
 |---|---|---|
 | **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Open-ended personas, exploratory red-team, tone/empathy, general quality probing, any request without a structural commitment | **Always `scenarios_generate_bg`.** Generation grounds the scenario in the agent description, KB and mock tools; hand-written instructions depend on improvisation. One scenario is still `num_scenarios: 1`. |
-| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, conditions[]}` | Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, anything needing an XML tag | Apply this test rather than judging "how structured" it feels. **Generate** (`scenarios_generate_bg` + `simulation_type: "conditional_actions"`, same grounding pipeline, validated conditions) when the request names a **workflow or goal and leaves the turn sequence to you**, and the flow needs no tag beyond `<endcall />`. **Create directly** (`scenarios_create`) when the request **specifies the turn sequence** or the wording, when the flow needs any other tag (`<dtmf>`, `<ivr>`, `<voicemail>`, `<interruption>`, `<hold>`, `<audio>`, `<function>`, …), or when it is an infra/CI test. |
+| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, conditions[]}` | Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, anything needing an XML tag | Apply this test rather than judging "how structured" it feels. **Generate** (`scenarios_generate_bg` + `simulation_type: "conditional_actions"`, same grounding pipeline, validated conditions) when the request names a **workflow or goal and leaves the turn sequence to you**, and the flow needs no tag beyond `<endcall />`. **Create directly** (`scenarios_create`) when the request dictates the exact turn-by-turn script for a *structured* test, when the flow needs any other tag (`<dtmf>`, `<ivr>`, `<voicemail>`, `<interruption>`, `<hold>`, `<audio>`, `<function>`, …), or when it is an infra/CI test. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
 
 Switch to CA with **no confirmation** when the user says: conditional actions, structured/scripted/deterministic test, unit test, regression test, exact flow, fixed sequence, compliance test, infra/pipeline/CI test. Infrastructure and pipeline tests (STT, VAD, LLM timeout, interruption, idle, DTMF) are **always** CA — see **cekura-infra-test-suite**.
 
 Ask one short question when the request names a tag-supported feature (voicemail, IVR, DTMF, hold, interruption, network simulation, background noise) without naming a mode: CA gives high-fidelity tags, behavioral is looser.
 
 **The two exceptions to "behavioral ⇒ generate":** the user supplies the scenario text themselves (verbatim, CSV/JSON list, "create this exact scenario"), or you are patching an existing scenario. Say which exception applies when you use `scenarios_create` for an `instruction` scenario.
+
+**Supplied text outranks every mode signal.** When the user hands you scenario text — a `<scenario>` block, numbered steps, a CSV row — and asks for it as written, create it as `scenario_type: "instruction"` with that text unchanged. Do not restructure it into conditional actions because the steps look sequential, and do not reword it; rewriting is the one thing they asked you not to do. Attach the personality, metrics, profile and tools as usual.
 
 **If actions are present, set the type.** A payload whose `instructions` carries CA-shaped JSON while `scenario_type` is absent is stored as an instruction scenario and the script never runs. Pass the object in the `conditional_actions` field with `scenario_type: "conditional_actions"` (the backend also accepts a JSON **string** in `instructions`, but the field is clearer and validated the same way).
 
@@ -163,6 +165,7 @@ Everything needed to write a valid, deterministic CA scenario is here. Load **`r
 ```
 
 - `role` describes **only** the testing agent's persona — never what the main agent is or does.
+- **When the description mandates an exact script** — a compliance disclosure, a voicemail message, a required phrase — reproduce it **verbatim** in the action with `fixed_message: true`, including every number and name in it. Paraphrasing a mandated script tests something the agent was never asked to say.
 - All five condition fields are **required on every condition**: `id`, `condition`, `action`, `type`, `fixed_message`. `type` is `"standard"` or `"action_followup"` — **not** "say"/"do". Ids must be unique and ascending. `id: 0` must be `condition: "FIRST_MESSAGE"`, `type: "standard"`, `fixed_message: true`, and `action: ""` when the main agent speaks first.
 - `scenario_language` is required (or inherited from the personality, whose language it must match). Do not set `first_message` or `instructions` yourself.
 - No `others` catch-all condition. One action ≤ 16 KB.
@@ -187,8 +190,8 @@ The runtime matcher compares the main agent's **latest message** against each co
 | `<endcall />` | ends the call; may be combined with text (`Thanks, bye <endcall />`) |
 | `<dtmf digits="123#" />` | `0-9`, `#`, `*`; combinable with text; use `digits="{{test_profile.pin}}#"` for caller data — formatting is stripped |
 | `<spell>TEXT</spell>` | spells letter by letter (ids, account numbers) |
-| `<silence time="1.5s" />` | interruptible pause, decimals allowed; matching restarts after an interrupt |
-| `<hold time="30s" />` | dead air, **not** interruptible, several per action; pauses the idle timer |
+| `<silence time="1.5s" />` | interruptible pause, decimals allowed; matching restarts after an interrupt. **Not for idle-timer tests** — the testing agent's own idle prompt (default 10 s) still runs and will fire before the threshold you are measuring |
+| `<hold time="30s" />` | dead air, **not** interruptible, several per action; pauses the testing agent's idle timer — so this is the tag for **any silence longer than ~8 s**, and the only correct one for testing the main agent's own idle/no-input behaviour (bracket the threshold: one hold just under it, one just over) |
 | `<ignore_interruptions>…</ignore_interruptions>` | protects a **span** (text, `<audio>`, `<hold>`) from interruption; content goes between the tags |
 | `<interruption time="2s" />` | **`type: "action_followup"` and at the very start of the action**; cuts in Xs after the agent's next turn begins |
 | `<ivr text="…" />` | uninterruptible menu played by the testing agent; **must be the entire action**; put post-menu content in an `action_followup`; `<hold>`/`<audio>` inside it are rejected — use `<ignore_interruptions>` instead |
@@ -303,6 +306,8 @@ Fixing a scoring complaint: a metric that keeps returning 50 usually has an outc
 ## Coverage and next steps
 
 A complete suite covers **workflow** happy paths, **deterministic/unit** tests, **edge cases** (tool failures, retries, ambiguity), **red team**, **error handling**, and **multi-language** — ~30 % happy path, ~70 % specific friction, every scenario grounded in a real capability. Naming: `{CATEGORY}-{NN}: {description}` (≤80 chars); tags `["Category", "priority", "ID"]`. Real-world category breakdowns: **`references/coverage-patterns.md`**.
+
+**Cekura's predefined Infrastructure Suite** (18+ ready-made latency / interruption / noise / packet-loss / hold tests) is **not** reachable from the MCP tools: it is added from the dashboard's Evaluators → Infrastructure Suite → *Add to my Project*, or the `add_infrastructure_suite` API. Point the user there rather than hand-building copies, tell them it also adds an *AI Interrupting user = 0* rubric rule to the project, and tag the copies `infrastructure-suite` so CI can select them. For a suite derived from the customer's own pipeline code, use **cekura-infra-test-suite**.
 
 `scenarios_create_from_transcript_bg` turns a production call log into a replayable evaluator (poll `_progress`, then attach metrics/profile/folder/tools); `call_logs_create_scenarios` does a flagged batch. For prod-failure mining use **cekura-generate-scenarios**; for CI/infra suites **cekura-infra-test-suite**; for metrics **cekura-metric-design**; to improve the agent itself **cekura-self-improving-agent**.
 
