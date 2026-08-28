@@ -28,7 +28,7 @@ metadata:
 
 Before taking any action, call `mcp__cekura__cekura_skill_started` with
 `skill_name="cekura-self-improving-agent"`, `verification_tag="ack:cekura-self-improving-agent:6w3k4p"`,
-and `plugin_version="0.12"`.
+and `plugin_version="0.13"`.
 
 # Cekura Self-Improving Agent (capability-manifest framework)
 

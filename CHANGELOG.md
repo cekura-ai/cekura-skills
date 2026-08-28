@@ -4,6 +4,59 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.13.0 — 2026-08-28
+
+**The eval-design playbook now teaches conditional actions where agents actually
+read it.** Production telemetry showed that every correlated conditional-actions
+scenario was written without the 76 KB reference ever being opened, so the root
+`cekura-eval-design` skill now carries the whole authoring contract — payload
+shape, the five required condition fields, how the runtime matcher fires an
+`asks …` trigger (only on a real question, so a condition written against an
+agent that *states* a need never fires), the complete tag table with its real
+placement and range constraints, functions, attached audio, and a ten-point
+self-check to run before every write. The reference keeps the pattern library and
+troubleshooting.
+
+**Changing existing evaluators is a documented flow.** Editing, not creating, is
+most of the real work, and the skill had no procedure for it: it now says to read
+the evaluators first (including the export the Evaluators page attaches to the
+chat), audit them against the rubric, send the smallest possible PATCH — the
+whole `conditional_actions` object, because a partial one deletes the scenario's
+functions — and read back a diff. Bulk edits, duplicates and version labels are
+covered, as is the usual cause of a metric stuck at 50.
+
+**Generation can produce conditional actions.** The skill previously stated the
+opposite and sent every structured scenario down the hand-authoring path,
+discarding the grounding the generator does against the agent description,
+knowledge base and mock tools. Grounded workflow-shaped flows are now generated
+with `simulation_type: "conditional_actions"`; direct creation stays the path for
+tag-driven, short, exact-script and infrastructure tests.
+
+**Manual creates no longer ship without metrics.** `scenarios_create` starts with
+none attached while generation attaches the project's set, and the skill now
+carries the name-to-id lookup, the baseline four, and what to do when one is not
+enabled for the project. Runs without metrics only report that a call happened.
+
+**The checkpoint is one adaptive question.** The seven-item gate is replaced by a
+single consolidated question covering only what the request and the agent record
+do not already answer, skipped entirely when the user said to proceed.
+
+**Expected outcomes account for what the transcript can prove.** New rules cover
+providers whose tool calls never reach the transcript (grade what the agent says,
+not what it did), branches a correct agent may skip, and success that runtime
+state controls rather than the scenario.
+
+**Corrections.** Reading the agent with `aiagents_retrieve` before the first
+write is now explicit (the list endpoint returns no description).
+`manual-create-update-eval` no longer documents condition `type` as `"say"`/`"do"`
+— the only accepted values are `standard` and `action_followup`, so following it
+produced a validation error. Red-team generation documents that omitting
+`attack_type` silently defaults to one category, that its output is a multi-turn
+conditional-actions plan, and that `generation_files` is workflow-only.
+`<background_noise>` and `<noise>` volumes are 0–1.0, not the 0.5–2 the reference
+claimed, and a payload with conditional-action content must set
+`scenario_type` or it is stored as plain instruction text.
+
 ## 0.12.2 — 2026-08-26
 
 Also corrects the `PUT` description: replacing a recording can rename it, and

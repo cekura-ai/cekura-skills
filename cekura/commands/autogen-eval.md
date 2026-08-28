@@ -13,7 +13,7 @@ allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mc
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.12"`. If a conversation/session ID is available (e.g.
+`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.13"`. If a conversation/session ID is available (e.g.
 you were invoked from Cekura sandbox), also pass it as `conversation_id`. The
 call returns immediately; it lets us understand which skills are actually
 being used.
@@ -61,7 +61,7 @@ Use the folder path for the `folder_path` parameter in the generate call.
 
 Default: `workflow`. Can combine by running generation multiple times with different types.
 
-**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category, and it accepts only `workflow`, `red_teaming_voice`, `red_teaming_text`, `knowledge_base` (default `workflow`; the red-teaming values also take an optional `attack_type`). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
+**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category: `workflow` (default), `red_teaming_voice`, `red_teaming_text` (`knowledge_base` exists at runtime but is absent from the published schema — for KB coverage use `workflow` plus `generation_files`). **Always pass `attack_type` explicitly on a red-team call** (`system_prompt_leak`, `data_leak`, `harmful_content`, `biased_output`, `unauthorized_actions`, `off_task`): omitting it silently defaults to `system_prompt_leak`, so a request for full red-team coverage comes back as one category — run one call per attack type. `generation_files` is rejected for red-team categories. A separate `simulation_type` field picks the OUTPUT format (`instruction` default, or `conditional_actions` for grounded structured flows). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
 
 ### 4. Number of Scenarios and Instructions
 

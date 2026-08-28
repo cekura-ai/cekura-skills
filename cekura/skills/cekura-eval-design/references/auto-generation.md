@@ -2,14 +2,15 @@
 
 Detailed schema and gotchas for the scenario auto-generator. Loaded on demand from `SKILL.md`'s "Auto-Generation" section.
 
-The auto-generator produces **behavioral** evaluators (`scenario_type: "instruction"`) — it **cannot emit conditional-action** evaluators (`scenario_type: "conditional_actions"`). That makes the split absolute:
+The auto-generator emits whichever output format `simulation_type` asks for:
 
-- **Behavioral scenarios are always generated here**, never hand-authored via the create endpoint — including a single one (`num_scenarios: 1` with a specific `extra_instructions`).
-- **Conditional-action evaluators are always authored directly** via the create endpoint, because generation has no way to produce them — see `references/conditional-actions.md`.
+- **Behavioral scenarios are always generated here**, never hand-authored via the create endpoint — including a single one (`num_scenarios: 1` with a specific `extra_instructions`). `simulation_type: "instruction"` is the default.
+- **Conditional actions can also be generated** — pass `simulation_type: "conditional_actions"` and the same grounding pipeline (agent description, KB, mock tools) emits validated `conditions[]`. Use it for grounded, workflow-shaped flows; author directly with `scenarios_create` when the test is tag-driven, short, exact-script or infrastructure — see `references/conditional-actions.md`.
+- Red-team categories (`scenario_type: "red_teaming_voice" / "red_teaming_text"`) always come back as conditional actions carrying a multi-turn attack plan; review them, never rewrite them into instructions.
 
 ## Endpoint
 
-`POST /test_framework/v1/scenarios/generate-bg/` — the path for every behavioral scenario, one or many.
+`POST /test_framework/v1/scenarios/generate-bg/` — the path for every behavioral scenario, one or many, and for grounded conditional-action scenarios via `simulation_type`.
 
 ## Full schema
 

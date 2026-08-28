@@ -12,7 +12,7 @@ allowed-tools: ["AskUserQuestion", "mcp__cekura__metrics_retrieve", "mcp__cekura
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="improve-metric"`, `verification_tag="ack:improve-metric:4r6m2t"`, and `plugin_version="0.12"`. If a conversation/session ID is available (e.g. you
+`skill_name="improve-metric"`, `verification_tag="ack:improve-metric:4r6m2t"`, and `plugin_version="0.13"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 

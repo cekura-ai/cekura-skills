@@ -12,7 +12,7 @@ allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestio
 ## Tracking (do this first)
 
 Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.12"`. If a conversation/session ID is available (e.g. you
+`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.13"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
@@ -24,7 +24,7 @@ LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 Create a new evaluator (test scenario) or update an existing one on Cekura. This command walks through every field with the user — use it when you need precise control over the scenario configuration.
 
-**Creating a behavioral (`instruction`) scenario is not what this command is for** — those are always generated via `/autogen-eval` → `scenarios_generate_bg`, even a single one. This command's create path is for **conditional-action** scenarios, where direct create is the only option because generation cannot emit them. See the Step 2 gate below for the one narrow exception. Updating any existing scenario, of either type, belongs here.
+**Creating a behavioral (`instruction`) scenario is not what this command is for** — those are always generated via `/autogen-eval` → `scenarios_generate_bg`, even a single one. This command's create path is for **conditional-action** scenarios that are tag-driven, short, exact-script or infrastructure; a grounded workflow-shaped CA flow is better generated (`simulation_type: "conditional_actions"`). See the Step 2 gate below for the one narrow exception. Updating any existing scenario, of either type, belongs here.
 
 ## Scope Gate
 
@@ -80,7 +80,7 @@ For updates: show the current agent/project assignment.
 
 **The answer decides whether this command is even the right tool:**
 
-- **Deterministic (conditional actions) → stay here.** `scenarios_create` is the only path; the generate endpoint cannot emit conditional actions.
+- **Deterministic (conditional actions) → stay here** when the test is tag-driven, short, exact-script or infrastructure. If instead it is a grounded, workflow-shaped flow (a long happy path mirroring the agent description), generation produces a better-grounded scenario: run `scenarios_generate_bg` with `simulation_type: "conditional_actions"` and walk the result through the fields below.
 - **Adaptive (instructions) → hand off to `/autogen-eval`**, which calls `scenarios_generate_bg`. Behavioral scenarios are always generated, including a single one (`num_scenarios: 1` with the user's description as `extra_instructions`) — generation grounds them in the agent description, hand-writing depends on improvisation. Say so and switch:
 
   > That's a behavioral scenario, so it should be generated rather than hand-written — I'll run `/autogen-eval` with your description as the generation guidance, then walk the result through the remaining fields with you.
@@ -89,7 +89,7 @@ For updates: show the current agent/project assignment.
 
 **For adaptive (the exception cases above):** Write instructions in first-person, behavioral, wrapped in `<scenario>` tags. See the eval-design skill for patterns.
 
-**For conditional actions:** Build a conditions array. Each condition has: `id`, `condition` (trigger), `action` (what to say/do), `type` ("say" or "do"), `fixed_message` (true for exact scripted lines, false for general instructions). See the cekura-eval-design skill's `references/conditional-actions.md` for full structure.
+**For conditional actions:** Build a conditions array. All five fields are required on every condition: `id` (unique, ascending), `condition` (the trigger — an observer's description of what the main agent does, or an earlier condition's id for a followup), `action` (what the caller says/does), `type` (**`"standard"` or `"action_followup"` — never "say"/"do"**), `fixed_message` (`true` for exact scripted lines and for **every** XML tag, `false` for behavioural instructions). `id: 0` must be `condition: "FIRST_MESSAGE"`, `standard`, `fixed_message: true`, with an empty `action` when the main agent speaks first. Pass the object in the `conditional_actions` field with `scenario_type: "conditional_actions"`, and set `scenario_language`. Load the cekura-eval-design skill for the tag table, the matcher rules and the pre-write self-check.
 
 ### 3. Name
 
