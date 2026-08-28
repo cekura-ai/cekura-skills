@@ -88,7 +88,7 @@ Do not ask about personality, metrics or tags — pick the documented defaults b
 | Mode | When | Write path |
 |---|---|---|
 | **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Open-ended personas, exploratory red-team, tone/empathy, general quality probing, any request without a structural commitment | **Always `scenarios_generate_bg`.** Generation grounds the scenario in the agent description, KB and mock tools; hand-written instructions depend on improvisation. One scenario is still `num_scenarios: 1`. |
-| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, conditions[]}` | Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, anything needing an XML tag | **Grounded, long, workflow-shaped flow ⇒ `scenarios_generate_bg` with `simulation_type: "conditional_actions"`** (it runs the same grounding pipeline and emits validated conditions). **Tag-driven, short, exact-script or infra flow ⇒ `scenarios_create` directly.** |
+| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, conditions[]}` | Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, anything needing an XML tag | Apply this test rather than judging "how structured" it feels. **Generate** (`scenarios_generate_bg` + `simulation_type: "conditional_actions"`, same grounding pipeline, validated conditions) when the request names a **workflow or goal and leaves the turn sequence to you**, and the flow needs no tag beyond `<endcall />`. **Create directly** (`scenarios_create`) when the request **specifies the turn sequence** or the wording, when the flow needs any other tag (`<dtmf>`, `<ivr>`, `<voicemail>`, `<interruption>`, `<hold>`, `<audio>`, `<function>`, …), or when it is an infra/CI test. |
 
 Switch to CA with **no confirmation** when the user says: conditional actions, structured/scripted/deterministic test, unit test, regression test, exact flow, fixed sequence, compliance test, infra/pipeline/CI test. Infrastructure and pipeline tests (STT, VAD, LLM timeout, interruption, idle, DTMF) are **always** CA — see **cekura-infra-test-suite**.
 
@@ -118,7 +118,12 @@ Full rulebook with worked bad→good examples: **`references/instruction-pattern
 
 ## Auto-generation
 
-`POST scenarios_generate_bg` → `{"progress_id": "<uuid>"}`. Poll `scenarios_generate_progress` (or `wait_for_scenario_generation` when available) until `completed_scenarios == total_scenarios`. **Always poll** — an unpolled generation is an unverified one.
+`POST scenarios_generate_bg` → `{"progress_id": "<uuid>"}`. Poll `scenarios_generate_progress` (or `wait_for_scenario_generation` when available) until `completed_scenarios == total_scenarios`. **Always poll** — an unpolled generation is an unverified one — but poll with a bound:
+
+- Report progress about every 30 s, using the real counts and real elapsed time from the responses; never estimate and never poll silently for minutes.
+- **Stall:** `completed_scenarios` still 0 after ~5 minutes ⇒ stop waiting. Retry **once** with a smaller batch and tighter `extra_instructions`; if that also stalls at 0, stop and report the progress id, the real elapsed time and what to try next. Never take a second wait on the same stalled job.
+- **Freeze:** progress advances then stops short of the total for ~4 minutes ⇒ treat the batch as done and handle the shortfall.
+- **This overrides "proceed autonomously"** — in autonomous mode the stall response *is* the autonomous action.
 
 | Field | Notes |
 |---|---|
@@ -289,7 +294,7 @@ Most real work is editing evaluators, not creating them. Procedure:
 4. **Many at once:** `scenarios_bulk_update` (merge lists such as `tool_ids`/`metrics` — do not blank the rest). **Copies:** `scenarios_duplicate_create`, never re-create by hand.
 5. **Read back** and show a per-scenario diff of what changed.
 
-Fixing a scoring complaint: a metric that keeps returning 50 usually has an outcome line no step fires (`blocked`) — fix the outcome or add the causing step; do not rewrite the whole scenario. Fixing how the testing agent *speaks* (digits read as words, wrong language) is `<spell>`, `scenario_language` and personality — not an instruction rewrite.
+Fixing a scoring complaint: a metric that keeps returning 50 usually has an outcome line no step fires (`blocked`) — fix the outcome or add the causing step; do not rewrite the whole scenario. Then re-read **every** remaining line against **Expected outcomes** before you PATCH: the blocking line is rarely the only one that breaks the rules, and a leftover hang-up or "politely"-style line keeps the evaluator wrong after the blocker is gone. Fixing how the testing agent *speaks* (digits read as words, wrong language) is `<spell>`, `scenario_language` and personality — not an instruction rewrite.
 
 ## Run and report honestly
 

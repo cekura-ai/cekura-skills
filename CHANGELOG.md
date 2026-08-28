@@ -46,6 +46,13 @@ providers whose tool calls never reach the transcript (grade what the agent says
 not what it did), branches a correct agent may skip, and success that runtime
 state controls rather than the scenario.
 
+**Bounded generation polling.** "Always poll" now carries the stop conditions the
+0.10.11 reliability protocol added: report real counts about every 30 s, give up after
+~5 minutes at zero progress (one retry with a smaller batch, then report), treat a
+freeze short of the total as done, and let the stall rule override "proceed
+autonomously". An A/B run against a stalled generator showed the unbounded instruction
+producing 51 poll calls where the previous release made 6.
+
 **Corrections.** Reading the agent with `aiagents_retrieve` before the first
 write is now explicit (the list endpoint returns no description).
 `manual-create-update-eval` no longer documents condition `type` as `"say"`/`"do"`
@@ -55,7 +62,13 @@ produced a validation error. Red-team generation documents that omitting
 conditional-actions plan, and that `generation_files` is workflow-only.
 `<background_noise>` and `<noise>` volumes are 0–1.0, not the 0.5–2 the reference
 claimed, and a payload with conditional-action content must set
-`scenario_type` or it is stored as plain instruction text.
+`scenario_type` or it is stored as plain instruction text. Choosing between generating a
+conditional-actions scenario and writing one by hand is now a test rather than a
+judgement — generate when the request names a workflow and leaves the turn sequence
+open and the flow needs no tag beyond `<endcall />`; create directly when the sequence
+or wording is specified, when any other tag is needed, or for an infra test. And fixing
+an evaluator whose metric sits at 50 re-checks every outcome line, not only the line
+that blocks: a leftover hang-up or "politely" line keeps the evaluator wrong.
 
 ## 0.12.2 — 2026-08-26
 
