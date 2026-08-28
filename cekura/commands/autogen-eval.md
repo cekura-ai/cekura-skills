@@ -155,6 +155,12 @@ Use `mcp__cekura__scenarios_generate_bg` with:
 | `extra_instructions` | From step 5 |
 | `folder_path` | From step 2 |
 | `tags` | From step 6 |
+| `scenario_type` | Category from step 3: `workflow` (default), `red_teaming_voice` or `red_teaming_text` |
+| `attack_type` | Red team only — the type chosen in step 3; **one generation call per attack type** |
+| `simulation_type` | Output format from step 3: `instruction` (default) or `conditional_actions` |
+| `generation_files` | KB/context uploads when the user supplied material (workflow category only) |
+| `personalities` | Personality ids for the scenario language |
+| `generate_expected_outcomes` | `true` unless the user supplied outcomes |
 
 Returns `{"progress_id": "<uuid>"}`.
 

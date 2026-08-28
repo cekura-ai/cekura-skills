@@ -239,7 +239,7 @@ The runtime matcher compares the main agent's **latest message** against each co
 
 ### `fixed_message`
 
-`true` = the action text is spoken verbatim (required for exact phrasing, compliance lines, and **every XML tag** — with `false` the brackets are read aloud). `false` = the action is an instruction the testing agent phrases naturally.
+`true` = the action text is spoken verbatim (required for exact phrasing, compliance lines, and **every XML tag except `<function>`** — with `false` the brackets are read aloud). `false` = the action is an instruction the testing agent phrases naturally.
 
 ### Tags (`fixed_message: true`)
 
@@ -280,7 +280,7 @@ Refuse to send a payload that fails any of these:
 2. `id: 0` is `FIRST_MESSAGE` + `standard` + `fixed_message: true`; `action` empty iff the main agent speaks first.
 3. Every condition has all five fields; ids unique and ascending; no `others`.
 4. Every `asks …` condition corresponds to a question the description mandates; no quoted agent speech; no one-word triggers.
-5. Every action containing a tag has `fixed_message: true`; `<interruption>` is first in an `action_followup`; `<speed>`/`<volume>` start their action; `<ivr>`/`<voicemail>` are whole actions; ratios and volumes are in range.
+5. Every action containing a tag other than `<function>` has `fixed_message: true`; `<interruption>` is first in an `action_followup`; `<speed>`/`<volume>` start their action; `<ivr>`/`<voicemail>` are whole actions; ratios and volumes are in range.
 6. Every `action_followup.condition` names an earlier id, and one agent reply really does elapse first.
 7. Every `{{test_profile.*}}` key exists in the attached profile; every `{{function.*}}` key is declared and the action is fixed.
 8. The flow ends: `<endcall />` on the last action, or a terminal transfer, or the user asked to stay on the line.
