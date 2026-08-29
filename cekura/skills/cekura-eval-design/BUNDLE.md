@@ -371,7 +371,7 @@ Recipe: list the project's metrics → map **names** to ids → pass `metrics: [
 
 ## Changing existing evaluators
 
-Most real work is editing evaluators, not creating them. Procedure:
+Most real work is editing evaluators, not creating them. This procedure governs an explicit update/duplicate/improve request. **A request to create is authored as asked even when a near-duplicate already exists** — note the overlap and any bug you noticed in one line of the summary, and offer to consolidate; do not silently fix the existing one in place of the create the user asked for. Procedure:
 
 1. **Read first.** Retrieve each scenario by id (or read the `scenarios.json` the Evaluators page attached to this conversation — do not page the list endpoint when it is already on disk).
 2. **Audit against the rubric** above (steps/conditions, outcomes, placeholders, metrics, personality, tools). Report what you found before changing it.
