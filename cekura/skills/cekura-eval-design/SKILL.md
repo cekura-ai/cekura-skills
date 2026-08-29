@@ -273,7 +273,7 @@ The runtime matcher compares the main agent's **latest message** against each co
 | `<volume ratio="1.5" />` | **0–2.0**, double quotes, must start the action, Cartesia voices only |
 | `<voice provider="11labs" id="…" model="…" />` | switches TTS voice persistently — the only way to put a second speaker in one call; add `text="…"` for a one-off regional line, or use the block form `<voice …>…</voice>`; `provider` must match the id format and cannot change mid-call |
 | `<background_noise sound="coffee-shop" volume="0.3">text</background_noise>` | wraps the spoken text; **`volume` is 0–1.0**; `sound` must be a supported preset name or an `http(s)` URL |
-| `<noise sound="beep" volume="0.5" time="1.1s" />` | one-shot effect; **`volume` is 0–1.0** |
+| `<noise sound="beep" volume="0.5" time="1.1s" />` | one-shot effect (`office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying`); **`volume` is 0–1.0** |
 | `<network_simulation packet_loss="20" />` | only `packet_loss` is supported |
 | `<audio id="hold-music" />` | plays an **already-uploaded** clip by name; reusable across conditions; never re-upload for a second step |
 | `<client_message t="order_update" d='{…}' />` | silent RTVI message to a Pipecat agent; `t` required |

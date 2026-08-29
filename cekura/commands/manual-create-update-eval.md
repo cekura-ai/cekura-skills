@@ -11,7 +11,7 @@ allowed-tools: ["Skill", "Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUs
 
 ## Load the design skill first
 
-Before the tracking call below and before any Cekura MCP call, invoke the `Skill` tool with `cekura:cekura-eval-design`. Everything in this command assumes that skill is in context — its mode table, step-writing rules, pre-write self-checks, the read-only rule for the agent under test and the update procedure. If it is not loaded, stop and load it; do not proceed on this command's text alone.
+Before the tracking call below and before any Cekura MCP call, load the `cekura-eval-design` skill — in Claude Code the `Skill` tool with `cekura:cekura-eval-design`; in any other harness, read its `SKILL.md` into context. Everything in this command assumes that skill is in context — its mode table, step-writing rules, pre-write self-checks, the read-only rule for the agent under test and the update procedure. If it is not loaded, stop and load it; do not proceed on this command's text alone.
 
 ## Tracking (then do this)
 

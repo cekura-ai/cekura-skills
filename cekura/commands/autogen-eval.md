@@ -12,7 +12,7 @@ allowed-tools: ["Skill", "AskUserQuestion", "Read", "mcp__cekura__aiagents_retri
 
 ## Load the design skill first
 
-Invoke the `cekura-eval-design` skill (the `Skill` tool, `cekura:cekura-eval-design`) before anything else — its **Mode and write path**, **Auto-generation** and **Expected outcomes** sections govern every field below, its rule that the agent under test is read-only applies throughout, and its post-generation verification is what you run at the end.
+Load the `cekura-eval-design` skill before anything else — in Claude Code the `Skill` tool with `cekura:cekura-eval-design`; in any other harness, read its `SKILL.md` into context — its **Mode and write path**, **Auto-generation** and **Expected outcomes** sections govern every field below, its rule that the agent under test is read-only applies throughout, and its post-generation verification is what you run at the end.
 
 ## Tracking (then do this)
 

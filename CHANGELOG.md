@@ -31,8 +31,16 @@ scenario down the hand-authoring path, discarding the grounding the generator do
 against the agent description, knowledge base and mock tools. Behavioural scenarios,
 conditional actions and red-team plans now all come from the generator —
 `simulation_type` picks the output format, the generator knows the full tag set and
-honours tag requirements in `extra_instructions` — and direct creation is reserved
-for a user-dictated exact script, an exact timing value, or a patch.
+honours tag requirements in `extra_instructions` — while one scenario whose
+conduct the user has laid out — a dictated script, one persona with its exact
+behaviour, an exact timing value, a patch — may be created directly under a new
+pre-create self-check (first person in `<scenario>` tags, a trigger on every step, no
+voice traits in the text, profile placeholders, outcome, personality, folder, tool ids
+and the baseline metrics). Any count, category or "generate" request stays a
+generation call, with the user's stated facts carried into `extra_instructions`. The
+`/autogen-eval` and `/manual-create-update-eval` commands load `cekura-eval-design`
+before their tracking call, and the coordinator routes create, update and generate
+requests to the skill first. The agent under test is read-only while authoring.
 
 **Manual creates no longer ship without metrics.** `scenarios_create` starts with
 none attached while generation attaches the project's set, and the skill now
@@ -80,6 +88,14 @@ names MCP tools or describes server behaviour (validation errors, schema gaps,
 defaults); it states what to do and leaves the call selection to the tool
 descriptions in whichever harness is running it. The slash commands keep their
 exact tool sequences.
+## 0.12.3 — 2026-08-29
+
+**Two crying sounds for `<noise>`.** `female-crying` and `male-crying` join
+`office`, `beep`, `cough1` and `cough2` as one-shot sound names. Each is about
+ten seconds of a person sobbing, for evaluators that check whether the agent
+notices a caller in distress and asks if everything is okay. `cekura-eval-design`
+lists them alongside the other one-shot sounds and shows how to shorten the clip
+with `time`.
 
 ## 0.12.2 — 2026-08-26
 
