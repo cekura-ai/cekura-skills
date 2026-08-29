@@ -40,7 +40,7 @@ and the baseline metrics). Any count, category or "generate" request stays a
 generation call, with the user's stated facts carried into `extra_instructions`. The
 `/autogen-eval` and `/manual-create-update-eval` commands load `cekura-eval-design`
 before their tracking call, and the coordinator routes create, update and generate
-requests to the skill first. The agent under test is read-only while authoring.
+requests — and mock-data or test-profile requests for a test — to the skill first. The agent under test is read-only while authoring.
 
 **Manual creates no longer ship without metrics.** `scenarios_create` starts with
 none attached while generation attaches the project's set, and the skill now

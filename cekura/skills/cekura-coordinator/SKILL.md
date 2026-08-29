@@ -93,7 +93,8 @@ When the user describes what they need, route them:
 | "Help me improve this metric" | `/improve-metric` command |
 | "Leave feedback on a metric result" | `/improve-metric` command (Phase 1: feedback collection) |
 | "Set up production monitoring" | **cekura-onboarding** skill (Phase 6) + observability docs |
-| "Add mock tools" / "set up tools" | **cekura-create-agent** skill (Phase 7) |
+| "Add mock tools" / "set up tools" — defining the tools on the agent | **cekura-create-agent** skill (Phase 7) |
+| "Mock tool data for a test" / "add a mock entry" / "create the test profile" — data an evaluator will use | **cekura-eval-design** skill (§ Test data) |
 | "Upload knowledge base" | **cekura-create-agent** skill (Phase 8) |
 | "Something's broken" / "file a bug" | `/report-bug` command |
 | "Improve my agent" / "auto-tune from eval results" | **cekura-self-improving-agent** skill |
