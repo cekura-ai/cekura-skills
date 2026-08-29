@@ -82,6 +82,23 @@ personality. The numeric metrics are the ones that measure what a
 transcript-reading judge cannot, which for an infrastructure suite is most of
 the point.
 
+**The dry run is now a hard completion gate.** A suite that has not returned
+`valid: true` is not finished, and the skill says so in those words instead of
+handing over a file that looks complete. With no credentials in the session it
+asks for them rather than skipping quietly; only if they cannot be supplied does
+it hand over, and then it must label the suite unvalidated, give the exact
+command, and point at the workflow's `validate` job as the backstop. It also
+reads the returned plan rather than the flag alone — the metrics each case
+resolved, and `test_profile: {mode: "inline"}` where an inline block was given.
+
+**The update path no longer bypasses the authoring rules.** Step 0 routed an
+update straight to step 5, which skipped the agent-record read and the
+expected-outcome contract — measurably, the same repository produced 0 lint
+warnings on a create and 3 on an update. Starting at step 5 is now stated as the
+entry point, not a shortcut: anything authored still runs through steps 1b, 4
+and 6. Pre-existing warnings on untouched cases are to be reported and left, not
+silently rewritten.
+
 **Version surfaces resynced.** The inline `plugin_version` telemetry tags had
 drifted a minor behind the manifests, which `bump_version.py` cannot repair on
 its own — it only rewrites tags matching the current major.minor. All 14 are

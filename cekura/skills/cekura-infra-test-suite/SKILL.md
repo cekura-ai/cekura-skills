@@ -83,10 +83,16 @@ git ls-files '.github/workflows/*' '.gitlab-ci.yml' 'Jenkinsfile' | xargs grep -
 ```
 
 - **No spec** → create. Work through steps 1–7.
-- **A spec exists** → update it in place. Read it in full, keep every `key`, and go to step 5. Do
-  not regenerate the file: an existing suite is reviewed source code whose results are comparable
-  across commits only while its keys hold still. The most common correct outcome of an update is
-  **no change**.
+- **A spec exists** → update it in place. Read it in full, keep every `key`, and start at step 5,
+  the diff review. Do not regenerate the file: an existing suite is reviewed source code whose
+  results are comparable across commits only while its keys hold still. The most common correct
+  outcome of an update is **no change**.
+  **Starting at step 5 is not skipping the rest.** Anything you go on to author runs through
+  step 1b (read the agent record), step 4 (the expected-outcome contract) and step 6 (the dry run),
+  exactly as it would on a create. An update is a smaller change, not a lower standard — a new case
+  written to the old file's house style instead of the judge's contract is a worse case.
+  Pre-existing lint warnings on cases this change does not touch are not yours to fix here: report
+  them, leave them, and clean them in their own change.
 - **A workflow already calls Cekura** → extend that file in step 7 rather than adding a second one,
   reusing its secret names and trigger conventions.
 
@@ -297,10 +303,26 @@ Before editing, complete the coverage matrix row for every changed runtime symbo
 is a valid conclusion when no observable behavior changed. Do not modify unrelated cases, relax
 expected outcomes, or add generic provider tests merely because a nearby file changed.
 
-### 6. Validate the committed artifact
+### 6. Validate the committed artifact — the dry run is not optional
 
-Use a dry run for the whole file. It validates syntax, metrics, personalities, profiles, target
-compatibility, planned runs, and estimated cost without creating objects or placing a call:
+**A suite that has not returned `valid: true` from a dry run is not finished.** Say so in those
+words rather than handing over a file that looks complete. Everything `lint_suite.py` cannot see
+is checked here: whether every metric slug exists *and is enabled for this agent*, whether the
+personality is reachable, whether the agent supports the channel the CI job will use, and whether
+the server's own validators accept every tag. A spec that fails any of those is not a weaker
+suite — it is a suite that cannot run at all.
+
+So the order is: lint, then dry run, then fix, then dry run again, until it comes back valid.
+
+**If there are no credentials in the session, ask for them** — an API key and the agent id, or an
+authenticated MCP session. Do not quietly skip to the handoff. Only when the user cannot supply
+them do you hand over unvalidated, and then you must (a) label the suite unvalidated in the
+handoff and in the coverage note, (b) give the exact command below, and (c) point out that the
+`validate` job in the CI workflow runs the same dry run, so the first pull request will catch
+what this session could not.
+
+A dry run validates syntax, metrics, personalities, profiles, target compatibility, planned runs,
+and estimated cost without creating objects or placing a call:
 
 ```bash
 python3 cekura/lint_suite.py cekura.tests.json --strict     # free, offline, first
@@ -317,8 +339,14 @@ curl -sS -X POST \
   -d '{"agent_id": 123, "spec": { ... }}'
 ```
 
-Require `valid: true`. Check that each planned case has the intended metrics and reports an inline
-profile when an inline `test_profile` was supplied. Save the validation response only if it contains
+Require `valid: true`, and read the returned plan rather than glancing at the flag: each case must
+list the metrics you intended, and any case given an inline `test_profile` must report
+`mode: "inline"`. A case reporting `existing` means the inline block did not take effect.
+
+Errors come back keyed by their location in the file — `scenarios[2].metrics[0]` — and all at once,
+so one round trip tells you everything to fix. Fix them; never drop a metric or loosen a case to
+get past one. An unenabled metric is a configuration problem in the workspace, not a defect in the
+suite. Save the validation response only if it contains
 no credentials or sensitive caller data. If dry-run validation needs a write beyond `dry_run=true`,
 stop and report the blocker.
 
@@ -356,7 +384,8 @@ Leave the repository with:
   the existing Cekura workflow extended;
 - a short README note describing the target assumptions, Cekura dependencies (metrics,
   personalities, channels), and how CI invokes the suite; and
-- the dry-run result, or the exact validation blocker.
+- the dry-run result — `valid: true` with its plan — or, if no credentials were available, the
+  suite explicitly labelled **unvalidated** together with the command that will validate it.
 
 Report case count, target channel/seat coverage, dependencies, and anything that needs a live run or
 a backend capability. A dry-run proves the spec is valid; it does not prove a bot deployment works.
