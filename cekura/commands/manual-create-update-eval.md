@@ -65,7 +65,7 @@ evaluators are named `Copy of <original name>`.
 
 ## Field Walkthrough — Ask in This Order
 
-Walk through each field conversationally. Don't dump a form — ask about each section, confirm, then move on.
+**This walkthrough applies when the user chose this command explicitly** — asking through the fields is what they came for. On every other entry path (the design skill routed here, or the request already carries the facts) the skill's rule governs instead: one consolidated question for what you could not infer, and personality, metrics and tags taken from the documented defaults rather than asked about. Walk through each field conversationally. Don't dump a form — ask about each section, confirm, then move on.
 
 ### 1. Agent and Project
 
@@ -163,15 +163,16 @@ Plus any custom metrics relevant to the scenario's workflow (e.g., booking flow 
 
 **Ask:** "Does this scenario need any special tools for the testing agent?"
 
-| Tool | When to Enable | Why |
+| Tool id | When to Enable | Why |
 |------|---------------|-----|
 | `TOOL_END_CALL` | Recommended by default | Testing agent can hang up — without it, calls run until timeout |
 | `TOOL_END_CALL_ONLY_ON_TRANSFER` | Transfer scenarios | Ends call after transfer instead of sitting through hold music |
-| `TOOL_DTMF` | IVR/phone menu flows | Send touch-tone inputs |
-| `TOOL_SEND_DTMF` | Same as above (alternate name) | |
-| `TOOL_RECEIVE_DTMF` | Receiving DTMF inputs | |
+| `TOOL_DTMF` | IVR/phone menu flows | The testing agent sends touch-tone inputs |
+| `RECEIVE_DTMF` | Outbound IVR / voicemail simulation | The **main agent** presses keys and the testing agent hears them |
+| `SEND_SMS_TOOL_CALL` | SMS workflows (`<send_sms>`) | Needs an SMS-enabled number |
+| `CALL_HOLD` | Long-hold tests | |
 
-**VAPI agents use prefixed names:** `VAPI_TOOL_END_CALL`, `VAPI_TOOL_END_CALL_ONLY_ON_TRANSFER`, etc.
+These six ids are the whole accepted set — no other spelling is valid, and never pass the agent's own tool ids or mock-tool ids (`Invalid tool IDs` is the symptom). Do not add a provider prefix: the platform maps the generic ids itself.
 
 Default recommendation: `["TOOL_END_CALL"]` for most scenarios, add `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer scenarios.
 
@@ -204,7 +205,7 @@ For inbound agents using Approach B (Cekura mock tools): assign a unique phone n
 
 ## Checkpoint — Review Before Creating/Updating
 
-**Always present the full configuration for approval before making the API call:**
+**When the user chose this walkthrough, present the full configuration for approval before making the API call** (on the skill's routed path, the skill's single checkpoint has already covered this — do not add a second gate):
 
 ```
 Scenario: [name]
@@ -226,7 +227,7 @@ Expected outcome:
 [full expected outcome text]
 ```
 
-Get explicit "looks good" before proceeding.
+Get explicit "looks good" before proceeding — unless the user said to proceed autonomously, or the design skill's checkpoint already ran for this request.
 
 ## Create or Update
 

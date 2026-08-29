@@ -63,6 +63,23 @@ freeze short of the total as done, and let the stall rule override "proceed
 autonomously". An A/B run against a stalled generator showed the unbounded instruction
 producing 51 poll calls where the previous release made 6.
 
+**Tag and generation-field corrections against backend validators.** `<speed>` accepts
+0.1–2.0 (0.8–1.2 is the natural-speech band, not the API limit); `<network_simulation>`
+supports `jitter` and `latency` in milliseconds alongside `packet_loss` percent — both
+were wrong in 0.12.2 and in every reference site. `generation_files` accepts XML as well
+as PDF/TXT/JSON/CSV/MD, up to 10 files. The expected-outcome judge reads the transcript
+plus injected run metadata (per-turn timing, duration, call-end reason), not the
+transcript alone. `manual-create-update-eval` no longer lists `TOOL_SEND_DTMF` /
+`TOOL_RECEIVE_DTMF`, which are not in the accepted tool set, and no longer tells authors
+to add a provider prefix.
+
+**The commands defer to the skill's checkpoint.** `/autogen-eval`'s gate now fires when
+the user asked to see a plan or something is unresolved, instead of on every request;
+`/manual-create-update-eval`'s field-by-field interview applies when the user chose that
+walkthrough, and its approval step is skipped when the skill's single checkpoint already
+ran. Verbatim user-supplied scenario text is exempt from the direct-create style checks
+that would require rewriting it.
+
 **Corrections.** Reading the agent with `aiagents_retrieve` before the first
 write is now explicit (the list endpoint returns no description).
 `manual-create-update-eval` no longer documents condition `type` as `"say"`/`"do"`

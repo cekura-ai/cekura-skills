@@ -124,9 +124,11 @@ Tags are applied uniformly to all generated scenarios. Common patterns:
 - `["workflow", "must-have"]` — category and priority
 - `["2026-04-sprint"]` — sprint tracking
 
-## Pre-Generation Checkpoint — HARD GATE
+## Pre-Generation Checkpoint
 
-**No `scenarios_generate_bg` call until the user replies approving this checkpoint.** That holds even when the request already names an agent and a count, and *especially* when the user said "first ask me…" or "show me the plan before making changes" — starting generation before their answer is the single worst failure mode of this command. The only exception: the user explicitly said to proceed autonomously / without confirmation.
+Follow the design skill's rule: **ask once, only for what the request and the agent record do not already answer**, then proceed. Do not re-ask what the user has already stated, and do not gate a request that arrives complete.
+
+**Wait for an explicit approval before any `scenarios_generate_bg` call** in exactly these cases: the user said "first ask me…", "show me the plan" or "confirm before creating"; something in the list below is unresolved. Starting generation before their answer is the single worst failure mode of this command. When the user said to proceed autonomously, skip the gate entirely.
 
 Also before proposing the plan:
 - **Readable inputs** — if scenarios derive from an attached file, KB, or agent prompt, confirm you can actually read it. If it's unreadable, **stop and ask for a usable copy — even when the user said to proceed autonomously**: autonomy licenses defaults, not swapping in a different source (agent description, guesses) for the one they supplied. A stand-in needs their explicit OK after being told the source is unreadable.

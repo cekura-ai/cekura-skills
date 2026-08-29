@@ -171,7 +171,7 @@ Full rulebook with worked bad→good examples: **`references/instruction-pattern
 
 ### Self-check before every direct instruction create
 
-Refuse to send a direct create with `scenario_type: "instruction"` that fails any of these:
+Refuse to send a direct create with `scenario_type: "instruction"` that fails any of these. **On user-supplied verbatim text, items 2, 3 and 6 do not apply** — they would require the rewriting the user forbade; item 5 still does, and say in the summary which style rules their text does not follow.
 
 1. Instructions are first person and wrapped in `<scenario>` tags; user-supplied text is unchanged, wrapper and numbering included.
 2. Every step — the first one too — pairs one caller action with a passive `when …` trigger naming the exact question or offer ("when asked for the account number").
@@ -201,7 +201,7 @@ Start generation as a background job; it returns a `progress_id`. Poll its progr
 | `folder_path` | always set it (create the folder first) |
 | `generate_expected_outcomes` | `true` unless the user gave outcomes |
 | `tool_ids`, `tags`, `test_profile`, `first_message`, `inbound_phone_number` | as needed |
-| `generation_files` | KB/context uploads for this run (PDF/TXT/JSON/CSV/MD, ≤50 MB). Workflow category only. |
+| `generation_files` | KB/context uploads for this run (PDF/TXT/JSON/CSV/XML/MD, ≤10 files, ≤50 MB combined). Workflow category only. |
 
 **Red-team attack types.** Choose by the threat the user names; for "red-team coverage" with no threat named, run all six — one call each — and say so in the summary.
 
@@ -269,12 +269,12 @@ The runtime matcher compares the main agent's **latest message** against each co
 | `<interruption time="2s" />` | **`type: "action_followup"` and at the very start of the action**; cuts in Xs after the agent's next turn begins |
 | `<ivr text="…" />` | uninterruptible menu played by the testing agent; **must be the entire action**; put post-menu content in an `action_followup`; `<hold>`/`<audio>` cannot go inside it — use `<ignore_interruptions>` instead |
 | `<voicemail text="…" />` or `<voicemail />` | greeting + beep; **entire action**; post-beep message goes in an `action_followup` |
-| `<speed ratio="1.1" />` | **0.8–1.2**, must start the action |
+| `<speed ratio="1.1" />` | ratio **0.1–2.0** (0.8–1.2 keeps speech natural), must start the action |
 | `<volume ratio="1.5" />` | **0–2.0**, double quotes, must start the action, Cartesia voices only |
 | `<voice provider="11labs" id="…" model="…" />` | switches TTS voice persistently — the only way to put a second speaker in one call; add `text="…"` for a one-off regional line, or use the block form `<voice …>…</voice>`; `provider` must match the id format and cannot change mid-call |
 | `<background_noise sound="coffee-shop" volume="0.3">text</background_noise>` | wraps the spoken text; **`volume` is 0–1.0**; `sound` must be a supported preset name or an `http(s)` URL |
 | `<noise sound="beep" volume="0.5" time="1.1s" />` | one-shot effect (`office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying`); **`volume` is 0–1.0** |
-| `<network_simulation packet_loss="20" />` | only `packet_loss` is supported |
+| `<network_simulation packet_loss="20" jitter="50" latency="100" />` | `packet_loss` %, `jitter` ms, `latency` ms — any combination |
 | `<audio id="hold-music" />` | plays an **already-uploaded** clip by name; reusable across conditions; never re-upload for a second step |
 | `<client_message t="order_update" d='{…}' />` | silent RTVI message to a Pipecat agent; `t` required |
 | `<function name="lookup" />` | runs a declared function; any non-first condition, fixed or not. `{{function.lookup.status}}` renders an output — `fixed_message: true` only, key must be in that function's `response_mapping`, and always declare a `default` |
@@ -304,7 +304,7 @@ Refuse to send a payload that fails any of these:
 
 ## Expected outcomes
 
-`expected_outcome_prompt` is graded line by line by an LLM judge reading **only the transcript** (no audio). It does nothing unless the **Expected Outcome** metric is attached, and it is required on every scenario you create or generate — conditional actions included; a scenario with an empty outcome runs but grades nothing. Each statement is `yes` / `no` / `blocked`; all `yes` = 100, any `no` = 0, any `blocked` = 50.
+`expected_outcome_prompt` is graded line by line by an LLM judge reading the **transcript plus the run metadata injected with it** — per-turn timing, call duration and the call-end reason — but never audio. It does nothing unless the **Expected Outcome** metric is attached, and it is required on every scenario you create or generate — conditional actions included; a scenario with an empty outcome runs but grades nothing. Each statement is `yes` / `no` / `blocked`; all `yes` = 100, any `no` = 0, any `blocked` = 50.
 
 Rules — 2–6 lines, each starting `The main agent should`:
 
