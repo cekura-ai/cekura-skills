@@ -79,10 +79,10 @@ When the user describes what they need, route them:
 | "Create metrics for my agent" | **cekura-metric-design** skill |
 | "My metrics are giving wrong results" | `/improve-metric` command (or **cekura-metric-improvement** skill for full cycle) |
 | "I need to test my agent" | **cekura-eval-design** skill |
-| "Generate test scenarios" / any behavioral scenario, one or many | `/autogen-eval` command (behavioral scenarios are always generated) |
-| "Create a specific test scenario" — scripted / deterministic / regression / IVR / DTMF / compliance flow | `/manual-create-update-eval` command (conditional actions — generation can't emit them) |
-| "Create a specific test scenario" — natural conversation, edge case, red-team | `/autogen-eval` command with `num_scenarios: 1` and the description as `extra_instructions` |
-| "Update / duplicate an existing scenario" | `/manual-create-update-eval` command (either type) |
+| "Generate test scenarios" / any batch or category-level request, either format | **cekura-eval-design** skill, then `/autogen-eval` command |
+| "Create a specific test scenario" — scripted / deterministic / regression / IVR / DTMF / compliance flow | **cekura-eval-design** skill (conditional actions: generated for a category, created directly for a dictated script), `/manual-create-update-eval` for the field walkthrough |
+| "Create a specific test scenario" — natural conversation, edge case, red-team | **cekura-eval-design** skill: generate (`num_scenarios: 1`) for a category-level ask, create directly for a fully described case |
+| "Update / duplicate an existing scenario" | **cekura-eval-design** skill (§ Changing existing evaluators), `/manual-create-update-eval` for the walkthrough |
 | "Run my tests" | `/run-evals` command |
 | "Check test results" | `/eval-results` command |
 | "Create a metric that checks X" | `/create-metric` command (or **cekura-metric-design** skill for complex metrics) |
