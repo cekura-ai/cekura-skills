@@ -576,7 +576,7 @@ The Cekura API rejects requests that violate these rules. Each rule maps to a sp
 6. **Unique condition IDs** — every condition's `id` must be unique across the array. Duplicate IDs are rejected. Use non-negative integers.
 7. **`action_followup` `condition` field must be an integer** — the integer must match the `id` of an existing earlier condition. String values like `"1"` are rejected. Self-references (`condition: <own id>`) are rejected.
 8. **`scenario_language` required** — Conditional Actions evaluators require a language. Set it via a personality with a configured language (inferred automatically) or set `scenario_language` explicitly. This also applies when changing an existing evaluator's type to Conditional Actions.
-9. **`personality` required** — every scenario needs a personality assigned, conditional-actions or otherwise.
+9. **`personality` required** — every scenario needs a personality assigned, conditional-actions or otherwise. The API returns 400 without one.
 10. **`<audio>` tags must reference uploaded clips** — every id must reference a real uploaded clip and the condition must be `fixed_message: true`. Hand-written `<audio>` tags fail this. Don't author them — audio is attached via the [upload endpoint](#attached-audio-audio--managed-do-not-hand-author).
 
 ### Extra rules at generation time (LLM-generated scenarios only)

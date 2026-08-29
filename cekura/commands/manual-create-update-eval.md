@@ -247,7 +247,7 @@ the evaluator payload with `scenarios_create`.
 ## Key Reminders
 
 - Name field has 80-char limit
-- `personality` is required on every scenario
+- `personality` is required on every scenario — the API returns 400 without it
 - Ask about language BEFORE personality — language constrains personality options
 - Instructions are first-person and behavioral (adaptive) or condition→action pairs (deterministic)
 - Expected outcomes should be concise and behavioral, not exact

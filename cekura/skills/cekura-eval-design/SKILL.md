@@ -54,14 +54,14 @@ Fetch the agent's **full record** before the first authoring write — the singl
 | Field | What it decides |
 |---|---|
 | `description` | every workflow, branch, KB fact, transfer and policy you are allowed to test or grade |
-| `inbound`, and the greeting the description scripts | who speaks first: the main agent opens ⇒ CA `id: 0` has `action: ""` and behavioral scenarios need no opening line; otherwise the testing agent opens. The record carries no reliable flag for this — read the description, and ask when it is genuinely unclear |
+| `inbound`, and the greeting the description scripts | who speaks first: the main agent opens ⇒ CA `id: 0` has `action: ""` and behavioral scenarios need no opening line; otherwise the testing agent opens. Read the description for this and ask when it is unclear |
 | `language` | the personality language and `scenario_language` |
 | `assistant_provider`, `transcript_provider`, `websocket_url` | whether tool calls reach the evaluation transcript (see **Expected outcomes**) |
 | `mock_tools` (request them explicitly — the default agent read omits them), `auto_dynamic_variables` | which tool inputs/outputs and variables the test data must match |
 
 Skip it only when the user supplied a complete verbatim payload, or the evaluators are already attached to this conversation (Evaluators-page context). Never invent a workflow, a KB fact, or a tool the description does not contain — if the description is empty or too thin to ground a test, say so and ask for it (or offer `cekura-create-agent` to import from the provider) instead of generating.
 
-**The agent under test is read-only while you author evaluators.** Do not PATCH its `description`, headers, greeting behaviour, tools or provider settings to make a test possible — an evaluator tests the agent as deployed, and a rewritten description hides the very gap the test would have found. The one exception is `mock_tools` data (see **Test data**). When the user states a fact or behaviour the record does not contain (a policy, a header, a greeting rule), say so in one line, then carry the user's version into the test itself: `extra_instructions` or `generation_files` when generating, the test profile and `expected_outcome_prompt` when creating directly. Never offer to fix the agent instead.
+**The agent under test is read-only while you author evaluators.** Do not PATCH any of its fields — description, connection settings, tools, provider configuration — to make a test possible — an evaluator tests the agent as deployed, and a rewritten description hides the very gap the test would have found. The one exception is `mock_tools` data (see **Test data**). When the user states a fact or behaviour the record does not contain (a policy, a header, a greeting rule), say so in one line, then carry the user's version into the test itself: `extra_instructions` or `generation_files` when generating, the test profile and `expected_outcome_prompt` when creating directly. If the user wants the agent itself changed, that is a separate task for the agent-setup or agent-improvement skill, after the evaluator exists.
 
 ## One consolidated checkpoint
 
@@ -71,7 +71,7 @@ Skip the question entirely when the user said "proceed autonomously", "don't ask
 
 If you did ask, **wait for the answer** — no create or generate call in the same turn. And when the user says "first ask me", "show me the plan" or "confirm before creating", present the whole plan (mode, count and coverage, folder, profile, personality, metrics) and wait for approval even if the request already names the agent and the count.
 
-When the user says they do not know how to structure it, or asks how you would, the mode question is mandatory — one short question offering behavioural vs conditional actions with the reason — even when the project already holds evaluators of one type. Existing project patterns never waive an **Ask first** row of the mode table.
+When the request sits in an **Ask first** row of the mode table and the user has not chosen a structure, ask — one short question offering behavioural vs conditional actions with the reason. Existing evaluators of one type in the project do not answer it for them; the no-confirmation rows (infra, pipeline, explicit CA vocabulary) still switch without asking.
 
 What to confirm (drop every line you can already answer):
 
@@ -81,11 +81,11 @@ What to confirm (drop every line you can already answer):
 4. **Folder name** — propose one; do not ask.
 5. **Anything genuinely ambiguous** in the request (a named branch that does not exist, an agent id that does not resolve).
 
-Do not ask about personality, metrics or tags — pick the documented defaults below (when several plain Normal personalities remain, take the first and say so) and state what you picked in your summary. A checkpoint that lists seven questions is a failure mode: users abandon it.
+Do not ask about personality, metrics or tags — pick the documented defaults below (when several plain Normal personalities remain, the male variant when both genders exist — as `references/choosing-personality.md` says — and say so) and state what you picked in your summary. A checkpoint that lists seven questions is a failure mode: users abandon it.
 
 ## Mode and write path
 
-**Generation is the general write path in every mode.** Behavioural scenarios, conditional actions and red-team plans all come from the same background generator, grounded in the agent description, KB and mock tools; only the output format differs — `simulation_type: "instruction"` or `"conditional_actions"` (red-team categories return conditional actions on their own). Use it for every batch, every category-level request ("cancellation edge cases", "test its policy knowledge") and whenever the user says "generate". The count/category test decides: **a request for a number of scenarios ("4 evaluators", "6 scheduling tests"), for a topic or category ("cancellations", "its knowledge of these policies"), or containing the word *generate* is a generation request even when the user hands you the facts to test** — those facts go into `extra_instructions` or `generation_files`, never into hand-written steps, and rephrasing "generate" as "create" in your own notes does not change the path. **One scenario whose conduct the user has laid out — a dictated turn-by-turn script, one persona with its exact behaviour, an infra test bracketing a timeout to the decimal, a patch to an existing scenario — may be created directly** with `scenarios_create`. The path changes nothing else: a direct create meets the same step, outcome, profile, personality, tool and metric rules as generated output (see **Self-check before every direct instruction create** and the CA self-check), and it starts with **no metrics attached**. Choosing the mode is the decision; the write path follows from whether the user described the caller's conduct or only what to test. Say in the summary which scenarios were generated and which were created.
+**Generation is the general write path in every mode.** Behavioural scenarios, conditional actions and red-team plans all come from the same background generator, grounded in the agent description, KB and mock tools; only the output format differs — `simulation_type: "instruction"` or `"conditional_actions"` (red-team categories return conditional actions on their own). Use it for every batch, every category-level request ("cancellation edge cases", "test its policy knowledge") and whenever the user says "generate". The count/category test decides: **a request for a number of scenarios ("three evaluators", "a suite for the refund flow"), for a topic or category ("billing disputes", "what it knows about the return policy"), or containing the word *generate* is a generation request even when the user hands you the facts to test** — those facts go into `extra_instructions` or `generation_files`, never into hand-written steps. **A scenario, or a small set of them, whose conduct the user has laid out — a dictated turn-by-turn script, one persona with its exact behaviour, an infra test bracketing a timeout to the decimal, a patch to an existing scenario — may be created directly** with `scenarios_create`. The path changes nothing else: a direct create meets the same step, outcome, profile, personality, tool and metric rules as generated output (see **Self-check before every direct instruction create** and the CA self-check), and it starts with **no metrics attached**. Choosing the mode is the decision; the write path follows from whether the user described the caller's conduct or only what to test. Say in the summary which scenarios were generated and which were created.
 
 | Mode | When |
 |---|---|
@@ -135,7 +135,7 @@ free. Cover the verification branch and the same-provider path. Use the Normal
 personality for the agent's language.
 ```
 
-Never send a generation call with empty `extra_instructions` — the generator falls back to generic coverage. When the user states the facts the agent must know (a fee, a retention period, an age limit), the exact values go into `extra_instructions` (or the source document into `generation_files`) — the generator writes the expected outcome from them, and an outcome that cannot name the right answer grades nothing. If the user truly wants unguided coverage, say so and pass a one-line category list.
+Never send a generation call with empty `extra_instructions` — the generator falls back to generic coverage. When the user states the facts the agent must know (a price, a deadline, an eligibility rule), the exact values go into `extra_instructions` (or the source document into `generation_files`) — the generator writes the expected outcome from them, and an outcome that cannot name the right answer grades nothing. If the user truly wants unguided coverage, say so and pass a one-line category list.
 
 **Step-writing rules** (also what you check in generated output): every step = one caller action + a passive `when …` trigger naming the exact question ("when asked for a preferred appointment time", never bare "when asked"); one action per step; no passive/non-verbal steps (Wait/Listen/Remain silent/Interrupt — those are personality or CA tags); data read-backs use `Verify [item] when asked to confirm [item] and correct if wrong.`; the last step is `End the call when <the result of the final scripted action>.` unless the flow ends in a terminal transfer; script only triggers the description guarantees (**stop at the fork**); never premise a step on the main agent misbehaving; every caller-provided value — including choices and confirmations — is `{{test_profile.field}}`, the same token at every mention, and must exist in the attached profile. If the main agent is reactive, put the opening request in `first_message`, not in a step, and key each trigger to the response to the previous step — never to the caller's own state. Do not fabricate placeholders for one-shot topics; those go inline.
 
@@ -165,7 +165,7 @@ KEY INTERACTION POINTS:
 </scenario>
 ```
 
-**Gaps after generation** — missing categories are closed by another generation run with `extra_instructions` naming exactly what is missing. A single, fully described missing case ("a caller who refuses to give their date of birth") may equally be created directly; when it is, write it to the step-writing rules above, wrap it in `<scenario>` tags, attach outcome, profile, personality, tools and metrics, and pass the direct-create self-check below.
+**Gaps after generation** — missing categories are closed by another generation run with `extra_instructions` naming exactly what is missing. A single, fully described missing case ("a caller whose payment is declined twice") may equally be created directly; when it is, write it to the step-writing rules above, wrap it in `<scenario>` tags, attach outcome, profile, personality, tools and metrics, and pass the direct-create self-check below.
 
 Full rulebook with worked bad→good examples: **`references/instruction-patterns.md`**.
 
@@ -174,9 +174,9 @@ Full rulebook with worked bad→good examples: **`references/instruction-pattern
 Refuse to send a `scenarios_create` payload with `scenario_type: "instruction"` that fails any of these:
 
 1. Instructions are first person and wrapped in `<scenario>` tags; user-supplied text is unchanged, wrapper and numbering included.
-2. Every step — the first one too — pairs one caller action with a passive `when …` trigger naming the exact question or offer ("when asked for the reason of the call").
-3. No voice or delivery traits anywhere in the text — not in the steps and not in the SCENARIO line: background noise, interruption, accent, speed and silence live in the personality (fork one if the project has none). No step says *interrupt, cut in, talk over, jump in, interject, before the agent finishes*; once the personality carries the interruption level, the steps read like any other caller's.
-4. Every caller-provided value is `{{test_profile.field}}` and exists in the attached profile; no hard-coded names or numbers.
+2. Every step — the first one too — pairs one caller action with a passive `when …` trigger naming the exact question or offer ("when asked for the account number").
+3. No voice or delivery traits anywhere in the text — not in the steps and not in the SCENARIO line: background noise, interruption, accent, speed and silence live in the personality (fork one if the project has none). A step says what the caller says or does, never how the delivery lands; once the personality carries the interruption level or the noise, the steps read like any other caller's.
+4. Every reusable caller identity value (name, phone, date of birth, account number) is `{{test_profile.field}}` and exists in the attached profile; one-shot values stay inline, and user-supplied verbatim text is never rewritten to add placeholders.
 5. `expected_outcome_prompt` is present and written to **Expected outcomes**; `personality` (language matching `scenario_language`), `folder_path`, `tool_ids` (ids from the **Tools** table only) and `metrics` (the baseline set) are all set.
 6. The last step ends the call, or the flow ends in a terminal transfer.
 
@@ -220,7 +220,7 @@ Red-teaming runs a **multi-turn attacker pipeline**: persona + context + a 5–1
 
 ## Conditional actions — authoring card
 
-Everything needed to write a valid, deterministic CA scenario is here. Load **`references/conditional-actions.md`** for the pattern library, the 34 background-sound names, and the troubleshooting matrix.
+Everything needed to write a valid, deterministic CA scenario is here. Load **`references/conditional-actions.md`** for the pattern library, the 30 `<background_noise>` sound names, and the troubleshooting matrix.
 
 ```json
 {
@@ -294,7 +294,7 @@ Refuse to send a payload that fails any of these:
 1. `scenario_type: "conditional_actions"` set; object in `conditional_actions`; `scenario_language` set.
 2. `id: 0` is `FIRST_MESSAGE` + `standard` + `fixed_message: true`; `action` empty iff the main agent speaks first.
 3. Every condition has all five fields; ids unique and ascending; no `others`.
-4. Every `asks …` condition corresponds to a question the description mandates; no quoted agent speech; no one-word triggers. When the user names an agent utterance that must be verbatim (a disclosure, a read-back), one condition's trigger is anchored on it and the outcome quotes it.
+4. Every `asks …` condition corresponds to a question the description mandates; no quoted agent speech; no one-word triggers. When the user names an agent utterance that must be verbatim (a disclosure, a read-back), one condition's trigger is anchored on it and the outcome states it as an exact fact in backticks (see **Expected outcomes**).
 5. Every action containing a tag other than `<function>` has `fixed_message: true`; `<interruption>` is first in an `action_followup`; `<speed>`/`<volume>` start their action; `<ivr>`/`<voicemail>` are whole actions; ratios and volumes are in range.
 6. Every `action_followup.condition` names an earlier id, and one agent reply really does elapse first.
 7. Every `{{test_profile.*}}` key exists in the attached profile; every `{{function.*}}` key is declared and the action is fixed.
@@ -341,7 +341,7 @@ Mock tool entries, test profiles and dynamic variables are one data set — desi
 
 Required on every scenario. Personalities control language, accent, voice model, interruption level, background noise, speed, and idle behaviour (`message_plan.idle_timeout_seconds`, default 10 s; `idle_message_max_spoken_count`, default 3) — **instructions cannot change any of it**.
 
-- List the personalities for the scenario's language; pick the plain **Normal** variant for the scenario's language (no background-noise variant) unless the persona demands otherwise — a caller described as furious, angry, impatient, confused, elderly or non-native takes the matching predefined personality (Angry, Frustrated, Impatient, Confused, …), never Normal; fork one when no predefined personality fits. Use a `language=multi` personality when the call mixes languages.
+- List the personalities for the scenario's language; pick the plain **Normal** variant for the scenario's language (no background-noise variant) unless the persona demands otherwise: a trait that lasts the whole call — impatience or aggression (Interruptive High), an accent or non-native pace (the accent or Slow Speaker variant), ambient noise (a Bg Noise variant) — takes the matching predefined personality from `references/choosing-personality.md`; fork one when nothing fits. For CA, keep Normal unless the trait is call-wide. The API returns 400 without a personality. Use a `language=multi` personality when the call mixes languages.
 - `scenario_language` must match the personality's language. If no personality exists for the target language, or the predefined one is not enabled for the project, enable it, or fork a predefined one or create one — that is the resolution, not a fallback to English.
 - For behavioral batches propose a mix: ~60 % normal, ~20 % challenging, ~10 % non-native, ~10 % edge. For CA, keep Normal — the behaviour is in the conditions.
 - **Silence is a personality/tag concern.** "Remain silent" in instructions does nothing: the idle prompt fires anyway. Use `<hold>` for a bounded pause in CA, or raise `idle_timeout_seconds` on a personality the project owns (fork a predefined one first). Symptom→cause table: **`references/choosing-personality.md`**.
@@ -372,7 +372,7 @@ Most real work is editing evaluators, not creating them. Procedure:
 1. **Read first.** Retrieve each scenario by id (or read the `scenarios.json` the Evaluators page attached to this conversation — do not page the list endpoint when it is already on disk).
 2. **Audit against the rubric** above (steps/conditions, outcomes, placeholders, metrics, personality, tools). Report what you found before changing it.
 3. **Minimal diff.** PATCH only the fields that are wrong. For CA, mutate the retrieved `conditional_actions` object and send it back **whole** — an update replaces the whole stored object, so one carrying only `conditions` drops `functions[]`. `scenario_type` need not be resent. Pass `version_name` when the user wants the change labelled.
-4. **Many at once:** use the bulk update (merge lists such as `tool_ids`/`metrics` — do not blank the rest). **Copies:** duplicate the scenario; never re-create by hand. **Conversions** (CA → instruction or back) are updates to the same scenario id — PATCH `scenario_type` with the new body (written to the rules of the target mode, an instruction flow ending in `End the call when …`); create a second evaluator only when the user asks to keep the original.
+4. **Many at once:** use the bulk update (merge lists such as `tool_ids`/`metrics` — do not blank the rest). **Copies:** duplicate the scenario; never re-create by hand. **Conversions** (CA → instruction or back) are updates to the same scenario id — PATCH `scenario_type` with the new body (written to the rules of the target mode, an instruction flow ending in `End the call when …`); duplicate first and convert the copy when the original's run history matters (ask if unsure).
 5. **Read back** and show a per-scenario diff of what changed.
 
 Fixing a scoring complaint: a metric that keeps returning 50 usually has an outcome line no step fires (`blocked`) — fix the outcome or add the causing step; do not rewrite the whole scenario. Then re-read **every** remaining line against **Expected outcomes** before you PATCH: the blocking line is rarely the only one that breaks the rules, and a leftover hang-up or "politely"-style line keeps the evaluator wrong after the blocker is gone. Fixing how the testing agent *speaks* (digits read as words, wrong language) is `<spell>`, `scenario_language` and personality — not an instruction rewrite.
