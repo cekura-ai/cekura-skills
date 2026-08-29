@@ -58,14 +58,14 @@ Fetch the agent's **full record** before the first authoring write — the singl
 | Field | What it decides |
 |---|---|
 | `description` | every workflow, branch, KB fact, transfer and policy you are allowed to test or grade |
-| `inbound`, `agent_gives_first_message` | who speaks first: `true` ⇒ CA `id: 0` has `action: ""` and behavioral scenarios need no opening line; `false`/null ⇒ the testing agent opens |
+| `inbound`, and the greeting the description scripts | who speaks first: the main agent opens ⇒ CA `id: 0` has `action: ""` and behavioral scenarios need no opening line; otherwise the testing agent opens. The record carries no reliable flag for this — read the description, and ask when it is genuinely unclear |
 | `language` | the personality language and `scenario_language` |
 | `assistant_provider`, `transcript_provider`, `websocket_url` | whether tool calls reach the evaluation transcript (see **Expected outcomes**) |
 | `mock_tools` (request them explicitly — the default agent read omits them), `auto_dynamic_variables` | which tool inputs/outputs and variables the test data must match |
 
 Skip it only when the user supplied a complete verbatim payload, or the evaluators are already attached to this conversation (Evaluators-page context). Never invent a workflow, a KB fact, or a tool the description does not contain — if the description is empty or too thin to ground a test, say so and ask for it (or offer `cekura-create-agent` to import from the provider) instead of generating.
 
-**The agent under test is read-only while you author evaluators.** Do not PATCH its `description`, headers, `agent_gives_first_message`/`agent_speaks_first`, tools or provider settings to make a test possible — an evaluator tests the agent as deployed, and a rewritten description hides the very gap the test would have found. The one exception is `mock_tools` data (see **Test data**). When the user states a fact or behaviour the record does not contain (a policy, a header, a greeting rule), say so in one line, then carry the user's version into the test itself: `extra_instructions` or `generation_files` when generating, the test profile and `expected_outcome_prompt` when creating directly. Never offer to fix the agent instead.
+**The agent under test is read-only while you author evaluators.** Do not PATCH its `description`, headers, greeting behaviour, tools or provider settings to make a test possible — an evaluator tests the agent as deployed, and a rewritten description hides the very gap the test would have found. The one exception is `mock_tools` data (see **Test data**). When the user states a fact or behaviour the record does not contain (a policy, a header, a greeting rule), say so in one line, then carry the user's version into the test itself: `extra_instructions` or `generation_files` when generating, the test profile and `expected_outcome_prompt` when creating directly. Never offer to fix the agent instead.
 
 ## One consolidated checkpoint
 
