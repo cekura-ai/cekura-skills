@@ -48,7 +48,7 @@ SOUNDS = frozenset({
     "inside-car", "inside-train", "public-park", "rain-thunder", "windy-day",
     "restaurant", "shopping-mall", "stadium-crowd", "standard-hiss", "static-radio",
     "fan-buzz", "ship-humming", "two-people-talking", "train-station",
-    "holding-on-song", "off",
+    "holding-on-song", "female-crying", "male-crying", "off",
 })
 # A wrapper tag must cover the whole action; inner <silence>/<break>/<noise> are
 # allowed, so the capture is greedy and anchored at both ends.
@@ -210,8 +210,12 @@ def check_action_tags(action, ctype, where, report):
     for tag in ("background_noise", "noise"):
         sound = _attrs(action, tag).get("sound")
         if sound is not None and sound not in SOUNDS:
-            report.error(where, f"<{tag} sound=\"{sound}\"> is not a known sound — a typo here "
-                                "is silent: the call runs without it")
+            # A warning, not an error: the server validates this enum too, so a real
+            # typo still fails at the dry run — whereas this list goes stale every
+            # time a sound is added, and a false error blocks a valid build.
+            report.warn(where, f"<{tag} sound=\"{sound}\"> is not in this checker's list. Either "
+                               "it is a typo — silent at runtime, the call just plays nothing — "
+                               "or the platform has added it since. The dry run is authoritative")
 
     if re.search(r"<audio\b", action):
         report.error(where, "<audio> resolves its id against the scenario's condition_audio map, "
