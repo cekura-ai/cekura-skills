@@ -4,6 +4,15 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.12.3 — 2026-08-29
+
+**Two crying sounds for `<noise>`.** `female-crying` and `male-crying` join
+`office`, `beep`, `cough1` and `cough2` as one-shot sound names. Each is about
+ten seconds of a person sobbing, for evaluators that check whether the agent
+notices a caller in distress and asks if everything is okay. `cekura-eval-design`
+lists them alongside the other one-shot sounds and shows how to shorten the clip
+with `time`.
+
 ## 0.12.2 — 2026-08-26
 
 Also corrects the `PUT` description: replacing a recording can rename it, and
