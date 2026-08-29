@@ -246,7 +246,9 @@ recording also fixes the dialogue, so the testing agent can no longer adapt.
 
 #### `<noise>` (one-shot) sound names
 
-`office`, `beep`, `cough1`, `cough2`
+`office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying`
+
+`female-crying` / `male-crying` are ~10s clips of a person sobbing — use them to test whether the agent notices a caller in distress and checks in (`<noise sound="female-crying" time="6000" /> Sorry... I just got some bad news.`). Shorten with `time` if needed.
 
 ## Attached Audio (`<audio>` — reference an existing recording by name)
 
@@ -826,7 +828,7 @@ XML tags (fixed_message:true only):
   <send_sms text="..." />           Trigger SMS for SMS workflows
   <network_simulation packet_loss="N" />   Only packet_loss supported (% value)
   <background_noise sound="NAME" volume="N">spoken text</background_noise>   volume multiplier 0.5–2 (optional)
-  <noise sound="NAME" volume="N" time="Xs" />   One-shot: office | beep | cough1 | cough2; volume 0.5–2 (optional)
+  <noise sound="NAME" volume="N" time="Xs" />   One-shot: office | beep | cough1 | cough2 | female-crying | male-crying; volume 0.5–2 (optional)
   <audio id="..." />                MANAGED — do NOT hand-author. Plays an uploaded recording instead
                                      of TTS; created by POST scenarios/{id}/condition-audio/. Multiple
                                      clips and sibling tags are allowed on fixed_message actions.
