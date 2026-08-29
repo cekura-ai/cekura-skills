@@ -223,8 +223,10 @@ Use the public `cekura-eval-design` skill and its conditional-actions reference 
   property the assertion.
 - `<network_simulation … />` takes `packet_loss` (0–100), `jitter` and `latency` (ms), and is
   self-closing. It degrades the audio — it never proves anything by itself.
-- Do not reference stored audio clips: an `<audio>` id cannot be versioned in git and blocks the run
-  until the clip is marked ready.
+- Do not reference stored audio clips. A recording is referenced by id against the scenario's
+  `condition_audio` map, and a spec materialises transient scenarios that have no such map — so an
+  `<audio>` id in a committed suite resolves against nothing. (Referencing recordings by name *is*
+  supported for dashboard evaluators; see `cekura-eval-design`. It is the spec path that cannot.)
 
 **Lint before you validate.** `scripts/lint_suite.py` checks all of the above plus spec structure,
 duplicate keys, and inline-personality limits, offline and free:

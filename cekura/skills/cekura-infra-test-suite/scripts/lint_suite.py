@@ -214,9 +214,10 @@ def check_action_tags(action, ctype, where, report):
                                 "is silent: the call runs without it")
 
     if re.search(r"<audio\b", action):
-        report.error(where, "<audio> points at an uploaded clip, which cannot be versioned in "
-                            "git and blocks the run until the clip is marked ready. Use text "
-                            "and tags only")
+        report.error(where, "<audio> resolves its id against the scenario's condition_audio map, "
+                            "and a spec materialises transient scenarios that have no map — so the "
+                            "reference points at nothing. Dashboard evaluators can use recordings; "
+                            "a committed suite cannot. Use text and tags only")
 
     if re.search(r"<spell\b", action):
         report.warn(where, "<spell> is fine to speak, but STT normalises spelled characters "
