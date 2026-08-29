@@ -88,6 +88,30 @@ its own — it only rewrites tags matching the current major.minor. All 14 are
 now level with the manifests, and `cekura/.github/plugin/plugin.json` rejoins
 the other six.
 
+## 0.12.2 — 2026-08-26
+
+Also corrects the `PUT` description: replacing a recording can rename it, and
+repoints every tag, so it — not delete-and-re-add — is the way to change the
+audio of a clip several steps use.
+
+**Recording names follow one convention everywhere.** The upload endpoint now
+derives a readable id from the filename when `name` is omitted, matching what the
+editor proposes, so an evaluator created through MCP names its recordings the way
+a person would instead of getting an opaque generated id. `cekura-eval-design`
+says to omit `name` and documents the shape to follow when overriding it.
+
+## 0.12.1 — 2026-08-25
+
+**Attached audio can be referenced, not just uploaded.** A recording now
+belongs to the scenario rather than to one step, so `<audio id="…"/>` may appear
+in several conditions and more than once in one action, and a recording's id is
+a name chosen at upload. `cekura-eval-design` no longer says never to emit an
+`<audio>` tag: it says to reference recordings that already exist, reading the
+available ids from the scenario's `condition_audio` map, and to reuse one rather
+than asking for the same audio twice. A referenced recording that does not exist
+now blocks the run rather than the save, so the guidance says what to do when
+the wanted audio is not there.
+
 ## 0.12.0 — 2026-08-20
 
 **Breaking — skill consolidation.** `cekura-self-improving-agent` is rewritten
