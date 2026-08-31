@@ -230,7 +230,7 @@ recording also fixes the dialogue, so the testing agent can no longer adapt.
 | Tag | Behavior | Constraint |
 |---|---|---|
 | `<background_noise sound="NAME" volume="N">spoken text</background_noise>` | Continuous ambient sound behind the caller's voice | Wraps the spoken text. `volume` optional, range **0–1.0** (e.g. `0.3`). |
-| `<noise sound="NAME" volume="N" time="Xs" />` | One-shot sound effect at a point in the action | `volume` (range **0–1.0**, optional) and `time` (seconds e.g. `"1.1s"`, optional) |
+| `<noise sound="NAME" volume="N" time="N" />` | One-shot sound effect at a point in the action | `volume` (range **0–1.0**, optional) and `time` (bare **milliseconds**, e.g. `"1100"` — not `"1.1s"`; truncates the clip, optional) |
 | `<network_simulation packet_loss="N" jitter="N" latency="N" />` | Simulate a degraded connection: `packet_loss` percent (0–100), `jitter` ms, `latency` ms | Any combination of the three; at least one required. |
 
 #### `<background_noise>` sound names
@@ -828,7 +828,7 @@ XML tags (fixed_message:true only):
   <send_sms text="..." />           Trigger SMS for SMS workflows
   <network_simulation packet_loss="N" jitter="N" latency="N" />   packet_loss %, jitter/latency ms
   <background_noise sound="NAME" volume="N">spoken text</background_noise>   volume 0–1.0 (optional)
-  <noise sound="NAME" volume="N" time="Xs" />   One-shot: office | beep | cough1 | cough2 | female-crying | male-crying; volume 0–1.0 (optional)
+  <noise sound="NAME" volume="N" time="N" />    One-shot: office | beep | cough1 | cough2 | female-crying | male-crying; volume 0–1.0, time in ms (optional)
   <audio id="..." />                MANAGED — do NOT hand-author. Plays an uploaded recording instead
                                      of TTS; created by POST scenarios/{id}/condition-audio/. Multiple
                                      clips and sibling tags are allowed on fixed_message actions.

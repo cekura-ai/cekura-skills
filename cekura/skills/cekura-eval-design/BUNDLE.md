@@ -277,7 +277,7 @@ The runtime matcher compares the main agent's **latest message** against each co
 | `<volume ratio="1.5" />` | **0–2.0**, double quotes, must start the action, Cartesia voices only |
 | `<voice provider="11labs" id="…" model="…" />` | switches TTS voice persistently — the only way to put a second speaker in one call; add `text="…"` for a one-off regional line, or use the block form `<voice …>…</voice>`; `provider` must match the id format and cannot change mid-call |
 | `<background_noise sound="coffee-shop" volume="0.3">text</background_noise>` | wraps the spoken text; **`volume` is 0–1.0**; `sound` must be a supported preset name or an `http(s)` URL |
-| `<noise sound="beep" volume="0.5" time="1.1s" />` | one-shot effect (`office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying`); **`volume` is 0–1.0** |
+| `<noise sound="beep" volume="0.5" time="1100" />` | one-shot effect (`office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying`); **`volume` is 0–1.0**; **`time` is bare milliseconds** (`1100`, never `1.1s`) and truncates the clip |
 | `<network_simulation packet_loss="20" jitter="50" latency="100" />` | `packet_loss` %, `jitter` ms, `latency` ms — any combination |
 | `<audio id="hold-music" />` | plays an **already-uploaded** clip by name; reusable across conditions; never re-upload for a second step |
 | `<client_message t="order_update" d='{…}' />` | silent RTVI message to a Pipecat agent; `t` required |
@@ -358,7 +358,7 @@ Required on every scenario. Personalities control language, accent, voice model,
 | `TOOL_END_CALL_ONLY_ON_TRANSFER` | the flow ends in a transfer to a human/IVR |
 | `TOOL_DTMF` | the testing agent presses keys (IVR, PIN, account entry) |
 | `RECEIVE_DTMF` | the **main agent** presses keys — outbound IVR simulation, voicemail systems |
-| `SEND_SMS_TOOL_CALL` | the testing agent sends an SMS (`<send_sms>`); needs an SMS-enabled number |
+| `SEND_SMS_TOOL_CALL` | the testing agent sends an SMS (`<send_sms text="…" />` — `text` is required); needs an SMS-enabled number |
 | `CALL_HOLD` | long-hold tests |
 
 Enable what the flow needs and nothing more, and always give the testing agent a way to finish the call. `tool_ids` accepts only the ids in this table — never the agent's own tool ids or mock-tool ids, which are already attached to the agent (`Invalid tool IDs` is the symptom of mixing them up).
