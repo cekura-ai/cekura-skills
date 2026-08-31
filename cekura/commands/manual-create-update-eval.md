@@ -1,18 +1,22 @@
 ---
 name: manual-create-update-eval
-description: Manually create, update, or duplicate a Cekura evaluator (a.k.a. scenario, eval)
+description: Manually create, update, or duplicate a Cekura evaluator (a.k.a. scenario, eval); loads the cekura-eval-design skill first
 argument-hint: "[create|update|duplicate] [eval type or scenario ID]"
-allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_duplicate_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Skill", "Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_duplicate_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-ack-tag: ack:manual-create-update-eval:5m4p7c -->
 > **Cekura skill verification tag:** `ack:manual-create-update-eval:5m4p7c`
 > When you call a Cekura scenario or test-profile write tool from this command (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 <!-- cekura-tracking-beacon -->
 
-## Tracking (do this first)
+## Load the design skill first
 
-Before doing anything else, call `mcp__cekura__cekura_skill_started` with
-`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.12"`. If a conversation/session ID is available (e.g. you
+Before the tracking call below and before any Cekura MCP call, load the `cekura-eval-design` skill — in Claude Code the `Skill` tool with `cekura:cekura-eval-design`; in any other harness, read its `SKILL.md` into context. Everything in this command assumes that skill is in context — its mode table, step-writing rules, pre-write self-checks, the read-only rule for the agent under test and the update procedure. If it is not loaded, stop and load it; do not proceed on this command's text alone.
+
+## Tracking (then do this)
+
+Next, call `mcp__cekura__cekura_skill_started` with
+`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.13"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
@@ -24,7 +28,7 @@ LIBERALLY — even `severity="low"` reports are valuable feedback.
 
 Create a new evaluator (test scenario) or update an existing one on Cekura. This command walks through every field with the user — use it when you need precise control over the scenario configuration.
 
-**Creating a behavioral (`instruction`) scenario is not what this command is for** — those are always generated via `/autogen-eval` → `scenarios_generate_bg`, even a single one. This command's create path is for **conditional-action** scenarios, where direct create is the only option because generation cannot emit them. See the Step 2 gate below for the one narrow exception. Updating any existing scenario, of either type, belongs here.
+The `cekura-eval-design` skill (loaded above) holds the mode table, the instruction and conditional-action rules, the pre-write self-checks and the update procedure this command walks through. Generation (`/autogen-eval` → `scenarios_generate_bg`) is the general path for batches and category-level requests in either format; this command's create path is for a specific scenario the user has already described in full — a dictated script, one fully specified case, a timing value exact to the decimal — and for updating any existing scenario. See the Step 2 gate below.
 
 ## Scope Gate
 
@@ -61,7 +65,7 @@ evaluators are named `Copy of <original name>`.
 
 ## Field Walkthrough — Ask in This Order
 
-Walk through each field conversationally. Don't dump a form — ask about each section, confirm, then move on.
+**This walkthrough applies when the user chose this command explicitly** — asking through the fields is what they came for. On every other entry path (the design skill routed here, or the request already carries the facts) the skill's rule governs instead: one consolidated question for what you could not infer, and personality, metrics and tags taken from the documented defaults rather than asked about. Walk through each field conversationally. Don't dump a form — ask about each section, confirm, then move on.
 
 ### 1. Agent and Project
 
@@ -80,16 +84,12 @@ For updates: show the current agent/project assignment.
 
 **The answer decides whether this command is even the right tool:**
 
-- **Deterministic (conditional actions) → stay here.** `scenarios_create` is the only path; the generate endpoint cannot emit conditional actions.
-- **Adaptive (instructions) → hand off to `/autogen-eval`**, which calls `scenarios_generate_bg`. Behavioral scenarios are always generated, including a single one (`num_scenarios: 1` with the user's description as `extra_instructions`) — generation grounds them in the agent description, hand-writing depends on improvisation. Say so and switch:
+- **Deterministic (conditional actions):** a batch or a category-level request → `scenarios_generate_bg` with `simulation_type: "conditional_actions"`, the flow and every tag requirement (DTMF entry, hold length, IVR menu, voicemail, interruption) in `extra_instructions`; then walk the result through the fields below and patch what is off. A single fully specified flow — the user dictated the turns, or a timing value must be exact — → build it here against the eval-design CA self-check.
+- **Adaptive (instructions):** a batch or a category-level request ("edge cases around cancellation") → hand off to `/autogen-eval`, which calls `scenarios_generate_bg` and grounds the scenarios in the agent description. A single case the user has already described in full, or supplied verbatim, → create it here: first person, `<scenario>`-wrapped, with outcome, profile, personality, tools and metrics attached (the eval-design skill's direct-create self-check). Updates to an existing adaptive scenario are always direct.
 
-  > That's a behavioral scenario, so it should be generated rather than hand-written — I'll run `/autogen-eval` with your description as the generation guidance, then walk the result through the remaining fields with you.
+**For adaptive (direct creates):** Write instructions in first-person, behavioral, wrapped in `<scenario>` tags. See the eval-design skill for patterns.
 
-  **Stay here for an adaptive scenario in exactly one case: the user supplies the instruction text themselves and wants it verbatim** — generating would discard their wording. Note in the summary that it bypassed generation. "Just hand-write it" is not that case: offer to generate from their description instead, and if they insist, ask them for the instruction text so the verbatim path applies. Updates to an existing adaptive scenario are unaffected — patching is always direct.
-
-**For adaptive (the exception cases above):** Write instructions in first-person, behavioral, wrapped in `<scenario>` tags. See the eval-design skill for patterns.
-
-**For conditional actions:** Build a conditions array. Each condition has: `id`, `condition` (trigger), `action` (what to say/do), `type` ("say" or "do"), `fixed_message` (true for exact scripted lines, false for general instructions). See the cekura-eval-design skill's `references/conditional-actions.md` for full structure.
+**For conditional actions:** Build a conditions array. All five fields are required on every condition: `id` (unique, ascending), `condition` (the trigger — an observer's description of what the main agent does, or an earlier condition's id for a followup), `action` (what the caller says/does), `type` (**`"standard"` or `"action_followup"` — never "say"/"do"**), `fixed_message` (`true` for exact scripted lines and for **every** XML tag, `false` for behavioural instructions). `id: 0` must be `condition: "FIRST_MESSAGE"`, `standard`, `fixed_message: true`, with an empty `action` when the main agent speaks first. Pass the object in the `conditional_actions` field with `scenario_type: "conditional_actions"`, and set `scenario_language`. Load the cekura-eval-design skill for the tag table, the matcher rules and the pre-write self-check.
 
 ### 3. Name
 
@@ -135,7 +135,7 @@ Default: `en`. Set via `scenario_language` field on the scenario.
 
 ### 8. Personality (Required)
 
-**After confirming language**, select a personality. The API returns 400 without one.
+**After confirming language**, select a personality — every scenario needs one.
 
 Use `mcp__cekura__personalities_list` to list available personalities, filtered by the chosen language if possible. `language=<code>` is the only filter you need (`project_id` is optional — it scopes to the project's own plus globally available personalities).
 
@@ -163,15 +163,16 @@ Plus any custom metrics relevant to the scenario's workflow (e.g., booking flow 
 
 **Ask:** "Does this scenario need any special tools for the testing agent?"
 
-| Tool | When to Enable | Why |
+| Tool id | When to Enable | Why |
 |------|---------------|-----|
 | `TOOL_END_CALL` | Recommended by default | Testing agent can hang up — without it, calls run until timeout |
 | `TOOL_END_CALL_ONLY_ON_TRANSFER` | Transfer scenarios | Ends call after transfer instead of sitting through hold music |
-| `TOOL_DTMF` | IVR/phone menu flows | Send touch-tone inputs |
-| `TOOL_SEND_DTMF` | Same as above (alternate name) | |
-| `TOOL_RECEIVE_DTMF` | Receiving DTMF inputs | |
+| `TOOL_DTMF` | IVR/phone menu flows | The testing agent sends touch-tone inputs |
+| `RECEIVE_DTMF` | Outbound IVR / voicemail simulation | The **main agent** presses keys and the testing agent hears them |
+| `SEND_SMS_TOOL_CALL` | SMS workflows (`<send_sms>`) | Needs an SMS-enabled number |
+| `CALL_HOLD` | Long-hold tests | |
 
-**VAPI agents use prefixed names:** `VAPI_TOOL_END_CALL`, `VAPI_TOOL_END_CALL_ONLY_ON_TRANSFER`, etc.
+These six ids are the whole accepted set — no other spelling is valid, and never pass the agent's own tool ids or mock-tool ids (`Invalid tool IDs` is the symptom). Do not add a provider prefix: the platform maps the generic ids itself.
 
 Default recommendation: `["TOOL_END_CALL"]` for most scenarios, add `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer scenarios.
 
@@ -204,7 +205,7 @@ For inbound agents using Approach B (Cekura mock tools): assign a unique phone n
 
 ## Checkpoint — Review Before Creating/Updating
 
-**Always present the full configuration for approval before making the API call:**
+**When the user chose this walkthrough, present the full configuration for approval before making the API call** (on the skill's routed path, the skill's single checkpoint has already covered this — do not add a second gate):
 
 ```
 Scenario: [name]
@@ -226,7 +227,7 @@ Expected outcome:
 [full expected outcome text]
 ```
 
-Get explicit "looks good" before proceeding.
+Get explicit "looks good" before proceeding — unless the user said to proceed autonomously, or the design skill's checkpoint already ran for this request.
 
 ## Create or Update
 
@@ -247,7 +248,7 @@ the evaluator payload with `scenarios_create`.
 ## Key Reminders
 
 - Name field has 80-char limit
-- `personality` is required — API returns 400 without it
+- `personality` is required on every scenario — the API returns 400 without it
 - Ask about language BEFORE personality — language constrains personality options
 - Instructions are first-person and behavioral (adaptive) or condition→action pairs (deterministic)
 - Expected outcomes should be concise and behavioral, not exact

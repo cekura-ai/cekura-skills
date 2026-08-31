@@ -143,7 +143,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 | `<silence time="Xs" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues; condition matching restarts after an interrupt. Supports decimal seconds for sub-second precision (e.g., `time="0.5s"`). | Embeddable mid-action |
 | `<hold time="Xs" />` | Dead air — **not interruptible**; background noise stops | Multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell text letter-by-letter (no attributes) | Wrap target text |
-| `<speed ratio="N" />` | Speech rate; ratio range **0.8–1.2** (0.8 = 20% slower, 1.2 = 20% faster) | **Must start the action** |
+| `<speed ratio="N" />` | Speech rate; ratio range **0.1–2.0** — 0.8–1.2 keeps speech natural, beyond that it is a stress test | **Must start the action** |
 | `<volume ratio="N" />` | Volume; ratio range **0–2** (0 = silent, 1 = normal, 2 = double) | **Must start the action. Cartesia voices only.** |
 
 #### `<voice>` — simulating multiple speakers
@@ -229,9 +229,9 @@ recording also fixes the dialogue, so the testing agent can no longer adapt.
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<background_noise sound="NAME" volume="N">spoken text</background_noise>` | Continuous ambient sound behind the caller's voice | Wraps the spoken text. `volume` optional; multiplier range **0.5–2** (1 = normal). |
-| `<noise sound="NAME" volume="N" time="Xs" />` | One-shot sound effect at a point in the action | `volume` (multiplier **0.5–2**, optional) and `time` (seconds e.g. `"1.1s"`, optional) |
-| `<network_simulation packet_loss="N" />` | Simulate degraded connection (percentage value, e.g. `packet_loss="5"`) | **Only `packet_loss` is supported.** |
+| `<background_noise sound="NAME" volume="N">spoken text</background_noise>` | Continuous ambient sound behind the caller's voice | Wraps the spoken text. `volume` optional, range **0–1.0** (e.g. `0.3`). |
+| `<noise sound="NAME" volume="N" time="N" />` | One-shot sound effect at a point in the action | `volume` (range **0–1.0**, optional) and `time` (bare **milliseconds**, e.g. `"1100"` — not `"1.1s"`; truncates the clip, optional) |
+| `<network_simulation packet_loss="N" jitter="N" latency="N" />` | Simulate a degraded connection: `packet_loss` percent (0–100), `jitter` ms, `latency` ms | Any combination of the three; at least one required. |
 
 #### `<background_noise>` sound names
 
@@ -679,7 +679,7 @@ The testing agent changes its objective mid-call (e.g., cancel → reschedule). 
 
 ### Degraded connection / packet loss
 
-`<network_simulation packet_loss="N" />` at the start of an action. Only `packet_loss` is honored. See "Worked Example 7: Degraded Connection Simulation".
+`<network_simulation packet_loss="N" jitter="N" latency="N" />` at the start of an action — packet loss in percent, jitter and latency in milliseconds, any combination. See "Worked Example 7: Degraded Connection Simulation".
 
 ### Scripted sequence (no agent reply gating)
 
@@ -717,7 +717,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - **No `default` on placeholder-referenced outputs.** If the API call fails or the path doesn't match, an un-defaulted placeholder is spoken literally — the testing agent says "your order is {{function.lookup.status}}" out loud. Declare a `default` for every output a fixed message references.
 - **Localhost / private-network function URLs.** Create-time validation only checks the URL is `http(s)`; internal addresses are refused at call time and the function falls back to defaults. Use a publicly reachable endpoint (e.g., a tunnel for local testing).
 - **Updating `conditional_actions` without the existing `functions[]`.** Updates are a full replace — the stored object is rebuilt from exactly what you send, so a PATCH that only carries `conditions` silently deletes every function. Read the current `instructions`, modify, and send the whole object back.
-- **Unsupported `<network_simulation>` attributes.** Only `packet_loss` is honored.
+- **Unsupported `<network_simulation>` attributes.** Only `packet_loss`, `jitter` and `latency` are honored; anything else fails validation.
 - **Hand-authoring an `<audio>` tag.** `<audio id="…"/>` is created only by the audio-upload flow ([Attached Audio](#attached-audio-audio--managed-do-not-hand-author)); a tag you write points at a clip that doesn't exist and fails reference validation. Never emit one when generating scenarios.
 - **Stringly-typed `action_followup` references.** The `condition` field on an `action_followup` must be an **integer** matching a prior condition's `id`. String values like `"1"` are rejected.
 - **Putting the JSON object directly in `instructions`.** Use the `conditional_actions` field on the scenario create/update payload. `instructions` accepts a string only.
@@ -739,7 +739,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
 - [ ] Every `<voice>` has a compatible `provider` and `id`; use either `text="..."` or an opening/closing block for regional speech, never both
 - [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
-- [ ] `<network_simulation>` only uses `packet_loss`
+- [ ] `<network_simulation>` uses only `packet_loss` / `jitter` / `latency`
 - [ ] No XML tags used with `fixed_message: false`
 - [ ] No hand-written `<audio>` tags (created only by the audio-upload flow; a fabricated id fails reference validation)
 - [ ] Every `<function>` tag and `{{function.*}}` placeholder references a declared function (and, for placeholders, a declared `response_mapping` output) — and none appear on `id: 0`
@@ -748,7 +748,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - [ ] Updates send the FULL `conditional_actions` object including existing `functions[]` (updates are full-replace, not a merge)
 - [ ] The last condition ends the conversation (via `<endcall />` or a natural close)
 - [ ] `scenario_language` is set (either explicitly or via a personality with a configured language — required by validation rule 6)
-- [ ] A `personality` is set (API returns 400 without one)
+- [ ] A `personality` is set
 
 ## Troubleshooting (error message → fix)
 
@@ -817,7 +817,7 @@ XML tags (fixed_message:true only):
   <spell>TEXT</spell>               Spell text letter-by-letter
   <interruption time="Xs" />        Cut in Xs after agent starts speaking — MUST be action_followup
                                      AND at the very start of the action string
-  <speed ratio="N" />               Speech rate 0.8–1.2; must start the action
+  <speed ratio="N" />               Speech rate 0.1-2.0 (0.8-1.2 natural); must start the action
   <volume ratio="N" />              Volume 0–2; must start the action; Cartesia only
   <voice provider="P" id="X" model="Y" />   Persistently switch TTS voice. Add text="..." for
                                      a temporary line, or wrap text in <voice ...>...</voice> for
@@ -826,9 +826,9 @@ XML tags (fixed_message:true only):
                                      11labs=alphanumeric); model optional (sonic-3.5 /
                                      eleven_turbo_v2_5); provider can't change mid-call
   <send_sms text="..." />           Trigger SMS for SMS workflows
-  <network_simulation packet_loss="N" />   Only packet_loss supported (% value)
-  <background_noise sound="NAME" volume="N">spoken text</background_noise>   volume multiplier 0.5–2 (optional)
-  <noise sound="NAME" volume="N" time="Xs" />   One-shot: office | beep | cough1 | cough2 | female-crying | male-crying; volume 0.5–2 (optional)
+  <network_simulation packet_loss="N" jitter="N" latency="N" />   packet_loss %, jitter/latency ms
+  <background_noise sound="NAME" volume="N">spoken text</background_noise>   volume 0–1.0 (optional)
+  <noise sound="NAME" volume="N" time="N" />    One-shot: office | beep | cough1 | cough2 | female-crying | male-crying; volume 0–1.0, time in ms (optional)
   <audio id="..." />                MANAGED — do NOT hand-author. Plays an uploaded recording instead
                                      of TTS; created by POST scenarios/{id}/condition-audio/. Multiple
                                      clips and sibling tags are allowed on fixed_message actions.

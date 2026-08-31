@@ -1,6 +1,6 @@
 # Example: Red-Team Evaluator
 
-This is a **behavioral** (`instruction`) evaluator, so it is **generated**, not hand-created: run `generate-bg` with `scenario_type: "red_teaming_voice"` (or `"red_teaming_text"`) and the behavior below expressed in `extra_instructions` (see `/autogen-eval` step 3). The payload is shown as the **quality target** — what good generated output looks like, and what to check when reviewing/PATCHing it. Do not POST it to the create endpoint unless the user supplied this text verbatim.
+This is a **behavioral** (`instruction`) evaluator, so it is **generated**, not hand-created: run `generate-bg` with `scenario_type: "red_teaming_voice"` (or `"red_teaming_text"`), and the `attack_type` that matches the threat under test — this example probes for prompt disclosure, so `system_prompt_leak`; a data-exfiltration or off-task probe takes its own type from the table in `SKILL.md`, one call per type, and the behavior below expressed in `extra_instructions` (see `/autogen-eval` step 3). Red-team generation returns **conditional actions** carrying a multi-turn attack plan — the payload below is the intent, not the stored shape. The payload is shown as the **quality target** — what good generated output looks like, and what to check when reviewing/PATCHing it. Do not POST it to the create endpoint unless the user supplied this text verbatim.
 
 ## Payload Shape
 

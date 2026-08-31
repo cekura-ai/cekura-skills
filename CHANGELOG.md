@@ -4,6 +4,107 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.13.0 — 2026-08-28
+
+**The eval-design playbook now teaches conditional actions where agents actually
+read it.** Production telemetry showed that every correlated conditional-actions
+scenario was written without the 76 KB reference ever being opened, so the root
+`cekura-eval-design` skill now carries the whole authoring contract — payload
+shape, the five required condition fields, how the runtime matcher fires an
+`asks …` trigger (only on a real question, so a condition written against an
+agent that *states* a need never fires), the complete tag table with its real
+placement and range constraints, functions, attached audio, and a ten-point
+self-check to run before every write. The reference keeps the pattern library and
+troubleshooting.
+
+**Changing existing evaluators is a documented flow.** Editing, not creating, is
+most of the real work, and the skill had no procedure for it: it now says to read
+the evaluators first (including the export the Evaluators page attaches to the
+chat), audit them against the rubric, send the smallest possible PATCH — the
+whole `conditional_actions` object, because a partial one deletes the scenario's
+functions — and read back a diff. Bulk edits, duplicates and version labels are
+covered, as is the usual cause of a metric stuck at 50.
+
+**Generation is the default write path in every mode.** The skill previously stated
+that the generator could not produce conditional actions and sent every structured
+scenario down the hand-authoring path, discarding the grounding the generator does
+against the agent description, knowledge base and mock tools. Behavioural scenarios,
+conditional actions and red-team plans now all come from the generator —
+`simulation_type` picks the output format, the generator knows the full tag set and
+honours tag requirements in `extra_instructions` — while one scenario whose
+conduct the user has laid out — a dictated script, one persona with its exact
+behaviour, an exact timing value, a patch — may be created directly under a new
+pre-create self-check (first person in `<scenario>` tags, a trigger on every step, no
+voice traits in the text, profile placeholders, outcome, personality, folder, tool ids
+and the baseline metrics). Any count, category or "generate" request stays a
+generation call, with the user's stated facts carried into `extra_instructions`. The
+`/autogen-eval` and `/manual-create-update-eval` commands load `cekura-eval-design`
+before their tracking call, and the coordinator routes create, update and generate
+requests — and mock-data or test-profile requests for a test — to the skill first. The agent under test is read-only while authoring.
+
+**Manual creates no longer ship without metrics.** `scenarios_create` starts with
+none attached while generation attaches the project's set, and the skill now
+carries the name-to-id lookup, the baseline four, and what to do when one is not
+enabled for the project. Runs without metrics only report that a call happened.
+
+**The checkpoint is one adaptive question.** The seven-item gate is replaced by a
+single consolidated question covering only what the request and the agent record
+do not already answer, skipped entirely when the user said to proceed.
+
+**Expected outcomes account for what the transcript can prove.** New rules cover
+providers whose tool calls never reach the transcript (grade what the agent says,
+not what it did), branches a correct agent may skip, and success that runtime
+state controls rather than the scenario.
+
+**Bounded generation polling.** "Always poll" now carries the stop conditions the
+0.10.11 reliability protocol added: report real counts about every 30 s, give up after
+~5 minutes at zero progress (one retry with a smaller batch, then report), treat a
+freeze short of the total as done, and let the stall rule override "proceed
+autonomously". An A/B run against a stalled generator showed the unbounded instruction
+producing 51 poll calls where the previous release made 6.
+
+**Tag and generation-field corrections against backend validators.** `<speed>` accepts
+0.1–2.0 (0.8–1.2 is the natural-speech band, not the API limit); `<network_simulation>`
+supports `jitter` and `latency` in milliseconds alongside `packet_loss` percent — both
+were wrong in 0.12.2 and in every reference site. `generation_files` accepts XML as well
+as PDF/TXT/JSON/CSV/MD, up to 10 files. The expected-outcome judge reads the transcript
+plus injected run metadata (per-turn timing, duration, call-end reason), not the
+transcript alone. `manual-create-update-eval` no longer lists `TOOL_SEND_DTMF` /
+`TOOL_RECEIVE_DTMF`, which are not in the accepted tool set, and no longer tells authors
+to add a provider prefix.
+
+**The commands defer to the skill's checkpoint.** `/autogen-eval`'s gate now fires when
+the user asked to see a plan or something is unresolved, instead of on every request;
+`/manual-create-update-eval`'s field-by-field interview applies when the user chose that
+walkthrough, and its approval step is skipped when the skill's single checkpoint already
+ran. Verbatim user-supplied scenario text is exempt from the direct-create style checks
+that would require rewriting it.
+
+**Corrections.** Reading the agent with `aiagents_retrieve` before the first
+write is now explicit (the list endpoint returns no description).
+`manual-create-update-eval` no longer documents condition `type` as `"say"`/`"do"`
+— the only accepted values are `standard` and `action_followup`, so following it
+produced a validation error. Red-team generation now carries a table of
+the six `attack_type` values and what each one tries to make the agent do, with one
+generation call per type; its output is a multi-turn conditional-actions plan, and
+`generation_files` is workflow-only.
+`<background_noise>` and `<noise>` volumes are 0–1.0, not the 0.5–2 the reference
+claimed, and a payload with conditional-action content must set
+`scenario_type` or it is stored as plain instruction text. And fixing
+an evaluator whose metric sits at 50 re-checks every outcome line, not only the line
+that blocks: a leftover hang-up or "politely" line keeps the evaluator wrong.
+
+**Routing content the first rewrite dropped is back.** The which-mode-for-which-request
+table, the infra-and-pipeline rule with its reason, the ask-first question, the
+instruction style rules and `<scenario>` shape, closing gaps with another generation
+run, mock-entry trigger closure, `X-` custom headers, the IVR inbound/outbound `id: 0`
+split, and the hard gate on "first show me the plan" are in `SKILL.md` again.
+
+**The skill body is guidance, not a tool script.** `cekura-eval-design` no longer
+names MCP tools or describes server behaviour (validation errors, schema gaps,
+defaults); it states what to do and leaves the call selection to the tool
+descriptions in whichever harness is running it. The slash commands keep their
+exact tool sequences.
 ## 0.12.3 — 2026-08-29
 
 **Two crying sounds for `<noise>`.** `female-crying` and `male-crying` join

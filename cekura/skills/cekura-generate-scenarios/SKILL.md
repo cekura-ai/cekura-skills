@@ -27,7 +27,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-generate-scenarios:7q3n6v`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.12"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.13"`. It returns immediately and lets Cekura see which skills are in use.
 
 # generate-scenarios
 
@@ -39,7 +39,7 @@ This skill is **read-first**: it never creates a scenario without an explicit us
 
 | `scenario_type` | Write path |
 |---|---|
-| `conditional_actions` — drop, tool_error, workflow_miss (turn-by-turn replays) | `mcp__cekura__scenarios_create` with the drafted `conditions`. The generation endpoints **cannot emit conditional actions**; direct create is the only path. |
+| `conditional_actions` — drop, tool_error, workflow_miss (turn-by-turn replays) | `mcp__cekura__scenarios_create` with the drafted `conditions` — the evidence call dictates the turn sequence, which is the one case that outranks generation. When you have the failure mode but not the turns, `scenarios_generate_bg` with `simulation_type: "conditional_actions"` emits grounded, validated conditions. |
 | `instruction` — drift, hallucination, comprehension, refusal, safety (free-form) | **Generate:** `mcp__cekura__call_logs_create_scenarios` (preferred — grounded in the evidence calls) or `scenarios_generate_bg`, passing the drafted `expected_behavior` + failure mode as `extra_instructions`. Behavioral instructions are never hand-authored. |
 
 A mixed report takes **both** paths in one pass; say which clusters went which way in the summary. The only reason to hand-author an `instruction` scenario is that the user dictated its text themselves.

@@ -19,7 +19,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-infra-test-suite:2h6r7k`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.12"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.13"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Voice AI Infrastructure Test Suite
 
@@ -46,6 +46,18 @@ components        values +          the analysis      criteria,         run scri
 | 5 — Build and Run | [phase5-build-run.md](phase5-build-run.md) | Create Cekura scenarios from the plan; write a CI run script batched by configuration with readiness gating and per-scenario timeout |
 
 ---
+
+## Two different things are called "infrastructure tests"
+
+Before Phase 1, make sure which one the user wants — the A/B run showed this request is
+ambiguous and the wrong reading costs a whole discovery pass:
+
+| Ask | What it is | What to do |
+|---|---|---|
+| "add Cekura's **predefined** infrastructure suite" | 18+ ready-made latency / interruption / noise / packet-loss / hold scenarios Cekura ships | **Not reachable from the MCP tools.** Point the user at the dashboard's Evaluators → Infrastructure Suite → *Add to my Project* (or the `add_infrastructure_suite` API). Tell them it also adds an *AI Interrupting user = 0* rubric rule to the project, and tag the copies `infrastructure-suite` so CI can select them. Do not hand-build copies, and do not start the phases below. |
+| "build infra/CI tests **for my bot**" | tests derived from the customer's own pipeline code | Run the five phases below. |
+
+If the request could be either, ask once — one short question — before Phase 1.
 
 ## Ground Rules
 
