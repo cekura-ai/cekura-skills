@@ -8,7 +8,7 @@ The generator is the default write path in every mode; `simulation_type` selects
 - `"conditional_actions"` — validated `conditions[]` from the same grounding pipeline (agent description, KB, mock tools), tags included: the generator knows the full tag set and honours tag requirements written into `extra_instructions`.
 - Red-team categories (`scenario_type: "red_teaming_voice" / "red_teaming_text"`) return conditional actions carrying a multi-turn attack plan; review them, never rewrite them into instructions.
 
-A specific case the user has already described in full — one persona, one dictated script, a timing value exact to the decimal, a patch to an existing scenario — may be created directly with `scenarios_create` under the same quality rules as generated output; generation is the path for batches, category-level requests and anything the user asks to "generate". See `SKILL.md` § Mode and write path.
+Behavioural (`instruction`) scenarios are always generated — a single fully described case is `num_scenarios: 1` with the description in `extra_instructions`. Direct creates are for exactly-known conditional-action structures, and for a complete verbatim instructions payload the user supplied to save unchanged, under the same quality rules as generated output. See `SKILL.md` § Mode and write path.
 
 ## Endpoint
 
