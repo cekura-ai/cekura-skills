@@ -4,6 +4,13 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.13.2 — 2026-09-02
+
+**Ringback tone for `<noise>`.** `ringback` joins the one-shot sound names: about
+six seconds of a phone ringback tone (one ring, the silence gap, and the start of
+the next ring), for evaluators that simulate a transfer or outbound leg the caller
+hears. `cekura-eval-design` lists it alongside the other one-shot sounds.
+
 ## 0.13.0 — 2026-08-28
 
 **The eval-design playbook now teaches conditional actions where agents actually
