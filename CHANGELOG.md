@@ -4,6 +4,107 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.14.0 — 2026-09-03
+
+**`cekura-infra-test-suite` now produces a Tests-as-Code suite in the
+repository, not dashboard evaluators.** The skill reads the voice-agent
+codebase and writes a committed JSON spec that CI submits to
+`run_scenarios_json`, so a prompt change and the cases covering it land in the
+same pull request. It creates the spec, the runner and the CI workflow, or
+updates them in place when they already exist — and `no suite change` is a
+valid, common outcome of an update. Cekura stays read-only throughout: the only
+permitted write-like request is a `dry_run=true` validation.
+
+Bundled with the skill:
+
+- `scripts/lint_suite.py` — offline spec and authoring-rule validator. No API
+  key, no network, so it runs on every push including fork pull requests. Its
+  tag rules mirror the server's own validators.
+- `scripts/run_suite.py` — CI runner that posts the spec, polls every run to a
+  terminal state and exits non-zero on failure. Runs are asynchronous, so a
+  workflow that stops at the POST reports success before any call is judged;
+  this is what makes the gate able to fail.
+- `references/discovery.md`, `references/case-catalog.md`,
+  `references/ci-wiring.md` and `examples/cekura.tests.json` — the stack
+  questions and what each answer lets you assert, nine proven case shapes with
+  the conditions under which each is a dead test, workflow templates for GitHub
+  Actions and GitLab, and a worked three-case suite.
+
+The five `phase*.md` files are removed; their discovery content is condensed
+into `references/discovery.md`, and the parts that planned dashboard folders,
+evaluator creation and scenario-id run scripts are gone with the output they
+served. npx users: run `npx skills add cekura-ai/cekura-skills --all`.
+
+**`cekura-infra-test-suite` now writes expected outcomes to the judge's
+contract.** Two end-to-end tests — one Pipecat repo, one LiveKit repo, fresh
+agent each time — produced 14 cases whose turn lists were flawless and whose
+judge criteria broke five rules in
+`cekura-eval-design/references/expected-outcomes.md`, in all 14. The cause was a
+missing pointer: step 4 routed to the conditional-actions reference, which
+teaches turn syntax, and never to the expected-outcomes reference, which teaches
+the criteria. The skill got what it asked for.
+
+Step 4 now names that reference and states the rules a CI suite breaks most
+often: every statement starts with "The main agent should", one per line, 2–6
+atomic lines; "main agent" and "testing agent" are the only speaker labels; no
+test-setup rationale; no subjective descriptors; no grading of farewells or call
+termination unless that is the case's declared point; and every statement must
+be fired by a written turn, since one whose trigger never occurs returns
+`blocked` on every run.
+
+`scripts/lint_suite.py` enforces the mechanical half as warnings, so `--strict`
+catches them in CI: speaker-label leakage, statements that are narrative rather
+than "The main agent should…", subjective descriptors, embedded test rationale,
+and closing/termination grading outside a case that declares itself about it.
+The bundled `examples/cekura.tests.json` is rewritten to the contract and lints
+clean under `--strict`.
+
+Also documents that `expected_outcome` is scored only when the Expected Outcome
+metric is attached, and that an infrastructure suite should attach the agent's
+enabled numeric metrics — latency, interruption — which measure what a judge
+reading a transcript cannot.
+
+Two fixes from testing the skill against a 101,836-line repository and a
+3,742-line TypeScript one. **Scope now has a stop condition:** if covering a
+behavior would need a change outside the spec, its coverage note, the scripts
+and the CI file — runtime code, a deploy workflow, a Cekura record, a metric
+that does not exist — the skill reports the blocker instead of making the
+change to enable its own test. On the large repo it had edited runtime code to
+make a feature reachable from CI: sound reasoning, minimal diff, still not its
+call. Updating a guard that exists to police the suite itself, such as a
+workflow step asserting the case count, is explicitly not a scope change.
+
+**New step 1b: read the agent record.** Enabled metrics, usable personalities,
+the agent's provider and channel, and the live schema were listed as required
+inputs but no workflow step fetched them, so a session with a working API key
+still authored as though it had none — `expected_outcome` alone and no pinned
+personality. The numeric metrics are the ones that measure what a
+transcript-reading judge cannot, which for an infrastructure suite is most of
+the point.
+
+**The dry run is now a hard completion gate.** A suite that has not returned
+`valid: true` is not finished, and the skill says so in those words instead of
+handing over a file that looks complete. With no credentials in the session it
+asks for them rather than skipping quietly; only if they cannot be supplied does
+it hand over, and then it must label the suite unvalidated, give the exact
+command, and point at the workflow's `validate` job as the backstop. It also
+reads the returned plan rather than the flag alone — the metrics each case
+resolved, and `test_profile: {mode: "inline"}` where an inline block was given.
+
+**The update path no longer bypasses the authoring rules.** Step 0 routed an
+update straight to step 5, which skipped the agent-record read and the
+expected-outcome contract — measurably, the same repository produced 0 lint
+warnings on a create and 3 on an update. Starting at step 5 is now stated as the
+entry point, not a shortcut: anything authored still runs through steps 1b, 4
+and 6. Pre-existing warnings on untouched cases are to be reported and left, not
+silently rewritten.
+
+**Version surfaces resynced.** The inline `plugin_version` telemetry tags had
+drifted a minor behind the manifests, which `bump_version.py` cannot repair on
+its own — it only rewrites tags matching the current major.minor. All 14 are
+now level with the manifests, and `cekura/.github/plugin/plugin.json` rejoins
+the other six.
+
 ## 0.13.0 — 2026-08-28
 
 **The eval-design playbook now teaches conditional actions where agents actually

@@ -44,7 +44,7 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `cekura-metric-improvement` | Improve metric accuracy through feedback cycle (labs workflow) |
 | `cekura-predefined-metrics` | Catalog of built-in metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
-| `cekura-infra-test-suite` | Compact CI/CD infra test suite — STT→LLM→TTS, interruption, idle timers, DTMF |
+| `cekura-infra-test-suite` | Source-controlled JSON Tests-as-Code suite — repository discovery, deterministic CI coverage, safe dry-run validation |
 | `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — failure rates + outcome distribution |
 | `cekura-generate-scenarios` | Turn flagged production failures into regression evaluator scenarios |
 
@@ -100,7 +100,7 @@ When the user describes what they need, route them:
 | "Improve my agent" / "auto-tune from eval results" | **cekura-self-improving-agent** skill |
 | "Which built-in metrics are available?" / "what does Hallucination Detection cost?" | **cekura-predefined-metrics** skill |
 | "Fix this prod call bug" / "reproduce and test a fix" | **cekura-self-improving-agent** |
-| "CI/CD tests for my voice bot" / "test my voice infrastructure" | **cekura-infra-test-suite** skill |
+| "CI/CD tests for my voice bot" / "commit a JSON test suite" / "Tests-as-Code for my voice repo" / "update CI eval coverage for this PR" | **cekura-infra-test-suite** skill |
 | "What % of calls have <problem>" / "analyze my recent calls" | **cekura-flag-call-log-failures** skill |
 | "Create scenarios from failed calls" / "replay prod failures as tests" | **cekura-generate-scenarios** skill |
 | "Run a full quality report" / "generate evals and run them end-to-end" | `/cekura-report` command |
@@ -149,7 +149,7 @@ This skill routes — it doesn't perform tasks itself. After confirming the user
 - Picking which built-in metrics to use → **cekura-predefined-metrics**
 - Designing test scenarios → **cekura-eval-design**
 - Fixing a production call bug end-to-end → **cekura-self-improving-agent**
-- CI/CD infra tests for a voice bot → **cekura-infra-test-suite**
+- Repository-owned JSON CI/CD test suite → **cekura-infra-test-suite**
 - Triaging production call logs → **cekura-flag-call-log-failures**
 - Turning prod failures into scenarios → **cekura-generate-scenarios**
 
