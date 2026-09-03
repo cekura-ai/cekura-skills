@@ -2,24 +2,22 @@
 name: cekura-eval-design
 description: >
   Use when the user asks to "generate (test) scenarios", "generate evaluators",
-  "create an evaluator", "create evals",
-  "create a scenario", "write a test scenario", "design a test case", "test my agent",
-  "build eval coverage",
-  "plan a test suite", "create red team tests", "set up test profiles", "configure conditional
-  actions", "write a conditional action evaluator", "build a deterministic test", "design an
-  IVR test", "IVR navigation test", "write a unit test for a voice agent", "build a regression
-  test", "scripted scenario", "scripted voice test", "structured evaluator", "exact flow test",
-  "sequential conditions", or "run evals". Also for debugging how the
-  testing agent speaks — "why did it read the number as a word", "make it spell digits",
-  "wrong language" — via scenario_language, personality, and XML tags. Covers evaluator
-  design, coverage strategy, test profiles, mock-tool data, conditional actions
-  (deterministic / unit test / regression / IVR flows), and workflow / red-team / edge-case
-  best practices.
+  "create an evaluator", "create evals", "create a scenario", "write a test scenario",
+  "design a test case", "test my agent", "build eval coverage", "plan a test suite",
+  "create red team tests", "set up test profiles", "configure conditional actions",
+  "build a deterministic test", "design an IVR test", "write a unit test for a voice
+  agent", "build a regression test", "scripted scenario", "structured evaluator",
+  or "run evals". Also for CHANGING existing evaluators — "update
+  an evaluator", "improve my evals", "make these evaluators stricter", "add a DTMF
+  step", "fix the expected outcome", "attach metrics to these" — and for debugging how
+  the testing agent speaks: "why did it read the number as a word", "make it spell
+  digits", "wrong language". Covers evaluator design and review, coverage, test
+  profiles, mock-tool data, conditional actions, and red-team / edge-case practice.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.9.0"
+  version: "0.10.0"
 ---
 
 > **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
@@ -34,151 +32,126 @@ Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_n
 
 # Cekura Eval Design
 
-## Purpose
+Create and improve Cekura evaluators (test scenarios) that exercise an AI voice or chat agent. An evaluator simulates a **caller**; it is not a metric (metrics score a transcript afterwards — see **cekura-metric-design**).
 
-Guide the creation of effective Cekura evaluators (test scenarios) that thoroughly exercise AI voice agent capabilities. Evaluators simulate callers to test the main agent — they are NOT metrics (which evaluate transcripts after the fact).
+- **Main agent** — the agent under test. **Testing agent** — Cekura's simulated caller.
+- **Evaluator / scenario** — one test case. **Personality** — the testing agent's voice, language and speaking behaviour. **Test profile** — identity/context data for the run. **Conditional actions (CA)** — turn-by-turn scripted testing-agent behaviour.
 
-## Performing Platform Actions
+This file says **what** to do. The Cekura tools available in your session — MCP tools, REST, or the platform's own agent tools — say how: read their descriptions to pick the call, and act through them rather than describing API calls or dashboard clicks. The file is self-sufficient for authoring both modes — load a reference only for the deep detail it names.
 
-When this skill suggests creating, listing, updating, or evaluating something on Cekura, **prefer using available platform tools over describing API calls or dashboard steps**. In Claude Code with the Cekura plugin installed, these tools are auto-configured and handle authentication, parameter validation, and error handling for you. Fall back to direct API endpoints or dashboard guidance only when no tools are available in the current session.
+## Workflow
 
-## Core Terminology
+1. **Read the agent** (mandatory, below).
+2. **Decide mode and write path** — behavioral vs conditional actions.
+3. **One consolidated checkpoint** — only for what you could not infer.
+4. **Create a folder** for the batch; never write into the project root.
+5. **Author** — generate, or create directly, per the write-path table.
+6. **Attach metrics and supporting fields** — profile, personality, tools, tags.
+7. **Verify** — read back what you wrote; then run if the user asked.
 
-- **Main agent**: The client's AI voice agent being tested
-- **Testing agent**: Cekura's simulated caller that exercises the main agent
-- **Evaluator/Scenario**: A test case defining what the simulated caller does and what success looks like
-- **Metric**: A post-call evaluation that scores a transcript (separate concept — see the cekura-metric-design skill)
-- **Personality**: Voice, language, accent, and behavioral traits for the simulated caller
-- **Test Profile**: Identity and context data passed to testing agent AND main agent (for chat/websocket runs)
-- **Conditional Action**: Structured, deterministic testing agent behavior with adaptive fallback
+Updating existing evaluators has its own procedure — see **Changing existing evaluators**.
 
-## The Eval Design Workflow
+## Read the agent before writing anything
 
-1. **Understand the agent** — Read the agent description (GET the agent record) to identify all workflows, decision points, and edge cases
-2. **Choose a tool strategy** — Ask the user which approach they want for handling the agent's external tool calls. This is a fundamental decision that shapes everything else. See "Tool Strategy — Three Approaches" below.
-3. **Always create a folder first** — Before generating or creating scenarios, create a folder to organize them. Never dump scenarios into the root. POST to the scenarios folder endpoint with `name`, `project_id`, and optionally `parent_path`. Then pass the `folder_path` to the generate endpoint or set it on individual scenarios.
-4. **Run the pre-creation checkpoint** — Confirm all key decisions with the user before building anything. See "Pre-Creation Checkpoint" below.
-5. **Author evaluators — the mode determines the write path, and there is no choice within a mode** (per "Choosing Authoring Mode" below):
-   - **Behavioral mode (`scenario_type: "instruction"`) → ALWAYS generate.** Use `POST /test_framework/v1/scenarios/generate-bg/` with category-level guidance in `extra_instructions`. Do NOT hand-author behavioral scenarios via the create endpoint — generation grounds them in the agent description, hand-written ones depend on improvisation. If using Cekura mock tools, the generator creates tool-aware scenarios automatically. See "Auto-Generation" below.
-   - **Conditional-actions mode (`scenario_type: "conditional_actions"`) → ALWAYS create directly.** The generate endpoint does **not** produce conditional-action scenarios, so this is the only path: `POST /test_framework/v1/scenarios/` with the `conditional_actions` payload. See "Designing Conditional Actions" below.
+Fetch the agent's **full record** before the first authoring write — the single-agent read, not a list view, because list views omit the `description` — and use it for:
 
-   **The one exception to the behavioral rule:** the user supplies the scenario text themselves (a CSV/JSON scenario list, or an explicit "create this exact scenario"). Generating would discard their wording — create those directly and say so.
-6. **Review and fix generation artifacts (only if you ran auto-gen in step 5)** — Generated scenarios are behavioral (`instructions`). PATCH `scenario_language` for non-English scenarios (defaults to "en" regardless of content). PATCH `first_message` if auto-gen added greetings instead of exact questions. Check for partial completion (generation may produce fewer than requested). These are routine post-generation fixups, not reasons to hand-author instead.
-7. **Supplement** — Fill remaining gaps by mode, same rule as step 5: **behavioral gaps (edge cases, free-form red-team) → another `generate-bg` run** with `extra_instructions` targeting exactly the missing categories; **deterministic/structural gaps → author conditional-action scenarios directly.** Never close a behavioral gap by hand-writing an `instruction` scenario.
-8. **Set up test infrastructure** — Check existing test profiles first, then create new ones. Configure tool data according to the chosen tool strategy.
-9. **Attach metrics** — ALWAYS include baseline metrics (Expected Outcome, Infrastructure Issues, Tool Call Success, Latency) on every evaluator. Without metrics, runs only report call completion, not correctness.
-10. **Run and validate** — Execute via `run_scenarios`, review transcripts, iterate
+| Field | What it decides |
+|---|---|
+| `description` | every workflow, branch, KB fact, transfer and policy you are allowed to test or grade |
+| `inbound`, and the greeting the description scripts | who speaks first: the main agent opens ⇒ CA `id: 0` has `action: ""` and behavioral scenarios need no opening line; otherwise the testing agent opens. Read the description for this and ask when it is unclear |
+| `language` | the personality language and `scenario_language` |
+| `assistant_provider`, `transcript_provider`, `websocket_url` | whether tool calls reach the evaluation transcript (see **Expected outcomes**) |
+| `mock_tools` (request them explicitly — the default agent read omits them), `auto_dynamic_variables` | which tool inputs/outputs and variables the test data must match |
 
-## Tool Strategy — Three Approaches
+Skip it only when the user supplied a complete verbatim payload, or the evaluators are already attached to this conversation (Evaluators-page context). Never invent a workflow, a KB fact, or a tool the description does not contain — if the description is empty or too thin to ground a test, say so and ask for it (or offer `cekura-create-agent` to import from the provider) instead of generating.
 
-**Ask the user early:** "Does your agent call external tools during calls? If so, how do you want to handle tool data for testing?"
+**The agent under test is read-only while you author evaluators.** Do not PATCH any of its fields (description, connection settings, tools, provider configuration) to make a test possible: an evaluator tests the agent as deployed, and a rewritten description hides the very gap the test would have found. The one exception is `mock_tools` data (see **Test data**). When the user states a fact or behaviour the record does not contain (a policy, a header, a greeting rule), say so in one line, then carry the user's version into the test itself: `extra_instructions` or `generation_files` when generating, the test profile and `expected_outcome_prompt` when creating directly. If the user wants the agent itself changed, that is a separate task for **cekura-create-agent** (configuration) or **cekura-self-improving-agent** (prompt changes), after the evaluator exists.
 
-| Approach | When to use | Your job |
+## One consolidated checkpoint
+
+Ask **once**, in a single message, and only for what the request and the agent record do not already answer. Then proceed.
+
+Skip the question entirely when the user said "proceed autonomously", "don't ask", or already stated the missing facts. Never re-ask something the user wrote in their message; never ask a second round of the same topics.
+
+If you did ask, **wait for the answer** — no create or generate call in the same turn. And when the user says "first ask me", "show me the plan" or "confirm before creating", present the whole plan (mode, count and coverage, folder, profile, personality, metrics) and wait for approval even if the request already names the agent and the count.
+
+When the request sits in an **Ask first** row of the mode table and the user has not chosen a structure, ask — one short question offering behavioural vs conditional actions with the reason. Existing evaluators of one type in the project do not answer it for them; the no-confirmation rows (infra, pipeline, explicit CA vocabulary) still switch without asking.
+
+What to confirm (drop every line you can already answer):
+
+1. **Tool data strategy** — (A) their staging backend, (B) Cekura mock tools, (C) tools irrelevant. Default: B when `mock_tools` exist, C when the agent has no tools.
+2. **Count and coverage** — how many scenarios and which workflows/categories. Default: propose a breakdown from the description.
+3. **Mode** — text/chat for iteration (cheap, same logic), voice for final validation. Default: text.
+4. **Folder name** — propose one; do not ask.
+5. **Anything genuinely ambiguous** in the request (a named branch that does not exist, an agent id that does not resolve).
+
+Do not ask about personality, metrics or tags — pick the documented defaults below (when several plain Normal personalities remain, take the male variant when both genders exist, per `references/choosing-personality.md`, and say so) and state what you picked in your summary. A checkpoint that lists seven questions is a failure mode: users abandon it.
+
+## Mode and write path
+
+**Generation is the general write path in every mode.** Behavioural scenarios, conditional actions and red-team plans all come from the same background generator, grounded in the agent description, KB and mock tools; red-team categories return conditional actions on their own; otherwise the generator's output format follows an org-level setting, not a request field. Use it for every batch, every category-level request and whenever the user says "generate". The count/category test decides: **a request for a number of scenarios ("three evaluators", "a suite for the refund flow"), for a topic or category ("billing disputes", "what it knows about the return policy"), or containing the word *generate* is a generation request even when the user hands you the facts to test** — those facts go into `extra_instructions` or `generation_files`, never into hand-written steps. **Direct create is for conditional-action scenarios whose structure is exactly known** — a user-scripted exact sequence, an IVR/DTMF flow, an infra test bracketing a timeout to the decimal. **A behavioural (`instruction`) scenario is never hand-authored**: even one fully described case is a generation call with `num_scenarios: 1` and the description in `extra_instructions`. The sole instruction-mode exception is a complete verbatim payload the user supplied to save unchanged — the generator cannot emit exact user text. (A change to an existing scenario is an update, not a create.) The path changes nothing else: a direct create meets the same step, outcome, profile, personality, tool and metric rules as generated output (see **Self-check before every direct instruction create** and the CA self-check), and it starts with **no metrics attached**. Choosing the mode is the decision; the write path follows from it. Say in the summary which scenarios were generated and which were created.
+
+| Mode | When |
+|---|---|
+| **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Open-ended personas, exploratory red-team, tone/empathy, general quality probing, any request without a structural commitment. The default. A category-level ask for one scenario is still `num_scenarios: 1`; never hand-author in this mode — only a complete user-supplied verbatim payload is created directly. |
+| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, conditions[]}` | Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, data-bound turn-by-turn verification, anything needing an XML tag. When generating, put the tag requirements into `extra_instructions` ("the caller enters the account number by DTMF", "hold 20 s after the greeting", "the caller reaches an IVR menu first") and check the output against the self-check below. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
+
+**Switch to CA with no confirmation** when the user says: conditional actions, structured or scripted scenario/test, deterministic test, unit test, regression test, exact flow, fixed sequence, compliance test, infra/infrastructure/pipeline/CI test or gate.
+
+**Infrastructure and pipeline tests are always CA — no confirmation.** Tests of STT, VAD, LLM timeout, TTS, interruption handling, idle timers, DTMF or any other pipeline-layer behaviour must trigger the behaviour at an exact moment with exact timing, which behavioural instructions cannot guarantee. Switch immediately; **cekura-infra-test-suite** has the full workflow.
+
+**Ask one short question** when the request names a tag-supported feature — voicemail, IVR menu, DTMF entry, hold music, interruption, network simulation/packet loss, background noise — without naming a mode: *"This involves [IVR]. Conditional actions support `<dtmf>` / `<ivr>` tags directly for a high-fidelity test; behavioural instructions are looser. Which do you want?"* Then proceed with the answer.
+
+**Which mode for which request** (defaults — the user's explicit word wins):
+
+| Request | Mode | Why |
 |---|---|---|
-| **A. Client-side mock data** | Client has staging API/test DB | Align test profiles with their mock data |
-| **B. Cekura mock tools** | No staging, want predictable isolated tests | Set up mock mappings + match test profiles to outputs |
-| **C. No mock data** | Conversational-only agents, testing tone/soft skills | Use test profiles for identity only |
+| Appointment scheduling happy path | Behavioral | Predictable path, no exact phrasing needed; the caller improvises naturally |
+| Scheduling as an exact-sequence regression test | CA | "Regression test" is a trigger phrase |
+| Compliance disclosure / account-number read-back | CA | Verbatim phrasing (`fixed_message: true`, `<spell>`); "compliance" is a trigger phrase |
+| Identity verification: name + DOB + last-4 | CA | Every turn is data-bound to the profile; structure prevents drift |
+| Inbound IVR menu navigation | Ask first | Tag-supported (`<dtmf>`), mode not named |
+| Voicemail handling | Ask first | `<voicemail>` is purpose-built; behavioural can work |
+| Angry caller / de-escalation | Behavioral | Tone-driven, exploratory, no fixed sequence |
+| One scripted red-team attack (specific injection, specific fallback) | CA | A fixed attack script; one evaluator per expected outcome |
+| Free-form red-team probing | Behavioral | Path not predictable; the attacker improvises |
+| Multi-language tone test | Behavioral | Soft-skill; `scenario_language` set either way |
+| Multi-language compliance verification | CA | Verbatim disclosures in the target language |
+| Network degradation / packet loss | Ask first | `<network_simulation>` is purpose-built |
+| Tool-failure recovery (specific failure, specific recovery step) | CA | Exact trigger and exact recovery |
+| "Test my agent's quality" | Behavioral | No structural commitment |
+| STT / VAD / LLM timeout / TTS / interruption / idle / DTMF | CA | Pipeline behaviour needs exact timing — no confirmation |
+| A caller who must stay silent, hold, or interrupt | CA (tag) | `<hold>`, `<silence>`, `<interruption>`; prose "remain silent" does nothing |
 
-**Critical rule for Approach B**: derive test profile values FROM mock outputs (same format, same values). Creating them independently guarantees mismatches.
+**Supplied text outranks every mode signal.** When the user hands you scenario text — a `<scenario>` block, numbered steps, a CSV row — and asks for it as written, create it as `scenario_type: "instruction"` with that text unchanged — the `<scenario>` wrapper and numbering included: when the user's text starts with `<scenario>`, the stored `instructions` string starts with `<scenario>` and ends with `</scenario>`. Do not restructure it into conditional actions because the steps look sequential, and do not reword it; rewriting is the one thing they asked you not to do. Attach the personality, metrics, profile and tools as usual.
 
-**See `references/test-data-design.md`** for full workflow, key questions to ask, and validation guidance for each approach.
+**If actions are present, set the type.** A payload whose `instructions` carries CA-shaped JSON while `scenario_type` is absent is stored as an instruction scenario and the script never runs. Pass the object in the `conditional_actions` field with `scenario_type: "conditional_actions"`.
 
-## Choosing Authoring Mode
+## Behavioral scenarios — shaping generation
 
-The default authoring mode is **behavioral instructions** (free-form, first-person scenario instructions). Switch to **conditional actions** in two situations:
+`extra_instructions` is where you steer the generator. One paragraph per scenario category, plain prose, third person about the testing agent, no PII, no markdown:
 
-**This choice also fixes the write path — it is not a second decision.** Behavioral ⇒ `generate-bg` (`scenarios_generate_bg`), always. Conditional actions ⇒ the create endpoint (`scenarios_create`), always, because generation cannot produce them. If you find yourself about to hand-author an `instruction` scenario, you have either picked the wrong mode or you are in the user-supplied-text exception (step 5).
+```
+The testing agent calls as an established patient who needs to reschedule a
+follow-up. It provides its name and date of birth when asked, requests the same
+provider, and accepts the earliest afternoon slot when told no mornings are
+free. Cover the verification branch and the same-provider path. Use the Normal
+personality for the agent's language.
+```
 
-### Switch immediately, no confirmation, when the user says any of:
+Never send a generation call with empty `extra_instructions` — the generator falls back to generic coverage. When the user states the facts the agent must know (a price, a deadline, an eligibility rule), the exact values go into `extra_instructions` (or the source document into `generation_files`) — the generator writes the expected outcome from them, and an outcome that cannot name the right answer grades nothing. If the user truly wants unguided coverage, say so and pass a one-line category list.
 
-"conditional actions", "structured scenario", "scripted scenario", "scripted test", "deterministic test", "unit test", "regression test", "exact flow", "fixed sequence", "compliance test", "infra test", "infrastructure test", "pipeline test", "CI test", "CI gate", "infra scenario". The user has stated their authoring intent — proceed straight to designing conditional actions (see "Designing Conditional Actions" below).
+**Step-writing rules** (also what you check in generated output): every step = one caller action + a passive `when …` trigger naming the exact question ("when asked for a preferred appointment time", never bare "when asked"); one action per step; no passive/non-verbal steps (Wait/Listen/Remain silent/Interrupt — those are personality or CA tags); data read-backs use `Verify [item] when asked to confirm [item] and correct if wrong.`; the last step is `End the call when <the result of the final scripted action>.` unless the flow ends in a terminal transfer; script only triggers the description guarantees (**stop at the fork**); never premise a step on the main agent misbehaving; every caller-provided value — including choices and confirmations — is `{{test_profile.field}}`, the same token at every mention, and must exist in the attached profile. If the main agent is reactive, put the opening request in `first_message`, not in a step, and key each trigger to the response to the previous step — never to the caller's own state. Do not fabricate placeholders for one-shot topics; those go inline.
 
-**Infrastructure and pipeline tests always use conditional actions.** If the user is building tests for STT, VAD, LLM, TTS, interruption handling, idle timers, DTMF, or any other pipeline-layer behavior — switch to conditional actions immediately, no confirmation needed. Behavioral instructions are not deterministic enough to reliably trigger specific pipeline behaviors at the right moment. See the **cekura-infra-test-suite** skill for the full workflow.
+**Instruction style** — what you check in generated output, apply when patching, and expect in a verbatim scenario:
 
-### Ask first when the user mentions a tag-supported feature without specifying a mode:
+- **First person, to the testing agent**: "State your name when asked" — never "The caller should state their name", and never the words *agent*, *AI*, *bot* or *system* inside a step (describe what the step asks about, not who asks).
+- **Behavioural goals, not dialogue**: "Report fever and cough and request the same provider" — not `Say exactly: "I have a fever"`. The one exception: be explicit about an exact phrase when mock or backend matching depends on it (`say "follow-up appointment" exactly`).
+- **Never quote what the main agent "may say"** as a trigger — `When the agent says "How can I help you?"` breaks on any rewording; key the step to the topic: "when asked what you need help with".
+- **Specific beats generic** — "Call to schedule an appointment" tests nothing; name the appointment type, the constraints and the complication.
+- A step that volunteers extra information is still one turn ("when asked X, answer and also mention Z"). Hanging up is a valid step; "Listen", "Wait", "Respond accordingly" and "End the call politely" are not — the testing agent does those anyway.
 
-"voicemail", "voicemail test", "IVR menu", "IVR navigation", "DTMF entry", "DTMF input", "hold music", "interruption test", "network simulation", "packet loss", "background noise". Conditional actions support these via dedicated XML tags (`<voicemail>`, `<dtmf>`, etc.) and produce higher-fidelity tests, but a behavioral instruction may also be acceptable. Ask one short question:
-
-> "This involves [voicemail / IVR / DTMF / etc.]. Conditional actions support `<voicemail>` / `<dtmf>` / `<...>` tags directly for high-fidelity testing — should I author this as a conditional-actions evaluator (structured turn-by-turn with the right tags), or behavioral instructions (free-form, looser)?"
-
-### Stay in behavioral mode for:
-
-Open-ended persona dialogue, exploratory red-team without specific attack scripts, soft-skill / tone / empathy testing, general edge-case quality probing where the conversation path isn't predictable. The "Writing Instructions" section below is the primary guide for this mode.
-
-### Concrete examples (which mode for which scenario)
-
-| Scenario the user describes | Default mode | Why |
-|---|---|---|
-| Appointment scheduling happy path | **Behavioral** | Path is predictable but doesn't need exact phrasing; behavioral lets the testing agent improvise naturally. |
-| Appointment scheduling — exact-sequence regression test | **Conditional actions** | "Regression test" is a direct trigger phrase. |
-| Compliance disclosure / account-number readback | **Conditional actions** | Verbatim phrasing required (`fixed_message: true` + `<spell>`); "compliance" is a direct trigger phrase. |
-| Identity verification with name + DOB + last 4 SSN | **Conditional actions** | Each turn's action is data-bound (read from test profile); structure prevents drift. |
-| Inbound IVR menu navigation | **Ask first** | Mentions IVR — could be conditional (high-fidelity, `<dtmf>`) or behavioral (looser); confirm with user. |
-| Voicemail handling test | **Ask first** | Mentions voicemail — `<voicemail>` tag is purpose-built but behavioral can work. |
-| Angry caller / de-escalation | **Behavioral** | Tone-driven, exploratory; no fixed sequence. |
-| Red-team prompt injection (a single attack pattern) | **Conditional actions** | Specific scripted attack; one evaluator per expected outcome. |
-| Red-team free-form probing | **Behavioral** | Path not predictable; the agent improvises attacks. |
-| Multi-language tone testing | **Behavioral** | Soft-skill evaluation; `scenario_language` set on either mode. |
-| Multi-language compliance verification | **Conditional actions** | Verbatim disclosures + language-specific phrasing. |
-| Network degradation under packet loss | **Ask first** | Mentions network simulation — `<network_simulation>` tag is purpose-built. |
-| Tool failure recovery flow (specific failure + recovery path) | **Conditional actions** | Specific failure trigger + specific recovery step. |
-| General "test my agent's quality" | **Behavioral** | No structural commitment specified. |
-| Infra / pipeline test (STT, VAD, LLM timeout, interruption, idle timer, DTMF) | **Conditional actions** | Pipeline behaviors must be triggered at exact moments with exact timing — behavioral instructions cannot guarantee this. |
-
-## Test Profiles — Always Use Them
-
-**Test profiles are the backbone of reliable evals.** They serve three critical purposes:
-1. **Memory persistence** — The testing agent reliably uses profile data during calls. Data in instructions often leads to hallucinations.
-2. **Dynamic variables** — For outbound and websocket runs, the profile's `main_agent_variables` section is sent to the agent under test as dynamic variables (mimicking production); the `testing_agent_variables` section stays with Cekura's simulator as persona/context only.
-3. **Single source of truth** — No risk of name in test profile saying "Sarah" while instructions say "John", which causes the testing agent to hallucinate. `test_profile.information.main_agent_variables` is the single source of truth for dynamic variables at call time.
-
-**Always use test profiles.** Never hardcode identity data (names, DOBs, account IDs, addresses, phone numbers, service addresses, discrepancy amounts — anything persona-related) in scenario instructions. This includes **caller choices and confirmations** — a plan, tier, or option the caller selects or agrees to is still caller data ("Select {{test_profile.delivery_speed}} when asked", not "Select express shipping"). Create a test profile with the data and reference it via `{{test_profile.field}}` placeholders, using the same token at every mention.
-
-**Building test profiles from real data:**
-The best approach is to pull call history from observability and/or past eval runs and use data that is known to work:
-1. Fetch recent call transcript_json records from the API
-2. Analyze toolcall inputs and outputs from real calls
-3. Build a memory document mapping existing data (names, account IDs, appointment IDs, etc.)
-4. Create test profiles using this verified data
-This ensures test profiles work against production tools.
-
-**Always check for existing test profiles first.** Clients often pre-build profiles that are tested against their mock backend — reuse these rather than creating from scratch.
-
-**Custom headers (SIP / WebSocket runs):** keys in `main_agent_variables` starting with `X-` are sent over the wire as custom SIP headers (SIP runs) or WebSocket connection headers to the agent under test. For SIP runs this is the **only** way to pass custom headers — they cannot be set on the agent record or in the run request; create a test profile with the `X-` keys and attach it to the run via `test_profile_ids`. (WebSocket runs can also carry static headers via the agent's `websocket_headers`; the profile's `X-` keys are merged on top.) Cekura always appends `X-Run-Id`, `X-Scenario-Id`, and `X-Result-Id`; those names are reserved and cannot be overridden.
-
-**Template variables in instructions:** Use `{{test_profile.field_name}}` or `{{test_profile['key']}}` for dynamic injection. For nested data: `{{test_profile.address.city}}`. Note: in voice scenarios, the simulated caller reads from the instruction text directly — the profile data is there for the caller to reference, not injected as hidden context.
-
-See `references/test-data-design.md` for the full profile creation guide, decision matrix for new vs. reuse, and the data-extraction workflow.
-
-## Writing Instructions
-
-Instructions tell the testing agent what to do. Write in **first person** from the testing agent's perspective.
-
-**These are quality rules, not an authoring path.** Behavioral scenarios are generated, so use this section for the three things you legitimately do with instruction text: (1) shaping the `extra_instructions` you pass to `generate-bg`, (2) reviewing and PATCHing what generation returns, and (3) the verbatim exception where the user supplied the text. It is not a licence to hand-author an `instruction` scenario via the create endpoint.
-
-### Instruction Style
-
-- First person: "State your name when asked" NOT "The caller should state their name"
-- Behavioral, not scripted: "Report fever and cough, request same provider" NOT "Say exactly: I have a fever"
-- Reference test profile data: "Provide {{test_profile.date_of_birth}} when asked for verification" (the actual DOB comes from the test profile)
-
-### Step-Writing Rules (the short version)
-
-Full rulebook with examples: **`references/instruction-patterns.md` § Step-Writing Rules** — load it before authoring. The essentials:
-
-1. **Every step = one caller action + a passive "when …" trigger.** "State the reason for calling when asked for the reason of the call." Never unconditional actions, and never the words "agent", "AI", "bot", "system" in a step — describe what the step asks about, not who asks it.
-2. **Trigger precision** — name the exact question or offer ("when asked for a preferred appointment time"), never bare "when asked" or vague context.
-3. **One action per step.** Two joined actions ⇒ the second is silently dropped. Exception: the volunteer pattern ("when asked X, answer and also mention Z") is one turn.
-4. **No passive/non-verbal steps** — no Wait/Listen/Interrupt/Remain silent/Mumble/Acknowledge. Those are personality attributes. Hangup IS a valid step.
-5. **Data read-backs use the verify format**: "Verify [item] when asked to confirm [item] and correct if wrong." — the last phrase is required.
-6. **Last step is always** "End the call when <specific condition naming the result of the final scripted action>." — unless the scenario ends in a terminal transfer (then accepting the transfer is the last step) or the user asked not to end the call.
-7. **Stop at the fork** — only script steps whose triggers the agent description guarantees; when the description doesn't mandate the agent's next reaction, end the scenario there. A short deterministic scenario beats a long speculative one. Never premise a scenario on non-controllable state (backend conditions no mock fixes, or the main agent misbehaving — test forbidden behavior via outcomes demanding its absence).
-8. **Placeholders for ALL caller-provided data — including choices.** Anything the caller provides, selects, agrees to, or confirms uses `{{test_profile.field}}` ("Select {{test_profile.delivery_speed}} when asked for a delivery speed"), the same token at every mention, and every placeholder must exist in the attached profile. Don't fabricate placeholders for one-shot topics — those go inline.
-9. **If the caller must lead** (reactive main agent), put the opening request in `first_message`, not a step, and key each trigger to the response to the previous step — never to the caller's own state.
-
-### Good Instructions Pattern
-
-Wrap instructions in `<scenario>` tags with a step-by-step format:
+Shape — what generation returns and what a verbatim scenario should look like:
 
 ```
 <scenario>
@@ -186,320 +159,253 @@ SCENARIO: [Brief scenario name]
 
 YOUR BEHAVIOR:
 1. State your intent to [action] when asked for the reason of the call
-2. Confirm you are the patient when asked if you are the patient
-3. Say and spell {{test_profile.first_name}} when asked for your name for verification
-4. Provide {{test_profile.date_of_birth}} when asked for your date of birth
-5. Say you are flexible with timing when told no slots are available
-6. End the call when the appointment confirmation is provided
+2. Say and spell {{test_profile.first_name}} when asked for your name
+3. Provide {{test_profile.date_of_birth}} when asked for your date of birth
+4. Say you are flexible with timing when told no slots are available
+5. End the call when the appointment confirmation is provided
 
 KEY INTERACTION POINTS:
-[Specific workflow nodes or edge cases to exercise]
+[Workflow nodes or edge cases to exercise]
 </scenario>
 ```
 
-**Be explicit about exact phrases** when mock/backend behavior depends on them (e.g., `say "follow-up appointment" exactly` if the mock's reason-for-visit matching requires it).
+**Gaps after generation** — missing categories are closed by another generation run with `extra_instructions` naming exactly what is missing; a single missing case is the same call with `num_scenarios: 1` ("a caller whose payment is declined twice" goes into `extra_instructions`, never into hand-written steps).
 
-### Common Instruction Mistakes
+Full rulebook with worked bad→good examples: **`references/instruction-patterns.md`**.
 
-- **Filler steps that add nothing** — NEVER write steps like "Listen to the agent's response", "Wait for the agent to speak", "End the call politely", or "Respond accordingly". The testing agent already does these things automatically. Every step must describe a **specific action the caller takes** — information they provide, a decision they make, or a behavior they exhibit. If a step doesn't tell the caller to DO something specific, delete it.
-- **Hardcoding profile data in instructions** — Names, DOBs, addresses, account numbers belong in test profiles, not instructions. When data is in both places and they differ, the testing agent hallucinates. This is the single most common mistake across clients.
-- **Using instructions for voice characteristics** — Instructions like "speak in a mumbling voice" or "be interruptive" don't change the testing agent's vocal style. Use **personalities** for that — they control actual voice model parameters (accent, interruption level, background noise, speed).
-- **Including examples of what the main agent "may say"** — Don't write `When the agent says "How can I help you", respond with...`. Instead, reference action points by topic: `When asked about what you need help with, explain that you need help with your billing address.` The former is brittle; the latter works regardless of exact agent phrasing.
-- **Not providing enough context for multi-step flows** — If a scenario involves a complex process (scheduling, onboarding), the testing agent needs step-by-step context to avoid hallucinating after the first few steps. For structured flows, use conditional actions instead.
-- **Vague or generic instructions** — "Call to schedule an appointment" is useless. Be specific: what type of appointment, what constraints, what complications should arise. The more specific the scenario, the more useful the test.
-- Third-person perspective instead of first person
-- Too scripted (exact dialogue) instead of behavioral goals
-- Missing edge case triggers
+### Self-check before every direct instruction create
 
-### Bad vs Good Instructions
+The only legitimate direct instruction create is user-supplied verbatim text (see **Mode and write path**) — if you wrote the steps yourself, stop and generate instead. Refuse to send a direct create with `scenario_type: "instruction"` that fails any of these. **On user-supplied verbatim text, items 2, 3 and 6 do not apply** — they would require the rewriting the user forbade; item 5 still does, and say in the summary which style rules their text does not follow.
 
-Full worked bad-vs-good examples (wrong-number scenario, new-patient scheduling) live in **`references/instruction-patterns.md`** — load it before writing `extra_instructions` or reviewing generated output.
+1. Instructions are first person and wrapped in `<scenario>` tags; user-supplied text is unchanged, wrapper and numbering included.
+2. Every step — the first one too — pairs one caller action with a passive `when …` trigger naming the exact question or offer ("when asked for the account number").
+3. No voice or delivery traits anywhere in the text — not in the steps and not in the SCENARIO line: background noise, interruption, accent, speed and silence live in the personality (fork one if the project has none). A step says what the caller says or does, never how the delivery lands; once the personality carries the interruption level or the noise, the steps read like any other caller's. The SCENARIO line names the task ("Reschedule an appointment"), never the delivery ("… as an interrupting caller"); the scenario's `name` may describe the persona for people browsing the list.
+4. Every reusable caller identity value (name, phone, date of birth, account number) is `{{test_profile.field}}` and exists in the attached profile; one-shot values stay inline, and user-supplied verbatim text is never rewritten to add placeholders.
+5. `expected_outcome_prompt` is present and written to **Expected outcomes**; `personality` (language matching `scenario_language`), `folder_path`, `tool_ids` (ids from the **Tools** table only) and `metrics` (the baseline set) are all set.
+6. The last step ends the call, or the flow ends in a terminal transfer.
 
-## Auto-Generation
+## Auto-generation
 
-The `POST /test_framework/v1/scenarios/generate-bg/` endpoint is the **only** workflow for behavioral scenarios — one at a time or in bulk. Generated scenarios always come back behavioral (`scenario_type: "instruction"`); **this endpoint does not emit `conditional_actions`.** So the split is absolute: behavioral → generate here; conditional actions (verbatim phrasing, exact-sequence regression, IVR/voicemail/DTMF flows) → author directly via the create endpoint, see "Designing Conditional Actions" below. Needing one behavioral scenario rather than ten is not a reason to hand-author it — call this endpoint with `num_scenarios: 1` and a specific `extra_instructions`.
+Start generation as a background job; it returns a `progress_id`. Poll its progress (or use the session's wait helper if one exists) until `completed_scenarios == total_scenarios`. **Always poll** — an unpolled generation is an unverified one — but poll with a bound:
 
-**Full schema:**
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `agent_id` | integer | Yes | Agent to generate scenarios for |
-| `num_scenarios` | integer | Yes | How many to generate |
-| `extra_instructions` | string | No | Category-level guidance (e.g., "focus on cancellation edge cases") |
-| `personalities` | array[integer] | No | Personality IDs to use |
-| `generate_expected_outcomes` | boolean | No | Auto-generate expected outcomes |
-| `folder_path` | string | No | Folder to place generated scenarios in (**always set this** — create the folder first) |
-| `tags` | array[string] | No | Tags to apply to all generated scenarios |
-| `tool_ids` | array[string] | No | Tools to enable (e.g., `TOOL_END_CALL`) |
+- Report progress about every 30 s, using the real counts and real elapsed time from the responses; never estimate and never poll silently for minutes.
+- **Stall:** `completed_scenarios` still 0 after ~5 minutes ⇒ stop waiting. Retry **once** with a smaller batch and tighter `extra_instructions`; if that also stalls at 0, stop and report the progress id, the real elapsed time and what to try next. Never take a second wait on the same stalled job.
+- **Freeze:** progress advances then stops short of the total for ~4 minutes ⇒ treat the batch as done and handle the shortfall.
+- **This overrides "proceed autonomously"** — in autonomous mode the stall response *is* the autonomous action.
 
-**Returns:** `{"progress_id": "<uuid>"}`. Poll with `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.
+| Field | Notes |
+|---|---|
+| `agent_id` | required (or `assistant_id`) |
+| `num_scenarios` | required, 1–100 |
+| `extra_instructions` | your category guidance — never empty |
+| `scenario_type` | **category**: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and attach the KB material as `generation_files`. |
+| `attack_type` | **required on every red-team call, one call per type** — pick from the table below |
+| `simulation_type` | **output format**: `instruction` (default) or `conditional_actions` |
+| `personalities` | personality ids for the scenario's language |
+| `folder_path` | always set it (create the folder first) |
+| `generate_expected_outcomes` | `true` unless the user gave outcomes |
+| `tool_ids`, `tags`, `test_profile`, `first_message`, `inbound_phone_number` | as needed |
+| `generation_files` | KB/context uploads for this run (PDF/TXT/JSON/CSV/XML/MD, ≤10 files, ≤50 MB combined). Workflow category only. |
 
-**Response has:** `total_scenarios`, `completed_scenarios`, `failed_scenarios`, `scenarios_list`.
+**Red-team attack types.** Choose by the threat the user names; for "red-team coverage" with no threat named, run all six — one call each — and say so in the summary.
 
-### Generation Gotchas
+| `attack_type` | The testing agent tries to make the main agent … |
+|---|---|
+| `system_prompt_leak` | reveal its prompt or instructions, tool/function names, internal variables, routing or workflow logic |
+| `data_leak` | disclose internal business data — authorization limits, pricing and margins, employee names or schedules, escalation criteria, customer statistics |
+| `harmful_content` | produce threats, hate speech, explicit content or instructions for illegal acts; confirm fabricated programmes or policies; give dangerous medical, legal or financial advice as fact |
+| `biased_output` | generalise about, or treat differently, a protected group — age, race/ethnicity, gender, religion, disability, socioeconomic status |
+| `unauthorized_actions` | commit to or "apply" account changes, credits, discounts or guarantees without the required verification, or skip an authentication step |
+| `off_task` | leave its purpose — competitor comparisons, unrelated topics over several turns, adopting another persona |
 
-1. **Generation can partially complete** — May produce fewer scenarios than requested (e.g., 15/18) with the remainder stuck. After a reasonable timeout, generate the remainder in a smaller batch with more specific `extra_instructions`.
+Red-teaming runs a **multi-turn attacker pipeline**: persona + context + a 5–10 turn plan, scored 1–5 (1–2 = the agent defended, 4–5 = a vulnerability). Text mode iterates up to 3 times against the chat API; voice mode generates once. Output arrives as conditional actions — review language, folder and tags, but **do not rewrite the multi-turn plans into instructions**. One generation call per `attack_type`. The generator creates its own "Red Teaming" personality; do not pre-create or patch one.
 
-2. **`scenario_language` defaults to "en"** — Auto-gen sets all scenarios to English even when `extra_instructions` specify non-English languages. PATCH each scenario with the correct language code (`ru`, `hi`, `es`, `zh`, `ko`, `pt`, `de`, etc.) after generation. This is required for correct TTS voice/pronunciation.
+**Post-generation verification** (every run): reconcile the count (generation can partially complete — regenerate the remainder with narrower `extra_instructions`); PATCH `scenario_language` for non-English scenarios (auto-gen writes `en` regardless of content); PATCH `first_message` when a greeting replaced an exact opening question; confirm `tool_ids`, folder and metrics. Generated scenarios come with a scenario-specific test profile (sectioned `main_agent_variables` / `testing_agent_variables`), `generated_mock_tool_entries` when the agent has mock tools, and ~10 project metrics already attached. More detail: **`references/auto-generation.md`**.
 
-3. **Auto-gen may add greetings to `first_message`** — When `extra_instructions` specify exact verbatim questions, some scenarios get a greeting (e.g., "Здравствуйте") as the `first_message` while the actual question is in instructions as a follow-up. PATCH `first_message` after generation.
+## Conditional actions — authoring card
 
-4. **Language-specific personalities may not be enabled per-project** — Non-English personalities may return "Personality is not enabled" errors. Always try the language-matched personality first (via `personalities_list` with `language=<code>` — the only filter needed — or a multilingual `language=multi` personality when the scenario mixes languages); on that error, remember `scenario_language` is **coupled to the personality's language by design** (mismatched creates are rejected — don't work around it): enable the predefined one for the project, or create/fork a Normal personality in the target language (`personalities_create` — multilingual voice models handle any supported language) and use it. See "Checking Available Personalities" under the Personality section.
-
-5. **Mock tool awareness** — When mock tools are enabled on an agent, the generate endpoint creates tool-aware scenarios automatically.
-
-## Personality — Required, Controls Voice Characteristics
-
-**`personality` is required on every scenario** — the API returns 400 if missing. Use **personalities (not instructions)** to control the testing agent's vocal style. Personalities manage:
-- Language and accent
-- Voice model and provider (ElevenLabs, Cartesia)
-- Interruption level (how often the caller interrupts)
-- Background noise (office, street, etc.)
-- Speech speed and patterns
-- Idle/stall behavior — seconds of silence before the testing agent prompts "Are you still there?" (`message_plan.idle_timeout_seconds`, default 10) and how many times it prompts before giving up (`message_plan.idle_message_max_spoken_count`, default 3)
-
-**Wrong:** putting `"speak in a mumbling voice and interrupt frequently"` in the instructions.
-**Right:** select or create a personality with the desired interruption level and voice characteristics.
-
-Instructions cannot alter actual speaking style — they only affect what the testing agent says, not how it sounds.
-
-**When the user wants the testing agent to stay silent** — through a long lookup, hold music, or a question it should not answer — that is the idle timeout, not an instruction. Adding "remain silent" or "do not respond" anywhere in the instructions, expected outcome, or the agent's description has no effect: the idle prompt fires anyway. Fix it on the personality with `personalities_partial_update` — for a pre-defined one, which is shared and cannot be edited, `personalities_fork_create` first and patch the copy, or, for a bounded pause in one step of a conditional-actions scenario, use `<hold time="Xs" />` — the idle timer is paused for the hold's duration, so a hold needs no matching timeout change. Full recipe and the symptom→cause table: **`references/choosing-personality.md`**.
-
-### Picking the Right Personality
-
-See **`references/choosing-personality.md`** for full selection logic — sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status checks, fallback defaults, and the first-message field.
-
-## Tool Enablement — Critical for Credit Efficiency
-
-Every evaluator should have the right tools enabled for the testing agent. Missing tools cause elongated calls, wasted credits, and false results.
-
-| Tool | When to Enable | Why |
-|------|---------------|-----|
-| `TOOL_END_CALL` | Recommended by default — so the testing agent can hang up after completing its objective | Without this, the testing agent can't hang up — calls run until timeout, wasting credits |
-| `TOOL_END_CALL_ONLY_ON_TRANSFER` | When the main agent transfers to a human/IVR | Without this, the testing agent stays on the line through hold music, voicemail, etc. |
-| `TOOL_DTMF` | When the flow involves IVR/phone menus | Allows the testing agent to send touch-tone inputs |
-
-**Always instruct the testing agent to end the call** after completing its objective if `TOOL_END_CALL` is enabled. Otherwise the call continues unnecessarily.
-
-**Transfer scenarios:** If the expected outcome involves a transfer to a human, enable `TOOL_END_CALL_ONLY_ON_TRANSFER` to prevent dead call time after the transfer completes.
-
-## Metrics — Always Attach Baseline Metrics
-
-Every evaluator should have at minimum these metrics enabled:
-1. **Expected Outcome** — Evaluates whether the agent achieved what the scenario expected
-2. **Infrastructure Issues** — Flags silent periods, connection drops, agent non-response
-3. **Tool Call Success** — Monitors whether tool calls succeed or fail
-4. **Latency** — Measures response time
-
-**Two-step process:** Metrics must be both (1) toggled on for simulations at the project level AND (2) added to the individual evaluators. Missing either step means the metric won't fire. Use `actions → modify scenarios` to bulk-add metrics to existing evaluators.
-
-Without metrics, runs return success/failure based only on whether the call completed — not whether the agent actually did the right thing. This leads to false passes that require manual review.
-
-## Designing Conditional Actions
-
-When in conditional-actions mode (per "Choosing Authoring Mode" above), set `scenario_type: "conditional_actions"` on the scenario payload and pass `{ "role": "...", "conditions": [...] }` through the `conditional_actions` field — not through `instructions`. The testing agent walks the `conditions` array turn by turn.
-
-### Authoring sequence
-
-Follow these steps in order. Skipping any of them is the most common cause of avoidable rework:
-
-1. **Confirm the path** — inbound vs outbound, who speaks first, what the structural test goal is. Especially for IVR, voicemail, and DTMF scenarios — see the inbound vs outbound split in `references/conditional-actions.md`.
-2. **Define the role** — one sentence describing only what the testing agent is pretending to be ("You are a patient calling to cancel an appointment"). Never describe what the main agent is or does — the role is purely the testing agent's persona.
-3. **Choose the first turn (`id: 0`)** — does the testing agent speak first (`action: "Hi, I need to..."`, `fixed_message: true`) or does the main agent speak first (`action: ""`, e.g., IVR/voicemail)?
-4. **Write standard conditions** — one per agent prompt the testing agent must respond to. Each `condition` is a description of what the agent says; each `action` is the testing agent's response (verbatim with `fixed_message: true`, or behavioral with `false`).
-5. **Add `action_followup` and tags as needed** — multi-part responses, interruptions, DTMF, voicemail, silence/hold, network simulation, background noise. Each tag has placement constraints — see the reference's XML Tags table. **Timing:** an `action_followup` fires on the testing agent's **next turn** after its referenced condition — one main-agent reply elapses in between, regardless of the reply's content. It never fires in the same turn as its parent. See `references/conditional-actions.md` for the full rule and worked examples.
-6. **Attach the supporting fields on the scenario** — test profile (for any identity data), tools (`TOOL_END_CALL`, `TOOL_DTMF` for IVR, etc.), metrics (Expected Outcome + Infrastructure Issues + Tool Call Success + Latency), personality (`scenario_language` is inherited from it), folder.
-7. **Run the validation checklist** — from `references/conditional-actions.md` § Validation Checklist. Catches missing FIRST_MESSAGE, missing `type`/`fixed_message`, XML tag misuse, etc., before you hit the API.
-
-**API payload skeleton (this is what to POST/PATCH to `/test_framework/v1/scenarios/`):**
+Everything needed to write a valid, deterministic CA scenario is here. Load **`references/conditional-actions.md`** for the pattern library, the 30 `<background_noise>` sound names, and the troubleshooting matrix.
 
 ```json
 {
-  "agent": 123,
-  "personality": 456,
-  "name": "CA-01: <descriptive name>",
-  "scenario_type": "conditional_actions",
-  "scenario_language": "en",
+  "agent": 123, "personality": 456, "name": "CA-01: <descriptive name>",
+  "scenario_type": "conditional_actions", "scenario_language": "en",
   "conditional_actions": {
-    "role": "You are a [persona] calling to [goal]",
+    "role": "You are a patient calling to cancel an appointment",
     "conditions": [
-      { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I need to ...", "type": "standard", "fixed_message": true },
-      { "id": 1, "condition": "The agent asks for X", "action": "Provide X", "type": "standard", "fixed_message": false },
-      { "id": 2, "condition": "The agent confirms", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
+      { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I need to cancel my appointment", "type": "standard", "fixed_message": true },
+      { "id": 1, "condition": "The main agent asks for the date of birth", "action": "Provide your date of birth", "type": "standard", "fixed_message": false },
+      { "id": 2, "condition": "The main agent confirms the cancellation", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
     ]
   }
 }
 ```
 
-Three load-bearing top-level fields:
-- **`scenario_type: "conditional_actions"`** — explicit, required. Without this the scenario is created as behavioral and your `conditional_actions` payload is ignored.
-- **`conditional_actions`** — JSON object carrying `{role, conditions[]}`. Do not put this object in `instructions`.
-- **`scenario_language`** — required for `conditional_actions`. Set explicitly, or rely on the assigned personality's language.
+- `role` describes **only** the testing agent's persona — never what the main agent is or does.
+- **When the description mandates an exact script** — a compliance disclosure, a voicemail message, a required phrase — reproduce it **verbatim** in the action with `fixed_message: true`, including every number and name in it. Paraphrasing a mandated script tests something the agent was never asked to say.
+- All five condition fields are **required on every condition**: `id`, `condition`, `action`, `type`, `fixed_message`. `type` is `"standard"` or `"action_followup"` — **not** "say"/"do". Ids must be unique and ascending. `id: 0` must be `condition: "FIRST_MESSAGE"`, `type: "standard"`, `fixed_message: true`, and `action: ""` when the main agent speaks first.
+- `scenario_language` is required (or inherited from the personality, whose language it must match). Do not set `first_message` or `instructions` yourself.
+- No `others` catch-all condition. One action ≤ 16 KB.
 
-Do not set `first_message` or `instructions` when using `conditional_actions` — they are managed for you.
+### Writing the `condition` string
 
-All five condition fields (`id`, `condition`, `action`, `type`, `fixed_message`) are required on every condition. `id: 0` must use `condition: "FIRST_MESSAGE"` (literal) and `fixed_message: true`; set `action: ""` if the main agent speaks first.
+The runtime matcher compares the main agent's **latest message** against each condition and fires every exact match — so a condition is an observer's description of what the agent does, and it must be able to fire:
 
-### XML tag constraints (the ones you'll hit most)
+- **`asks X` triggers only fire on a direct question ending in "?"**. If the description shows the agent *stating* a need ("I'll need your phone number"), write it as a statement: `"The main agent says it needs the phone number"` — otherwise the step never fires and the call stalls.
+- Never a quote of the agent's words (`"Can you provide your DOB?"` ✗) and never one vague word (`"verification"` ✗). Be specific: `"The main agent asks for the caller's name and date of birth to verify their identity"`.
+- Conditions **re-fire** on any later turn that matches. When one main-agent turn matches several conditions (a multi-item offer), the testing agent consolidates all their actions into one reply — do not split those across turns.
+- `action_followup`: `condition` is the **id of an earlier condition**, and the action fires on the testing agent's **next** turn after that one — one main-agent reply always elapses in between. Never use it for two caller actions with no agent reply between them; put those in one `action` string.
 
-- **All XML tags require `fixed_message: true`.** With `false`, the testing agent reads angle brackets as literal text.
-- **`<client_message t="..." d='...' />`** sends an app-defined RTVI client message to a Pipecat agent. `t` is required, `d` is optional, and the message is silent.
-- **`<ivr text="..." />` and `<voicemail text="..." />`** (or `<voicemail />` for silent) **must be the entire action** — no surrounding text or other tags. Use a separate `action_followup` for post-IVR / post-beep content.
-- **`<ignore_interruptions>...</ignore_interruptions>`** protects a **span**, not the whole action: everything inside (text, attached `<audio>` clips, `<hold>`/`<silence>`) plays to completion; the main agent's speech during the span is transcribed but never interrupts or triggers a reply. Content goes between the tags — never in an attribute — and `<hold>`/`<audio>` inside `<ivr text="...">` are rejected at save time in favor of this tag.
-- **`<interruption time="Xs" />`** requires `type: "action_followup"` AND must be at the **very start** of the action string. It fires `Xs` after the main agent's next turn begins.
-- **`<silence time="Xs" />`** is interruptible by the main agent; condition matching restarts after an interrupt. Supports decimal seconds (`"0.5s"`) for sub-second precision. **`<hold time="Xs" />`** is not interruptible; multiple `<hold>` tags allowed in one action.
-- **`<dtmf digits="..." />`** supports `0–9`, `#`, `*`; combinable with surrounding text. For caller data (account number, PIN, DOB) use `digits="{{test_profile.customer_number}}#"` instead of hardcoding — the value is resolved per run and formatting in it is stripped before dialing.
-- **`<endcall />`** combinable with text — natural sign-offs like `Thanks, that's all I needed <endcall />` work.
-- **`<spell>TEXT</spell>`** wraps text to spell letter by letter (good for IDs, account numbers).
-- **`<speed ratio="N" />`** range **0.8–1.2**; **`<volume ratio="N" />`** range **0–2** (Cartesia voices only) — both must be at the **start** of the action.
-- **`<voice provider="P" id="X" model="Y" />`** switches the testing agent's TTS voice persistently — **the only way to put a second speaker in one call**. Add `text="..."` for a temporary regional voice, or use `<voice ...>...</voice>` when regional text contains inline tags; the prior voice resumes after the region. `provider` and `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric; `model` is optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`); the provider itself cannot change mid-call. Do not combine `text` with the block form. Prefer this over an attached audio clip when you only need a different *voice* — a recording also fixes the dialogue.
-- **`<network_simulation packet_loss="N" />`** — only `packet_loss` is supported.
+### `fixed_message`
 
-### Worked example — Linear verification flow
+`true` = the action text is spoken verbatim (required for exact phrasing, compliance lines, and **every XML tag except `<function>`** — with `false` the brackets are read aloud). `false` = the action is an instruction the testing agent phrases naturally.
 
-```json
-{
-  "role": "You are an established patient calling to check your appointment status",
-  "conditions": [
-    { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I'd like to check on my upcoming appointment", "type": "standard", "fixed_message": true },
-    { "id": 1, "condition": "The agent asks for your name", "action": "My name is {{test_profile.first_name}} {{test_profile.last_name}}", "type": "standard", "fixed_message": true },
-    { "id": 2, "condition": "The agent asks for your date of birth", "action": "Provide your date of birth", "type": "standard", "fixed_message": false },
-    { "id": 3, "condition": "The agent asks for your account number", "action": "My account number is <spell>{{test_profile.account_number}}</spell>", "type": "standard", "fixed_message": true },
-    { "id": 4, "condition": "The agent confirms your identity and provides appointment details", "action": "Thank you, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
-  ]
-}
-```
+### Tags (`fixed_message: true`)
 
-**Pattern → reference map.** For any of these scenario types, see `references/conditional-actions.md` § "Pattern Library by Use Case" for the full worked JSON:
+| Tag | Rule |
+|---|---|
+| `<endcall />` | ends the call; may be combined with text (`Thanks, bye <endcall />`) |
+| `<dtmf digits="123#" />` | `0-9`, `#`, `*`; combinable with text; use `digits="{{test_profile.pin}}#"` for caller data — formatting is stripped |
+| `<spell>TEXT</spell>` | spells letter by letter (ids, account numbers) |
+| `<silence time="1.5s" />` | interruptible pause, decimals allowed; matching restarts after an interrupt. **Not for idle-timer tests** — the testing agent's own idle prompt (default 10 s) still runs and will fire before the threshold you are measuring |
+| `<hold time="30s" />` | dead air, **not** interruptible, several per action; pauses the testing agent's idle timer — so this is the tag for **any silence longer than ~8 s**, and the only correct one for testing the main agent's own idle/no-input behaviour (bracket the threshold: one hold just under it, one just over) |
+| `<ignore_interruptions>…</ignore_interruptions>` | protects a **span** (text, `<audio>`, `<hold>`) from interruption; content goes between the tags |
+| `<interruption time="2s" />` | **`type: "action_followup"` and at the very start of the action**; cuts in Xs after the agent's next turn begins |
+| `<ivr text="…" />` | uninterruptible menu played by the testing agent; **must be the entire action**; put post-menu content in an `action_followup`; `<hold>`/`<audio>` cannot go inside it — use `<ignore_interruptions>` instead |
+| `<voicemail text="…" />` or `<voicemail />` | greeting + beep; **entire action**; post-beep message goes in an `action_followup` |
+| `<speed ratio="1.1" />` | ratio **0.1–2.0** (0.8–1.2 keeps speech natural), must start the action |
+| `<volume ratio="1.5" />` | **0–2.0**, double quotes, must start the action, Cartesia voices only |
+| `<voice provider="11labs" id="…" model="…" />` | switches TTS voice persistently — the only way to put a second speaker in one call; add `text="…"` for a one-off regional line, or use the block form `<voice …>…</voice>`; `provider` must match the id format and cannot change mid-call |
+| `<background_noise sound="coffee-shop" volume="0.3">text</background_noise>` | wraps the spoken text; **`volume` is 0–1.0**; `sound` must be a supported preset name or an `http(s)` URL |
+| `<noise sound="beep" volume="0.5" time="1100" />` | one-shot effect (`office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying`); **`volume` is 0–1.0**; **`time` is bare milliseconds** (`1100`, never `1.1s`) and truncates the clip |
+| `<network_simulation packet_loss="20" jitter="50" latency="100" />` | `packet_loss` %, `jitter` ms, `latency` ms — any combination |
+| `<audio id="hold-music" />` | plays an **already-uploaded** clip by name; reusable across conditions; never re-upload for a second step |
+| `<client_message t="order_update" d='{…}' />` | silent RTVI message to a Pipecat agent; `t` required |
+| `<function name="lookup" />` | runs a declared function; any non-first condition, fixed or not. `{{function.lookup.status}}` renders an output — `fixed_message: true` only, key must be in that function's `response_mapping`, and always declare a `default` |
 
-- IVR menu navigation **(inbound vs outbound — patterns differ on whether `id:0 action` is empty or contains `<ivr>`)**, voicemail with post-beep, verification/compliance verbatim, multi-part response, mid-flow pivot, interruption mid-sentence, degraded connection, noisy environment, hostile caller, red-team prompt injection, scripted sequence, multi-language.
+**IVR direction decides `id: 0`.** Inbound (the main agent *is* the IVR): `id: 0` has `action: ""` and the testing agent navigates with `<dtmf>`. Outbound (the main agent dials into a third-party IVR): the testing agent plays the menu — `<ivr text="…" />` as the whole `id: 0` action, post-menu content in an `action_followup`, and `RECEIVE_DTMF` enabled so the main agent's key presses are heard.
 
-**Always load the reference before writing conditions** for: full XML tag rubric (placement, ranges, voice constraints), test profile template-variable syntax, the `<silence>` vs `<hold>` distinction, the 30 `<background_noise>` sound names, the full anti-patterns list, the post-authoring quality checklist, and the troubleshooting matrix.
+Use a **tag, not a personality**, for anything transient (interruption, noise, hold, silence) and keep the Normal personality for the call's language. Never apply both.
 
-The reference is `references/conditional-actions.md`. Read it once at the start of any conditional-actions authoring session, and the inline content above will be enough to draft. Re-read sections of the reference if validation errors come back.
+**Test profile placeholders** (`{{test_profile.field}}`, nested `{{test_profile.address.city}}`) resolve at run time on `fixed_message: true` actions; every key must exist in the attached profile.
 
-## Pre-Creation Checkpoint — Confirm Before Building
+**Live data** — `functions[]` sits beside `role` and `conditions` inside `conditional_actions`: `{name, type: "rest_api", auto_run, config: {method GET|POST, url (public http(s)), headers, query_params, body, timeout_seconds 1–30, response_mapping}}`. `auto_run: true` fetches once at call start; a `<function>` tag re-fetches at that turn. **An update that sends only `conditions` deletes every function** — always read, modify, then send the whole object back.
 
-**Before creating scenarios or generating them, always pause and confirm key decisions with the user.** This is a hard gate: no `scenarios_create` / `scenarios_generate_bg` call until the user has replied approving the plan — even when the first message already names an agent and a count, and *especially* when it says "first ask me" or "show me the plan". The only exception is an explicit "proceed autonomously / don't ask me" from the user. Do not assume defaults — present your plan and get explicit approval. After generation, run the verification pass in `references/auto-generation.md` § Reliability Protocol (count reconciliation, language/role checks, expected outcomes, tools).
+### Self-check before every CA write
 
-### What to Confirm
+Refuse to send a payload that fails any of these:
 
-Present a checkpoint like this before proceeding:
+1. `scenario_type: "conditional_actions"` set; object in `conditional_actions`; `scenario_language` set.
+2. `id: 0` is `FIRST_MESSAGE` + `standard` + `fixed_message: true`; `action` empty iff the main agent speaks first.
+3. Every condition has all five fields; ids unique and ascending; no `others`.
+4. Every `asks …` condition corresponds to a question the description mandates; no quoted agent speech; no one-word triggers. When the user names an agent utterance that must be verbatim (a disclosure, a read-back), one condition's trigger is anchored on it and the outcome states it as an exact fact in backticks (see **Expected outcomes**).
+5. Every action containing a tag other than `<function>` has `fixed_message: true`; `<interruption>` is first in an `action_followup`; `<speed>`/`<volume>` start their action; `<ivr>`/`<voicemail>` are whole actions; ratios and volumes are in range.
+6. Every `action_followup.condition` names an earlier id, and one agent reply really does elapse first.
+7. Every `{{test_profile.*}}` key exists in the attached profile; every `{{function.*}}` key is declared and the action is fixed.
+8. The flow ends: `<endcall />` on the last action, or a terminal transfer, or the user asked to stay on the line.
+9. `personality` set and its language matches `scenario_language`.
+10. Metrics, test profile, `tool_ids`, folder and tags attached.
 
-1. **Tool strategy** — "How do you want to handle your agent's tool calls during testing?"
-   - **A) Client-side mock data** — You manage your own staging backend; I'll align test profiles with your test data
-   - **B) Cekura mock tools** — Cekura intercepts tool calls and returns mock responses; I'll set up the mappings
-   - **C) No mock data** — Tools aren't relevant to these tests; we'll focus on conversational behavior
+## Expected outcomes
 
-2. **Test profile** — "Want me to create `<profile-name>` with these fields?" Show the full `information` dict. For Approach A: check existing profiles first; fields must match staging data formats exactly. For Approach B: check existing mock entries first — if they fit, find the corresponding profile; if the profile is missing fields, create a new complete one; if no mock data fits, design new entries then derive the profile from those outputs. For Approach C: only caller identity fields needed. Never use a partial profile — missing fields cause the testing agent to improvise.
+`expected_outcome_prompt` is graded line by line by an LLM judge reading the **transcript plus the run metadata injected with it** — per-turn timing, call duration and the call-end reason — but never audio. It does nothing unless the **Expected Outcome** metric is attached, and it is required on every scenario you create or generate — conditional actions included; a scenario with an empty outcome runs but grades nothing. Each statement is `yes` / `no` / `blocked`; all `yes` = 100, any `no` = 0, any `blocked` = 50.
 
-3. **Run mode** — "Default to text/chat for the first pass? It's cheapest, and since tools are mocked the results are the same as voice for logic validation." Recommend text unless the user specifically needs voice testing (latency, interruption handling, TTS quality).
+Rules — 2–6 lines, each starting `The main agent should`:
 
-4. **Personality** — For **conditional-actions** scenarios, default to the "Normal" personality for the scenario's language — always look it up via `personalities_list language=<code>` (English included; when several Normal variants exist, prefer the plain no-background-noise one — "Normal Male …", not the "Bg Noise" variants — male when both genders exist, unless the persona implies otherwise), or pick a multilingual `language=multi` one when the scenario mixes languages — behavioral logic is in the conditions, not the personality. For **behavioral** scenarios, propose a mix: ~60% normal, ~20% challenging (interrupter/background noise), ~10% non-native, ~10% edge cases. Confirm with the user before using anything other than the normal default. See "Picking the Right Personality" above.
+- **One verifiable demand per line.** Split "and"-joined aggregates. Never pad a short scenario to a count.
+- **Every line must be fired by a written step**, or it comes back `blocked` on every run.
+- **Verb and object must both be licensed** by the agent description, a mock output, or a KB fact. "Ask for X" does not license "explain X"; "transfer" does not license "transfer to a manager".
+- **Tool-backed claims need tool evidence in the transcript.** Tool calls reach it only when the provider's post-call fetch includes them (VAPI, Retell, ElevenLabs, Bland, Synthflow, LiveKit, Pipecat, Kore — with credentials configured), or `transcript_provider` is `custom`, or the run is over a websocket/chat transport that records them. Otherwise grade what the agent **says**: "verbally confirms the booking", never "books the appointment".
+- **Contingent branches stay contingent.** If a correct agent may skip the action ("if the caller has insurance…"), phrase the line with the condition or demand only what every branch shares. An unconditional demand fails an agent that correctly took the other path.
+- **Never demand success that runtime state controls.** No "transfers to a manager" / "books the slot" unless the scenario's mock data or profile fixes that availability; otherwise allow the documented fallback.
+- **Offering is not executing** — if the flow stops early, demand "offered"/"gathered", not "booked".
+- **End-call is structural, not behaviour under test.** Write no outcome line for the end-call step, for who hung up, or for the call-end reason — not even "The main agent should end the call after …" — unless the user explicitly asked to test termination. A closing phrase the description *mandates* may be graded as speech. **Nothing after a terminal transfer.**
+- **Binary and objective.** Ban "appropriately", "professionally", "warmly", "politely", "clearly". Semantic content, not verbatim phrasing — except an exact KB fact, which goes in backticks: `` `123 Medical Lane, Suite 100` ``.
+- **Copy placeholder tokens** from the steps (`{{test_profile.selected_plan}}`); a prose paraphrase is still hardcoding. `{{transcript}}`, `{{call_end_reason}}` and duration are injected automatically.
+- No test-setup rationale (timeouts, variable values) in the outcome — that belongs in the scenario body.
 
-5. **Authoring mode** — Default is **behavioral instructions**. Switch automatically when the user's request used a direct trigger phrase ("conditional actions", "structured", "scripted", "deterministic test", "regression test", "compliance test", "exact flow", "fixed sequence"). Ask the user when the scenario mentions a tag-supported feature (voicemail, IVR, DTMF, hold, interruption, network simulation, background noise) without specifying a mode. See "Choosing Authoring Mode" above.
+Order matters only when the description mandates it: one line naming both events ("…should ask for the date of birth before providing any account details"). Full scoring model, variables and examples: **`references/expected-outcomes.md`**.
 
-6. **Folder** — "I'll create a folder called `<name>` to organize these scenarios."
+## Test data
 
-7. **Metrics** — "I'll attach the baseline metrics (Expected Outcome, Infrastructure Issues, Tool Call Success, Latency) to all scenarios."
+Mock tool entries, test profiles and dynamic variables are one data set — design them together (**`references/test-data-design.md`**).
 
-### Why This Matters
+- **Why profiles**: the testing agent reliably uses profile data, and the same fact written in instructions *and* a profile that disagree makes it hallucinate — the profile is the single source of truth, and its `main_agent_variables` is what reaches the agent under test.
+- **Approach A (client staging)**: discover their formats first, then build a profile that matches exactly.
+- **Approach B (Cekura mocks)**: design mock entries **first**, then derive every profile value from the mock outputs — identical strings, never invented independently. One input → one output; a different outcome needs a different input. Add 10-digit, 11-digit and E.164 phone variants. Keep new entries distinct from existing ones so the fuzzy lookup cannot return the wrong record. Mark free-text arguments in `freetext_params` instead of adding an entry per phrasing. **An entry exists only when a caller step completes the trigger** — asking about a balance is not a tool call; offered ≠ completed; a refusal or an abandoned request gets no entry; an empty entry list is often correct — and every completed tool-backed step must have one. One mapping per distinct input the agent might send, not one per tool. Derive in one direction only: profile values from mock outputs, never an entry edited to match a story value.
+- **Approach C**: identity fields only.
+- **Always list the existing test profiles first** — clients pre-build profiles tested against their backend. A profile missing a field the flow needs is not reusable: create a complete one.
+- `information` uses the sectioned shape: `main_agent_variables` (sent to the agent under test as dynamic variables at call time; `X-`prefixed keys become SIP/WebSocket headers) and `testing_agent_variables` (persona/context for the caller). Every registered dynamic variable needs a non-empty value on every scenario.
+- **Custom headers**: `X-`prefixed keys in `main_agent_variables` are sent as SIP headers (the **only** way to pass custom SIP headers — they cannot be set on the agent or on the run) or as WebSocket connection headers (merged over the agent's static `websocket_headers`); attach the profile to the run via `test_profile_ids`. `X-Run-Id`, `X-Scenario-Id` and `X-Result-Id` are reserved.
+- Chat and websocket runs pass profile data to the main agent, so tool logic can be verified without a voice call.
+- PATCHing `information` **replaces** it — GET, merge, then PATCH.
+- Never hardcode identity data, choices or confirmations in instructions or conditions.
 
-Without checkpoints, the AI agent will:
-- Pick the wrong tool strategy (setting up Cekura mocks when the client has a staging backend, or ignoring tools when they're critical)
-- Create test profiles with fields that don't match mock/staging data (authentication failures)
-- Default to voice mode when text would be 10x cheaper for the same coverage
-- Use conditional actions when adaptive instructions are more appropriate
-- Scatter scenarios without folder organization
-- Skip metric attachment (producing useless runs)
+## Personality
 
-**One checkpoint before creating saves multiple rounds of rework after.**
+Required on every scenario. Personalities control language, accent, voice model, interruption level, background noise, speed, and idle behaviour (`message_plan.idle_timeout_seconds`, default 10 s; `idle_message_max_spoken_count`, default 3) — **instructions cannot change any of it**.
 
-## Eval Types
+- List the personalities for the scenario's language; pick the plain **Normal** variant for the scenario's language (no background-noise variant) unless the persona demands otherwise: a trait that lasts the whole call — impatience or aggression (Interruptive High), an accent or non-native pace (the accent or Slow Speaker variant), ambient noise (a Bg Noise variant) — takes the matching predefined personality from `references/choosing-personality.md`; fork one when nothing fits. For CA, keep Normal unless the trait is call-wide. The API returns 400 without a personality. Use a `language=multi` personality when the call mixes languages.
+- `scenario_language` must match the personality's language. If no personality exists for the target language, or the predefined one is not enabled for the project, enable it, or fork a predefined one or create one — that is the resolution, not a fallback to English.
+- For behavioral batches propose a mix: ~60 % normal, ~20 % challenging, ~10 % non-native, ~10 % edge. For CA, keep Normal unless the trait is call-wide — the behaviour is in the conditions.
+- **Silence is a personality/tag concern.** "Remain silent" in instructions does nothing: the idle prompt fires anyway. Use `<hold>` for a bounded pause in CA, or raise `idle_timeout_seconds` on a personality the project owns (fork a predefined one first). Symptom→cause table: **`references/choosing-personality.md`**.
 
-A complete suite covers: **Workflow** (happy path), **Deterministic/Unit Test** (conditional actions for exact flows), **Edge Case** (tool failures, ambiguous inputs), **Red Team** (prompt injection, social engineering), **Error Handling** (hostile caller, clinical questions), **Multi-Language**.
+## Tools
 
-**See `references/coverage-patterns.md`** for one-paragraph descriptions of each type, the tag-based naming convention, and category breakdowns from real deployments.
+| Tool id | Enable when |
+|---|---|
+| `TOOL_END_CALL` | default — without it the call runs to the duration cap, wasting credits |
+| `TOOL_END_CALL_ONLY_ON_TRANSFER` | the flow ends in a transfer to a human/IVR |
+| `TOOL_DTMF` | the testing agent presses keys (IVR, PIN, account entry) |
+| `RECEIVE_DTMF` | the **main agent** presses keys — outbound IVR simulation, voicemail systems |
+| `SEND_SMS_TOOL_CALL` | the testing agent sends an SMS (`<send_sms text="…" />` — `text` is required); needs an SMS-enabled number |
+| `CALL_HOLD` | long-hold tests |
 
-## Execution Modes
+Enable what the flow needs and nothing more, and always give the testing agent a way to finish the call. `tool_ids` accepts only the ids in this table — never the agent's own tool ids or mock-tool ids, which are already attached to the agent (`Invalid tool IDs` is the symptom of mixing them up).
 
-**Practical guidance:** use **text/chat** for development iteration (fast, cheap, tests logic), **voice** for final validation before deployment. **WebSocket** for agents built on WebSocket providers, **Pipecat** for Pipecat framework agents. Test profile data is passed to the main agent in chat and websocket runs, enabling tool verification without voice calls. Full speed/cost comparison table in `references/coverage-patterns.md`.
+## Metrics
 
-## Mock Tool Data, Test Profiles, and Dynamic Variables
+A directly created scenario starts with **no metrics attached**; generation attaches the project's set automatically. Direct creates therefore need an explicit attach — a scenario with no metrics only reports whether the call completed.
 
-These three form one cohesive test data set and must be designed together. Key principles for Approach B:
+Recipe: list the project's metrics → map **names** to ids → pass `metrics: [ids]` on create, or update afterwards. Baseline set: **Expected Outcome**, **Infrastructure Issues**, **Tool Call Success**, **Latency**. If one is missing from the project, copy the predefined metric into the project first (a global predefined id is not valid on a scenario) and check `simulation_enabled` — a metric that is off for simulations never fires. Never guess an id.
 
-- **Mock data first**: design mock tool entries before creating the test profile; derive all profile values from mock outputs (never edit an entry to match a story value — derive in that direction only)
-- **Input = caller-provided trigger keys, output = returned values**: lookup steps have the caller provide `{{test_profile.<input_field>}}`; verification steps have the caller state back `{{test_profile.<output_field>}}`
-- **Entry only when a step completes the trigger**: a caller asking a question ≠ a tool call; offered ≠ completed; an empty entry list is often correct. Conversely, every completed tool-backed step MUST have an entry.
-- **One input → one output**: a different outcome needs a different input — never two entries with the same input
-- **Identical values everywhere**: the same fact in mock entries, test profile, and dynamic variables must be the identical string (only the deliberate validation-failure pattern mismatches). Every registered dynamic variable gets a non-empty value on every scenario.
-- **Per-input branching**: one mapping per distinct input the agent might send; not one mapping per tool
-- **Phone format variants**: always add 10-digit, 11-digit-with-1, and E.164 forms (mismatches cause 404s)
-- **Append-not-replace**: PATCHing `information` REPLACES the array; always GET → merge → PATCH
-- **Fuzzy match variation**: new mock entries must be sufficiently distinct from existing ones so Cekura's closest-match lookup doesn't return the wrong user
-- **Test profile completeness**: if an existing profile covers only a subset of required fields, create a new complete profile — never use a partial one
+## Changing existing evaluators
 
-**See `references/test-data-design.md`** for the full approach-selection guide, decision matrix for new vs. reuse, fuzzy-match variation rules, chain dependency design, dynamic variable wiring, and API reference.
+Most real work is editing evaluators, not creating them. This procedure governs an explicit update/duplicate/improve request. **A request to create is authored as asked even when a near-duplicate already exists** — note the overlap and any bug you noticed in one line of the summary, and offer to consolidate; do not silently fix the existing one in place of the create the user asked for. Procedure:
 
-## Tagging Strategy
+1. **Read first.** Retrieve each scenario by id (or read the `scenarios.json` the Evaluators page attached to this conversation — do not page the list endpoint when it is already on disk).
+2. **Audit against the rubric** above (steps/conditions, outcomes, placeholders, metrics, personality, tools). Report what you found before changing it.
+3. **Minimal diff.** PATCH only the fields that are wrong. For CA, mutate the retrieved `conditional_actions` object and send it back **whole** — an update replaces the whole stored object, so one carrying only `conditions` drops `functions[]`. `scenario_type` need not be resent. Pass `version_name` when the user wants the change labelled.
+4. **Many at once:** use the bulk update (merge lists such as `tool_ids`/`metrics` — do not blank the rest). **Copies:** duplicate the scenario; never re-create by hand. **Conversions** (CA → instruction or back) are updates to the same scenario id — PATCH `scenario_type` with the new body (written to the rules of the target mode, an instruction flow ending in `End the call when …`); duplicate first and convert the copy when the original's run history matters (ask if unsure).
+5. **Read back** and show a per-scenario diff of what changed.
 
-Format: `tags: ["Category", "priority-level", "scenario-ID"]`. Category codes: S=Scheduling, RS=Rescheduling, CN=Cancellation, V=Verification, SA=Safety, RT=RedTeam, etc.
+Fixing a scoring complaint: a metric that keeps returning 50 usually has an outcome line no step fires (`blocked`) — fix the outcome or add the causing step; do not rewrite the whole scenario. Then re-read **every** remaining line against **Expected outcomes** before you PATCH: the blocking line is rarely the only one that breaks the rules, and a leftover hang-up or "politely"-style line keeps the evaluator wrong after the blocker is gone. Fixing how the testing agent *speaks* (digits read as words, wrong language) is `<spell>`, `scenario_language` and personality — not an instruction rewrite.
 
-## Expected Outcomes
+## Run and report honestly
 
-Focus on the main agent's behavior, not the caller's experience:
-- **One atomic statement per line** — each line starts "The main agent should…" and makes ONE verifiable demand; split "and"-joined aggregates. 2–6 lines per scenario; short scenarios get few lines — never pad.
-- **Every line must be fired by a written step** — an outcome whose condition the scripted flow never produces returns "blocked" on every run.
-- **Verb AND object must be licensed** by the agent description (or a mock output / KB fact): "ask for X" does not license "explain X"; "transfer" does not license "transfer to a manager" unless the description says so. When a behavior isn't licensed, omit the line.
-- **Offering is not executing** — if the flow doesn't complete the action (deferral, hang-up, terminal transfer first), demand only the partial state reached ("offered", "gathered"), never "booked".
-- **Never grade who hung up** — end-call mechanics are structural; don't test them unless explicitly asked.
-- **Binary verifiability, no subjective words** — ban "appropriately", "professionally", "warmly", "politely"; semantic content, not verbatim phrasing (except exact KB facts like phone numbers).
-- **Copy placeholder tokens from the steps** — an outcome referencing a profile value uses the identical `{{test_profile.field}}` token; a prose paraphrase still counts as hardcoding.
+Run in text mode for iteration; for voice, use the run variant that matches the agent's connection (phone, VAPI or Retell WebRTC, websocket, SIP, Pipecat, LiveKit, ElevenLabs, email); a tests-as-code spec has its own JSON run. Pass `test_profile_ids` / `personality_ids` to override per run instead of editing scenarios (this is how accent and language sweeps are done), and `frequency` for load. Poll the result before reporting anything, and never state an outcome you did not read back.
 
-**See `references/expected-outcomes.md`** for the full writing rules, scoring model, prioritization hierarchy, metric variable support (`{{test_profile.*}}`, `{{agent.*}}`, etc.), and good/bad examples.
+## Coverage and next steps
 
-## Create Evaluator from Transcript
+A complete suite covers **workflow** happy paths, **deterministic/unit** tests, **edge cases** (tool failures, retries, ambiguity), **red team**, **error handling**, and **multi-language** — ~30 % happy path, ~70 % specific friction, every scenario grounded in a real capability. Naming: `{CATEGORY}-{NN}: {description}` (≤80 chars); tags `["Category", "priority", "ID"]`. Real-world category breakdowns: **`references/coverage-patterns.md`**.
 
-`POST /test_framework/v1/scenarios/create_scenario_from_transcript/` turns a real call (by observability call-log ID) into a replayable evaluator — useful for regression tests from real edge cases. Always review post-creation and attach metrics, profile, folder, tools. **See `references/coverage-patterns.md` § Create Evaluator from Transcript** for the workflow.
+**Cekura's predefined Infrastructure Suite** (18+ ready-made latency / interruption / noise / packet-loss / hold tests) is not built through the scenario tools: the user adds it from the dashboard (Evaluators → Infrastructure Suite → *Add to my Project*). Point the user there rather than hand-building copies, tell them it also adds an *AI Interrupting user = 0* rubric rule to the project, and tag the copies `infrastructure-suite` so CI can select them. For a suite derived from the customer's own pipeline code, use **cekura-infra-test-suite**.
 
-## Documentation
+A production call log can be turned into a replayable evaluator — one at a time or as a flagged batch; both are background jobs, so poll, then attach metrics/profile/folder/tools. For prod-failure mining use **cekura-generate-scenarios**; for CI/infra suites **cekura-infra-test-suite**; for metrics **cekura-metric-design**; to improve the agent itself **cekura-self-improving-agent**.
 
-- Public docs: https://docs.cekura.ai
-- LLM-friendly docs: https://docs.cekura.ai/llms.txt
-- Concepts: https://docs.cekura.ai/documentation/key-concepts/
-- Full API endpoints: `references/api-reference.md`
+Public docs: https://docs.cekura.ai · LLM-friendly docs https://docs.cekura.ai/llms.txt · concepts https://docs.cekura.ai/documentation/key-concepts/ · endpoints `references/api-reference.md`. For multi-session projects offer a memory document (**`references/session-memory.md`**).
 
-## Session Memory Document
+### Reference files (load on demand)
 
-For multi-session eval projects, offer to create a session memory document that captures key decisions (tool strategy, profiles, scenarios, open items) so future sessions don't re-derive context.
-
-**See `references/session-memory.md`** for the template and update workflow.
-
-## Next Steps
-
-After completing eval design, the user typically needs:
-- **Run the suite** → execute via the run-scenarios endpoints (see `references/api-reference.md`)
-- **Review results** → check transcripts and metric scores
-- **Add or improve metrics** → invoke **cekura-metric-design** for new metrics, **cekura-metric-improvement** to refine existing ones
-- **Connect a new agent first** → invoke **cekura-create-agent**
-
-## Additional Resources
-
-### Reference Files (loaded on demand)
-
-- **`references/choosing-personality.md`** — Full personality selection logic: sustained vs. temporary behaviors, interruption tiers, multilingual matching, enabled/disabled status, fallback rules
-- **`references/test-data-design.md`** — Approach selection (A/B/C), mock tool data design (per-input branching, fuzzy-match variation, phone format variants, chain dependencies, append-not-replace), test profile creation and reuse decision matrix, dynamic variable wiring, data flow by mode, API reference
-- **`references/conditional-actions.md`** — Conditional actions: field semantics, XML-tag constraints, worked examples, anti-patterns, validation checklist, quick-reference card
-- **`references/expected-outcomes.md`** — Writing rules, prioritization hierarchy, metric variables, good/bad examples
-- **`references/coverage-patterns.md`** — Test coverage category breakdowns
-- **`references/session-memory.md`** — Multi-session project memory document template
-- **`references/api-reference.md`** — Complete API endpoints: scenarios, profiles, results
-
-### Example Files
-
-- **`examples/csv-eval-creation.md`** — CSV-to-evaluator workflow
-- **`examples/workflow-eval.md`** — Single workflow evaluator example
-- **`examples/red-team-eval.md`** — Red-team evaluator example
+- **`references/conditional-actions.md`** — CA pattern library, sound names, worked examples, troubleshooting matrix
+- **`references/instruction-patterns.md`** — behavioral step rulebook with bad→good examples
+- **`references/expected-outcomes.md`** — scoring model, metric variables, examples
+- **`references/test-data-design.md`** — approaches A/B/C, mock design, profiles, dynamic variables
+- **`references/choosing-personality.md`** — selection logic, idle/interruption, multilingual
+- **`references/coverage-patterns.md`** — category breakdowns, execution modes, transcript-based creation
+- **`references/auto-generation.md`** — generation reliability protocol
+- **`references/api-reference.md`** — endpoints and payload schemas
+- **`examples/workflow-eval.md`**, **`examples/red-team-eval.md`**, **`examples/csv-eval-creation.md`**
 
 
 
@@ -808,7 +714,7 @@ Keep names under 80 chars (API limit on the `name` field).
 
 ## Eval Types
 
-A complete suite has coverage across these categories. Each type can be **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule. That choice also fixes how the scenario gets written: behavioral ⇒ generated via `generate-bg`; conditional actions ⇒ created directly, since generation cannot emit them.
+A complete suite has coverage across these categories. Each type can be **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule. That choice also fixes how the scenario gets written: behavioral ⇒ generated via `generate-bg`, always; conditional actions ⇒ created directly when the structure is exactly known (generation emits conditional actions only for red-team categories or when an org-level setting is on, so direct create is the dependable path).
 
 ### Workflow Evals (Core)
 

@@ -16,6 +16,8 @@ metadata:
 
 # Cekura Voice AI Infrastructure CI/CD Suite
 
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.14"`. It returns immediately and lets Cekura see which skills are in use.
+
 Build a compact, reviewable Cekura test suite **in the voice-agent repository**. The deliverable is a
 JSON spec that CI submits to Cekura's Tests-as-Code endpoint. It is not a folder of persistent
 dashboard evaluators.
@@ -69,6 +71,18 @@ only for what cannot be safely inferred.
 
 If a required target, enabled metric, or staging fixture is unknown, prepare the repository-side
 plan and mark that case blocked. Do not silently substitute a weaker check.
+
+## Two different things are called "infrastructure tests"
+
+Settle this before step 0 — an A/B run showed the request is ambiguous, and the wrong reading
+costs a whole discovery pass:
+
+| Ask | What it is | What to do |
+|---|---|---|
+| "add Cekura's **predefined** infrastructure suite" | 18+ ready-made latency / interruption / noise / packet-loss / hold scenarios Cekura ships | **Not reachable from the MCP tools.** Point the user at the dashboard's Evaluators → Infrastructure Suite → *Add to my Project* (or the `add_infrastructure_suite` API). Tell them it also adds an *AI Interrupting user = 0* rubric rule to the project, and tag the copies `infrastructure-suite` so CI can select them. Do not hand-build copies, and do not run the steps below. |
+| "build infra/CI tests **for my bot**" | tests derived from the customer's own pipeline code | Run the steps below. |
+
+If the request could be either, ask once — one short question — before step 0.
 
 ## Workflow
 

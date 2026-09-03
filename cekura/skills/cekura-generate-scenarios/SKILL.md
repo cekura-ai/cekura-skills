@@ -39,7 +39,7 @@ This skill is **read-first**: it never creates a scenario without an explicit us
 
 | `scenario_type` | Write path |
 |---|---|
-| `conditional_actions` — drop, tool_error, workflow_miss (turn-by-turn replays) | `mcp__cekura__scenarios_create` with the drafted `conditions`. The generation endpoints **cannot emit conditional actions**; direct create is the only path. |
+| `conditional_actions` — drop, tool_error, workflow_miss (turn-by-turn replays) | `mcp__cekura__scenarios_create` with the drafted `conditions` — the evidence call dictates the turn sequence, which is the one case that outranks generation. When you have the failure mode but not the turns, `scenarios_generate_bg` with `simulation_type: "conditional_actions"` emits grounded, validated conditions. |
 | `instruction` — drift, hallucination, comprehension, refusal, safety (free-form) | **Generate:** `mcp__cekura__call_logs_create_scenarios` (preferred — grounded in the evidence calls) or `scenarios_generate_bg`, passing the drafted `expected_behavior` + failure mode as `extra_instructions`. Behavioral instructions are never hand-authored. |
 
 A mixed report takes **both** paths in one pass; say which clusters went which way in the summary. The only reason to hand-author an `instruction` scenario is that the user dictated its text themselves.

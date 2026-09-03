@@ -79,10 +79,10 @@ When the user describes what they need, route them:
 | "Create metrics for my agent" | **cekura-metric-design** skill |
 | "My metrics are giving wrong results" | `/improve-metric` command (or **cekura-metric-improvement** skill for full cycle) |
 | "I need to test my agent" | **cekura-eval-design** skill |
-| "Generate test scenarios" / any behavioral scenario, one or many | `/autogen-eval` command (behavioral scenarios are always generated) |
-| "Create a specific test scenario" — scripted / deterministic / regression / IVR / DTMF / compliance flow | `/manual-create-update-eval` command (conditional actions — generation can't emit them) |
-| "Create a specific test scenario" — natural conversation, edge case, red-team | `/autogen-eval` command with `num_scenarios: 1` and the description as `extra_instructions` |
-| "Update / duplicate an existing scenario" | `/manual-create-update-eval` command (either type) |
+| "Generate test scenarios" / any batch or category-level request, either format | **cekura-eval-design** skill (`/autogen-eval` for the walkthrough where slash commands exist) |
+| "Create a specific test scenario" — scripted / deterministic / regression / IVR / DTMF / compliance flow | **cekura-eval-design** skill (conditional actions: generated for a category, created directly for a dictated script), `/manual-create-update-eval` for the field walkthrough where slash commands exist |
+| "Create a specific test scenario" — natural conversation, edge case, red-team | **cekura-eval-design** skill: generate (`num_scenarios: 1`) for a category-level ask, create directly for a fully described case |
+| "Update / duplicate an existing scenario" | **cekura-eval-design** skill (§ Changing existing evaluators), `/manual-create-update-eval` for the walkthrough where slash commands exist |
 | "Run my tests" | `/run-evals` command |
 | "Check test results" | `/eval-results` command |
 | "Create a metric that checks X" | `/create-metric` command (or **cekura-metric-design** skill for complex metrics) |
@@ -93,7 +93,8 @@ When the user describes what they need, route them:
 | "Help me improve this metric" | `/improve-metric` command |
 | "Leave feedback on a metric result" | `/improve-metric` command (Phase 1: feedback collection) |
 | "Set up production monitoring" | **cekura-onboarding** skill (Phase 6) + observability docs |
-| "Add mock tools" / "set up tools" | **cekura-create-agent** skill (Phase 7) |
+| "Add mock tools" / "set up tools" — defining the tools on the agent | **cekura-create-agent** skill (Phase 7) |
+| "Mock tool data for a test" / "add a mock entry" / "create the test profile" — data an evaluator will use | **cekura-eval-design** skill (§ Test data) |
 | "Upload knowledge base" | **cekura-create-agent** skill (Phase 8) |
 | "Something's broken" / "file a bug" | `/report-bug` command |
 | "Improve my agent" / "auto-tune from eval results" | **cekura-self-improving-agent** skill |

@@ -2,14 +2,17 @@
 
 Detailed schema and gotchas for the scenario auto-generator. Loaded on demand from `SKILL.md`'s "Auto-Generation" section.
 
-The auto-generator produces **behavioral** evaluators (`scenario_type: "instruction"`) — it **cannot emit conditional-action** evaluators (`scenario_type: "conditional_actions"`). That makes the split absolute:
+The generator is the default write path in every mode; `simulation_type` selects the output format:
 
-- **Behavioral scenarios are always generated here**, never hand-authored via the create endpoint — including a single one (`num_scenarios: 1` with a specific `extra_instructions`).
-- **Conditional-action evaluators are always authored directly** via the create endpoint, because generation has no way to produce them — see `references/conditional-actions.md`.
+- `"instruction"` (default) — behavioural scenarios, one or many (`num_scenarios: 1` with a specific `extra_instructions` is normal).
+- `"conditional_actions"` — validated `conditions[]` from the same grounding pipeline (agent description, KB, mock tools), tags included: the generator knows the full tag set and honours tag requirements written into `extra_instructions`.
+- Red-team categories (`scenario_type: "red_teaming_voice" / "red_teaming_text"`) return conditional actions carrying a multi-turn attack plan; review them, never rewrite them into instructions.
+
+Behavioural (`instruction`) scenarios are always generated — a single fully described case is `num_scenarios: 1` with the description in `extra_instructions`. Direct creates are for exactly-known conditional-action structures, and for a complete verbatim instructions payload the user supplied to save unchanged, under the same quality rules as generated output. See `SKILL.md` § Mode and write path.
 
 ## Endpoint
 
-`POST /test_framework/v1/scenarios/generate-bg/` — the path for every behavioral scenario, one or many.
+`POST /test_framework/v1/scenarios/generate-bg/` — the path for every behavioral scenario, one or many, and for grounded conditional-action scenarios via `simulation_type`.
 
 ## Full schema
 
@@ -23,6 +26,10 @@ The auto-generator produces **behavioral** evaluators (`scenario_type: "instruct
 | `folder_path` | string | No | Folder to place generated scenarios in (**always set this** — create the folder first) |
 | `tags` | array[string] | No | Tags to apply to all generated scenarios |
 | `tool_ids` | array[string] | No | Tools to enable (e.g., `TOOL_END_CALL`) |
+| `scenario_type` | string | No | Category: `workflow` (default), `red_teaming_voice`, `red_teaming_text` |
+| `attack_type` | string | Red team | One of the six attack types (see `SKILL.md`); one generation call per type |
+| `simulation_type` | string | No | Output format: `instruction` (default) or `conditional_actions` |
+| `generation_files` | files | No | KB/context uploads, workflow category only |
 
 **Returns:** `{"progress_id": "<uuid>"}`. Poll with `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.
 

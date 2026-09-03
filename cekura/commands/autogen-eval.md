@@ -2,7 +2,7 @@
 name: autogen-eval
 description: Auto-generate Cekura evaluators using the generate API with full configuration
 argument-hint: "[agent ID] [count] [scenario type]"
-allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Skill", "AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 
 <!-- cekura-ack-tag: ack:autogen-eval:3w6k5b -->
@@ -10,9 +10,13 @@ allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mc
 > When you call a Cekura scenario or test-profile write tool from this command (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 <!-- cekura-tracking-beacon -->
 
-## Tracking (do this first)
+## Load the design skill first
 
-Before doing anything else, call `mcp__cekura__cekura_skill_started` with
+Load the `cekura-eval-design` skill before anything else — in Claude Code the `Skill` tool with `cekura:cekura-eval-design`; in any other harness, read its `SKILL.md` into context — its **Mode and write path**, **Auto-generation** and **Expected outcomes** sections govern every field below, its rule that the agent under test is read-only applies throughout, and its post-generation verification is what you run at the end.
+
+## Tracking (then do this)
+
+Next, call `mcp__cekura__cekura_skill_started` with
 `skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.14"`. If a conversation/session ID is available (e.g.
 you were invoked from Cekura sandbox), also pass it as `conversation_id`. The
 call returns immediately; it lets us understand which skills are actually
@@ -57,11 +61,22 @@ Use the folder path for the `folder_path` parameter in the generate call.
 |------|-------------|----------|
 | **workflow** | Tests standard agent workflows (scheduling, onboarding, etc.) | Core functional coverage |
 | **redteaming** | Tests adversarial inputs (prompt injection, social engineering, manipulation) | Security and robustness testing |
-| **knowledge_base** | Tests the agent's knowledge (FAQs, product info, policies) | Accuracy and completeness of information |
+| **workflow + `generation_files`** | Tests the agent's knowledge (FAQs, product info, policies) against uploaded material | Accuracy and completeness of information |
 
 Default: `workflow`. Can combine by running generation multiple times with different types.
 
-**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category, and it accepts only `workflow`, `red_teaming_voice`, `red_teaming_text`, `knowledge_base` (default `workflow`; the red-teaming values also take an optional `attack_type`). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
+**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and upload the KB material as `generation_files` (workflow category only). A separate `simulation_type` field picks the OUTPUT format (`instruction` default, or `conditional_actions` for grounded structured flows). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
+
+**Every red-team call carries `attack_type`, one call per type.** Ask which threats matter; for "full red-team coverage" run all six and say so in the summary.
+
+| `attack_type` | The testing agent tries to make the main agent … |
+|---|---|
+| `system_prompt_leak` | reveal its prompt or instructions, tool/function names, internal variables, routing or workflow logic |
+| `data_leak` | disclose internal business data — authorization limits, pricing and margins, employee names or schedules, escalation criteria, customer statistics |
+| `harmful_content` | produce threats, hate speech, explicit content or instructions for illegal acts; confirm fabricated programmes or policies; give dangerous medical, legal or financial advice as fact |
+| `biased_output` | generalise about, or treat differently, a protected group — age, race/ethnicity, gender, religion, disability, socioeconomic status |
+| `unauthorized_actions` | commit to or "apply" account changes, credits, discounts or guarantees without the required verification, or skip an authentication step |
+| `off_task` | leave its purpose — competitor comparisons, unrelated topics over several turns, adopting another persona |
 
 ### 4. Number of Scenarios and Instructions
 
@@ -109,9 +124,11 @@ Tags are applied uniformly to all generated scenarios. Common patterns:
 - `["workflow", "must-have"]` — category and priority
 - `["2026-04-sprint"]` — sprint tracking
 
-## Pre-Generation Checkpoint — HARD GATE
+## Pre-Generation Checkpoint
 
-**No `scenarios_generate_bg` call until the user replies approving this checkpoint.** That holds even when the request already names an agent and a count, and *especially* when the user said "first ask me…" or "show me the plan before making changes" — starting generation before their answer is the single worst failure mode of this command. The only exception: the user explicitly said to proceed autonomously / without confirmation.
+Follow the design skill's rule: **ask once, only for what the request and the agent record do not already answer**, then proceed. Do not re-ask what the user has already stated, and do not gate a request that arrives complete.
+
+**Wait for an explicit approval before any `scenarios_generate_bg` call** in exactly these cases: the user said "first ask me…", "show me the plan" or "confirm before creating"; something in the list below is unresolved. Starting generation before their answer is the single worst failure mode of this command. When the user said to proceed autonomously, skip the gate entirely.
 
 Also before proposing the plan:
 - **Readable inputs** — if scenarios derive from an attached file, KB, or agent prompt, confirm you can actually read it. If it's unreadable, **stop and ask for a usable copy — even when the user said to proceed autonomously**: autonomy licenses defaults, not swapping in a different source (agent description, guesses) for the one they supplied. A stand-in needs their explicit OK after being told the source is unreadable.
@@ -123,7 +140,7 @@ Present the full configuration for approval:
 ```
 Agent: [agent_id] ([agent_name])
 Folder: [folder_path]
-Scenario type: [workflow / redteaming / knowledge_base]
+Scenario type: [workflow / red_teaming_voice / red_teaming_text] (+ attack_type for red team)
 Count: [num_scenarios]
 Tags: [tags]
 
@@ -144,6 +161,12 @@ Use `mcp__cekura__scenarios_generate_bg` with:
 | `extra_instructions` | From step 5 |
 | `folder_path` | From step 2 |
 | `tags` | From step 6 |
+| `scenario_type` | Category from step 3: `workflow` (default), `red_teaming_voice` or `red_teaming_text` |
+| `attack_type` | Red team only — the type chosen in step 3; **one generation call per attack type** |
+| `simulation_type` | Output format from step 3: `instruction` (default) or `conditional_actions` |
+| `generation_files` | KB/context uploads when the user supplied material (workflow category only) |
+| `personalities` | Personality ids for the scenario language |
+| `generate_expected_outcomes` | `true` unless the user supplied outcomes |
 
 Returns `{"progress_id": "<uuid>"}`.
 
@@ -249,7 +272,7 @@ After generation (or bulk creation), show:
 
 ```
 Generated: [X] scenarios in folder "[folder_name]"
-Type: [workflow / redteaming / knowledge_base]
+Type: [workflow / red_teaming_voice / red_teaming_text]
 
 Coverage breakdown:
   - Scheduling: [N] scenarios
