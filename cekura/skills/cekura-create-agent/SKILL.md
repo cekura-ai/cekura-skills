@@ -5,8 +5,11 @@ description: >
   "set up a main agent", "add my main agent to Cekura", "configure my main agent",
   "connect my main agent", "set up mock tools", "add tools to my agent",
   "upload knowledge base", "configure integration", "connect VAPI", "connect Retell",
-  "connect LiveKit", "connect ElevenLabs", "add dynamic variables", or needs to onboard
-  a voice AI agent onto the Cekura platform. Covers the full agent setup flow: project
+  "connect LiveKit", "connect ElevenLabs", "add dynamic variables", "import my agent
+  from another platform", "migrate my agent config", or needs to onboard a voice AI
+  agent onto the Cekura platform — including when the user uploads or references an
+  exported config file from another provider and wants to register it as a Cekura agent.
+  Covers the full agent setup flow: project
   selection, provider selection, basics and connection type, description, main agent creation,
   mock tools, knowledge base, dynamic variables, and advanced configuration.
 license: MIT
