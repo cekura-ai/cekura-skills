@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "cekura-skills",
-  "version": "0.14.0",
+  "version": "0.15.6",
   "description": "Claude Code plugin for Cekura AI voice agent testing and evaluation",
   "owner": {
     "name": "Cekura",

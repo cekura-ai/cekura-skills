@@ -4,6 +4,125 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.6 — 2026-09-04
+
+**Settings links come from `frontend_url` and nothing else.** Each environment
+sets its own dashboard URL, so that value is authoritative; the hardcoded
+`dashboard.cekura.ai` forms and the host-fallback paragraphs are gone from all
+three files, replaced by one line each.
+
+## 0.15.5 — 2026-09-04
+
+**Never emit a `dashboard.cekura.ai` link from the Cekura platform.** The
+sandbox strips any `*cekura.ai` URL whose host does not match the run's
+`frontend_url`, keeping the label and dropping the link — so the
+"elsewhere" fallback these files offered produced a sentence that reads like
+a link that failed, which is worse than plain prose. On the platform the host
+is `frontend_url` and nothing else; when it is missing or local
+(`127.0.0.1`/`localhost`), write **Settings → Integrations → GitHub** in words.
+The `dashboard.cekura.ai` form stays correct outside the platform, where no
+scrubber runs.
+
+## 0.15.4 — 2026-09-04
+
+**The GitHub offer moved into `cekura-create-agent/SKILL.md`, because that is
+the only file guaranteed to be in context.** 0.15.1–0.15.3 put it in
+`phase2-provider.md` §2a′, and measured live the model never opened that file:
+the skill gate records a load after the ROOT SKILL.md alone, and no phase-read
+gate covers this skill (only `cekura-onboarding`'s phase 2 and phase 5). So the
+system-prompt directive fired — `github_list_repos` was called — and then the
+model, holding no offer text, wrote "No GitHub connection, so I can't read your
+agent's code" and went straight to four batched questions. Its own reasoning
+said "GitHub not connected; offer it" and then dropped it, which is what a
+missing shape looks like.
+
+The root file now carries the trigger, both clarification beats and the
+re-check; §2a′ keeps the extraction table and credential-manifest rules and is
+still worth reading.
+
+Also reconciles "ask one thing at a time" with the platform's batching rule
+instead of leaving the model to referee them on screen: a branch-determining
+question is asked alone and first, and the fields that follow batch into one
+clarification.
+
+## 0.15.3 — 2026-09-04
+
+**The connect-GitHub offer now links the real page.** `/settings/org/integrations`
+— org-scoped, like the account API key, not project-scoped like the provider
+keys. The host stays environment-derived (`frontend_url` on the platform,
+`dashboard.cekura.ai` elsewhere), so no environment's URL is baked into the
+skill.
+
+## 0.15.2 — 2026-09-04
+
+**Connecting GitHub is now a two-beat flow that waits for the user.** 0.15.1
+made the offer a real `<clarification>`, but a single block could not both send
+the user to the Integrations page and confirm they got there. Beat 1 offers,
+with the Integrations link in the question text — `options` are chips that send
+a choice back, so a chip cannot navigate. Beat 2 repeats the link and stops
+again, giving the user a turn in which to actually install the App and pick
+repositories.
+
+On "I've connected it" the flow **re-runs `github_list_repos` rather than
+believing the claim**, and distinguishes three outcomes that were previously
+one: repos listed (scan), connected but no repositories shared (App installed,
+nothing selected — a real and confusing state), and still not connected. A
+confirmation about a system we can query gets queried.
+
+Declining at either beat falls through to the normal questions, unchanged.
+
+## 0.15.1 — 2026-09-04
+
+**The LiveKit/Pipecat GitHub offers are `<clarification>` blocks, not prose.**
+0.15.0 gave them as quoted prose, so on the Cekura platform they rendered as a
+remark and the turn never paused: measured live, the assistant said "If you
+connect it under Settings -> Integrations -> GitHub, I can pull all of that"
+and continued straight into "A few questions to shape the setup:". The offer
+was decorative and the user had nothing to answer. Both the connect offer and
+the scan offer now specify the block and its options, in `phase2-agent.md`
+2b' and `phase2-provider.md` 2a', with an explicit rule against batching the
+config questions into the offer's turn — a scan answers most of them, and the
+offer is branch-determining.
+
+## 0.15.0 — 2026-09-04
+
+**LiveKit and Pipecat onboarding now reads the user's repo instead of
+interrogating them, and the SDK offer ends in a pull request.** Nothing about
+these two providers auto-imports — the system prompt, language, dispatch name
+and connection mode all had to be collected by hand, while every one of them
+was sitting in the user's code.
+
+- **`cekura-onboarding/phase2-agent.md`** — new §2b′ offers to read the
+  connected repo before any config is collected, and offers to *connect*
+  GitHub when no connection exists (these agents are code-based, so the
+  connection is worth one sentence). The user can name the repo directly
+  instead of having one guessed. Credentials are read from the deployment
+  manifest, never the values, and the remaining ask points at
+  Settings → Provider API Keys with a confirm-when-saved handshake. The
+  "FIRST question is the connection mode" rule now yields to the scan — it
+  had been bolded above a footnote saying the scan came first, and the bold
+  rule won.
+- **`cekura-create-agent/phase2-provider.md`** — the same offer as §2a′. It
+  existed nowhere on this path, which is the one "onboard my LiveKit agent"
+  actually takes.
+- **`cekura-onboarding/phase6-testing-next.md`** — the SDK is now offered
+  proactively once results are shown, with the testing / observability / both
+  scope asked rather than inherited. Every other row in that table waits for
+  the user to describe a problem, which they can only do if they know the data
+  exists; the SDK *is* the data.
+- **`cekura-create-agent/phase6-sdk-integration.md`** — new §6·0 surface check
+  and §6P platform branch. The existing flow assumed local Claude Code
+  (`pip install`, in-place `Edit`, "do not ask permission"), none of which is
+  possible in the Cekura sandbox. §6P checks out the repo, shows a short plan
+  plus per-file diffs, waits for explicit confirmation, then opens a PR whose
+  code reads `CEKURA_API_KEY` and `CEKURA_AGENT_ID` from the environment — no
+  secret in the diff. `tracing_enabled` flips only after the user confirms
+  merge, env vars and redeploy; setting it at PR time makes every run wait on
+  a webhook that never arrives.
+
+Also corrects a stale claim in `phase2-agent.md` §2c that the Cekura platform
+UI has no codebase access. It does, when the org's GitHub is connected.
+
 ## 0.14.0 — 2026-09-03
 
 **`cekura-infra-test-suite` now produces a Tests-as-Code suite in the

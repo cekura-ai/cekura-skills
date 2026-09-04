@@ -98,7 +98,37 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 
 **If the user has partially completed setup:** ask at the start which phases are done, mark them complete, then begin from the first incomplete phase — but always end at Phase 11.
 
-**Collect conversationally — ask one thing at a time.** Do not dump all questions at once.
+**Collect conversationally — ask one thing at a time.** Do not dump all questions at once. Two carve-outs, so this does not fight the platform's batching rule: a **branch-determining** question (one whose answer decides which other questions exist) is asked ALONE and first; once the branch is known, the fields it requires are batched into ONE clarification rather than dribbled across turns.
+
+### LiveKit / Pipecat: offer GitHub before you ask anything else
+
+**This is the first thing you do after the provider answer — before the connection-mode question, before Phase 3.** It is branch-determining: reading the repo answers most of what the later phases would ask. Full detail (extraction table, credential-manifest rules, report-and-hold) is in [phase2-provider.md](phase2-provider.md) §2a′ — **read that file** — but the offer itself is here because it must not be skipped if you have not.
+
+**Step 1 — `github_list_repos`** (no arguments).
+
+**Not connected → offer to connect, in two beats. Both are `<clarification>` blocks, never prose** — prose does not pause the turn, so a prose offer is a remark the user cannot answer and the flow rolls past it. Never state "no GitHub connection, so I'll collect the details from you" and continue; that skips the offer entirely.
+
+```
+<clarification>
+{"questions": ["LiveKit and Pipecat agents are code-based — most of what I need (your system prompt, language, and dispatch name) lives in your repo. Want to connect your org's GitHub so I can read it and fill these in for you? Connect it here: <frontend_url>/settings/org/integrations. Otherwise I'll just ask you for them."], "question_types": [null], "options": [["Yes, take me there", "Just ask me instead"]]}
+</clarification>
+```
+
+On "Yes, take me there", stop again so they have a turn in which to do it:
+
+```
+<clarification>
+{"questions": ["Open <frontend_url>/settings/org/integrations, install the GitHub App, and pick the repositories you want Cekura to see. Tell me when it's done and I'll pull your agent's setup from the code."], "question_types": [null], "options": [["I've connected it", "Never mind — just ask me"]]}
+</clarification>
+```
+
+Then **re-run `github_list_repos`** and report what it returns, not what the user claimed.
+
+**The link is `<frontend_url>/settings/org/integrations`**, where `frontend_url` comes from the run context — every environment sets its own dashboard URL, so that value is the correct one. Never substitute another host.
+
+**Connected → offer the scan** (`options: [["Read my repo", "I'll paste it instead"]]`), then pick the repo per §2a′.
+
+**Declined at any beat → carry on with the normal asks and never re-offer.**
 
 **Never use a field's default value without determining the correct value first.** For every field with a default, actively figure out the right value from code, config, provider API, or context — then confirm it with the user. Only fall back to asking the user directly if it genuinely cannot be determined. Never leave a field at its default because it was easier. A default is a last resort, not a starting point.
 
