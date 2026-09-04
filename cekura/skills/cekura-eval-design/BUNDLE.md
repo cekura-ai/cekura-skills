@@ -135,29 +135,31 @@ separate instruction and conditional-actions requests; do not force the whole
 set into the first selected format.
 
 - A temporary non-verbal effect—silence/hold, timed interruption, or background
-  noise—belongs in a conditional-actions request with the required tag stated in
-  `extra_instructions`. For silence after a trigger, offer a structured
-  conditional-actions evaluator using `<hold>` (or `<silence>` only for a short,
-  interruptible pause); never submit "remain silent" as an instruction scenario.
+  noise—goes in its own generation request with `simulation_type:
+  "conditional_actions"` and the required tag stated in `extra_instructions`
+  (`<hold>` for dead air after a trigger; `<silence>` only for a short,
+  interruptible pause). When the trigger and duration are exactly known, a
+  direct conditional-actions create is equally valid. Never submit "remain
+  silent" as an instruction scenario.
 - An explicitly requested instruction scenario remains valid for a sustained
-  caller manner that its personality can express, including an interruptive
-  caller. Do not reroute it merely because the text mentions interruption. Only
-  a timed/runtime interruption requires the conditional-actions tag.
+  caller manner its personality can express, including an interruptive caller.
+  Send `simulation_type: "instruction"` explicitly on that request: when the
+  field is absent, the generator auto-selects conditional actions for any
+  interruption, silence or hold wording in `extra_instructions`, and the user
+  would get structured scenarios while you report instruction ones. Only a
+  timed/runtime interruption needs the conditional-actions tag.
 - If the user explicitly chose instruction format for a case that needs a
   runtime tag, explain that the requested behaviour cannot be represented in
   that format and offer the structured alternative before submitting it. Do not
   silently omit the behaviour or claim it was generated.
-- Before drafting a new batch, inspect comparable existing evaluators and one or
-  more representative completed runs when they are available and authorized.
-  Derive concise, reusable guidance—connection mode, call-flow shape,
-  personality and profile conventions, and observable outcomes—and include it
-  in `extra_instructions`. Do not copy transcripts, customer data, credentials,
-  or evaluator identifiers into generation guidance.
-- Record the intended accounting: cases in each generation request, cases that
-  share one evaluator, and cases deferred for an external dependency. After
-  polling, reconcile the requested test cases, persisted evaluator records, and
-  covered cases. Report validation rejections separately from provider,
-  persistence, and post-run evaluation failures.
+- Before drafting, read existing evaluators in the folder and one completed run
+  when available; put only reusable conventions (connection mode, call-flow
+  shape, profile and personality conventions) into `extra_instructions` — never
+  transcripts, customer data or evaluator ids.
+- Track which cases went into which request and which were deferred; after
+  polling, reconcile requested cases against persisted evaluators as described
+  under **Post-generation verification**, reporting validation rejections
+  separately from provider or evaluation failures.
 
 ## Behavioral scenarios — shaping generation
 
@@ -746,7 +748,7 @@ Keep names under 80 chars (API limit on the `name` field).
 
 ## Eval Types
 
-A complete suite has coverage across these categories. Each type can be **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule. That choice also fixes how the scenario gets written: behavioral ⇒ generated via `generate-bg`, always; conditional actions ⇒ created directly when the structure is exactly known (generation emits conditional actions only for red-team categories or when an org-level setting is on, so direct create is the dependable path).
+A complete suite has coverage across these categories. Each type can be **behavioral** (free-form instructions) or **conditional actions** (structured `{role, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule. That choice also fixes how the scenario gets written: behavioral ⇒ generated via `generate-bg`, always; conditional actions ⇒ created directly when the structure is exactly known (generation emits conditional actions when the request sets `simulation_type: "conditional_actions"` or for red-team categories; direct create is for structures that are exactly known).
 
 ### Workflow Evals (Core)
 
