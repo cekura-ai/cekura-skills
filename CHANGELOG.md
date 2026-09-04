@@ -4,6 +4,24 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.2 — 2026-09-04
+
+**Connecting GitHub is now a two-beat flow that waits for the user.** 0.15.1
+made the offer a real `<clarification>`, but a single block could not both send
+the user to the Integrations page and confirm they got there. Beat 1 offers,
+with the Integrations link in the question text — `options` are chips that send
+a choice back, so a chip cannot navigate. Beat 2 repeats the link and stops
+again, giving the user a turn in which to actually install the App and pick
+repositories.
+
+On "I've connected it" the flow **re-runs `github_list_repos` rather than
+believing the claim**, and distinguishes three outcomes that were previously
+one: repos listed (scan), connected but no repositories shared (App installed,
+nothing selected — a real and confusing state), and still not connected. A
+confirmation about a system we can query gets queried.
+
+Declining at either beat falls through to the normal questions, unchanged.
+
 ## 0.15.1 — 2026-09-04
 
 **The LiveKit/Pipecat GitHub offers are `<clarification>` blocks, not prose.**

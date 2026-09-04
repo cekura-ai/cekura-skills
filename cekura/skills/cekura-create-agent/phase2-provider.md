@@ -40,15 +40,39 @@ Ask: "What provider does your main agent run on?"
 
 **Both offers below are QUESTIONS, and a question is a `<clarification>` block — never prose.** On the Cekura platform, prose does not pause the turn: a prose offer is displayed as a remark, execution continues straight into the config questions, and the user never gets to answer. Measured live 2026-09-04 — the assistant wrote "If you connect it under Settings → Integrations → GitHub, I can pull all of that" and immediately continued with "A few questions to shape the setup:", so the offer was decorative. Emit the block, and let the turn end there.
 
-**No connection → offer to connect, once.** Frame it as a choice you are waiting on, not as a limitation you are noting:
+**No connection → offer to connect, in two beats.** Frame it as a choice you are waiting on, not a limitation you are noting.
+
+**What `<INTEGRATIONS_LINK>` means — never emit that placeholder literally.** Substitute, in this order of preference:
+
+1. On the Cekura platform, the org's Integrations page on the host you were given (`frontend_url`). Use that exact host — a guessed one is fabrication.
+2. Elsewhere (local Claude Code / Codex / Cursor), `https://dashboard.cekura.ai` plus the same path.
+3. **If you do not know the path, do not invent one.** Write the words **Settings → Integrations → GitHub** instead of a link. The two-beat flow works unchanged with a written path; a wrong URL sends the user somewhere that does not exist.
+
+**Beat 1 — the offer.** Include the Integrations link in the QUESTION TEXT: `options` are chips that send a choice back, so a chip cannot navigate anywhere. The link is what the user clicks to get there; the chip is what tells you which way they went.
 
 ```
 <clarification>
-{"questions": ["LiveKit and Pipecat agents are code-based — most of what I need (your system prompt, language, and dispatch name) lives in your repo. Want to connect your org's GitHub so I can read it and fill these in for you? It's under Settings → Integrations → GitHub. Otherwise I'll just ask you for them."], "question_types": [null], "options": [["I'll connect it now", "Just ask me instead"]]}
+{"questions": ["LiveKit and Pipecat agents are code-based — most of what I need (your system prompt, language, and dispatch name) lives in your repo. Want to connect your org's GitHub so I can read it and fill these in for you? Connect it here: <INTEGRATIONS_LINK>. Otherwise I'll just ask you for them."], "question_types": [null], "options": [["Yes, take me there", "Just ask me instead"]]}
 </clarification>
 ```
 
-On "I'll connect it now", **re-run `github_list_repos`** when they come back — the connection did not exist when you last called it — then continue with the scan offer below.
+**Beat 2 — wait for confirmation.** On "Yes, take me there", do NOT re-check immediately and do NOT start asking config questions. Repeat the link and stop again, so the user has a turn in which to go and do it:
+
+```
+<clarification>
+{"questions": ["Open <INTEGRATIONS_LINK>, install the GitHub App, and pick the repositories you want Cekura to see. Tell me when it's done and I'll pull your agent's setup from the code."], "question_types": [null], "options": [["I've connected it", "Never mind — just ask me"]]}
+</clarification>
+```
+
+**On "I've connected it", re-run `github_list_repos`** — the connection did not exist when you last called it, so the earlier answer is stale. Three outcomes, and they are different:
+
+| `github_list_repos` now says | Do |
+|---|---|
+| Repos listed | Go to the scan offer below |
+| Connected, but no repositories shared | The App is installed and no repos were selected. Say exactly that, point back at the same page to pick repositories, and offer one re-check |
+| Still not connected | Say so plainly — do not claim it worked. Offer one re-check, then fall through to the normal asks |
+
+**Never assume the confirmation is true.** "I've connected it" is a claim about a system you can check, so check it — and report what the tool returned, not what the user said.
 
 **Connected → offer the scan, once:**
 
