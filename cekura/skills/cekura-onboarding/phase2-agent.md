@@ -87,19 +87,31 @@ Unlike VAPI/Retell/ElevenLabs, nothing about a LiveKit or Pipecat agent auto-imp
 
 **Start with `github_list_repos`.** It needs no arguments and tells you whether a connection exists and what the exact repo names are (`github_checkout_repo` requires an exact name).
 
-**No connection → offer to connect, once.** These are code-based agents, and the repo is where their configuration lives, so a connection is worth one sentence:
+**Both offers below are QUESTIONS, and a question is a `<clarification>` block — never prose.** On the Cekura platform, prose does not pause the turn: a prose offer is displayed as a remark, execution rolls straight on into the config questions, and the user never gets to answer. Measured live 2026-09-04 — the assistant wrote "If you connect it under Settings → Integrations → GitHub, I can pull all of that" and immediately continued with "A few questions to shape the setup:", so the offer was decorative. Emit the block and let the turn end there.
 
-> "LiveKit and Pipecat agents are code-based — most of what I need (your system prompt, language, and dispatch name) is in your repo. Want to connect your org's GitHub so Cekura can read it and fill these in for you? It's under **Settings → Integrations → GitHub**. Otherwise I'll just ask you for them."
+**No connection → offer to connect, once.** These are code-based agents and the repo is where their configuration lives, so the connection is worth one question. Frame it as a choice you are waiting on, not a limitation you are noting:
 
-If they connect, re-run `github_list_repos` and continue below. If they decline, or the connection isn't ready, carry on with the normal asks and **never re-offer**.
+```
+<clarification>
+{"questions": ["LiveKit and Pipecat agents are code-based — most of what I need (your system prompt, language, and dispatch name) is in your repo. Want to connect your org's GitHub so Cekura can read it and fill these in for you? It's under Settings → Integrations → GitHub. Otherwise I'll just ask you for them."], "question_types": [null], "options": [["I'll connect it now", "Just ask me instead"]]}
+</clarification>
+```
+
+On "I'll connect it now", **re-run `github_list_repos`** when they return — the connection did not exist when you last called it — then continue with the scan offer. If they decline, or the connection still isn't ready, carry on with the normal asks and **never re-offer**.
 
 **Connected → offer the scan, once:**
 
-> "I can read your connected GitHub repos and pull your agent's setup straight from the code — its system prompt, language, and dispatch name — so you don't have to paste them. Want me to? I'll only read, and I'll show you everything before it's saved."
+```
+<clarification>
+{"questions": ["I can read your connected GitHub repos and pull your agent's setup straight from the code — its system prompt, language, and dispatch name — so you don't have to paste them. Want me to? I'll only read, and I'll show you everything before it's saved."], "question_types": [null], "options": [["Read my repo", "I'll paste it instead"]]}
+</clarification>
+```
 
 **Declined → say "no problem", carry on with the normal asks, and never re-offer.** A second offer reads as nagging.
 
-**Accepted → pick the repo.** If one name is the obvious match, say which one you're reading and go. If several look plausible, ask — and always let them name it themselves rather than making them pick from a list:
+**Do not batch the config questions into the same turn as either offer.** A scan ANSWERS most of them, so asking them alongside the offer wastes exactly the questions this section exists to remove — and it breaks the batching rule, since "should I read your repo" is branch-determining: it decides whether the rest get asked at all.
+
+**Accepted → pick the repo.** If one name is the obvious match, say which one you're reading and go. If several look plausible, ask — again as a `<clarification>`, with the connected repo names as `options`, and free text still available for a name that isn't listed:
 
 > "Which repo is the agent in? I can look through the connected ones myself, or tell me the exact name and I'll go straight there."
 

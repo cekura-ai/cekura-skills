@@ -4,6 +4,19 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.1 — 2026-09-04
+
+**The LiveKit/Pipecat GitHub offers are `<clarification>` blocks, not prose.**
+0.15.0 gave them as quoted prose, so on the Cekura platform they rendered as a
+remark and the turn never paused: measured live, the assistant said "If you
+connect it under Settings -> Integrations -> GitHub, I can pull all of that"
+and continued straight into "A few questions to shape the setup:". The offer
+was decorative and the user had nothing to answer. Both the connect offer and
+the scan offer now specify the block and its options, in `phase2-agent.md`
+2b' and `phase2-provider.md` 2a', with an explicit rule against batching the
+config questions into the offer's turn — a scan answers most of them, and the
+offer is branch-determining.
+
 ## 0.15.0 — 2026-09-04
 
 **LiveKit and Pipecat onboarding now reads the user's repo instead of
