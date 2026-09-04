@@ -6,10 +6,10 @@ markdown report, and exits non-zero if anything failed. Python 3 standard
 library only — no pip install on the runner.
 
     # free: validate and price the file, create nothing
-    CEKURA_API_KEY=... python3 cekura/run_suite.py --dry-run --agent-id 42
+    CEKURA_API_KEY=... python3 <skill>/scripts/run_suite.py --dry-run --agent-id 42
 
     # real run, gates the build
-    CEKURA_API_KEY=... python3 cekura/run_suite.py --agent-id 42
+    CEKURA_API_KEY=... python3 <skill>/scripts/run_suite.py --agent-id 42
 
 Environment:
     CEKURA_API_KEY            required

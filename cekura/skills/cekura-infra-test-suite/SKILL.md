@@ -84,6 +84,32 @@ costs a whole discovery pass:
 
 If the request could be either, ask once — one short question — before step 0.
 
+## The deliverable — exactly three files
+
+Decide nothing about scope mid-flight. Every run of this skill ends with these three paths and no
+others:
+
+```
+cekura.tests.json                    the suite
+.github/workflows/cekura-tests.yml   the CI gate (created, or the existing Cekura job extended)
+README.md                            a section: what runs, which secrets, which permissions
+```
+
+Write all three in one pass, before the dry run — not one, then a question, then another. Earlier
+versions of this skill also vendored `lint_suite.py` and `run_suite.py` into the repository and
+added a separate coverage note; they do not. The linter runs from this skill's own directory
+during authoring, the workflow polls inline, and the coverage table lives in the README section
+and the pull-request body.
+
+**Ask the user exactly one question in the whole run**: the workflow trigger (step 7). Everything
+else is either discoverable from the repository or already supplied. Do not ask which files to
+create, whether to proceed, or where to put them.
+
+If a pull request is the destination, say the required GitHub App permissions before proposing it:
+**Contents: read and write**, **Pull requests: read and write**, and — because the payload
+includes `.github/workflows/` — **Workflows: read and write**. Granting the last one on the App is
+not enough on its own; an org admin has to accept the permission change on the installation.
+
 ## Workflow
 
 ### 0. Decide whether this is a create or an update
@@ -252,7 +278,7 @@ Use the public `cekura-eval-design` skill and its conditional-actions reference 
 duplicate keys, and inline-personality limits, offline and free:
 
 ```bash
-python3 cekura/lint_suite.py cekura.tests.json --strict
+python3 <skill>/scripts/lint_suite.py cekura.tests.json --strict
 ```
 
 It mirrors the server's own tag validators, so a clean lint means the dry run fails only for
@@ -339,10 +365,11 @@ A dry run validates syntax, metrics, personalities, profiles, target compatibili
 and estimated cost without creating objects or placing a call:
 
 ```bash
-python3 cekura/lint_suite.py cekura.tests.json --strict     # free, offline, first
-CEKURA_API_KEY=… python3 cekura/run_suite.py --dry-run --agent-id 123
+python3 <skill>/scripts/lint_suite.py cekura.tests.json --strict   # free, offline, first
+CEKURA_API_KEY=… python3 <skill>/scripts/run_suite.py --dry-run --agent-id 123
 ```
 
+Both run from this skill's directory — they are authoring tools, not files the repository keeps.
 The runner posts the file and prints the returned plan. The raw form, when you want it:
 
 ```bash
@@ -368,38 +395,53 @@ stop and report the blocker.
 
 A validated spec is not yet a gate. Runs are asynchronous: the POST returns as soon as they are
 queued, so a job that ends at `curl` reports success before a single call has been judged — a gate
-that cannot fail, which is worse than none because it reads as coverage.
+that cannot fail, which is worse than none because it reads as coverage. The workflow therefore
+polls each run to a terminal state and exits non-zero on any failure. `references/ci-wiring.md`
+carries the template; copy it rather than composing YAML from memory.
 
-Install the two bundled scripts into the repository and wire them:
+Two things are fixed and not up for discussion with the user:
 
-```bash
-mkdir -p cekura && cp <skill>/scripts/{lint_suite.py,run_suite.py} cekura/
-```
+- **`workflow_dispatch` with a `dry_run` checkbox, defaulting to checked.** Validation is free and
+  places no calls, so the manual path must always offer it, and offer it first.
+- **Every trigger other than a manual run validates only**, unless the user explicitly asks for
+  live calls on that trigger. Real calls spend credit; a push that quietly bills is not a default
+  anyone consents to.
 
-`run_suite.py` posts the spec, polls every run to a terminal state, writes `cekura-report.md`, and
-exits non-zero when any case fails, errors or times out. Both scripts are Python 3 standard library
-only — nothing to install on a runner.
+Then ask the one question:
 
-Then create `.github/workflows/cekura-tests.yml`, **or extend the workflow that already calls
-Cekura** — never add a second one. `references/ci-wiring.md` has the GitHub Actions and GitLab
-templates, the fork-PR rule (a job needing secrets must not run on forks), how to point a run at a
-per-PR deployment with `pipecat_v2` / `livekit_v2`, and how to pick a trigger that does not spend
-credit on every push.
+> How should this run — manually only, on pushes to a branch, on pull requests, or on a schedule?
 
-Confirm the trigger with the user before committing a workflow that places real calls.
+Take the answer, drop it into the template's `on:` block, and write the file. If the repository
+already has a workflow that calls Cekura, extend that one — never add a second.
+
+### 8. Open the pull request
+
+One payload, all three files, once the dry run has returned `valid: true`. Do not open a pull
+request for a suite that has not validated, and do not open one file at a time.
+
+The PR body carries what the repository does not: the case-to-code coverage table, the rows you
+deliberately left uncovered and why, the dry-run plan (case count, planned runs, estimated cost),
+and the secrets the workflow needs — `CEKURA_API_KEY` as a repository secret and
+`CEKURA_AGENT_ID` as a repository variable.
+
+If the write is refused with `403 Resource not accessible by integration`, the cause is the
+`Workflows` permission named in *The deliverable* above — not repository access, which the
+checkout already proved. Say that plainly instead of suggesting the connection is broken.
 
 ## Handoff
 
 Leave the repository with:
 
-- the JSON spec or specs, formatted and source-controlled;
-- a coverage note mapping code paths to stable case keys, including explicit uncovered rows;
-- `cekura/lint_suite.py` and `cekura/run_suite.py`, and the workflow that runs them — created, or
-  the existing Cekura workflow extended;
-- a short README note describing the target assumptions, Cekura dependencies (metrics,
-  personalities, channels), and how CI invokes the suite; and
+- `cekura.tests.json`, formatted and source-controlled;
+- `.github/workflows/cekura-tests.yml` — created, or the existing Cekura workflow extended — with
+  the `dry_run` checkbox on its manual trigger;
+- a README section covering target assumptions, Cekura dependencies (metrics, personalities,
+  channels), the required secrets, and how CI invokes the suite; and
 - the dry-run result — `valid: true` with its plan — or, if no credentials were available, the
   suite explicitly labelled **unvalidated** together with the command that will validate it.
+
+The coverage table, including the rows left uncovered, goes in the pull-request body and the
+README section — not a separate file.
 
 Report case count, target channel/seat coverage, dependencies, and anything that needs a live run or
 a backend capability. A dry-run proves the spec is valid; it does not prove a bot deployment works.
@@ -417,7 +459,9 @@ Example, read when the shape of a case is in question:
 - **`examples/cekura.tests.json`** — a three-case suite: an interruption gauntlet, an idle
   escalation, and an instruction case with test data. Lints clean in `--strict`
 
-Scripts, copied into the user's repository:
+Scripts, run from this skill's directory while authoring — never copied into the
+user's repository:
 
 - **`scripts/lint_suite.py`** — offline spec and authoring-rule validator; no key, no network
-- **`scripts/run_suite.py`** — CI runner: posts, polls, reports, exits non-zero on failure
+- **`scripts/run_suite.py`** — posts and polls; used here for the dry run. The workflow template
+  polls inline so the repository keeps no vendored script
