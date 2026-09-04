@@ -407,12 +407,17 @@ Two things are fixed and not up for discussion with the user:
   live calls on that trigger. Real calls spend credit; a push that quietly bills is not a default
   anyone consents to.
 
-Then ask the one question:
+**The default is `workflow_dispatch` and nothing else** — started from the Actions tab against
+whichever branch the user picks, with the `dry_run` box checked. Write that unless they say
+otherwise. Then ask the one question:
 
-> How should this run — manually only, on pushes to a branch, on pull requests, or on a schedule?
+> This will run on manual dispatch only — you pick the branch in the Actions tab, and dry run is
+> checked by default. Want to add a trigger on top of that: pushes to a branch, pull requests, or
+> a nightly schedule?
 
-Take the answer, drop it into the template's `on:` block, and write the file. If the repository
-already has a workflow that calls Cekura, extend that one — never add a second.
+Take the answer, add it to the template's `on:` block, and write the file. No answer, or "that's
+fine", means manual only. If the repository already has a workflow that calls Cekura, extend that
+one — never add a second.
 
 ### 8. Open the pull request
 

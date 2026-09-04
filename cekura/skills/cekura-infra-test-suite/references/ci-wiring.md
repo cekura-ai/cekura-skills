@@ -63,8 +63,10 @@ built; do not describe the first while wiring the second.
 
 ## GitHub Actions
 
-One file, one job, two modes. The manual trigger always carries a `dry_run` checkbox that defaults
-to checked; every other trigger validates only, unless the user asked for live calls there.
+One file, one job, two modes. **`workflow_dispatch` alone is the default** — the run is started
+from the Actions tab against a branch of your choosing, and the `dry_run` checkbox on it defaults
+to checked. Any additional trigger is opt-in, and validates only unless the user asked for live
+calls there.
 
 ```yaml
 name: Cekura voice tests
@@ -76,9 +78,11 @@ on:
         description: "Validate only — no calls placed, no credit spent"
         type: boolean
         default: true
-  # ← the trigger the user chose goes here, e.g.
-  # pull_request:
-  #   paths: ["cekura.tests.json", "src/**"]
+  # Manual dispatch is the whole default: you pick the branch in the Actions
+  # tab and nothing fires on its own. Add a second trigger ONLY if the user
+  # asked for one, e.g.
+  #   pull_request:
+  #     paths: ["cekura.tests.json", "src/**"]
 
 permissions:
   contents: read
@@ -203,11 +207,12 @@ Never in the spec or the workflow: API keys, phone numbers, real customer data, 
 
 Real calls cost money and take minutes, so the trigger is a real decision:
 
-This is the one question the skill asks. Offer these four and take the answer:
+This is the one question the skill asks, and it comes with a default: **manual dispatch only**.
+Write that unless the user picks something else.
 
 | Trigger | Good for |
 |---|---|
-| Manual only (`workflow_dispatch`) | the default. Nothing runs until someone asks |
+| Manual only (`workflow_dispatch`) | **the default.** Pick a branch in the Actions tab; nothing fires on its own |
 | Push to the deploy branch / pre-deploy | the whole suite as a release gate |
 | Nightly on the main branch | catching drift from provider-side changes nobody committed |
 | Pull requests touching the spec or `src/` | only where the suite is small, fast and reliably green |
