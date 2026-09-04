@@ -4,6 +4,18 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.5 — 2026-09-04
+
+**Never emit a `dashboard.cekura.ai` link from the Cekura platform.** The
+sandbox strips any `*cekura.ai` URL whose host does not match the run's
+`frontend_url`, keeping the label and dropping the link — so the
+"elsewhere" fallback these files offered produced a sentence that reads like
+a link that failed, which is worse than plain prose. On the platform the host
+is `frontend_url` and nothing else; when it is missing or local
+(`127.0.0.1`/`localhost`), write **Settings → Integrations → GitHub** in words.
+The `dashboard.cekura.ai` form stays correct outside the platform, where no
+scrubber runs.
+
 ## 0.15.4 — 2026-09-04
 
 **The GitHub offer moved into `cekura-create-agent/SKILL.md`, because that is

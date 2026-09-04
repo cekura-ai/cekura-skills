@@ -44,8 +44,8 @@ Ask: "What provider does your main agent run on?"
 
 **What `<INTEGRATIONS_LINK>` means — never emit that placeholder literally.** The path is `/settings/org/integrations` (org-scoped, like the account API key — not project-scoped like the provider keys). The HOST varies by environment, so:
 
-- On the Cekura platform, use the host you were given (`frontend_url`) + that path. A guessed host is fabrication, and if no host was given, write the words **Settings → Integrations → GitHub** instead of a link.
-- Elsewhere (local Claude Code / Codex / Cursor), `https://dashboard.cekura.ai/settings/org/integrations`.
+- On the Cekura platform, use `frontend_url` from the run context + that path, and **nothing else**. A reply's `*cekura.ai` links are stripped when their host doesn't match `frontend_url`, so a `dashboard.cekura.ai` link there silently becomes label-only text — worse than prose, because it reads like a link that failed. If `frontend_url` is missing or local (`127.0.0.1`, `localhost`), write the words **Settings → Integrations → GitHub**.
+- Outside the platform (local Claude Code / Codex / Cursor), `https://dashboard.cekura.ai/settings/org/integrations`.
 
 **Beat 1 — the offer.** Include the Integrations link in the QUESTION TEXT: `options` are chips that send a choice back, so a chip cannot navigate anywhere. The link is what the user clicks to get there; the chip is what tells you which way they went.
 

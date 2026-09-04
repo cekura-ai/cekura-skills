@@ -122,7 +122,9 @@ On "Yes, take me there", stop again so they have a turn in which to do it:
 </clarification>
 ```
 
-Then **re-run `github_list_repos`** and report what it returns, not what the user claimed. `<host>` is `frontend_url` on the Cekura platform and `https://dashboard.cekura.ai` elsewhere; if you have no host, write **Settings → Integrations → GitHub** rather than inventing one.
+Then **re-run `github_list_repos`** and report what it returns, not what the user claimed.
+
+`<host>`: on the Cekura platform use `frontend_url` from the run context and **nothing else** — a `dashboard.cekura.ai` link is stripped from your reply when it doesn't match that host, so the user sees a sentence that reads as if it had a link and doesn't. If `frontend_url` is missing or points at localhost, write **Settings → Integrations → GitHub** in words. Outside the platform (local Claude Code / Codex / Cursor) use `https://dashboard.cekura.ai/settings/org/integrations`.
 
 **Connected → offer the scan** (`options: [["Read my repo", "I'll paste it instead"]]`), then pick the repo per §2a′.
 
