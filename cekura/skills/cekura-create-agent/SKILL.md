@@ -110,7 +110,7 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 
 ```
 <clarification>
-{"questions": ["LiveKit and Pipecat agents are code-based — most of what I need (your system prompt, language, and dispatch name) lives in your repo. Want to connect your org's GitHub so I can read it and fill these in for you? Connect it here: <host>/settings/org/integrations. Otherwise I'll just ask you for them."], "question_types": [null], "options": [["Yes, take me there", "Just ask me instead"]]}
+{"questions": ["LiveKit and Pipecat agents are code-based — most of what I need (your system prompt, language, and dispatch name) lives in your repo. Want to connect your org's GitHub so I can read it and fill these in for you? Connect it here: <frontend_url>/settings/org/integrations. Otherwise I'll just ask you for them."], "question_types": [null], "options": [["Yes, take me there", "Just ask me instead"]]}
 </clarification>
 ```
 
@@ -118,13 +118,13 @@ On "Yes, take me there", stop again so they have a turn in which to do it:
 
 ```
 <clarification>
-{"questions": ["Open <host>/settings/org/integrations, install the GitHub App, and pick the repositories you want Cekura to see. Tell me when it's done and I'll pull your agent's setup from the code."], "question_types": [null], "options": [["I've connected it", "Never mind — just ask me"]]}
+{"questions": ["Open <frontend_url>/settings/org/integrations, install the GitHub App, and pick the repositories you want Cekura to see. Tell me when it's done and I'll pull your agent's setup from the code."], "question_types": [null], "options": [["I've connected it", "Never mind — just ask me"]]}
 </clarification>
 ```
 
 Then **re-run `github_list_repos`** and report what it returns, not what the user claimed.
 
-`<host>`: on the Cekura platform use `frontend_url` from the run context and **nothing else** — a `dashboard.cekura.ai` link is stripped from your reply when it doesn't match that host, so the user sees a sentence that reads as if it had a link and doesn't. If `frontend_url` is missing or points at localhost, write **Settings → Integrations → GitHub** in words. Outside the platform (local Claude Code / Codex / Cursor) use `https://dashboard.cekura.ai/settings/org/integrations`.
+**The link is `<frontend_url>/settings/org/integrations`**, where `frontend_url` comes from the run context — every environment sets its own dashboard URL, so that value is the correct one. Never substitute another host.
 
 **Connected → offer the scan** (`options: [["Read my repo", "I'll paste it instead"]]`), then pick the repo per §2a′.
 

@@ -4,6 +4,13 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.6 — 2026-09-04
+
+**Settings links come from `frontend_url` and nothing else.** Each environment
+sets its own dashboard URL, so that value is authoritative; the hardcoded
+`dashboard.cekura.ai` forms and the host-fallback paragraphs are gone from all
+three files, replaced by one line each.
+
 ## 0.15.5 — 2026-09-04
 
 **Never emit a `dashboard.cekura.ai` link from the Cekura platform.** The
