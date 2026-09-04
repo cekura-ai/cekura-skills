@@ -4,6 +4,45 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.0 — 2026-09-04
+
+**LiveKit and Pipecat onboarding now reads the user's repo instead of
+interrogating them, and the SDK offer ends in a pull request.** Nothing about
+these two providers auto-imports — the system prompt, language, dispatch name
+and connection mode all had to be collected by hand, while every one of them
+was sitting in the user's code.
+
+- **`cekura-onboarding/phase2-agent.md`** — new §2b′ offers to read the
+  connected repo before any config is collected, and offers to *connect*
+  GitHub when no connection exists (these agents are code-based, so the
+  connection is worth one sentence). The user can name the repo directly
+  instead of having one guessed. Credentials are read from the deployment
+  manifest, never the values, and the remaining ask points at
+  Settings → Provider API Keys with a confirm-when-saved handshake. The
+  "FIRST question is the connection mode" rule now yields to the scan — it
+  had been bolded above a footnote saying the scan came first, and the bold
+  rule won.
+- **`cekura-create-agent/phase2-provider.md`** — the same offer as §2a′. It
+  existed nowhere on this path, which is the one "onboard my LiveKit agent"
+  actually takes.
+- **`cekura-onboarding/phase6-testing-next.md`** — the SDK is now offered
+  proactively once results are shown, with the testing / observability / both
+  scope asked rather than inherited. Every other row in that table waits for
+  the user to describe a problem, which they can only do if they know the data
+  exists; the SDK *is* the data.
+- **`cekura-create-agent/phase6-sdk-integration.md`** — new §6·0 surface check
+  and §6P platform branch. The existing flow assumed local Claude Code
+  (`pip install`, in-place `Edit`, "do not ask permission"), none of which is
+  possible in the Cekura sandbox. §6P checks out the repo, shows a short plan
+  plus per-file diffs, waits for explicit confirmation, then opens a PR whose
+  code reads `CEKURA_API_KEY` and `CEKURA_AGENT_ID` from the environment — no
+  secret in the diff. `tracing_enabled` flips only after the user confirms
+  merge, env vars and redeploy; setting it at PR time makes every run wait on
+  a webhook that never arrives.
+
+Also corrects a stale claim in `phase2-agent.md` §2c that the Cekura platform
+UI has no codebase access. It does, when the org's GitHub is connected.
+
 ## 0.14.0 — 2026-09-03
 
 **`cekura-infra-test-suite` now produces a Tests-as-Code suite in the
