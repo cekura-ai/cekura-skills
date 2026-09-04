@@ -4,6 +4,28 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.4 — 2026-09-04
+
+**The GitHub offer moved into `cekura-create-agent/SKILL.md`, because that is
+the only file guaranteed to be in context.** 0.15.1–0.15.3 put it in
+`phase2-provider.md` §2a′, and measured live the model never opened that file:
+the skill gate records a load after the ROOT SKILL.md alone, and no phase-read
+gate covers this skill (only `cekura-onboarding`'s phase 2 and phase 5). So the
+system-prompt directive fired — `github_list_repos` was called — and then the
+model, holding no offer text, wrote "No GitHub connection, so I can't read your
+agent's code" and went straight to four batched questions. Its own reasoning
+said "GitHub not connected; offer it" and then dropped it, which is what a
+missing shape looks like.
+
+The root file now carries the trigger, both clarification beats and the
+re-check; §2a′ keeps the extraction table and credential-manifest rules and is
+still worth reading.
+
+Also reconciles "ask one thing at a time" with the platform's batching rule
+instead of leaving the model to referee them on screen: a branch-determining
+question is asked alone and first, and the fields that follow batch into one
+clarification.
+
 ## 0.15.3 — 2026-09-04
 
 **The connect-GitHub offer now links the real page.** `/settings/org/integrations`
