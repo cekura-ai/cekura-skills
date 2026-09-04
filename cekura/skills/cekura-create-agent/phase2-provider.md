@@ -42,11 +42,10 @@ Ask: "What provider does your main agent run on?"
 
 **No connection → offer to connect, in two beats.** Frame it as a choice you are waiting on, not a limitation you are noting.
 
-**What `<INTEGRATIONS_LINK>` means — never emit that placeholder literally.** Substitute, in this order of preference:
+**What `<INTEGRATIONS_LINK>` means — never emit that placeholder literally.** The path is `/settings/org/integrations` (org-scoped, like the account API key — not project-scoped like the provider keys). The HOST varies by environment, so:
 
-1. On the Cekura platform, the org's Integrations page on the host you were given (`frontend_url`). Use that exact host — a guessed one is fabrication.
-2. Elsewhere (local Claude Code / Codex / Cursor), `https://dashboard.cekura.ai` plus the same path.
-3. **If you do not know the path, do not invent one.** Write the words **Settings → Integrations → GitHub** instead of a link. The two-beat flow works unchanged with a written path; a wrong URL sends the user somewhere that does not exist.
+- On the Cekura platform, use the host you were given (`frontend_url`) + that path. A guessed host is fabrication, and if no host was given, write the words **Settings → Integrations → GitHub** instead of a link.
+- Elsewhere (local Claude Code / Codex / Cursor), `https://dashboard.cekura.ai/settings/org/integrations`.
 
 **Beat 1 — the offer.** Include the Integrations link in the QUESTION TEXT: `options` are chips that send a choice back, so a chip cannot navigate anywhere. The link is what the user clicks to get there; the chip is what tells you which way they went.
 

@@ -4,6 +4,14 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.3 — 2026-09-04
+
+**The connect-GitHub offer now links the real page.** `/settings/org/integrations`
+— org-scoped, like the account API key, not project-scoped like the provider
+keys. The host stays environment-derived (`frontend_url` on the platform,
+`dashboard.cekura.ai` elsewhere), so no environment's URL is baked into the
+skill.
+
 ## 0.15.2 — 2026-09-04
 
 **Connecting GitHub is now a two-beat flow that waits for the user.** 0.15.1
