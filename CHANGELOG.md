@@ -4,6 +4,15 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.16.3 — 2026-09-04
+
+**`phase5-create.md` no longer contradicts the dashboard handoff.** Its LiveKit
+and Pipecat payload examples still showed real credentials
+(`"<Pipecat Cloud API Key from pipecat.daily.co>"`, a live-looking `wss://` URL),
+so a model reading that file would have gone and asked for them. Both examples
+now say the create carries dummies, and that the dispatch names are identifiers
+rather than secrets.
+
 ## 0.16.2 — 2026-09-04
 
 **Pipecat is not LiveKit, and the flow now says so.** 0.16.0-0.16.1 described

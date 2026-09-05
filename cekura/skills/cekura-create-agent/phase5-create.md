@@ -317,6 +317,8 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```
 
 ### LiveKit
+
+> **Credentials here are DUMMIES, not asks.** For LiveKit and Pipecat the create carries `DUMMY_API_KEY` (plus `DUMMY_SECRET` / `DUMMY_WSS_URL` for LiveKit only), and the user replaces them on the agent's page — never ask for them in chat. `pipecat_agent_name` and LiveKit's `agent_name` are dispatch identifiers, NOT secrets: take them from the repo scan or ask inline, and never dummy them. See the handoff in [phase2-provider.md](phase2-provider.md) §2a′.
 ```json
 {
   "name": "LiveKit Concierge",
@@ -367,6 +369,8 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 ```
 
 ### Pipecat Cloud
+
+> **Credentials here are DUMMIES, not asks.** For LiveKit and Pipecat the create carries `DUMMY_API_KEY` (plus `DUMMY_SECRET` / `DUMMY_WSS_URL` for LiveKit only), and the user replaces them on the agent's page — never ask for them in chat. `pipecat_agent_name` and LiveKit's `agent_name` are dispatch identifiers, NOT secrets: take them from the repo scan or ask inline, and never dummy them. See the handoff in [phase2-provider.md](phase2-provider.md) §2a′.
 ```json
 {
   "name": "Pipecat Support Agent",
