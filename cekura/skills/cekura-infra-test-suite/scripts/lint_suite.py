@@ -7,8 +7,8 @@ every push — the paid dry run then only has to catch what a local check cannot
 (metric resolution, agent capability, personality access).
 
 Usage:
-    python3 cekura/lint_suite.py cekura.tests.json
-    python3 cekura/lint_suite.py cekura.tests.json --strict   # warnings fail too
+    python3 <skill>/scripts/lint_suite.py cekura.tests.json
+    python3 <skill>/scripts/lint_suite.py cekura.tests.json --strict   # warnings fail too
 
 Exit codes: 0 clean, 1 problems found, 2 could not read the file.
 """

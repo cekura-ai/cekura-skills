@@ -25,13 +25,38 @@ dashboard evaluators.
 Use this skill when the repository, its deployment target, and the Cekura agent are in scope. For
 one-off dashboard evaluators or adaptive quality scenarios, use `cekura-eval-design` instead.
 
+## How this runs — two contexts, one procedure
+
+The steps below are identical in both; what differs is where the code comes from, what is already
+known, and where the result lands. Detect it, do not ask: **the repository is already the working
+directory** → a terminal. **The code must be fetched with `mcp__github__github_checkout_repo`** →
+launched from the Cekura dashboard.
+
+| | Terminal | Dashboard |
+|---|---|---|
+| Repository | already the working directory | fetched with `github_checkout_repo` |
+| Agent | infer from config, or ask | named in the launch message |
+| Credentials | may genuinely be absent — asking is right | the MCP session is already authenticated; **never ask** |
+| Result | the working tree, for the user to commit | one pull request, via `github_open_pull_request` |
+
+### The interaction contract
+
+**One question per run, asked in your first response, and this is it:**
+
+> This will run on manual dispatch only — started from the Actions tab against a branch, placing real
+> calls, with a `dry run` box for validating instead. Add a trigger too: push, PR, or a schedule?
+
+Ask it while reporting what you found, then keep working. **Do not wait for the answer** — if none
+has arrived by step 6, write manual dispatch and say in the handoff how to add a trigger. Nothing
+else is a question: not which files to create, not where to put them, not whether to proceed, and —
+in the dashboard context — not credentials.
+
 ## API Access — Cekura MCP Server
 
-Authenticate the Cekura MCP server with OAuth or an API key before discovering the target. Use MCP
-reads where the client provides them. Tests-as-Code validation is the public HTTPS endpoint below;
-when using it directly, take the base URL and API key from the user's local environment or CI secret,
-never from source control. If the target environment lacks the endpoint, report that fact and do not
-fall back to creating dashboard evaluators.
+Authenticate the MCP server before discovering the target, and prefer MCP reads. Tests-as-Code
+validation is the public HTTPS endpoint below; take its base URL and key from the environment or a
+CI secret, never from source control. If the endpoint is absent, report that rather than falling
+back to dashboard evaluators.
 
 ## Safety and scope
 
@@ -45,9 +70,10 @@ fall back to creating dashboard evaluators.
   asks for it after reviewing the spec and accepts the cost.
 - Never place API keys, phone numbers, production customer data, or deployment secrets in a spec or
   committed workflow. Use CI secrets and non-sensitive, staging-compatible profile data.
-- Preserve existing unrelated repository changes. Edits are limited to the spec, its coverage note,
-  the two bundled scripts, and the CI file that runs them. Extend an existing Cekura workflow rather
-  than adding a second one, and confirm the trigger before committing a job that places real calls.
+- Preserve existing unrelated repository changes. Edits are limited to the file list settled in
+  *The deliverable* below. Extend an existing Cekura workflow rather than adding a second one.
+- If a target, enabled metric, personality or staging fixture is unknown, mark that case blocked
+  rather than substituting a weaker check.
 - **If covering a behavior would need a change outside that set — runtime code, a deploy workflow,
   a Cekura record, a metric that does not exist — stop and report the blocker.** Do not make the
   change in order to make your own test possible, however small the diff and however sound the
@@ -55,34 +81,53 @@ fall back to creating dashboard evaluators.
   thing that is not a scope change is a guard whose whole job is policing this suite — a workflow
   step asserting the case count, say. Updating that is part of adding a case.
 
-## Required inputs
-
-Establish these before authoring. Discover them from the repository or Cekura where possible; ask
-only for what cannot be safely inferred.
-
-1. **Target** — Cekura base URL, project/agent ID, channel, and any request-only connection data.
-   `agent_id` belongs in the run request, never in the JSON spec.
-2. **Execution contract** — which deployed bot is under test, how CI reaches it, and whether this is
-   a PR suite, deploy gate, or both. A spec is reusable, but the run request supplies the target.
-3. **Available dependencies** — enabled metrics, usable personality IDs, and whether a saved
-   personality is required because it has non-inline settings.
-4. **Repository intent** — supported languages, user journeys, staging fixtures/mocks, and explicit
-   non-goals. Do not fabricate a business flow that the code and fixtures cannot support.
-
-If a required target, enabled metric, or staging fixture is unknown, prepare the repository-side
-plan and mark that case blocked. Do not silently substitute a weaker check.
-
 ## Two different things are called "infrastructure tests"
 
-Settle this before step 0 — an A/B run showed the request is ambiguous, and the wrong reading
-costs a whole discovery pass:
+Settle this before step 0 — the wrong reading costs a discovery pass:
 
 | Ask | What it is | What to do |
 |---|---|---|
-| "add Cekura's **predefined** infrastructure suite" | 18+ ready-made latency / interruption / noise / packet-loss / hold scenarios Cekura ships | **Not reachable from the MCP tools.** Point the user at the dashboard's Evaluators → Infrastructure Suite → *Add to my Project* (or the `add_infrastructure_suite` API). Tell them it also adds an *AI Interrupting user = 0* rubric rule to the project, and tag the copies `infrastructure-suite` so CI can select them. Do not hand-build copies, and do not run the steps below. |
+| "add Cekura's **predefined** infrastructure suite" | 18+ ready-made latency / interruption / noise / packet-loss / hold scenarios Cekura ships | **Not reachable from the MCP tools.** Send them to Evaluators → Infrastructure Suite → *Add to my Project* (or the `add_infrastructure_suite` API); note it also adds an *AI Interrupting user = 0* rubric rule, and tag the copies `infrastructure-suite` so CI can select them. Do not hand-build copies or run the steps below. |
 | "build infra/CI tests **for my bot**" | tests derived from the customer's own pipeline code | Run the steps below. |
 
-If the request could be either, ask once — one short question — before step 0.
+If the request could be either, ask once — one short question — before step 0. This can only
+happen in a terminal: a dashboard launch names the repository and the agent, which settles it.
+
+## The deliverable — three files, fixed before you write
+
+The baseline, and what almost every repository gets:
+
+```
+cekura.tests.json                    the suite
+.github/workflows/cekura-tests.yml   the CI gate (created, or the existing Cekura job extended)
+README.md                            a section: what runs, which secrets, which permissions
+```
+
+**Decide the exact list before writing anything, and name it in your first response.** Three is a
+baseline, not a cap; what matters is that the list is settled up front, because discovering a fourth
+file halfway through is what turns one pass into four rounds of steering. Add or substitute only
+where the repository's own conventions demand it, and say why:
+
+- CI is not GitHub Actions → `.gitlab-ci.yml`, a Jenkinsfile stage, a Makefile target. A
+  substitution, not an addition.
+- Docs live somewhere other than the README → put the section where that repo keeps them.
+- Two independently deployable bots → two specs, if one cannot cover both.
+- The repo's workflows call a `ci/` or `scripts/` directory by convention → the poller can live
+  there instead of inline, matching what is already there.
+
+Never as an addition: a coverage note (it goes in the README section and the PR body), a vendored
+`lint_suite.py` or `run_suite.py`, or a config file this skill invented. Every extra file is one more
+thing the customer maintains forever — if you cannot name the convention forcing it, it does not
+belong. Write the whole list in one pass, before the dry run; the linter runs from this skill's own
+directory and the workflow polls inline.
+
+One question per run, asked first — see *The interaction contract* above. Everything else is
+either discoverable from the repository or already supplied.
+
+If a pull request is the destination, name the required GitHub App permissions before proposing it:
+**Contents** and **Pull requests** read-and-write, plus **Workflows** read-and-write because the
+payload writes `.github/workflows/`. Granting that last one on the App is not enough — an org admin
+must accept the change on the installation.
 
 ## Workflow
 
@@ -96,18 +141,16 @@ git ls-files | grep -Ei '(cekura|tests?).*\.json$'       # candidates
 git ls-files '.github/workflows/*' '.gitlab-ci.yml' 'Jenkinsfile' | xargs grep -ln 'cekura' 2>/dev/null
 ```
 
-- **No spec** → create. Work through steps 1–7.
+- **No spec** → create. Work through steps 1–8.
 - **A spec exists** → update it in place. Read it in full, keep every `key`, and start at step 5,
   the diff review. Do not regenerate the file: an existing suite is reviewed source code whose
   results are comparable across commits only while its keys hold still. The most common correct
   outcome of an update is **no change**.
-  **Starting at step 5 is not skipping the rest.** Anything you go on to author runs through
-  step 1b (read the agent record), step 4 (the expected-outcome contract) and step 6 (the dry run),
-  exactly as it would on a create. An update is a smaller change, not a lower standard — a new case
-  written to the old file's house style instead of the judge's contract is a worse case.
-  Pre-existing lint warnings on cases this change does not touch are not yours to fix here: report
-  them, leave them, and clean them in their own change.
-- **A workflow already calls Cekura** → extend that file in step 7 rather than adding a second one,
+  **Starting at step 5 is not skipping the rest.** Anything you author still runs through step 1b,
+  step 4's expected-outcome contract and step 7's dry run. An update is a smaller change, not a
+  lower standard — a case written to the old file's house style instead of the judge's contract is a
+  worse case. Pre-existing lint warnings on untouched cases are not yours to fix here.
+- **A workflow already calls Cekura** → extend that file in step 6 rather than adding a second one,
   reusing its secret names and trigger conventions.
 
 ### 1. Read the actual agent path
@@ -149,6 +192,13 @@ authoring. They are all reads, and each turns a guess into a fact:
   is rejected for a channel the agent was never configured for.
 - **The live spec schema**, which outranks any example in this skill.
 
+**If the agent contradicts the repository, say so before authoring anything.** A repo that builds a
+Pipecat pharmacy line pointed at a bare "helpful assistant" on another provider will fail every case
+that is worth writing — and a wall of red on a first run reads as a broken suite rather than the
+wrong agent id. Name the mismatch in your first response, lead the handoff with it, and put it at
+the top of the pull-request body. Author the suite against the repository anyway: it is correct, and
+it becomes right the moment the agent id is fixed.
+
 With no credentials, say so plainly: use `expected_outcome` alone, pin no personality, and mark the
 suite unvalidated. Never invent a metric slug or a personality id to fill the gap — an unenabled
 slug is a hard rejection at the dry run, which is the right place to find out, but a guessed one
@@ -156,7 +206,8 @@ only wastes the round trip.
 
 ### 2. Make a coverage matrix before editing
 
-Create or update a concise coverage note beside the spec. Use this table:
+Build the coverage table before editing. It is not a file — it goes into the README section and the
+PR body, so a reviewer sees the reasoning without the repo carrying a document that rots:
 
 | Code path / source evidence | Behavior to prove | Seat + transport | Transcript-observable assertion | Case key | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -252,7 +303,7 @@ Use the public `cekura-eval-design` skill and its conditional-actions reference 
 duplicate keys, and inline-personality limits, offline and free:
 
 ```bash
-python3 cekura/lint_suite.py cekura.tests.json --strict
+python3 <skill>/scripts/lint_suite.py cekura.tests.json --strict
 ```
 
 It mirrors the server's own tag validators, so a clean lint means the dry run fails only for
@@ -317,7 +368,41 @@ Before editing, complete the coverage matrix row for every changed runtime symbo
 is a valid conclusion when no observable behavior changed. Do not modify unrelated cases, relax
 expected outcomes, or add generic provider tests merely because a nearby file changed.
 
-### 6. Validate the committed artifact — the dry run is not optional
+### 6. Write the files, in one pass
+
+Everything is decided by now, including the file list. Write it all together, before validating
+anything — not one file, then a question, then another. That loop is what this step exists to
+prevent.
+
+#### The workflow
+
+A validated spec is not yet a gate. Runs are asynchronous: the POST returns as soon as they are
+queued, so a job that ends at `curl` reports success before a single call has been judged — a gate
+that cannot fail, which is worse than none because it reads as coverage. The workflow therefore
+polls each run to a terminal state and exits non-zero on any failure. `references/ci-wiring.md`
+carries the template; copy it rather than composing YAML from memory.
+
+Two things are fixed and not up for discussion with the user:
+
+- **`workflow_dispatch` with a `dry_run` checkbox, unchecked by default.** Dispatching by hand is a
+  deliberate act whose point is to place the calls; the box is there for when it is not.
+- **Every trigger other than a manual run validates only**, unless the user explicitly asks for
+  live calls on that trigger. Real calls spend credit; a push that quietly bills is not a default
+  anyone consents to.
+
+**The default is `workflow_dispatch` and nothing else** — started from the Actions tab against
+whichever branch the user picks. The trigger question was asked in
+your first response; if an answer came back, add it to the template's `on:` block, and otherwise
+write manual-only and note in the handoff how to add one. Never hold the run open waiting.
+
+If the repository already has a workflow that calls Cekura, extend that one — never add a second.
+
+#### The README section
+
+Append the template in `references/ci-wiring.md`, filled in — what the suite proves, how to trigger
+it, the two secrets, and step 2's coverage table including the uncovered rows.
+
+### 7. Lint, then dry run — validation is not optional
 
 **A suite that has not returned `valid: true` from a dry run is not finished.** Say so in those
 words rather than handing over a file that looks complete. Everything `lint_suite.py` cannot see
@@ -328,8 +413,10 @@ suite — it is a suite that cannot run at all.
 
 So the order is: lint, then dry run, then fix, then dry run again, until it comes back valid.
 
-**If there are no credentials in the session, ask for them** — an API key and the agent id, or an
-authenticated MCP session. Do not quietly skip to the handoff. Only when the user cannot supply
+**In a terminal, if there are no credentials in the session, ask for them** — an API key and the
+agent id, or an authenticated MCP session. Do not quietly skip to the handoff. In the dashboard the
+MCP session is already authenticated, so a missing key is a bug to report, never a question: the
+user has nothing to paste. Only when the user cannot supply
 them do you hand over unvalidated, and then you must (a) label the suite unvalidated in the
 handoff and in the coverage note, (b) give the exact command below, and (c) point out that the
 `validate` job in the CI workflow runs the same dry run, so the first pull request will catch
@@ -339,10 +426,11 @@ A dry run validates syntax, metrics, personalities, profiles, target compatibili
 and estimated cost without creating objects or placing a call:
 
 ```bash
-python3 cekura/lint_suite.py cekura.tests.json --strict     # free, offline, first
-CEKURA_API_KEY=… python3 cekura/run_suite.py --dry-run --agent-id 123
+python3 <skill>/scripts/lint_suite.py cekura.tests.json --strict   # free, offline, first
+CEKURA_API_KEY=… python3 <skill>/scripts/run_suite.py --dry-run --agent-id 123
 ```
 
+Both run from this skill's directory — they are authoring tools, not files the repository keeps.
 The runner posts the file and prints the returned plan. The raw form, when you want it:
 
 ```bash
@@ -364,60 +452,48 @@ suite. Save the validation response only if it contains
 no credentials or sensitive caller data. If dry-run validation needs a write beyond `dry_run=true`,
 stop and report the blocker.
 
-### 7. Wire CI so the gate can fail
+### 8. Deliver
 
-A validated spec is not yet a gate. Runs are asynchronous: the POST returns as soon as they are
-queued, so a job that ends at `curl` reports success before a single call has been judged — a gate
-that cannot fail, which is worse than none because it reads as coverage.
+Only once the dry run has returned `valid: true`.
 
-Install the two bundled scripts into the repository and wire them:
+**Dashboard** — one `github_open_pull_request` call carrying every file; never one at a time,
+never for a suite that has not validated. The body carries what the repository does not: the
+coverage table, the uncovered rows and why, the dry-run plan (cases, planned runs, estimated cost),
+the two secrets, and — if step 1b found the agent contradicts the repository — that mismatch first.
 
-```bash
-mkdir -p cekura && cp <skill>/scripts/{lint_suite.py,run_suite.py} cekura/
-```
+If the write is refused with `403 Resource not accessible by integration`, the cause is the
+`Workflows` permission named in *The deliverable* above — not repository access, which the checkout
+already proved. Say that plainly instead of suggesting the connection is broken.
 
-`run_suite.py` posts the spec, polls every run to a terminal state, writes `cekura-report.md`, and
-exits non-zero when any case fails, errors or times out. Both scripts are Python 3 standard library
-only — nothing to install on a runner.
-
-Then create `.github/workflows/cekura-tests.yml`, **or extend the workflow that already calls
-Cekura** — never add a second one. `references/ci-wiring.md` has the GitHub Actions and GitLab
-templates, the fork-PR rule (a job needing secrets must not run on forks), how to point a run at a
-per-PR deployment with `pipecat_v2` / `livekit_v2`, and how to pick a trigger that does not spend
-credit on every push.
-
-Confirm the trigger with the user before committing a workflow that places real calls.
+**Terminal** — leave the files in the working tree and stop. Do not commit, branch or
+push unless asked; offer the commit message, and `gh pr create` if they want a PR. Report what the
+PR body would have carried.
 
 ## Handoff
 
 Leave the repository with:
 
-- the JSON spec or specs, formatted and source-controlled;
-- a coverage note mapping code paths to stable case keys, including explicit uncovered rows;
-- `cekura/lint_suite.py` and `cekura/run_suite.py`, and the workflow that runs them — created, or
-  the existing Cekura workflow extended;
-- a short README note describing the target assumptions, Cekura dependencies (metrics,
-  personalities, channels), and how CI invokes the suite; and
-- the dry-run result — `valid: true` with its plan — or, if no credentials were available, the
-  suite explicitly labelled **unvalidated** together with the command that will validate it.
+- `cekura.tests.json`, formatted and source-controlled;
+- `.github/workflows/cekura-tests.yml` — created, or the existing Cekura workflow extended — with
+  the `dry_run` checkbox, and manual dispatch as the only trigger unless the user asked for more;
+- the README section from step 6; and
+- the dry-run result — `valid: true` with its plan — or the suite explicitly labelled
+  **unvalidated** with the command that will validate it.
 
-Report case count, target channel/seat coverage, dependencies, and anything that needs a live run or
-a backend capability. A dry-run proves the spec is valid; it does not prove a bot deployment works.
+Report case count, channel/seat coverage, dependencies, anything needing a live run, and — if the
+trigger question went unanswered — which trigger you wrote and how to add another. A dry run proves
+the spec valid; it does not prove a deployment works.
 
 ## Bundled assets
 
-Reference files, read when the step calls for them:
+Read when the step calls for them:
 
 - **`references/discovery.md`** — the stack questions, and which assertion each answer unlocks
 - **`references/case-catalog.md`** — nine proven case shapes with their drop-if conditions
-- **`references/ci-wiring.md`** — workflow templates, run targets, per-PR deployments, triggers
+- **`references/ci-wiring.md`** — workflow and README templates, run targets, triggers
+- **`examples/cekura.tests.json`** — a three-case suite that lints clean in `--strict`
 
-Example, read when the shape of a case is in question:
-
-- **`examples/cekura.tests.json`** — a three-case suite: an interruption gauntlet, an idle
-  escalation, and an instruction case with test data. Lints clean in `--strict`
-
-Scripts, copied into the user's repository:
+Run from this skill's directory while authoring; never copied into the user's repository:
 
 - **`scripts/lint_suite.py`** — offline spec and authoring-rule validator; no key, no network
-- **`scripts/run_suite.py`** — CI runner: posts, polls, reports, exits non-zero on failure
+- **`scripts/run_suite.py`** — posts and polls; used here for the dry run
