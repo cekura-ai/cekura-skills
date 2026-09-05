@@ -4,6 +4,38 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.14.2 — 2026-09-05
+
+**`cekura-infra-test-suite` now completes in one pass.** The skill ends with
+exactly three paths — `cekura.tests.json`, `.github/workflows/cekura-tests.yml`
+and a README section — written together before validation, rather than one file
+at a time with a question between each. Nothing is vendored into the customer's
+repository: the linter runs from the skill's own directory and the workflow
+polls inline.
+
+- **One question per run, asked first and never blocking.** The workflow trigger
+  is the only thing the skill asks. It defaults to `workflow_dispatch` alone,
+  with a `dry_run` checkbox that is checked by default, so nothing fires on its
+  own and nothing bills without an explicit uncheck. If the answer has not
+  arrived by the time the workflow is written, the default ships and the handoff
+  says how to add a trigger later.
+- **Terminal and dashboard are one procedure.** The skill detects which it is in
+  from whether the repository has to be fetched, and scopes the differences:
+  where the agent comes from, whether asking for credentials makes sense, and
+  whether the result is a pull request or a working tree.
+- **An agent that contradicts the repository is now called out first**, in the
+  first response and at the top of the pull request. A suite authored against
+  the code but pointed at an unrelated agent fails every case, which reads as a
+  broken suite rather than a wrong agent id.
+- **Required GitHub App permissions are stated up front** — Contents, Pull
+  requests, and Workflows, the last because the payload writes under
+  `.github/workflows/`. A `403 Resource not accessible by integration` on the
+  tree write is named as that permission, not as lost repository access.
+
+Authoring behaviour is unchanged: discovery, the spec shape, the case rules, the
+expected-outcome contract, metric selection and the dry-run gate are the same
+text they were in 0.14.1.
+
 ## 0.14.0 — 2026-09-03
 
 **`cekura-infra-test-suite` now produces a Tests-as-Code suite in the
