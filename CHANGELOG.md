@@ -4,6 +4,31 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.16.0 — 2026-09-04
+
+**LiveKit/Pipecat agents are now created first and finished in the dashboard.**
+The flow no longer asks for the API key, secret and server URL in chat. It
+creates the agent from the repo scan, hands over `<frontend_url>/agents/<id>`,
+and asks the user to fill the three values there — so no secret transits the
+chat and the run is not blocked waiting for three pasted strings.
+
+- **WebRTC Automated is now assumed**, not asked, unless the repo shows
+  SIP/telephony handling. The assumption is stated so the user can correct it.
+- **Placeholders at create**: `CEKURA_PLACEHOLDER_SET_IN_DASHBOARD` (api_key)
+  and `wss://set-in-dashboard.invalid` (url), with `api_secret` omitted —
+  LiveKit and Pipecat reject a create without the first two, and omitting the
+  third is what makes it verifiable afterwards.
+- **The handoff is gated, not trusted.** On "I've saved them" the flow re-reads
+  the agent and requires `livekit_api_key_is_placeholder` false, the url no
+  longer the sentinel, and `api_secret_configured` true. `null` counts as not
+  done. No evaluators and no run until all three pass, because a run against a
+  placeholder fails in a way that looks like a broken agent.
+
+Reconciles four rules that would otherwise fight this flow: the root skill's
+blanket ban on placeholder URLs, "collect them before creating the agent",
+"never offer skip credentials for now", and the telephony-vs-WebRTC question
+being asked before anything else.
+
 ## 0.15.6 — 2026-09-04
 
 **Settings links come from `frontend_url` and nothing else.** Each environment

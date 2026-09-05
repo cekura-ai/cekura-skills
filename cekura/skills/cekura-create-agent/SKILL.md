@@ -86,7 +86,7 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 - Make decisions about a phase without first reading its phase file
 - Ask the user "shall we continue?" between phases — just continue
 - Give the user a list of steps to do manually — execute them yourself using Bash and API calls
-- Offer a placeholder URL or "connect the real server later" as an option — if a WebSocket URL is needed, get a real working one now by running the server and ngrok yourself
+- Offer a placeholder URL or "connect the real server later" as an option — if a WebSocket URL is needed, get a real working one now by running the server and ngrok yourself. **The one exception is the LiveKit/Pipecat dashboard handoff below**, where the two named sentinels are required because `aiagents_create` rejects those providers without an api_key and url — and that path is gated: no run happens until all three values are verified as replaced.
 
 **Do it yourself. Do not instruct.** When something needs to be done — making an API call, updating a field, running a scenario — do it directly using available tools. Do not write out steps for the user to follow. Only ask the user when you genuinely cannot proceed without their input (e.g. a file they need to upload, a decision only they can make).
 
@@ -127,6 +127,23 @@ Then **re-run `github_list_repos`** and report what it returns, not what the use
 **The link is `<frontend_url>/settings/org/integrations`**, where `frontend_url` comes from the run context — every environment sets its own dashboard URL, so that value is the correct one. Never substitute another host.
 
 **Connected → offer the scan** (`options: [["Read my repo", "I'll paste it instead"]]`), then pick the repo per §2a′.
+
+### Then create the agent — never ask for credentials in chat
+
+**Default to WebRTC Automated** unless the repo showed SIP/telephony handling. Say so rather than asking: *"Setting this up as WebRTC Automated — the most common LiveKit setup. Tell me if yours is reached by phone or SIP instead."*
+
+`aiagents_create` with everything the scan found, plus exactly these placeholders (LiveKit/Pipecat reject a create without an api_key and url — the only reason placeholders are allowed here):
+`api_key` = `CEKURA_PLACEHOLDER_SET_IN_DASHBOARD`, `url` = `wss://set-in-dashboard.invalid`, and **omit `api_secret`** — it is optional at save, and its absence is what makes it checkable.
+
+Then hand the agent over in the SAME reply, because a placeholder without a link strands the user:
+
+```
+<clarification>
+{"questions": ["Created your agent: <frontend_url>/agents/<agent_id>. Open it and fill in your LiveKit API key, API secret and server URL there — that way none of your secrets go through this chat. Tell me when they're saved."], "question_types": [null], "options": [["I've saved them", "I'd rather paste them here"]]}
+</clarification>
+```
+
+**On "I've saved them", `aiagents_retrieve` and require all three** — never take the word for it: `livekit_api_key_is_placeholder` is `false`, `url` is no longer the sentinel, `api_secret_configured` is `true`. `null` means undeterminable, which is NOT done. If any fails, name what is still unset and re-link. **No evaluators and no run until all three pass** — a run against a placeholder fails in a way that looks like a broken agent.
 
 **Declined at any beat → carry on with the normal asks and never re-offer.**
 

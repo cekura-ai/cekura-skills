@@ -16,7 +16,7 @@ Before the tracking call below and before any Cekura MCP call, load the `cekura-
 ## Tracking (then do this)
 
 Next, call `mcp__cekura__cekura_skill_started` with
-`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.15"`. If a conversation/session ID is available (e.g. you
+`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.16"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
