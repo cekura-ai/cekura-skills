@@ -43,8 +43,8 @@ launched from the Cekura dashboard.
 
 **One question per run, asked in your first response, and this is it:**
 
-> This will run on manual dispatch only — you pick the branch in the Actions tab, and dry run is
-> checked by default. Want to add a trigger too: pushes to a branch, pull requests, or a schedule?
+> This will run on manual dispatch only — started from the Actions tab against a branch, placing real
+> calls, with a `dry run` box for validating instead. Add a trigger too: push, PR, or a schedule?
 
 Ask it while reporting what you found, then keep working. **Do not wait for the answer** — if none
 has arrived by step 6, write manual dispatch and say in the handoff how to add a trigger. Nothing
@@ -385,14 +385,14 @@ carries the template; copy it rather than composing YAML from memory.
 
 Two things are fixed and not up for discussion with the user:
 
-- **`workflow_dispatch` with a `dry_run` checkbox, defaulting to checked.** Validation is free and
-  places no calls, so the manual path must always offer it, and offer it first.
+- **`workflow_dispatch` with a `dry_run` checkbox, unchecked by default.** Dispatching by hand is a
+  deliberate act whose point is to place the calls; the box is there for when it is not.
 - **Every trigger other than a manual run validates only**, unless the user explicitly asks for
   live calls on that trigger. Real calls spend credit; a push that quietly bills is not a default
   anyone consents to.
 
 **The default is `workflow_dispatch` and nothing else** — started from the Actions tab against
-whichever branch the user picks, with the `dry_run` box checked. The trigger question was asked in
+whichever branch the user picks. The trigger question was asked in
 your first response; if an answer came back, add it to the template's `on:` block, and otherwise
 write manual-only and note in the handoff how to add one. Never hold the run open waiting.
 
@@ -476,7 +476,7 @@ Leave the repository with:
 
 - `cekura.tests.json`, formatted and source-controlled;
 - `.github/workflows/cekura-tests.yml` — created, or the existing Cekura workflow extended — with
-  the `dry_run` checkbox and manual dispatch as the only trigger unless the user asked for more;
+  the `dry_run` checkbox, and manual dispatch as the only trigger unless the user asked for more;
 - the README section from step 6; and
 - the dry-run result — `valid: true` with its plan — or the suite explicitly labelled
   **unvalidated** with the command that will validate it.

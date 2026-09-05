@@ -18,7 +18,7 @@ The template below does exactly that. Copy it; do not compose YAML from memory.
 |---|---|---|---|
 | spec is well-formed | nothing | free | every trigger, forks included |
 | validate against Cekura | API key + agent id | free | every trigger where secrets exist |
-| run the suite | API key + agent id | real calls | a manual run with the box unchecked |
+| run the suite | API key + agent id | real calls | a manual dispatch, unless `dry run` is ticked |
 
 ## Nothing is vendored into the repository
 
@@ -63,10 +63,10 @@ built; do not describe the first while wiring the second.
 
 ## GitHub Actions
 
-One file, one job, two modes. **`workflow_dispatch` alone is the default** — the run is started
-from the Actions tab against a branch of your choosing, and the `dry_run` checkbox on it defaults
-to checked. Any additional trigger is opt-in, and validates only unless the user asked for live
-calls there.
+One file, one job, two modes. **`workflow_dispatch` alone is the default** — the run is started from
+the Actions tab against a branch of your choosing, and it places real calls: a manual dispatch is a
+deliberate act. Tick `dry run` to validate the spec instead. Any additional trigger is opt-in and
+validates only, so nothing bills without someone choosing to run it.
 
 ```yaml
 name: Cekura voice tests
@@ -75,9 +75,12 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
+        # Unchecked by default: dispatching this workflow by hand is a
+        # deliberate act, and the point of it is to place the calls. Tick
+        # the box when you only want the spec validated.
         description: "Validate only — no calls placed, no credit spent"
         type: boolean
-        default: true
+        default: false
   # Manual dispatch is the whole default: you pick the branch in the Actions
   # tab and nothing fires on its own. Add a second trigger ONLY if the user
   # asked for one, e.g.
@@ -164,7 +167,7 @@ jobs:
 ## GitLab CI
 
 Same two Python blocks as the GitHub template — validate, then poll — with `when: manual` standing
-in for the `dry_run` checkbox.
+in for the manual dispatch.
 
 ```yaml
 cekura:validate:

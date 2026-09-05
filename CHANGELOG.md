@@ -14,11 +14,12 @@ repository: the linter runs from the skill's own directory and the workflow
 polls inline.
 
 - **One question per run, asked first and never blocking.** The workflow trigger
-  is the only thing the skill asks. It defaults to `workflow_dispatch` alone,
-  with a `dry_run` checkbox that is checked by default, so nothing fires on its
-  own and nothing bills without an explicit uncheck. If the answer has not
-  arrived by the time the workflow is written, the default ships and the handoff
-  says how to add a trigger later.
+  is the only thing the skill asks. It defaults to `workflow_dispatch` alone —
+  nothing fires on its own, and a manual dispatch places real calls, with a
+  `dry run` box to tick when only the spec needs validating. Every other
+  trigger validates only. If the answer has not arrived by the time the
+  workflow is written, the default ships and the handoff says how to add a
+  trigger later.
 - **Terminal and dashboard are one procedure.** The skill detects which it is in
   from whether the repository has to be fetched, and scopes the differences:
   where the agent comes from, whether asking for credentials makes sense, and
