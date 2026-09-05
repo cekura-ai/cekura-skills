@@ -223,3 +223,25 @@ and every non-manual trigger validates only unless they explicitly asked otherwi
 Cases in one file run in parallel, so wall-clock is roughly the longest single call, not the sum.
 Cost is not — it scales with case count times `frequency`. That is the real reason for the 10–12
 ceiling.
+
+## The README section
+
+Written by SKILL.md step 6. One shape for every repository the skill touches:
+
+```markdown
+## Voice tests (Cekura)
+
+`cekura.tests.json` holds N deterministic cases covering <one line: what the suite proves>.
+
+Run them from **Actions → Cekura voice tests → Run workflow**. `dry run` is checked by default and
+validates the spec without placing calls or spending credit; uncheck it to run the suite for real.
+
+Requires `CEKURA_API_KEY` (repository secret) and `CEKURA_AGENT_ID` (repository variable).
+
+| Case | What it proves | Source |
+|---|---|---|
+| … | … | `src/bot.py:118` |
+
+Not covered: <the rows you left out, and what each would need>.
+```
+
