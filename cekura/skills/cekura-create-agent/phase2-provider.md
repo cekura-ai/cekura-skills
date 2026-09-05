@@ -116,12 +116,15 @@ Ask: "What provider does your main agent run on?"
    - `api_key`: `DUMMY_API_KEY`
    - `url`: `DUMMY_WSS_URL`
    - `api_secret`: `DUMMY_SECRET`
-   Assume NONE of the three is already set — dummy all of them.
+
+   **Pipecat is NOT the same shape — do not copy LiveKit's.** Pipecat has no `url` and no `api_secret`: dummy `api_key` ONLY. Its other required create field, `pipecat_agent_name`, is a dispatch identifier and NOT a secret — take it from `pcc-deploy.toml` in the scan, or ask for it inline. Never dummy it: a dummy dispatch name creates an agent that saves cleanly and dispatches nowhere.
+
+   Assume none of the provider's own credentials is already set — dummy all of them.
 3. **Hand over the agent and say why**, in the SAME reply — a placeholder without the link strands the user with a broken agent:
 
 ```
 <clarification>
-{"questions": ["Created your agent: <frontend_url>/agents/<agent_id>. Open it and fill in your LiveKit API key, API secret and server URL there — that way none of your secrets go through this chat. Tell me when they're saved."], "question_types": [null], "options": [["I've saved them", "I'd rather paste them here"]]}
+{"questions": ["Created your agent: <frontend_url>/agents/<agent_id>. Open it and fill in the credentials shown there (LiveKit: API key, API secret, server URL. Pipecat: API key) — that way none of your secrets go through this chat. Tell me when they're saved."], "question_types": [null], "options": [["I've saved them", "I'd rather paste them here"]]}
 </clarification>
 ```
 

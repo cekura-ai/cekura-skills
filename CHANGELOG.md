@@ -4,6 +4,22 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.16.2 — 2026-09-04
+
+**Pipecat is not LiveKit, and the flow now says so.** 0.16.0-0.16.1 described
+one credential shape for both. Pipecat has no `url` and no `api_secret` — it
+uses `api_key` alone — so dummying three values there would have written junk
+into fields it does not use and told the user to go replace two that do not
+exist.
+
+Its other required create field, `pipecat_agent_name`, is a dispatch identifier
+rather than a secret. It comes from `pcc-deploy.toml` via the repo scan, or is
+asked for inline, and is never dummied: a dummy dispatch name saves cleanly and
+then dispatches nowhere, which fails at run time looking like a broken agent.
+
+The handoff message is provider-aware rather than naming LiveKit's three fields
+for everyone.
+
 ## 0.16.1 — 2026-09-04
 
 **All three LiveKit/Pipecat credentials get a dummy, and the handoff is

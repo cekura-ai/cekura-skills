@@ -136,13 +136,13 @@ Then **re-run `github_list_repos`** and report what it returns, not what the use
 **Default to WebRTC Automated** unless the repo showed SIP/telephony handling. Say so rather than asking: *"Setting this up as WebRTC Automated — the most common LiveKit setup. Tell me if yours is reached by phone or SIP instead."*
 
 `aiagents_create` with everything the scan found, plus exactly these placeholders (LiveKit/Pipecat reject a create without an api_key and url — the only reason placeholders are allowed here):
-`api_key` = `DUMMY_API_KEY`, `url` = `DUMMY_WSS_URL`, and `api_secret` = `DUMMY_SECRET`. All three get a dummy — assume nothing is already set.
+`api_key` = `DUMMY_API_KEY`, `url` = `DUMMY_WSS_URL`, and `api_secret` = `DUMMY_SECRET` — all three, assume nothing is set. **Pipecat differs:** dummy `api_key` ONLY (it has no url or secret), and take `pipecat_agent_name` from `pcc-deploy.toml` or ask for it — it is a dispatch id, not a secret, and a dummy there saves cleanly but dispatches nowhere.
 
 Then hand the agent over in the SAME reply, because a placeholder without a link strands the user:
 
 ```
 <clarification>
-{"questions": ["Created your agent: <frontend_url>/agents/<agent_id>. Open it and fill in your LiveKit API key, API secret and server URL there — that way none of your secrets go through this chat. Tell me when they're saved."], "question_types": [null], "options": [["I've saved them", "I'd rather paste them here"]]}
+{"questions": ["Created your agent: <frontend_url>/agents/<agent_id>. Open it and fill in the credentials shown there (LiveKit: API key, API secret, server URL. Pipecat: API key) — that way none of your secrets go through this chat. Tell me when they're saved."], "question_types": [null], "options": [["I've saved them", "I'd rather paste them here"]]}
 </clarification>
 ```
 
