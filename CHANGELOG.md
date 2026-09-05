@@ -6,12 +6,15 @@ All notable changes to the Cekura plugin. Versions follow
 
 ## 0.14.2 — 2026-09-05
 
-**`cekura-infra-test-suite` now completes in one pass.** The skill ends with
-exactly three paths — `cekura.tests.json`, `.github/workflows/cekura-tests.yml`
-and a README section — written together before validation, rather than one file
-at a time with a question between each. Nothing is vendored into the customer's
-repository: the linter runs from the skill's own directory and the workflow
-polls inline.
+**`cekura-infra-test-suite` now completes in one pass.** The file list is
+settled and named before anything is written, then written together — rather
+than one file at a time with a question between each. The baseline is three
+paths: `cekura.tests.json`, `.github/workflows/cekura-tests.yml` and a README
+section. It is a baseline, not a cap: a GitLab repo, a monorepo with two
+deployable bots, or one that keeps docs outside the README substitutes or adds
+where its own conventions demand, and says why. Nothing is vendored into the
+customer's repository — the linter runs from the skill's own directory and the
+workflow polls inline.
 
 - **One question per run, asked first and never blocking.** The workflow trigger
   is the only thing the skill asks. It defaults to `workflow_dispatch` alone —

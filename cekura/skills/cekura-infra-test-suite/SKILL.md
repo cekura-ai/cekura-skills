@@ -70,9 +70,10 @@ back to dashboard evaluators.
   asks for it after reviewing the spec and accepts the cost.
 - Never place API keys, phone numbers, production customer data, or deployment secrets in a spec or
   committed workflow. Use CI secrets and non-sensitive, staging-compatible profile data.
-- Preserve existing unrelated repository changes. Edits are limited to the three paths named in
-  *The deliverable* below — the spec, the workflow, and a README section. Extend an existing Cekura
-  workflow rather than adding a second one.
+- Preserve existing unrelated repository changes. Edits are limited to the file list settled in
+  *The deliverable* below. Extend an existing Cekura workflow rather than adding a second one.
+- If a target, enabled metric, personality or staging fixture is unknown, mark that case blocked
+  rather than substituting a weaker check.
 - **If covering a behavior would need a change outside that set — runtime code, a deploy workflow,
   a Cekura record, a metric that does not exist — stop and report the blocker.** Do not make the
   change in order to make your own test possible, however small the diff and however sound the
@@ -80,25 +81,9 @@ back to dashboard evaluators.
   thing that is not a scope change is a guard whose whole job is policing this suite — a workflow
   step asserting the case count, say. Updating that is part of adding a case.
 
-## Required inputs
-
-Established by steps 1 and 1b.
-
-1. **Target** — base URL, project/agent ID, channel, request-only connection data. `agent_id` belongs
-   in the run request, never in the spec.
-2. **Execution contract** — which deployed bot is under test and how CI reaches it. A spec is
-   reusable; the run request supplies the target.
-3. **Available dependencies** — enabled metrics, usable personality IDs, and whether a saved
-   personality is required because it has non-inline settings.
-4. **Repository intent** — languages, user journeys, staging fixtures, explicit non-goals. Do not
-   fabricate a business flow the code and fixtures cannot support.
-
-If a target, enabled metric or fixture is unknown, mark that case blocked rather than substituting a
-weaker check.
-
 ## Two different things are called "infrastructure tests"
 
-Settle this before step 0; the wrong reading costs a whole discovery pass:
+Settle this before step 0 — the wrong reading costs a discovery pass:
 
 | Ask | What it is | What to do |
 |---|---|---|
@@ -108,10 +93,9 @@ Settle this before step 0; the wrong reading costs a whole discovery pass:
 If the request could be either, ask once — one short question — before step 0. This can only
 happen in a terminal: a dashboard launch names the repository and the agent, which settles it.
 
-## The deliverable — exactly three files
+## The deliverable — three files, fixed before you write
 
-Decide nothing about scope mid-flight. Every run of this skill ends with these three paths and no
-others:
+The baseline, and what almost every repository gets:
 
 ```
 cekura.tests.json                    the suite
@@ -119,9 +103,23 @@ cekura.tests.json                    the suite
 README.md                            a section: what runs, which secrets, which permissions
 ```
 
-Write all three in one pass, before the dry run. Nothing is vendored: the linter runs from this
-skill's own directory, the workflow polls inline, and the coverage table lives in the README
-section and the pull-request body.
+**Decide the exact list before writing anything, and name it in your first response.** Three is a
+baseline, not a cap; what matters is that the list is settled up front, because discovering a fourth
+file halfway through is what turns one pass into four rounds of steering. Add or substitute only
+where the repository's own conventions demand it, and say why:
+
+- CI is not GitHub Actions → `.gitlab-ci.yml`, a Jenkinsfile stage, a Makefile target. A
+  substitution, not an addition.
+- Docs live somewhere other than the README → put the section where that repo keeps them.
+- Two independently deployable bots → two specs, if one cannot cover both.
+- The repo's workflows call a `ci/` or `scripts/` directory by convention → the poller can live
+  there instead of inline, matching what is already there.
+
+Never as an addition: a coverage note (it goes in the README section and the PR body), a vendored
+`lint_suite.py` or `run_suite.py`, or a config file this skill invented. Every extra file is one more
+thing the customer maintains forever — if you cannot name the convention forcing it, it does not
+belong. Write the whole list in one pass, before the dry run; the linter runs from this skill's own
+directory and the workflow polls inline.
 
 One question per run, asked first — see *The interaction contract* above. Everything else is
 either discoverable from the repository or already supplied.
@@ -150,8 +148,8 @@ git ls-files '.github/workflows/*' '.gitlab-ci.yml' 'Jenkinsfile' | xargs grep -
   outcome of an update is **no change**.
   **Starting at step 5 is not skipping the rest.** Anything you author still runs through step 1b,
   step 4's expected-outcome contract and step 7's dry run. An update is a smaller change, not a
-  lower standard — a new case written to the old file's house style instead of the judge's contract
-  is a worse case. Pre-existing lint warnings on untouched cases are not yours to fix here.
+  lower standard — a case written to the old file's house style instead of the judge's contract is a
+  worse case. Pre-existing lint warnings on untouched cases are not yours to fix here.
 - **A workflow already calls Cekura** → extend that file in step 6 rather than adding a second one,
   reusing its secret names and trigger conventions.
 
@@ -208,8 +206,8 @@ only wastes the round trip.
 
 ### 2. Make a coverage matrix before editing
 
-Build the coverage table before editing anything. It is not a file — it goes into the README section
-and the PR body, so a reviewer sees the reasoning without the repo carrying a document that rots:
+Build the coverage table before editing. It is not a file — it goes into the README section and the
+PR body, so a reviewer sees the reasoning without the repo carrying a document that rots:
 
 | Code path / source evidence | Behavior to prove | Seat + transport | Transcript-observable assertion | Case key | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -370,10 +368,11 @@ Before editing, complete the coverage matrix row for every changed runtime symbo
 is a valid conclusion when no observable behavior changed. Do not modify unrelated cases, relax
 expected outcomes, or add generic provider tests merely because a nearby file changed.
 
-### 6. Write all three files, in one pass
+### 6. Write the files, in one pass
 
-Everything is decided by now. Write all three together, before validating anything — not one file,
-then a question, then another. That loop is what this step exists to prevent.
+Everything is decided by now, including the file list. Write it all together, before validating
+anything — not one file, then a question, then another. That loop is what this step exists to
+prevent.
 
 #### The workflow
 
@@ -415,9 +414,9 @@ suite — it is a suite that cannot run at all.
 So the order is: lint, then dry run, then fix, then dry run again, until it comes back valid.
 
 **In a terminal, if there are no credentials in the session, ask for them** — an API key and the
-agent id, or an authenticated MCP session. Do not quietly skip to the handoff. In the dashboard
-context the MCP session is already authenticated, so a missing key is a bug to report, never a
-question to ask: the user has nothing to paste. Only when the user cannot supply
+agent id, or an authenticated MCP session. Do not quietly skip to the handoff. In the dashboard the
+MCP session is already authenticated, so a missing key is a bug to report, never a question: the
+user has nothing to paste. Only when the user cannot supply
 them do you hand over unvalidated, and then you must (a) label the suite unvalidated in the
 handoff and in the coverage note, (b) give the exact command below, and (c) point out that the
 `validate` job in the CI workflow runs the same dry run, so the first pull request will catch
@@ -457,8 +456,8 @@ stop and report the blocker.
 
 Only once the dry run has returned `valid: true`.
 
-**Dashboard** — one `github_open_pull_request` call carrying all three files; never one at a
-time, never for a suite that has not validated. The body carries what the repository does not: the
+**Dashboard** — one `github_open_pull_request` call carrying every file; never one at a time,
+never for a suite that has not validated. The body carries what the repository does not: the
 coverage table, the uncovered rows and why, the dry-run plan (cases, planned runs, estimated cost),
 the two secrets, and — if step 1b found the agent contradicts the repository — that mismatch first.
 
@@ -466,7 +465,7 @@ If the write is refused with `403 Resource not accessible by integration`, the c
 `Workflows` permission named in *The deliverable* above — not repository access, which the checkout
 already proved. Say that plainly instead of suggesting the connection is broken.
 
-**Terminal** — leave the three files in the working tree and stop. Do not commit, branch or
+**Terminal** — leave the files in the working tree and stop. Do not commit, branch or
 push unless asked; offer the commit message, and `gh pr create` if they want a PR. Report what the
 PR body would have carried.
 
@@ -483,7 +482,7 @@ Leave the repository with:
 
 Report case count, channel/seat coverage, dependencies, anything needing a live run, and — if the
 trigger question went unanswered — which trigger you wrote and how to add another. A dry run proves
-the spec is valid; it does not prove a bot deployment works.
+the spec valid; it does not prove a deployment works.
 
 ## Bundled assets
 
