@@ -85,7 +85,7 @@ Do not ask about personality, metrics or tags — pick the documented defaults b
 
 ## Mode and write path
 
-**Generation is the general write path in every mode.** Behavioural scenarios, conditional actions and red-team plans all come from the same background generator, grounded in the agent description, KB and mock tools; red-team categories return conditional actions on their own; otherwise the generator's output format follows an org-level setting, not a request field. Use it for every batch, every category-level request and whenever the user says "generate". The count/category test decides: **a request for a number of scenarios ("three evaluators", "a suite for the refund flow"), for a topic or category ("billing disputes", "what it knows about the return policy"), or containing the word *generate* is a generation request even when the user hands you the facts to test** — those facts go into `extra_instructions` or `generation_files`, never into hand-written steps. **Direct create is for conditional-action scenarios whose structure is exactly known** — a user-scripted exact sequence, an IVR/DTMF flow, an infra test bracketing a timeout to the decimal. **A behavioural (`instruction`) scenario is never hand-authored**: even one fully described case is a generation call with `num_scenarios: 1` and the description in `extra_instructions`. The sole instruction-mode exception is a complete verbatim payload the user supplied to save unchanged — the generator cannot emit exact user text. (A change to an existing scenario is an update, not a create.) The path changes nothing else: a direct create meets the same step, outcome, profile, personality, tool and metric rules as generated output (see **Self-check before every direct instruction create** and the CA self-check), and it starts with **no metrics attached**. Choosing the mode is the decision; the write path follows from it. Say in the summary which scenarios were generated and which were created.
+**Generation is the general write path in every mode.** Behavioural scenarios, conditional actions and red-team plans all come from the same background generator, grounded in the agent description, KB and mock tools; red-team categories return conditional actions on their own, while ordinary generation uses the request's `simulation_type` output format. Use it for every batch, every category-level request and whenever the user says "generate". The count/category test decides: **a request for a number of scenarios ("three evaluators", "a suite for the refund flow"), for a topic or category ("billing disputes", "what it knows about the return policy"), or containing the word *generate* is a generation request even when the user hands you the facts to test** — those facts go into `extra_instructions` or `generation_files`, never into hand-written steps. **Direct create is for conditional-action scenarios whose structure is exactly known** — a user-scripted exact sequence, an IVR/DTMF flow, an infra test bracketing a timeout to the decimal. **A behavioural (`instruction`) scenario is never hand-authored**: even one fully described case is a generation call with `num_scenarios: 1` and the description in `extra_instructions`. The sole instruction-mode exception is a complete verbatim payload the user supplied to save unchanged — the generator cannot emit exact user text. (A change to an existing scenario is an update, not a create.) The path changes nothing else: a direct create meets the same step, outcome, profile, personality, tool and metric rules as generated output (see **Self-check before every direct instruction create** and the CA self-check), and it starts with **no metrics attached**. Choosing the mode is the decision; the write path follows from it. Say in the summary which scenarios were generated and which were created.
 
 | Mode | When |
 |---|---|
@@ -122,6 +122,40 @@ Do not ask about personality, metrics or tags — pick the documented defaults b
 **Supplied text outranks every mode signal.** When the user hands you scenario text — a `<scenario>` block, numbered steps, a CSV row — and asks for it as written, create it as `scenario_type: "instruction"` with that text unchanged — the `<scenario>` wrapper and numbering included: when the user's text starts with `<scenario>`, the stored `instructions` string starts with `<scenario>` and ends with `</scenario>`. Do not restructure it into conditional actions because the steps look sequential, and do not reword it; rewriting is the one thing they asked you not to do. Attach the personality, metrics, profile and tools as usual.
 
 **If actions are present, set the type.** A payload whose `instructions` carries CA-shaped JSON while `scenario_type` is absent is stored as an instruction scenario and the script never runs. Pass the object in the `conditional_actions` field with `scenario_type: "conditional_actions"`.
+
+### Batch routing before generation
+
+When a user supplies a test-case document or asks for a category batch, classify
+each requested case before making a generation call. A mixed set may require
+separate instruction and conditional-actions requests; do not force the whole
+set into the first selected format.
+
+- A temporary non-verbal effect—silence/hold, timed interruption, or background
+  noise—goes in its own generation request with `simulation_type:
+  "conditional_actions"` and the required tag stated in `extra_instructions`
+  (`<hold>` for dead air after a trigger; `<silence>` only for a short,
+  interruptible pause). When the trigger and duration are exactly known, a
+  direct conditional-actions create is equally valid. Never submit "remain
+  silent" as an instruction scenario.
+- An explicitly requested instruction scenario remains valid for a sustained
+  caller manner its personality can express, including an interruptive caller.
+  Send `simulation_type: "instruction"` explicitly on that request: when the
+  field is absent, the generator auto-selects conditional actions for any
+  interruption, silence or hold wording in `extra_instructions`, and the user
+  would get structured scenarios while you report instruction ones. Only a
+  timed/runtime interruption needs the conditional-actions tag.
+- If the user explicitly chose instruction format for a case that needs a
+  runtime tag, explain that the requested behaviour cannot be represented in
+  that format and offer the structured alternative before submitting it. Do not
+  silently omit the behaviour or claim it was generated.
+- Before drafting, read existing evaluators in the folder and one completed run
+  when available; put only reusable conventions (connection mode, call-flow
+  shape, profile and personality conventions) into `extra_instructions` — never
+  transcripts, customer data or evaluator ids.
+- Track which cases went into which request and which were deferred; after
+  polling, reconcile requested cases against persisted evaluators as described
+  under **Post-generation verification**, reporting validation rejections
+  separately from provider or evaluation failures.
 
 ## Behavioral scenarios — shaping generation
 
