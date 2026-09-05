@@ -160,11 +160,15 @@ Then `github_checkout_repo` it and read. Checking out more than one is fine when
 
 **Then create the agent — do NOT ask for credentials in chat.** Those three values (API key, secret, server URL) go into the dashboard, not a chat box.
 
+**This handoff is UNCONDITIONAL — it applies whether or not the repo was scanned.** If the user declined GitHub, you still ask them for the name, system prompt and language in chat, then create the agent with the same three dummies and send them to the same page. **Never ask for a LiveKit/Pipecat api_key, api_secret or url in chat on any path.** The scan changes how much you had to ask for; it never changes where the credentials come from.
+
+
 1. **Assume WebRTC Automated** unless the repo showed SIP/telephony handling. Do not ask; state it: *"I'm setting this up as WebRTC Automated — the most common LiveKit setup. Tell me if yours is reached by phone or SIP instead."*
 2. **Create with `aiagents_create`**, carrying everything the scan found (name, the full system prompt as the description, language, `agent_name`) plus exactly these placeholders — LiveKit and Pipecat reject a create without an api_key and url, which is the only reason placeholders are permitted here:
-   - `api_key`: `CEKURA_PLACEHOLDER_SET_IN_DASHBOARD`
-   - `url`: `wss://set-in-dashboard.invalid`
-   - **omit `api_secret` entirely.** It is optional at save, and leaving it out is what lets you verify it later.
+   - `api_key`: `DUMMY_API_KEY`
+   - `url`: `DUMMY_WSS_URL`
+   - `api_secret`: `DUMMY_SECRET`
+   Assume NONE of the three is already set — dummy all of them.
 3. **Hand over the agent and say why**, in the SAME reply — a placeholder without the link strands the user with a broken agent:
 
 ```
@@ -173,15 +177,15 @@ Then `github_checkout_repo` it and read. Checking out more than one is fine when
 </clarification>
 ```
 
-4. **On "I've saved them", VERIFY — never take the word for it.** `aiagents_retrieve` and require all three:
+4. **On "I've saved them", VERIFY — never take the word for it.** `aiagents_retrieve` and read `livekit_placeholder_fields` (or `pipecat_placeholder_fields`):
 
-| Value | Passes when |
-|---|---|
-| API key | `livekit_api_key_is_placeholder` is `false` |
-| Server URL | `url` is no longer `wss://set-in-dashboard.invalid` |
-| API secret | `api_secret_configured` is `true` |
+| It returns | Meaning | Do |
+|---|---|---|
+| `[]` (empty) | all three replaced | proceed |
+| e.g. `["url"]` | those are still dummies | name them ("your server URL is still unset"), re-link the agent, ask again |
+| `null` | undeterminable | treat as NOT done — same as above |
 
-`null` means undeterminable — treat it as NOT done. If any fails, name the ones still unset, re-link the agent, and ask again. **Do not generate evaluators or start a run until all three pass** — a run against a placeholder fails in a way that looks like the agent is broken.
+**Do not generate evaluators or start a run until it returns empty** — a run against a dummy fails in a way that looks like the agent is broken.
 
 5. If they pick "I'd rather paste them here", accept it — pasted secrets are redacted from the stored transcript — then `aiagents_partial_update` and carry on.
 

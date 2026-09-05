@@ -4,6 +4,24 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.16.1 — 2026-09-04
+
+**All three LiveKit/Pipecat credentials get a dummy, and the handoff is
+unconditional.** Two corrections to 0.16.0:
+
+- `DUMMY_API_KEY`, `DUMMY_SECRET`, `DUMMY_WSS_URL` — `api_secret` is no longer
+  omitted. Omitting it was a verification trick, but it left the agent's config
+  page showing two fields to fill and one that looked done, which is the
+  opposite of "replace these three".
+- Verification now reads `livekit_placeholder_fields` / `pipecat_placeholder_fields`,
+  which return the LIST of credentials still holding a dummy. `[]` proceeds; a
+  non-empty list is named back to the user ("your server URL is still unset");
+  `null` is undeterminable and also blocks.
+- **The handoff fires whether or not the repo was scanned.** A user who declines
+  GitHub is still asked for name/prompt/language in chat, then gets the same
+  agent-with-dummies and the same link. Credentials are never requested in chat
+  on any path.
+
 ## 0.16.0 — 2026-09-04
 
 **LiveKit/Pipecat agents are now created first and finished in the dashboard.**
