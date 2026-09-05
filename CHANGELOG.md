@@ -4,6 +4,16 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.0 — 2026-09-04
+
+Added `cekura-agent-benchmark-report`, an end-to-end voice-agent benchmark
+workflow. It derives core workflows, creates and validates a 5–10 evaluator
+suite, runs an unevenly weighted 100-call batch, and produces a benchmark
+report. The skill
+requires a cost estimate and explicit approval before paid pilot or batch calls,
+and requires revised approval when paid evaluator repairs exceed the approved
+contingency.
+
 ## 0.14.0 — 2026-09-03
 
 **`cekura-infra-test-suite` now produces a Tests-as-Code suite in the
