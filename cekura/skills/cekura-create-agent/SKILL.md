@@ -13,14 +13,16 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "1.2.1"
+  version: "1.3.0"
 ---
 
 # Cekura Create Agent
 
 Full main agent setup flow — **pick provider early, it shapes everything that follows**.
 
-> **LiveKit / Pipecat note:** keep `provider.type = livekit` or `pipecat` regardless of how Cekura connects (phone, WebRTC, chat). Never reroute a LiveKit/Pipecat agent into `self_hosted` just because it has a phone number — these providers support phone-based simulations and SDK integration natively under their own type.
+> **LiveKit / Pipecat note:** keep `provider.type = livekit` or `pipecat` regardless of how Cekura connects (phone, WebRTC, chat). Never reroute a LiveKit/Pipecat agent into `custom` just because it has a phone number — these providers support phone-based simulations and SDK integration natively under their own type. They are also the two **code-based** providers: nothing auto-imports, so Phase 2 checks GitHub, reads the configuration out of the agent's own repo, and creates the agent with placeholder credentials rather than asking for a secret in chat.
+>
+> `self_hosted` is NOT a valid `provider.type` — the v2 endpoint rejects it. Use `custom`; `self_hosted` survives only as a `chat_agent_details.type`.
 
 ```
 Standard path (KoreAI, Genesys, Cisco, self-hosted):
@@ -86,7 +88,7 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 - Make decisions about a phase without first reading its phase file
 - Ask the user "shall we continue?" between phases — just continue
 - Give the user a list of steps to do manually — execute them yourself using Bash and API calls
-- Offer a placeholder URL or "connect the real server later" as an option — if a WebSocket URL is needed, get a real working one now by running the server and ngrok yourself
+- Offer a placeholder URL or "connect the real server later" as an option — if a WebSocket URL is needed, get a real working one now by running the server and ngrok yourself. **One carve-out, and only one:** LiveKit and Pipecat provider *credentials* are created as marked placeholders on purpose, so that no provider secret is ever typed into a chat — see Phase 2's code-based flow. That is a deliberate mechanism with a verification step attached, not permission to defer a WebSocket URL.
 
 **Do it yourself. Do not instruct.** When something needs to be done — making an API call, updating a field, running a scenario — do it directly using available tools. Do not write out steps for the user to follow. Only ask the user when you genuinely cannot proceed without their input (e.g. a file they need to upload, a decision only they can make).
 

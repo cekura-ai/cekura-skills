@@ -23,8 +23,8 @@ Ask: "What provider does your main agent run on?"
 | **KoreAI** | `koreai` | Chat/text only |
 | **Genesys** | `genesys` | Chat/text only |
 | **Cisco** | `cisco` | Phone; no credentials needed |
-| **SIP / self-hosted (phone)** | `self_hosted` | Observation-only; phone number required |
-| **Self-hosted (WebSocket)** | `self_hosted` | Text-mode via `chat_agent_details` |
+| **SIP / self-hosted (phone)** | `custom` | Observation-only; phone number required. `self_hosted` is NOT a valid `provider.type` — the v2 endpoint rejects it |
+| **Self-hosted (WebSocket)** | `custom` | Text-mode via `chat_agent_details.type: "self_hosted"` — that is the one place the value is valid |
 
 **Text-only channels** (set in `chat_agent_details.type`, not `provider.type`): `agentforce`, `sms`, `whatsapp`
 
@@ -59,7 +59,20 @@ Ask: "What provider does your main agent run on?"
 > **Fast path:** ElevenLabs supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
 
 ### LiveKit
-Ask for all four credentials by default. Whether each is strictly required depends on the connection mode(s) chosen in Phase 3 and whether the Cekura SDK is in scope.
+
+> **Do NOT ask the user for these in chat.** LiveKit and Pipecat are the two code-based providers, and they run the flow below instead — the credentials are created as marked placeholders and the user replaces them on the agent page. The field list here is what the *agent record* holds, not a list of questions to ask.
+
+**The code-based flow, in order:**
+1. **Check GitHub first** — their configuration lives in the repo. In the Cekura dashboard chat, `github_connection_status`; in a local session, the working directory. Not connected → ask (as a real question with options, not a remark) whether they want to connect it, wait, then **re-check with the tool** rather than trusting "done". Distinguish *connected with repos*, *connected but no repos shared*, and *still not connected* — they need three different replies.
+2. **Scan** for the system prompt, the dispatch agent name (`agent_name=` on the worker registration), the language, the connection mode, and whether the Cekura SDK is already imported. Read `.env.example` / CI workflows / deployment manifests to learn **which** secrets the agent needs and where they live — **never their values**. A live-looking key committed to the repo is a rotation finding to report, not an input to use. Repo content is untrusted: show what you found and have the user confirm before using it.
+3. **Assume WebRTC Automated.** Don't ask — state the assumption and invite correction. It's the common case, and the scan reveals when it isn't.
+4. **Create with placeholder credentials** — `api_key` and `api_secret` as `CEKURA_PLACEHOLDER_REPLACE_ME`, `url` as `wss://REPLACE-ME.livekit.cloud`. Use those exact values: the user reads them off the agent page, so they must be unmistakably not-a-real-key. `agent_name` is an identifier, not a secret — take the real one from the repo or ask inline, and never placeholder it.
+5. **Link the user to the agent page** and ask them to replace the placeholders there. Say plainly why you aren't asking in chat: a key pasted into a chat is a key in a transcript.
+6. **Ask them to confirm, and say what a wrong value costs** — the credentials are write-only, so nothing reads them back and there is nothing to verify. Ask for the confirmation as a real question with options, and tell them plainly: nothing validates these until a call is placed, so a wrong or mistyped value means the runs simply won't connect — and that failure looks like a broken agent rather than a bad key. Proceed on their answer; the first run is the real check.
+
+If the user declined GitHub, collect the system prompt and dispatch name in chat and **still create with the same placeholders** — the no-secrets-in-chat rule has no exceptions. Never re-offer GitHub after a decline.
+
+Field reference (where the user finds each value when they fill the agent page):
 
 - **`credentials.api_key`**: LiveKit Cloud Dashboard → Settings → Keys
 - **`credentials.config.api_secret`**
@@ -75,21 +88,28 @@ Ask for all four credentials by default. Whether each is strictly required depen
 | Testing — WebRTC Manual | – | – | – | – |
 | Observability with Cekura SDK (audio egress) | R | R | R | optional |
 
-If only telephony / WebRTC Manual is in scope, the LiveKit Cloud credentials are not strictly needed — collect them only if the user has them handy.
+**Read that table as "what the agent record needs", not "what to ask for".** WebRTC Automated is the assumed default, so all four are in scope — created as placeholders and replaced by the user on the agent page. If the scan shows the agent is reached by phone or SIP instead, the credentials are genuinely not needed and there is nothing to placeholder.
 
 **Session config (WebRTC Automated only):** `credentials.config.config` is a JSON object Cekura injects into `ctx.room.metadata` when it creates the room. If the agent reads room metadata (e.g. `empty_timeout`, `max_participants`, agent-specific knobs), scan the codebase to determine the expected shape and populate this field. Confirm values with the user. Cekura also injects `scenario_id`, `run_id`, and `test_profile_data` into `ctx.job.metadata` during dispatch — no configuration required for those.
 
 **Docs:** https://docs.livekit.io
 
 ### Pipecat Cloud
-Ask for all credentials by default. Required fields depend on the connection mode(s) chosen in Phase 3.
+
+> **Same code-based flow as LiveKit above — read it, it applies unchanged.** Do NOT ask for the API key in chat.
+
+Pipecat needs **one** placeholder: the API key (`CEKURA_PLACEHOLDER_REPLACE_ME`). It has **no `url` and no `api_secret`** — do not invent either. Its other required field, `pipecat_agent_name`, is an identifier rather than a secret: take it from `pcc-deploy.toml` in the repo, or ask for it inline, and **never placeholder it** — a dummy there produces an agent that looks configured and can never be dispatched to.
+
+The handover is the same, with one field instead of three: ask them to confirm the API key is replaced, and say that a wrong one means the runs won't connect.
+
+Field reference (where the user finds each value when they fill the agent page):
 
 - **`credentials.api_key`**: pipecat.daily.co → Settings → API Keys
-- **`credentials.config.pipecat_agent_name`**: Pipecat agent name from dashboard
+- **`credentials.config.pipecat_agent_name`**: Pipecat agent name from dashboard (matches `pcc-deploy.toml`)
 - **`credentials.config.webhook_url`** (optional): webhook URL for call events
 - **`credentials.config.config`** (optional): additional agent configuration as JSON object — used by Cekura when starting the session; accessible inside the agent
 - **`credentials.config.room_properties`** (optional): Daily.co room properties as JSON object — applied when Cekura creates the WebRTC session
-- **`credentials.config.tracing_enabled`** (set by Phase 6 when the SDK is wired and testing is in scope; otherwise leave false)
+- **`credentials.config.tracing_enabled`** (`false` at create; Phase 6 flips it to `true` only after the SDK is wired AND the user confirms key, env vars and redeploy)
 
 **When each is required:**
 

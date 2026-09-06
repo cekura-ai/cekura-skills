@@ -24,9 +24,13 @@ Retrieve the agent (`aiagents_retrieve`) and match its configured connection:
 
 **Pick the tool from the agent's ACTUAL connection — never downgrade.** `scenarios_run_text` is for chat/text agents only; running a voice agent's verification as a text simulation (e.g. because provider credentials are unverified) is NOT a verification — it proves nothing about the connection. If no working connection exists, that IS the finding: surface it and collect a connection (phone number, or fixed credentials) instead of running a fake check.
 
+**LiveKit / Pipecat — this run is the first real check on the credentials.** They were created as placeholders and replaced by the user on the agent page; nothing reads them back, so this call is where a wrong or mistyped key, secret or URL first shows up. Two consequences: don't run before the user has confirmed they replaced them (phase2 Step 5), and if the call never connects, **say the credentials are the first thing to check** rather than reporting it as an unexplained failure. A placeholder or a typo fails exactly like a broken agent, and users spend hours debugging code that works.
+
 ## 5b. Execute
 
-Run **one single scenario, `frequency: 1`** — this run is the end-to-end verification, not a coverage sweep. Voice calls take 1–3 minutes. Once it verifies clean (5c), the user can run the rest of the suite.
+**Start the run immediately — no question first.** Not "ready to run?", not "which scenario should we start with?", not "shall I kick this off?". The user opted into onboarding, which is the authorization; pick one of the generated scenarios yourself (any of them proves the connection, which is this run's only job) and call the run tool.
+
+Run **one single scenario, `frequency: 1`** — this run is the end-to-end verification, not a coverage sweep. Voice calls take 1–3 minutes. Once it verifies clean (5c), offer to run the rest of the suite.
 
 ## 5c. Verification gate — the whole point
 
