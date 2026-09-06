@@ -11,7 +11,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.5.2"
+  version: "0.6.0"
 ---
 
 # Cekura Platform Onboarding
@@ -43,7 +43,9 @@ This skill executes **one phase at a time, in order**. For each phase:
 
 **Ask questions ONLY to collect missing inputs or resolve genuine ambiguity** (provider choice, credentials, phone number, self-hosted confirmation). Don't pause to re-confirm an action the flow already implies — the user invoked onboarding, which is a request to create the agent, enable metrics, generate evaluators, and start the first verification run. (Your client's own tool-permission prompts still apply as normal.) No "ready to continue?", no "shall I create it?", no "want me to proceed?" — just do the step and narrate it. The one exception: when a **gate is blocked** (e.g. the testing-path description gate) present the blocker and the options.
 
-**Onboarding is self-contained.** Do NOT open the sibling cekura-create-agent skill (or any other skill) during onboarding — everything needed (credential matrix, description quality bar) is inlined in this skill's phase files. cekura-create-agent's phase sequence covers post-onboarding work (SDK integration, mock tools, knowledge base) and running it mid-onboarding hijacks the flow into those steps; it is a Phase-6 handoff only.
+**Onboarding is self-contained.** Do NOT open the sibling cekura-create-agent skill (or any other skill) during onboarding — everything needed (credential matrix, description quality bar, the LiveKit/Pipecat code-based flow, SDK integration) is inlined in this skill's phase files. cekura-create-agent's phase sequence covers post-onboarding work (mock tools, knowledge base, dynamic variables) and running it mid-onboarding hijacks the flow into those steps; it is a Phase-6 handoff only.
+
+**LiveKit and Pipecat take a different route through Phase 2** — they are the two code-based providers, where nothing auto-imports and the configuration lives in the user's repo. That flow checks GitHub first, reads the agent's own code, and creates the agent with placeholder credentials so no provider secret is ever typed into chat. It is written out in [phase2-agent.md](phase2-agent.md) §2b; do not improvise it from the credential matrix above.
 
 ## The Phases
 
@@ -55,6 +57,7 @@ This skill executes **one phase at a time, in order**. For each phase:
 | 4T | [phase4-testing-evaluators.md](phase4-testing-evaluators.md) | Generate first evaluators (generation-first) | testing |
 | 5T | [phase5-testing-first-run.md](phase5-testing-first-run.md) | First test run + **verification gate** | testing |
 | 6T | [phase6-testing-next.md](phase6-testing-next.md) | What's next (SDK, mock tools, custom metrics) | testing |
+| 7T | [phase7-sdk-pr.md](phase7-sdk-pr.md) | Offer the Cekura SDK and open the integration PR — LiveKit/Pipecat, post-results only | testing |
 | 3O | [phase3-observability-ingest.md](phase3-observability-ingest.md) | Ingest call logs + **verification gate** | observability |
 | 4O | [phase4-observability-metrics.md](phase4-observability-metrics.md) | Configure starter metrics | observability |
 | 5O | [phase5-observability-evaluate.md](phase5-observability-evaluate.md) | Run metric evaluation | observability |

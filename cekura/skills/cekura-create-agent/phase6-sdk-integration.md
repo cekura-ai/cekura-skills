@@ -8,13 +8,23 @@ For LiveKit and Pipecat, integrate the Cekura SDK directly into the user's agent
 
 > **Start:** Announce "Starting Phase 6 — SDK Integration" before doing anything in this phase.
 
-## 6a. Brief the user (do not ask permission)
+## 6a. Offer it after results, then get an explicit yes
 
-State one sentence about what the SDK adds and that you are integrating now:
+**Timing:** offer the SDK only once the user has seen real results — a completed run, a transcript, scores. The pitch is "here's what more Cekura can capture", and that lands only against something they have watched work. Before results it is an upsell for an unproven product.
 
-> "I'll integrate the Cekura SDK into your agent code now. It adds transcripts, tool calls, metrics, OTel traces, session logs, and dual-channel audio (in observe mode) to every call — none of which is available without it. Stop me if you'd prefer not to touch the agent code."
+Let them pick what it's for — testing, observability, or both — and say in one sentence what it adds:
 
-Do not wait for confirmation. Proceed unless the user objects. If they object, jump to [6h. Falling back when the user refuses the SDK](#6h-falling-back-when-the-user-refuses-the-sdk).
+> "Your tests run against the agent from the outside. The SDK adds what only the agent itself sees: per-turn transcripts, tool calls and their arguments, latency breakdowns, OTel traces — plus dual-channel audio on production calls. It's a small change to your agent code."
+
+**Then show a short plan before touching anything: which files, one line each, what it unlocks. Not a tutorial, not the diff.** Get an explicit yes on that plan.
+
+> - `requirements.txt` — add `cekura[livekit]`, the tracer package
+> - `agent/main.py` — construct the tracer and call `track_session` before `session.start()`, which is what captures transcripts, tool calls and traces
+> - `.env.example` — document `CEKURA_API_KEY` and `CEKURA_AGENT_ID` so the deploy knows what to set
+
+If the user declines at either point, jump to [6h. Falling back when the user refuses the SDK](#6h-falling-back-when-the-user-refuses-the-sdk) and do not re-pitch.
+
+**Where the edits land depends on the session.** With direct file access (local Claude Code in the repo), edit in place. In the Cekura dashboard chat there is no local checkout: check the repo out through the GitHub connection, make the edits there, and **propose them as a pull request** — never describe the changes and leave the user to apply them.
 
 ## 6b. Pick the methods to wire
 
@@ -78,6 +88,8 @@ Update the dependency manifest, then run the install. Skill executes the install
 
 ## 6f. Make the code edits
 
+**No secret in the diff — ever.** The API key and the agent id are both read from environment variables (`CEKURA_API_KEY`, `CEKURA_AGENT_ID`). Never hardcode either, never inline a real key, never commit a `.env`. A credential in a pull request is a credential in the repo's history even after the PR is closed — and the agent id is inlined here rather than templated for exactly the same reason: one shape, no judgement call about which values are "safe enough".
+
 Use `Edit` to modify the entrypoint(s) in place. See `references/livekit-tracing.md` and `references/pipecat-tracing.md` for the full snippets and edge cases.
 
 ### LiveKit Python
@@ -90,7 +102,7 @@ from cekura.livekit import LiveKitTracer
 
 cekura = LiveKitTracer(
     api_key=os.getenv("CEKURA_API_KEY"),
-    agent_id=<AGENT_ID_FROM_PHASE_5>,
+    agent_id=int(os.getenv("CEKURA_AGENT_ID", "0")),
 )
 ```
 
@@ -113,7 +125,7 @@ import { LiveKitTracer } from '@cekura/livekit';
 
 const cekura = new LiveKitTracer({
   apiKey: process.env.CEKURA_API_KEY || '',
-  agentId: <AGENT_ID_FROM_PHASE_5>,
+  agentId: Number(process.env.CEKURA_AGENT_ID),
 });
 ```
 
@@ -137,7 +149,7 @@ from cekura.pipecat import PipecatTracer
 
 cekura = PipecatTracer(
     api_key=os.getenv("CEKURA_API_KEY"),
-    agent_id=<AGENT_ID_FROM_PHASE_5>,
+    agent_id=int(os.getenv("CEKURA_AGENT_ID", "0")),
 )
 
 # Testing
@@ -178,18 +190,29 @@ If the pipeline is missing them, ask the user before adding — it changes pipel
 
 If yes, edit the pipeline accordingly.
 
-## 6g. Wire CEKURA_API_KEY into the runtime
+## 6g. Hand over the actions only the user can do
 
-Set the env var so the SDK can pick it up:
+The integration is not finished work until three things happen, and **none of them can be done from here**. End the pull request body (or the summary, on a local session) with exactly these:
 
-- If `.env` or `.env.example` exists in the repo, append `CEKURA_API_KEY=<key>` (or a placeholder with a comment).
-- Otherwise, tell the user explicitly how to set it for their runtime (shell export, deployment env, secret manager). Never hardcode the key in code.
+```markdown
+## Before this works — three things only you can do
+
+1. **Create a Cekura API key** — Settings → API Keys → Create. It's shown once.
+2. **Set both env vars** wherever this agent runs (deployment env, secret manager — not in the repo):
+   - `CEKURA_API_KEY` — the key from step 1
+   - `CEKURA_AGENT_ID` — `<the agent id>`
+3. **Redeploy the agent** so it picks them up.
+
+Tell Cekura once all three are done and tracing gets switched on.
+```
+
+In `.env.example`, document both variables **as names only, with no values**. Never write a real key into any file in the repo.
 
 ## 6h. Falling back when the user refuses the SDK
 
 If the user objects to the SDK edits:
 
-- **Update the Cekura agent record:** PATCH `credentials.config.tracing_enabled = false` via `mcp__cekura__aiagents_partial_update`. The `true` set in Phase 5 was provisional; this clears the per-run wait.
+- **Nothing to undo on the agent record:** Phase 5 creates with `tracing_enabled: false`, and it only ever becomes `true` after a confirmed deploy. Verify it is still `false` (`aiagents_retrieve`) and move on — no PATCH needed unless an earlier step set it.
 - **If only testing was in scope** — continue without the SDK. Tests will still run via WebRTC Automated / Telephony / Manual, but the run data is limited to what the provider exposes (no agent-side transcripts, no tool-call attribution, no OTel traces).
 - **If observability is in scope** — neither LiveKit nor Pipecat has a non-SDK observability path on Cekura. Point the user to Custom Observability:
 
@@ -203,9 +226,12 @@ After the integration is complete, PATCH `credentials.config.tracing_enabled` to
 
 | Situation | `tracing_enabled` |
 |-----------|-------------------|
-| SDK wired, testing in scope (testing-only or both) | `true` |
+| SDK wired **and the user has confirmed all three of 6g** (key created, env vars set, agent redeployed), testing in scope | `true` |
+| SDK wired but the deploy steps aren't confirmed — PR merged is NOT enough | `false` |
 | SDK wired, observability only | `false` |
 | User refused SDK | `false` |
+
+**Ask before flipping it**, with options (`["All three done", "Not yet"]`) — don't infer it from a merged PR. Setting `true` while no SDK is actually running makes every test run wait on a webhook that never arrives and time out. If they say not yet, leave it `false`, say plainly that traces stay off until the deploy lands, and carry it as an open item.
 
 Use `mcp__cekura__aiagents_partial_update` with a JSON body of the form:
 

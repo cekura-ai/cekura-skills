@@ -51,7 +51,7 @@ All other fields are optional. PATCH requires no mandatory fields.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `type` | enum | `vapi\|retell\|elevenlabs\|bland\|livekit\|pipecat\|synthflow\|agora\|koreai\|genesys\|cisco\|amazon_connect\|telnyx\|self_hosted\|custom` |
+| `type` | enum | `vapi\|retell\|elevenlabs\|bland\|livekit\|pipecat\|synthflow\|agora\|koreai\|genesys\|cisco\|amazon_connect\|telnyx\|custom` — `self_hosted` is rejected here; it is a `chat_agent_details.type` only |
 | `agent_id` | string\|null | Voice agent ID on provider platform |
 | `credentials` | AgentCredentials\|null | `{api_key (write-only), config}` |
 | `chat_agent_details` | ChatAgentDetails\|null | `{type, config}` |
@@ -73,7 +73,7 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `koreai` | `client_id`, `bot_id` | `host` (default: https://bots.kore.ai) |
 | `genesys` | `client_id`, `region` | — |
 | `cisco` | — | — |
-| `self_hosted` | — | — (use `provider.send_post_conversation_metadata` at provider level) |
+| `custom` | — | — (use `provider.send_post_conversation_metadata` at provider level) |
 
 ## chat_agent_details by type
 
