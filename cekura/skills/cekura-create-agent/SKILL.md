@@ -22,7 +22,7 @@ metadata:
 
 Full main agent setup flow — **pick provider early, it shapes everything that follows**.
 
-> **LiveKit / Pipecat note:** keep `provider.type = livekit` or `pipecat` regardless of how Cekura connects (phone, WebRTC, chat). Never reroute a LiveKit/Pipecat agent into `self_hosted` just because it has a phone number — these providers support phone-based simulations and SDK integration natively under their own type.
+> **LiveKit / Pipecat leave this skill at the provider answer.** They are the code-based providers — prompt, name, language and dispatch name live in the user's repo — so the moment the provider is LiveKit or Pipecat, call the `Skill` tool with `cekura:cekura-livekit-pipecat-onboarding` (bare `cekura-livekit-pipecat-onboarding` if that name is reported unavailable) and follow it from its first phase. Do NOT continue to Phase 3: it asks connection mode, name and language, none of which that flow asks. The dashboard runtime denies `aiagents_create` for these two provider types until that skill is loaded. Forks and wrappers built on the framework ("Dograh via Pipecat") are `self_hosted` and stay here.
 
 ```
 Standard path (KoreAI, Genesys, Cisco, self-hosted):
@@ -30,8 +30,8 @@ Phase 1  → Phase 2  → Phase 3  → Phase 4  → Phase 5  → Phase 6  → Ph
 Project    Provider   Basics &   Description  Create     SDK        Mock       KB         Dyn Vars   Advanced   Verify
                       Conn Type               agent     (no-op)     Tools
 
-LiveKit / Pipecat path (Phase 6 wires the Cekura SDK in the user's repo):
-Phase 1  → Phase 2  → Phase 3  → Phase 4  → Phase 5  → Phase 6  → Phase 7  → Phase 8  → Phase 9  → Phase 10 → Phase 11
+LiveKit / Pipecat path:
+Phase 1  → Phase 2 (provider = LiveKit/Pipecat) → hand off to `cekura-livekit-pipecat-onboarding` — none of the phases below run
                                                        SDK
                                                        integration
 
@@ -49,10 +49,10 @@ Project    Provider   Create     Advanced   Verify
 |-------|------|--------------|-------------------|-------------------|------------------------------------------------|
 | 1 | [phase1-project.md](phase1-project.md) | List projects, pick `project_id` | **✓ required** | **✓ required** | **✓ required** |
 | 2 | [phase2-provider.md](phase2-provider.md) | Choose provider; collect all credentials upfront | **✓ required** | **✓ required** | **✓ required** (api_key + agent_id only) |
-| 3 | [phase3-basics.md](phase3-basics.md) | Main agent name, language, connection mode(s) (multi-select for LiveKit/Pipecat) | **✓ required** | **✓ required** | skipped — auto-imported |
+| 3 | [phase3-basics.md](phase3-basics.md) | Main agent name, language, connection mode(s) | **✓ required** | handed off in Phase 2 | skipped — auto-imported |
 | 4 | [phase4-description.md](phase4-description.md) | Collect main agent description — the full system prompt | **✓ required** | **✓ required** | skipped — auto-imported |
 | 5 | [phase5-create.md](phase5-create.md) | Create the main agent — POST v2, full provider examples | **✓ required** | **✓ required** | **✓ required** (auto-import path) |
-| 6 | [phase6-sdk-integration.md](phase6-sdk-integration.md) | SDK integration in the user's repo (LiveKit / Pipecat only) | no-op | **✓ required** (unless explicitly refused) | no-op |
+| 6 | [phase6-sdk-integration.md](phase6-sdk-integration.md) | SDK integration in the user's repo — local edit-in-place variant | no-op | handed off in Phase 2 (its skill raises a PR instead) | no-op |
 | 7 | [phase7-mock-tools.md](phase7-mock-tools.md) | Main agent mock tools — auto-fetch (managed provider or self-hosted MCP) or manual | **✓ required** | **✓ required** | skipped — auto-imported |
 | 8 | [phase8-knowledge-base.md](phase8-knowledge-base.md) | Main agent knowledge base — upload KB files | **✓ required** | **✓ required** | skipped — auto-imported |
 | 9 | [phase9-dynamic-variables.md](phase9-dynamic-variables.md) | Main agent dynamic variables — register via API | **✓ required** | **✓ required** | skipped — auto-imported |
@@ -84,7 +84,7 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 - Skip a phase for a non-auto-import provider because it "seems done"
 - Stop after Phase 5 because the main agent was created
 - Bundle multiple phases into one response without completing each
-- Skip phases for non-auto-import providers (e.g. "phases 7–10 not needed" for LiveKit) — for these providers every phase is mandatory
+- Skip phases for non-auto-import providers (e.g. "phases 7–10 not needed" for a self-hosted agent) — for these providers every phase is mandatory
 - Make decisions about a phase without first reading its phase file
 - Ask the user "shall we continue?" between phases — just continue
 - Give the user a list of steps to do manually — execute them yourself using Bash and API calls
@@ -94,7 +94,7 @@ This skill executes **one phase at a time, in order**. Do not plan ahead, do not
 
 **Use MCP tools, not raw API calls.** The Cekura MCP server is configured and authenticated. Use it directly for all Cekura platform operations — listing projects, creating agents, registering variables, running scenarios, fetching results. Do not generate curl commands for operations that the MCP server can perform. Raw curl is only a fallback when a specific operation is not available via MCP.
 
-**All 11 phases are mandatory for non-auto-import providers — execute every phase, every time, no exceptions.** Phase 6 (SDK Integration) is a no-op for providers other than LiveKit/Pipecat — announce it and continue. For VAPI, Retell, ElevenLabs, Bland, and Synthflow using `configure_from_provider`, phases 3, 4, 6, 7, 8, and 9 are skipped (the backend imports all of that automatically). The phase files for those phases contain explicit skip instructions — follow them.
+**All 11 phases are mandatory for non-auto-import providers — execute every phase, every time, no exceptions** (LiveKit and Pipecat excepted: they hand off in Phase 2 and never reach Phase 3). Phase 6 (SDK Integration) is a no-op for every provider that reaches it — announce it and continue. For VAPI, Retell, ElevenLabs, Bland, and Synthflow using `configure_from_provider`, phases 3, 4, 6, 7, 8, and 9 are skipped (the backend imports all of that automatically). The phase files for those phases contain explicit skip instructions — follow them.
 
 **The skill does not end until Phase 11's verification run succeeds.** If the run reveals issues (missing dynamic variables, broken mock tools, wrong connection settings, silent agent), go back to the relevant phase, fix the issue, and retry the run. Never exit before a real conversation is confirmed in the transcript.
 
