@@ -4,6 +4,19 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.1 — 2026-09-06
+
+**Dashboard links now resolve on every environment.** The agent had no way to
+learn the dashboard host: the prompt pointed it at a sandbox file the guardrail
+does not let it read, and nothing else carried the value. It looked correct
+wherever the host was guessable — a guessed `*.cekura.ai` that matches the real
+one survives the link-scrubber — and produced link-less replies everywhere else.
+The host now arrives as `dashboard_url=` in the workspace line, and the
+LiveKit/Pipecat flow builds its agent-page and Integrations links from that.
+
+Requires the matching backend change to be deployed; without it the agent
+correctly omits the link rather than guessing.
+
 ## 0.15.0 — 2026-09-06
 
 **LiveKit and Pipecat now onboard from the repo instead of from a
