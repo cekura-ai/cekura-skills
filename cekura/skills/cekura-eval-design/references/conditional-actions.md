@@ -700,7 +700,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 
 ## Multi-Turn Probe & Duration Control
 
-Scenarios that fire a fixed sequence of caller lines against a live agent (behavior probes, out-of-scope/hallucination challenges, and especially cross-agent benchmarks) share a failure mode the basic patterns don't cover: the **call runs to the duration cap** even though every caller line is scripted. The cause is almost always one of the three below, and the fixes are cheap.
+Any CA scenario that fires a **fixed sequence of caller lines** at a live agent can hit a failure mode the basic patterns don't cover: the **call runs to the duration cap** even though every caller line is scripted. The three causes below are the usual ones, and the fixes are cheap.
 
 ### The condition-matcher stall (and when to go positional)
 
