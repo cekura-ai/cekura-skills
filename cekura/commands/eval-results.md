@@ -72,7 +72,7 @@ If previous results exist, compare to identify new failures that were previously
 Flag evals with missing configuration:
 - No baseline metrics attached → results only show call completion, not correctness
 - Missing `TOOL_END_CALL` → elongated calls, wasted credits
-- No `max_duration` on the scenario → a stalled call runs to the project cap; set one a little above the longest legitimate call
+- Calls that ran to the project cap → the main agent stalled; if that scenario should end sooner, give it its own `max_duration` rather than changing the project setting
 - Missing test profiles → identity data likely hardcoded in instructions
 
 ## Tips

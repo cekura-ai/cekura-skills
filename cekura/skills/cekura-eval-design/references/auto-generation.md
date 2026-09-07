@@ -53,7 +53,7 @@ Behavioural (`instruction`) scenarios are always generated — a single fully de
 
 8. **Multilingual batches: generate per language** — for "N per language" requests, run one generation per language with that language's personality (see `choosing-personality.md`) instead of one mixed batch. Mixed batches tend to stamp every scenario with a single language and drift the per-language counts.
 
-9. **No `max_duration` field** — the generate endpoint does not accept a duration cap, so generated scenarios inherit the project's `max_call_duration`. Set `max_duration` (10–3600 s) on each generated scenario afterwards with a PATCH or the bulk update, a little above the longest legitimate call for the flow.
+9. **No `max_duration` field** — the generate endpoint does not accept a duration cap; generated scenarios inherit the project's `max_call_duration`, which is the project owner's setting and normally the right one. Only a scenario that needs its own bound (idle/timeout/hold tests, a user-requested limit, a short flow on a paid transport) gets `max_duration` (10–3600 s) afterwards by PATCH — see SKILL.md § Duration cap.
 
 ## Reliability Protocol
 
@@ -75,6 +75,6 @@ The generator is a background pipeline that can stall, partially complete, or dr
 3. **Language** — for non-English requests, check `scenario_language`, the personality's language, and that `first_message`/`instructions` are actually written in the target language (gotchas 2, 6, 8).
 4. **Roles** — instructions are caller-side, first person (gotcha 7).
 5. **Scaffolding** — every scenario has a non-empty `expected_outcome_prompt` (pass `generate_expected_outcomes: true`; patch any that came back empty), the right tools (`TOOL_END_CALL`; `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows; `TOOL_DTMF` for IVR), and the baseline metrics.
-6. **Bounds and metric fit** — `max_duration` set on every scenario (gotcha 9); the inherited project metrics reviewed per scenario — baseline kept, a flow-specific metric kept only where the scenario exercises that flow or it carries an N/A trigger (SKILL.md § Metrics).
+6. **Bounds and metric fit** — `max_duration` set on the scenarios that need their own bound, and only those (gotcha 9); the inherited project metrics reviewed per scenario — baseline kept, a flow-specific metric kept only where the scenario exercises that flow or it carries an N/A trigger (SKILL.md § Metrics).
 
-Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched, caps set") — never report success on the trigger alone.
+Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched") — never report success on the trigger alone.

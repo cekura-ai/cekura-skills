@@ -49,7 +49,7 @@ Execute one or more evaluators against the target agent.
 3. **Confirm scope**: Show the user what will run:
    - Number of runs: evaluators × `frequency` × test profiles × personalities passed on the run
    - Execution mode (auto-selected or chosen)
-   - Worst-case call length: each scenario's `max_duration`, or the project's `max_call_duration` where it is unset. A stalled main agent runs to that cap on every run, so name any scenario without a cap of its own before a voice run.
+   - Worst-case call length: each scenario's `max_duration`, or the project's `max_call_duration` where it is unset — a stalled main agent runs to that cap. State it; do not change the project setting.
 
 4. **Execute using batch endpoint** (preferred for multiple evals). Pass `agent_id`, `scenarios` (array of IDs), and optionally `frequency` (for repeat runs).
 
@@ -101,7 +101,7 @@ Execute one or more evaluators against the target agent.
 Before running, verify evals are properly configured:
 - **Baseline metrics attached**: Expected Outcome, Infrastructure Issues, Tool Call Success, Latency. Without these, runs report pass/fail based on call completion — not correctness.
 - **Tools enabled**: `TOOL_END_CALL` (testing agent can hang up), `TOOL_END_CALL_ONLY_ON_TRANSFER` (for transfer scenarios). Missing tools = elongated calls, wasted credits.
-- **Duration cap set**: `max_duration` (10–3600 s) on every scenario, a little above the longest legitimate call for that flow. Unset means the project's `max_call_duration`, which is sized for production calls — a stalled agent burns that whole cap.
+- **Duration cap known**: unset `max_duration` means the project's `max_call_duration` applies, which is the owner's setting. Only a scenario that must end within a known time (idle/timeout/hold tests, a user-requested limit, a short flow on an expensive transport) needs its own `max_duration` (10–3600 s).
 - **Test profiles assigned**: Identity data in test profiles, not hardcoded in instructions.
 
 ## Tips

@@ -7,14 +7,16 @@ All notable changes to the Cekura plugin. Versions follow
 ## 0.14.3 — 2026-09-07
 
 **Run and result guidance now bounds the cost of a voice suite.** Nothing in
-the authoring skills previously asked for a duration cap, a first small cohort,
-or a stop after a setup error, so a suite could run every scenario to the
-project's production call cap, or fail every run on the same configuration
-error, before anyone read a result.
+the authoring skills previously mentioned a per-scenario duration cap, a first
+small cohort, or a stop after a setup error, so a suite could fail every run on
+the same configuration error before anyone read a result.
 
-- **`max_duration` on every scenario.** Generation leaves it unset, and unset
-  inherits the project's `max_call_duration`; eval-design gains a *Duration
-  cap* section and the generation/autogen fixups set it after verification.
+- **Per-scenario `max_duration`, where a scenario needs it.** Generation leaves
+  it unset and the project owner's `max_call_duration` applies, which is
+  normally right; eval-design gains a *Duration cap* section saying when a
+  scenario gets its own bound (idle/timeout/hold tests, a user-requested limit,
+  a short flow on a paid transport) and that the project setting is never
+  changed for a test.
 - **Smoke cohort on paid transports.** `run-evals`, `cekura-report` and
   eval-design's run guidance launch 3–5 evaluators first on voice, SIP and
   WebRTC and read them before the rest.
