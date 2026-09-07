@@ -60,6 +60,21 @@ For each run, three things must be true — say which are, plainly:
 
 Share the result with the dashboard link (`{dashboard_url}/{project_id}/results/{result_id}` — this one IS project-scoped), the pass/fail count, and one transcript worth reading. 70–80% passing is a normal first result; don't aim for 100%.
 
+### The call completed but the metrics are still evaluating
+
+This is the common case: the voice call finishes in 1-3 minutes, the metric evaluation takes a few more. **A connected call is a success — never put "stop here" next to one.** The user has just watched their agent work; offering an exit at that exact moment reads as "we're done, nothing else here", and it throws away the flow's whole remaining half.
+
+Say plainly what happened (the call connected, ran, and is being scored), then ask — `<clarification>`, alone — with the NEXT step as the alternative to waiting:
+
+> "Your agent connected and the call ran clean — the metrics are still scoring. That usually takes another minute or two. While they finish, want to see what else Cekura can do for this agent? The next step wires the Cekura SDK into your repo, so every real production call gets traced and scored the same way, not just these test runs."
+
+Options: `["Show me the SDK step", "Just wait for the scores"]`
+
+- **Show me the SDK step** → [phase5-sdk-pr.md](phase5-sdk-pr.md) **now**, with the run still in flight. Note the result id so you can come back: after the PR is raised (or declined), read the results once more and share the scores before the closing summary. The user gets both.
+- **Just wait for the scores** → keep polling, share the results, then the SDK offer as usual.
+
+Never offer to abandon the run, and never end the turn on "let me know when you want to continue" — that is the stall this whole phase exists to avoid.
+
 **If a call never connected — the credentials are the first thing to check, and say so.** They were placeholders the user replaced by hand; a typo in the API key, secret or server URL, or a dispatch name that doesn't match the worker's registration, fails exactly like a broken agent. Then a `<clarification>` — fallback **F5**:
 
 > "The call didn't connect. Most often that's a mistyped credential or a dispatch name that doesn't match your worker. Want me to walk through it and re-run?"
@@ -70,4 +85,6 @@ Options: `["Check credentials and re-run", "Skip for now"]`. *Skip* → exit to 
 
 ## Phase 4 Gate
 
-At least one run with a completed call, a two-sided transcript and scores — or the user chose *Not now* / *Skip*, recorded as an open item. Then [phase5-sdk-pr.md](phase5-sdk-pr.md): the SDK is offered **only after** results are on screen.
+At least one run whose call **connected and completed** — or the user chose *Not now* / *Skip*, recorded as an open item. Then [phase5-sdk-pr.md](phase5-sdk-pr.md).
+
+Scores are not a precondition for phase 5: a connected call has already proven the thing the run was for, and the SDK step is what fills the evaluation wait. What IS a precondition is that the call connected — offering the SDK on top of a run that never reached the agent buries a broken connection under new work.

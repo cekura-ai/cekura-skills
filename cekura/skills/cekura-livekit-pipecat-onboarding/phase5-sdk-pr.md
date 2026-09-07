@@ -2,7 +2,9 @@
 
 > **Start:** Announce the step in plain words ("There's more Cekura can capture from your agent — want to see?") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
-**Testing variant: this runs ONLY after the user has seen real results** — a completed run, a transcript, scores. The offer is "here's what more Cekura can capture", and that sentence only means anything against something they watched work. If the run hasn't happened, go back to [phase4-evaluators-run.md](phase4-evaluators-run.md). **Observability variant:** you arrive here straight from [phase3-create.md](phase3-create.md) — the SDK *is* the observability integration for these providers — with the use case preselected to "Observability"; skip the pitch's testing half.
+**Testing variant: this runs once the user has seen their agent actually work** — a run whose call connected and completed. The offer is "here's what more Cekura can capture", and that sentence only means anything against something they watched work. If the run hasn't happened, go back to [phase4-evaluators-run.md](phase4-evaluators-run.md).
+
+**Scores do not have to be in yet.** Metric evaluation runs a minute or two behind the call, and that wait is exactly when this step belongs — the user is otherwise watching a spinner, and "stop here" is the only other thing to offer them. If you arrived from phase4's F4b with the run still scoring, keep the result id: after the PR is raised or declined, read the results once more and share the scores before the closing summary. **Observability variant:** you arrive here straight from [phase3-create.md](phase3-create.md) — the SDK *is* the observability integration for these providers — with the use case preselected to "Observability"; skip the pitch's testing half.
 
 The runtime denies `github_open_pull_request` until this file has been read, because everything that keeps this step safe — show the changes first, get an explicit yes, no credential in the diff — is written down here and nowhere else.
 

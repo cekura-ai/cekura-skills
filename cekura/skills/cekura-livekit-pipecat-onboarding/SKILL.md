@@ -71,8 +71,10 @@ One phase at a time, in order. For each: announce the step in plain words (never
 | 1 | [phase1-github.md](phase1-github.md) | `github_connection_status`; connect ask; the Integrations URL + "connected yet?" ask; three-outcome re-check; "scan?" ask; **paste path** if declined | both |
 | 2 | [phase2-scan.md](phase2-scan.md) | checkout; extract prompt, agent name, dispatch name, language, who speaks first, SDK presence; confirm; one open question at most; WebRTC Automated stated | both |
 | 3 | [phase3-create.md](phase3-create.md) | `aiagents_create` with placeholder credentials + `agent_speaks_first`; agent-page link; "Done / Not yet" | both |
-| 4 | [phase4-evaluators-run.md](phase4-evaluators-run.md) | 10 evaluators, 1 personality; **ask** before the run; run; share results | testing only |
+| 4 | [phase4-evaluators-run.md](phase4-evaluators-run.md) | 10 evaluators, 1 personality; **ask** before the run; run; while metrics score, offer phase 5 rather than an exit | testing only |
 | 5 | [phase5-sdk-pr.md](phase5-sdk-pr.md) | SDK offer (testing / observability / both); `<diff_view>` per file; PR; the three user actions; tracing on only after confirmation | both (observability arrives from phase3) |
+
+**The flow never offers to stop.** Every question's alternative is the next step, not an exit. The user leaves when they say so — which the fallback table honours — but it is never Cekura's suggestion, least of all right after the agent's first working call.
 
 Onboarding **ends** when phase5 does. Close with the summary shape in `cekura-onboarding/phase6-testing-next.md` (what was set up, the run link, the PR link, open items). Do not run cekura-onboarding's phases 3T–6T again.
 
@@ -88,6 +90,7 @@ Declines are handled **inside this skill**; the only exits are terminal — fini
 | F2b | findings shown | `Looks right` / `Let me correct it` | *Correct* → apply, re-confirm; stays in phase2 |
 | F3 | credentials "Not yet" | `Done — they're updated now` / `Generate evaluators anyway — I'll add the keys before the run` / `Pause here` | *Generate anyway* → phase4, run re-gated on a credentials re-ask; *Pause* → **exit**, open item "placeholder credentials" |
 | F4 | run them? | `Run them` / `Run just one first` / `Not now` | *Not now* → **exit**, open item "no verified run"; SDK offer skipped |
+| F4b | call connected, metrics still scoring | `Show me the SDK step` / `Just wait for the scores` | *SDK* → phase5 **now**, then come back and share the scores. **Never offer "stop here" on a run that connected.** |
 | F5 | run didn't connect | `Check credentials and re-run` / `Skip for now` | *Skip* → **exit**, failure as an open item |
 | F6 | SDK offer | `Testing` / `Observability` / `Both` / `Not now` | *Not now* → **exit**; `tracing_enabled` stays false |
 | F7 | open the PR? | `Open the PR` / `Change the plan` / `Not now` | *Change* → re-show diffs; *Not now* → as F6 |
