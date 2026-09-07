@@ -355,6 +355,8 @@ This is especially important for **WebSocket main agents**: the connection is bi
 
 **Do not proceed until you have: name, language, connection type confirmed, and phone number (if using phone/SIP). Description can be a placeholder if using auto-sync.**
 
+> **LiveKit / Pipecat: "have" does not mean "asked for".** The Phase 2 repo scan supplies the name, language and connection mode, and WebRTC Automated is assumed — so this gate is normally satisfied without a single question. The name is never asked. The language is asked only if the scan is silent, and asked ALONE.
+
 Announce: "Phase 3 complete." Then immediately begin the next phase without waiting for the user:
 - Collecting description manually → [Phase 4 — Agent Description](phase4-description.md)
 - Using auto-sync → [Phase 5 — Create the Agent](phase5-create.md)

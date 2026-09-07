@@ -4,6 +4,20 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.2 — 2026-09-06
+
+**The LiveKit/Pipecat flow no longer asks for the agent's name.** It is in the
+repo — repository name, project metadata, deploy-manifest service name, or the
+dispatch name — so the scan now looks for it and the create uses it, saying
+which source it came from. A name is trivially editable afterwards, so a derived
+one that is slightly off costs nothing while a question costs a turn.
+
+**Language is asked alone, and only as a fallback.** The scan settles it from
+STT/TTS config or the prompt's own language; a question fires only when the scan
+is genuinely silent. It is never bundled with a name question — "What is the
+agent's name and primary language?" was two asks wearing one coat, and the name
+half should not have been asked at all.
+
 ## 0.15.1 — 2026-09-06
 
 **Dashboard links now resolve on every environment.** The agent had no way to

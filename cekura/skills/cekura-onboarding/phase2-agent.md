@@ -100,6 +100,7 @@ Then **wait**. When they say they have done it, **call `github_connection_status
 | What | Where it usually is |
 |---|---|
 | **System prompt** | the string handed to the LLM — `instructions=`, `system_prompt`, a prompt module, or a `.md`/`.txt` the code loads |
+| **Agent name** | the repository name, `name` in `pyproject.toml` / `package.json`, the service name in a deploy manifest, or the dispatch name below. Tidy a slug into words (`acme-support-bot` → "Acme Support Bot") |
 | **Dispatch agent name** | LiveKit: `agent_name=` on the worker/`WorkerOptions` registration. Pipecat: `agent_name` in `pcc-deploy.toml` |
 | **Language** | STT/TTS config (`language=`, `model=…-en`), or the prompt's own language |
 | **Connection mode** | a `JobContext`/`rtc_session` worker or a Pipecat pipeline ⇒ WebRTC; a bound SIP trunk or a phone number in config ⇒ telephony |
@@ -125,7 +126,7 @@ If the scan found a SIP trunk or phone number, say that instead and use the tele
 
 ```json
 {
-  "name": "<from the repo or the user>",
+  "name": "<derived from the repo — see Step 2; never asked>",
   "description": "<the COMPLETE system prompt — multi-line>",
   "project": <project_id>,
   "language": "en",
@@ -148,7 +149,7 @@ If the scan found a SIP trunk or phone number, say that instead and use the tele
 
 ```json
 {
-  "name": "<from the repo or the user>",
+  "name": "<derived from the repo — see Step 2; never asked>",
   "description": "<the COMPLETE system prompt — multi-line>",
   "project": <project_id>,
   "language": "en",
@@ -165,8 +166,10 @@ If the scan found a SIP trunk or phone number, say that instead and use the tele
 }
 ```
 
+- **Never ask for the agent's name.** It is in the repo — repository name, project metadata, deploy manifest, or the dispatch name — and a name is trivially editable afterwards, so a derived one that is slightly off costs the user nothing while a question costs a turn. Say which one you used ("calling it Acme Support Bot, after the repo") and move on. Only ask if there is genuinely no repo to read (GitHub declined) AND the user never named it.
 - **The dispatch agent name is an identifier, not a secret — never placeholder it.** It is public, it is in the repo, and it is what the provider matches the dispatch against; a dummy there produces an agent that looks configured and can never connect. Take it from the repo, or ask for it inline in a `<clarification>` (that ask is fine — it is not a credential).
 - **`tracing_enabled: false` at create.** It only becomes `true` after the SDK is integrated AND the user confirms they finished the deploy steps — see phase7. Set `true` early and every run waits on a webhook that never arrives.
+- **Language: take it from the scan; ask only if the scan is genuinely silent, and then ask it ALONE.** STT/TTS config usually settles it (`language=`, a locale in the model name), and the prompt's own language is good evidence. Never bundle it with a name question — "What is the agent's name and primary language?" is two asks wearing one coat, and the name half should not have been asked at all.
 - The description still has to pass the hard acceptance check in 2c, whether it came from the repo or from a paste.
 
 ### Step 5 — Hand over the link, say why, and say what a wrong value costs
@@ -217,7 +220,7 @@ Then ask for the confirmation as a real `<clarification>` — options `["Done �
   - **Testing path: this check is a blocker.** If the user genuinely cannot produce the prompt, help them retrieve it (provider dashboard, their repo) or pause onboarding until they have it. Do not create the agent with a summary/placeholder and continue.
     **Never offer "switch to the observability path" as a way around this gate.** The path was chosen for the user's goal in Phase 0; observability's placeholder allowance is not an escape hatch from the testing requirement. Only switch paths if the user themselves says their goal is actually production-call monitoring — not to dodge providing the prompt.
   - **Observability path: a placeholder is acceptable** after one push-back. Ingestion and most metrics work without it. Create with a clearly marked placeholder and surface it as an open item in every subsequent summary.
-- Agent name, language.
+- Agent name, language. **(LiveKit/Pipecat: both come from the repo scan in 2b — the name is never asked, and the language is asked alone only when the scan is silent.)**
 - Connection details for how Cekura reaches the agent, in order of preference: existing phone number → SIP URI → websocket URL → provider WebRTC. **LiveKit and Pipecat are the exception: 2b assumes WebRTC Automated and states the assumption rather than working down this list.**
 
 **Confirm `custom` ONLY when YOU inferred it — never re-confirm a choice the user already made.** If the user explicitly picked "self-hosted / custom" from the provider question, or you routed a fork/variant to `custom` per the variant carve-out above, that IS the decision — proceed straight to collecting the connection, do NOT ask "are you sure none of VAPI/Retell/… apply?". Ask the confirmation below only when you are about to *default* to `custom` without the user having said so (e.g. they were vague and you're guessing):
