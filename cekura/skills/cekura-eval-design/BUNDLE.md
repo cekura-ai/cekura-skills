@@ -163,7 +163,7 @@ set into the first selected format.
 
 ## Behavioral scenarios — shaping generation
 
-`extra_instructions` is where you steer the generator. One numbered paragraph per evaluator, plain prose, third person about the testing agent, no PII, no markdown. Each paragraph tests one behaviour: what the caller wants, where the friction or branch happens, and what the outcome should show. Keep `num_scenarios` equal to the number of paragraphs. If the user asks for a full end-to-end journey, write it as its own paragraph and say it is end-to-end.
+`extra_instructions` is where you steer the generator. One numbered paragraph per evaluator, plain prose, third person about the testing agent, no PII, no markdown. Each paragraph tests one behaviour: what the caller wants, where the friction or branch happens, and what the outcome should show. If the user asks for a full end-to-end journey, write it as its own paragraph and say it is end-to-end.
 
 ```
 The testing agent calls as an established patient who needs to reschedule a

@@ -97,7 +97,7 @@ Default: `workflow`. Can combine by running generation multiple times with diffe
 
 **Ask:** "Do you have specific scenarios in mind, or should I generate broad coverage based on the agent description?"
 
-**For specific scenarios:** Format each scenario as a clear numbered paragraph — one behaviour to test per paragraph — and set `num_scenarios` to the paragraph count. If the user wants a full end-to-end journey, write it as its own paragraph and say so.
+**For specific scenarios:** Format each scenario as a clear numbered paragraph, one behaviour to test per paragraph. If the user wants a full end-to-end journey, write it as its own paragraph and say so.
 
 ```
 extra_instructions: |
