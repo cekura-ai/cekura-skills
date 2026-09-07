@@ -728,9 +728,9 @@ A `standard` mid-turn condition only advances the caller when an **LLM judge dec
 
 When you *do* keep a semantic `standard` gate, phrase it so a **legitimate non-answer still advances the caller**. `"The agent answers the question about its hours"` strands the caller when the agent (correctly) says it has none; `"The agent responds to, deflects, or redirects the question about its hours"` advances on any real reply. A mid-turn gate should test *that the agent took a turn*, not *that it gave the answer you hoped for* — grading the answer is Expected Outcome's job, not the gate's.
 
-### Reliable termination — dedicate a step to `<endcall />`
+### Clean termination — a caller closing line plus a dedicated `<endcall />`
 
-`<endcall />` merged into wrap-up **text** ("Thanks, that's all — `<endcall/>`") frequently does **not** hang up: providers speak the sentence and keep the line open, and the agent loops its own closer. Terminate reliably with a **two-step close**:
+A robust, readable way to end a scripted multi-turn probe is a **two-step close**:
 
 1. a caller **closing line** as its own condition — `"Okay, that's all I needed, thank you."`
 2. a **dedicated `action_followup`** gated on that line whose action is *only* `<endcall />`.
@@ -741,7 +741,7 @@ When you *do* keep a semantic `standard` gate, phrase it so a **legitimate non-a
 { "id": 5, "condition": 4, "action": "<endcall />", "type": "action_followup", "fixed_message": true }
 ```
 
-Verify it worked by reading the run's `metadata.ended_reason` — a clean close reads `"…agent-ended-call"` and the call duration drops well under the cap. Also give the caller `role` an explicit stop instruction ("After your final listed question and the agent's reply, say your short closing line and end the call; never start a new topic"), so it doesn't invent extra turns that reopen the conversation.
+Keeping `<endcall />` on its own step (rather than appended to wrap-up text) makes the intent explicit and easy to audit. Confirm the call ended as intended by reading the run's `metadata.ended_reason` — a clean close reads `"…agent-ended-call"` and the duration sits well under the cap. Also give the caller `role` an explicit stop instruction ("After your final listed question and the agent's reply, say your short closing line and end the call; never start a new topic"), so it doesn't invent extra turns that reopen the conversation.
 
 ### A long call is sometimes real signal, not a harness bug
 
@@ -786,7 +786,7 @@ When one suite runs against **several different agents** to compare them (provid
 - **Setting `first_message` independently of `id:0`.** When `conditional_actions` is provided, `first_message` is taken from `id:0` action; values you pass separately will be overwritten.
 - **Forgetting `scenario_type: "conditional_actions"`.** Without the explicit type, the scenario is created as `instruction` (the default) and your `conditional_actions` payload is ignored.
 - **No `<endcall />` at end.** Without an explicit termination, the call runs to timeout, wasting credits.
-- **`<endcall />` merged into wrap-up text.** `"Thanks, that's all — <endcall/>"` often fails to hang up — the provider speaks the line and holds the call open. Give `<endcall />` its **own** `action_followup` gated on the caller's closing line (see [Reliable termination](#reliable-termination--dedicate-a-step-to-endcall-)).
+- **Relying on the agent to end the call.** A scripted probe should drive its own termination: give `<endcall />` its own `action_followup` gated on the caller's closing line rather than hoping the agent hangs up (see [Clean termination](#clean-termination--a-caller-closing-line-plus-a-dedicated-endcall-)).
 - **Semantic mid-turn gate that demands the answer, not a reply.** `"The agent answers X"` strands the caller against an agent that legitimately can't answer X, running the call to the cap. Phrase the gate as `"responds to, deflects, or redirects…"` and let Expected Outcome grade the answer.
 - **Forcing `action_followup` on content-dependent turns for determinism.** Converting a natural back-and-forth to positional advancement makes the caller ignore the agent's actual reply, tanking Expected Outcome / Relevancy. Only chain probe turns positionally when the caller's next line is content-independent (see [The condition-matcher stall](#the-condition-matcher-stall-and-when-to-go-positional)).
 - **Domain-specific caller questions in a cross-agent benchmark.** "What are your weekend hours?" measures the domain, not the agent. Use domain-neutral probes and outcome prompts that accept truthful "I don't have that" answers (see [Cross-Agent / Benchmark Fairness](#cross-agent--benchmark-fairness)).
@@ -812,7 +812,7 @@ When one suite runs against **several different agents** to compare them (provid
 - [ ] `{{function.*}}` placeholders appear only on `fixed_message: true` actions, and every referenced output declares a `default`
 - [ ] Function URLs are publicly reachable `http(s)` endpoints (no localhost/private hosts)
 - [ ] Updates send the FULL `conditional_actions` object including existing `functions[]` (updates are full-replace, not a merge)
-- [ ] The last condition ends the conversation (via `<endcall />` or a natural close); for a scripted multi-turn probe, `<endcall />` is its **own** `action_followup` gated on the caller's closing line, not merged into wrap-up text
+- [ ] The last condition ends the conversation (via `<endcall />` or a natural close); for a scripted multi-turn probe, prefer `<endcall />` as its **own** `action_followup` gated on the caller's closing line
 - [ ] Mid-turn semantic gates advance on any real reply ("responds to, deflects, or redirects…"), not only on the hoped-for answer
 - [ ] For a cross-agent benchmark: caller questions are domain-neutral, out-of-scope probes are universal, the outcome prompt accepts a truthful limitation answer, and conditions/turn-count/`max_duration`/personality/metrics are identical across agents
 - [ ] `scenario_language` is set (either explicitly or via a personality with a configured language — required by validation rule 6)
