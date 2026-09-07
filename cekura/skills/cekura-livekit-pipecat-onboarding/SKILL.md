@@ -33,7 +33,7 @@ You were handed a `Context already established:` block by **cekura-onboarding** 
 - **Never re-ask the provider, the variant (testing / observability) or the project.** If a line is present in the block, it is true.
 - **Session = local**, or no `github_*` tool exists → skip [phase1-github.md](phase1-github.md) entirely; the repo is the working directory.
 - Anything under **"User already said"** is settled — skip that row of phase2's confirmation and never ask it again.
-- **Agent already exists** → resume at the first unfinished phase: credentials unconfirmed → phase3 3b; evaluators exist but no run → phase4 4b; results exist → phase5.
+- **Agent already exists** → resume at the first unfinished phase: credentials unconfirmed → phase3 3b; evaluators exist but no run → phase4 4b; a run you made **in this conversation** has results → phase5. Leftover agents, scenarios or results from an earlier session are NOT a reason to skip ahead — if you have not watched the run yourself, you have not reached phase5.
 - **Direct invocation, no block** → provider from the trigger phrase; variant defaults to testing; project from ONE `projects_list` (create one if none). Nothing else is asked up front.
 
 ## How this runs — two contexts, one journey
@@ -48,6 +48,14 @@ Detect it, do not ask. **A `github_connection_status` tool exists and the worksp
 | Waiting | `wait_for_scenario_generation`, `wait_for_result` | poll `scenarios_generate_progress`, `results_retrieve` |
 | SDK change | `<diff_view>` per file → `github_open_pull_request` | the same diffs as fenced blocks → `Edit` on a new branch; `gh pr create` only if asked; never the default branch |
 | Credentials | **never asked in chat** — placeholders, replaced on the agent page | the same |
+
+## The order is the product — never run ahead of it
+
+1. GitHub → 2. scan → 3. create the agent → user confirms the credentials → 4. generate ten evaluators → **ask** → run → results → 5. SDK offer → PR.
+
+**Nothing about the SDK, tracing or a pull request is mentioned before the results.** Not as a preview, not as "here's what's coming", not as a question. The SDK step asks the user to review a change to their own repository; it is earned by them watching their own agent take a call, and it is worth nothing before that. The runtime denies `github_open_pull_request` until a `scenarios_run_*` call has come back clean in this conversation.
+
+Equally: **never ask an implementation question the repo can answer.** How to tell prod from UAT, whether they have separate entrypoints, how the SDK should be gated, which config file to touch — read it, decide it, show it in the diff. The user reviews your patch; they do not design it.
 
 ## Execution model
 

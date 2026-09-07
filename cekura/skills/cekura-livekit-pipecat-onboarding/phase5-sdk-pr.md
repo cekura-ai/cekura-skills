@@ -2,7 +2,11 @@
 
 > **Start:** Announce the step in plain words ("There's more Cekura can capture from your agent — want to see?") — never a phase number or the word "Phase"; the numbering below is internal navigation only.
 
-**Testing variant: this runs once the user has seen their agent actually work** — a run whose call connected and completed. The offer is "here's what more Cekura can capture", and that sentence only means anything against something they watched work. If the run hasn't happened, go back to [phase4-evaluators-run.md](phase4-evaluators-run.md).
+## STOP — this is the LAST step, and it has a precondition
+
+**Testing variant: do not open this phase, mention the SDK, mention tracing, or mention a pull request until a run has completed in THIS conversation.** The rail is: GitHub → scan → create the agent → user confirms credentials → generate evaluators → ASK → run → results → *then* this file. If any of those has not happened, you are in the wrong phase — go back to [phase3-create.md](phase3-create.md) or [phase4-evaluators-run.md](phase4-evaluators-run.md) and finish it.
+
+Concretely, you may not be here without a **`result_id` from a `scenarios_run_*` call you made in this conversation**. Not an agent id, not a scenario id, not a plan to run later. The runtime enforces the tail of this: `github_open_pull_request` is denied until a run has come back clean. The offer is "here's what more Cekura can capture" — a sentence that means nothing to someone who has not yet watched their agent take a call, and asking them to review a change to their own repo before that is asking for trust they have no reason to give.
 
 **Scores do not have to be in yet.** Metric evaluation runs a minute or two behind the call, and that wait is exactly when this step belongs — the user is otherwise watching a spinner, and "stop here" is the only other thing to offer them. If you arrived from phase4's F4b with the run still scoring, keep the result id: after the PR is raised or declined, read the results once more and share the scores before the closing summary. **Observability variant:** you arrive here straight from [phase3-create.md](phase3-create.md) — the SDK *is* the observability integration for these providers — with the use case preselected to "Observability"; skip the pitch's testing half.
 
@@ -28,7 +32,9 @@ Options: `["Testing — richer test runs", "Observability — capture production
 | Observability | `observe_session` | `observe_and_create_task` |
 | Both | both, split by entrypoint or an env var | both, split by entrypoint or an env var |
 
-`track_*` is what Cekura's own simulation runs hit. `observe_*` is for real production calls that never went through Cekura. If they want both from a single entrypoint, gate on an env var (`CEKURA_MODE=test` → `track_*`, else `observe_*`).
+`track_*` is what Cekura's own simulation runs hit. `observe_*` is for real production calls that never went through Cekura.
+
+**"Both" from a single entrypoint: decide it yourself, do not ask.** Gate on `CEKURA_MODE` (`=test` → `track_*`, else `observe_*`), show it in the diff, and say in one line what you did and how to change it. **Never ask the user how they tell production from UAT, whether they have separate entrypoints or configs, or how they would like the SDK gated** — that is an implementation detail you can read out of their repo and a reviewable line in the PR, not an onboarding question. Someone connecting an agent for the first time is being asked to design your patch.
 
 ## 5b. Show the planned changes as diffs, then get an explicit yes — fallback **F7**
 
