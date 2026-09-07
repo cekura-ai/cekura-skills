@@ -254,7 +254,7 @@ Red-teaming runs a **multi-turn attacker pipeline**: persona + context + a 5–1
 
 ## Conditional actions — authoring card
 
-Everything needed to write a valid, deterministic CA scenario is here. Load **`references/conditional-actions.md`** for the pattern library, the 30 `<background_noise>` sound names, and the troubleshooting matrix.
+Everything needed to write a valid, deterministic CA scenario is here. Load **`references/conditional-actions.md`** for the pattern library, the 30 `<background_noise>` sound names, the troubleshooting matrix, multi-turn probe & duration control (stall-proof positional chaining, reliable `<endcall />`), and cross-agent benchmark fairness.
 
 ```json
 {
@@ -427,7 +427,7 @@ Public docs: https://docs.cekura.ai · LLM-friendly docs https://docs.cekura.ai/
 
 ### Reference files (load on demand)
 
-- **`references/conditional-actions.md`** — CA pattern library, sound names, worked examples, troubleshooting matrix
+- **`references/conditional-actions.md`** — CA pattern library, sound names, worked examples, troubleshooting matrix, multi-turn probe & duration control, cross-agent benchmark fairness
 - **`references/instruction-patterns.md`** — behavioral step rulebook with bad→good examples
 - **`references/expected-outcomes.md`** — scoring model, metric variables, examples
 - **`references/test-data-design.md`** — approaches A/B/C, mock design, profiles, dynamic variables
