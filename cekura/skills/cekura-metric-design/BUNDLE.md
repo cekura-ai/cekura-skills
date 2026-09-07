@@ -242,7 +242,7 @@ Every agent should have at minimum these predefined metrics enabled for both obs
 
 **Two-step activation required:** Metrics must be (1) toggled on for simulations at the project level AND (2) added to individual evaluators. Missing either step means metrics won't fire. Without metrics enabled, users get false passes and must manually review every run.
 
-**Simulation cost scales with attachment.** Every metric attached to a scenario is scored on every run of it, and a project rubric rule over that metric gates the run's `success`. Attach flow-specific LLM metrics only to the scenarios that exercise the flow, or give them a trigger that returns N/A elsewhere — the baseline set stays on everything.
+**Simulation cost scales with attachment.** Every metric attached to a scenario is scored on every run of it, and a project rubric rule over that metric gates the run's `success`. A flow-specific LLM metric that the project attaches to every scenario should carry a trigger that returns N/A where the flow does not occur, so unrelated scenarios are neither billed nor failed by it.
 
 **Expected Outcome is transcript-only — it cannot evaluate audio-layer behavior.** Expected Outcome reads the conversation text to determine whether the agent achieved its goal. It has no visibility into silences, interruptions, barge-ins, audio dropouts, or other voice-channel signals. Do not rely on Expected Outcome to catch these. For anything that depends on the audio stream rather than conversation content, use predefined metrics instead.
 

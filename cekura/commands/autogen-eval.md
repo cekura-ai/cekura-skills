@@ -193,7 +193,7 @@ Fetch the created scenarios and verify (full checklist: eval-design `references/
 3. **Language** — `scenario_language`, personality language, and the actual text of `first_message`/`instructions` all match the requested language; `first_message` is literal caller dialogue, not a meta-instruction.
 4. **Roles** — instructions describe the caller (first person), not the main agent.
 5. **Scaffolding** — non-empty `expected_outcome_prompt` on every scenario, correct tools (`TOOL_END_CALL`, `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows, `TOOL_DTMF` for IVR), baseline metrics attached.
-6. **Bounds and metric fit** — `max_duration` set on the scenarios that need their own bound, and only those (fixup 5 below); inherited metrics reviewed per scenario (fixup 3).
+6. **Bounds and metrics** — `max_duration` set on the scenarios that need their own bound, and only those (fixup 5 below); Expected Outcome present on every scenario, inherited metrics left in place (fixup 3).
 
 Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched") — never report success on the trigger alone.
 
@@ -212,8 +212,8 @@ mcp__cekura__scenarios_partial_update:
 ### 2. First Message Fix
 Auto-gen may add greetings ("Здравствуйте", "你好") as `first_message` when you specified exact questions. PATCH `first_message` to the exact intended opener.
 
-### 3. Metrics Review
-Generation attaches the project's simulation-enabled metrics. **Every eval MUST carry the baseline set** (Expected Outcome, Infrastructure Issues, Tool Call Success, Latency) — fetch ids with `mcp__cekura__metrics_list` and PATCH any scenario missing one. Then review the rest per scenario: every attached LLM metric is scored, and billed, on every run, and a rubric rule over it gates the run's `success`. Keep a flow-specific metric only where the scenario exercises that flow or it carries an N/A trigger; remove the others from `metrics`:
+### 3. Metrics Check
+Generation attaches the project's simulation-enabled metrics — that set is the project's choice, so leave it in place. Check that Expected Outcome is present (without it a run only reports call completion) and that the other baseline metrics the project has (Infrastructure Issues, Tool Call Success, Latency) came through; if one is missing and the project has it, fetch ids with `mcp__cekura__metrics_list` and PATCH it on. Do not strip inherited metrics. If a scenario clearly cannot exercise one of them (a booking-flow metric on a pure FAQ scenario), mention it in the summary and let the user decide — an N/A trigger on the metric (see `cekura-metric-design`) is usually the better fix than removing it:
 ```
 mcp__cekura__scenarios_partial_update:
   id: <scenario_id>
@@ -301,6 +301,6 @@ Missing coverage (behavioral gaps → another generation run; deterministic gaps
 - **Number of scenarios should match instruction count** — mismatches cause skipped or duplicate scenarios
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
-- **Metrics are required** — verify the baseline set after generation, and drop inherited metrics the scenario cannot exercise
+- **Metrics come from the project** — generation attaches the project's set; confirm Expected Outcome is present and attach a missing baseline metric only if the project has it
 - **`max_duration` is per-scenario and optional** — unset inherits the project owner's cap; set it only on scenarios that need their own bound
 - **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which uses `scenario_type: "red_teaming_voice"` or `"red_teaming_text"` alongside that guidance text. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.

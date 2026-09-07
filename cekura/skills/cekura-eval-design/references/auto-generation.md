@@ -75,6 +75,6 @@ The generator is a background pipeline that can stall, partially complete, or dr
 3. **Language** — for non-English requests, check `scenario_language`, the personality's language, and that `first_message`/`instructions` are actually written in the target language (gotchas 2, 6, 8).
 4. **Roles** — instructions are caller-side, first person (gotcha 7).
 5. **Scaffolding** — every scenario has a non-empty `expected_outcome_prompt` (pass `generate_expected_outcomes: true`; patch any that came back empty), the right tools (`TOOL_END_CALL`; `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows; `TOOL_DTMF` for IVR), and the baseline metrics.
-6. **Bounds and metric fit** — `max_duration` set on the scenarios that need their own bound, and only those (gotcha 9); the inherited project metrics reviewed per scenario — baseline kept, a flow-specific metric kept only where the scenario exercises that flow or it carries an N/A trigger (SKILL.md § Metrics).
+6. **Bounds and metrics** — `max_duration` set on the scenarios that need their own bound, and only those (gotcha 9); Expected Outcome present on every scenario and the inherited project metrics left in place — flag, do not remove, one a scenario clearly cannot exercise (SKILL.md § Metrics).
 
 Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched") — never report success on the trigger alone.
