@@ -23,8 +23,8 @@ Ask: "What provider does your main agent run on?"
 | **KoreAI** | `koreai` | Chat/text only |
 | **Genesys** | `genesys` | Chat/text only |
 | **Cisco** | `cisco` | Phone; no credentials needed |
-| **SIP / self-hosted (phone)** | `self_hosted` | Observation-only; phone number required |
-| **Self-hosted (WebSocket)** | `self_hosted` | Text-mode via `chat_agent_details` |
+| **SIP / self-hosted (phone)** | `custom` | Observation-only; phone number required. `self_hosted` is NOT a valid `provider.type` — the v2 endpoint rejects it |
+| **Self-hosted (WebSocket)** | `custom` | Text-mode via `chat_agent_details.type: "self_hosted"` — that is the one place the value is valid |
 
 **Text-only channels** (set in `chat_agent_details.type`, not `provider.type`): `agentforce`, `sms`, `whatsapp`
 
@@ -59,7 +59,10 @@ Ask: "What provider does your main agent run on?"
 > **Fast path:** ElevenLabs supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
 
 ### LiveKit
-Ask for all four credentials by default. Whether each is strictly required depends on the connection mode(s) chosen in Phase 3 and whether the Cekura SDK is in scope.
+
+> **LiveKit and Pipecat are onboarded by the `cekura-livekit-pipecat-onboarding` skill — hand off now.** Claude Code: `Skill(skill="cekura:cekura-livekit-pipecat-onboarding")`; other harnesses: read its `SKILL.md`. Pass what is known (project, provider, anything the user said). It checks GitHub, reads the repo, creates the agent with placeholder credentials (no secret is ever asked for in chat), confirms the replacement, runs the first evaluators and offers the SDK. **Resume here at Phase 7 (mock tools) when it returns.** Do not run Phases 3–6 for these providers — two copies of one flow is how it drifted before.
+
+Field reference (where the user finds each value when they fill the agent page):
 
 - **`credentials.api_key`**: LiveKit Cloud Dashboard → Settings → Keys
 - **`credentials.config.api_secret`**
@@ -75,21 +78,24 @@ Ask for all four credentials by default. Whether each is strictly required depen
 | Testing — WebRTC Manual | – | – | – | – |
 | Observability with Cekura SDK (audio egress) | R | R | R | optional |
 
-If only telephony / WebRTC Manual is in scope, the LiveKit Cloud credentials are not strictly needed — collect them only if the user has them handy.
+**Read that table as "what the agent record needs", not "what to ask for".** WebRTC Automated is the assumed default, so all four are in scope — created as placeholders and replaced by the user on the agent page. If the scan shows the agent is reached by phone or SIP instead, the credentials are genuinely not needed and there is nothing to placeholder.
 
 **Session config (WebRTC Automated only):** `credentials.config.config` is a JSON object Cekura injects into `ctx.room.metadata` when it creates the room. If the agent reads room metadata (e.g. `empty_timeout`, `max_participants`, agent-specific knobs), scan the codebase to determine the expected shape and populate this field. Confirm values with the user. Cekura also injects `scenario_id`, `run_id`, and `test_profile_data` into `ctx.job.metadata` during dispatch — no configuration required for those.
 
 **Docs:** https://docs.livekit.io
 
 ### Pipecat Cloud
-Ask for all credentials by default. Required fields depend on the connection mode(s) chosen in Phase 3.
+
+> **Same handoff as LiveKit above:** `cekura-livekit-pipecat-onboarding`. Pipecat has one placeholder (the API key — no `url`, no `api_secret`); its dispatch name comes from `pcc-deploy.toml` and is never a placeholder. Resume here at Phase 7 when it returns.
+
+Field reference (where the user finds each value when they fill the agent page):
 
 - **`credentials.api_key`**: pipecat.daily.co → Settings → API Keys
-- **`credentials.config.pipecat_agent_name`**: Pipecat agent name from dashboard
+- **`credentials.config.pipecat_agent_name`**: Pipecat agent name from dashboard (matches `pcc-deploy.toml`)
 - **`credentials.config.webhook_url`** (optional): webhook URL for call events
 - **`credentials.config.config`** (optional): additional agent configuration as JSON object — used by Cekura when starting the session; accessible inside the agent
 - **`credentials.config.room_properties`** (optional): Daily.co room properties as JSON object — applied when Cekura creates the WebRTC session
-- **`credentials.config.tracing_enabled`** (set by Phase 6 when the SDK is wired and testing is in scope; otherwise leave false)
+- **`credentials.config.tracing_enabled`** (`false` at create; Phase 6 flips it to `true` only after the SDK is wired AND the user confirms key, env vars and redeploy)
 
 **When each is required:**
 

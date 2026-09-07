@@ -111,8 +111,8 @@ Available codes: `af ar bn bg zh cs da nl en et fi fr de el gu hi he hu id it ja
 | **ElevenLabs** | Yes | Auto-fetch or paste | |
 | **Synthflow** | Yes | Auto-fetch or paste | `agent_id` required for auto-import |
 | **Bland** | Yes | Auto-fetch | `agent_id` = Persona ID; separate Pathway ID for chat |
-| **LiveKit** | No | Ask user | WebRTC only |
-| **Pipecat** | No | Ask user | Agent identified by `credentials.config.pipecat_agent_name` |
+| **LiveKit** | No | **Read the repo** (Phase 2 code-based flow); ask only if that fails | WebRTC Automated assumed; credentials created as placeholders, never asked for in chat |
+| **Pipecat** | No | **Read the repo** (Phase 2 code-based flow); ask only if that fails | Agent identified by `credentials.config.pipecat_agent_name`, taken from `pcc-deploy.toml` — an identifier, never a placeholder |
 | **WebSocket voice (raw-PCM)** | No | Ask user | `provider.type = custom`; connects via `telephony.websocket_url` |
 | **KoreAI** | No | Ask user | Text/chat only |
 | **Genesys** | No | Ask user | Text/chat only |
@@ -139,6 +139,8 @@ The connection type itself is often apparent from the code structure: a WebSocke
 ---
 
 The connection type is determined by what you configure — ask the user to confirm if not clear from code.
+
+> **LiveKit and Pipecat: assume WebRTC Automated. Do NOT ask.** It is the common case for both, and the Phase 2 repo scan reveals when it isn't (a bound SIP trunk or a phone number in config). State the assumption and invite correction in the same breath — "I'll set this up as WebRTC Automated; say so if it's actually reached by phone or SIP" — rather than spending a question on it.
 
 | Mode | When | What to set |
 |------|------|-------------|
@@ -352,6 +354,8 @@ This is especially important for **WebSocket main agents**: the connection is bi
 ## Phase 3 Gate
 
 **Do not proceed until you have: name, language, connection type confirmed, and phone number (if using phone/SIP). Description can be a placeholder if using auto-sync.**
+
+> **LiveKit / Pipecat: "have" does not mean "asked for".** The Phase 2 repo scan supplies the name, language and connection mode, and WebRTC Automated is assumed — so this gate is normally satisfied without a single question. The name is never asked. The language is asked only if the scan is silent, and asked ALONE.
 
 Announce: "Phase 3 complete." Then immediately begin the next phase without waiting for the user:
 - Collecting description manually → [Phase 4 — Agent Description](phase4-description.md)

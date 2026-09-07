@@ -147,7 +147,7 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
 
 ## LiveKit
 
-Keep `provider.type = livekit` regardless of connection mode (phone, WebRTC, chat). LiveKit/Pipecat phone agents should not be classified as `self_hosted`.
+Keep `provider.type = livekit` regardless of connection mode (phone, WebRTC, chat). A LiveKit phone agent is still a LiveKit agent — do not reclassify it as `custom`. (A *fork* built on LiveKit is a different matter: that is `custom` with a connection only.)
 
 **Recommended payload (SDK integration + WebRTC Automated, also covers Telephony):**
 
@@ -160,13 +160,13 @@ Keep `provider.type = livekit` regardless of connection mode (phone, WebRTC, cha
   "provider": {
     "type": "livekit",
     "credentials": {
-      "api_key": "<LiveKit API Key>",
+      "api_key": "CEKURA_PLACEHOLDER_REPLACE_ME",
       "config": {
-        "api_secret": "<LiveKit API Secret>",
-        "url": "<wss://your-server.livekit.cloud>",
-        "agent_name": "<worker agent_name>",
+        "api_secret": "CEKURA_PLACEHOLDER_REPLACE_ME",
+        "url": "wss://REPLACE-ME.livekit.cloud",
+        "agent_name": "<worker agent_name — real, never a placeholder>",
         "config": {"empty_timeout": 300},
-        "tracing_enabled": true
+        "tracing_enabled": false
       }
     },
     "auto_dial_outbound": true
@@ -174,7 +174,8 @@ Keep `provider.type = livekit` regardless of connection mode (phone, WebRTC, cha
 }
 ```
 
-- `tracing_enabled: true` — Cekura waits for the Cekura SDK to confirm test-run data. Phase 6 of `cekura-create-agent` integrates the SDK in the user's agent code. If the SDK is not integrated, set this to `false`.
+- **The three credentials are created as placeholders, never asked for in chat** — the user replaces them on the agent page and confirms when done. They are write-only, so nothing reads them back: the first run is what proves they are right. See Phase 2's code-based flow.
+- `tracing_enabled: false` at create — Cekura waits on the SDK when this is `true`, so it only flips after Phase 6 wires the SDK AND the user confirms key, env vars and redeploy.
 - `agent_name` must match `@server.rtc_session(agent_name=...)` in the agent code (required for WebRTC Automated and Chat connections).
 - `credentials.config.config` — JSON injected into `ctx.room.metadata` during dispatch. Populate with the keys the agent reads.
 - Required credentials by connection mode:
@@ -204,20 +205,21 @@ Keep `provider.type = pipecat` regardless of connection mode.
   "provider": {
     "type": "pipecat",
     "credentials": {
-      "api_key": "<Pipecat Cloud API Key>",
+      "api_key": "CEKURA_PLACEHOLDER_REPLACE_ME",
       "config": {
-        "pipecat_agent_name": "<agent name from Pipecat dashboard>",
+        "pipecat_agent_name": "<agent name from pcc-deploy.toml — real, never a placeholder>",
         "webhook_url": "<optional>",
         "config": {},
         "room_properties": {},
-        "tracing_enabled": true
+        "tracing_enabled": false
       }
     }
   }
 }
 ```
 
-- `tracing_enabled: true` — Cekura waits for the Cekura SDK to confirm test-run data. Phase 6 of `cekura-create-agent` integrates the SDK in the user's agent code. If the SDK is not integrated, set this to `false`.
+- **The API key is created as a placeholder, never asked for in chat** — Pipecat has no `url` and no `api_secret`, so it is the only one. The user replaces it on the agent page and confirms; the first run is what proves it is right.
+- `tracing_enabled: false` at create — same rule as LiveKit above.
 - `credentials.config.config` — optional Pipecat agent configuration JSON used when Cekura starts the session.
 - `credentials.config.room_properties` — optional Daily.co room properties JSON applied when Cekura creates the room.
 - Required credentials by connection mode:
@@ -385,7 +387,7 @@ Contact Cekura support to set up the Cisco Webex integration for your organizati
     "sip_uri": "sip:agent@yourdomain.com",
     "sip_auth": {"username": "user", "password": "pass"}
   },
-  "provider": {"type": "self_hosted"}
+  "provider": {"type": "custom"}
 }
 ```
 
@@ -402,7 +404,7 @@ SIP headers: Cekura injects `X-Run-Id`, `X-Scenario-Id`, and `X-Result-Id` on ev
   "project": 123,
   "telephony": {"inbound": false},
   "provider": {
-    "type": "self_hosted",
+    "type": "custom",
     "chat_agent_details": {
       "type": "self_hosted",
       "config": {

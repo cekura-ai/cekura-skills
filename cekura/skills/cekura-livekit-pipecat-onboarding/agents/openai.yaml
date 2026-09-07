@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cekura: LiveKit / Pipecat Onboarding"
+  short_description: "Onboards a LiveKit or Pipecat agent from its repository — GitHub check, repo scan, placeholder credentials, first run, SDK pull request."
+  brand_color: "#6366F1"
+
+policy:
+  allow_implicit_invocation: true

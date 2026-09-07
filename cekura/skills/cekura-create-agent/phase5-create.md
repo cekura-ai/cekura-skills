@@ -149,7 +149,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 
 ```json
 "provider": {
-  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|agora|koreai|genesys|cisco|amazon_connect|telnyx|self_hosted|custom",
+  "type": "vapi|retell|elevenlabs|bland|livekit|pipecat|synthflow|agora|koreai|genesys|cisco|amazon_connect|telnyx|custom",
   "agent_id": "<voice agent ID on provider platform>",
   "credentials": {
     "api_key": "<provider API key (write-only)>",
@@ -179,9 +179,11 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 | `koreai` | `client_id`, `bot_id` | `host` |
 | `genesys` | `client_id`, `region` | — |
 | `cisco` | — | — |
-| `self_hosted` | — | — |
+| `custom` (self-hosted / fork of a named provider) | — | — |
 
-> **`send_post_conversation_metadata`** for `self_hosted` is set at the **provider level** (not inside `credentials.config`): `"provider": {"type": "self_hosted", "send_post_conversation_metadata": true}`
+> **`provider.type` for a self-hosted agent is `"custom"`, NOT `"self_hosted"`.** The v2 endpoint rejects `self_hosted` outright — it is not in the accepted list. The value survives only as a *chat* type inside `chat_agent_details.type` (a websocket chat connection), never as `provider.type`. Same for any fork/wrapper built on a named provider.
+>
+> **`send_post_conversation_metadata`** is set at the **provider level** (not inside `credentials.config`): `"provider": {"type": "custom", "send_post_conversation_metadata": true}`
 
 **`chat_agent_details.config` by provider:**
 
@@ -205,7 +207,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
   "description": "<the COMPLETE system prompt from Phase 4 — multi-line; a one-line summary here produces junk evaluators>",
   "project": 123,
   "language": "en",
-  "provider": {"type": "self_hosted"},
+  "provider": {"type": "custom"},
   "telephony": {
     "phone_number": "+14155551234",
     "inbound": true
@@ -221,7 +223,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
   "project": 123,
   "language": "en",
   "provider": {
-    "type": "self_hosted",
+    "type": "custom",
     "chat_agent_details": {
       "type": "self_hosted",
       "config": {
@@ -326,13 +328,13 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
   "provider": {
     "type": "livekit",
     "credentials": {
-      "api_key": "APIxxx",
+      "api_key": "CEKURA_PLACEHOLDER_REPLACE_ME",
       "config": {
-        "api_secret": "secret_xxx",
-        "url": "wss://acme.livekit.cloud",
+        "api_secret": "CEKURA_PLACEHOLDER_REPLACE_ME",
+        "url": "wss://REPLACE-ME.livekit.cloud",
         "agent_name": "concierge",
         "config": {"empty_timeout": 300},
-        "tracing_enabled": true
+        "tracing_enabled": false
       }
     }
   },
@@ -340,9 +342,10 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
 }
 ```
 
-- **`tracing_enabled: true`** — Phase 6 will integrate the SDK. If the user refuses the SDK integration in Phase 6, that phase flips this back to `false`.
-- **`agent_name`** — must match what the LiveKit worker registers (`@server.rtc_session(agent_name=...)`). Required for WebRTC Automated and Chat; optional otherwise but still worth collecting.
-- **`api_key`, `api_secret`, `url`** — required for WebRTC Automated, Chat, and SDK-based observability. Skip only if every connection mode is telephony-only and the SDK isn't in scope.
+- **The three placeholder values are literal — copy them exactly.** The user reads them off the agent page, so they must be unmistakably not-a-real-key; an invented dummy (`abc123`, `test`) looks like a value somebody meant to set. Never ask for these three in chat; see Phase 2's code-based flow.
+- **`tracing_enabled: false` at create.** It becomes `true` only after the SDK is integrated AND the user confirms they created the key, set the env vars and redeployed (Phase 6). Set `true` early and every run waits on a webhook that never arrives.
+- **`agent_name`** — an identifier, not a secret, so it is NEVER a placeholder: take the real value from the repo (or ask inline). Must match what the LiveKit worker registers (`@server.rtc_session(agent_name=...)`). Required for WebRTC Automated and Chat; optional otherwise but still worth collecting.
+- **`api_key`, `api_secret`, `url`** — required for WebRTC Automated, Chat, and SDK-based observability. Created as placeholders and replaced by the user on the agent page; ask them to confirm before any run, and tell them a wrong value means the run won't connect.
 - **`credentials.config.config`** — optional JSON injected into `ctx.room.metadata` for WebRTC sessions. Populate only with the keys the agent actually reads; omit if the agent doesn't read room metadata.
 - **`telephony`** — include the phone block only when telephony is one of the connection modes from Phase 3.
 
@@ -377,22 +380,22 @@ Same as above but `agent_id` = squad ID. Auto-sync tries `/assistant/{id}` first
   "provider": {
     "type": "pipecat",
     "credentials": {
-      "api_key": "<Pipecat Cloud API Key from pipecat.daily.co>",
+      "api_key": "CEKURA_PLACEHOLDER_REPLACE_ME",
       "config": {
-        "pipecat_agent_name": "<agent name from Pipecat dashboard>",
+        "pipecat_agent_name": "<REAL agent name from pcc-deploy.toml — never a placeholder>",
         "webhook_url": "<optional — webhook URL for call events>",
         "config": {},
         "room_properties": {},
-        "tracing_enabled": true
+        "tracing_enabled": false
       }
     }
   }
 }
 ```
 
-- **`tracing_enabled: true`** — Phase 6 will integrate the SDK. If the user refuses the SDK integration in Phase 6, that phase flips this back to `false`.
-- **`pipecat_agent_name`** — the agent name as deployed in Pipecat Cloud. Required for WebRTC Automated; collect it anyway so it's available later.
-- **`api_key`** — required for WebRTC Automated; not needed for telephony-only or SDK-based observability.
+- **`tracing_enabled: false` at create** — same rule as LiveKit above.
+- **`pipecat_agent_name`** — the agent name as deployed in Pipecat Cloud, an identifier rather than a secret. Take it from `pcc-deploy.toml`; NEVER a placeholder.
+- **`api_key`** — Pipecat's only credential, and its only placeholder. There is no `url` and no `api_secret` — do not invent either. Ask the user to confirm they replaced it before any run.
 - **`credentials.config.config`** — optional Pipecat agent configuration JSON used when Cekura starts a session. Populate only with the keys the agent reads.
 - **`credentials.config.room_properties`** — optional Daily.co room properties JSON applied when Cekura creates the room.
 - **`webhook_url`** — optional webhook URL for Pipecat call events.

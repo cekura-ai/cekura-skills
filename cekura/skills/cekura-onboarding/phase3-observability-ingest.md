@@ -46,7 +46,7 @@ How continuous ingestion works depends on the provider:
   | Retell | `POST /observability/v1/retell/observe/` |
   | ElevenLabs | `POST /observability/v1/elevenlabs/observe/` |
 
-- **LiveKit / Pipecat** — continuous production observability comes from the **Cekura SDK** in the agent (`observe_*` mode reports every call automatically; read `../cekura-create-agent/phase6-sdk-integration.md` when the user is ready to integrate it). Without the SDK, the user pushes call data themselves via `observe_create` after each call.
+- **LiveKit / Pipecat** — continuous production observability comes from the **Cekura SDK** in the agent (`observe_*` mode reports every call automatically; LiveKit/Pipecat observability agents arrive via `cekura-livekit-pipecat-onboarding`, whose phase5 opens the SDK pull request; return here for this ingest gate once it is wired). Without the SDK, the user pushes call data themselves via `observe_create` after each call.
 
 - **All other providers / self-hosted** — push each completed call to the generic `observe_create` endpoint from the agent's post-call hook.
 

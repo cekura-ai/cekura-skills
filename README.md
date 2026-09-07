@@ -24,7 +24,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 12 Skills, 14 Commands in one plugin
+### 13 Skills, 14 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
@@ -37,6 +37,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
 | `cekura-infra-test-suite` | |
+| `cekura-livekit-pipecat-onboarding` | |
 | `cekura-flag-call-log-failures` | |
 | `cekura-generate-scenarios` | |
 
@@ -88,7 +89,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Twelve skills, scoped to specific Cekura workflows:
+Thirteen skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
@@ -101,6 +102,7 @@ Twelve skills, scoped to specific Cekura workflows:
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
 | `cekura-infra-test-suite` | "Create a committed JSON CI/CD suite / add Tests-as-Code to my voice-agent repo / update test coverage for this PR" |
+| `cekura-livekit-pipecat-onboarding` | "Connect my LiveKit / Pipecat agent — read it from the repo, first run, SDK PR" |
 | `cekura-flag-call-log-failures` | "Analyze the last N calls for issues / what % of calls have <problem>" |
 | `cekura-generate-scenarios` | "Create scenarios from failed calls / regression-test the agent on prod issues" |
 
@@ -245,7 +247,8 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-metric-improvement \
          cekura/skills/cekura-predefined-metrics \
          cekura/skills/cekura-eval-design \
-         cekura/skills/cekura-infra-test-suite
+         cekura/skills/cekura-infra-test-suite \
+         cekura/skills/cekura-livekit-pipecat-onboarding
 ```
 
 **Behavior preset** — single-file domain knowledge (metric design, eval design, API reference, anti-patterns):
@@ -486,6 +489,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
 | `cekura-infra-test-suite` | Creating or updating source-controlled Cekura JSON Tests-as-Code suites for a voice-agent repository |
+| `cekura-livekit-pipecat-onboarding` | Onboarding a LiveKit or Pipecat agent from its repository — GitHub check, placeholder credentials, first run, SDK PR |
 | `cekura-flag-call-log-failures` | Triaging recent production call logs against KPIs — failure rates + outcome distribution |
 | `cekura-generate-scenarios` | Turning flagged production failures into regression evaluator scenarios |
 

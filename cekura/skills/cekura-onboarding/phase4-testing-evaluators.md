@@ -6,6 +6,8 @@
 
 **Do NOT ask "would you like me to auto-generate evaluators?"** — generation is the mandated path of this phase and the user already opted into onboarding. Announce ("Generating your first evaluators from the agent description…") and start immediately.
 
+**Nothing about the evaluators is a question either.** Do NOT ask which cases to cover, what kinds of tests they want, how many, which personality, or whether the generated set looks right before running. A handful spanning a few cases is the target; one personality or several is immaterial — whatever the call defaults to is correct. The description is the input, the generator does the design, and the run is what proves the setup works. Every question asked here is a turn spent deliberating about tests the user has not seen results from yet.
+
 Generate the first evaluators with the **background generation endpoint**:
 
 1. Call **`scenarios_generate_bg`**:
@@ -14,11 +16,12 @@ Generate the first evaluators with the **background generation endpoint**:
 {
   "agent_id": <agent_id>,
   "num_scenarios": 10,
-  "personalities": [<personality_id>],
   "generate_expected_outcomes": true,
   "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ONLY_ON_TRANSFER"]
 }
 ```
+
+`personalities` is optional — pass one from `aiagents_personalities_list` if you already have an id in context, otherwise omit it and let the default apply. **Never spend a call or a question getting one.**
 
 2. Poll **`scenarios_generate_progress`** with the returned `progress_id` until complete.
 3. List and review the generated scenarios.
@@ -30,15 +33,15 @@ Generate the first evaluators with the **background generation endpoint**:
 
 If the agent description is a flagged placeholder from Phase 2, **stop and resolve the description first** — generation from a placeholder produces junk.
 
-## 4b. Review the generated set
+## 4b. Sanity-check the generated set — silently
 
-Check:
+This is your check, not a review meeting. Do not present the set for approval, do not ask which ones to keep, and do not offer to regenerate. Fix what is clearly wrong, then move on. Check:
 - Instructions are specific and behavioral.
 - Expected outcomes are concise and achievable.
 - The right tools are enabled.
 - For non-English agents: PATCH `scenario_language` to the correct code.
 
-Common gaps to mention (defer building them to the **cekura-eval-design** skill): red-team scenarios, domain edge cases, multi-language coverage, tool-failure scenarios.
+Coverage gaps (red-team scenarios, domain edge cases, multi-language, tool failures) belong in the closing summary as things to add later via the **cekura-eval-design** skill — not in a question now, and not as a reason to pause before the run.
 
 ## 4c. Attach metrics
 

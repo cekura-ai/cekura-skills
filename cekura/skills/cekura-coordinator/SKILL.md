@@ -45,6 +45,7 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `cekura-predefined-metrics` | Catalog of built-in metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
 | `cekura-infra-test-suite` | Source-controlled JSON Tests-as-Code suite — repository discovery, deterministic CI coverage, safe dry-run validation |
+| `cekura-livekit-pipecat-onboarding` | LiveKit/Pipecat agents — GitHub-first onboarding: read the repo, placeholder credentials, first run, SDK pull request |
 | `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — failure rates + outcome distribution |
 | `cekura-generate-scenarios` | Turn flagged production failures into regression evaluator scenarios |
 
@@ -101,6 +102,7 @@ When the user describes what they need, route them:
 | "Which built-in metrics are available?" / "what does Hallucination Detection cost?" | **cekura-predefined-metrics** skill |
 | "Fix this prod call bug" / "reproduce and test a fix" | **cekura-self-improving-agent** |
 | "CI/CD tests for my voice bot" / "commit a JSON test suite" / "Tests-as-Code for my voice repo" / "update CI eval coverage for this PR" | **cekura-infra-test-suite** skill |
+| "connect my LiveKit agent" / "onboard my Pipecat agent" / "add the Cekura SDK to my agent repo" | **cekura-livekit-pipecat-onboarding** skill |
 | "What % of calls have <problem>" / "analyze my recent calls" | **cekura-flag-call-log-failures** skill |
 | "Create scenarios from failed calls" / "replay prod failures as tests" | **cekura-generate-scenarios** skill |
 | "Run a full quality report" / "generate evals and run them end-to-end" | `/cekura-report` command |
@@ -150,6 +152,7 @@ This skill routes — it doesn't perform tasks itself. After confirming the user
 - Designing test scenarios → **cekura-eval-design**
 - Fixing a production call bug end-to-end → **cekura-self-improving-agent**
 - Repository-owned JSON CI/CD test suite → **cekura-infra-test-suite**
+- Onboarding a LiveKit or Pipecat agent from its repository → **cekura-livekit-pipecat-onboarding**
 - Triaging production call logs → **cekura-flag-call-log-failures**
 - Turning prod failures into scenarios → **cekura-generate-scenarios**
 

@@ -11,7 +11,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.5.2"
+  version: "0.7.0"
 ---
 
 # Cekura Platform Onboarding
@@ -43,7 +43,9 @@ This skill executes **one phase at a time, in order**. For each phase:
 
 **Ask questions ONLY to collect missing inputs or resolve genuine ambiguity** (provider choice, credentials, phone number, self-hosted confirmation). Don't pause to re-confirm an action the flow already implies — the user invoked onboarding, which is a request to create the agent, enable metrics, generate evaluators, and start the first verification run. (Your client's own tool-permission prompts still apply as normal.) No "ready to continue?", no "shall I create it?", no "want me to proceed?" — just do the step and narrate it. The one exception: when a **gate is blocked** (e.g. the testing-path description gate) present the blocker and the options.
 
-**Onboarding is self-contained.** Do NOT open the sibling cekura-create-agent skill (or any other skill) during onboarding — everything needed (credential matrix, description quality bar) is inlined in this skill's phase files. cekura-create-agent's phase sequence covers post-onboarding work (SDK integration, mock tools, knowledge base) and running it mid-onboarding hijacks the flow into those steps; it is a Phase-6 handoff only.
+**Onboarding is self-contained — with ONE exception.** Do NOT open the sibling cekura-create-agent skill (or any other skill) during onboarding — everything needed (credential matrix, description quality bar) is inlined in this skill's phase files. cekura-create-agent's phase sequence covers post-onboarding work (mock tools, knowledge base, dynamic variables) and running it mid-onboarding hijacks the flow into those steps; it is a Phase-6 handoff only. **The exception: LiveKit and Pipecat hand off to `cekura-livekit-pipecat-onboarding` at the provider answer** (Phase 2 §2b) — the one sub-skill onboarding loads.
+
+**LiveKit and Pipecat leave this skill at the provider answer.** They are the two code-based providers — nothing auto-imports and the configuration lives in the user's repo — so `cekura-livekit-pipecat-onboarding` reads the agent's own code, creates the agent with placeholder credentials (no provider secret is ever typed into chat), runs the first evaluators and offers the SDK. It returns only to close out (its terminal exits land in [phase6-testing-next.md](phase6-testing-next.md)); do not run the code-based flow from this skill's files, and do not run 3T–6T after it completes.
 
 ## The Phases
 
@@ -54,7 +56,8 @@ This skill executes **one phase at a time, in order**. For each phase:
 | 3T | [phase3-testing-metrics.md](phase3-testing-metrics.md) | Verify default metrics (auto-enabled at project creation) | testing |
 | 4T | [phase4-testing-evaluators.md](phase4-testing-evaluators.md) | Generate first evaluators (generation-first) | testing |
 | 5T | [phase5-testing-first-run.md](phase5-testing-first-run.md) | First test run + **verification gate** | testing |
-| 6T | [phase6-testing-next.md](phase6-testing-next.md) | What's next (SDK, mock tools, custom metrics) | testing |
+| 6T | [phase6-testing-next.md](phase6-testing-next.md) | What's next (SDK, mock tools, custom metrics); also the closing summary the LiveKit/Pipecat skill exits into | testing |
+| 2→ | *handoff* — **cekura-livekit-pipecat-onboarding** | LiveKit/Pipecat only, from the provider answer: GitHub → scan → placeholder create → evaluators → run → SDK PR. Completes onboarding. | both |
 | 3O | [phase3-observability-ingest.md](phase3-observability-ingest.md) | Ingest call logs + **verification gate** | observability |
 | 4O | [phase4-observability-metrics.md](phase4-observability-metrics.md) | Configure starter metrics | observability |
 | 5O | [phase5-observability-evaluate.md](phase5-observability-evaluate.md) | Run metric evaluation | observability |

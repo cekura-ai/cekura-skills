@@ -4,6 +4,169 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.16.0 — 2026-09-07
+
+**New skill: `cekura-livekit-pipecat-onboarding`.** LiveKit and Pipecat are the
+two code-based providers — nothing auto-imports, and everything Cekura needs is
+in the agent's own repository. Their onboarding journey now lives in a skill of
+its own, handed off from `cekura-onboarding` (and from `cekura-create-agent`) the
+moment the provider answer is LiveKit or Pipecat. Install with
+`npx skills add cekura-ai/cekura-skills --skill cekura-livekit-pipecat-onboarding`.
+
+Why a separate skill: four consecutive stage sessions failed to run this flow,
+and every one traced back to the same shape of problem — the flow lived inside
+the generic onboarding skill and inherited rules written for every other
+provider, several of which vetoed the steps this flow needs (a ban on
+skip-option questions ate the "connect GitHub?" question; a "collect the
+credentials first" rule fought the placeholder-credential create; a section
+titled "Manual essentials (… LiveKit/Pipecat)" was a second, wrong destination).
+Isolation is the fix, not a fifth exemption. The dashboard runtime swaps its
+onboarding rules for this skill's the moment it is loaded, so the two rule sets
+are never in context together.
+
+The journey, in order: `github_connection_status` → connect-or-paste →
+`github_checkout_repo` and a scan that extracts the system prompt, the agent's
+name, the dispatch name, the language, **who speaks first** (→
+`agent_speaks_first`) and whether the SDK is already wired → at most one
+question for what the code could not settle → WebRTC Automated stated, not
+asked → `aiagents_create` with placeholder credentials (three for LiveKit, one
+for Pipecat; the dispatch name is real) → the agent-page link, the fields to
+replace, "Done / Not yet", and the warning that a wrong value means runs cannot
+connect → ten evaluators, one personality → **ask** before running → results →
+the SDK offer, shown as one `<diff_view>` per file → an explicit yes → a pull
+request whose code reads `CEKURA_API_KEY` / `CEKURA_AGENT_ID` from the
+environment and whose body ends with the three things only the user can do →
+tracing switched on only after they confirm all three.
+
+Every decline is a real question with options, handled inside the skill (a
+GitHub decline takes an in-skill paste path — same prompt quality bar — rather
+than hopping back to onboarding and returning); the only exits are terminal,
+into `cekura-onboarding`'s closing summary. The observability variant runs the
+same phases through the create, skips evaluators, and goes straight to the SDK
+offer with observability preselected.
+
+**Moved, not duplicated:** `cekura-onboarding/phase2-agent.md` §2b is now a
+handoff stub carrying a `Context already established:` block;
+`cekura-onboarding/phase7-sdk-pr.md` is deleted (its content is the new skill's
+phase5); `cekura-create-agent`'s LiveKit/Pipecat sections hand off too and
+resume at Phase 7. Deep SDK reference stays in `cekura-create-agent/references/`.
+
+## 0.15.3 — 2026-09-06
+
+**The LiveKit/Pipecat flow could be skipped entirely by landing in the wrong
+section.** Two parts of Phase 2 claimed those providers: §2b (the code-based
+flow — check GitHub, read the repo) and §2c, titled "Manual essentials
+(self-hosted, deferred-key, LiveKit/Pipecat)", whose content is "collect
+description, name, language". Told to follow the matching section, an agent
+scanning headers had two matches, and picking §2c meant asking the user for the
+name and system prompt that were sitting in their repository — with no GitHub
+check and no scan.
+
+Phase 2 now routes each provider answer to exactly one section, §2c no longer
+advertises itself as a LiveKit/Pipecat destination, and §2c opens with an entry
+check that sends those providers back to §2b if they arrived directly. §2b
+borrows §2c's description quality bar rather than handing off to it.
+
+## 0.15.2 — 2026-09-06
+
+**The LiveKit/Pipecat flow no longer asks for the agent's name.** It is in the
+repo — repository name, project metadata, deploy-manifest service name, or the
+dispatch name — so the scan now looks for it and the create uses it, saying
+which source it came from. A name is trivially editable afterwards, so a derived
+one that is slightly off costs nothing while a question costs a turn.
+
+**Language is asked alone, and only as a fallback.** The scan settles it from
+STT/TTS config or the prompt's own language; a question fires only when the scan
+is genuinely silent. It is never bundled with a name question — "What is the
+agent's name and primary language?" was two asks wearing one coat, and the name
+half should not have been asked at all.
+
+## 0.15.1 — 2026-09-06
+
+**Dashboard links now resolve on every environment.** The agent had no way to
+learn the dashboard host: the prompt pointed it at a sandbox file the guardrail
+does not let it read, and nothing else carried the value. It looked correct
+wherever the host was guessable — a guessed `*.cekura.ai` that matches the real
+one survives the link-scrubber — and produced link-less replies everywhere else.
+The host now arrives as `dashboard_url=` in the workspace line, and the
+LiveKit/Pipecat flow builds its agent-page and Integrations links from that.
+
+Requires the matching backend change to be deployed; without it the agent
+correctly omits the link rather than guessing.
+
+## 0.15.0 — 2026-09-06
+
+**LiveKit and Pipecat now onboard from the repo instead of from a
+credential interrogation.** They are the two code-based providers — nothing
+auto-imports, and everything Cekura needs is in the agent's own code — so the
+flow goes and finds it. `cekura-onboarding` Phase 2 and `cekura-create-agent`
+Phase 2 both run the same sequence, and it ends at a completed test call
+rather than at a half-filled form.
+
+No API change was needed for any of this — it is entirely skill and prompt
+behaviour.
+
+- **GitHub is checked first, and re-checked with the tool.** Not connected, the
+  user gets a real question (with a link to the org Integrations page) rather
+  than a remark, and "I've connected it" is re-verified rather than believed.
+  *Connected with repos*, *connected but no repositories shared*, and *still not
+  connected* are three different situations and now get three different
+  answers — the middle one used to be reported as "not connected", sending
+  users to reinstall an App they had already installed. Decline, and the details
+  are collected in chat and GitHub is never offered again.
+- **The scan reads the manifest, never the values.** `.env.example`, CI
+  workflows and deployment manifests say *which* secrets the agent needs and
+  where they live; that is all that is taken. A live-looking key committed to
+  the repo is reported as something to rotate, never used as an input. Repo
+  content is treated as untrusted data, and what was found is confirmed with
+  the user before it is used.
+- **No provider secret is ever asked for in chat, on any path.** The agent is
+  created with marked placeholder credentials — three for LiveKit (API key,
+  API secret, server URL), one for Pipecat (API key; it has no URL and no
+  secret) — and the user replaces them on the agent page. Pipecat's dispatch
+  agent name is an identifier, not a secret: it comes from `pcc-deploy.toml`
+  and is never a placeholder. This holds even when the user declined GitHub
+  entirely.
+- **The handover names the fields and says what a wrong value costs.** The user
+  is told exactly which fields to replace — three for LiveKit, one for Pipecat —
+  and asked to confirm when they're done, as a real question rather than a
+  passing "let me know". They are also told, in the same breath, that nothing
+  validates a credential until a call is placed: a wrong or mistyped key means
+  the runs simply won't connect, and that failure looks like a broken agent
+  rather than a bad key. Nothing downstream starts before that confirmation, and
+  a failed first run now says "check the credentials first" instead of reporting
+  an unexplained failure.
+- **WebRTC Automated is assumed rather than asked.** It is the common case for
+  both providers, and the scan reveals when it is wrong; the assumption is
+  stated with an invitation to correct it.
+- **Evaluators are generated and run without a single question.** No "which
+  cases should we cover", no "how many", no personality choice, no "does this set
+  look right", no "ready to run?". A handful spanning a few cases is the target,
+  the default personality is fine, and the run starts immediately on a scenario
+  the flow picks itself — the run is what proves the setup, and none of those
+  questions can be answered usefully before the user has seen a result.
+- **The SDK is offered only after results, and lands as a pull request.** New
+  `phase7-sdk-pr.md`: pick testing, observability or both; see a short plan —
+  which files, one line each, what it unlocks; confirm; then a PR. The code
+  reads `CEKURA_API_KEY` and `CEKURA_AGENT_ID` from the environment, so no
+  credential is ever in the diff, and the PR ends with the three things only
+  the user can do (create a key, set the vars, redeploy). Tracing is switched
+  on only after they confirm all three — a merged PR is not a deploy.
+
+**Fixes**
+
+- `provider.type` no longer documented as `self_hosted` anywhere. The v2
+  endpoint rejects that value; the correct one is `custom`, and `self_hosted`
+  survives only as a `chat_agent_details.type`. This affected the fork/wrapper
+  carve-out ("Dograh via Pipecat"), which is the first branch of the new flow.
+- LiveKit/Pipecat agents are now created with `tracing_enabled: false`. The
+  create examples set `true`, which makes every run wait on a webhook from an
+  SDK that is not integrated yet.
+- The LiveKit credential path is `credentials.config.url`, not
+  `credentials.url`.
+- Onboarding's SDK step no longer points into `cekura-create-agent`'s phase
+  files, which the skill's own self-containment rule forbids.
+
 ## 0.14.2 — 2026-09-05
 
 **`cekura-infra-test-suite` now completes in one pass.** The file list is
