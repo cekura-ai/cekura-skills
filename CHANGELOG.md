@@ -4,6 +4,23 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.14.3 — 2026-09-07
+
+**`cekura-eval-design` — conditional-actions guidance for scripted multi-turn
+probes.** New "Multi-Turn Probe & Duration Control" section in
+`references/conditional-actions.md` covering the condition-matcher stall (why a
+canned/looping agent can run a fully scripted call to the duration cap) and the
+decision between positional `action_followup` chaining and semantic `standard`
+gates for content-independent vs. content-dependent caller turns, plus
+deflection-tolerant mid-turn conditions and interruption timing for terse
+agents.
+
+- Matching anti-pattern and validation-checklist entries, including explicit
+  self-driven termination (inline `<endcall />` vs. a dedicated
+  `action_followup`, with the tradeoff).
+- SKILL.md authoring-card and reference-list pointers updated; BUNDLE.md
+  regenerated.
+
 ## 0.14.2 — 2026-09-05
 
 **`cekura-infra-test-suite` now completes in one pass.** The file list is
