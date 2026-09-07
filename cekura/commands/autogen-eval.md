@@ -97,7 +97,7 @@ Default: `workflow`. Can combine by running generation multiple times with diffe
 
 **Ask:** "Do you have specific scenarios in mind, or should I generate broad coverage based on the agent description?"
 
-**For specific scenarios:** Format each scenario as a clear paragraph. The generator reads these and creates one evaluator per scenario description.
+**For specific scenarios:** Format each scenario as a clear numbered paragraph — one behaviour or branch under test per paragraph. The generator reads these and creates one evaluator per scenario description. If the user wants a full end-to-end journey, say so in that paragraph so it is a deliberate composition, not an accident.
 
 ```
 extra_instructions: |

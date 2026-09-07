@@ -34,6 +34,12 @@ the same configuration error before anyone read a result.
 - **Instruction patterns:** values defined by the conversation ("the first
   option asked about") are called out as non-fixtures — name them in the
   profile and key the trigger on the question.
+- **One behaviour per evaluator.** `extra_instructions` is one numbered
+  paragraph per evaluator, each owning one branch under test; an end-to-end
+  journey is a labelled, deliberate composition. The coverage reference no
+  longer asks every scenario to progress through multiple workflows, and the
+  post-generation plan diff regenerates a scenario that fused several
+  behaviours.
 - **Skill activation.** `cekura-create-agent` now triggers on the plain
   phrasing users reach for — "create an agent", "set up an agent", "walk me
   through creating an agent", "connect my agent" — and on importing an agent

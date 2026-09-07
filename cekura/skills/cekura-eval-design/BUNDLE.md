@@ -163,7 +163,7 @@ set into the first selected format.
 
 ## Behavioral scenarios — shaping generation
 
-`extra_instructions` is where you steer the generator. One paragraph per scenario category, plain prose, third person about the testing agent, no PII, no markdown:
+`extra_instructions` is where you steer the generator. One numbered paragraph per evaluator, plain prose, third person about the testing agent, no PII, no markdown. **Each evaluator owns one behaviour or branch under test**: the caller walks as far into the flow as that branch requires, cooperative everywhere except at the one point being tested, and the expected outcome grades that point. A request that bundles several behaviours ("verification, then a reschedule, then a callback refusal") is several paragraphs, not one. A full end-to-end journey is a deliberate composition the user asked for — label it as such in the paragraph and the name; it is never the default shape.
 
 ```
 The testing agent calls as an established patient who needs to reschedule a
@@ -668,7 +668,7 @@ When generating a batch of scenarios (auto-gen or manual), apply this distributi
 
 - **~30% happy-path** (cooperative caller completing the full workflow), **~70% friction** — with at least one happy-path scenario in any batch.
 - **Every scenario opens with a DIFFERENT caller persona** inferred from the agent's domain (healthcare: worried patient, impatient caregiver, confused elderly caller). No two scenarios share the same opening persona.
-- **Each scenario progresses through MULTIPLE workflow steps** — not just the first one or two.
+- **Each scenario tests one behaviour or branch**, and the caller walks as deep into the flow as that branch requires — not stopping at the first step or two, but not touring every workflow either. A full end-to-end journey is a deliberately labelled composition, not the default shape; one failure should point at one behaviour.
 - **Friction appears at DIFFERENT points across the batch**: some early-then-cooperative, some smooth-start-with-mid-flow pushback, some late friction (refuses to confirm, changes mind), some multi-point.
 - **Friction must be SPECIFIC and behavioral**, never "the caller is difficult": refuses to confirm identity until told why it's needed; challenges a specific piece of information; asks the same question repeatedly despite an answer; suddenly asks for a human mid-flow.
 - **Every scenario must be grounded** in an actual agent capability — a workflow branch in the description, a configured tool, a KB fact, or a general conduct policy (professionalism, safety, escalation). Reach the target count by permuting grounded branches, value variants, friction positions, and personas — never by inventing capabilities the agent doesn't have. Friction may never be premised on environment failures the scenario can't control or on the main agent misbehaving.

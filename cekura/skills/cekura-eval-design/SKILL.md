@@ -159,7 +159,7 @@ set into the first selected format.
 
 ## Behavioral scenarios — shaping generation
 
-`extra_instructions` is where you steer the generator. One paragraph per scenario category, plain prose, third person about the testing agent, no PII, no markdown:
+`extra_instructions` is where you steer the generator. One numbered paragraph per evaluator, plain prose, third person about the testing agent, no PII, no markdown. **Each evaluator owns one behaviour or branch under test**: the caller walks as far into the flow as that branch requires, cooperative everywhere except at the one point being tested, and the expected outcome grades that point. A request that bundles several behaviours ("verification, then a reschedule, then a callback refusal") is several paragraphs, not one. A full end-to-end journey is a deliberate composition the user asked for — label it as such in the paragraph and the name; it is never the default shape.
 
 ```
 The testing agent calls as an established patient who needs to reschedule a
