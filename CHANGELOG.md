@@ -4,6 +4,22 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.3 — 2026-09-06
+
+**The LiveKit/Pipecat flow could be skipped entirely by landing in the wrong
+section.** Two parts of Phase 2 claimed those providers: §2b (the code-based
+flow — check GitHub, read the repo) and §2c, titled "Manual essentials
+(self-hosted, deferred-key, LiveKit/Pipecat)", whose content is "collect
+description, name, language". Told to follow the matching section, an agent
+scanning headers had two matches, and picking §2c meant asking the user for the
+name and system prompt that were sitting in their repository — with no GitHub
+check and no scan.
+
+Phase 2 now routes each provider answer to exactly one section, §2c no longer
+advertises itself as a LiveKit/Pipecat destination, and §2c opens with an entry
+check that sends those providers back to §2b if they arrived directly. §2b
+borrows §2c's description quality bar rather than handing off to it.
+
 ## 0.15.2 — 2026-09-06
 
 **The LiveKit/Pipecat flow no longer asks for the agent's name.** It is in the

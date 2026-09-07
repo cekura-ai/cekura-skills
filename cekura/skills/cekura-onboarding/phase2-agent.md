@@ -17,7 +17,17 @@ The full provider list is:
 
 **All-or-nothing rule for the choice UI:** if you ask this as a structured question with selectable options, the options MUST be the complete list above — all eleven, one option each, never a subset you picked, never an "Other" bucket. If the interface cannot show that many options (some cap at ~4), do NOT use options at all — ask as a plain question with the full list in the message text and let the user type the provider name. A partial option list hides first-class providers and nudges users toward the self-hosted misclassification warned about below.
 
-Then follow the matching section below. **Onboarding is self-contained — do NOT open the cekura-create-agent skill or any of its phase files during onboarding** (its phase sequence covers post-onboarding work like mock tools and knowledge bases; running it mid-onboarding hijacks the flow). SDK integration has its own file in THIS skill — [phase7-sdk-pr.md](phase7-sdk-pr.md), after the first results. The credential matrix you need:
+Then go to **exactly one** section below and run it start to finish:
+
+| Provider answer | Section | |
+|---|---|---|
+| VAPI · Retell · ElevenLabs · Bland · Synthflow | **2a** | auto-import |
+| KoreAI · Genesys · Cisco | **2a′** | standard named |
+| **LiveKit · Pipecat** | **2b** | code-based — **always start here, never 2c** |
+| self-hosted / custom, or a fork built on a named provider | **2c** | manual |
+
+**2c is NOT a LiveKit/Pipecat destination.** It holds shared sub-steps (the description quality bar, the language fallback) that 2b sends you into and expects you back from. Landing in 2c directly for LiveKit/Pipecat skips the GitHub check and the repo scan, and the first visible symptom is asking the user for a name and a system prompt that were sitting in their code.
+ **Onboarding is self-contained — do NOT open the cekura-create-agent skill or any of its phase files during onboarding** (its phase sequence covers post-onboarding work like mock tools and knowledge bases; running it mid-onboarding hijacks the flow). SDK integration has its own file in THIS skill — [phase7-sdk-pr.md](phase7-sdk-pr.md), after the first results. The credential matrix you need:
 
 | Provider | Required fields (where to find them) |
 |---|---|
@@ -170,7 +180,7 @@ If the scan found a SIP trunk or phone number, say that instead and use the tele
 - **The dispatch agent name is an identifier, not a secret — never placeholder it.** It is public, it is in the repo, and it is what the provider matches the dispatch against; a dummy there produces an agent that looks configured and can never connect. Take it from the repo, or ask for it inline in a `<clarification>` (that ask is fine — it is not a credential).
 - **`tracing_enabled: false` at create.** It only becomes `true` after the SDK is integrated AND the user confirms they finished the deploy steps — see phase7. Set `true` early and every run waits on a webhook that never arrives.
 - **Language: take it from the scan; ask only if the scan is genuinely silent, and then ask it ALONE.** STT/TTS config usually settles it (`language=`, a locale in the model name), and the prompt's own language is good evidence. Never bundle it with a name question — "What is the agent's name and primary language?" is two asks wearing one coat, and the name half should not have been asked at all.
-- The description still has to pass the hard acceptance check in 2c, whether it came from the repo or from a paste.
+- The description still has to pass the hard acceptance check in 2c, whether it came from the repo or from a paste. **Borrow that check and come back here — do not restart the flow in 2c**; its name/language collection is for providers that have no repo to read.
 
 ### Step 5 — Hand over the link, say why, and say what a wrong value costs
 
@@ -195,7 +205,9 @@ Then ask for the confirmation as a real `<clarification>` — options `["Done �
 
 **The first run is the verification**, and that is the honest framing to give: if it fails to connect, a wrong or mistyped credential is the first thing to check ([phase5-testing-first-run.md](phase5-testing-first-run.md) covers diagnosing it).
 
-## 2c. Manual essentials (self-hosted, deferred-key, LiveKit/Pipecat)
+## 2c. Manual essentials (self-hosted / deferred-key providers; shared sub-steps for 2b)
+
+> **Entry check — if the provider is LiveKit or Pipecat, you should have arrived here FROM 2b**, for the description quality bar or the language fallback, with the GitHub check and repo scan already done. If you came straight here after the provider question, stop and go to [2b](#2b-livekit--pipecat--the-code-based-flow) — the name and the system prompt are in their repo, and asking for them is the symptom of having skipped it.
 
 - **Description = the real system prompt.** The description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent. The complete quality bar is below — do not open other skills' files for it.
 
