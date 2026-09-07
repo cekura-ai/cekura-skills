@@ -700,7 +700,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 
 ## Multi-Turn Probe & Duration Control
 
-Any CA scenario that fires a **fixed sequence of caller lines** at a live agent can hit a failure mode the basic patterns don't cover: the **call runs to the duration cap** even though every caller line is scripted. The three causes below are the usual ones, and the fixes are cheap.
+Any CA scenario that fires a **fixed sequence of caller lines** at a live agent can hit a failure mode the basic patterns don't cover: the **call runs to the duration cap** even though every caller line is scripted. The usual cause is a mid-turn condition that won't advance the caller; the fixes are cheap.
 
 ### The condition-matcher stall (and when to go positional)
 
@@ -728,37 +728,9 @@ A `standard` mid-turn condition only advances the caller when an **LLM judge dec
 
 When you *do* keep a semantic `standard` gate, phrase it so a **legitimate non-answer still advances the caller**. `"The agent answers the question about its hours"` strands the caller when the agent (correctly) says it has none; `"The agent responds to, deflects, or redirects the question about its hours"` advances on any real reply. A mid-turn gate should test *that the agent took a turn*, not *that it gave the answer you hoped for* — grading the answer is Expected Outcome's job, not the gate's.
 
-### Clean termination — a caller closing line plus a dedicated `<endcall />`
-
-A robust, readable way to end a scripted multi-turn probe is a **two-step close**:
-
-1. a caller **closing line** as its own condition — `"Okay, that's all I needed, thank you."`
-2. a **dedicated `action_followup`** gated on that line whose action is *only* `<endcall />`.
-
-```jsonc
-{ "id": 4, "condition": "The agent responds to the final question",
-  "action": "Okay, that's all I needed, thank you.", "type": "standard", "fixed_message": true },
-{ "id": 5, "condition": 4, "action": "<endcall />", "type": "action_followup", "fixed_message": true }
-```
-
-Keeping `<endcall />` on its own step (rather than appended to wrap-up text) makes the intent explicit and easy to audit. Confirm the call ended as intended by reading the run's `metadata.ended_reason` — a clean close reads `"…agent-ended-call"` and the duration sits well under the cap. Also give the caller `role` an explicit stop instruction ("After your final listed question and the agent's reply, say your short closing line and end the call; never start a new topic"), so it doesn't invent extra turns that reopen the conversation.
-
-### A long call is sometimes real signal, not a harness bug
-
-Before "fixing" a capped call, read the transcript. If the agent genuinely breaks down — loops "I didn't get that", dumps the caller into a dead transfer queue, restarts with a new persona — the long duration and its `EO=0` are **correct measurements** and must be kept. Only apply the positional/endcall fixes when the caller was stalled or never reached its closing line despite the agent behaving. Masking a genuine breakdown hides exactly the behavior a suite exists to catch.
-
 ### Interruption timing for terse agents
 
 `<interruption time="Xs" />` must lead an `action_followup` action (see [Interruption behavior](#interruption-behavior--action_followup-re-executes-from-the-start)). Against agents that speak in short bursts, a long lead lands *after* the agent already finished, so no barge-in is exercised — use a short lead such as `time="0.2s"` so the cut-in happens mid-utterance.
-
-## Cross-Agent / Benchmark Fairness
-
-When one suite runs against **several different agents** to compare them (provider bake-offs, model A/B tests, pre/post-prompt-change regressions), scenario wording that was harmless for a single agent becomes **bias**. Neutralize it before the run, or the ranking measures the wrong thing.
-
-- **Watch the agent–domain confound.** If each agent under test lives in a different business domain (a legal intake bot vs. a retail bot vs. a restaurant bot), any domain-specific caller question ("what are your weekend hours?", "where's your nearest location?") measures *whether that domain has public hours/locations*, not conversational skill. Replace domain-specific probes with **domain-neutral** ones that every agent can field — capabilities ("what can you help me with?"), escalation ("can you connect me to a person?"), limits ("is there anything you can't help with?") — while keeping each scenario's actual stressor (barge-in, silence, hold, compound question, topic-switch).
-- **Make out-of-scope truly universal.** An "out of scope" probe must be outside the scope of **every** agent in the comparison. "What's the weather?" is out-of-scope for a bank but fair game for a travel line — prefer requests no customer-service agent should fulfill (book a flight, give stock-picking advice, translate a paragraph).
-- **Let the Expected Outcome prompt accept truthful domain-appropriate answers.** A near-binary judge will score a correct "I don't have a physical location / I'm online-only / I can't transfer but I'll pass your details on / hours vary" as a failure unless you say otherwise. Add an explicit allowance to the outcome prompt: *"A truthful acknowledgement of a limitation is acceptable and is not itself a failure."* This keeps the judge from punishing honesty and rewarding agents that happen to have a convenient fact to recite.
-- **Keep the scenarios uniform across agents.** Same conditions, same number of caller turns, same `max_duration`, same personality, same metric set for every agent — the only variable should be the agent's phone number (`agent_number` override with `mode: "same_number"`). Uneven turn counts or per-agent wording make the composite scores incomparable.
 
 ## Anti-Patterns
 
@@ -789,7 +761,6 @@ When one suite runs against **several different agents** to compare them (provid
 - **Relying on the agent to end the call.** A scripted probe should drive its own termination: give `<endcall />` its own `action_followup` gated on the caller's closing line rather than hoping the agent hangs up (see [Clean termination](#clean-termination--a-caller-closing-line-plus-a-dedicated-endcall-)).
 - **Semantic mid-turn gate that demands the answer, not a reply.** `"The agent answers X"` strands the caller against an agent that legitimately can't answer X, running the call to the cap. Phrase the gate as `"responds to, deflects, or redirects…"` and let Expected Outcome grade the answer.
 - **Forcing `action_followup` on content-dependent turns for determinism.** Converting a natural back-and-forth to positional advancement makes the caller ignore the agent's actual reply, tanking Expected Outcome / Relevancy. Only chain probe turns positionally when the caller's next line is content-independent (see [The condition-matcher stall](#the-condition-matcher-stall-and-when-to-go-positional)).
-- **Domain-specific caller questions in a cross-agent benchmark.** "What are your weekend hours?" measures the domain, not the agent. Use domain-neutral probes and outcome prompts that accept truthful "I don't have that" answers (see [Cross-Agent / Benchmark Fairness](#cross-agent--benchmark-fairness)).
 - **Conditions arrays longer than ~15 entries.** Split into multiple evaluators by phase (verification, scheduling, confirmation). Long arrays drift from the intended flow and are hard to debug.
 
 ## Validation Checklist
@@ -814,7 +785,6 @@ When one suite runs against **several different agents** to compare them (provid
 - [ ] Updates send the FULL `conditional_actions` object including existing `functions[]` (updates are full-replace, not a merge)
 - [ ] The last condition ends the conversation (via `<endcall />` or a natural close); for a scripted multi-turn probe, prefer `<endcall />` as its **own** `action_followup` gated on the caller's closing line
 - [ ] Mid-turn semantic gates advance on any real reply ("responds to, deflects, or redirects…"), not only on the hoped-for answer
-- [ ] For a cross-agent benchmark: caller questions are domain-neutral, out-of-scope probes are universal, the outcome prompt accepts a truthful limitation answer, and conditions/turn-count/`max_duration`/personality/metrics are identical across agents
 - [ ] `scenario_language` is set (either explicitly or via a personality with a configured language — required by validation rule 6)
 - [ ] A `personality` is set
 
