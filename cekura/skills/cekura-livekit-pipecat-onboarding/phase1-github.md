@@ -11,22 +11,42 @@ Check the connection before anything else. Do not announce a plan, do not ask fo
 - **In the Cekura dashboard chat:** call **`github_connection_status`**. It takes no arguments and reports the connection fresh on every call, so it is also how you re-check later.
 - **In a local session (Claude Code, Cursor, Codex) with the repo already on disk:** you have the code directly — skip this whole file and go to [phase2-scan.md](phase2-scan.md). There is nothing to connect.
 
-**Not connected** — ask, as a real `<clarification>` with options, whether they want to connect it. Prose does not pause the turn; a question written as prose renders as a passing remark and the flow runs on without them:
+**Not connected** — the tool's own result spells out the question to ask; ask exactly that, and nothing else in the same block:
 
-> "Your LiveKit/Pipecat agent's configuration lives in its repo. Connecting GitHub lets me read the system prompt and dispatch name straight from the code instead of asking you to paste them. Connect it under Settings → Integrations → GitHub — org admins only."
-> Options: `["I'll connect it now", "Skip — I'll paste the details"]`
+> "Would you like to connect your organization's GitHub so Cekura can read your agent's details straight from its code?"
+> Options: `["Yes, I'll connect it", "No — I'll provide the details myself"]`
 
-Link the settings page as `{dashboard_url}/settings/org/integrations`, taking `dashboard_url` from the workspace line (`[Current workspace: … dashboard_url=…]`) — that is the only place the host appears, and it is not always a `cekura.ai` one. **Never guess a host**: a guessed one is stripped out of your reply and the user gets a link-less sentence. No `dashboard_url` in the workspace line ⇒ name the page in words and drop the URL.
+**This is the user's choice, not yours.** Never answer it for them ("GitHub isn't connected, so I'll just collect the details"), never call it optional or "not required", and never put a second question — least of all the agent's name — in the same block. A question written as prose renders as a passing remark: the flow runs on without them, and the bottom-bar prompt they actually look at never appears.
 
-Then **wait**. When they say they have done it, **call `github_connection_status` again** — their word is not evidence. Three outcomes, three different replies:
+**"Yes, I'll connect it"** — give them the address **on its own line** so it can be opened in a new tab, then ask the follow-up in the same reply:
+
+```
+https://<dashboard host>/settings/org/integrations
+```
+
+Take the host from the workspace line (`[Current workspace: … dashboard_url=…]`) — the only place it appears, and not always a `cekura.ai` one. **Never guess a host**: a guessed one is stripped out of your reply and the user gets a link-less sentence. No `dashboard_url` in the workspace line ⇒ name the page in words and drop the URL. Mention that connecting needs an org admin, and that they also pick which repositories to share.
+
+Then the second `<clarification>`, alone — the flow always resumes on a claim, so it needs its own question rather than a guess about when they are back:
+
+> "Have you connected GitHub yet?"
+> Options: `["Yes, I've connected it", "Not yet — still working on it", "I'll paste the details instead"]`
+
+- **Yes** → **call `github_connection_status` again** before believing them; their word is not evidence, the tool is. Three outcomes below.
+- **Not yet** → say you'll wait and ask the same question again; do not start collecting fields in the meantime.
+- **I'll paste the details instead** → the paste path in 1b.
+
+Three outcomes on the re-check, three different replies:
 
 | Re-check says | Say |
 |---|---|
-| Connected, repos listed | Name the repos you can see and go to [phase2-scan.md](phase2-scan.md). |
+| Connected, repos listed | Name the repos you can see, then ask the scan question below before reading anything. |
 | Connected, **no repos shared** | The App is installed but the repository picker is empty — Cekura sees nothing. Ask them to add repositories to the installation at the same settings page, then re-check again. Do NOT tell them to connect GitHub; they already did. |
 | Still not connected | Say so plainly and offer the choice once more, or take the paste path in 1b. Never claim it worked. |
 
-**Already connected on the first call** — skip the connect ask entirely and ask instead whether to scan the repo (`<clarification>`, options `["Scan it", "No — I'll paste the details"]`), naming the repos you can see.
+**Connected, with repos** (on the first call or the re-check) — skip the connect ask entirely; asking someone to connect what they already connected reads as not listening. Ask the scan question instead, alone, naming the repositories you can see:
+
+> "Want me to read `<repo>` and pull your agent's details out of the code?"
+> Options: `["Scan it", "No — I'll paste the details"]`
 
 **Declined either question** — take the paste path in 1b. Then go straight to [phase3-create.md](phase3-create.md) with the same placeholder credentials. **Never re-offer GitHub in this conversation.** Asking twice reads as not listening.
 
