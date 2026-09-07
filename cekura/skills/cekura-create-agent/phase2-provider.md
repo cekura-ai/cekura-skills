@@ -60,7 +60,7 @@ Ask: "What provider does your main agent run on?"
 
 ### LiveKit / Pipecat — onboarding hands off; this section is for everything else
 
-**If the user is ONBOARDING a LiveKit or Pipecat agent, stop and hand off:** call the `Skill` tool with `cekura:cekura-livekit-pipecat-onboarding` and follow it from its first phase. It reads the system prompt, agent name, language and dispatch name out of the user's repository and creates the agent with placeholder credentials they replace on the agent page — so **none of the credentials below are asked for in chat**, and neither is the connection mode (WebRTC Automated is assumed).
+**If the user is ONBOARDING a LiveKit or Pipecat agent, stop and hand off:** call the `Skill` tool with `cekura:cekura-livekit-pipecat-onboarding` — or, if that name is reported unavailable, the bare `cekura-livekit-pipecat-onboarding` — and follow it from its first phase. It reads the system prompt, agent name, language and dispatch name out of the user's repository and creates the agent with placeholder credentials they replace on the agent page — so **none of the credentials below are asked for in chat**, and neither is the connection mode (WebRTC Automated is assumed).
 
 The dashboard runtime **denies `aiagents_create` for `provider.type` `livekit` and `pipecat` until that skill is loaded**, so continuing here does not end in a created agent.
 

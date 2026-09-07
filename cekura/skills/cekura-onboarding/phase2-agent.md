@@ -64,7 +64,7 @@ These two are the **code-based** providers: nothing auto-imports, and the system
 
 **Hand off NOW, before any other question.**
 
-- **Claude Code / plugin sessions:** call the `Skill` tool with `cekura:cekura-livekit-pipecat-onboarding`.
+- **Claude Code / plugin sessions:** call the `Skill` tool with `cekura:cekura-livekit-pipecat-onboarding` — or, if that name is reported unavailable, the bare `cekura-livekit-pipecat-onboarding` (the same skill, installed at user level). Do not give up on the first miss.
 - **Other harnesses:** read that skill's `SKILL.md` and follow it from its first phase.
 
 The dashboard runtime **denies `aiagents_create` for `provider.type` `livekit` or `pipecat` until that skill is loaded**, so there is no version of this that works by continuing here.
