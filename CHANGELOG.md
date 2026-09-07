@@ -24,12 +24,11 @@ the same configuration error before anyone read a result.
   `success` is the rubric verdict over every attached metric; `run-evals`,
   `eval-results` and `cekura-report` report the Expected Outcome score and the
   failing rule separately.
-- **Inherited metrics stay in place.** Generation attaches the project's
-  simulation-enabled set, which is the project's choice; eval-design and
-  autogen-eval check Expected Outcome came through, attach a missing baseline
-  metric only when the project has it, and flag rather than remove a metric a
-  scenario clearly cannot exercise. metric-design notes that a project-wide
-  flow-specific metric should carry an N/A trigger.
+- **Metrics after generation.** Generation attaches the project's
+  simulation-enabled set; eval-design and autogen-eval check Expected Outcome
+  came through and attach a missing baseline metric only when the project has
+  it. metric-design notes that a project-wide flow-specific metric should carry
+  an N/A trigger.
 - `codex/AGENTS.md` / `GEMINI.md` carry the smoke-cohort and rubric points as
   anti-patterns 17–18.
 - **Skill activation.** `cekura-create-agent` now triggers on the plain

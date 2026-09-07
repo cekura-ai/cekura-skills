@@ -193,7 +193,7 @@ Fetch the created scenarios and verify (full checklist: eval-design `references/
 3. **Language** — `scenario_language`, personality language, and the actual text of `first_message`/`instructions` all match the requested language; `first_message` is literal caller dialogue, not a meta-instruction.
 4. **Roles** — instructions describe the caller (first person), not the main agent.
 5. **Scaffolding** — non-empty `expected_outcome_prompt` on every scenario, correct tools (`TOOL_END_CALL`, `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows, `TOOL_DTMF` for IVR), baseline metrics attached.
-6. **Metrics** — Expected Outcome present on every scenario, inherited metrics left in place (fixup 3).
+6. **Metrics** — Expected Outcome present on every scenario (fixup 3).
 
 Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched") — never report success on the trigger alone.
 
@@ -213,7 +213,7 @@ mcp__cekura__scenarios_partial_update:
 Auto-gen may add greetings ("Здравствуйте", "你好") as `first_message` when you specified exact questions. PATCH `first_message` to the exact intended opener.
 
 ### 3. Metrics Check
-Generation attaches the project's simulation-enabled metrics — that set is the project's choice, so leave it in place. Check that Expected Outcome is present (without it a run only reports call completion) and that the other baseline metrics the project has (Infrastructure Issues, Tool Call Success, Latency) came through; if one is missing and the project has it, fetch ids with `mcp__cekura__metrics_list` and PATCH it on. Do not strip inherited metrics. If a scenario clearly cannot exercise one of them (a booking-flow metric on a pure FAQ scenario), mention it in the summary and let the user decide — an N/A trigger on the metric (see `cekura-metric-design`) is usually the better fix than removing it:
+Generation attaches the project's simulation-enabled metrics. Check that Expected Outcome is present (without it a run only reports call completion) and that the other baseline metrics the project has (Infrastructure Issues, Tool Call Success, Latency) came through; if one is missing and the project has it, fetch ids with `mcp__cekura__metrics_list` and PATCH it on:
 ```
 mcp__cekura__scenarios_partial_update:
   id: <scenario_id>
