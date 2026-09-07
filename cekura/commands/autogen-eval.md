@@ -97,7 +97,7 @@ Default: `workflow`. Can combine by running generation multiple times with diffe
 
 **Ask:** "Do you have specific scenarios in mind, or should I generate broad coverage based on the agent description?"
 
-**For specific scenarios:** Format each scenario as a clear numbered paragraph — one behaviour or branch under test per paragraph — and set `num_scenarios` to the paragraph count. The generator plans exactly `num_scenarios` scenarios and every plan must address your text, but nothing binds paragraph N to scenario N: it can merge two paragraphs into one scenario or split one across two. The 1:1 check in Post-Generation Verification is what confirms the mapping. If the user wants a full end-to-end journey, open that paragraph with "End-to-end:" so it is a deliberate composition and does not bleed into the other scenarios.
+**For specific scenarios:** Format each scenario as a clear numbered paragraph — one behaviour to test per paragraph — and set `num_scenarios` to the paragraph count. If the user wants a full end-to-end journey, write it as its own paragraph and say so.
 
 ```
 extra_instructions: |

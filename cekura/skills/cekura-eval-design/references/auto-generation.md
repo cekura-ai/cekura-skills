@@ -71,7 +71,7 @@ The generator is a background pipeline that can stall, partially complete, or dr
 
 **After completion — verify before reporting success:**
 1. **Count** — fetch the created scenarios and compare to the request. If short, generate the remainder in a small batch whose `extra_instructions` name exactly the missing cases.
-2. **Plan diff** — map generated scenarios 1:1 against the approved plan. If the generator merged two requested cases into one, fused several behaviours into one scenario, or invented an extra, regenerate the missing standalone cases (one paragraph each) and flag the extra.
+2. **Plan diff** — map generated scenarios 1:1 against the approved plan. If the generator merged two requested cases into one or invented an extra, regenerate the missing cases and flag the extra.
 3. **Language** — for non-English requests, check `scenario_language`, the personality's language, and that `first_message`/`instructions` are actually written in the target language (gotchas 2, 6, 8).
 4. **Roles** — instructions are caller-side, first person (gotcha 7).
 5. **Scaffolding** — every scenario has a non-empty `expected_outcome_prompt` (pass `generate_expected_outcomes: true`; patch any that came back empty), the right tools (`TOOL_END_CALL`; `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows; `TOOL_DTMF` for IVR), and the baseline metrics.
