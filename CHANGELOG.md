@@ -4,6 +4,34 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.14.3 — 2026-09-07
+
+**Run and result guidance now bounds the cost of a voice suite.** Nothing in
+the authoring skills previously asked for a duration cap, a first small cohort,
+or a stop after a setup error, so a suite could run every scenario to the
+project's production call cap, or fail every run on the same configuration
+error, before anyone read a result.
+
+- **`max_duration` on every scenario.** Generation leaves it unset, and unset
+  inherits the project's `max_call_duration`; eval-design gains a *Duration
+  cap* section and the generation/autogen fixups set it after verification.
+- **Smoke cohort on paid transports.** `run-evals`, `cekura-report` and
+  eval-design's run guidance launch 3–5 evaluators first on voice, SIP and
+  WebRTC and read them before the rest.
+- **Setup errors stop the batch.** A rejected configuration or mock change, a
+  missing phone-number record or bad credentials hits every run identically;
+  the fail-fast list now names them.
+- **`success` is read against the project rubric.** With rubric rules,
+  `success` is the rubric verdict over every attached metric; `run-evals`,
+  `eval-results` and `cekura-report` report the Expected Outcome score and the
+  failing rule separately.
+- **Inherited metrics are reviewed per scenario.** Generation attaches the
+  project's simulation-enabled set; eval-design, autogen-eval and metric-design
+  keep the baseline and keep a flow-specific metric only where the scenario
+  exercises the flow or it carries an N/A trigger.
+- `codex/AGENTS.md` / `GEMINI.md` carry the same three points as anti-patterns
+  17–19.
+
 ## 0.14.2 — 2026-09-05
 
 **`cekura-infra-test-suite` now completes in one pass.** The file list is

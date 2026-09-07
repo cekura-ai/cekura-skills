@@ -596,3 +596,6 @@ These recurring mistakes are identified from real customer feedback. Proactively
 14. **Flow-specific metrics with `always` trigger** — Metrics that only apply to certain flows should use custom triggers to avoid evaluating every call.
 15. **Empty agent descriptions** — Agent has description "." or empty, rendering `{{agent.description}}` metrics useless.
 16. **Obs-enabled metrics on non-production projects** — Each obs-enabled metric costs ~0.2 credits per call. Audit all projects.
+17. **No `max_duration` on scenarios** — Unset inherits the project's `max_call_duration`, sized for production calls; a stalled main agent runs to it on every run. Set it (10–3600 s) a little above the longest legitimate call for the flow.
+18. **Launching a full voice suite blind** — On voice/SIP/WebRTC, run a 3–5 evaluator smoke cohort first. A setup error (rejected configuration or mock change, missing phone-number record, bad credentials) hits every run identically: stop the batch and fix it rather than let the remainder fail.
+19. **Reading `success: false` as an agent failure** — With project rubric rules, `success` is the rubric verdict over every attached metric. Report the Expected Outcome score and the failing rubric rule separately; a metric the scenario never exercised can fail the run.

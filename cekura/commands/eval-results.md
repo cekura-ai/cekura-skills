@@ -29,8 +29,8 @@ Fetch evaluation results and provide analysis of common workflow issues.
 
 2. **Parse results**: For each result, extract:
    - Scenario name and tags
-   - Pass/fail status
-   - Expected outcome vs actual behavior
+   - Pass/fail status — `success` is the project rubric's verdict when rubric rules exist (all rules ANDed by default); otherwise it follows Expected Outcome and any failed binary metric
+   - Expected outcome score vs actual behavior, reported separately from `success`: a run with Expected Outcome passed but `success: false` failed a project-wide rubric rule (`rubric` names it), possibly a metric the scenario never exercised
    - Metric evaluations (if metrics were attached)
 
 3. **Summarize by category**: Group results by category tag:
@@ -60,6 +60,7 @@ Show percentage and highlight categories below threshold (e.g., <80%).
 
 ### Most Common Failure Reasons
 Group failed scenarios by root cause:
+- Setup errors (rejected configuration, missing phone-number record, bad credentials) → nothing was tested; fix the configuration and do not count these as agent failures
 - Tool failures → agent needs better recovery handling
 - Missing workflow steps → agent description incomplete
 - Wrong routing → agent's decision logic needs fixing
@@ -71,6 +72,7 @@ If previous results exist, compare to identify new failures that were previously
 Flag evals with missing configuration:
 - No baseline metrics attached → results only show call completion, not correctness
 - Missing `TOOL_END_CALL` → elongated calls, wasted credits
+- No `max_duration` on the scenario → a stalled call runs to the project cap; set one a little above the longest legitimate call
 - Missing test profiles → identity data likely hardcoded in instructions
 
 ## Tips
