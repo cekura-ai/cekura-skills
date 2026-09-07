@@ -31,6 +31,12 @@ error, before anyone read a result.
   exercises the flow or it carries an N/A trigger.
 - `codex/AGENTS.md` / `GEMINI.md` carry the same three points as anti-patterns
   17–19.
+- **Skill activation.** `cekura-create-agent` now triggers on the plain
+  phrasing users reach for — "create an agent", "set up an agent", "walk me
+  through creating an agent", "connect my agent" — and on importing an agent
+  from another platform's exported config; `cekura-onboarding` says it is not
+  for adding to an existing workspace. Folds in the open product-chat
+  auto-improvement PRs #116, #119, #135 and #152; #142 is not adopted.
 
 ## 0.14.2 — 2026-09-05
 
