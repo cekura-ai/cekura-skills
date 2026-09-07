@@ -758,7 +758,7 @@ When you *do* keep a semantic `standard` gate, phrase it so a **legitimate non-a
 - **Setting `first_message` independently of `id:0`.** When `conditional_actions` is provided, `first_message` is taken from `id:0` action; values you pass separately will be overwritten.
 - **Forgetting `scenario_type: "conditional_actions"`.** Without the explicit type, the scenario is created as `instruction` (the default) and your `conditional_actions` payload is ignored.
 - **No `<endcall />` at end.** Without an explicit termination, the call runs to timeout, wasting credits.
-- **Relying on the agent to end the call.** A scripted probe should drive its own termination — give `<endcall />` its own `action_followup` gated on the caller's closing line rather than hoping the agent hangs up.
+- **Relying on the agent to end the call.** A scripted probe should drive its own termination — give `<endcall />` its own `action_followup` gated on the caller's closing line rather than hoping the agent hangs up. `action_followup` (not `standard`, and not folded into the closing line's action) fires positionally after the agent's one closing reply, so the agent finishes its goodbye before the line drops and no fragile "the agent says goodbye" semantic gate is needed.
 - **Semantic mid-turn gate that demands the answer, not a reply.** `"The agent answers X"` strands the caller against an agent that legitimately can't answer X, running the call to the cap. Phrase the gate as `"responds to, deflects, or redirects…"` and let Expected Outcome grade the answer.
 - **Forcing `action_followup` on content-dependent turns for determinism.** Converting a natural back-and-forth to positional advancement makes the caller ignore the agent's actual reply, tanking Expected Outcome / Relevancy. Only chain probe turns positionally when the caller's next line is content-independent (see [The condition-matcher stall](#the-condition-matcher-stall-and-when-to-go-positional)).
 - **Conditions arrays longer than ~15 entries.** Split into multiple evaluators by phase (verification, scheduling, confirmation). Long arrays drift from the intended flow and are hard to debug.
@@ -783,7 +783,7 @@ When you *do* keep a semantic `standard` gate, phrase it so a **legitimate non-a
 - [ ] `{{function.*}}` placeholders appear only on `fixed_message: true` actions, and every referenced output declares a `default`
 - [ ] Function URLs are publicly reachable `http(s)` endpoints (no localhost/private hosts)
 - [ ] Updates send the FULL `conditional_actions` object including existing `functions[]` (updates are full-replace, not a merge)
-- [ ] The last condition ends the conversation (via `<endcall />` or a natural close); for a scripted multi-turn probe, prefer `<endcall />` as its **own** `action_followup` gated on the caller's closing line
+- [ ] The last condition ends the conversation (via `<endcall />` or a natural close)
 - [ ] Mid-turn semantic gates advance on any real reply ("responds to, deflects, or redirects…"), not only on the hoped-for answer
 - [ ] `scenario_language` is set (either explicitly or via a personality with a configured language — required by validation rule 6)
 - [ ] A `personality` is set
