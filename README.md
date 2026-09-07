@@ -24,7 +24,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 11 Skills, 14 Commands in one plugin
+### 12 Skills, 14 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
@@ -38,6 +38,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-eval-design` | |
 | `cekura-personality-design` | |
 | `cekura-infra-test-suite` | |
+| `cekura-livekit-pipecat-onboarding` | |
 | `cekura-flag-call-log-failures` | |
 | `cekura-generate-scenarios` | |
 

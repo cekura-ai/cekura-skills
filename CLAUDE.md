@@ -37,6 +37,7 @@ cekura-skills/
       cekura-eval-design/
       cekura-personality-design/
       cekura-infra-test-suite/
+      cekura-livekit-pipecat-onboarding/
       cekura-flag-call-log-failures/
       cekura-generate-scenarios/
     commands/                    # Slash commands (Claude Code only)
@@ -60,7 +61,7 @@ The 12 SKILL.md files inside `cekura/skills/` are the **only** source of skill c
 1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
 2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 11 skills under `cekura/skills/`. The bare repo URL works cleanly.
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 12 skills under `cekura/skills/`. The bare repo URL works cleanly.
 
 ### Skill content rules
 
@@ -133,6 +134,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
 | `cekura-personality-design` | Personality selection, forking and creation — the simulated caller's voice, accent, timing and audio layer |
 | `cekura-infra-test-suite` | Generate or update source-controlled JSON Tests-as-Code CI/CD suites from a voice-agent repository |
+| `cekura-livekit-pipecat-onboarding` | LiveKit/Pipecat onboarding from the agent's own repo — GitHub check, code scan, placeholder credentials, first run, SDK pull request |
 | `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — flagged calls, failure rates, outcome distribution |
 | `cekura-generate-scenarios` | Cluster flagged production failures and create one evaluator scenario per failure mode |
 

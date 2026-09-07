@@ -58,26 +58,37 @@ Then collect the telephony essentials in ONE clarification — **phone number (o
 
 No auto-import for these, so collect their credentials per the create-agent matrix (for example, Cisco needs no credentials) **plus** the manual essentials of 2c (description, language). The two rules above apply unchanged.
 
-## 2b. LiveKit / Pipecat — config-only connection (no SDK, no code changes)
+## 2b. LiveKit / Pipecat — hand off, immediately
 
-There is **no SDK requirement to onboard**. Simulations dispatch via provider APIs and Cekura produces its own transcript from call audio. The Cekura SDK is a post-first-result upgrade (agent-side traces, tool-call visibility) — offer it in Phase 6T, not here.
+These two are the **code-based** providers: nothing auto-imports, and the system prompt, agent name, language, dispatch name and who-speaks-first all live in the user's repository. Asking for any of them in chat is the wrong flow, so this skill does not run it.
 
-**The FIRST question for LiveKit/Pipecat is the connection mode — NEVER credentials.** Do not ask for an API key, secret, or URL until the user has chosen WebRTC. Ask:
+**Hand off NOW, before any other question.**
 
-> "How should Cekura reach your agent — does it already have a **phone number or SIP endpoint** (simplest), or should we dispatch over **WebRTC** via your provider's API?"
+- **Claude Code / plugin sessions:** call the `Skill` tool with `cekura:cekura-livekit-pipecat-onboarding`.
+- **Other harnesses:** read that skill's `SKILL.md` and follow it from its first phase.
 
-**Path A — Telephony (preferred, fewest moving parts).** If the agent has a phone number or SIP endpoint, that's the whole connection. Collect in ONE clarification: **phone number (or SIP URI) + inbound-or-outbound + language, together** — plus the complete system prompt via the description gate. **Ask inbound/outbound explicitly — never infer it** (it decides who dials; a wrong guess means the run can't connect), and don't silently default the language. **No provider credentials needed** — do not ask for any.
+The dashboard runtime **denies `aiagents_create` for `provider.type` `livekit` or `pipecat` until that skill is loaded**, so there is no version of this that works by continuing here.
 
-**Path B — WebRTC dispatch (only when there's no phone path, or the user chooses it).** Now — and only now — collect credentials. **On this path credentials are mandatory — never offer "skip credentials for now":** WebRTC dispatch is the connection, so without them the agent is unreachable and the first-run verification (Phase 5T) cannot happen. If the user can't share them, offer the telephony path instead or pause here.
-- **Pipecat Cloud**: `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name`. Runs via `scenarios_run_pipecat_v2`.
-- **LiveKit**: `credentials.url` + `api_key` + `api_secret` + `config.agent_name` (must match the worker's `agent_name`). Runs via `scenarios_run_livekit_v2`.
+Pass what is already settled, so none of it is asked twice:
 
-**Both paths:**
-- **Keep `provider.type` = `livekit` / `pipecat` regardless of connection mode.** A LiveKit agent reached by phone is still a LiveKit agent — never reroute it to `self_hosted`. (This is for a *genuine* LiveKit/Pipecat agent named verbatim; a fork built on the framework — "Dograh via Pipecat" — is `self_hosted` per the variant carve-out and never reaches this section.)
-- **Set `credentials.config.tracing_enabled: false`.** It only becomes `true` after the SDK is actually integrated and verified (a later, optional step). Setting it `true` without the SDK makes every run wait on a webhook that never arrives.
-- No auto-import exists for these providers, so collect the manual essentials of 2c (description, language).
+```
+Context already established:
+- Variant: <testing | observability>
+- Project: <project_id>
+- Provider: <LiveKit | Pipecat>  ← answered; never re-ask
+- Agent: <agent_id, or "none yet">
+- User already said: <anything volunteered — repo name, language, agent name>
+- Session: <dashboard | local>, dashboard_url=<from the workspace line>
+```
 
-## 2c. Manual essentials (self-hosted, deferred-key, LiveKit/Pipecat)
+**When it completes, onboarding is complete.** It writes its own closing summary and does not return here — do NOT run Phases 3T–6T for these providers.
+
+**Forks and wrappers are not these providers.** "Dograh via Pipecat", "our stack built on LiveKit" — those are `self_hosted` with a connection only, and they stay in this skill, in 2c.
+
+
+## 2c. Manual essentials (self-hosted, deferred-key)
+
+> **Not LiveKit or Pipecat.** A genuine agent on either of those left this skill in 2b. Only forks and wrappers built on them ("Dograh via Pipecat") arrive here, as `self_hosted`.
 
 - **Description = the real system prompt.** The description drives evaluator generation and `{{agent.description}}` metrics — it is the single most leverage-rich field on the agent. The complete quality bar is below — do not open other skills' files for it.
 
