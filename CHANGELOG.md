@@ -31,6 +31,9 @@ the same configuration error before anyone read a result.
   an N/A trigger.
 - `codex/AGENTS.md` / `GEMINI.md` carry the smoke-cohort and rubric points as
   anti-patterns 17–18.
+- **Instruction patterns:** values defined by the conversation ("the first
+  option asked about") are called out as non-fixtures — name them in the
+  profile and key the trigger on the question.
 - **Skill activation.** `cekura-create-agent` now triggers on the plain
   phrasing users reach for — "create an agent", "set up an agent", "walk me
   through creating an agent", "connect my agent" — and on importing an agent
