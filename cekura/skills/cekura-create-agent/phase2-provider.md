@@ -58,6 +58,14 @@ Ask: "What provider does your main agent run on?"
 
 > **Fast path:** ElevenLabs supports `configure_from_provider` — just collect `api_key` + `agent_id`. Everything else (name, description, phone number, tools, knowledge base, dynamic variables) is auto-imported. See Phase 5 for the import flow.
 
+### LiveKit / Pipecat — onboarding hands off; this section is for everything else
+
+**If the user is ONBOARDING a LiveKit or Pipecat agent, stop and hand off:** call the `Skill` tool with `cekura:cekura-livekit-pipecat-onboarding` and follow it from its first phase. It reads the system prompt, agent name, language and dispatch name out of the user's repository and creates the agent with placeholder credentials they replace on the agent page — so **none of the credentials below are asked for in chat**, and neither is the connection mode (WebRTC Automated is assumed).
+
+The dashboard runtime **denies `aiagents_create` for `provider.type` `livekit` and `pipecat` until that skill is loaded**, so continuing here does not end in a created agent.
+
+The field tables below stay authoritative for what the payload looks like, and for the cases that skill does not cover — editing an existing agent's credentials, or a fork/wrapper built on the framework ("Dograh via Pipecat"), which is `self_hosted` and never LiveKit or Pipecat.
+
 ### LiveKit
 Ask for all four credentials by default. Whether each is strictly required depends on the connection mode(s) chosen in Phase 3 and whether the Cekura SDK is in scope.
 
