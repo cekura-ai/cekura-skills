@@ -193,7 +193,7 @@ Fetch the created scenarios and verify (full checklist: eval-design `references/
 3. **Language** — `scenario_language`, personality language, and the actual text of `first_message`/`instructions` all match the requested language; `first_message` is literal caller dialogue, not a meta-instruction.
 4. **Roles** — instructions describe the caller (first person), not the main agent.
 5. **Scaffolding** — non-empty `expected_outcome_prompt` on every scenario, correct tools (`TOOL_END_CALL`, `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows, `TOOL_DTMF` for IVR), baseline metrics attached.
-6. **Bounds and metrics** — `max_duration` set on the scenarios that need their own bound, and only those (fixup 5 below); Expected Outcome present on every scenario, inherited metrics left in place (fixup 3).
+6. **Metrics** — Expected Outcome present on every scenario, inherited metrics left in place (fixup 3).
 
 Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched") — never report success on the trigger alone.
 
@@ -228,10 +228,7 @@ Check if generated scenarios need test profiles. For scenarios involving identit
 
 Test profile `information` uses the sectioned shape `{"main_agent_variables": {...}, "testing_agent_variables": {...}}`. The auto-generation flow populates both sections — `main_agent_variables` carries the values that reach the agent under test as dynamic variables, `testing_agent_variables` carries persona/context for the simulator.
 
-### 5. Duration Cap — only where a scenario needs one
-Generation leaves `max_duration` unset, so generated scenarios inherit the project's `max_call_duration`. That is the project owner's setting and normally correct — do not patch every scenario, and never change the project setting. PATCH `max_duration` (10–3600 s) only on a scenario that needs its own bound: an idle, timeout or hold test that must end within a known time, a limit the user asked for, or a short flow on a paid transport where a stalled main agent would run out the whole project cap. Set it a little above the longest legitimate call for that flow.
-
-### 6. Quality Review
+### 5. Quality Review
 Review each generated evaluator:
 - Does it have meaningful, multi-step instructions (not 1-line stubs)?
 - Are instructions in first-person behavioral format?
@@ -288,7 +285,6 @@ Post-generation fixes applied:
   - [X] scenarios: language set to [code]
   - [X] scenarios: metrics attached
   - [X] scenarios: test profiles assigned
-  - [X] scenarios: max_duration set (only those needing their own bound)
 
 Missing coverage (behavioral gaps → another generation run; deterministic gaps → conditional-action evaluators):
   - [workflow not covered]
@@ -302,5 +298,4 @@ Missing coverage (behavioral gaps → another generation run; deterministic gaps
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
 - **Metrics come from the project** — generation attaches the project's set; confirm Expected Outcome is present and attach a missing baseline metric only if the project has it
-- **`max_duration` is per-scenario and optional** — unset inherits the project owner's cap; set it only on scenarios that need their own bound
 - **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which uses `scenario_type: "red_teaming_voice"` or `"red_teaming_text"` alongside that guidance text. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.

@@ -250,7 +250,7 @@ Start generation as a background job; it returns a `progress_id`. Poll its progr
 
 Red-teaming runs a **multi-turn attacker pipeline**: persona + context + a 5–10 turn plan, scored 1–5 (1–2 = the agent defended, 4–5 = a vulnerability). Text mode iterates up to 3 times against the chat API; voice mode generates once. Output arrives as conditional actions — review language, folder and tags, but **do not rewrite the multi-turn plans into instructions**. One generation call per `attack_type`. The generator creates its own "Red Teaming" personality; do not pre-create or patch one.
 
-**Post-generation verification** (every run): reconcile the count (generation can partially complete — regenerate the remainder with narrower `extra_instructions`); PATCH `scenario_language` for non-English scenarios (auto-gen writes `en` regardless of content); PATCH `first_message` when a greeting replaced an exact opening question; confirm `tool_ids`, folder and metrics. Generated scenarios come with a scenario-specific test profile (sectioned `main_agent_variables` / `testing_agent_variables`), `generated_mock_tool_entries` when the agent has mock tools, and the project's simulation-enabled metrics already attached — leave that set in place and check Expected Outcome came through (see **Metrics**). A scenario that needs its own time bound gets `max_duration` afterwards by PATCH (see **Duration cap**); the rest keep the project setting. More detail: **`references/auto-generation.md`**.
+**Post-generation verification** (every run): reconcile the count (generation can partially complete — regenerate the remainder with narrower `extra_instructions`); PATCH `scenario_language` for non-English scenarios (auto-gen writes `en` regardless of content); PATCH `first_message` when a greeting replaced an exact opening question; confirm `tool_ids`, folder and metrics. Generated scenarios come with a scenario-specific test profile (sectioned `main_agent_variables` / `testing_agent_variables`), `generated_mock_tool_entries` when the agent has mock tools, and the project's simulation-enabled metrics already attached — leave that set in place and check Expected Outcome came through (see **Metrics**). More detail: **`references/auto-generation.md`**.
 
 ## Conditional actions — authoring card
 
@@ -393,9 +393,7 @@ Required on every scenario. Personalities control language, accent, voice model,
 
 Enable what the flow needs and nothing more, and always give the testing agent a way to finish the call. `tool_ids` accepts only the ids in this table — never the agent's own tool ids or mock-tool ids, which are already attached to the agent (`Invalid tool IDs` is the symptom of mixing them up).
 
-## Duration cap
-
-`max_duration` (10–3600 s) is an optional per-scenario bound. Unset, a run inherits the project's `max_call_duration`, which the project owner set deliberately — leave it alone by default, and never change the project setting to suit a test. Set a scenario's own cap only when that scenario needs one: the test must end within a known time (an idle, timeout or hold test that would otherwise wait out the project cap), the user asks for a bound, or a short flow is being run on a paid transport where a stalled main agent would burn the whole project cap — and then set it a little above the longest legitimate call for that flow. `TOOL_END_CALL` ends a call that finishes; the cap ends one that never does. Generation never sets it, so it is a PATCH after verification on the scenarios that need it.
+A scenario's optional `max_duration` (10–3600 s) overrides the project's `max_call_duration` for that scenario only. The project setting is the owner's and is never changed for a test; give a scenario its own cap only when it must end within a known time (idle, timeout or hold tests) or the user asks for a bound.
 
 ## Metrics
 
