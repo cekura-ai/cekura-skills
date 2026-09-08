@@ -24,14 +24,14 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 12 Skills, 14 Commands in one plugin
+### 11 Skills, 14 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
 | `cekura-coordinator` | `cekura-onboarding`, `setup-mcp`, `upgrade-skills`, `report-bug` |
 | `cekura-onboarding` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` |
 | `cekura-create-agent` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report` |
-| `cekura-self-improving-agent` | "Improve my agent / auto-tune from eval results" — **also** "fix a production call bug end-to-end". Works on dashboard-managed providers AND custom stacks (config in your repo/DB/prompt registry, runtime-created provider agents, custom mock servers) via a per-project capability manifest |
+| `cekura-self-improving-agent` | |
 | `cekura-metric-design` | |
 | `cekura-metric-improvement` | |
 | `cekura-predefined-metrics` | |
@@ -39,6 +39,12 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-infra-test-suite` | |
 | `cekura-flag-call-log-failures` | |
 | `cekura-generate-scenarios` | |
+
+**`cekura-self-improving-agent`** covers both "improve my agent / auto-tune from eval
+results" and "fix a production call bug end-to-end". It works on dashboard-managed
+providers and on custom stacks — config in your own repo, database, or prompt registry,
+provider agents created at deploy time, custom mock servers — via a per-project
+capability manifest.
 
 These encode best practices from real client deployments — proactive guardrails, real transcript grounding, iterative improvement loops, coverage planning, and anti-pattern detection.
 
