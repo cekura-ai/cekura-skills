@@ -8,7 +8,7 @@
 
 Default metrics are already enabled at project creation; confirm silently with one `metrics_list` (Expected Outcome present) and say nothing unless something is missing.
 
-Call **`scenarios_generate_bg`** immediately — do not ask whether to, which cases to cover, how many, or which personality:
+**You started this at the end of phase 3** ([phase3-create.md](phase3-create.md) 3a-bis), so the work has been running while the user fetched their credentials — go straight to the wait below with the `progress_id` you already have. Only if you somehow reached here without firing it, call **`scenarios_generate_bg`** now. Either way: do not ask whether to, which cases to cover, how many, or which personality.
 
 ```json
 {
@@ -23,13 +23,15 @@ Call **`scenarios_generate_bg`** immediately — do not ask whether to, which ca
 
 Then wait: **dashboard** `wait_for_scenario_generation` with the returned `progress_id`; **local** poll `scenarios_generate_progress`. If generation fails, retry once with a smaller `num_scenarios`; if it fails again, stop and report — never hand-write a stopgap set.
 
+**Say how long before you block on it.** `wait_for_scenario_generation` returns nothing until the work finishes, so from the user's side the chat simply stops. Silence for two minutes reads as a hang; the same two minutes with "this takes a couple of minutes — writing ten evaluators against your prompt" reads as work. One line, before the call, with the real number in it. Never promise to "come back to you" — you are blocking on it right now, and the answer arrives in this same turn.
+
 **Sanity-check the set silently** — this is your check, not a review meeting. Instructions specific and behavioral; expected outcomes achievable; tools right; `scenario_language` patched for a non-English agent. Attach **Expected Outcome** plus one connection metric to every evaluator with one `scenarios_bulk_update`. Fix what is clearly wrong; do not present the set for approval.
 
 ## 4b. Ask before running — this is fallback **F4**
 
 Now — and only now — one `<clarification>`:
 
-> "Ten evaluators are ready for `<agent name>`. Run them against your agent now? Each is a real dispatch to your worker through the credentials you just entered, 1–3 minutes apiece."
+> "Ten evaluators are ready for `<agent name>`. Run them against your agent now? Each one is a real call placed to your worker through the credentials you just entered. They run in parallel, so it's about three minutes for the whole set, not thirty."
 
 Options: `["Run them", "Run just one first", "Not now"]`
 
@@ -49,6 +51,8 @@ Tool by provider — the agent's `provider.type` from `aiagents_retrieve`, never
 | `pipecat` | `scenarios_run_pipecat_v2` |
 
 Pass `scenarios` and `frequency: 1`. Then wait: **dashboard** `wait_for_result`; **local** poll `results_retrieve` / `runs_bulk_retrieve` with 30s between reads. Never claim a result you have not read.
+
+**Same rule as generation: say the number before you block.** Ten calls run in parallel and take about three minutes end to end — say that, once, in the message that precedes the wait. A run is the longest silence in this flow and the only one the user can picture, so give them the picture: real calls are being placed to their agent right now.
 
 ## 4d. Verify and share
 
