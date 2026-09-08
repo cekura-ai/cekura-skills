@@ -17,6 +17,7 @@ One message, in this shape. Skip any line that has nothing to report — never w
 - The result link: `{dashboard_url}/{project_id}/results/{result_id}` — this route **is** project-scoped, unlike the agent one.
 - The headline numbers: how many passed, how many didn't. 70–80% on a first run is normal and worth saying so, or the user reads a red number as a broken agent.
 - One transcript worth reading, named and linked.
+- **Scenarios deliberately left unrun**, if any — name them as an open item ("six of the ten run; the other four are saved and ready whenever you want them"), never silently omitted. The user chose to move on, not to abandon them.
 
 **The pull request**, if one was opened — the link, and the three things only the user can do:
 1. create an API key at `{dashboard_url}/settings/org/api-key`

@@ -55,8 +55,8 @@ Now — and only now — one `<clarification>`:
 Options: `["Run them", "Run just one first", "Not now"]`
 
 - **Run them** → 4c with all ten, `frequency: 1`.
-- **Run just one first** → 4c with the first generated scenario; once it verifies clean, offer the other nine in one line.
-- **Not now** → exit: close with the summary in [phase6-close.md](phase6-close.md), open item "no verified run". **Skip the SDK offer** — it is post-results only.
+- **Run just one first** → 4c with the first generated scenario, then the question in 4e — not a one-line prose offer of the other nine.
+- **Not now** → exit: close with the summary in [phase6-close.md](phase6-close.md), open item "no verified run". **Skip the SDK offer** — nothing has run, so there is nothing to build on.
 
 The credentials are the reason this is a question rather than an automatic step: the run is the first thing that touches them, and a run against a wrong or still-placeholder value fails looking exactly like a broken agent.
 
@@ -74,6 +74,20 @@ Pass `scenarios` and `frequency: 1`. Then wait: **dashboard** `wait_for_result`;
 **Same rule as generation: say the number before you block.** Ten calls run in parallel and take three to four minutes end to end — say that, once, in the message that precedes the wait. A run is the longest silence in this flow and the only one the user can picture, so give them the picture: real calls are being placed to their agent right now.
 
 ## 4d. Verify and share
+
+### The switch: once one call has a two-sided transcript, the SDK is on the table
+
+**The moment any run in this conversation produces a two-sided transcript, the user has seen what Cekura does** — evaluators, a real call to their agent, results to read. From that point on, **every question you ask in this phase carries a way forward to the SDK, and none of them offers a bare exit.**
+
+Three things that are NOT part of that bar:
+
+- **Whether the evaluation passed.** A failed evaluator is a finding to report and link, never a gate. Say what failed, point at the results page, and ask the question anyway.
+- **Whether the scores are in.** Metric evaluation trails the call by a minute or two.
+- **Whether the other nine finished.** One is enough to have seen it.
+
+The offer is always phrased as going forward, never as giving up: *"Tell me about the Cekura SDK and what else it captures"* — not "stop here", not "that's all for now".
+
+**The one path where this does not apply is a run where nothing connected at all** — no call reached the agent, so there is nothing the SDK sentence can refer to and a PR against their repo will not fix a mistyped key. That is F5 below, and it stays a credentials question.
 
 For each run, three things must be true — say which are, plainly:
 
@@ -98,16 +112,47 @@ Options: `["Show me the SDK step", "Just wait for the scores"]`
 
 Never offer to abandon the run, and never end the turn on "let me know when you want to continue" — that is the stall this whole phase exists to avoid.
 
+## 4e. The results are in — report them, then ask where next (fallback **F4c**)
+
+This is the case that had no question at all: the run finishes, some pass, some don't, and the flow used to fall straight through to a closing summary. That is the dead end this phase exists to avoid.
+
+**Report the failures; do not gate on them.** Name the count, say the transcripts and per-metric scores are on the results page, link it, and go straight into the question. Never "let's fix these first" — a first run at 70–80% is normal and the user has other things to see.
+
+> "Six of the ten passed. The four that didn't are worth a look — the transcripts and per-metric scores are at {dashboard_url}/{project_id}/results/{result_id}. Where do you want to go next?"
+
+Options: `["Run the rest", "Tell me about the Cekura SDK and what else it captures", "Walk me through a failure"]`
+
+- **Run the rest** → back to 4c with the scenarios that have not run. When they come back, ask this same question again.
+- **Tell me about the Cekura SDK…** → [phase5-sdk-pr.md](phase5-sdk-pr.md).
+- **Walk me through a failure** → read one failing transcript, say what went wrong in two or three sentences, then **re-ask this same question**. It is a detour, not an ending.
+
+**There is no fourth option, and no "that's all for now".** If the user wants to stop they will say so in prose, and that is when you go to [phase6-close.md](phase6-close.md) — but it is never something you offer them.
+
+**"I'll run the rest later" is a real answer**, whether they pick it from the options or say it in prose. Treat it as choosing the SDK: the remaining scenarios are saved and ready, say so in one line, and move on to phase 5. It is not a reason to close.
+
+**If every scenario ran and every one passed**, ask the same question without the failure half — `["Tell me about the Cekura SDK and what else it captures", "Walk me through a transcript"]`.
+
+---
+
 **If a call never connected — the credentials are the first thing to check, and say so.** They were placeholders the user replaced by hand; a typo in the API key, secret or server URL, or a dispatch name that doesn't match the worker's registration, fails exactly like a broken agent. Then a `<clarification>` — fallback **F5**:
 
 > "The call didn't connect. Most often that's a mistyped credential or a dispatch name that doesn't match your worker. Want me to walk through it and re-run?"
 
-Options: `["Check credentials and re-run", "Skip for now"]`. *Skip* → exit to the phase6 summary with the failure as an open item; never an implied success.
+Options: `["Check credentials and re-run", "I'll fix it and come back"]`.
+
+- **Check credentials and re-run** → walk the fields, then 4c again.
+- **I'll fix it and come back** → the phase6 summary, with "no call reached the agent" as the open item, said plainly — never an implied success.
+
+**No SDK offer on this path**, and no third option that reads as giving up. Nothing connected, so "here's what more Cekura can capture" refers to nothing the user has seen, and a pull request against their repo does not fix a mistyped key. Fix the connection first; the rest of the flow is still there afterwards.
 
 ---
 
 ## Phase 4 Gate
 
-At least one run whose call **connected and completed** — or the user chose *Not now* / *Skip*, recorded as an open item. Then [phase5-sdk-pr.md](phase5-sdk-pr.md).
+**One two-sided transcript**, from any run in this conversation. That is the whole bar. Then [phase5-sdk-pr.md](phase5-sdk-pr.md).
 
-Scores are not a precondition for phase 5: a connected call has already proven the thing the run was for, and the SDK step is what fills the evaluation wait. What IS a precondition is that the call connected — offering the SDK on top of a run that never reached the agent buries a broken connection under new work.
+Not preconditions: a passing evaluation, finished metric scores, or the other nine scenarios having run. A call the user's agent answered and spoke in has already proven the thing the run was for, and everything after it is detail they can read at their own pace.
+
+The one real precondition is that a call connected. Offering the SDK on top of a run that never reached the agent buries a broken connection under new work — that path is F5 and it stays a credentials question.
+
+The other way out is *Not now* at F4, where nothing ran at all: exit to [phase6-close.md](phase6-close.md) with "no verified run" as the open item, and no SDK offer. Every other path through this phase ends by offering the SDK, not by offering to stop.
