@@ -91,7 +91,9 @@ Then ask for the confirmation as a real `<clarification>` — options `["Done �
 
 **"Done" is what you act on.** Nothing reads the credentials back — they are write-only, so there is no check to run and no flag to inspect. Do not claim to have verified them, do not say "confirmed" or "validated", and do not re-ask. Say what is actually true and move on:
 
-> "Great — I started generating evaluators while you were doing that, so they should be ready. The first test call will be the real check on those credentials."
+> "Great — I started generating evaluators while you were doing that. The first test call will be the real check on those credentials."
+
+**Do not claim the evaluators are ready.** Someone who has done this before is back in under a minute, and generation takes two to three — so more often than not they are still being written. [phase4-evaluators-run.md](phase4-evaluators-run.md) 4a-bis handles that case; it needs you not to have promised otherwise.
 
 **"Not yet"** — this is fallback **F3** in SKILL.md. Ask what they want: `["Done — they're updated now", "Generate evaluators anyway — I'll add the keys before the run", "Pause here"]`. *Generate anyway* → [phase4-evaluators-run.md](phase4-evaluators-run.md), and re-ask about the credentials before the run. *Pause* → exit to the closing summary ([phase6-close.md](phase6-close.md)) with "placeholder credentials" as the open item.
 

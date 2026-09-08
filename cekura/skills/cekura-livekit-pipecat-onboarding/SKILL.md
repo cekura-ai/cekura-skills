@@ -79,7 +79,7 @@ One phase at a time, in order. For each: announce the step in plain words (never
 | 1 | [phase1-github.md](phase1-github.md) | `github_connection_status`; connect ask; the Integrations URL + "connected yet?" ask; three-outcome re-check; "scan?" ask; **paste path** if declined | both |
 | 2 | [phase2-scan.md](phase2-scan.md) | checkout; extract prompt, agent name, dispatch name, language, who speaks first, SDK presence; confirm; one open question at most; WebRTC Automated stated | both |
 | 3 | [phase3-create.md](phase3-create.md) | `aiagents_create` with placeholder credentials + `agent_speaks_first`; agent-page link; "Done / Not yet" | both |
-| 4 | [phase4-evaluators-run.md](phase4-evaluators-run.md) | 10 evaluators, 1 personality; **ask** before the run; run; while metrics score, offer phase 5 rather than an exit | testing only |
+| 4 | [phase4-evaluators-run.md](phase4-evaluators-run.md) | generation was started back in phase 3, so collect it here; **ask** before the run — early, if it is still generating; run; while metrics score, offer phase 5 rather than an exit | testing only |
 | 5 | [phase5-sdk-pr.md](phase5-sdk-pr.md) | SDK offer (testing / observability / both); `<diff_view>` per file; PR; the three user actions; tracing on only after confirmation | both (observability arrives from phase3) |
 | 6 | [phase6-close.md](phase6-close.md) | the closing summary, open items, what's next as options — every path ends here | both |
 
@@ -98,7 +98,7 @@ Declines are handled **inside this skill**, and so is the ending: every exit lan
 | F2 | connected — scan? | `Scan it` / `No — I'll paste the details` | *No* → as F1 |
 | F2b | findings shown | `Looks right` / `Let me correct it` | *Correct* → apply, re-confirm; stays in phase2 |
 | F3 | credentials "Not yet" | `Done — they're updated now` / `Generate evaluators anyway — I'll add the keys before the run` / `Pause here` | *Generate anyway* → phase4, run re-gated on a credentials re-ask; *Pause* → **exit**, open item "placeholder credentials" |
-| F4 | run them? | `Run them` / `Run just one first` / `Not now` | *Not now* → **exit**, open item "no verified run"; SDK offer skipped |
+| F4 | run them? | `Run them` / `Run just one first` / `Not now` — or, asked while generation finishes, `Run them as soon as they're ready` / `Run just one first` / `Not now` | Asked **once**, in whichever form fits; never both. *Not now* → **exit**, open item "no verified run"; SDK offer skipped |
 | F4b | call connected, metrics still scoring | `Show me the SDK step` / `Just wait for the scores` | *SDK* → phase5 **now**, then come back and share the scores. **Never offer "stop here" on a run that connected.** |
 | F5 | run didn't connect | `Check credentials and re-run` / `Skip for now` | *Skip* → **exit**, failure as an open item |
 | F6 | SDK offer | `Testing` / `Observability` / `Both` / `Not now` | *Not now* → **exit**; `tracing_enabled` stays false |

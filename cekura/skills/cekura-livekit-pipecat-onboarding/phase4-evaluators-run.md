@@ -27,6 +27,25 @@ Then wait: **dashboard** `wait_for_scenario_generation` with the returned `progr
 
 **Sanity-check the set silently** — this is your check, not a review meeting. Instructions specific and behavioral; expected outcomes achievable; tools right; `scenario_language` patched for a non-English agent. Attach **Expected Outcome** plus one connection metric to every evaluator with one `scenarios_bulk_update`. Fix what is clearly wrong; do not present the set for approval.
 
+## 4a-bis. If they got back before generation finished — ask the run question early
+
+**This is the normal case, not the edge case.** A user who has replaced provider credentials before is done in well under a minute; generation takes two to three. Starting it early (phase 3) bought back the minute they spent, not the whole three.
+
+So when they confirm, **read `scenarios_generate_progress` once** — one call, not a loop; the runtime throttles progress reads to one per 30s and will tell you to use the waiter instead.
+
+- **Finished** → straight on to the sanity check, then 4b as written.
+- **Still running** → say where it actually is, and **ask the run question now**, while it finishes:
+
+> "Almost there — 6 of the 10 evaluators are written, another minute or so. Want me to run them against your agent as soon as they're all ready?"
+
+Options: `["Run them as soon as they're ready", "Run just one first", "Not now"]`
+
+Then block on `wait_for_scenario_generation`, sanity-check the set, and **run immediately — do not ask again.** The question has been asked and answered; a second one after the wait is the same interruption moved later, and it makes the first ask look like it was for nothing.
+
+**The count is read, never estimated.** "6 of 10" comes from `completed_scenarios` / `total_scenarios` in the progress payload. Inventing a number to sound precise is worse than saying "still writing them, about another minute" — which is what to say if the read did not come back with counts.
+
+This is the same fallback **F4** as 4b; only the wording and the timing change.
+
 ## 4b. Ask before running — this is fallback **F4**
 
 Now — and only now — one `<clarification>`:
