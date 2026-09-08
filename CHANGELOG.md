@@ -4,6 +4,46 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.14.5 — 2026-09-08
+
+**Run and result guidance now bounds the cost of a voice suite.** Nothing in
+the authoring skills previously mentioned a per-scenario duration cap, a first
+small cohort, or a stop after a setup error, so a suite could fail every run on
+the same configuration error before anyone read a result.
+
+- **Per-scenario `max_duration` is noted as optional.** The project owner's
+  `max_call_duration` applies and is never changed for a test; only a scenario
+  that must end within a known time gets its own bound.
+- **Smoke cohort on paid transports.** `run-evals`, `cekura-report` and
+  eval-design's run guidance launch 3–5 evaluators first on voice, SIP and
+  WebRTC and read them before the rest.
+- **Setup errors stop the batch.** A rejected configuration or mock change, a
+  missing phone-number record or bad credentials hits every run identically;
+  the fail-fast list now names them.
+- **`success` is read against the project rubric.** With rubric rules,
+  `success` is the rubric verdict over every attached metric; `run-evals`,
+  `eval-results` and `cekura-report` report the Expected Outcome score and the
+  failing rule separately.
+- **Metrics after generation.** Generation attaches the project's
+  simulation-enabled set; eval-design and autogen-eval check Expected Outcome
+  came through and attach a missing baseline metric only when the project has
+  it. metric-design notes that a project-wide flow-specific metric should carry
+  an N/A trigger.
+- `codex/AGENTS.md` / `GEMINI.md` carry the smoke-cohort and rubric points as
+  anti-patterns 17–18.
+- **Instruction patterns:** values defined by the conversation ("the first
+  option asked about") are called out as non-fixtures — name them in the
+  profile and key the trigger on the question.
+- **One behaviour per evaluator.** `extra_instructions` is one numbered
+  paragraph per evaluator, each testing one behaviour; an end-to-end journey is
+  its own paragraph, written as such. The coverage reference no longer asks
+  every scenario to progress through multiple workflows.
+- **Skill activation.** `cekura-create-agent` now triggers on the plain
+  phrasing users reach for — "create an agent", "set up an agent", "walk me
+  through creating an agent", "connect my agent" — and on importing an agent
+  from another platform's exported config; `cekura-onboarding` says it is not
+  for adding to an existing workspace. Folds in the open product-chat
+  auto-improvement PRs #116, #119, #135 and #152; #142 is not adopted.
 ## 0.14.4 — 2026-09-08
 
 **Ringback tone for `<noise>`, and the sound list becomes a catalog.** `ringback`

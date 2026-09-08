@@ -159,7 +159,7 @@ set into the first selected format.
 
 ## Behavioral scenarios — shaping generation
 
-`extra_instructions` is where you steer the generator. One paragraph per scenario category, plain prose, third person about the testing agent, no PII, no markdown:
+`extra_instructions` is where you steer the generator. One numbered paragraph per evaluator, plain prose, third person about the testing agent, no PII, no markdown. Each paragraph tests one behaviour: what the caller wants, where the friction or branch happens, and what the outcome should show. If the user asks for a full end-to-end journey, write it as its own paragraph and say it is end-to-end.
 
 ```
 The testing agent calls as an established patient who needs to reschedule a
@@ -250,7 +250,7 @@ Start generation as a background job; it returns a `progress_id`. Poll its progr
 
 Red-teaming runs a **multi-turn attacker pipeline**: persona + context + a 5–10 turn plan, scored 1–5 (1–2 = the agent defended, 4–5 = a vulnerability). Text mode iterates up to 3 times against the chat API; voice mode generates once. Output arrives as conditional actions — review language, folder and tags, but **do not rewrite the multi-turn plans into instructions**. One generation call per `attack_type`. The generator creates its own "Red Teaming" personality; do not pre-create or patch one.
 
-**Post-generation verification** (every run): reconcile the count (generation can partially complete — regenerate the remainder with narrower `extra_instructions`); PATCH `scenario_language` for non-English scenarios (auto-gen writes `en` regardless of content); PATCH `first_message` when a greeting replaced an exact opening question; confirm `tool_ids`, folder and metrics. Generated scenarios come with a scenario-specific test profile (sectioned `main_agent_variables` / `testing_agent_variables`), `generated_mock_tool_entries` when the agent has mock tools, and ~10 project metrics already attached. More detail: **`references/auto-generation.md`**.
+**Post-generation verification** (every run): reconcile the count (generation can partially complete — regenerate the remainder with narrower `extra_instructions`); PATCH `scenario_language` for non-English scenarios (auto-gen writes `en` regardless of content); PATCH `first_message` when a greeting replaced an exact opening question; confirm `tool_ids`, folder and metrics. Generated scenarios come with a scenario-specific test profile (sectioned `main_agent_variables` / `testing_agent_variables`), `generated_mock_tool_entries` when the agent has mock tools, and the project's simulation-enabled metrics already attached — check Expected Outcome came through (see **Metrics**). More detail: **`references/auto-generation.md`**.
 
 ## Conditional actions — authoring card
 
@@ -393,11 +393,15 @@ Required on every scenario. Personalities control language, accent, voice model,
 
 Enable what the flow needs and nothing more, and always give the testing agent a way to finish the call. `tool_ids` accepts only the ids in this table — never the agent's own tool ids or mock-tool ids, which are already attached to the agent (`Invalid tool IDs` is the symptom of mixing them up).
 
+A scenario's optional `max_duration` (10–3600 s) overrides the project's `max_call_duration` for that scenario only. The project setting is the owner's and is never changed for a test; give a scenario its own cap only when it must end within a known time (idle, timeout or hold tests) or the user asks for a bound.
+
 ## Metrics
 
 A directly created scenario starts with **no metrics attached**; generation attaches the project's set automatically. Direct creates therefore need an explicit attach — a scenario with no metrics only reports whether the call completed.
 
 Recipe: list the project's metrics → map **names** to ids → pass `metrics: [ids]` on create, or update afterwards. Baseline set: **Expected Outcome**, **Infrastructure Issues**, **Tool Call Success**, **Latency**. If one is missing from the project, copy the predefined metric into the project first (a global predefined id is not valid on a scenario) and check `simulation_enabled` — a metric that is off for simulations never fires. Never guess an id.
+
+Generation attaches the project's simulation-enabled set; check Expected Outcome came through and attach a baseline metric only when it is missing and the project has it. Every attached metric is scored on every run, and a project rubric rule over it gates the run's `success` (see **Run and report honestly**).
 
 ## Changing existing evaluators
 
@@ -414,6 +418,8 @@ Fixing a scoring complaint: a metric that keeps returning 50 usually has an outc
 ## Run and report honestly
 
 Run in text mode for iteration; for voice, use the run variant that matches the agent's connection (phone, VAPI or Retell WebRTC, websocket, SIP, Pipecat, LiveKit, ElevenLabs, email); a tests-as-code spec has its own JSON run. Pass `test_profile_ids` / `personality_ids` to override per run instead of editing scenarios (this is how accent and language sweeps are done), and `frequency` for load. Poll the result before reporting anything, and never state an outcome you did not read back.
+
+On voice, SIP or WebRTC, a batch of more than five evaluators starts with a 3–5 evaluator smoke cohort: read those results — connected, finished inside the cap, no setup error — before launching the rest. A setup or configuration error (the provider rejected a configuration or mock change, a missing phone-number record, bad credentials) hits every run the same way: stop the batch, quote the exact error, fix it first. When reporting, separate a run's `success` from its Expected Outcome score: with project rubric rules, `success` is the rubric verdict over every attached metric, so an Expected Outcome pass with `success: false` failed a project-wide rule — name that rule instead of reporting the scenario as failed.
 
 ## Coverage and next steps
 

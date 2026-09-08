@@ -53,6 +53,8 @@ Behavioural (`instruction`) scenarios are always generated — a single fully de
 
 8. **Multilingual batches: generate per language** — for "N per language" requests, run one generation per language with that language's personality (see `choosing-personality.md`) instead of one mixed batch. Mixed batches tend to stamp every scenario with a single language and drift the per-language counts.
 
+9. **No `max_duration` field** — generated scenarios use the project's `max_call_duration`, which is normally right. The rare scenario that must end within a known time (idle/timeout/hold tests, or a bound the user asked for) gets its own `max_duration` by PATCH afterwards.
+
 ## Reliability Protocol
 
 The generator is a background pipeline that can stall, partially complete, or drift from the plan. Every generation run follows this protocol:
@@ -69,9 +71,10 @@ The generator is a background pipeline that can stall, partially complete, or dr
 
 **After completion — verify before reporting success:**
 1. **Count** — fetch the created scenarios and compare to the request. If short, generate the remainder in a small batch whose `extra_instructions` name exactly the missing cases.
-2. **Plan diff** — map generated scenarios 1:1 against the approved plan. If the generator merged two requested cases into one or invented an extra, create the missing standalone case and flag the extra.
+2. **Plan diff** — map generated scenarios 1:1 against the approved plan. If the generator merged two requested cases into one or invented an extra, regenerate the missing cases and flag the extra.
 3. **Language** — for non-English requests, check `scenario_language`, the personality's language, and that `first_message`/`instructions` are actually written in the target language (gotchas 2, 6, 8).
 4. **Roles** — instructions are caller-side, first person (gotcha 7).
 5. **Scaffolding** — every scenario has a non-empty `expected_outcome_prompt` (pass `generate_expected_outcomes: true`; patch any that came back empty), the right tools (`TOOL_END_CALL`; `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows; `TOOL_DTMF` for IVR), and the baseline metrics.
+6. **Metrics** — Expected Outcome present on every scenario; a missing baseline metric attached if the project has it (SKILL.md § Metrics).
 
 Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched") — never report success on the trigger alone.

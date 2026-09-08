@@ -97,7 +97,7 @@ Default: `workflow`. Can combine by running generation multiple times with diffe
 
 **Ask:** "Do you have specific scenarios in mind, or should I generate broad coverage based on the agent description?"
 
-**For specific scenarios:** Format each scenario as a clear paragraph. The generator reads these and creates one evaluator per scenario description.
+**For specific scenarios:** Format each scenario as a clear numbered paragraph, one behaviour to test per paragraph. If the user wants a full end-to-end journey, write it as its own paragraph and say so.
 
 ```
 extra_instructions: |
@@ -193,6 +193,7 @@ Fetch the created scenarios and verify (full checklist: eval-design `references/
 3. **Language** — `scenario_language`, personality language, and the actual text of `first_message`/`instructions` all match the requested language; `first_message` is literal caller dialogue, not a meta-instruction.
 4. **Roles** — instructions describe the caller (first person), not the main agent.
 5. **Scaffolding** — non-empty `expected_outcome_prompt` on every scenario, correct tools (`TOOL_END_CALL`, `TOOL_END_CALL_ONLY_ON_TRANSFER` for transfer flows, `TOOL_DTMF` for IVR), baseline metrics attached.
+6. **Metrics** — Expected Outcome present on every scenario (fixup 3).
 
 Report the verification result explicitly ("9/9 created, languages verified, 2 first_messages patched") — never report success on the trigger alone.
 
@@ -211,8 +212,8 @@ mcp__cekura__scenarios_partial_update:
 ### 2. First Message Fix
 Auto-gen may add greetings ("Здравствуйте", "你好") as `first_message` when you specified exact questions. PATCH `first_message` to the exact intended opener.
 
-### 3. Metrics Attachment
-Generated scenarios may not have metrics attached. **Every eval MUST have metrics.** Fetch baseline metric IDs with `mcp__cekura__metrics_list` and PATCH each scenario:
+### 3. Metrics Check
+Generation attaches the project's simulation-enabled metrics. Check that Expected Outcome is present (without it a run only reports call completion) and that the other baseline metrics the project has (Infrastructure Issues, Tool Call Success, Latency) came through; if one is missing and the project has it, fetch ids with `mcp__cekura__metrics_list` and PATCH it on:
 ```
 mcp__cekura__scenarios_partial_update:
   id: <scenario_id>
@@ -296,5 +297,5 @@ Missing coverage (behavioral gaps → another generation run; deterministic gaps
 - **Number of scenarios should match instruction count** — mismatches cause skipped or duplicate scenarios
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
-- **Metrics are required** — PATCH them on after generation
+- **Metrics come from the project** — generation attaches the project's set; confirm Expected Outcome is present and attach a missing baseline metric only if the project has it
 - **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which uses `scenario_type: "red_teaming_voice"` or `"red_teaming_text"` alongside that guidance text. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.

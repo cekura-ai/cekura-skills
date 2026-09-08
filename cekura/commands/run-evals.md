@@ -47,11 +47,13 @@ Execute one or more evaluators against the target agent.
    - **Pipecat exception:** when the choices are `pipecat` and `pipecat-v2`, ask exactly: *"Your agent uses Pipecat. `pipecat` (v1) uses a manually provided room URL for each evaluator run; `pipecat-v2` uses configured Pipecat Cloud project credentials and creates sessions automatically."* Offer only `pipecat (v1)` and `pipecat-v2` as the options.
 
 3. **Confirm scope**: Show the user what will run:
-   - Number of evaluators
+   - Number of runs: evaluators × `frequency` × test profiles × personalities passed on the run
    - Execution mode (auto-selected or chosen)
-   - Estimated time/cost implications
+   - Worst-case call length: each scenario's `max_duration`, or the project's `max_call_duration` where it is unset — a stalled main agent runs to that cap. State it; do not change the project setting.
 
 4. **Execute using batch endpoint** (preferred for multiple evals). Pass `agent_id`, `scenarios` (array of IDs), and optionally `frequency` (for repeat runs).
+
+   **Smoke cohort first on paid transports.** For voice, SIP and WebRTC runs of more than five evaluators, launch 3–5 representative ones first and read their results — connected, finished inside the cap, no setup error — before launching the rest. Text and websocket runs may go in one batch. Skip the cohort only when the user explicitly asks for the whole suite at once, and say that you skipped it.
 
    | Mode | Tool |
    |---|---|
@@ -73,11 +75,14 @@ Execute one or more evaluators against the target agent.
 
    **Fail fast on terminal errors — never retry-loop through them:**
    - **Billing** ("insufficient balance", "subscription expired/inactive"): stop immediately, quote the exact error, and tell the user to top up / renew before re-running. Do not poll again until they confirm.
+   - **Setup / configuration errors** (the provider rejected a configuration or mock-tool change, the outbound phone-number record is missing, credentials are invalid, `status=failed` before any call connected): every run in the batch hits the same wall. Stop, do not launch the remaining evaluators, quote the exact `failed_reasons` text, and fix the configuration before re-running.
    - **Call never connects** (still dialing/ringing after ~2 minutes): stop polling and diagnose — wrong/unreachable phone number, agent not answering, telephony misconfiguration — instead of "keep polling".
    - **Infra errors** (LiveKit/SIP worker failures, timeouts): surface the error verbatim and which scenario hit it; suggest text/chat mode as a fallback for logic validation rather than retrying voice blindly.
 
 6. **After completion**: Offer to fetch results:
    Use `mcp__cekura__results_retrieve` with the result ID.
+
+   Read a run's `success` correctly: when the project has rubric rules, `success` is the rubric verdict over every attached metric (all rules must pass by default), not the Expected Outcome score alone. Report the Expected Outcome score and the failing rubric rule separately — a scenario whose Expected Outcome passed but whose run shows `success: false` failed a project-wide gate, possibly on a metric the scenario never exercised, not the behaviour under test.
 
 ## Execution Modes
 
