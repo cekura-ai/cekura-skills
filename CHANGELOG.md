@@ -4,6 +4,37 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.0 — 2026-09-08
+
+**Both subagents are removed.** They cost every install ~1,040 always-on
+tokens — a quarter of the plugin's context budget — for capability nothing
+routed to and that the skills already covered in more depth.
+
+- **`eval-suite-planner` and `metric-reviewer` are deleted.** No skill,
+  command or the coordinator ever delegated to either; the only references
+  were two rows in CLAUDE.md. Their content is superseded by
+  `cekura-eval-design` (coverage, red-team, gap analysis),
+  `cekura-metric-design` (review criteria) and `cekura-metric-improvement`
+  (labs, feedback, auto-improve). Where they diverged they were wrong:
+  `eval-suite-planner` routed to a `bulk-create-evals` command that does not
+  exist and emitted CSV rows for direct creation, which eval-design forbids
+  for instruction scenarios; and both declared toolsets without MCP access
+  while instructing the reader to fetch evals and call logs "via the API".
+  Always-on cost drops from ~4,150 to ~3,300 tokens. Removing a whole
+  component category is why this is a minor bump, not a patch: anyone who
+  invoked either agent by name no longer can.
+- **The `cekura-onboarding` name is still shared** by the skill and the
+  command, so `claude plugin details` lists it twice. Renaming the command
+  would break `initialMessage="/cekura-onboarding"` in the product onboarding
+  UI, the published install docs, and the internal-tools triage prompts — all
+  of which read the command name from `main`. It needs a coordinated change
+  across those repos, not a rename here.
+- **Docs state the real inventory.** README and CLAUDE.md claimed 12 skills;
+  there are 11 (`cekura-fixing-prod-issues` was folded into
+  `cekura-self-improving-agent`). The "What's Included" table had the
+  `cekura-self-improving-agent` blurb sitting in its Commands column, where
+  the command list had already ended; it now reads as a note under the table.
+
 ## 0.14.5 — 2026-09-08
 
 **Run and result guidance now bounds the cost of a voice suite.** Nothing in

@@ -16,7 +16,7 @@ metadata:
 
 # Cekura Voice AI Infrastructure CI/CD Suite
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.14"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.15"`. It returns immediately and lets Cekura see which skills are in use.
 
 Build a compact, reviewable Cekura test suite **in the voice-agent repository**. The deliverable is a
 JSON spec that CI submits to Cekura's Tests-as-Code endpoint. It is not a folder of persistent
