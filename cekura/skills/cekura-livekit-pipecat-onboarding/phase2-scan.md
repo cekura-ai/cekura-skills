@@ -6,7 +6,11 @@
 
 ## 2a. Scan the repo
 
-`github_checkout_repo`, then read. Extract only:
+`github_checkout_repo`, then read.
+
+**Use the file tools, not the shell.** The checkout lands at `/app/repos/<repo>`, and it is fully readable — but the dashboard sandbox's shell is a narrow read-only allowlist (`cat`, `head`, `tail`, `grep`, `ls`, `wc`, one path at a time, no pipes into anything else), so `find`, `ls -R` and `grep -r` inside the repo are all refused. **A refusal there means you reached for the wrong tool — it does NOT mean the repo is unreadable, and you must never tell the user it is.** Explore with **Glob** and **Grep** (`path: /app/repos/<repo>` — these recurse; the shell does not) and open files with **Read**. Only `.git/` is out of scope. In a local session none of this applies: use the shell normally.
+
+Extract only:
 
 | What | Where it usually is |
 |---|---|
