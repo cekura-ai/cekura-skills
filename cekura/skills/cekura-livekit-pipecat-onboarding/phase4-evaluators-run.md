@@ -50,7 +50,7 @@ This is the same fallback **F4** as 4b; only the wording and the timing change.
 
 Now — and only now — one `<clarification>`:
 
-> "Ten evaluators are ready for `<agent name>`. Run them against your agent now? Each one is a real call placed to your worker through the credentials you just entered. They run in parallel, so it's about three minutes for the whole set, not thirty."
+> "Ten evaluators are ready for `<agent name>`. Run them against your agent now? Each one is a real call placed to your worker through the credentials you just entered. They run in parallel, so it's three to four minutes for the whole set, not thirty."
 
 Options: `["Run them", "Run just one first", "Not now"]`
 
@@ -71,7 +71,7 @@ Tool by provider — the agent's `provider.type` from `aiagents_retrieve`, never
 
 Pass `scenarios` and `frequency: 1`. Then wait: **dashboard** `wait_for_result`; **local** poll `results_retrieve` / `runs_bulk_retrieve` with 30s between reads. Never claim a result you have not read.
 
-**Same rule as generation: say the number before you block.** Ten calls run in parallel and take about three minutes end to end — say that, once, in the message that precedes the wait. A run is the longest silence in this flow and the only one the user can picture, so give them the picture: real calls are being placed to their agent right now.
+**Same rule as generation: say the number before you block.** Ten calls run in parallel and take three to four minutes end to end — say that, once, in the message that precedes the wait. A run is the longest silence in this flow and the only one the user can picture, so give them the picture: real calls are being placed to their agent right now.
 
 ## 4d. Verify and share
 
