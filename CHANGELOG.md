@@ -4,6 +4,16 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.14.4 — 2026-09-08
+
+**Ringback tone for `<noise>`, and the sound list becomes a catalog.** `ringback`
+joins the one-shot sound names: about six seconds of a phone ringback tone (one
+ring, the silence gap, and the start of the next ring), for evaluators that
+simulate a transfer or outbound leg the caller hears. The one-shot list is now
+documented as a growing catalog — names added to the platform later are equally
+valid, as are direct `https://` audio URLs — so this skill no longer needs an
+update for every new sound.
+
 ## 0.14.3 — 2026-09-07
 
 **`cekura-eval-design` — conditional-actions guidance for scripted multi-turn
