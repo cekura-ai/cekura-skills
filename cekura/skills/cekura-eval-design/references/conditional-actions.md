@@ -702,6 +702,40 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - `<hold time="Xs" />` for guaranteed dead air (not interruptible; background noise stops; multiple per action allowed).
 - `<silence time="Xs" />` for natural-feeling pauses (interruptible by the main agent; background noise continues; condition matching restarts after an interrupt). Supports decimal seconds (`"0.5s"`) for sub-second precision.
 
+## Multi-Turn Probe & Duration Control
+
+Any CA scenario that fires a **fixed sequence of caller lines** at a live agent can hit a failure mode the basic patterns don't cover: the **call runs to the duration cap** even though every caller line is scripted. The usual cause is a mid-turn condition that won't advance the caller; the fixes are cheap.
+
+### The condition-matcher stall (and when to go positional)
+
+A `standard` mid-turn condition only advances the caller when an **LLM judge decides the agent's last reply satisfies the semantic condition**. A rigid or canned agent — one that answers every probe with the *same* boilerplate ("I'm here to help with device setup, how can I assist?") — can leave the judge unsure whether it "responded to the flight-booking request." The caller then re-fires the **same line** turn after turn until the call hits the cap. The transcript shows the caller repeating one sentence 10–12×, which also pollutes the caller-side repetition metrics.
+
+**Decision rule — is the next caller line content-dependent?**
+
+- **No (positional):** the caller's next line is fixed regardless of what the agent said — out-of-scope probes, hallucination probes, a scripted interrogation. Chain the probe turns as `action_followup` referencing the previous step's `id`. Each probe then fires after **exactly one** agent reply, so a looping agent cannot stall the sequence. The agent's replies are still captured and graded by Expected Outcome; positional advancement does **not** hurt EO here because the caller's lines never needed to adapt.
+- **Yes (semantic):** the caller's next line genuinely depends on the agent's answer for a natural back-and-forth. Keep `type: "standard"` with a semantic condition. **Do not** convert these to `action_followup` just to force turn-count determinism — a caller that ignores the agent's actual reply produces an unnatural conversation and tanks Expected Outcome / Relevancy.
+
+```jsonc
+// Content-independent probe chain — positional, cannot be stalled by a looping agent
+{ "id": 1, "condition": "The agent greets the caller or asks how it can help",
+  "action": "Can you help me book a flight to Chicago for tomorrow?", "type": "standard", "fixed_message": true },
+{ "id": 2, "condition": 1, "action": "Okay, then which stock should I buy this week?",
+  "type": "action_followup", "fixed_message": true },
+{ "id": 3, "condition": 2, "action": "Alright — can you translate a paragraph into French for me?",
+  "type": "action_followup", "fixed_message": true },
+{ "id": 4, "condition": 3, "action": "Okay, that's all I needed, thank you.",
+  "type": "action_followup", "fixed_message": true },
+{ "id": 5, "condition": 4, "action": "<endcall />", "type": "action_followup", "fixed_message": true }
+```
+
+### Deflection-tolerant mid-turn conditions
+
+When you *do* keep a semantic `standard` gate, phrase it so a **legitimate non-answer still advances the caller**. `"The agent answers the question about its hours"` strands the caller when the agent (correctly) says it has none; `"The agent responds to, deflects, or redirects the question about its hours"` advances on any real reply. A mid-turn gate should test *that the agent took a turn*, not *that it gave the answer you hoped for* — grading the answer is Expected Outcome's job, not the gate's.
+
+### Interruption timing for terse agents
+
+`<interruption time="Xs" />` must lead an `action_followup` action (see [Interruption behavior](#interruption-behavior--action_followup-re-executes-from-the-start)). Against agents that speak in short bursts, a long lead lands *after* the agent already finished, so no barge-in is exercised — use a short lead such as `time="0.2s"` so the cut-in happens mid-utterance.
+
 ## Anti-Patterns
 
 - **Too many materially different branches in one evaluator.** Cekura's docs frame conditional actions as good for branching conversations — and they are: multiple `standard` conditions can fire on different agent responses, which lets the testing agent adapt within a single evaluator. The pitfall is bundling **materially different success/failure paths** (e.g., booking-confirmed vs. agent-refused vs. error-handoff) into one conditions array, because each path has a different expected outcome and the LLM judge can only score one. **Cekura-skill guidance: prefer one evaluator per expected outcome.** Lightweight in-flow branches (e.g., the agent might offer slot A or slot B — accept whichever) are fine; distinct success/failure outcomes are not — split them into separate evaluators.
@@ -728,6 +762,9 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - **Setting `first_message` independently of `id:0`.** When `conditional_actions` is provided, `first_message` is taken from `id:0` action; values you pass separately will be overwritten.
 - **Forgetting `scenario_type: "conditional_actions"`.** Without the explicit type, the scenario is created as `instruction` (the default) and your `conditional_actions` payload is ignored.
 - **No `<endcall />` at end.** Without an explicit termination, the call runs to timeout, wasting credits.
+- **Relying on the agent to end the call.** A scripted probe should drive its own termination with an explicit `<endcall />` rather than hoping the agent hangs up. Both placements work: inline in the caller's final action ends the call as soon as the caller's turn plays; a dedicated `action_followup` gated on the closing line instead fires after the agent's one closing reply, so the agent finishes its goodbye before the line drops. Pick inline when you don't need the agent's closing turn, the followup when you do.
+- **Semantic mid-turn gate that demands the answer, not a reply.** `"The agent answers X"` strands the caller against an agent that legitimately can't answer X, running the call to the cap. Phrase the gate as `"responds to, deflects, or redirects…"` and let Expected Outcome grade the answer.
+- **Forcing `action_followup` on content-dependent turns for determinism.** Converting a natural back-and-forth to positional advancement makes the caller ignore the agent's actual reply, tanking Expected Outcome / Relevancy. Only chain probe turns positionally when the caller's next line is content-independent (see [The condition-matcher stall](#the-condition-matcher-stall-and-when-to-go-positional)).
 - **Conditions arrays longer than ~15 entries.** Split into multiple evaluators by phase (verification, scheduling, confirmation). Long arrays drift from the intended flow and are hard to debug.
 
 ## Validation Checklist
@@ -751,6 +788,7 @@ Declare a `rest_api` function (default `auto_run: true` fetches at call start) a
 - [ ] Function URLs are publicly reachable `http(s)` endpoints (no localhost/private hosts)
 - [ ] Updates send the FULL `conditional_actions` object including existing `functions[]` (updates are full-replace, not a merge)
 - [ ] The last condition ends the conversation (via `<endcall />` or a natural close)
+- [ ] Mid-turn semantic gates advance on any real reply ("responds to, deflects, or redirects…"), not only on the hoped-for answer
 - [ ] `scenario_language` is set (either explicitly or via a personality with a configured language — required by validation rule 6)
 - [ ] A `personality` is set
 
