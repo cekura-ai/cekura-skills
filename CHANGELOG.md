@@ -4,7 +4,7 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
-## 0.14.6 — 2026-09-08
+## 0.15.0 — 2026-09-08
 
 **Both subagents are removed.** They cost every install ~1,040 always-on
 tokens — a quarter of the plugin's context budget — for capability nothing
@@ -20,7 +20,9 @@ routed to and that the skills already covered in more depth.
   exist and emitted CSV rows for direct creation, which eval-design forbids
   for instruction scenarios; and both declared toolsets without MCP access
   while instructing the reader to fetch evals and call logs "via the API".
-  Always-on cost drops from ~4,150 to ~3,100 tokens.
+  Always-on cost drops from ~4,150 to ~3,300 tokens. Removing a whole
+  component category is why this is a minor bump, not a patch: anyone who
+  invoked either agent by name no longer can.
 - **The `cekura-onboarding` name is still shared** by the skill and the
   command, so `claude plugin details` lists it twice. Renaming the command
   would break `initialMessage="/cekura-onboarding"` in the product onboarding
