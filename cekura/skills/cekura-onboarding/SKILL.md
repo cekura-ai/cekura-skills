@@ -45,7 +45,7 @@ This skill executes **one phase at a time, in order**. For each phase:
 
 **Ask questions ONLY to collect missing inputs or resolve genuine ambiguity** (provider choice, credentials, phone number, self-hosted confirmation). Don't pause to re-confirm an action the flow already implies — the user invoked onboarding, which is a request to create the agent, enable metrics, generate evaluators, and start the first verification run. (Your client's own tool-permission prompts still apply as normal.) No "ready to continue?", no "shall I create it?", no "want me to proceed?" — just do the step and narrate it. The one exception: when a **gate is blocked** (e.g. the testing-path description gate) present the blocker and the options.
 
-**Onboarding is self-contained.** Do NOT open the sibling cekura-create-agent skill (or any other skill) during onboarding — everything needed (credential matrix, description quality bar) is inlined in this skill's phase files. cekura-create-agent's phase sequence covers post-onboarding work (SDK integration, mock tools, knowledge base) and running it mid-onboarding hijacks the flow into those steps; it is a Phase-6 handoff only.
+**Onboarding is self-contained, with ONE exception: LiveKit and Pipecat hand off to `cekura-livekit-pipecat-onboarding` at the provider answer (Phase 2 §2b), and that skill completes onboarding on its own.** Otherwise, do NOT open the sibling cekura-create-agent skill (or any other skill) during onboarding — everything needed (credential matrix, description quality bar) is inlined in this skill's phase files. cekura-create-agent's phase sequence covers post-onboarding work (SDK integration, mock tools, knowledge base) and running it mid-onboarding hijacks the flow into those steps; it is a Phase-6 handoff only.
 
 ## The Phases
 
@@ -53,6 +53,7 @@ This skill executes **one phase at a time, in order**. For each phase:
 |-------|------|--------------|------|
 | 0 | [phase0-path.md](phase0-path.md) | Pick testing vs observability; ONE `aiagents_list` call to detect existing work | shared |
 | 2 | [phase2-agent.md](phase2-agent.md) | Create/connect the agent — provider-first, minimal, validated | shared |
+| 2→ | *handoff* — **cekura-livekit-pipecat-onboarding** | LiveKit/Pipecat only, from the provider answer: GitHub → scan → placeholder create → evaluators → run → SDK PR → its own close. Completes onboarding; 3T–6T are not run. | shared |
 | 3T | [phase3-testing-metrics.md](phase3-testing-metrics.md) | Verify default metrics (auto-enabled at project creation) | testing |
 | 4T | [phase4-testing-evaluators.md](phase4-testing-evaluators.md) | Generate first evaluators (generation-first) | testing |
 | 5T | [phase5-testing-first-run.md](phase5-testing-first-run.md) | First test run + **verification gate** | testing |

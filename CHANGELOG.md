@@ -4,6 +4,28 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.2 — 2026-09-09
+### Added
+
+- **`cekura-livekit-pipecat-onboarding`** — a dedicated skill for the two
+  code-based providers. Nothing auto-imports for LiveKit or Pipecat: the system
+  prompt, agent name, language, dispatch name and who-speaks-first all live in
+  the user's repository. The skill checks the GitHub connection, asks to scan the
+  repo, reads those values out of the code, creates the agent with placeholder
+  credentials the user replaces on the agent page, generates ten evaluators, asks
+  before running them, shares the results, and offers the Cekura SDK as a pull
+  request. **No provider API key, secret or URL is ever asked for in chat**, on
+  any path — including when GitHub is declined.
+
+### Changed
+
+- `cekura-onboarding` §2b now hands LiveKit/Pipecat off at the provider answer
+  instead of collecting their fields in chat, and §2c is retitled: only forks and
+  wrappers built on those frameworks arrive there, as `self_hosted`. **No other
+  onboarding phase changed** — every other provider behaves exactly as before,
+  and the backend carries a test that fails if a rule from this flow leaks into
+  the shared onboarding rules.
+
 ## 0.15.1 — 2026-09-09
 
 **New `cekura-personality-design` skill, and a correction: accent is not a
