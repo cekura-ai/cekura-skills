@@ -94,6 +94,8 @@ Never hardcode personal data in steps. Use `{{test_profile.field}}` for anything
 
 **Every mention:** use the same placeholder every time the attribute appears — never placeholder once and the bare word elsewhere. Copy the identical token into any expected-outcome line that references the value.
 
+**No values defined by the conversation.** "The first option asked about", "whatever the second item is", "a type not yet mentioned" are not fixtures — they are resolved at run time from the main agent's question order, so the caller's answers, and every outcome line that grades them, change with the run. Name the values in the profile and key the *trigger* on the question: ❌ `Give a rate for the FIRST truck type asked about` → ✅ `Quote {{test_profile.flatbed_rate}} when asked for the flatbed rate`. A flow that genuinely needs data-bound turn-by-turn bookkeeping is a conditional-actions scenario.
+
 **Don't fabricate placeholders:** a placeholder is justified only for configured dynamic variables, mock-tool input keys, or fields already in the test profile. One-shot topics, agenda items, and labels go inline ("Ask about the cancellation policy when offered help") — not as invented `{{test_profile.*}}` fields.
 
 **Placeholder closure:** every `{{test_profile.X}}` used in steps or outcomes must exist with a concrete value in the attached test profile — an unresolved placeholder resolves to nothing at call time.

@@ -562,7 +562,7 @@ Sibling tags can be combined with text and run left to right. Do not nest tags, 
 | `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent; `t` required, `d` optional, `fixed_message: true` |
 | `<network_simulation packet_loss="N" />` | Only `packet_loss` supported — `jitter`/`latency` are ignored. |
 | `<background_noise sound="NAME" volume="0.x">text</background_noise>` | Continuous ambient sound (e.g. `coffee-shop`, `office-ambience`, `rain-thunder`, `vacuum-cleaner`, `construction-site`) |
-| `<noise sound="NAME" volume="N" time="Xms" />` | One-shot effect: `office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying` (~10s of sobbing, for distress-detection tests). `volume` and `time` (milliseconds) are optional. |
+| `<noise sound="NAME" volume="N" time="Xms" />` | One-shot effect: `office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying` (~10s of sobbing, for distress-detection tests), `ringback` (~6s phone ringback tone), plus newer catalog sounds — any name the platform accepts at save works, and a direct `https://` audio URL is also valid. `volume` and `time` (milliseconds) are optional. |
 | `<audio id="..." />` | Plays an uploaded recording. One recording can be referenced from several steps and more than once per action; read the scenario's `condition_audio` for the available ids and never fabricate one. |
 
 ### Test Profile Variables in Fixed Messages
@@ -601,3 +601,5 @@ These recurring mistakes are identified from real customer feedback. Proactively
 14. **Flow-specific metrics with `always` trigger** — Metrics that only apply to certain flows should use custom triggers to avoid evaluating every call.
 15. **Empty agent descriptions** — Agent has description "." or empty, rendering `{{agent.description}}` metrics useless.
 16. **Obs-enabled metrics on non-production projects** — Each obs-enabled metric costs ~0.2 credits per call. Audit all projects.
+17. **Launching a full voice suite blind** — On voice/SIP/WebRTC, run a 3–5 evaluator smoke cohort first. A setup error (rejected configuration or mock change, missing phone-number record, bad credentials) hits every run identically: stop the batch and fix it rather than let the remainder fail.
+18. **Reading `success: false` as an agent failure** — With project rubric rules, `success` is the rubric verdict over every attached metric. Report the Expected Outcome score and the failing rubric rule separately; a metric the scenario never exercised can fail the run.

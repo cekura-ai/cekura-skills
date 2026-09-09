@@ -239,6 +239,8 @@ The user can still override by passing a mode explicitly in their initial comman
 
 Pass `agent_id` and `scenarios` (array of IDs). Capture the returned `result_id`.
 
+On voice, SIP or WebRTC modes, launch 3–5 of the scenarios first and read their results (connected, finished inside the cap, no setup error) before launching the rest. A setup error — rejected configuration or mock change, missing phone-number record, bad credentials — hits every run identically: stop and fix it rather than let the remainder fail.
+
 Poll `mcp__cekura__results_retrieve(id=result_id)` until `status` is `completed` or `failed`. Use `mcp__cekura__results_list` to monitor overall progress. If a run hangs, use `mcp__cekura__end_call` to terminate it.
 
 If `status=failed`, inspect `failed_reasons` and surface infra issues (connection errors, websocket handshake failures) before writing the report.
@@ -365,5 +367,6 @@ Save as `result_<result_id>_report.md` in the working directory and return the p
 
 - **Empty `transcript` field but populated `transcript_object`** — render from `transcript_object` (list of `{role, content}` turns).
 - **`success=true` with `error_message` set** — infra issue; don't treat as a real pass.
+- **`success=false` with Expected Outcome passed** — a project rubric rule failed (`rubric` names it), possibly on a metric the scenario never exercised; report the rule, not a scenario failure.
 - **All passes on generic scenarios, all fails on specific-fact scenarios** — strong signal of persona/KB misconfiguration or missing test data; call it out explicitly and group those failures under one issue category in the summary.
 - **Auto-generated evaluators that don't match the agent's domain** — pause and re-generate with better `extra_instructions` rather than running junk.

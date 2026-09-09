@@ -4,7 +4,7 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
-## 0.15.0 — 2026-09-09
+## 0.15.1 — 2026-09-09
 
 **New `cekura-personality-design` skill, and a correction: accent is not a
 setting.** A personality's accent is a property of the voice it synthesises
@@ -31,6 +31,86 @@ here and in `codex/AGENTS.md` / `GEMINI.md`.
   so timing and audio problems stop being debugged as agent bugs.
 - Gate-able like the eval and metric families, with an ack tag and a BUNDLE so
   a session without the plugin installed can still load it over MCP.
+## 0.15.0 — 2026-09-08
+
+**Both subagents are removed.** They cost every install ~1,040 always-on
+tokens — a quarter of the plugin's context budget — for capability nothing
+routed to and that the skills already covered in more depth.
+
+- **`eval-suite-planner` and `metric-reviewer` are deleted.** No skill,
+  command or the coordinator ever delegated to either; the only references
+  were two rows in CLAUDE.md. Their content is superseded by
+  `cekura-eval-design` (coverage, red-team, gap analysis),
+  `cekura-metric-design` (review criteria) and `cekura-metric-improvement`
+  (labs, feedback, auto-improve). Where they diverged they were wrong:
+  `eval-suite-planner` routed to a `bulk-create-evals` command that does not
+  exist and emitted CSV rows for direct creation, which eval-design forbids
+  for instruction scenarios; and both declared toolsets without MCP access
+  while instructing the reader to fetch evals and call logs "via the API".
+  Always-on cost drops from ~4,150 to ~3,300 tokens. Removing a whole
+  component category is why this is a minor bump, not a patch: anyone who
+  invoked either agent by name no longer can.
+- **The `cekura-onboarding` name is still shared** by the skill and the
+  command, so `claude plugin details` lists it twice. Renaming the command
+  would break `initialMessage="/cekura-onboarding"` in the product onboarding
+  UI, the published install docs, and the internal-tools triage prompts — all
+  of which read the command name from `main`. It needs a coordinated change
+  across those repos, not a rename here.
+- **Docs state the real inventory.** README and CLAUDE.md claimed 12 skills;
+  there are 11 (`cekura-fixing-prod-issues` was folded into
+  `cekura-self-improving-agent`). The "What's Included" table had the
+  `cekura-self-improving-agent` blurb sitting in its Commands column, where
+  the command list had already ended; it now reads as a note under the table.
+
+## 0.14.5 — 2026-09-08
+
+**Run and result guidance now bounds the cost of a voice suite.** Nothing in
+the authoring skills previously mentioned a per-scenario duration cap, a first
+small cohort, or a stop after a setup error, so a suite could fail every run on
+the same configuration error before anyone read a result.
+
+- **Per-scenario `max_duration` is noted as optional.** The project owner's
+  `max_call_duration` applies and is never changed for a test; only a scenario
+  that must end within a known time gets its own bound.
+- **Smoke cohort on paid transports.** `run-evals`, `cekura-report` and
+  eval-design's run guidance launch 3–5 evaluators first on voice, SIP and
+  WebRTC and read them before the rest.
+- **Setup errors stop the batch.** A rejected configuration or mock change, a
+  missing phone-number record or bad credentials hits every run identically;
+  the fail-fast list now names them.
+- **`success` is read against the project rubric.** With rubric rules,
+  `success` is the rubric verdict over every attached metric; `run-evals`,
+  `eval-results` and `cekura-report` report the Expected Outcome score and the
+  failing rule separately.
+- **Metrics after generation.** Generation attaches the project's
+  simulation-enabled set; eval-design and autogen-eval check Expected Outcome
+  came through and attach a missing baseline metric only when the project has
+  it. metric-design notes that a project-wide flow-specific metric should carry
+  an N/A trigger.
+- `codex/AGENTS.md` / `GEMINI.md` carry the smoke-cohort and rubric points as
+  anti-patterns 17–18.
+- **Instruction patterns:** values defined by the conversation ("the first
+  option asked about") are called out as non-fixtures — name them in the
+  profile and key the trigger on the question.
+- **One behaviour per evaluator.** `extra_instructions` is one numbered
+  paragraph per evaluator, each testing one behaviour; an end-to-end journey is
+  its own paragraph, written as such. The coverage reference no longer asks
+  every scenario to progress through multiple workflows.
+- **Skill activation.** `cekura-create-agent` now triggers on the plain
+  phrasing users reach for — "create an agent", "set up an agent", "walk me
+  through creating an agent", "connect my agent" — and on importing an agent
+  from another platform's exported config; `cekura-onboarding` says it is not
+  for adding to an existing workspace. Folds in the open product-chat
+  auto-improvement PRs #116, #119, #135 and #152; #142 is not adopted.
+## 0.14.4 — 2026-09-08
+
+**Ringback tone for `<noise>`, and the sound list becomes a catalog.** `ringback`
+joins the one-shot sound names: about six seconds of a phone ringback tone (one
+ring, the silence gap, and the start of the next ring), for evaluators that
+simulate a transfer or outbound leg the caller hears. The one-shot list is now
+documented as a growing catalog — names added to the platform later are equally
+valid, as are direct `https://` audio URLs — so this skill no longer needs an
+update for every new sound.
 
 ## 0.14.3 — 2026-09-07
 

@@ -40,7 +40,6 @@ cekura-skills/
       cekura-flag-call-log-failures/
       cekura-generate-scenarios/
     commands/                    # Slash commands (Claude Code only)
-    agents/                      # Sub-agent definitions (Claude Code only)
     hooks/                       # MCP failure detection + session-start auto-update (Claude Code CLI only)
   _template/                     # SKILL.md.tmpl scaffold for new skills (dev-only)
   codex/
@@ -50,7 +49,7 @@ cekura-skills/
   CLAUDE.md                      # This file — developer context for contributors
 ```
 
-> **Note on the `cekura/` subdir:** Claude Code's marketplace validator rejects `"source": "."`, so the plugin contents live under `cekura/` and `marketplace.json` points to `"./cekura"`. The `.claude-plugin/marketplace.json` itself stays at the repo root; everything else (plugin.json, .mcp.json, skills/, commands/, agents/, hooks/) travels with the plugin root under `cekura/`.
+> **Note on the `cekura/` subdir:** Claude Code's marketplace validator rejects `"source": "."`, so the plugin contents live under `cekura/` and `marketplace.json` points to `"./cekura"`. The `.claude-plugin/marketplace.json` itself stays at the repo root; everything else (plugin.json, .mcp.json, skills/, commands/, hooks/) travels with the plugin root under `cekura/`.
 >
 > **Other platforms follow the same root-registry → `cekura/` pattern.** Cursor (`.cursor-plugin/marketplace.json`), Codex/generic (`.agents/plugins/marketplace.json`, via `source: "git-subdir"` + `path: "./cekura"`), Gemini (`gemini-extension.json`), and GitHub Copilot (`.github/plugin/marketplace.json`) all live at the repo root and resolve into `cekura/`. Codex reads the same `cekura/.mcp.json` as Claude Code (Codex accepts the camelCase `mcpServers` wrapper and strips the `type` field; snake_case `mcp_servers` would register zero servers — CI enforces the shape); Copilot reads it too, but only because its own `cekura/.github/plugin/plugin.json` points at it explicitly; Cursor and Gemini declare the MCP endpoint inline in their own manifests (all the same URL — `validate_skills.py` asserts parity). These are purely additive — they don't touch `.claude-plugin/marketplace.json`, the `cekura/` assets, or the `npx skills add` path, so existing Claude + npx users are unaffected. See "Multi-platform plugin manifests" below.
 
@@ -61,7 +60,7 @@ The 12 SKILL.md files inside `cekura/skills/` are the **only** source of skill c
 1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
 2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 12 skills under `cekura/skills/`. The bare repo URL works cleanly.
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 11 skills under `cekura/skills/`. The bare repo URL works cleanly.
 
 ### Skill content rules
 
@@ -155,12 +154,6 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `eval-results` | Check results from a test run |
 | `cekura-report` | End-to-end quality report: generate 10 evals, run them, produce structured analysis |
 
-### Agents
-| Component | Purpose |
-|-----------|---------|
-| `metric-reviewer` | Reviews metric quality |
-| `eval-suite-planner` | Coverage matrix design from agent descriptions |
-
 ### Hooks
 | Component | Purpose |
 |-----------|---------|
@@ -183,7 +176,7 @@ Beyond the Claude Code plugin, the repo ships native plugin/extension manifests 
 |----------|-------|------------------|-----|
 | Codex | `.agents/plugins/marketplace.json` (root) + `cekura/.codex-plugin/plugin.json` (`hooks` → `cekura/hooks/codex-hooks.json`) | Skills + MCP + `SessionStart` auto-update hook (no slash commands — Codex plugins have no `commands` field). The hook needs a one-time `/hooks` trust. | `cekura/.mcp.json` (shared with Claude Code — Codex requires the camelCase `mcpServers` wrapper or a direct server map; OAuth on first use) |
 | Cursor | `.cursor-plugin/marketplace.json` (root) + `cekura/.cursor-plugin/plugin.json` | Skills + MCP | inline `mcpServers` in plugin.json (hosted MCP URL) |
-| GitHub Copilot | `.github/plugin/marketplace.json` (root) + `cekura/.github/plugin/plugin.json` | Skills + MCP (no slash commands; no subagents — Copilot only discovers `agents/*.agent.md`, ours are Claude-style `*.md`, so agent bundling is deferred) | `cekura/.mcp.json`, referenced explicitly by the Copilot manifest's `mcpServers` path (OAuth on first use) |
+| GitHub Copilot | `.github/plugin/marketplace.json` (root) + `cekura/.github/plugin/plugin.json` | Skills + MCP (no slash commands; no subagents — the plugin ships none) | `cekura/.mcp.json`, referenced explicitly by the Copilot manifest's `mcpServers` path (OAuth on first use) |
 | Gemini CLI | `gemini-extension.json` (root) + `GEMINI.md` (root) | MCP + context file only — Gemini discovers skills from a root `skills/` dir, so the nested `cekura/skills/` isn't bundled; native skill bundling deferred | declared inline via `httpUrl` (native remote MCP + OAuth; no `mcp-remote` shim) |
 
 **Copilot's manifests are deliberately separate from Claude's.** Copilot CLI resolves marketplaces from `marketplace.json` → `.plugin/` → `.github/plugin/` → `.claude-plugin/`, and plugin manifests from `.plugin/plugin.json` → `plugin.json` → `.github/plugin/plugin.json` → `.claude-plugin/plugin.json` — so with no Copilot files it would silently fall back to the Claude manifests. We ship `.github/plugin/` at both levels so Copilot always wins on its own files and the two platforms can never constrain each other (e.g. Claude's marketplace entry omitting `version`, or a future Claude-only manifest field). Don't delete them expecting the fallback to cover it.
