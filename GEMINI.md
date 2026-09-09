@@ -9,7 +9,9 @@ You are an expert at working with the Cekura platform for AI voice agent testing
 - **Metric**: A post-call evaluation that scores a transcript against defined criteria
 - **Evaluator/Scenario**: A test case defining what the simulated caller does and what success looks like
 - **Test Profile**: Identity and context data passed to the testing agent (and the main agent in chat/websocket/outbound runs)
-- **Personality**: Voice, language, accent, and behavioral traits for the simulated caller
+- **Personality**: The simulated caller's voice layer — voice (which is what sets its accent), language,
+  speed, interruption and idle timing, background noise, volume, network conditions, plus a persona
+  prompt. Reused across evaluators. `accent` is a read-only label derived from the voice, not a setting
 
 ## Source-Controlled CI/CD Test Suites
 
@@ -388,7 +390,8 @@ KEY INTERACTION POINTS:
 ### Common Instruction Mistakes
 
 - **Hardcoding profile data in instructions** — When data is in both places and they differ, the testing agent hallucates
-- **Using instructions for voice characteristics** — "speak in a mumbling voice" does nothing. Use **personalities**
+- **Using instructions for voice characteristics** — "speak in a mumbling voice" or "use an Indian accent"
+  does nothing. Use **personalities**; for an accent, change the personality's `voice_id`
 - **Including examples of what the main agent "may say"** — Reference actions by topic instead
 - **Voice-specific instructions in text scenarios** — "speak naturally" has zero effect on text-based testing
 - **Multi-action steps** — Split "give wrong DOB, then correct it" into separate conditional steps
@@ -468,6 +471,8 @@ Skipping this checkpoint leads to wrong tool strategy, data mismatches, wasted v
 | POST | `/test_framework/v1/test-profiles/` | Create test profile |
 | GET | `/test_framework/v1/test-profiles/?agent_id=ID` | List profiles |
 | GET | `/test_framework/v1/personalities/` | List personalities |
+| GET | `/test_framework/v1/personalities/elevenlabs_voices/` | List ElevenLabs voices (carries an accent label per voice) |
+| GET | `/test_framework/v1/personalities/cartesia_voices/` | List Cartesia voices |
 | GET | `/test_framework/v2/results/` | List run results |
 | GET | `/test_framework/v2/results/{id}/` | Get run details |
 | GET | `/test_framework/v2/runs/{id}/` | Get individual run |
@@ -582,7 +587,7 @@ These recurring mistakes are identified from real customer feedback. Proactively
 
 1. **Hardcoded identity data in instructions** — Names, DOBs, addresses hardcoded instead of using test profiles. Causes testing agent hallucinations when data conflicts.
 2. **Missing end call tools** — `TOOL_END_CALL` / `TOOL_END_CALL_ON_TRANSFER` not enabled. Calls run until timeout, wasting credits.
-3. **Using instructions for voice** — "speak in a mumbling voice" in instructions has no effect — use personalities.
+3. **Using instructions for voice** — "speak in a mumbling voice" in instructions has no effect — use personalities. An accent request means a different `voice_id`, not an `accent` value (that field is read-only and derived).
 4. **Missing baseline metrics** — No Expected Outcome metric attached. Runs report pass based on call completion, not agent behavior.
 5. **Including agent speech examples** — `When the agent says "How can I help you"...` is brittle — reference actions by topic.
 6. **Missing test profiles for outbound/websocket** — Profile fields are sent as dynamic variables to the main agent.

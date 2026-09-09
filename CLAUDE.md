@@ -35,6 +35,7 @@ cekura-skills/
       cekura-metric-improvement/
       cekura-predefined-metrics/
       cekura-eval-design/
+      cekura-personality-design/
       cekura-infra-test-suite/
       cekura-flag-call-log-failures/
       cekura-generate-scenarios/
@@ -131,6 +132,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-metric-improvement` | Metric improvement through feedback iteration |
 | `cekura-predefined-metrics` | Catalog of all predefined metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Evaluator design, test profiles, conditional actions, session memory |
+| `cekura-personality-design` | Personality selection, forking and creation — the simulated caller's voice, accent, timing and audio layer |
 | `cekura-infra-test-suite` | Generate or update source-controlled JSON Tests-as-Code CI/CD suites from a voice-agent repository |
 | `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — flagged calls, failure rates, outcome distribution |
 | `cekura-generate-scenarios` | Cluster flagged production failures and create one evaluator scenario per failure mode |

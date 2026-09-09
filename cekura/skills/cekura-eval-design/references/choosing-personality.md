@@ -21,7 +21,8 @@ When selecting a personality, check its prompt to understand how the testing age
 | Parameter | What it controls |
 |---|---|
 | Voice model / provider | ElevenLabs, Cartesia, etc. |
-| Language and accent | American English, Spanish, Hindi, Brazilian Portuguese, etc. |
+| Language | American English, Spanish, Hindi, Brazilian Portuguese, etc. Pick it first — personalities are language-specific |
+| Accent | A property of the chosen voice, **not** a settable field. The `accent` value on a personality is a read-only label derived from its `voice_id`; to change the accent, change the voice |
 | Gender | Male, female, neutral |
 | Speech speed | 0.8× (slow) to 1.2× (fast) relative to normal |
 | Background noise | Off, office, street, café, etc. |
@@ -66,7 +67,8 @@ Users describe these as agent problems. They are personality settings.
 | "The testing agent keeps asking 'Are you still there?' mid-test" | Idle timeout (default 10s) | Raise `message_plan.idle_timeout_seconds` on a personality they own |
 | "I told it to stay silent / not answer and it responds anyway" | Idle timeout — the idle prompt fires regardless of instructions | Same. Also see `<hold>` below for a single-step pause |
 | "It talks over my agent" | Interruption preset | Personality with a lower `interruption_level` |
-| "It speaks too fast / wrong accent / no background noise" | Voice config | Different personality, or fork and adjust |
+| "It speaks too fast / no background noise" | Voice config | Different personality, or fork and patch `speed` / `background_noise` |
+| "Wrong accent" / "I set `accent` and nothing changed" | The voice, not the `accent` field | Pick a voice with that accent (`personalities_elevenlabs_voices` publishes an accent label per voice), then fork and patch `voice_id` + `provider`. See the `cekura-personality-design` skill |
 
 **Never** propose an Agent Description or evaluator-instruction edit as the fix for any row in this table.
 

@@ -28,6 +28,7 @@ KEY_REFERENCES = {
     "cekura-metric-design": ["prompt-patterns.md", "advanced-patterns.md"],
     "cekura-metric-improvement": ["feedback-examples.md"],
     "cekura-predefined-metrics": ["selection-by-use-case.md"],
+    "cekura-personality-design": ["personality-vs-evaluator.md", "voice-and-accent.md"],
 }
 
 
