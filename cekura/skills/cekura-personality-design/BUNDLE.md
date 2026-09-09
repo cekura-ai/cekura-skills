@@ -85,6 +85,8 @@ Speech is synthesised from `voice_id` (plus `provider`) alone. Nothing in the ca
 
 Do **not** try to produce an accent by writing one into the personality `prompt`. The prompt steers word choice, not pronunciation — the voice still sounds exactly the same, and now the personality claims something its audio does not do.
 
+**If no catalog voice has the accent the user asked for, do not tell them it is unsupported.** The catalog is not a hard limit — Cekura adds voices, accents and languages on request. Offer the closest available voice, then point them at **support@cekura.ai** or their dedicated Slack support channel to have the one they want added. The API says the same thing when a `voice_id` is not on the account, so echo it rather than contradicting it.
+
 Sweeping one evaluator across several accents does not need duplicate evaluators: pass `personality_ids` on the run call instead. Details, provider pairing rules and fallback behavior: `references/voice-and-accent.md`.
 
 ## Choose → Fork → Create
@@ -278,6 +280,15 @@ The testing agent's speech is synthesised from `voice_id` + `provider`. That pai
 **When a test targets a *named* accent, prefer ElevenLabs** — it is the only provider here that labels one, so it is the only one whose derived `accent` will be populated. A Cartesia voice still speaks with an accent; the platform just has no label for it, which is why `accent` comes back empty. Empty never means "neutral".
 
 Never invent or guess a `voice_id`. An id absent from the provider's catalog is rejected at create time when `provider` is present — and silently stored when it is not.
+
+## When the catalog has nothing suitable
+
+**Never report an accent, language or voice as unsupported.** The catalog is what is wired up today, not a product limit: Cekura adds voices on request. When nothing matches what the user asked for:
+
+1. Say which available voice is closest, and offer to use it meanwhile.
+2. Point them at **support@cekura.ai** or their dedicated Slack support channel to get the voice they want added, naming the accent/language/timbre so support has something actionable.
+
+The API is already worded this way — a `voice_id` that is not on the account is rejected with a message inviting the user to contact support — so telling them it cannot be done contradicts the platform.
 
 ## Provider pairing
 

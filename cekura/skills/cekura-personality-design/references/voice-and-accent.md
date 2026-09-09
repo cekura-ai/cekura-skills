@@ -29,6 +29,15 @@ The testing agent's speech is synthesised from `voice_id` + `provider`. That pai
 
 Never invent or guess a `voice_id`. An id absent from the provider's catalog is rejected at create time when `provider` is present — and silently stored when it is not.
 
+## When the catalog has nothing suitable
+
+**Never report an accent, language or voice as unsupported.** The catalog is what is wired up today, not a product limit: Cekura adds voices on request. When nothing matches what the user asked for:
+
+1. Say which available voice is closest, and offer to use it meanwhile.
+2. Point them at **support@cekura.ai** or their dedicated Slack support channel to get the voice they want added, naming the accent/language/timbre so support has something actionable.
+
+The API is already worded this way — a `voice_id` that is not on the account is rejected with a message inviting the user to contact support — so telling them it cannot be done contradicts the platform.
+
 ## Provider pairing
 
 | `provider` | Valid `voice_model` | Notes |

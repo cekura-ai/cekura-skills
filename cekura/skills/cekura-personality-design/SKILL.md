@@ -81,6 +81,8 @@ Speech is synthesised from `voice_id` (plus `provider`) alone. Nothing in the ca
 
 Do **not** try to produce an accent by writing one into the personality `prompt`. The prompt steers word choice, not pronunciation — the voice still sounds exactly the same, and now the personality claims something its audio does not do.
 
+**If no catalog voice has the accent the user asked for, do not tell them it is unsupported.** The catalog is not a hard limit — Cekura adds voices, accents and languages on request. Offer the closest available voice, then point them at **support@cekura.ai** or their dedicated Slack support channel to have the one they want added. The API says the same thing when a `voice_id` is not on the account, so echo it rather than contradicting it.
+
 Sweeping one evaluator across several accents does not need duplicate evaluators: pass `personality_ids` on the run call instead. Details, provider pairing rules and fallback behavior: `references/voice-and-accent.md`.
 
 ## Choose → Fork → Create
