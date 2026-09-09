@@ -4,6 +4,34 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.0 — 2026-09-09
+
+**New `cekura-personality-design` skill, and a correction: accent is not a
+setting.** A personality's accent is a property of the voice it synthesises
+with. The `accent` field is a read-only label derived from `voice_id` — nothing
+in the call pipeline reads it — so setting it never changed how a call sounded.
+The plugin previously implied otherwise: `choosing-personality.md` listed
+"Language and accent" as a voice parameter, and `cekura-eval-design` said
+personalities "control language, accent, voice model, ...". Those are corrected,
+here and in `codex/AGENTS.md` / `GEMINI.md`.
+
+- **The personality-vs-evaluator boundary, routed by duration.** A trait that
+  lasts the whole call is a personality; a single moment is an evaluator step.
+  Evaluator instructions cannot reach the voice layer, and the failure is
+  silent — the call runs, the run passes, the behavior never happens.
+- **Accent as a voice-selection task.** Look the accent up in a voice catalog
+  (`personalities_elevenlabs_voices` publishes a label per voice;
+  `personalities_cartesia_voices` does not), pass the id with its provider, and
+  let the label derive. Writing an accent into the personality prompt changes
+  word choice, not pronunciation.
+- **Choose → fork → create**, in that order, with the patch fan-out warning:
+  patching a shared personality reaches every evaluator already using it.
+- **The full voice-layer surface** — voice, language and transcriber, speed,
+  interruption and idle timing, background noise, volume, network simulation —
+  so timing and audio problems stop being debugged as agent bugs.
+- Gate-able like the eval and metric families, with an ack tag and a BUNDLE so
+  a session without the plugin installed can still load it over MCP.
+
 ## 0.14.3 — 2026-09-07
 
 **`cekura-eval-design` — conditional-actions guidance for scripted multi-turn
