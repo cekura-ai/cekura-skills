@@ -163,7 +163,7 @@ For full field semantics (all 5 required condition fields), validation rules, XM
   "id": "integer",
   "name": "string — display name",
   "language": "string — ISO language code",
-  "accent": "string — voice accent",
+  "accent": "string — READ-ONLY label derived from voice_id; cannot be set. Empty when the provider publishes no accent (all Cartesia voices)",
   "voice_model": "string — e.g., sonic-3",
   "provider": "string — 11labs or cartesia",
   "interruption_level": "string — how often the caller interrupts",

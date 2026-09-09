@@ -44,6 +44,7 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `cekura-metric-improvement` | Improve metric accuracy through feedback cycle (labs workflow) |
 | `cekura-predefined-metrics` | Catalog of built-in metrics — what each does, costs, constraints, configuration |
 | `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
+| `cekura-personality-design` | Choose, fork or create a personality — the simulated caller's voice, accent, speed, interruption and idle behavior |
 | `cekura-infra-test-suite` | Source-controlled JSON Tests-as-Code suite — repository discovery, deterministic CI coverage, safe dry-run validation |
 | `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — failure rates + outcome distribution |
 | `cekura-generate-scenarios` | Turn flagged production failures into regression evaluator scenarios |

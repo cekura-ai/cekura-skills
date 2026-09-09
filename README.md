@@ -36,6 +36,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-metric-improvement` | |
 | `cekura-predefined-metrics` | |
 | `cekura-eval-design` | |
+| `cekura-personality-design` | |
 | `cekura-infra-test-suite` | |
 | `cekura-flag-call-log-failures` | |
 | `cekura-generate-scenarios` | |
@@ -106,6 +107,7 @@ Eleven skills, scoped to specific Cekura workflows:
 | `cekura-metric-improvement` | "Improve a metric / fix metric accuracy" |
 | `cekura-predefined-metrics` | "What predefined metrics are available / which built-in metrics should I use" |
 | `cekura-eval-design` | "Design test scenarios for my voice agent" |
+| `cekura-personality-design` | "Create a custom personality / test a different accent / make the caller interrupt more" |
 | `cekura-infra-test-suite` | "Create a committed JSON CI/CD suite / add Tests-as-Code to my voice-agent repo / update test coverage for this PR" |
 | `cekura-flag-call-log-failures` | "Analyze the last N calls for issues / what % of calls have <problem>" |
 | `cekura-generate-scenarios` | "Create scenarios from failed calls / regression-test the agent on prod issues" |
@@ -251,6 +253,7 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
          cekura/skills/cekura-metric-improvement \
          cekura/skills/cekura-predefined-metrics \
          cekura/skills/cekura-eval-design \
+         cekura/skills/cekura-personality-design \
          cekura/skills/cekura-infra-test-suite
 ```
 
@@ -491,6 +494,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-metric-improvement` | Improving an existing metric via feedback iteration |
 | `cekura-predefined-metrics` | Exploring built-in metrics — what each does, costs, constraints |
 | `cekura-eval-design` | Designing test scenarios for a voice agent |
+| `cekura-personality-design` | Choosing, forking or creating a personality — the simulated caller's voice, accent, speed, interruption and idle behavior |
 | `cekura-infra-test-suite` | Creating or updating source-controlled Cekura JSON Tests-as-Code suites for a voice-agent repository |
 | `cekura-flag-call-log-failures` | Triaging recent production call logs against KPIs — failure rates + outcome distribution |
 | `cekura-generate-scenarios` | Turning flagged production failures into regression evaluator scenarios |

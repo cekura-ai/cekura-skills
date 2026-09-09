@@ -14,6 +14,9 @@
   "cekura-infra-test-suite": [
     "ack:cekura-infra-test-suite:2h6r7k"
   ],
+  "cekura-personality-design": [
+    "ack:cekura-personality-design:4m7d3q"
+  ],
   "manual-create-update-eval": [
     "ack:manual-create-update-eval:5m4p7c"
   ],

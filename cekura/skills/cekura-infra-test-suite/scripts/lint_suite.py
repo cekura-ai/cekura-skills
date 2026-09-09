@@ -30,8 +30,12 @@ DEFAULTS_KEYS = {"concurrency_limit", "frequency", "language", "max_duration",
 PERSONALITY_FORBIDDEN = {"network_simulation", "start_speaking_plan", "stop_speaking_plan",
                          "message_plan", "generation_config", "background_sound_volume",
                          "interruption_level"}
-PERSONALITY_INLINE = {"base", "name", "prompt", "language", "accent", "voice_model",
+PERSONALITY_INLINE = {"base", "name", "prompt", "language", "voice_model",
                       "voice_id", "provider", "speed", "background_noise", "end_call_enabled"}
+# Derived from the voice, so the API refuses them. They read as ordinary
+# settings, hence their own message: "unknown field" would leave the author
+# with no idea that the answer is voice_id.
+PERSONALITY_DERIVED = {"accent", "gender"}
 PERSONALITY_REQUIRED_WITHOUT_BASE = {"prompt", "language", "voice_model", "voice_id",
                                      "background_noise"}
 SLUG = re.compile(r"^[a-z0-9_]+$")
@@ -358,7 +362,12 @@ def check_personality(personality, where, report):
     if forbidden:
         report.error(where, "these are rejected inline and must live on a saved personality "
                             "referenced by id or by base: " + ", ".join(sorted(forbidden)))
-    unknown = set(personality) - PERSONALITY_INLINE - PERSONALITY_FORBIDDEN
+    derived = PERSONALITY_DERIVED & set(personality)
+    for field in sorted(derived):
+        report.error(where, f"{field!r} is derived from the voice and cannot be set — the "
+                            f"caller is synthesised from voice_id alone, so set voice_id to a "
+                            f"voice that has the {field} you want")
+    unknown = set(personality) - PERSONALITY_INLINE - PERSONALITY_FORBIDDEN - PERSONALITY_DERIVED
     if unknown:
         report.error(where, "unknown inline personality field(s): " + ", ".join(sorted(unknown)))
     if "base" not in personality:
