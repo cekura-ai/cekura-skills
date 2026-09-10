@@ -29,6 +29,7 @@ KEY_REFERENCES = {
     "cekura-metric-improvement": ["feedback-examples.md"],
     "cekura-predefined-metrics": ["selection-by-use-case.md"],
     "cekura-personality-design": ["personality-vs-evaluator.md", "voice-and-accent.md"],
+    "cekura-bot-test-writer": ["change-triage.md", "edit-modes.md"],
 }
 
 

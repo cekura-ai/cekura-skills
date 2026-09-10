@@ -142,10 +142,10 @@ git ls-files '.github/workflows/*' '.gitlab-ci.yml' 'Jenkinsfile' | xargs grep -
 ```
 
 - **No spec** → create. Work through steps 1–8.
-- **A spec exists** → update it in place. Read it in full, keep every `key`, and start at step 5,
-  the diff review. Do not regenerate the file: an existing suite is reviewed source code whose
-  results are comparable across commits only while its keys hold still. The most common correct
-  outcome of an update is **no change**.
+- **A spec exists** → update it in place; for a pull-request-sized update, **`cekura-bot-test-writer`
+  is the skill for that**. Read it in full, keep every `key`, start at step 5, and never regenerate:
+  an existing suite is reviewed source code whose results stay comparable only while its keys hold
+  still, and the most common correct outcome of an update is **no change**.
   **Starting at step 5 is not skipping the rest.** Anything you author still runs through step 1b,
   step 4's expected-outcome contract and step 7's dry run. An update is a smaller change, not a
   lower standard — a case written to the old file's house style instead of the judge's contract is a
