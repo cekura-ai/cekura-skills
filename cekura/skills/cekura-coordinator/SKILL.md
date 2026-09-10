@@ -46,6 +46,7 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `cekura-eval-design` | Design evaluators, test suites, coverage strategy, conditional actions |
 | `cekura-personality-design` | Choose, fork or create a personality — the simulated caller's voice, accent, speed, interruption and idle behavior |
 | `cekura-infra-test-suite` | Source-controlled JSON Tests-as-Code suite — repository discovery, deterministic CI coverage, safe dry-run validation |
+| `cekura-bot-test-writer` | Keep that committed suite in step with the code — read a PR diff, edit the smallest thing that closes a real gap |
 | `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — failure rates + outcome distribution |
 | `cekura-generate-scenarios` | Turn flagged production failures into regression evaluator scenarios |
 
@@ -101,7 +102,8 @@ When the user describes what they need, route them:
 | "Improve my agent" / "auto-tune from eval results" | **cekura-self-improving-agent** skill |
 | "Which built-in metrics are available?" / "what does Hallucination Detection cost?" | **cekura-predefined-metrics** skill |
 | "Fix this prod call bug" / "reproduce and test a fix" | **cekura-self-improving-agent** |
-| "CI/CD tests for my voice bot" / "commit a JSON test suite" / "Tests-as-Code for my voice repo" / "update CI eval coverage for this PR" | **cekura-infra-test-suite** skill |
+| "CI/CD tests for my voice bot" / "commit a JSON test suite" / "Tests-as-Code for my voice repo" | **cekura-infra-test-suite** skill |
+| "Update the tests for this PR" / "does this diff need new voice tests" / "keep my suite in sync" / "run a test writer on every PR" | **cekura-bot-test-writer** skill |
 | "What % of calls have <problem>" / "analyze my recent calls" | **cekura-flag-call-log-failures** skill |
 | "Create scenarios from failed calls" / "replay prod failures as tests" | **cekura-generate-scenarios** skill |
 | "Run a full quality report" / "generate evals and run them end-to-end" | `/cekura-report` command |
@@ -151,6 +153,7 @@ This skill routes — it doesn't perform tasks itself. After confirming the user
 - Designing test scenarios → **cekura-eval-design**
 - Fixing a production call bug end-to-end → **cekura-self-improving-agent**
 - Repository-owned JSON CI/CD test suite → **cekura-infra-test-suite**
+- Updating that suite for a pull request → **cekura-bot-test-writer**
 - Triaging production call logs → **cekura-flag-call-log-failures**
 - Turning prod failures into scenarios → **cekura-generate-scenarios**
 

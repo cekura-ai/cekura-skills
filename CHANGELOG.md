@@ -4,6 +4,40 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.2 — 2026-09-10
+
+**New `cekura-bot-test-writer` skill: keep a committed suite in step with the
+code, one pull request at a time.** `cekura-infra-test-suite` creates a suite;
+nothing kept it current afterwards, so coverage drifted behind the bot until
+someone regenerated the file and lost every case's history. This skill is the
+increment half of that pair — it reads a PR diff and edits, it never generates.
+
+- **The default answer is no change.** Refactors, logging, dependency bumps and
+  docs end at `none`, with the reasoning as the deliverable. A suite that gains
+  a case per PR stops being a gate: every case is a live call on every run.
+- **A cost-ordered edit ladder** — KEEP, TIGHTEN, EXTEND, REPLACE, RETIRE, ADD.
+  EXTEND is the default when coverage is genuinely missing (a longer
+  deterministic call beats a new one); ADD costs one more call forever and has
+  to be paid for by retiring a dead case.
+- **Change triage by layer** in `references/change-triage.md`: what a prompt
+  edit, a threshold move, a provider swap, a new tool or a new language each
+  mean for coverage, and the trap in the ones that look safe.
+- **Layers, not frameworks.** The rows are layers of a voice agent, so the
+  triage is the same whether they are Pipecat processors, LiveKit agent hooks,
+  a vendor SDK's callbacks or hand-rolled asyncio — the caller cannot tell
+  which library produced what it heard. Find the layer by tracing the
+  entrypoint, never by recognising an import.
+- **Keys are permanent.** A key joins today's result to last month's, so a
+  renamed case resets its history and a silently repurposed one corrupts it.
+- **Two rules it will not bend**: never weaken an assertion to make a red case
+  green — an assertion the PR falsifies is either a deliberate contract change
+  or a regression, and deciding by editing the test is the failure mode — and
+  never touch anything but the spec and its coverage note.
+- **Validation is lint plus dry run, never a live call.** A PR-triggered writer
+  that dials bills on every push; `references/pr-automation.md` carries the CI
+  wiring, the spec-only guard step, and fork-safe degradation to a comment.
+- Bundled for MCP, so a session without the plugin installed can still load it.
+
 ## 0.15.1 — 2026-09-09
 
 **New `cekura-personality-design` skill, and a correction: accent is not a

@@ -14,6 +14,9 @@
   "cekura-infra-test-suite": [
     "ack:cekura-infra-test-suite:2h6r7k"
   ],
+  "cekura-bot-test-writer": [
+    "ack:cekura-bot-test-writer:3d7k2m"
+  ],
   "cekura-personality-design": [
     "ack:cekura-personality-design:4m7d3q"
   ],
