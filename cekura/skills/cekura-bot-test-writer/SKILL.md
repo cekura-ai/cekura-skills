@@ -155,6 +155,13 @@ when the seat, transport, language, test profile and terminal condition all matc
 turns are reachable after the existing ones — nothing extends past a hangup. Merging aggressively
 is right; a longer deterministic call is cheaper than a new one. An incoherent megatest is not.
 
+**Extending can break the case it extends**, and that failure looks like success: a statement that
+was unambiguous now reads against two similar turns, a terminal assertion describes a moment that
+is no longer last, or the call outgrows `max_duration` and the tail comes back `blocked` — never
+red, just no longer proving anything. After extending, re-read every pre-existing statement
+against the new full turn list. `references/edit-modes.md` has the four failure modes and the
+what-not-to-do list.
+
 **ADD needs a budget, not just a reason.** If the suite's coverage note declares a case count,
 adding means retiring something: a case whose drop-if condition has fired, or two cases that
 merge. Never grow a suite silently — name the new count and what paid for it.
@@ -232,10 +239,14 @@ unvalidated in the handoff, and let the maintainer's run validate it.
 
 ### 8. Hand off
 
-Report, in this order: the decision table; the files and case keys changed with the new case
-count; the exact dry-run result or the reason there is none; and every row you left `uncovered`
-with what it would take. Then re-check the final diff against the changed-file list you recorded
-in step 0.
+Work the checklist at the end of `references/edit-modes.md` first — keys unchanged, every
+pre-existing statement still firing where it did, nothing newly `blocked`, nothing loosened,
+counts stated, the diff only what you meant.
+
+Then report, in this order: the decision table; the files and case keys changed, with the case
+count before and after; the exact dry-run result or the reason there is none; and every row you
+left `uncovered` with what it would take. Re-check the final diff against the changed-file list
+you recorded in step 0.
 
 **Scope is the spec plus its coverage note, and nothing else.** Runtime code, workflows, deploy
 configuration, Cekura records, a metric that does not exist — all out of bounds, however small the

@@ -29,6 +29,12 @@ increment half of that pair — it reads a PR diff and edits, it never generates
   entrypoint, never by recognising an import.
 - **Keys are permanent.** A key joins today's result to last month's, so a
   renamed case resets its history and a silently repurposed one corrupts it.
+- **Extending can break the case it extends**, and that failure looks like
+  success — an added turn can make a settled statement ambiguous, move what a
+  terminal assertion describes, or push the tail past `max_duration` where
+  every statement returns `blocked`: never red, just no longer proving
+  anything. The mode carries a re-verify rule and a what-not-to-do list, and
+  the reference ends in a pre-handoff checklist.
 - **Two rules it will not bend**: never weaken an assertion to make a red case
   green — an assertion the PR falsifies is either a deliberate contract change
   or a regression, and deciding by editing the test is the failure mode — and

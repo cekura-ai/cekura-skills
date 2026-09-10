@@ -73,8 +73,37 @@ another one.
 Then add the matching `expected_outcome` line. Ids ascend and never collide; an
 `action_followup` condition holds the integer id of the earlier condition it follows.
 
-Watch the terminal ordering: `max_duration`, end-call and hang-up assertions stay last. Adding a
-turn after the one that proves a clean ending destroys that proof.
+### Extending can break the case it extends
+
+This is the failure that looks like success. New turns change the transcript the judge reads for
+the **whole** case, not just for your part of it:
+
+- **A statement that was unambiguous stops being one.** "The main agent should confirm the Friday
+  booking" scored cleanly when Friday came up once. Your added turns discuss a second date, and
+  now the judge is reading two confirmations and one contradiction.
+- **Terminal assertions drift.** "The call ends after the main agent's goodbye" described the last
+  turn in the case. It no longer does. `max_duration`, end-call and hang-up assertions stay last.
+- **The call gets longer, and `max_duration` is a hard cut.** Turns past the limit never run, and
+  every statement they were supposed to fire comes back `blocked` — neither pass nor fail, so the
+  case stops proving anything without ever going red.
+- **Condition matching is order-sensitive.** A `standard` condition matches an observable main-agent
+  turn. A new turn that produces a similar-looking one earlier can capture the match a later
+  condition was written for, and the rest of the script runs against the wrong state.
+
+So after extending, **re-read every pre-existing `expected_outcome` line against the new full turn
+list** and confirm each still fires exactly where it did. If one does not, you have not extended
+this case — you have replaced it, and the honest move is to say so and justify it as a REPLACE.
+
+### What NOT to do when extending
+
+- Do not weaken or delete an existing statement to make room for the new turns.
+- Do not renumber or reorder existing condition ids. Append.
+- Do not reword an existing action so your addition flows better. If an existing turn is in the
+  way, that is a REPLACE and needs its own justification.
+- Do not change the case's `language`, `test_profile` or personality to suit the new turns — those
+  five fields are the compatibility check, not an obstacle to route around.
+- Do not restructure or reformat the case while you are in there.
+- Do not pad the terminal action with a trailing `<silence>` or `<hold>`.
 
 ---
 
@@ -115,6 +144,11 @@ Delete the whole scenario object, then in the same edit:
 - if the case is being *repurposed* rather than dropped, that is not a retirement — it is a new
   key, because a key whose meaning changed silently corrupts its own history.
 
+**When coverage is folded rather than dropped, record where it went.** A case that absorbs another
+case's job says so in its own `name` or the coverage note — `folded in: idle-recovery (ordered idle
+prompts, agent-driven end)`. Without that line a reviewer cannot tell merged coverage from lost
+coverage, and neither can you in three months.
+
 ---
 
 ## ADD — nothing covers it and nothing can absorb it
@@ -125,9 +159,12 @@ An ADD is right for a distinct subsystem, seat, transport, provider, language, o
 lifecycle. It is wrong for a variation of something already covered — a second interruption case
 at a different offset, a provider swap, a rephrased prompt.
 
-**Budget arithmetic.** If the coverage note declares a count, name the new one and what paid for
-it: a case whose drop-if fired (see `change-triage.md`), or two cases merged under the older key.
-If nothing can pay, say so and let the user approve the growth — do not grow the suite silently.
+**Budget arithmetic — actually count it.** Before you commit, state the case count before and
+after, and what that costs per run: six cases to seven is a 17% increase on every future run of
+this gate, forever, and the increase compounds with each PR that reaches for ADD. If the coverage
+note declares a count, name the new one and what paid for it — a case whose drop-if fired (see
+`change-triage.md`), or two cases merged under the older key. If nothing can pay, say so and let
+the user approve the growth. Do not grow the suite silently.
 
 A new scenario copies the house shape of the file it joins:
 
@@ -155,11 +192,18 @@ missing one silently runs English.
 
 ---
 
-## After any edit
+## After any edit — the checklist
 
-1. `python3 <plugin>/skills/cekura-infra-test-suite/scripts/lint_suite.py <spec> --strict`
-2. Dry run against Cekura (`--dry-run`), which is the only place an unenabled metric, an
-   unreachable personality or a wrong channel shows up.
-3. Re-read your own diff for the four things a generator gets wrong and a contributor does not:
-   a changed key, a reformatted untouched case, a statement no turn fires, and a loosened
-   assertion.
+Run all of it, in order. Items 3–8 are what a reviewer would catch, and catching them yourself is
+the difference between a suite edit that gets merged and one that gets argued about.
+
+1. `python3 <plugin>/skills/cekura-infra-test-suite/scripts/lint_suite.py <spec> --strict`.
+2. Dry run against Cekura (`--dry-run`) — the only place an unenabled metric, an unreachable
+   personality or a wrong channel shows up. It must return `valid: true`.
+3. **No key changed.** Added keys are unique and descriptive; no existing key was renamed.
+4. **Every pre-existing statement still fires where it did**, in every case you touched.
+5. **Every new statement is fired by a written turn.** Nothing is permanently `blocked`.
+6. **No assertion was loosened** — no dropped metric, no relaxed outcome, no removed turn.
+7. **Counts.** Cases before and after, and the coverage note updated if it declares a number.
+8. **The diff is only what you meant.** No reformatting, no reordering, no untouched case
+   restyled, nothing outside the spec and its coverage note.
