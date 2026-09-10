@@ -4,7 +4,7 @@ description: >
   Use when the user says "get started with Cekura", "set up Cekura", "onboard to Cekura",
   "I'm new to Cekura", "help me set up my agent", "how do I use Cekura",
   "walk me through Cekura", "configure my project", "first time using Cekura",
-  or needs guidance on initial platform setup. Not for adding an agent, more scenarios
+  or needs guidance on initial platform setup, or types the command /cekura-onboarding. Not for adding an agent, more scenarios
   or more metrics to an existing workspace — those are cekura-create-agent,
   cekura-eval-design and cekura-metric-design. Covers two onboarding paths:
   **testing** (default — build evaluators and run simulated calls) and
