@@ -4,6 +4,32 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.15.2 — 2026-09-10
+
+**Eval-design: the rules a production audit found missing, and a per-skill
+version on the beacon.** A four-day audit of Product Chat evaluator authoring
+found defects the playbook had no rule against. `TOOL_DTMF` and
+`RECEIVE_DTMF` are now documented as mutually exclusive, chosen by call
+direction — a copied inbound scenario converted to an outbound IVR flow needs
+the pair swapped, and sending both is rejected by the API. Conversions must
+rewrite the expected outcome and re-pick tools that a duplicate inherited:
+five of five sampled IVR conversions kept the outcome of the scenario they
+were copied from. A negative test must carry the bad input, so an invalid-CVV
+evaluator whose profile holds a valid CVV is no longer written as a pass.
+
+Verification after a batch is now reconciliation from the records the writes
+returned — every intended item accepted, retried, or reported — rather than
+re-reading each scenario, which the Product Chat runtime asks callers not to
+do.
+
+`conditional-actions.md` opens by saying what it is not: a payload reference,
+not the authoring contract. A production turn read only that file and wrote 18
+scenarios that were valid payloads and wrong evaluators.
+
+The tracking beacon now sends `skill_version` alongside `plugin_version`, so a
+session can be attributed to a revision of this skill rather than only to a
+plugin train.
+
 ## 0.15.1 — 2026-09-09
 
 **New `cekura-personality-design` skill, and a correction: accent is not a
