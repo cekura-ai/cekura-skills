@@ -17,7 +17,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.10.0"
+  version: "0.11.0"
 ---
 
 > **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
@@ -28,7 +28,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.15"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, `plugin_version="0.15"`, and `skill_version="0.11.0"`. It returns immediately and lets Cekura see which skills are in use, and which revision of this one.
 
 # Cekura Eval Design
 
@@ -47,7 +47,7 @@ This file says **what** to do. The Cekura tools available in your session — MC
 4. **Create a folder** for the batch; never write into the project root.
 5. **Author** — generate, or create directly, per the write-path table.
 6. **Attach metrics and supporting fields** — profile, personality, tools, tags.
-7. **Verify** — read back what you wrote; then run if the user asked.
+7. **Reconcile** — account for every item you set out to write: accepted (you have its id from the write response), rejected then fixed, or rejected and reported with the reason. A write returns the stored record, so this is arithmetic on responses you already hold, not a second read of each one. Then run if the user asked.
 
 Updating existing evaluators has its own procedure — see **Changing existing evaluators**.
 
@@ -396,6 +396,8 @@ Required on every scenario. Personalities carry the caller's voice layer — lan
 | `SEND_SMS_TOOL_CALL` | the testing agent sends an SMS (`<send_sms text="…" />` — `text` is required); needs an SMS-enabled number |
 | `CALL_HOLD` | long-hold tests |
 
+`TOOL_DTMF` and `RECEIVE_DTMF` are mutually exclusive — the API rejects a scenario carrying both. Pick by direction: the testing agent pressing keys is `TOOL_DTMF`, the main agent pressing them is `RECEIVE_DTMF`. A copied inbound scenario converted to an outbound IVR flow needs the pair swapped, not added to.
+
 Enable what the flow needs and nothing more, and always give the testing agent a way to finish the call. `tool_ids` accepts only the ids in this table — never the agent's own tool ids or mock-tool ids, which are already attached to the agent (`Invalid tool IDs` is the symptom of mixing them up).
 
 A scenario's optional `max_duration` (10–3600 s) overrides the project's `max_call_duration` for that scenario only. The project setting is the owner's and is never changed for a test; give a scenario its own cap only when it must end within a known time (idle, timeout or hold tests) or the user asks for a bound.
@@ -415,8 +417,8 @@ Most real work is editing evaluators, not creating them. This procedure governs 
 1. **Read first.** Retrieve each scenario by id (or read the `scenarios.json` the Evaluators page attached to this conversation — do not page the list endpoint when it is already on disk).
 2. **Audit against the rubric** above (steps/conditions, outcomes, placeholders, metrics, personality, tools). Report what you found before changing it.
 3. **Minimal diff.** PATCH only the fields that are wrong. For CA, mutate the retrieved `conditional_actions` object and send it back **whole** — an update replaces the whole stored object, so one carrying only `conditions` drops `functions[]`. `scenario_type` need not be resent. Pass `version_name` when the user wants the change labelled.
-4. **Many at once:** use the bulk update (merge lists such as `tool_ids`/`metrics` — do not blank the rest). **Copies:** duplicate the scenario; never re-create by hand. **Conversions** (CA → instruction or back) are updates to the same scenario id — PATCH `scenario_type` with the new body (written to the rules of the target mode, an instruction flow ending in `End the call when …`); duplicate first and convert the copy when the original's run history matters (ask if unsure).
-5. **Read back** and show a per-scenario diff of what changed.
+4. **Many at once:** use the bulk update (merge lists such as `tool_ids`/`metrics` — do not blank the rest). **Copies:** duplicate the scenario; never re-create by hand. **Conversions** (CA → instruction or back) are updates to the same scenario id — PATCH `scenario_type` with the new body (written to the rules of the target mode, an instruction flow ending in `End the call when …`); duplicate first and convert the copy when the original's run history matters (ask if unsure). A duplicate arrives carrying the source's expected outcome, tools, profile and metrics, and none of them are re-checked for you: rewrite the outcome for what the converted scenario now does, and re-pick `tool_ids` for its direction. Converting a batch and leaving the inherited outcomes in place is the single most common way a conversion ships broken.
+5. **Show a per-scenario diff** of what changed, from the records the PATCHes returned, and account for every scenario you set out to update.
 
 Fixing a scoring complaint: a metric that keeps returning 50 usually has an outcome line no step fires (`blocked`) — fix the outcome or add the causing step; do not rewrite the whole scenario. Then re-read **every** remaining line against **Expected outcomes** before you PATCH: the blocking line is rarely the only one that breaks the rules, and a leftover hang-up or "politely"-style line keeps the evaluator wrong after the blocker is gone. Fixing how the testing agent *speaks* (digits read as words, wrong language) is `<spell>`, `scenario_language` and personality — not an instruction rewrite.
 
@@ -428,7 +430,9 @@ On voice, SIP or WebRTC, a batch of more than five evaluators starts with a 3–
 
 ## Coverage and next steps
 
-A complete suite covers **workflow** happy paths, **deterministic/unit** tests, **edge cases** (tool failures, retries, ambiguity), **red team**, **error handling**, and **multi-language** — ~30 % happy path, ~70 % specific friction, every scenario grounded in a real capability. Naming: `{CATEGORY}-{NN}: {description}` (≤80 chars); tags `["Category", "priority", "ID"]`. Real-world category breakdowns: **`references/coverage-patterns.md`**.
+A complete suite covers **workflow** happy paths, **deterministic/unit** tests, **edge cases** (tool failures, retries, ambiguity), **red team**, **error handling**, and **multi-language** — ~30 % happy path, ~70 % specific friction, every scenario grounded in a real capability.
+
+**A negative test has to carry the bad input.** An evaluator named for invalid data must actually supply invalid data — an invalid-CVV test whose profile holds a valid CVV passes while never reaching the branch it exists to exercise, and reads as a pass to everyone afterwards. Put the wrong value in the step or the attached profile, say in the expected outcome what the main agent should do about it, and let any valid retry come only after the rejection it is testing for. Naming: `{CATEGORY}-{NN}: {description}` (≤80 chars); tags `["Category", "priority", "ID"]`. Real-world category breakdowns: **`references/coverage-patterns.md`**.
 
 **Cekura's predefined Infrastructure Suite** (18+ ready-made latency / interruption / noise / packet-loss / hold tests) is not built through the scenario tools: the user adds it from the dashboard (Evaluators → Infrastructure Suite → *Add to my Project*). Point the user there rather than hand-building copies, tell them it also adds an *AI Interrupting user = 0* rubric rule to the project, and tag the copies `infrastructure-suite` so CI can select them. For a suite derived from the customer's own pipeline code, use **cekura-infra-test-suite**.
 
