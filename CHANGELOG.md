@@ -4,6 +4,22 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.16.1 — 2026-09-11
+
+Two trigger-description fixes from the product-chat failure audits
+(2026-09-09 and 2026-09-10 nightly runs, consolidated into one release).
+
+- **`run-evals` now triggers on "run my cron job now".** A user asked to run
+  one of their scheduled jobs immediately; the command description only said
+  "Execute Cekura evaluators (…)", so the command never loaded and the agent
+  answered ad hoc. The description now also names running a cron job's
+  evaluators immediately or triggering a scheduled run on demand.
+- **`cekura-onboarding` names its own slash command.** Typing
+  `/cekura-onboarding` in product chat performed onboarding work from context
+  without formally loading the skill, so no skill-start event fired and the
+  phase files were never read. The description now includes "types the
+  command /cekura-onboarding", mirroring how `/self-improve` is mapped.
+
 ## 0.16.0 — 2026-09-11
 
 **Pre-submission release for the Anthropic community marketplace.** Two
