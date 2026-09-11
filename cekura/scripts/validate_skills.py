@@ -10,11 +10,15 @@
      so a stale duplicate would mask releases)
   3. all five platform manifests point at the same MCP URL
   4. every skill directory is listed in README.md and CLAUDE.md
+  5. every prose skill count in README.md and CLAUDE.md matches the real
+     number of skills (a new skill that only updates the tables leaves the
+     surrounding sentence claiming the old count -- this has shipped twice)
 
 Usage:
   python3 cekura/scripts/validate_skills.py
 """
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -149,19 +153,76 @@ def check_docs_inventory(errors):
                 errors.append(f"{doc}: skill `{path.name}` is not listed")
 
 
+NUMBER_WORDS = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+    "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11,
+    "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15,
+    "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19,
+    "twenty": 20, "twenty-one": 21, "twenty-two": 22, "twenty-three": 23,
+    "twenty-four": 24, "twenty-five": 25,
+}
+
+# "13 skills" / "Thirteen skills". A demonstrative ("these 4 commands", "the
+# two commands above") introduces a subset, not an inventory claim, so those
+# are skipped.
+_COUNT_RE = re.compile(
+    r"(?P<det>\b(?:these|those|the|following|first|last|next|other)\s+)?"
+    r"\b(?P<n>\d+|[A-Za-z]+(?:-[A-Za-z]+)?)\s+(?P<noun>skills|commands)\b",
+    re.IGNORECASE,
+)
+
+
+def _as_int(token):
+    if token.isdigit():
+        return int(token)
+    return NUMBER_WORDS.get(token.lower())
+
+
+def check_prose_counts(errors):
+    """Catch a stale 'Eleven skills' sentence above an up-to-date table."""
+    n_skills = len(list(SKILLS.glob("*/SKILL.md")))
+    n_commands = len(list((REPO / "cekura" / "commands").glob("*.md")))
+    for doc in ("README.md", "CLAUDE.md"):
+        for lineno, line in enumerate((REPO / doc).read_text().splitlines(), 1):
+            claims = [m for m in _COUNT_RE.finditer(line) if not m.group("det")]
+            has_skill_claim = any(
+                m.group("noun").lower() == "skills" and _as_int(m.group("n")) is not None
+                for m in claims
+            )
+            for m in claims:
+                count = _as_int(m.group("n"))
+                if count is None:
+                    continue
+                noun = m.group("noun").lower()
+                # A bare command count in prose is usually shell commands;
+                # only trust it as an inventory claim alongside a skill count.
+                if noun == "commands" and not has_skill_claim:
+                    continue
+                expected = n_skills if noun == "skills" else n_commands
+                if count != expected:
+                    errors.append(
+                        f"{doc}:{lineno}: claims {m.group('n')} {noun}, "
+                        f"but the plugin ships {expected}"
+                    )
+
+
 def main():
     errors = []
     check_skill_frontmatter(errors)
     check_versions(errors)
     check_mcp_url_parity(errors)
     check_docs_inventory(errors)
+    check_prose_counts(errors)
     if errors:
         print("skill validation FAILED:")
         for e in errors:
             print(f"  - {e}")
         return 1
     n = len(list(SKILLS.glob("*/SKILL.md")))
-    print(f"skill validation OK ({n} skills; versions, MCP URLs, docs inventory consistent)")
+    print(
+        f"skill validation OK ({n} skills; versions, MCP URLs, "
+        "docs inventory and prose counts consistent)"
+    )
     return 0
 
 

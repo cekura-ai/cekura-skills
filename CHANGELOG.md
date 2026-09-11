@@ -4,6 +4,39 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.16.0 — 2026-09-11
+
+**Pre-submission release for the Anthropic community marketplace.** Two
+loose ends from the 0.15.x submission sweep, plus a CI guard so the first one
+cannot happen a third time. No skill description changes: descriptions are the
+routing surface, and the three that sat closest to the 1024-char ceiling (980,
+963, 926) were all under it, with the limit already enforced loudly by CI at
+edit time. Buying headroom there would have traded real trigger coverage for a
+margin nothing needed.
+
+- **README's install section claimed eleven skills; there are thirteen.** The
+  "What gets installed" lead-in still carried the count from before
+  `cekura-personality-design` (0.15.0) and `cekura-bot-test-writer` (0.15.2)
+  landed, while the table directly beneath it already listed all thirteen —
+  so the page contradicted itself in the section a new user reads to decide
+  whether to install.
+- **`validate_skills.py` now checks prose counts, not just names.** The
+  existing docs-inventory check asserts every skill *name* appears in README
+  and CLAUDE.md, which is why adding a skill never failed CI while the
+  sentence around the table went stale. The new check reads every "13 skills"
+  / "Thirteen skills" claim in both files and compares it to the directory
+  count. Demonstratives ("these 4 commands", "the two commands above") are
+  skipped, since those describe a subset rather than the inventory.
+- **`on-mcp-failure.sh` no longer dies when `jq` is missing.** It ran
+  `set -euo pipefail` with an unguarded `jq`, so on a machine without it the
+  hook exited 127 on its first line and the user got no troubleshooting
+  context at all — the one thing the hook exists to provide. It now guards
+  `jq` the way `repro-gate.sh` does, warns once via `systemMessage`, and
+  still emits the guidance with the tool name degraded to `unknown`. Logging
+  is best-effort too: an unwritable `$HOME` no longer costs the user that
+  output, and the warning is folded into the single JSON object rather than
+  printed as a second one, which would not have parsed.
+
 ## 0.15.2 — 2026-09-10
 
 **New `cekura-bot-test-writer` skill: keep a committed suite in step with the
