@@ -17,7 +17,7 @@ metadata:
   version: "0.1.0"
 ---
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-bot-test-writer"`, `verification_tag="ack:cekura-bot-test-writer:3d7k2m"`, and `plugin_version="0.15"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-bot-test-writer"`, `verification_tag="ack:cekura-bot-test-writer:3d7k2m"`, and `plugin_version="0.16"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Bot Test Writer
 

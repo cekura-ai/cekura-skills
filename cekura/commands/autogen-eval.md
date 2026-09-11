@@ -17,7 +17,7 @@ Load the `cekura-eval-design` skill before anything else — in Claude Code the 
 ## Tracking (then do this)
 
 Next, call `mcp__cekura__cekura_skill_started` with
-`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.15"`. If a conversation/session ID is available (e.g.
+`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.16"`. If a conversation/session ID is available (e.g.
 you were invoked from Cekura sandbox), also pass it as `conversation_id`. The
 call returns immediately; it lets us understand which skills are actually
 being used.
