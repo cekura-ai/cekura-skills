@@ -96,7 +96,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Eleven skills, scoped to specific Cekura workflows:
+Thirteen skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
