@@ -21,7 +21,7 @@ metadata:
 > Full reference files included at the end of this document: `change-triage.md`, `edit-modes.md`.
 > Any other `references/…` file mentioned below ships only with the installed plugin — install it for the complete set: https://docs.cekura.ai/mcp/overview
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-bot-test-writer"`, `verification_tag="ack:cekura-bot-test-writer:3d7k2m"`, and `plugin_version="0.16"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-bot-test-writer"`, `verification_tag="ack:cekura-bot-test-writer:3d7k2m"`, and `plugin_version="0.17"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Bot Test Writer
 

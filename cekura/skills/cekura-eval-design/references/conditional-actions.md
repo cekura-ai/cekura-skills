@@ -271,9 +271,9 @@ play. A direct `https://` URL to an audio file is also accepted as `sound=`.
 - **Rules:** fixed-message conditions only; multiple recordings and sibling tags are allowed and run left to right; do not nest `<audio>` inside a wrapping tag (`<spell>`, `<background_noise>`, `<voicemail>`, `<ivr>`). Inside `<ignore_interruptions>` is fine — an uninterruptible clip sequence is that tag's main use.
 - **Run gating:** a scenario can't run while a referenced recording is missing, or is not `ready` (pending/processing/failed all block).
 
-## Test Profile Template Variables (fixed_message: true only)
+## Test Profile Template Variables
 
-Inject test-profile fields directly into verbatim text. Substitution happens at runtime before the message is spoken.
+Inject test-profile fields into an action. Substitution happens at run time, on **every** conditional action, before the runtime looks at `fixed_message` at all — so a placeholder resolves in a non-fixed action too. What `fixed_message: true` decides is whether the resolved value is *spoken verbatim*: on a fixed action the rendered text is the line, on a non-fixed one it is guidance the testing agent rephrases. Use a fixed action when the exact wording is itself the requirement (compliance phrasing, an account number read back, keypad entry); a non-fixed action is the right choice when the value matters and the phrasing does not. (`fixed_message: true` is still required for XML tags and for `{{function.*}}` outputs — those are separate rules, not this one.)
 
 | Pattern | Example |
 |---|---|
@@ -282,10 +282,13 @@ Inject test-profile fields directly into verbatim text. Substitution happens at 
 | Nested field | `{{test_profile.address.city}}` |
 | Combined with XML tag | `<spell>{{test_profile.account_number}}</spell>` |
 
+A placeholder is only as good as the profile behind it: a key that exists but holds an empty value renders to nothing, and the caller says a sentence with a hole in it. Check the attached profile has a real value for every key an action references before the scenario runs.
+
 Two ways to use profile data in conditions:
 
 - **Behavioral instruction (`fixed_message: false`):** `"Provide your full name and date of birth for verification"` — the testing agent reads from the profile and phrases it naturally.
 - **Template variable in a fixed message (`fixed_message: true`):** `"My name is {{test_profile.first_name}} {{test_profile.last_name}} and my date of birth is {{test_profile.dob}}"` — exact phrasing AND the real profile value both matter (compliance, IVR account-number entry).
+- **Template variable in a non-fixed action (`fixed_message: false`):** `"Provide your full name: {{test_profile.full_name}}"` — the value is resolved and handed to the testing agent, which phrases the reply itself. Valid, and the right trade when you want the real value without scripting the sentence.
 
 ### Test Profile Rules (read before writing any action)
 
@@ -738,6 +741,17 @@ When you *do* keep a semantic `standard` gate, phrase it so a **legitimate non-a
 
 ## Anti-Patterns
 
+The first six are one family: the payload validates, the write returns `ok`, and the flow still cannot reach the behaviour it claims to test. Nothing rejects them, so this list is the only gate.
+
+- **A condition that waits for silence.** Matching reads the main agent's latest message, and staying quiet produces no message — so the correct silent path is the one branch that can never fire, and the caller stalls there. `"The agent acknowledges the instruction or stays silent after it"` also joins two different behaviours in one trigger, making the next action depend on which happened.
+  - ✗ `"condition": "The agent acknowledges the hold or stays silent"` → `<hold time="7s" />` then greet
+  - ✓ put the line and the pause in the *preceding* action (`"Please hold. <silence time=\"7s\" />"`), then trigger on what the agent says next
+- **A condition that depends on elapsed time or a retry count.** `"after a long time with no transfer"`, `"the third time it asks"` — neither is visible in one message. Drive the wait yourself with `<hold>`/`<silence>` and order the follow-ups, or use an `action_followup` chain so the step count is structural.
+- **A condition qualified by earlier conversation.** `"once the agent has already confirmed…"` is matched by a judge reading the history rather than by the message in front of it — supported, but a weaker guarantee than ordering. Prefer ordering; keep the history phrasing only where ordering cannot express the phase, and never use it to mean "not yet" or "instead of the other branch".
+- **Two triggers that can match the same message.** `"asks what happened"` and `"prompts for the claim details"` describe one prompt, and every matching condition fires — so both actions are spoken in the same turn instead of over two. Give each condition a distinct, topic-specific trigger.
+- **A trigger that assumes one combined question.** `"asks for the postcode and the date of birth"` fires only if the agent asks for both at once; a normal split into two turns matches neither. One condition per prompt unless the description shows a combined ask.
+- **A step scheduled after the call ends.** An action containing `<endcall />` hangs up, so every later step, and every outcome line resting on one, is unreachable. Two possible endings are two evaluators, not two branches in one.
+- **The behaviour under test used as the gate.** A flow proving the agent stays connected through a pause that only *starts* the pause after a condition matches tests the gate, not the behaviour. Put the setup in the preceding action.
 - **Too many materially different branches in one evaluator.** Cekura's docs frame conditional actions as good for branching conversations — and they are: multiple `standard` conditions can fire on different agent responses, which lets the testing agent adapt within a single evaluator. The pitfall is bundling **materially different success/failure paths** (e.g., booking-confirmed vs. agent-refused vs. error-handoff) into one conditions array, because each path has a different expected outcome and the LLM judge can only score one. **Cekura-skill guidance: prefer one evaluator per expected outcome.** Lightweight in-flow branches (e.g., the agent might offer slot A or slot B — accept whichever) are fine; distinct success/failure outcomes are not — split them into separate evaluators.
 - **Missing `type`.** `type` is required on every condition with no default — omitting it returns a validation error. Always set `"standard"` or `"action_followup"` explicitly.
 - **Vague conditions.** `"condition": "verification"` is too ambiguous and may not trigger. Write `"condition": "The agent asks for your name and date of birth to verify your identity"`.
@@ -774,6 +788,11 @@ When you *do* keep a semantic `standard` gate, phrase it so a **legitimate non-a
 - [ ] All `id` values are unique integers
 - [ ] Every condition has all five fields: `id`, `condition`, `action`, `type`, `fixed_message`
 - [ ] `type` is explicitly `"standard"` or `"action_followup"` on every condition
+- [ ] Every `standard` condition describes ONE observable main-agent message — no silence, no elapsed time, no retry count, no `or` joining two different behaviours
+- [ ] No two conditions can match the same message unless their actions belong in the same turn
+- [ ] A multi-field trigger appears only where the description shows the agent asks for those fields together
+- [ ] Nothing is scheduled after an action containing `<endcall />`, and no `action_followup` references a condition that ends the call
+- [ ] Every `{{test_profile.*}}` key referenced holds a real value in the attached profile
 - [ ] `action_followup` conditions have an integer (not string) in `condition`
 - [ ] Every `action_followup` references a condition where the main agent produces a reply (if the main agent is silent — hold, voicemail mid-sequence, back-to-back caller actions — the actions are merged into one condition instead)
 - [ ] If the scenario is intentionally designed to invite an interruption (long `<silence>` tag, opening-line-then-silence pattern, or any other deliberate pause the main agent is expected to speak through), the condition uses `type: "standard"` so the testing agent re-evaluates conditions on interruption instead of looping on the same `action_followup`.
@@ -906,7 +925,7 @@ Action types:
                    an interruption (long <silence>, etc.), the testing agent LOOPS on the same
                    sentence. Use `standard` for those.
 
-Test profile variables (fixed_message:true only):
+Test profile variables (render on every action; fixed_message:true = spoken verbatim):
   {{test_profile.field_name}}                   Simple field
   {{test_profile['key']}}                       Bracket notation (keys with spaces/special chars)
   {{test_profile.address.city}}                 Nested field
