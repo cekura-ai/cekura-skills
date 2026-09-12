@@ -4,6 +4,39 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.0 — 2026-09-12
+
+**Evaluator-authoring safety.** Six reviewed product-chat authoring sessions
+produced evaluators that saved cleanly and still could not test what they
+claimed: one existing evaluator was overwritten by an unrelated objective,
+several flows gated their next step on the main agent staying silent or on a
+terminal hang-up, assertions were made about transfers and menu branches the
+agent record never described, and a tag-driven flow was rewritten as prose to
+make a failing run finish. Nothing in the API rejects any of that, so
+`cekura-eval-design` now carries the checks.
+
+- **Changing existing evaluators** gains an objective check before the diff: an
+  edit that would change what the evaluator tests is a second evaluator, and
+  the choice is the user's. Read-back is replaced by reconciliation from the
+  write responses, which is what the runtime already asks for.
+- **Conversions out of conditional actions** are limited to flows with no
+  runtime control in play — keypad tones, holds, silences, IVR and voicemail
+  simulation, interruptions, voice switches and live functions are tag effects
+  that prose cannot execute — and are never a way to make a failing run pass.
+- **Grounding**: every branch, capability, policy, threshold and profile field
+  a condition or outcome asserts must trace to the agent record, its knowledge
+  base, mock data, the test profile, or what the user said.
+- **Conditional-action determinism**: new self-check items and anti-patterns
+  for silence triggers, elapsed-time and retry predicates, history-qualified
+  conditions, colliding triggers, combined-field triggers, steps scheduled
+  after `<endcall />`, and the behaviour under test used as its own gate.
+- **Run and report honestly**: a write proves storage, not behaviour. Offer a
+  run for control-dependent flows, and where none happened say the evaluator
+  is unvalidated rather than letting "created successfully" stand for "works".
+- **Corrected**: `{{test_profile.*}}` renders in fixed *and* non-fixed actions.
+  The runtime substitutes every conditional action before it looks at
+  `fixed_message`; that flag decides whether the value is spoken verbatim.
+
 ## 0.16.0 — 2026-09-11
 
 **Pre-submission release for the Anthropic community marketplace.** Two
