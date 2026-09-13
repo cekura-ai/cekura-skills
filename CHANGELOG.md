@@ -33,6 +33,24 @@ make a failing run finish. Nothing in the API rejects any of that, so
 - **Run and report honestly**: a write proves storage, not behaviour. Offer a
   run for control-dependent flows, and where none happened say the evaluator
   is unvalidated rather than letting "created successfully" stand for "works".
+- **DTMF is chosen by direction**: `TOOL_DTMF` (testing agent presses keys) and
+  `RECEIVE_DTMF` (main agent presses keys) are mutually exclusive; a scenario
+  copied from the other direction swaps the pair rather than adding to it.
+- **Copies and conversions re-audit what they inherit**: a duplicate arrives
+  with the source's expected outcome, tools, profile and metrics, none of them
+  re-checked; the outcome is rewritten for what the scenario now does and the
+  tools re-picked for its direction.
+- **A negative test carries the bad input**: an evaluator named for invalid
+  data supplies it, in the step or the profile, and states what the agent
+  should do about it — otherwise it passes without reaching its branch.
+- **`conditional-actions.md` opens by saying what it is not**: the payload
+  reference, not the authoring contract; the root skill's rules still apply.
+- **Beacon carries `skill_version`**: `cekura_skill_started` sends the skill's
+  own `metadata.version` (0.11.0) next to `plugin_version`, so a session can be
+  attributed to a revision of the skill rather than only to a plugin train.
+- **Routing**: `run-evals` also triggers on running a cron job's evaluators
+  immediately or a scheduled run on demand; `cekura-onboarding` names its own
+  `/cekura-onboarding` command so a typed command loads the skill.
 - **Corrected**: `{{test_profile.*}}` renders in fixed *and* non-fixed actions.
   The runtime substitutes every conditional action before it looks at
   `fixed_message`; that flag decides whether the value is spoken verbatim.

@@ -1,5 +1,12 @@
 # Conditional Actions Reference
 
+> **This file is the payload reference, not the authoring contract.** It says
+> what a valid conditional-actions object looks like; it does not carry the
+> root skill's write path, pre-write self-check, expected-outcome rules, tool
+> direction table, or update procedure. Read on its own it produces valid
+> payloads that are wrong evaluators — load `cekura-eval-design` and check
+> against its rules before you write.
+
 ## What They Are
 
 Conditional actions create structured, repeatable test flows — **unit tests for voice agents**. The testing agent follows a predefined sequence of triggers and responses but adapts if the main agent deviates from the expected flow. Use them when a developer would write the test as code; use behavioral instructions when they would describe a persona.
