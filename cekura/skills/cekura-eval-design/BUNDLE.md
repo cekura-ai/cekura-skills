@@ -17,7 +17,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.10.0"
+  version: "0.11.0"
 ---
 
 > **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
@@ -28,7 +28,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, and `plugin_version="0.16"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, `plugin_version="0.17"`, and `skill_version="0.11.0"`. It returns immediately and lets Cekura see which skills are in use, and which revision of this one.
 
 # Cekura Eval Design
 
@@ -41,13 +41,13 @@ This file says **what** to do. The Cekura tools available in your session — MC
 
 ## Workflow
 
-1. **Read the agent** (mandatory, below).
+1. **Read the agent, and list its evaluators** (mandatory, below).
 2. **Decide mode and write path** — behavioral vs conditional actions.
 3. **One consolidated checkpoint** — only for what you could not infer.
 4. **Create a folder** for the batch; never write into the project root.
 5. **Author** — generate, or create directly, per the write-path table.
 6. **Attach metrics and supporting fields** — profile, personality, tools, tags.
-7. **Verify** — read back what you wrote; then run if the user asked.
+7. **Verify and say what it proves** — reconcile every write from its own response; run if the user asked, and if nothing ran, say so.
 
 Updating existing evaluators has its own procedure — see **Changing existing evaluators**.
 
@@ -63,9 +63,11 @@ Fetch the agent's **full record** before the first authoring write — the singl
 | `assistant_provider`, `transcript_provider`, `websocket_url` | whether tool calls reach the evaluation transcript (see **Expected outcomes**) |
 | `mock_tools` (request them explicitly — the default agent read omits them), `auto_dynamic_variables` | which tool inputs/outputs and variables the test data must match |
 
-Skip it only when the user supplied a complete verbatim payload, or the evaluators are already attached to this conversation (Evaluators-page context). Never invent a workflow, a KB fact, or a tool the description does not contain — if the description is empty or too thin to ground a test, say so and ask for it (or offer `cekura-create-agent` to import from the provider) instead of generating.
+Before a create, also list the evaluators the agent already has — one list call. A create is still authored as asked when a near-duplicate exists (see **Changing existing evaluators**), but the overlap is named in the summary, and that is only possible if you looked; a suite that silently gains a second copy of a test is one nobody can read later. Skip both reads only when the user supplied a complete verbatim payload, or the evaluators are already attached to this conversation (Evaluators-page context). Never invent a workflow, a KB fact, or a tool the description does not contain — if the description is empty or too thin to ground a test, say so and ask for it (or offer `cekura-create-agent` to import from the provider) instead of generating.
 
 **The agent under test is read-only while you author evaluators.** Do not PATCH any of its fields (description, connection settings, tools, provider configuration) to make a test possible: an evaluator tests the agent as deployed, and a rewritten description hides the very gap the test would have found. The one exception is `mock_tools` data (see **Test data**). When the user states a fact or behaviour the record does not contain (a policy, a header, a greeting rule), say so in one line, then carry the user's version into the test itself: `extra_instructions` or `generation_files` when generating, the test profile and `expected_outcome_prompt` when creating directly. If the user wants the agent itself changed, that is a separate task for **cekura-create-agent** (configuration) or **cekura-self-improving-agent** (prompt changes), after the evaluator exists.
+
+**Everything a condition or an outcome line asserts has to be licensed by a source you can point at** — the agent record, its knowledge base, mock tool data, the attached test profile, or what the user stated in this conversation. That covers every branch and menu option, every capability (transfer, SMS, callback, hold), every policy, consent step, fact and threshold, and every profile field. Where the source is missing, ask for it or say plainly that it cannot become a pass/fail assertion; never carry it across from a similar agent, from an existing evaluator, or from a plausible guess. An ungrounded assertion does not fail loudly — the condition never fires, or the outcome grades behaviour the agent was never asked to produce — and the run then reads as an agent defect. A referenced profile field also has to hold a real value before the scenario runs: an empty placeholder is the same ungrounded assertion with a blank where the fact should be.
 
 ## One consolidated checkpoint
 
@@ -209,7 +211,7 @@ Full rulebook with worked bad→good examples: **`references/instruction-pattern
 
 ### Self-check before every direct instruction create
 
-The only legitimate direct instruction create is user-supplied verbatim text (see **Mode and write path**) — if you wrote the steps yourself, stop and generate instead. Refuse to send a direct create with `scenario_type: "instruction"` that fails any of these. **On user-supplied verbatim text, items 2, 3 and 6 do not apply** — they would require the rewriting the user forbade; item 5 still does, and say in the summary which style rules their text does not follow.
+The only legitimate direct instruction create is user-supplied verbatim text (see **Mode and write path**) — if you wrote the steps yourself, stop and generate instead. That includes steps written to imitate a scenario that already exists — the same flow for another language, agent, persona or variant. A reference makes the steps easier to write, not legitimate to write: the same scenario in another form is a duplicate followed by a patch of what changed (language, personality, a step), and a new flow shaped like an existing one is a generation request carrying that flow in `extra_instructions`. Refuse to send a direct create with `scenario_type: "instruction"` that fails any of these. **On user-supplied verbatim text, items 2, 3 and 6 do not apply** — they would require the rewriting the user forbade; item 5 still does, and say in the summary which style rules their text does not follow.
 
 1. Instructions are first person and wrapped in `<scenario>` tags; user-supplied text is unchanged, wrapper and numbering included.
 2. Every step — the first one too — pairs one caller action with a passive `when …` trigger naming the exact question or offer ("when asked for the account number").
@@ -333,12 +335,14 @@ Refuse to send a payload that fails any of these:
 2. `id: 0` is `FIRST_MESSAGE` + `standard` + `fixed_message: true`; `action` empty iff the main agent speaks first.
 3. Every condition has all five fields; ids unique and ascending; no `others`.
 4. Every `asks …` condition corresponds to a question the description mandates; no quoted agent speech; no one-word triggers. When the user names an agent utterance that must be verbatim (a disclosure, a read-back), one condition's trigger is anchored on it and the outcome states it as an exact fact in backticks (see **Expected outcomes**).
-5. Every action containing a tag other than `<function>` has `fixed_message: true`; `<interruption>` is first in an `action_followup`; `<speed>`/`<volume>` start their action; `<ivr>`/`<voicemail>` are whole actions; ratios and volumes are in range.
-6. Every `action_followup.condition` names an earlier id, and one agent reply really does elapse first.
-7. Every `{{test_profile.*}}` key exists in the attached profile; every `{{function.*}}` key is declared and the action is fixed.
-8. The flow ends: `<endcall />` on the last action, or a terminal transfer, or the user asked to stay on the line.
-9. `personality` set and its language matches `scenario_language`.
-10. Metrics, test profile, `tool_ids`, folder and tags attached.
+5. Each `standard` condition names **one thing the main agent can be seen to do in its latest message**. Silence is not one of them: a condition waiting for no reply — or joining a reply and silence with `or` — cannot fire on the path it was written for, and the flow stalls exactly when the agent behaves correctly. Put the pause in the preceding action and trigger on what the agent says next. Elapsed time and retry counts are not observable from one message either ("after a while", "the third time"); get those from ordering, an `action_followup` chain, or a `<hold>`/`<silence>` you place yourself. A condition qualified by an earlier phase ("once the agent has confirmed…") is matched by a judge reading the history rather than by the message alone — a weaker guarantee than ordering, so use it only where ordering cannot express the phase.
+6. **Triggers that cannot collide.** The runtime checks every condition against each main-agent message and fires all that match, merging their actions into one spoken turn — it does not pick one — so two conditions must not be able to match the same message unless their actions belong in the same turn. No catch-all. Match two fields in one trigger only where the description shows the agent asks for them together; otherwise one condition per prompt — and a request for the combined trigger does not change that: a condition the description says will never match leaves the evaluator stalled, not stricter, so split it and say in the summary why.
+7. Every action containing a tag other than `<function>` has `fixed_message: true`; `<interruption>` is first in an `action_followup`; `<speed>`/`<volume>` start their action; `<ivr>`/`<voicemail>` are whole actions; ratios and volumes are in range.
+8. Every `action_followup.condition` names an earlier id, and one agent reply really does elapse first — and that id is not one that ends the call, because a hung-up call has no next turn.
+9. Every `{{test_profile.*}}` key exists in the attached profile **and holds a value**; every `{{function.*}}` key is declared and the action is fixed.
+10. **Every branch ends, and nothing is chained past an ending.** Conditions are matched against each message, not walked in order, so a terminal action — `<endcall />` or a terminal transfer — may sit at any position, and a flow whose branches end differently carries one per branch. What can never fire is anything that needs a turn after the hang-up: an `action_followup` on a terminal condition (rule 8), or an outcome line about what follows it. Every branch the agent can take must reach a terminal or the call runs to timeout — unless the user asked for the caller to stay on the line. Split into two evaluators only when the caller, not the agent, decides which ending happens; where the agent decides, the outcome must hold on every branch (see **Expected outcomes**, contingent branches).
+11. `personality` set and its language matches `scenario_language`.
+12. Metrics, test profile, `tool_ids`, folder and tags attached.
 
 ## Expected outcomes
 
@@ -396,6 +400,8 @@ Required on every scenario. Personalities carry the caller's voice layer — lan
 | `SEND_SMS_TOOL_CALL` | the testing agent sends an SMS (`<send_sms text="…" />` — `text` is required); needs an SMS-enabled number |
 | `CALL_HOLD` | long-hold tests |
 
+`TOOL_DTMF` and `RECEIVE_DTMF` are mutually exclusive — the API rejects a scenario carrying both. Pick by direction: the testing agent pressing keys is `TOOL_DTMF`, the main agent pressing them is `RECEIVE_DTMF`. A scenario copied from the other direction needs the pair swapped, not added to.
+
 Enable what the flow needs and nothing more, and always give the testing agent a way to finish the call. `tool_ids` accepts only the ids in this table — never the agent's own tool ids or mock-tool ids, which are already attached to the agent (`Invalid tool IDs` is the symptom of mixing them up).
 
 A scenario's optional `max_duration` (10–3600 s) overrides the project's `max_call_duration` for that scenario only. The project setting is the owner's and is never changed for a test; give a scenario its own cap only when it must end within a known time (idle, timeout or hold tests) or the user asks for a bound.
@@ -414,9 +420,10 @@ Most real work is editing evaluators, not creating them. This procedure governs 
 
 1. **Read first.** Retrieve each scenario by id (or read the `scenarios.json` the Evaluators page attached to this conversation — do not page the list endpoint when it is already on disk).
 2. **Audit against the rubric** above (steps/conditions, outcomes, placeholders, metrics, personality, tools). Report what you found before changing it.
-3. **Minimal diff.** PATCH only the fields that are wrong. For CA, mutate the retrieved `conditional_actions` object and send it back **whole** — an update replaces the whole stored object, so one carrying only `conditions` drops `functions[]`. `scenario_type` need not be resent. Pass `version_name` when the user wants the change labelled.
-4. **Many at once:** use the bulk update (merge lists such as `tool_ids`/`metrics` — do not blank the rest). **Copies:** duplicate the scenario; never re-create by hand. **Conversions** (CA → instruction or back) are updates to the same scenario id — PATCH `scenario_type` with the new body (written to the rules of the target mode, an instruction flow ending in `End the call when …`); duplicate first and convert the copy when the original's run history matters (ask if unsure).
-5. **Read back** and show a per-scenario diff of what changed.
+3. **Objective check — does this edit keep the evaluator's purpose?** Compare the request against what the evaluator tests today: its name, role, flow and expected outcome. Refining that purpose proceeds — a step added, a trigger fixed, an outcome line tightened, a value changed. Introducing a *different* purpose is a second evaluator, not an edit: ask once, in a single question, whether to keep this one and add a separate evaluator or to replace it, and never take replacement as the default. The wording of the request does not settle this: "instead", "rather than", "should now test", or the same said in another language, names the new objective — it says nothing about what happens to the old evaluator, so the question stands. Only an explicit statement about the old one ("replace it", "I don't need the old test", "keep it and add") answers it. An update rewrites the stored object in place, so the coverage the evaluator held goes with no copy kept and no warning shown. Where the user has already said which they want, act on it and do not ask again.
+4. **Minimal diff.** PATCH only the fields that are wrong. For CA, mutate the retrieved `conditional_actions` object and send it back **whole** — an update replaces the whole stored object, so one carrying only `conditions` drops `functions[]`. `scenario_type` need not be resent. Pass `version_name` when the user wants the change labelled.
+5. **Many at once:** use the bulk update (merge lists such as `tool_ids`/`metrics` — do not blank the rest). **Copies:** duplicate the scenario; never re-create by hand. **Conversions** (CA → instruction or back) are updates to the same scenario id — PATCH `scenario_type` with the new body (written to the rules of the target mode, an instruction flow ending in `End the call when …`); duplicate first and convert the copy when the original's run history matters (ask if unsure). **A conversion out of conditional actions is available only when no runtime control is in play.** Keypad tones, timed holds and pauses, IVR and voicemail simulation, interruptions, voice switches, live functions, and exact retry or timing behaviour are effects of tags; asked for in prose — "send DTMF 1", "stay silent", "retry three times" — they read to the testing agent as narration and execute nothing, so the converted evaluator drifts and its failures say nothing about the agent under test. Never convert to make a failing run pass: fix the condition that did not fire. A duplicate arrives carrying the source's expected outcome, tools, profile and metrics, and none of them are re-checked for you: after any copy or conversion, rewrite the outcome for what the scenario now does and re-pick `tool_ids` for its direction — inherited outcomes left in place are how a conversion ships broken.
+6. **Reconcile and report.** Account for every item you set out to write from the write responses themselves — accepted, rejected then fixed, or rejected and reported with the reason — and show a per-scenario diff of what changed. A write returns the stored record, so this is arithmetic on what you already hold, not a second read of each id.
 
 Fixing a scoring complaint: a metric that keeps returning 50 usually has an outcome line no step fires (`blocked`) — fix the outcome or add the causing step; do not rewrite the whole scenario. Then re-read **every** remaining line against **Expected outcomes** before you PATCH: the blocking line is rarely the only one that breaks the rules, and a leftover hang-up or "politely"-style line keeps the evaluator wrong after the blocker is gone. Fixing how the testing agent *speaks* (digits read as words, wrong language) is `<spell>`, `scenario_language` and personality — not an instruction rewrite.
 
@@ -424,11 +431,15 @@ Fixing a scoring complaint: a metric that keeps returning 50 usually has an outc
 
 Run in text mode for iteration; for voice, use the run variant that matches the agent's connection (phone, VAPI or Retell WebRTC, websocket, SIP, Pipecat, LiveKit, ElevenLabs, email); a tests-as-code spec has its own JSON run. Pass `test_profile_ids` / `personality_ids` to override per run instead of editing scenarios (this is how accent and language sweeps are done), and `frequency` for load. Poll the result before reporting anything, and never state an outcome you did not read back.
 
+**A write proves storage, not behaviour.** A create or update response is the evaluator as saved; it says nothing about whether the flow runs. Where behaviour depends on runtime controls — DTMF, hold or silence timing, IVR and voicemail paths, interruptions, transfers, live functions — offer one targeted run. If the user does not want one, close by saying the evaluator is created but **unvalidated** and naming what a run would establish; never let "created successfully" stand in for "works". And never diagnose the agent, a provider or a carrier from a run of a configuration you have since changed — that verdict belongs to the payload that actually ran.
+
 On voice, SIP or WebRTC, a batch of more than five evaluators starts with a 3–5 evaluator smoke cohort: read those results — connected, finished inside the cap, no setup error — before launching the rest. A setup or configuration error (the provider rejected a configuration or mock change, a missing phone-number record, bad credentials) hits every run the same way: stop the batch, quote the exact error, fix it first. When reporting, separate a run's `success` from its Expected Outcome score: with project rubric rules, `success` is the rubric verdict over every attached metric, so an Expected Outcome pass with `success: false` failed a project-wide rule — name that rule instead of reporting the scenario as failed.
 
 ## Coverage and next steps
 
-A complete suite covers **workflow** happy paths, **deterministic/unit** tests, **edge cases** (tool failures, retries, ambiguity), **red team**, **error handling**, and **multi-language** — ~30 % happy path, ~70 % specific friction, every scenario grounded in a real capability. Naming: `{CATEGORY}-{NN}: {description}` (≤80 chars); tags `["Category", "priority", "ID"]`. Real-world category breakdowns: **`references/coverage-patterns.md`**.
+A complete suite covers **workflow** happy paths, **deterministic/unit** tests, **edge cases** (tool failures, retries, ambiguity), **red team**, **error handling**, and **multi-language** — ~30 % happy path, ~70 % specific friction, every scenario grounded in a real capability.
+
+**A negative test has to carry the bad input.** An evaluator named for invalid, missing or malformed data must actually supply it — in the step or in the attached profile — otherwise it passes without ever reaching the branch it exists to exercise, and reads as a pass to everyone afterwards. Say in the expected outcome what the main agent should do about the bad value, and let any valid retry come only after the rejection under test. Naming: `{CATEGORY}-{NN}: {description}` (≤80 chars); tags `["Category", "priority", "ID"]`. Real-world category breakdowns: **`references/coverage-patterns.md`**.
 
 **Cekura's predefined Infrastructure Suite** (18+ ready-made latency / interruption / noise / packet-loss / hold tests) is not built through the scenario tools: the user adds it from the dashboard (Evaluators → Infrastructure Suite → *Add to my Project*). Point the user there rather than hand-building copies, tell them it also adds an *AI Interrupting user = 0* rubric rule to the project, and tag the copies `infrastructure-suite` so CI can select them. For a suite derived from the customer's own pipeline code, use **cekura-infra-test-suite**.
 

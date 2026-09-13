@@ -4,6 +4,75 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.0 — 2026-09-12
+
+**Evaluator-authoring safety.** Six reviewed product-chat authoring sessions
+produced evaluators that saved cleanly and still could not test what they
+claimed: one existing evaluator was overwritten by an unrelated objective,
+several flows gated their next step on the main agent staying silent or on a
+terminal hang-up, assertions were made about transfers and menu branches the
+agent record never described, and a tag-driven flow was rewritten as prose to
+make a failing run finish. Nothing in the API rejects any of that, so
+`cekura-eval-design` now carries the checks.
+
+- **Changing existing evaluators** gains an objective check before the diff: an
+  edit that would change what the evaluator tests is a second evaluator, and
+  the choice is the user's. Read-back is replaced by reconciliation from the
+  write responses, which is what the runtime already asks for.
+- **Conversions out of conditional actions** are limited to flows with no
+  runtime control in play — keypad tones, holds, silences, IVR and voicemail
+  simulation, interruptions, voice switches and live functions are tag effects
+  that prose cannot execute — and are never a way to make a failing run pass.
+- **Grounding**: every branch, capability, policy, threshold and profile field
+  a condition or outcome asserts must trace to the agent record, its knowledge
+  base, mock data, the test profile, or what the user said.
+- **Conditional-action determinism**: new self-check items and anti-patterns
+  for silence triggers, elapsed-time and retry predicates, history-qualified
+  conditions, colliding triggers, combined-field triggers, follow-ups chained
+  to a hang-up, and the behaviour under test used as its own gate.
+- **Run and report honestly**: a write proves storage, not behaviour. Offer a
+  run for control-dependent flows, and where none happened say the evaluator
+  is unvalidated rather than letting "created successfully" stand for "works".
+- **DTMF is chosen by direction**: `TOOL_DTMF` (testing agent presses keys) and
+  `RECEIVE_DTMF` (main agent presses keys) are mutually exclusive; a scenario
+  copied from the other direction swaps the pair rather than adding to it.
+- **Copies and conversions re-audit what they inherit**: a duplicate arrives
+  with the source's expected outcome, tools, profile and metrics, none of them
+  re-checked; the outcome is rewritten for what the scenario now does and the
+  tools re-picked for its direction.
+- **A negative test carries the bad input**: an evaluator named for invalid
+  data supplies it, in the step or the profile, and states what the agent
+  should do about it — otherwise it passes without reaching its branch.
+- **The request's wording does not decide preserve-or-replace**: "instead",
+  "rather than" or "should now test" name the new objective, not the fate of
+  the old evaluator; only an explicit statement about the old one does.
+- **Imitating an existing scenario is still hand-writing**: the same flow for
+  another language, agent or persona is a duplicate plus a patch, or a
+  generation request carrying the reference flow — never a direct instruction
+  create.
+- **A requested combined trigger is still split** when the description asks
+  for the fields separately: a condition that can never match stalls the
+  evaluator rather than tightening it.
+- **Existing evaluators are listed before a create**, so an overlap can be
+  named in the summary instead of a second copy landing silently.
+- **`conditional-actions.md` opens by saying what it is not**: the payload
+  reference, not the authoring contract; the root skill's rules still apply.
+- **Beacon carries `skill_version`**: `cekura_skill_started` sends the skill's
+  own `metadata.version` (0.11.0) next to `plugin_version`, so a session can be
+  attributed to a revision of the skill rather than only to a plugin train.
+- **Routing**: `run-evals` also triggers on running a cron job's evaluators
+  immediately or a scheduled run on demand; `cekura-onboarding` names its own
+  `/cekura-onboarding` command so a typed command loads the skill.
+- **Corrected**: `{{test_profile.*}}` renders in fixed *and* non-fixed actions.
+  The runtime substitutes every conditional action before it looks at
+  `fixed_message`; that flag decides whether the value is spoken verbatim.
+- **Corrected**: a terminal action does not have to be the last condition.
+  The runtime matches every condition against each main-agent message rather
+  than walking the list, so a flow may end differently on different branches,
+  each with its own `<endcall />`; what cannot fire is an `action_followup`
+  chained to a terminal condition. Two conditions matching one message both
+  fire and are merged into a single turn — the runtime never picks one.
+
 ## 0.16.0 — 2026-09-11
 
 **Pre-submission release for the Anthropic community marketplace.** Two

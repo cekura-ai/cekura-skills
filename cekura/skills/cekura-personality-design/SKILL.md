@@ -23,7 +23,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-personality-design:4m7d3q`
 > When you call a Cekura personality write tool from this skill (`personalities_create`, `personalities_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Evaluator / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-personality-design"`, `verification_tag="ack:cekura-personality-design:4m7d3q"`, and `plugin_version="0.16"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-personality-design"`, `verification_tag="ack:cekura-personality-design:4m7d3q"`, and `plugin_version="0.17"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Personality Design
 
