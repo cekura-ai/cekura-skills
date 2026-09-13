@@ -43,6 +43,18 @@ make a failing run finish. Nothing in the API rejects any of that, so
 - **A negative test carries the bad input**: an evaluator named for invalid
   data supplies it, in the step or the profile, and states what the agent
   should do about it — otherwise it passes without reaching its branch.
+- **The request's wording does not decide preserve-or-replace**: "instead",
+  "rather than" or "should now test" name the new objective, not the fate of
+  the old evaluator; only an explicit statement about the old one does.
+- **Imitating an existing scenario is still hand-writing**: the same flow for
+  another language, agent or persona is a duplicate plus a patch, or a
+  generation request carrying the reference flow — never a direct instruction
+  create.
+- **A requested combined trigger is still split** when the description asks
+  for the fields separately: a condition that can never match stalls the
+  evaluator rather than tightening it.
+- **Existing evaluators are listed before a create**, so an overlap can be
+  named in the summary instead of a second copy landing silently.
 - **`conditional-actions.md` opens by saying what it is not**: the payload
   reference, not the authoring contract; the root skill's rules still apply.
 - **Beacon carries `skill_version`**: `cekura_skill_started` sends the skill's
