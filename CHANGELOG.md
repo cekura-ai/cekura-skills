@@ -28,14 +28,20 @@ make a failing run finish. Nothing in the API rejects any of that, so
   base, mock data, the test profile, or what the user said.
 - **Conditional-action determinism**: new self-check items and anti-patterns
   for silence triggers, elapsed-time and retry predicates, history-qualified
-  conditions, colliding triggers, combined-field triggers, steps scheduled
-  after `<endcall />`, and the behaviour under test used as its own gate.
+  conditions, colliding triggers, combined-field triggers, follow-ups chained
+  to a hang-up, and the behaviour under test used as its own gate.
 - **Run and report honestly**: a write proves storage, not behaviour. Offer a
   run for control-dependent flows, and where none happened say the evaluator
   is unvalidated rather than letting "created successfully" stand for "works".
 - **Corrected**: `{{test_profile.*}}` renders in fixed *and* non-fixed actions.
   The runtime substitutes every conditional action before it looks at
   `fixed_message`; that flag decides whether the value is spoken verbatim.
+- **Corrected**: a terminal action does not have to be the last condition.
+  The runtime matches every condition against each main-agent message rather
+  than walking the list, so a flow may end differently on different branches,
+  each with its own `<endcall />`; what cannot fire is an `action_followup`
+  chained to a terminal condition. Two conditions matching one message both
+  fire and are merged into a single turn — the runtime never picks one.
 
 ## 0.16.0 — 2026-09-11
 
