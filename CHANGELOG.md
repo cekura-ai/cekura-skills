@@ -4,6 +4,32 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.1 — 2026-09-15
+
+**Suites stopped shipping unvalidated.** Sandboxed sessions were ending with
+"No dry-run tool available via MCP, and the sandbox blocks running scripts" and
+handing over a pull request nobody had checked. Both halves of that were true:
+the only way to validate a spec was `scenarios_run_json`, which is marked
+destructive — correctly, since it is also the tool that places calls — and
+sandboxes withhold destructive tools. The skills now point at
+`scenarios_validate_json`, a read-only tool that returns the same `{valid,
+plan}` and needs neither an API key nor a shell (backend #11561).
+
+- **`cekura-infra-test-suite`** names validation as the only permitted
+  write-like request, and says in step 7 that a missing shell is not a reason to
+  ship unvalidated — the tool answers without one. `scenarios_run_json` is now
+  explicitly never to be called.
+- **`cekura-bot-test-writer`** gets the same correction where it validates an
+  edited spec.
+- **`run_suite.py --dry-run`** posts to `validate_scenarios_json/`, falling back
+  to the old `?dry_run=true` path on a 404 so a deployment that has not picked
+  up the endpoint yet still validates.
+- **The committed CI workflow's `validate` job** switches too. It can no longer
+  spend credit even if edited, and it now passes on a low balance — checking a
+  suite costs nothing, so a workspace short on credit gets its pull request
+  validated instead of a confusing failure. The `run` job is unchanged; running
+  is what it is for.
+
 ## 0.17.0 — 2026-09-12
 
 **Evaluator-authoring safety.** Six reviewed product-chat authoring sessions

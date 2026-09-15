@@ -6,7 +6,7 @@ description: >
   regression coverage; add deterministic Cekura voice tests to CI; or test an STT, LLM, TTS, VAD,
   interruption, idle-timer, DTMF, or call-lifecycle pipeline; or set up a CI gate that blocks a
   merge when the voice pipeline regresses. Inspects the repository before authoring a compact JSON
-  suite, validates it safely with Cekura dry-run, and wires the workflow that runs it.
+  suite, validates it safely against Cekura, and wires the workflow that runs it.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
@@ -63,8 +63,8 @@ back to dashboard evaluators.
 - Inspect the repository before proposing coverage. Do not infer providers, transports, tools, or
   pipeline behavior from a framework name alone.
 - Treat Cekura as read-only. You may `GET` agent, enabled metric, personality, test-profile, schema,
-  and export data. The only permitted write-like request is
-  `POST /test_framework/v1/scenarios/run_scenarios_json/?dry_run=true`.
+  and export data. The only permitted write-like request is `scenarios_validate_json` — validation,
+  which creates nothing and dials nothing. Never call `scenarios_run_json`: it spends credit.
 - Never create, edit, delete, duplicate, or export-and-reimport scenarios, test profiles,
   personalities, metrics, agents, or folders. Never run the suite live unless the user separately
   asks for it after reviewing the spec and accepts the cost.
@@ -402,28 +402,30 @@ If the repository already has a workflow that calls Cekura, extend that one — 
 Append the template in `references/ci-wiring.md`, filled in — what the suite proves, how to trigger
 it, the two secrets, and step 2's coverage table including the uncovered rows.
 
-### 7. Lint, then dry run — validation is not optional
+### 7. Lint, then validate — validation is not optional
 
-**A suite that has not returned `valid: true` from a dry run is not finished.** Say so in those
-words rather than handing over a file that looks complete. Everything `lint_suite.py` cannot see
-is checked here: whether every metric slug exists *and is enabled for this agent*, whether the
-personality is reachable, whether the agent supports the channel the CI job will use, and whether
-the server's own validators accept every tag. A spec that fails any of those is not a weaker
-suite — it is a suite that cannot run at all.
+**A suite that has not come back `valid: true` is not finished.** Say so in those words rather than
+handing over a file that looks complete. Everything `lint_suite.py` cannot see is checked here:
+whether every metric slug exists *and is enabled for this agent*, whether the personality is
+reachable, whether the agent supports the channel CI will use, and whether the server's validators
+accept every tag. A spec that fails any of those is not a weaker suite — it cannot run at all.
 
-So the order is: lint, then dry run, then fix, then dry run again, until it comes back valid.
+So the order is: lint, then validate, then fix, then validate again, until it comes back valid.
+
+**Validate with the MCP tool `scenarios_validate_json`.** It takes `{agent_id, spec}`, returns
+`{valid, plan}`, creates nothing, and needs neither a key nor a shell — a sandbox without a terminal
+is no reason to ship unvalidated. Never reach for `scenarios_run_json`: same question under
+`dry_run=true`, but it also spends credit and dials, so it is withheld where destructive tools are.
 
 **In a terminal, if there are no credentials in the session, ask for them** — an API key and the
-agent id, or an authenticated MCP session. Do not quietly skip to the handoff. In the dashboard the
-MCP session is already authenticated, so a missing key is a bug to report, never a question: the
-user has nothing to paste. Only when the user cannot supply
-them do you hand over unvalidated, and then you must (a) label the suite unvalidated in the
-handoff and in the coverage note, (b) give the exact command below, and (c) point out that the
-`validate` job in the CI workflow runs the same dry run, so the first pull request will catch
-what this session could not.
+agent id, or an authenticated MCP session; do not quietly skip to the handoff. In the dashboard that
+session is already authenticated, so a missing key is a bug to report, never a question. Only when
+the user cannot supply them do you hand over unvalidated — labelled so in both the handoff and the
+coverage note, with the exact command below, and a note that the workflow's `validate` job runs the
+same check, so the first pull request catches what this session could not.
 
-A dry run validates syntax, metrics, personalities, profiles, target compatibility, planned runs,
-and estimated cost without creating objects or placing a call:
+Validation covers syntax, metrics, personalities, profiles, target compatibility, planned runs and
+estimated cost, without creating objects or placing a call:
 
 ```bash
 python3 <skill>/scripts/lint_suite.py cekura.tests.json --strict   # free, offline, first
@@ -431,13 +433,13 @@ CEKURA_API_KEY=… python3 <skill>/scripts/run_suite.py --dry-run --agent-id 123
 ```
 
 Both run from this skill's directory — they are authoring tools, not files the repository keeps.
-The runner posts the file and prints the returned plan. The raw form, when you want it:
+The raw form:
 
 ```bash
 curl -sS -X POST \
   -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
   -H "Content-Type: application/json" \
-  "$CEKURA_BASE_URL/test_framework/v1/scenarios/run_scenarios_json/?dry_run=true" \
+  "$CEKURA_BASE_URL/test_framework/v1/scenarios/validate_scenarios_json/" \
   -d '{"agent_id": 123, "spec": { ... }}'
 ```
 
@@ -446,15 +448,14 @@ list the metrics you intended, and any case given an inline `test_profile` must 
 `mode: "inline"`. A case reporting `existing` means the inline block did not take effect.
 
 Errors come back keyed by their location in the file — `scenarios[2].metrics[0]` — and all at once,
-so one round trip tells you everything to fix. Fix them; never drop a metric or loosen a case to
-get past one. An unenabled metric is a configuration problem in the workspace, not a defect in the
-suite. Save the validation response only if it contains
-no credentials or sensitive caller data. If dry-run validation needs a write beyond `dry_run=true`,
-stop and report the blocker.
+so one round trip tells you everything to fix. Fix them; never drop a metric or loosen a case to get
+past one. An unenabled metric is a configuration problem in the workspace, not a defect in the
+suite. Save the validation response only if it holds no credentials or sensitive caller data, and if
+validating appears to need a write beyond validation itself, stop and report the blocker.
 
 ### 8. Deliver
 
-Only once the dry run has returned `valid: true`.
+Only once validation has returned `valid: true`.
 
 **Dashboard** — one `github_open_pull_request` call carrying every file; never one at a time,
 never for a suite that has not validated. The body carries what the repository does not: the
@@ -477,7 +478,7 @@ Leave the repository with:
 - `.github/workflows/cekura-tests.yml` — created, or the existing Cekura workflow extended — with
   the `dry_run` checkbox, and manual dispatch as the only trigger unless the user asked for more;
 - the README section from step 6; and
-- the dry-run result — `valid: true` with its plan — or the suite explicitly labelled
+- the validation result — `valid: true` with its plan — or the suite explicitly labelled
   **unvalidated** with the command that will validate it.
 
 Report case count, channel/seat coverage, dependencies, anything needing a live run, and — if the
