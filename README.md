@@ -287,7 +287,7 @@ For the fallbacks, re-run the skill installer / re-download `AGENTS.md`.
 
 ## Cursor
 
-Native plugin support — skills **and** MCP tools. (Cursor plugins don't carry Claude-style slash commands; the skills cover those workflows.)
+Native plugin support — skills, slash commands, **and** MCP tools.
 
 ### Install (recommended)
 
@@ -523,7 +523,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | **Claude Code (VS Code)** | Marketplace install | Yes | Yes | Yes |
 | **Claude Code (CLI)** | `/plugins` install | Yes | Yes | Yes |
 | **Codex** | `codex plugin marketplace add` | Yes | Yes | No |
-| **Cursor** | Plugin marketplace install | Yes | Yes | No |
+| **Cursor** | Plugin marketplace install | Yes | Yes | Yes |
 | **Gemini CLI** | `gemini extensions install` | Context file only | Yes | No |
 | **GitHub Copilot (CLI)** | `copilot plugin marketplace add` | Yes | Yes | No |
 | **GitHub Copilot (coding agent / code review / IDE)** | `npx skills add --output .github/skills` | Yes | Repo MCP config | No |
