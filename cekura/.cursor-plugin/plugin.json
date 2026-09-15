@@ -2,7 +2,7 @@
   "name": "cekura",
   "displayName": "Cekura",
   "version": "0.17.0",
-  "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from Cursor.",
+  "description": "Access Cekura voice AI testing & evaluation skills, commands, and MCP tools directly from Cursor.",
   "author": {
     "name": "Cekura",
     "email": "support@cekura.ai"
@@ -21,6 +21,7 @@
     "onboarding",
     "platform"
   ],
+  "hooks": "./hooks/cursor-hooks.json",
   "mcpServers": {
     "cekura": {
       "url": "https://api.cekura.ai/mcp"
