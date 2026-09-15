@@ -4,12 +4,14 @@
     "name": "Cekura",
     "email": "support@cekura.ai"
   },
+  "metadata": {
+    "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals."
+  },
   "plugins": [
     {
       "name": "cekura",
-      "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals — skills plus MCP tools.",
-      "source": "./cekura",
-      "category": "development"
+      "source": "cekura",
+      "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals."
     }
   ]
 }
