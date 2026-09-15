@@ -216,7 +216,7 @@ Choosing between those two by editing the test is the failure this skill exists 
 the diff does not settle it, ask — do not soften the line, delete the metric, drop the turn, or
 relax the outcome. A green suite bought that way costs more than a red one.
 
-### 7. Lint, then dry run — never live
+### 7. Lint, then validate — never live
 
 ```bash
 SPEC=<the spec you edited>      # whatever this repository calls it
@@ -228,12 +228,12 @@ CEKURA_API_KEY=… CEKURA_BASE_URL=… \
   --spec "$SPEC" --dry-run --agent-id "$CEKURA_AGENT_ID"
 ```
 
-The linter is offline and free; it mirrors the server's own tag validators. The dry run
-(`POST …/run_scenarios_json/?dry_run=true`) is the only write-shaped request this skill may make,
-and it is the only place that catches an unenabled metric slug, an unreachable personality, or a
-channel the agent was never configured for. **An edited spec that has not returned `valid: true`
-is not finished** — say that in those words rather than handing over a file that merely looks
-complete.
+The linter is offline and free; it mirrors the server's own tag validators. Validation — the MCP
+tool `scenarios_validate_json`, or `POST …/validate_scenarios_json/`, which the runner uses — is the
+only write-shaped request this skill may make, and the only place that catches an unenabled metric
+slug, an unreachable personality, or a channel the agent was never configured for. **An edited spec
+that has not returned `valid: true` is not finished** — say that in those words rather than handing
+over a file that merely looks complete.
 
 This skill never starts a real run. A test writer that dials on every push bills on every push;
 the suite's own workflow places calls on its own trigger, where someone chose the cost.

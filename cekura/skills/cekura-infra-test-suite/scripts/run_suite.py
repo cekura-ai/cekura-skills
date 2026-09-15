@@ -33,6 +33,7 @@ import urllib.parse
 import urllib.request
 
 RUN_PATH = "/test_framework/v1/scenarios/run_scenarios_json/"
+VALIDATE_PATH = "/test_framework/v1/scenarios/validate_scenarios_json/"
 BULK_PATH = "/test_framework/v2/runs/bulk/"
 TERMINAL_BAD = {"failed", "error", "cancelled", "timeout"}
 
@@ -93,10 +94,22 @@ def build_payload(spec, args):
     return payload
 
 
+def validate(payload, key, base):
+    """Ask the server to check the spec. Creates nothing, charges nothing."""
+    try:
+        return api("POST", VALIDATE_PATH, key, base, payload)
+    except RuntimeError as exc:
+        if "HTTP 404" not in str(exc):
+            raise
+    # A deployment that predates the validate endpoint answers the same
+    # question through the run endpoint's dry-run flag.
+    return api("POST", RUN_PATH, key, base, payload, {"dry_run": "true"})
+
+
 def dry_run(payload, key, base):
     """Validate and price without creating or charging anything."""
     try:
-        response = api("POST", RUN_PATH, key, base, payload, {"dry_run": "true"})
+        response = validate(payload, key, base)
     except RuntimeError as exc:
         print(str(exc))
         print("\nThe spec was rejected. Every problem is reported at once, keyed by its "
