@@ -1,6 +1,6 @@
 {
   "name": "cekura",
-  "version": "0.17.1",
+  "version": "0.17.2",
   "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from GitHub Copilot.",
   "author": {
     "name": "Cekura",
@@ -23,5 +23,6 @@
     "platform"
   ],
   "skills": "./skills/",
+  "hooks": "./hooks/copilot-hooks.json",
   "mcpServers": "./.mcp.json"
 }
