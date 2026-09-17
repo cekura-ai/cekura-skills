@@ -4,6 +4,33 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.2 — 2026-09-17
+
+**The plugin stopped blocking file and shell tools on GitHub Copilot CLI.** With
+the Cekura plugin enabled, Copilot denied ordinary local work — reading a
+spreadsheet, running a shell command — with `Denied by preToolUse hook from
+cekura@cekura-skills (hook errored)`. Disabling the plugin restored it. Nothing
+about the Cekura gate was firing: the hook could not run at all.
+
+Copilot falls back to convention discovery when a plugin manifest omits `hooks`,
+so it loaded `cekura/hooks/hooks.json` — Claude Code's config. It does not
+substitute `${CLAUDE_PLUGIN_ROOT}` in hook commands, so each command resolved to
+a non-existent `/hooks/*.sh` and exited 127. A `preToolUse` hook that errors is
+fail-closed, so every matching tool call was denied. This is the same folder-
+discovery trap fixed for Cursor in 0.17.0, one host over.
+
+- **`cekura/.github/plugin/plugin.json`** declares `hooks` explicitly, pointing
+  at a new, deliberately empty `cekura/hooks/copilot-hooks.json`. An explicit
+  field replaces discovery, so Copilot no longer reads Claude's hook config.
+  All three hooks are Claude-only logic that writes into `~/.claude/`.
+- Codex, Cursor and Copilot now each declare their own hooks file, so no
+  platform reaches `hooks.json` by discovery any more. Claude Code's hook
+  configuration and all three hook scripts are untouched.
+
+Copilot users on 0.11.0 through 0.17.1 can unblock themselves by updating
+(`copilot plugin update cekura`). The reproduction gate remains Claude-only; it
+has never enforced on Copilot, and this release does not change that.
+
 ## 0.17.1 — 2026-09-15
 
 **Suites stopped shipping unvalidated.** Sandboxed sessions were ending with
