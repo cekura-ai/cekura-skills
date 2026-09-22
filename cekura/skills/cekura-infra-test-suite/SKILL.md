@@ -290,8 +290,8 @@ Use the public `cekura-eval-design` skill and its conditional-actions reference 
   `action_followup`.
 - `<silence>` can be interrupted; `<hold>` cannot. Test the behavior the code path actually selects.
 - `<speed ratio="N" />` (0.1–2.0) and `<volume ratio="N" />` (0–2.0) are self-closing and apply from
-  where they appear, so put them first. Use them to exercise a path; never make an inaudible
-  property the assertion.
+  where they appear until the next tag of the same kind. Add `text="..."` to scope one to just those
+  words instead. Use them to exercise a path; never make an inaudible property the assertion.
 - `<network_simulation … />` takes `packet_loss` (0–100), `jitter` and `latency` (ms), and is
   self-closing. It degrades the audio — it never proves anything by itself.
 - Do not reference stored audio clips. A recording is referenced by id against the scenario's

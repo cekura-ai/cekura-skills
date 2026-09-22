@@ -150,8 +150,8 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 | `<silence time="Xs" />` | Pause on the caller's turn — **interruptible** by the main agent; background noise continues; condition matching restarts after an interrupt. Supports decimal seconds for sub-second precision (e.g., `time="0.5s"`). | Embeddable mid-action |
 | `<hold time="Xs" />` | Dead air — **not interruptible**; background noise stops | Multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell text letter-by-letter (no attributes) | Wrap target text |
-| `<speed ratio="N" />` | Speech rate; ratio range **0.1–2.0** — 0.8–1.2 keeps speech natural, beyond that it is a stress test | **Must start the action** |
-| `<volume ratio="N" />` | Volume; ratio range **0–2** (0 = silent, 1 = normal, 2 = double) | **Must start the action. Cartesia voices only.** |
+| `<speed ratio="N" />` | Speech rate; ratio range **0.1–2.0** — 0.8–1.2 keeps speech natural, beyond that it is a stress test. Add `text="..."` to apply the ratio to just those words. | Embeddable mid-action; applies from where it appears until the next `<speed>` tag or the end of the action. `text` scopes it instead and restores the prior rate. Self-closing only — no block form. |
+| `<volume ratio="N" />` | Volume; ratio range **0–2** (0 = silent, 1 = normal, 2 = double). Add `text="..."` to apply the ratio to just those words. | Same placement and scoping rules as `<speed>`. Above 1.0 the output clips, so prefer `<= 1.0` unless distortion is the point. Self-closing only — no block form. |
 
 #### `<voice>` — simulating multiple speakers
 
@@ -601,7 +601,7 @@ These additional rules apply when the platform's auto-generator produces a scena
 - Only documented tags are accepted (unknown tags are rejected)
 - Multiple sibling tags are allowed and run left to right; do not nest tags
 - `fixed_message` must be `true` whenever the action contains a tag
-- `<speed>` tag only at the very start of the action
+- `<speed>` and `<volume>` may appear anywhere in the action; neither has a block form
 - "others" / catch-all conditions are rejected — write specific triggers
 
 ## Pattern Library by Use Case
@@ -645,7 +645,7 @@ The FIRST_MESSAGE plants the injection. Author **one evaluator per expected outc
 
 ### Error handling — hostile / angry caller
 
-FIRST_MESSAGE establishes hostile tone. Use behavioral instructions for the angry tone (the testing agent improvises) but keep verbatim closes. Optional: `<volume ratio="1.5" />` at the start of an emphatic line (Cartesia voices only).
+FIRST_MESSAGE establishes hostile tone. Use behavioral instructions for the angry tone (the testing agent improvises) but keep verbatim closes. Optional: `<volume ratio="1.5" text="I have been on hold for forty minutes" />` to raise just the emphatic phrase.
 
 ```json
 {
@@ -885,8 +885,10 @@ XML tags (fixed_message:true only):
   <spell>TEXT</spell>               Spell text letter-by-letter
   <interruption time="Xs" />        Cut in Xs after agent starts speaking — MUST be action_followup
                                      AND at the very start of the action string
-  <speed ratio="N" />               Speech rate 0.1-2.0 (0.8-1.2 natural); must start the action
-  <volume ratio="N" />              Volume 0–2; must start the action; Cartesia only
+  <speed ratio="N" />               Speech rate 0.1-2.0 (0.8-1.2 natural); anywhere in the action
+  <speed ratio="N" text="..." />    Same, scoped to that text only
+  <volume ratio="N" />              Volume 0–2; anywhere in the action; clips above 1.0
+  <volume ratio="N" text="..." />   Same, scoped to that text only
   <voice provider="P" id="X" model="Y" />   Persistently switch TTS voice. Add text="..." for
                                      a temporary line, or wrap text in <voice ...>...</voice> for
                                      a temporary region (nested inline tags allowed); prior voice

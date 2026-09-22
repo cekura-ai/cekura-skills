@@ -4,6 +4,28 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.1 — 2026-09-22
+
+**`<speed>` and `<volume>` gain a scoped form, and three stale claims about
+them are corrected.** Both tags now take `text="..."`, which applies the ratio
+to those words and restores the previous value — the same shape `<voice>`
+already uses — so a single number can be rattled off quickly or a card number
+dropped to a mumble without re-tagging the rest of the line.
+
+- **Neither tag has to start the action.** `<speed>` was constrained that way
+  by a backend validator, never by the runtime, and `<volume>` never had the
+  restriction at all. Every skill that repeated the rule is updated.
+- **`<volume>` is not Cartesia-only.** Both tags are applied after synthesis
+  — amplitude scaling for volume, pitch-preserving time stretch for speed — so
+  they behave identically on every TTS provider.
+- **`<speed>` accepts 0.1–2.0**, not 0.8–1.2. The narrow band is the range
+  that keeps speech natural, which is guidance rather than the validated limit.
+- Neither tag has a block form, and `text="..."` cannot contain nested tags;
+  both are now stated where authors will look.
+
+`<interruption>` is unaffected — it is still required at the very start of an
+`action_followup`.
+
 ## 0.17.0 — 2026-09-12
 
 **Evaluator-authoring safety.** Six reviewed product-chat authoring sessions
