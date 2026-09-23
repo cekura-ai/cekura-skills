@@ -1,6 +1,6 @@
 {
   "name": "cekura",
-  "version": "0.17.1",
+  "version": "0.17.3",
   "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from Codex.",
   "author": {
     "name": "Cekura",
@@ -34,6 +34,13 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://cekura.ai"
+    "websiteURL": "https://cekura.ai",
+    "privacyPolicyURL": "https://www.cekura.ai/privacy-policy",
+    "termsOfServiceURL": "https://www.cekura.ai/terms-of-service",
+    "defaultPrompt": [
+      "Set up Cekura and connect my voice agent.",
+      "Create evals for my agent and run them.",
+      "Create a metric to score call quality."
+    ]
   }
 }

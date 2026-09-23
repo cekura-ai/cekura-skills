@@ -4,7 +4,7 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
-## 0.17.1 — 2026-09-22
+## 0.17.3 — 2026-09-23
 
 **`<speed>` and `<volume>` gain a scoped form, and three stale claims about
 them are corrected.** Both tags now take `text="..."`, which applies the ratio
@@ -25,6 +25,58 @@ dropped to a mumble without re-tagging the rest of the line.
 
 `<interruption>` is unaffected — it is still required at the very start of an
 `action_followup`.
+## 0.17.2 — 2026-09-17
+
+**The plugin stopped blocking file and shell tools on GitHub Copilot CLI.** With
+the Cekura plugin enabled, Copilot denied ordinary local work — reading a
+spreadsheet, running a shell command — with `Denied by preToolUse hook from
+cekura@cekura-skills (hook errored)`. Disabling the plugin restored it. Nothing
+about the Cekura gate was firing: the hook could not run at all.
+
+Copilot falls back to convention discovery when a plugin manifest omits `hooks`,
+so it loaded `cekura/hooks/hooks.json` — Claude Code's config. It does not
+substitute `${CLAUDE_PLUGIN_ROOT}` in hook commands, so each command resolved to
+a non-existent `/hooks/*.sh` and exited 127. A `preToolUse` hook that errors is
+fail-closed, so every matching tool call was denied. This is the same folder-
+discovery trap fixed for Cursor in 0.17.0, one host over.
+
+- **`cekura/.github/plugin/plugin.json`** declares `hooks` explicitly, pointing
+  at a new, deliberately empty `cekura/hooks/copilot-hooks.json`. An explicit
+  field replaces discovery, so Copilot no longer reads Claude's hook config.
+  All three hooks are Claude-only logic that writes into `~/.claude/`.
+- Codex, Cursor and Copilot now each declare their own hooks file, so no
+  platform reaches `hooks.json` by discovery any more. Claude Code's hook
+  configuration and all three hook scripts are untouched.
+
+Copilot users on 0.11.0 through 0.17.1 can unblock themselves by updating
+(`copilot plugin update cekura`). The reproduction gate remains Claude-only; it
+has never enforced on Copilot, and this release does not change that.
+
+## 0.17.1 — 2026-09-15
+
+**Suites stopped shipping unvalidated.** Sandboxed sessions were ending with
+"No dry-run tool available via MCP, and the sandbox blocks running scripts" and
+handing over a pull request nobody had checked. Both halves of that were true:
+the only way to validate a spec was `scenarios_run_json`, which is marked
+destructive — correctly, since it is also the tool that places calls — and
+sandboxes withhold destructive tools. The skills now point at
+`scenarios_validate_json`, a read-only tool that returns the same `{valid,
+plan}` and needs neither an API key nor a shell (backend #11561).
+
+- **`cekura-infra-test-suite`** names validation as the only permitted
+  write-like request, and says in step 7 that a missing shell is not a reason to
+  ship unvalidated — the tool answers without one. `scenarios_run_json` is now
+  explicitly never to be called.
+- **`cekura-bot-test-writer`** gets the same correction where it validates an
+  edited spec.
+- **`run_suite.py --dry-run`** posts to `validate_scenarios_json/`, falling back
+  to the old `?dry_run=true` path on a 404 so a deployment that has not picked
+  up the endpoint yet still validates.
+- **The committed CI workflow's `validate` job** switches too. It can no longer
+  spend credit even if edited, and it now passes on a low balance — checking a
+  suite costs nothing, so a workspace short on credit gets its pull request
+  validated instead of a confusing failure. The `run` job is unchanged; running
+  is what it is for.
 
 ## 0.17.0 — 2026-09-12
 

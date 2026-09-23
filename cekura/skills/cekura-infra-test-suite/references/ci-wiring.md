@@ -117,7 +117,7 @@ jobs:
           spec = json.load(open("cekura.tests.json"))
           body = json.dumps({"agent_id": int(os.environ["CEKURA_AGENT_ID"]), "spec": spec}).encode()
           url = os.environ["CEKURA_BASE_URL"].rstrip("/") + \
-              "/test_framework/v1/scenarios/run_scenarios_json/?dry_run=true"
+              "/test_framework/v1/scenarios/validate_scenarios_json/"
           req = urllib.request.Request(url, body, {
               "X-CEKURA-API-KEY": os.environ["CEKURA_API_KEY"],
               "Content-Type": "application/json",

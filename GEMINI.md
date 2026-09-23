@@ -23,8 +23,8 @@ does not cover a different pipeline assembly on the other.
 Keep the spec self-contained where possible: `test_profile.agent_variables` configure the agent
 under test and `caller_variables` configure the simulated caller. Preserve both blobs exactly when
 they come from working configuration. Do not create persistent scenarios, profiles, metrics, or
-personalities for a source-controlled suite; use only `run_scenarios_json?dry_run=true` until the
-user explicitly authorizes live calls.
+personalities for a source-controlled suite; validate with `scenarios_validate_json` and create
+nothing until the user explicitly authorizes live calls.
 
 Use deterministic conditional actions for CI regression checks: every condition on both seats has
 `fixed_message: true`; conditional-actions cases set `language`; and outcomes assert only transcript
