@@ -305,8 +305,10 @@ The runtime matcher compares the main agent's **latest message** against each co
 | `<interruption time="2s" />` | **`type: "action_followup"` and at the very start of the action**; cuts in Xs after the agent's next turn begins |
 | `<ivr text="…" />` | uninterruptible menu played by the testing agent; **must be the entire action**; put post-menu content in an `action_followup`; `<hold>`/`<audio>` cannot go inside it — use `<ignore_interruptions>` instead |
 | `<voicemail text="…" />` or `<voicemail />` | greeting + beep; **entire action**; post-beep message goes in an `action_followup` |
-| `<speed ratio="1.1" />` | ratio **0.1–2.0** (0.8–1.2 keeps speech natural), must start the action |
-| `<volume ratio="1.5" />` | **0–2.0**, double quotes, must start the action, Cartesia voices only |
+| `<speed ratio="1.1" />` | ratio **0.1–2.0** (0.8–1.2 keeps speech natural); anywhere in the action, holds until the next `<speed>` tag |
+| `<speed ratio="1.1" text="..." />` | same ratio, scoped to that text only — the prior rate resumes afterwards |
+| `<volume ratio="1.5" />` | **0–2.0**, single or double quotes; anywhere in the action; clips above 1.0 |
+| `<volume ratio="1.5" text="..." />` | same ratio, scoped to that text only |
 | `<voice provider="11labs" id="…" model="…" />` | switches TTS voice persistently — the only way to put a second speaker in one call; add `text="…"` for a one-off regional line, or use the block form `<voice …>…</voice>`; `provider` must match the id format and cannot change mid-call |
 | `<background_noise sound="coffee-shop" volume="0.3">text</background_noise>` | wraps the spoken text; **`volume` is 0–1.0**; `sound` must be a supported preset name or an `http(s)` URL |
 | `<noise sound="beep" volume="0.5" time="1100" />` | one-shot effect (`office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying`); **`volume` is 0–1.0**; **`time` is bare milliseconds** (`1100`, never `1.1s`) and truncates the clip |

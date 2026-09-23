@@ -555,8 +555,8 @@ Sibling tags can be combined with text and run left to right. Do not nest tags, 
 | `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell letter-by-letter |
 | `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be action_followup AND at start of action string.** |
-| `<speed ratio="N" />` | Speech rate 0.8–1.2. Must start action. |
-| `<volume ratio="N" />` | Volume 0–2. Must start action. Cartesia only. |
+| `<speed ratio="N" />` | Speech rate 0.1–2.0 (0.8–1.2 natural). Anywhere in the action; `text="..."` scopes it. |
+| `<volume ratio="N" />` | Volume 0–2. Anywhere in the action; `text="..."` scopes it. Clips above 1.0. |
 | `<voice provider="P" id="X" model="Y" />` | Switch the testing agent's TTS voice persistently — **the only way to put a second speaker in one call**. Add `text="..."` for a temporary regional voice, or wrap regional text in `<voice ...>...</voice>` (supports nested inline tags); the prior voice resumes afterward. `provider` + `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). Provider cannot change mid-call. |
 | `<send_sms text="..." />` | Trigger an SMS for SMS-driven workflows |
 | `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent; `t` required, `d` optional, `fixed_message: true` |

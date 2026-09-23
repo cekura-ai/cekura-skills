@@ -289,7 +289,7 @@ Many call-log failures are driven not by *what* the caller said but by *how* it 
 
 | Real call-log condition (root cause) | Tag | Notes |
 |---|---|---|
-| Caller speaks faintly / low volume → VAD or ASR misses the turn | `<volume ratio="X" />` at the **start** of the action | Cekura volume tag. Ratio ~0–2 (`0.2` ≈ very faint, `1` = normal, `2` = loud). This is the tag for "the agent didn't hear the user" failures. Confirm the ratio is valid for the agent's voice provider (support differs across 11labs / cartesia). |
+| Caller speaks faintly / low volume → VAD or ASR misses the turn | `<volume ratio="X" />`, or `<volume ratio="X" text="..." />` to drop only part of the line | Cekura volume tag. Ratio ~0–2 (`0.2` ≈ very faint, `1` = normal, `2` = loud). This is the tag for "the agent didn't hear the user" failures. It may sit anywhere in the action, and is applied after synthesis, so it behaves the same on every voice provider. |
 | Caller pauses mid-sentence; agent could jump in | `<silence time="1.5s" />` | **Interruptible**, mid-utterance only — never trailing (see the end-of-action rule above). |
 | Caller goes dead-silent to trip a silence/turn timeout | `<hold time="2s" />` | **Non-interruptible** — forces the gap; use this (not `<silence>`) when the failure is a silence-timeout. |
 | Caller laughs / sighs / is emotional | `[laughter]`, `[sigh]`, etc. | Emotion markers; can repeat (`[laughter] [laughter]`). |
