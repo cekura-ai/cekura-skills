@@ -21,10 +21,11 @@ claims are gone.**
 - **`<speed>`/`<volume>` do not have to start their action.** 0.17.3 fixed this
   in the tag tables but left the old rule in the eval-design pre-save
   checklist, which contradicted the table above it.
-- **`id: 0` (FIRST_MESSAGE) plays once and is never retried.** If the main
-  agent talks over it — typically its greeting landing during a leading
-  `<silence>` — the unplayed rest is dropped and the next turn is free-form, so
-  the opener gets paraphrased. The eval-design skill now says so and steers
+- **`id: 0` (FIRST_MESSAGE) is sent once and never retried.** If the main
+  agent's speech cuts it off — typically its greeting landing during a leading
+  `<silence>`, which always yields — the unplayed rest is dropped for good.
+  Other conditions still match as usual; a free-form reply may paraphrase the
+  lost opener. The eval-design skill now says so and steers
   "wait for the greeting, then say X" to `id: 0` `action: ""` plus a
   `standard` `id: 1`.
 - **`voice_volume` is listed next to Cartesia's native volume** in

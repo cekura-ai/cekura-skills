@@ -70,7 +70,7 @@ The `role` and `conditions[]` fields inside `conditional_actions`:
 - `condition` must be the literal string `"FIRST_MESSAGE"` — not `""` (the older convention is wrong).
 - `fixed_message` must be `true`.
 - If the main agent speaks first (IVR or voicemail scenarios), set `action: ""` — the testing agent waits for the main agent to begin.
-- **It plays once and is never retried.** `id: 0` fires as the call connects. If the main agent talks over it — including its own greeting landing during a leading `<silence>` — the rest of the action is dropped for good, and the testing agent's next turn is free-form (it may paraphrase the opener). So a leading `<silence>` on `id: 0` is almost always a mistake: to let the agent greet first and then say an exact line, set `id: 0` to `action: ""` and put the line on a `standard` `id: 1` triggered by the greeting.
+- **It is sent once and is never retried.** `id: 0` fires as the call connects. If the main agent's speech cuts it off, whatever had not played yet is dropped and never spoken later; matching then continues through the other conditions as usual, and a free-form reply may paraphrase the lost opener. `<silence>` always gives way when the agent starts talking (spoken text gives way per the personality's interruption settings), so a greeting that lands during a leading `<silence>` drops the whole line. So a leading `<silence>` on `id: 0` is almost always a mistake: to let the agent greet first and then say an exact line, set `id: 0` to `action: ""` and put the line on a `standard` `id: 1` triggered by the greeting.
 
 ## Condition Types
 

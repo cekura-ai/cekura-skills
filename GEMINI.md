@@ -535,7 +535,7 @@ Set `scenario_type: "conditional_actions"` and pass the structured payload in th
 | `fixed_message` | boolean | `true` = spoken verbatim; `false` = natural language instruction. Required. |
 
 When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the testing agent waits.
-id:0 plays once and is never retried: if the main agent talks over it (e.g. its greeting lands during a leading `<silence>`), the rest is dropped and the next turn is free-form. To say an exact line after the agent greets, use id:0 `action: ""` + a `standard` id:1.
+id:0 is sent once and never retried: if the main agent's speech cuts it off (e.g. its greeting lands during a leading `<silence>`, which always yields), the unplayed rest is dropped for good; other conditions still match as usual. To say an exact line after the agent greets, use id:0 `action: ""` + a `standard` id:1.
 
 ### Action Types
 
