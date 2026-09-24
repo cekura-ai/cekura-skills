@@ -6,8 +6,9 @@ All notable changes to the Cekura plugin. Versions follow
 
 ## 0.17.5 — 2026-09-24
 
-**`<interruption>` can be followed by a sound alone, and two leftover
-`<speed>`/`<volume>` claims are gone.**
+**`<interruption>` can be followed by a sound alone, FIRST_MESSAGE's
+fire-once behaviour is documented, and two leftover `<speed>`/`<volume>`
+claims are gone.**
 
 - **A sound clip is a complete interruption.** `<interruption time="1.2s" />
   <noise sound="cough1" />` — the caller coughs over the agent — is now valid;
@@ -20,6 +21,12 @@ All notable changes to the Cekura plugin. Versions follow
 - **`<speed>`/`<volume>` do not have to start their action.** 0.17.3 fixed this
   in the tag tables but left the old rule in the eval-design pre-save
   checklist, which contradicted the table above it.
+- **`id: 0` (FIRST_MESSAGE) plays once and is never retried.** If the main
+  agent talks over it — typically its greeting landing during a leading
+  `<silence>` — the unplayed rest is dropped and the next turn is free-form, so
+  the opener gets paraphrased. The eval-design skill now says so and steers
+  "wait for the greeting, then say X" to `id: 0` `action: ""` plus a
+  `standard` `id: 1`.
 - **`voice_volume` is listed next to Cartesia's native volume** in
   choosing-personality. The "Cartesia volume" row read as the only volume
   control and steered quiet-caller tests onto Cartesia voices; the
