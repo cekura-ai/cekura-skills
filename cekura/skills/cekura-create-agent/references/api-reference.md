@@ -64,7 +64,7 @@ All other fields are optional. PATCH requires no mandatory fields.
 | Provider | Required | Optional |
 |----------|---------|---------|
 | `vapi` | — | `public_key`, `trigger_url` |
-| `retell` | — | `trigger_url`, `livekit_server_url` |
+| `retell` | — | `trigger_url` |
 | `elevenlabs` | — | `trigger_url`, `elevenlabs_base_url_override` |
 | `bland` | — | `encrypted_key` (Twilio bundle) |
 | `livekit` | `api_secret`, `url` | `agent_name`, `config`, `tracing_enabled`, `trigger_url` |
