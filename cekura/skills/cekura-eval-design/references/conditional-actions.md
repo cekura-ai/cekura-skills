@@ -230,7 +230,7 @@ recording also fixes the dialogue, so the testing agent can no longer adapt.
 | `<dtmf digits="..." />` | Send touch-tone digits. Supports digits, `#`, and `*` (e.g. `digits="123"`, `digits="456#"`, `digits="*9"`), or a `{{test_profile.key}}` placeholder for caller data (`digits="{{test_profile.pin}}#"`). | Combinable with text |
 | `<send_sms text="..." />` | Trigger an SMS for testing SMS-driven workflows | `text` required |
 | `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent | `t` required; `d` optional; `fixed_message: true` |
-| `<interruption time="Xs" />` | Cuts in `Xs` after the **main agent starts its next turn** (shorter = more aggressive) | **Must be `type: "action_followup"` AND must appear at the very start of the action string.** |
+| `<interruption time="Xs" />` | Cuts in `Xs` after the **main agent starts its next turn** (shorter = more aggressive) | **Must be `type: "action_followup"` AND must appear at the very start of the action string.** Must be followed by spoken text or a sound clip (`<noise sound="cough1" />`, `<audio id="…" />`); a bare tag, or one followed only by `<silence>`/`<hold>`, is rejected. |
 
 ### Environmental
 
@@ -767,6 +767,7 @@ The first six are one family: the payload validates, the write returns `ok`, and
 - **`<ivr>` or `<voicemail>` combined with other text or tags.** Both tags must be the *entire* action. Surrounding text or additional tags causes a validation error. Use a separate `action_followup` for any post-IVR / post-beep content.
 - **`<ivr>` in `id: 0` when testing an inbound IVR agent.** The main agent IS the IVR — leave `id: 0 action: ""` and let the main agent play its own menu, then press `<dtmf>` on later conditions. The `<ivr>` tag is only for the outbound case where the **testing agent** simulates a third-party IVR the main agent must navigate.
 - **Text before `<interruption>`.** `<interruption>` must be the very first thing in the action string.
+- **Nothing audible after `<interruption>`.** The tag sets only the timing. Follow it with spoken text or a sound clip — `<interruption time="1s" /> <noise sound="cough1" />` is a valid cough-over-the-agent cut-in; `<interruption time="1s" />` alone or followed only by a pause is rejected.
 - **`<interruption>` as `type: "standard"`.** It only works as `action_followup`; on `standard` it has no effect because the timing mechanism needs a preceding action to anchor against.
 - **Expecting `action_followup` to fire in the same turn.** `action_followup` fires on the **next turn** — after the testing agent sends condition X and the main agent replies. It does not fire in the same turn as condition X.
 - **Splitting same-turn actions across conditions.** Each condition is one testing-agent turn. If two testing-agent actions must happen without a main agent reply between them, they belong in the same `action` string — not split across a `standard` condition and an `action_followup`. The `action_followup` fires at the next turn (after the main agent replies); if the main agent never replies, the followup never fires and the call stalls.
@@ -805,7 +806,7 @@ The first six are one family: the payload validates, the write returns `ok`, and
 - [ ] If the scenario is intentionally designed to invite an interruption (long `<silence>` tag, opening-line-then-silence pattern, or any other deliberate pause the main agent is expected to speak through), the condition uses `type: "standard"` so the testing agent re-evaluates conditions on interruption instead of looping on the same `action_followup`.
 - [ ] `<ivr>` and `<voicemail>` are the entire action on their condition (no surrounding text or other tags)
 - [ ] Every `<voice>` has a compatible `provider` and `id`; use either `text="..."` or an opening/closing block for regional speech, never both
-- [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"`
+- [ ] `<interruption>` is at the very start of its action string AND uses `type: "action_followup"` AND is followed by spoken text or a `<noise>`/`<audio>` clip
 - [ ] `<network_simulation>` uses only `packet_loss` / `jitter` / `latency`
 - [ ] No XML tags used with `fixed_message: false`
 - [ ] No hand-written `<audio>` tags (created only by the audio-upload flow; a fabricated id fails reference validation)
@@ -884,7 +885,8 @@ XML tags (fixed_message:true only):
   <hold time="Xs" />                Dead air — NOT interruptible; bg noise stops; multiple per action
   <spell>TEXT</spell>               Spell text letter-by-letter
   <interruption time="Xs" />        Cut in Xs after agent starts speaking — MUST be action_followup
-                                     AND at the very start of the action string
+                                     AND at the very start of the action string;
+                                     followed by text or a <noise>/<audio> clip
   <speed ratio="N" />               Speech rate 0.1-2.0 (0.8-1.2 natural); anywhere in the action
   <speed ratio="N" text="..." />    Same, scoped to that text only
   <volume ratio="N" />              Volume 0–2; anywhere in the action; clips above 1.0

@@ -160,6 +160,10 @@ def check_action_tags(action, ctype, where, report):
         elif action[:INTERRUPTION.search(action).start()].strip():
             report.error(where, "<interruption> must be the first thing in the action; text "
                                 "before it is rejected")
+        spoken = re.sub(r"\[[^\]]+\]", "", re.sub(r"<[^>]+>", "", action)).strip()
+        if not spoken and not re.search(r"<(?:noise|audio)\s", action):
+            report.error(where, "<interruption> must be followed by spoken text or a "
+                                "<noise>/<audio> clip; a bare tag or a pause is rejected")
         if ctype != "action_followup":
             report.error(where, 'a condition whose action carries <interruption> must use '
                                 'type "action_followup"')

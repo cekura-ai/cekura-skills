@@ -46,7 +46,8 @@ These three parameters work together. `interruption_level` applies a preset that
 | Idle message count | Max times the idle message is repeated before the agent gives up (default: 3) |
 | Network simulation | Simulate packet loss, jitter, and latency (0–100%) for degraded-network testing |
 | Cartesia emotion | Emotional tone applied to Cartesia Sonic-3 voice generation |
-| Cartesia volume | Volume multiplier for Cartesia voice output |
+| Voice volume (`voice_volume`) | Caller speech volume on any TTS provider, applied after synthesis — the lever for "quiet caller" tests |
+| Cartesia volume | Cartesia's native volume setting (Cartesia Sonic-3 only); prefer Voice volume, which reaches much quieter levels and works on every provider |
 
 Network simulation is especially useful for testing how the main agent handles real-world call quality degradation — poor mobile connections, VoIP jitter, etc.
 
