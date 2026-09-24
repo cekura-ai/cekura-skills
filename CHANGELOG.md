@@ -4,6 +4,39 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.5 — 2026-09-24
+
+**`<interruption>` can be followed by a sound alone, FIRST_MESSAGE's
+fire-once behaviour is documented, and two leftover `<speed>`/`<volume>`
+claims are gone.**
+
+- **A sound clip is a complete interruption.** `<interruption time="1.2s" />
+  <noise sound="cough1" />` — the caller coughs over the agent — is now valid;
+  the backend used to reject it with "must be followed by spoken text", and
+  authors worked around it with a trailing `...`. The rule the skills now
+  state everywhere: after `<interruption>` comes spoken text or a
+  `<noise>`/`<audio>` clip. A bare tag, or one followed only by
+  `<silence>`/`<hold>`, is still rejected. `lint_suite.py` checks the same
+  rule, so a CI suite fails locally before the backend sees it.
+- **`<speed>`/`<volume>` do not have to start their action.** 0.17.3 fixed this
+  in the tag tables but left the old rule in the eval-design pre-save
+  checklist, which contradicted the table above it.
+- **`id: 0` (FIRST_MESSAGE) is sent once and never retried.** If the main
+  agent's speech cuts it off — typically its greeting landing during a leading
+  `<silence>`, which always yields — the unplayed rest is dropped for good.
+  Other conditions still match as usual; a free-form reply may paraphrase the
+  lost opener. The eval-design skill now says so and steers
+  "wait for the greeting, then say X" to `id: 0` `action: ""` plus a
+  `standard` `id: 1`.
+- **`voice_volume` is listed next to Cartesia's native volume** in
+  choosing-personality. The "Cartesia volume" row read as the only volume
+  control and steered quiet-caller tests onto Cartesia voices; the
+  `<volume>` tag and `voice_volume` both work on every provider.
+
+`<background_noise volume>` and `<noise volume>` are 0–1.0, as the validator
+enforces. Installs older than 0.13.0 still describe them as a 0.5–2
+multiplier — run `/cekura:upgrade-skills`.
+
 ## 0.17.4 — 2026-09-24
 
 **Retell agents no longer take a LiveKit server URL.** Retell web calls now

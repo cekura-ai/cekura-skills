@@ -535,6 +535,7 @@ Set `scenario_type: "conditional_actions"` and pass the structured payload in th
 | `fixed_message` | boolean | `true` = spoken verbatim; `false` = natural language instruction. Required. |
 
 When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the testing agent waits.
+id:0 is sent once and never retried: if the main agent's speech cuts it off (e.g. its greeting lands during a leading `<silence>`, which always yields), the unplayed rest is dropped for good; other conditions still match as usual. To say an exact line after the agent greets, use id:0 `action: ""` + a `standard` id:1.
 
 ### Action Types
 
@@ -554,7 +555,7 @@ Sibling tags can be combined with text and run left to right. Do not nest tags, 
 | `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues. Supports decimal seconds (`"0.5s"`) for sub-second precision. |
 | `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |
 | `<spell>TEXT</spell>` | Spell letter-by-letter |
-| `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be action_followup AND at start of action string.** |
+| `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be action_followup AND at start of action string**, followed by spoken text or a `<noise>`/`<audio>` clip. |
 | `<speed ratio="N" />` | Speech rate 0.1–2.0 (0.8–1.2 natural). Anywhere in the action; `text="..."` scopes it. |
 | `<volume ratio="N" />` | Volume 0–2. Anywhere in the action; `text="..."` scopes it. Clips above 1.0. |
 | `<voice provider="P" id="X" model="Y" />` | Switch the testing agent's TTS voice persistently — **the only way to put a second speaker in one call**. Add `text="..."` for a temporary regional voice, or wrap regional text in `<voice ...>...</voice>` (supports nested inline tags); the prior voice resumes afterward. `provider` + `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). Provider cannot change mid-call. |
