@@ -78,8 +78,7 @@ All examples use the v2 API (`/test_framework/v2/aiagents/`) with the nested `pr
     "credentials": {
       "api_key": "<Retell API Key>",
       "config": {
-        "trigger_url": "<optional — outbound call trigger URL>",
-        "livekit_server_url": "<optional — override Retell LiveKit server>"
+        "trigger_url": "<optional — outbound call trigger URL>"
       }
     },
     "chat_agent_details": {

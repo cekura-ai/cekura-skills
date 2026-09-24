@@ -4,6 +4,14 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.4 — 2026-09-24
+
+**Retell agents no longer take a LiveKit server URL.** Retell web calls now
+run through Retell's v3 WebRTC gateway, addressed by call ID, so
+`livekit_server_url` is gone from the Retell `credentials.config` keys in
+`cekura-create-agent` (the provider-keys tables and the Retell integration
+example). `trigger_url` is the only optional Retell key.
+
 ## 0.17.3 — 2026-09-23
 
 **`<speed>` and `<volume>` gain a scoped form, and three stale claims about
