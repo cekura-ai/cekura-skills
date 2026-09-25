@@ -12,10 +12,11 @@ That request returns as soon as the runs are **queued**. Nothing has been dialle
 A job that ends there passes while the agent is broken — a gate that is worse than no gate, because
 it looks like coverage. Something has to poll the result to a terminal state and exit non-zero.
 
-A result is terminal at `completed`, `failed`, `timeout` or `cancelled`. `completed` only means at
-least one run finished — not that any passed — and `failed_runs_count` counts only runs that
-finished and failed their checks, leaving out runs that errored or timed out. The gate therefore
-passes only when `status` is `completed` and `success_runs_count` equals `total_runs_count`.
+A result stays in progress until every one of its runs has ended, then settles at `completed`,
+`failed`, `timeout` or `cancelled`. `completed` means at least one run completed — not that any
+passed — and `failed_runs_count` counts only runs that completed and failed their checks, leaving
+out runs that errored or timed out. The gate therefore passes only when `status` is `completed`
+and `success_runs_count` equals `total_runs_count`.
 
 The template below does exactly that. Copy it; do not compose YAML from memory.
 
@@ -172,8 +173,9 @@ jobs:
                       break
               time.sleep(30)
 
-          # "completed" means at least one run finished, not that every run passed,
-          # and failed_runs_count leaves out runs that errored or timed out. Gate on passes.
+          # Once every run has ended the result is "completed" if any run completed, whether
+          # or not runs passed, and failed_runs_count leaves out runs that errored or timed
+          # out. Gate on passes.
           runs = result.get("runs") or {}
           for r in runs.values() if isinstance(runs, dict) else runs:
               if not r.get("success"):

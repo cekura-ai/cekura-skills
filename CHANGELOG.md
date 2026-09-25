@@ -16,8 +16,9 @@ passes a run that errored.**
   The step now reads the result `id`, polls `GET /test_framework/v1/results/{id}/`
   until `completed`, `failed`, `timeout` or `cancelled`, and retries a 5xx or a
   dropped connection instead of failing the job.
-- **The gate counts passes.** `completed` means at least one run finished, and
-  `failed_runs_count` leaves out runs that errored or timed out, so the step
+- **The gate counts passes.** Once every run has ended, a result is `completed`
+  if any run completed, whether or not runs passed, and `failed_runs_count`
+  leaves out runs that errored or timed out, so the step
   passes only when the result is `completed` and `success_runs_count` equals
   `total_runs_count`. `ci-wiring.md` says why, so an agent extending a workflow
   does not reintroduce either check.
