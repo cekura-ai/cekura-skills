@@ -10,7 +10,12 @@ curl -X POST ".../run_scenarios_json/" -d '{"agent_id": 42, "spec": ...}'   # �
 
 That request returns as soon as the runs are **queued**. Nothing has been dialled, nothing judged.
 A job that ends there passes while the agent is broken — a gate that is worse than no gate, because
-it looks like coverage. Something has to poll the runs to a terminal state and exit non-zero.
+it looks like coverage. Something has to poll the result to a terminal state and exit non-zero.
+
+A result is terminal at `completed`, `failed`, `timeout` or `cancelled`. `completed` only means at
+least one run finished — not that any passed — and `failed_runs_count` counts only runs that
+finished and failed their checks, leaving out runs that errored or timed out. The gate therefore
+passes only when `status` is `completed` and `success_runs_count` equals `total_runs_count`.
 
 The template below does exactly that. Copy it; do not compose YAML from memory.
 
@@ -132,10 +137,11 @@ jobs:
         if: ${{ env.DRY_RUN == 'false' && env.CEKURA_API_KEY != '' }}
         run: |
           python3 - <<'EOF'
-          import json, os, sys, time, urllib.request
+          import json, os, sys, time, urllib.error, urllib.request
 
           base = os.environ["CEKURA_BASE_URL"].rstrip("/")
           key = {"X-CEKURA-API-KEY": os.environ["CEKURA_API_KEY"], "Content-Type": "application/json"}
+          TERMINAL = {"completed", "failed", "timeout", "cancelled"}
 
           def call(method, path, payload=None):
               req = urllib.request.Request(base + path, payload, key, method=method)
@@ -144,22 +150,39 @@ jobs:
           spec = json.load(open("cekura.tests.json"))
           body = json.dumps({"agent_id": int(os.environ["CEKURA_AGENT_ID"]), "spec": spec}).encode()
           started = call("POST", "/test_framework/v1/scenarios/run_scenarios_json/", body)
-          ids = [r["id"] for r in started.get("results", [])]
-          print(f"queued {len(ids)} run(s)")
+          result_id = started["id"]
+          print(f"result {result_id}: {len(started.get('runs') or [])} run(s) queued")
 
           # The POST returns once the runs are queued — nothing has been dialled
-          # yet. Poll to a terminal state or the job is a gate that cannot fail.
+          # yet. Poll the result to a terminal state or the job is a gate that cannot fail.
           deadline = time.time() + 45 * 60
-          while time.time() < deadline:
-              runs = call("GET", "/test_framework/v2/runs/bulk/?ids=" + ",".join(map(str, ids)))
-              pending = [r for r in runs.get("results", []) if r.get("status") in ("queued", "running")]
-              if not pending:
-                  failed = [r for r in runs["results"] if r.get("status") != "passed"]
-                  for r in failed:
-                      print(f"FAILED {r.get('id')} {r.get('scenario_name')}: {r.get('status')}")
-                  sys.exit(f"{len(failed)} case(s) failed" if failed else 0)
+          while True:
+              if time.time() > deadline:
+                  sys.exit(f"timed out waiting for result {result_id}")
+              try:
+                  result = call("GET", f"/test_framework/v1/results/{result_id}/")
+              except urllib.error.HTTPError as e:
+                  if e.code < 500:
+                      raise
+                  print(f"poll got HTTP {e.code}; retrying")
+              except urllib.error.URLError as e:
+                  print(f"poll failed ({e.reason}); retrying")
+              else:
+                  if result.get("status") in TERMINAL:
+                      break
               time.sleep(30)
-          sys.exit("timed out waiting for runs")
+
+          # "completed" means at least one run finished, not that every run passed,
+          # and failed_runs_count leaves out runs that errored or timed out. Gate on passes.
+          runs = result.get("runs") or {}
+          for r in runs.values() if isinstance(runs, dict) else runs:
+              if not r.get("success"):
+                  print(f"FAILED run {r.get('id')} (scenario {r.get('scenario')}): "
+                        f"{r.get('status')} {r.get('error_message') or ''}".rstrip())
+          total, passed = result.get("total_runs_count", 0), result.get("success_runs_count", 0)
+          print(f"{passed}/{total} run(s) passed; result status {result['status']}")
+          if result["status"] != "completed" or total == 0 or passed != total:
+              sys.exit(f"{total - passed} of {total} run(s) did not pass")
           EOF
 ```
 
@@ -167,23 +190,31 @@ jobs:
 ## GitLab CI
 
 Same two Python blocks as the GitHub template — validate, then poll — with `when: manual` standing
-in for the manual dispatch.
+in for the manual dispatch. Paste each heredoc from the GitHub template in full where marked; do not
+move them into files, since nothing else in the repository would own them.
 
 ```yaml
+variables:
+  CEKURA_BASE_URL: https://api.cekura.ai   # CEKURA_API_KEY and CEKURA_AGENT_ID come from CI/CD variables
+
 cekura:validate:
   image: python:3.12-slim
-  variables:
-    CEKURA_API_KEY: $CEKURA_API_KEY
-    CEKURA_AGENT_ID: $CEKURA_AGENT_ID
   script:
     - python3 -c "import json; json.load(open('cekura.tests.json'))"
-    - python3 ci/validate.py          # the validate heredoc above, inlined here
+    - |
+      python3 - <<'EOF'
+      # the "Validate against Cekura" heredoc from the GitHub template, verbatim
+      EOF
 
 cekura:run:
   image: python:3.12-slim
   needs: [cekura:validate]
   when: manual                        # real calls stay opt-in, as on GitHub
-  script: python3 ci/run.py           # the poll heredoc above
+  script:
+    - |
+      python3 - <<'EOF'
+      # the "Run the suite" heredoc from the GitHub template, verbatim
+      EOF
 ```
 
 ## Extending a workflow that already calls Cekura
@@ -236,8 +267,8 @@ Written by SKILL.md step 6. One shape for every repository the skill touches:
 
 `cekura.tests.json` holds N deterministic cases covering <one line: what the suite proves>.
 
-Run them from **Actions → Cekura voice tests → Run workflow**. `dry run` is checked by default and
-validates the spec without placing calls or spending credit; uncheck it to run the suite for real.
+Run them from **Actions → Cekura voice tests → Run workflow**. A manual run places real calls; tick
+`dry run` to validate the spec without placing calls or spending credit.
 
 Requires `CEKURA_API_KEY` (repository secret) and `CEKURA_AGENT_ID` (repository variable).
 

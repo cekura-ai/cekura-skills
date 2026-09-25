@@ -4,6 +4,31 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.6 — 2026-09-25
+
+**The CI workflow the infra-suite skill writes can pass again, and it no longer
+passes a run that errored.**
+
+- **The "Run the suite" step polled the wrong thing.** It read run ids from a
+  `results` key the run response does not have, polled `runs/bulk/?ids=` (the
+  endpoint takes `run_ids`, so every poll was a 400), and waited for `queued` /
+  `passed`, which are not statuses. Every dispatch failed, however the agent did.
+  The step now reads the result `id`, polls `GET /test_framework/v1/results/{id}/`
+  until `completed`, `failed`, `timeout` or `cancelled`, and retries a 5xx or a
+  dropped connection instead of failing the job.
+- **The gate counts passes.** `completed` means at least one run finished, and
+  `failed_runs_count` leaves out runs that errored or timed out, so the step
+  passes only when the result is `completed` and `success_runs_count` equals
+  `total_runs_count`. `ci-wiring.md` says why, so an agent extending a workflow
+  does not reintroduce either check.
+- **GitLab snippet no longer points at files nothing creates.** It inlined
+  `ci/validate.py` / `ci/run.py`; it now shows where each heredoc goes.
+- **The README template contradicted the workflow.** It said `dry run` is
+  checked by default; the workflow leaves it unchecked, so a manual dispatch
+  places real calls. The README now says so.
+- `/cekura-report` waits for all four terminal statuses and counts passes the
+  same way.
+
 ## 0.17.5 — 2026-09-24
 
 **`<interruption>` can be followed by a sound alone, FIRST_MESSAGE's

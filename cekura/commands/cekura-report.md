@@ -241,7 +241,7 @@ Pass `agent_id` and `scenarios` (array of IDs). Capture the returned `result_id`
 
 On voice, SIP or WebRTC modes, launch 3–5 of the scenarios first and read their results (connected, finished inside the cap, no setup error) before launching the rest. A setup error — rejected configuration or mock change, missing phone-number record, bad credentials — hits every run identically: stop and fix it rather than let the remainder fail.
 
-Poll `mcp__cekura__results_retrieve(id=result_id)` until `status` is `completed` or `failed`. Use `mcp__cekura__results_list` to monitor overall progress. If a run hangs, use `mcp__cekura__end_call` to terminate it.
+Poll `mcp__cekura__results_retrieve(id=result_id)` until `status` is `completed`, `failed`, `timeout` or `cancelled`. `completed` means at least one run finished, not that runs passed — count passes from `success_runs_count` against `total_runs_count`, since `failed_runs_count` leaves out runs that errored or timed out. Use `mcp__cekura__results_list` to monitor overall progress. If a run hangs, use `mcp__cekura__end_call` to terminate it.
 
 If `status=failed`, inspect `failed_reasons` and surface infra issues (connection errors, websocket handshake failures) before writing the report.
 
