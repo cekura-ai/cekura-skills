@@ -46,6 +46,7 @@ Use the appropriate MCP tool based on the main agent's connection mode. Do not c
 | WebRTC (Retell) | `mcp__cekura__scenarios_run_retell_webrtc` |
 | WebRTC (LiveKit) | `mcp__cekura__scenarios_run_livekit_v2` |
 | WebRTC (Pipecat) | `mcp__cekura__scenarios_run_pipecat_v2` |
+| Text (Pipecat Cloud) | `mcp__cekura__scenarios_run_pipecat_chat` |
 | WebRTC (ElevenLabs) | `mcp__cekura__scenarios_run_elevenlabs` |
 
 Poll the result using `mcp__cekura__results_retrieve` until the run is complete, then inspect the transcript.

@@ -4,6 +4,17 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.7 — 2026-09-26
+
+**Pipecat Cloud agents can be run as text.**
+
+- New `pipecat-chat` mode in `/run-evals` and `/cekura-report`, backed by the
+  `scenarios_run_pipecat_chat` tool. It runs evaluators as a text conversation
+  against the same Pipecat Cloud deployment used for voice, over RTVI, so it
+  needs `credentials.config.pipecat_agent_name` and a bot with RTVI enabled.
+  Mock tools are not supported on this mode. Onboarding and create-agent
+  verification tables list the tool for text checks.
+
 ## 0.17.6 — 2026-09-25
 
 **The CI workflow the infra-suite skill writes can pass again, and it no longer

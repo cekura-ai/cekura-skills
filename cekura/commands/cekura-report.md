@@ -21,6 +21,7 @@ allowed-tools:
     "mcp__cekura__scenarios_run_websocket",
     "mcp__cekura__scenarios_run_pipecat_v1",
     "mcp__cekura__scenarios_run_pipecat_v2",
+    "mcp__cekura__scenarios_run_pipecat_chat",
     "mcp__cekura__scenarios_run_retell_webrtc",
     "mcp__cekura__scenarios_run_vapi_webrtc",
     "mcp__cekura__scenarios_run_livekit_v2",
@@ -115,7 +116,7 @@ Some scenarios need pre-existing state in the user's backend (e.g. cancelling an
 2. **Get a list of mock data to add to your system** — Cekura tells you the exact records (IDs, names, statuses) it will reference; you seed them in your backend before the run.
 3. **Skip scenarios that require mock state** — only generate/keep scenarios that don't depend on backend state (e.g. greetings, FAQs, booking-new-appointment flows, off-topic deflection).
 
-**For all other providers (websocket, pipecat, pipecat-v2, livekit, sip, text) — offer only 2 options:**
+**For all other providers (websocket, pipecat, pipecat-v2, pipecat-chat, livekit, sip, text) — offer only 2 options:**
 
 1. **Get a list of mock data to add to your system**
 2. **Skip scenarios that require mock state**
@@ -199,7 +200,7 @@ Mapping:
 | `provider.type: elevenlabs` (analogous) | `elevenlabs`; add `voice` if `telephony.phone_number`; add `text` if `provider.chat_agent_details` |
 | `provider.type: livekit` | `livekit`; add `voice` if `telephony.phone_number` |
 | `provider.type: agora` | `agora` |
-| `provider.type: pipecat` | `pipecat-v2` (preferred), `pipecat`; add `voice` if `telephony.phone_number` |
+| `provider.type: pipecat` | `pipecat-v2` (preferred), `pipecat`; add `pipecat-chat` if `credentials.config.pipecat_agent_name`; add `voice` if `telephony.phone_number` |
 | `provider.type: self_hosted` + `telephony.sip_uri` | `sip` |
 | `provider.type: self_hosted` + `telephony.websocket_url` (no sip) | `chirp` (raw-PCM voice) or `websocket` (JSON/text) |
 | `provider.type: self_hosted` + only `telephony.phone_number` | `voice` |
@@ -229,6 +230,7 @@ The user can still override by passing a mode explicitly in their initial comman
 | websocket | `mcp__cekura__scenarios_run_websocket` |
 | pipecat | `mcp__cekura__scenarios_run_pipecat_v1` |
 | pipecat-v2 | `mcp__cekura__scenarios_run_pipecat_v2` |
+| pipecat-chat | `mcp__cekura__scenarios_run_pipecat_chat` |
 | retell | `mcp__cekura__scenarios_run_retell_webrtc` |
 | vapi | `mcp__cekura__scenarios_run_vapi_webrtc` |
 | livekit | `mcp__cekura__scenarios_run_livekit_v2` |
