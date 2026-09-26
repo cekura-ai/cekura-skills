@@ -1,8 +1,8 @@
 ---
 name: run-evals
-description: Execute Cekura evaluators (voice, text, websocket, sip, pipecat, vapi, retell, elevenlabs, livekit); also use when the user wants to run a cron job's evaluators immediately or trigger a scheduled run on demand
-argument-hint: "[evaluator IDs or 'all'] [mode: voice/text/websocket/sip/pipecat/pipecat-v2/vapi/retell/elevenlabs/livekit]"
-allowed-tools: ["AskUserQuestion", "mcp__cekura__aiagents_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__scenarios_run_pipecat_v2", "mcp__cekura__scenarios_run_vapi_webrtc", "mcp__cekura__scenarios_run_retell_webrtc", "mcp__cekura__scenarios_run_elevenlabs", "mcp__cekura__scenarios_run_livekit_v2", "mcp__cekura__scenarios_run_sip", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+description: Execute Cekura evaluators (voice, text, websocket, sip, pipecat, pipecat-chat, vapi, retell, elevenlabs, livekit); also use when the user wants to run a cron job's evaluators immediately or trigger a scheduled run on demand
+argument-hint: "[evaluator IDs or 'all'] [mode: voice/text/websocket/sip/pipecat/pipecat-v2/pipecat-chat/vapi/retell/elevenlabs/livekit]"
+allowed-tools: ["AskUserQuestion", "mcp__cekura__aiagents_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__scenarios_run_pipecat_v2", "mcp__cekura__scenarios_run_pipecat_chat", "mcp__cekura__scenarios_run_vapi_webrtc", "mcp__cekura__scenarios_run_retell_webrtc", "mcp__cekura__scenarios_run_elevenlabs", "mcp__cekura__scenarios_run_livekit_v2", "mcp__cekura__scenarios_run_sip", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-tracking-beacon -->
 
@@ -39,6 +39,7 @@ Execute one or more evaluators against the target agent.
    - **`chirp`** = when `telephony.websocket_url` is set on a voice agent (raw-PCM audio websocket).
    - **WebRTC** (`vapi`, `retell`, `elevenlabs`, `livekit`, `agora`) = when `provider.type` matches.
    - **`pipecat-v2` / `pipecat`** = when `provider.type: pipecat`.
+   - **`pipecat-chat`** = when `provider.type: pipecat` and `provider.credentials.config.pipecat_agent_name` is set (text over the same Pipecat Cloud deployment; the bot must have RTVI enabled). Mock tools are not supported on this mode.
 
    Selection rule:
    - **0 candidates** → STOP. Surface: *"Agent has no provider, phone number, SIP endpoint, or websocket URL configured — can't run evals."*
@@ -62,6 +63,7 @@ Execute one or more evaluators against the target agent.
    | websocket | `mcp__cekura__scenarios_run_websocket` |
    | pipecat | `mcp__cekura__scenarios_run_pipecat_v1` |
    | pipecat-v2 | `mcp__cekura__scenarios_run_pipecat_v2` |
+   | pipecat-chat | `mcp__cekura__scenarios_run_pipecat_chat` |
    | vapi | `mcp__cekura__scenarios_run_vapi_webrtc` |
    | retell | `mcp__cekura__scenarios_run_retell_webrtc` |
    | elevenlabs | `mcp__cekura__scenarios_run_elevenlabs` |
@@ -92,6 +94,7 @@ Execute one or more evaluators against the target agent.
 | websocket | Medium | Medium | Custom websocket agents (requires a websocket URL) |
 | pipecat | Medium | Medium | Pipecat/Daily WebRTC with a manually supplied room URL per evaluator run |
 | pipecat-v2 | Medium | Medium | Pipecat Cloud with configured project credentials; Cekura creates sessions |
+| pipecat-chat | Fast | Low | Text run against the same Pipecat Cloud deployment over RTVI; no STT/TTS |
 | vapi / retell / elevenlabs / livekit (WebRTC) | Medium | Medium | Provider-native browser/SDK testing |
 | voice (PSTN) | Slow | High | Realistic phone-call validation (requires a phone number) |
 | sip | Slow | High | Self-hosted SIP endpoints (requires a SIP endpoint) |

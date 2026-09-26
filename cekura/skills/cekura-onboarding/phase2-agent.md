@@ -69,7 +69,7 @@ There is **no SDK requirement to onboard**. Simulations dispatch via provider AP
 **Path A — Telephony (preferred, fewest moving parts).** If the agent has a phone number or SIP endpoint, that's the whole connection. Collect in ONE clarification: **phone number (or SIP URI) + inbound-or-outbound + language, together** — plus the complete system prompt via the description gate. **Ask inbound/outbound explicitly — never infer it** (it decides who dials; a wrong guess means the run can't connect), and don't silently default the language. **No provider credentials needed** — do not ask for any.
 
 **Path B — WebRTC dispatch (only when there's no phone path, or the user chooses it).** Now — and only now — collect credentials. **On this path credentials are mandatory — never offer "skip credentials for now":** WebRTC dispatch is the connection, so without them the agent is unreachable and the first-run verification (Phase 5T) cannot happen. If the user can't share them, offer the telephony path instead or pause here.
-- **Pipecat Cloud**: `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name`. Runs via `scenarios_run_pipecat_v2`.
+- **Pipecat Cloud**: `credentials.api_key` (pipecat.daily.co → Settings → API Keys) + `credentials.config.pipecat_agent_name`. Runs via `scenarios_run_pipecat_v2` (voice) or `scenarios_run_pipecat_chat` (text, same deployment, RTVI enabled).
 - **LiveKit**: `credentials.url` + `api_key` + `api_secret` + `config.agent_name` (must match the worker's `agent_name`). Runs via `scenarios_run_livekit_v2`.
 
 **Both paths:**

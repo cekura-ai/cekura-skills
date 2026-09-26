@@ -14,6 +14,7 @@ Retrieve the agent (`aiagents_retrieve`) and match its configured connection:
 | `telephony.sip_uri` | `scenarios_run_sip` |
 | `telephony.websocket_url` | `scenarios_run_chirp` |
 | `provider.type` pipecat (WebRTC) | `scenarios_run_pipecat_v2` |
+| `provider.type` pipecat (text, `credentials.config.pipecat_agent_name` set) | `scenarios_run_pipecat_chat` |
 | `provider.type` livekit (WebRTC) | `scenarios_run_livekit_v2` |
 | `provider.type` vapi / retell (WebRTC) | `scenarios_run_vapi_webrtc` / `scenarios_run_retell_webrtc` |
 | `provider.type` elevenlabs | `scenarios_run_elevenlabs` |

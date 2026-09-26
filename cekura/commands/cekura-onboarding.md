@@ -37,6 +37,7 @@ allowed-tools:
     "mcp__cekura__predefined_metrics_copy_create",
     "mcp__cekura__scenarios_run_pipecat_v1",
     "mcp__cekura__scenarios_run_pipecat_v2",
+    "mcp__cekura__scenarios_run_pipecat_chat",
     "mcp__cekura__scenarios_run_retell_webrtc",
     "mcp__cekura__scenarios_run_vapi_webrtc",
     "mcp__cekura__scenarios_run_livekit_v2",
