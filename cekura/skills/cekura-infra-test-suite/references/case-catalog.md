@@ -65,7 +65,7 @@ read the default from the installed library version and cite it; do not guess. U
 |---|---|
 | **Shape** | the caller goes silent and stays silent |
 | **Sequence asserts** | the reprompt sequence fires in order, the configured number of times, then the agent ends the call |
-| **Threshold asserts** | fires at the configured threshold; each prompt matches its exact string from the code |
+| **Threshold asserts** | fires at the configured threshold; each prompt is identified by its distinguishing content from the code (the escalation order is the point, not verbatim wording) |
 | **Drop if** | the codebase has no idle timer |
 
 Go silent for longer than any plausible timeout when the value is unknown. A condition whose action

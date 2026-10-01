@@ -61,21 +61,25 @@ Every value comes from somewhere specific. Fill each from this table and change 
 |---|---|---|
 | `AGENT_NAME_BASE` | `agent_name` in `pcc-deploy.toml` | the name in code (`agent_name=`/`agentName:`), else the Cekura agent's saved `agent_name`, else the repo name |
 | …then, for both | lowercase it and replace anything outside `[a-z0-9-]` with `-`. It is a label for previews, not production's name; Pipecat caps the preview at 54 characters, so keep the base ≤ 46 | same, ≤ 57 |
-| `build_context`, `dockerfile` | the directory holding `pcc-deploy.toml` joined with its `[build] context_dir`, and its `[build] dockerfile`. **Set both whenever the bot is not at the repository root** | the context and `-f` the repo's own `docker build` uses (deploy workflow, Makefile, README); set both when not at the root |
+| `build_context`, `dockerfile` | the directory holding `pcc-deploy.toml` joined with its `[build] context_dir`, and its `[build] dockerfile` — with no `[build]` section, that directory and `Dockerfile`. **Set both whenever the bot is not at the repository root** | the context and `-f` the repo's own `docker build` uses (deploy workflow, Makefile, README); set both when not at the root |
 | build source | **`cloud_build` (the default)**. Use `image` only when this workflow itself builds and pushes the PR's commit to a tag unique to it (`:pr-<number>-<sha>`), by copying the repo's existing build-and-push steps before `deploy-preview`. The `image` in `pcc-deploy.toml` is a fixed tag pointing at production's code — **never** pass it | the Dockerfile above |
 | `secret_set` | **`secret_set` from `pcc-deploy.toml`**, so the first run works. In the handoff, recommend a CI-only set holding every key the bot reads (list them), created with `pcc secrets set <name> --file .env` in the same org | — |
 | `env` lines | — | one `KEY=${{ secrets.KEY }}` line per **secret** the worker reads: each plugin's key (`DEEPGRAM_API_KEY`, `OPENAI_API_KEY`, `ELEVEN_API_KEY`, `CARTESIA_API_KEY`, …) and every `os.getenv`/`process.env` that holds a credential. Not non-secret settings that have defaults |
 | `region`, `agent_profile` | from `pcc-deploy.toml`, when set | — |
 | `krisp_viva`, `max_session_duration` | `[krisp_viva] audio_filter` and `max_session_duration` from `pcc-deploy.toml`, when set — a bot built on Krisp may not start without it | — |
+| spec and README | the repo root — unless the bot lives in a subdirectory: then `<bot dir>/cekura.tests.json`, `spec:` set to that path on every action, and the section in that directory's README | same |
+| `min_agents` | omit: it defaults to `max_agents`, so every agent is warm when the suite starts | — |
 | `max_agents` | omit, so one agent per suite call is kept warm. If `[scaling] max_agents` in `pcc-deploy.toml` is lower than the suite's call count, set `max_agents` to it **and** `concurrency_limit` on `run-suite` to the same number | — |
 | `concurrency_limit` | as above | `3`: one runner serves every call |
+| manual job | the same `concurrency_limit` and `share_link` as the preview job | same |
 | `share_link` | `true` only when the repo is known private (`gh repo view --json visibility`, or the dashboard checkout says so). Otherwise `false` — on a public repo the PR comment would publish a link that opens every transcript and recording for 7 days | same |
 | secret names | reuse the names an existing deploy workflow already uses (`PIPECAT_API_KEY`, `LIVEKIT_URL`, …); otherwise the template's | same |
 | `CEKURA_BASE_URL` | set the repository variable when the Cekura workspace is not on `https://api.cekura.ai` (an EU workspace is `https://api.eu.cekura.ai`) | same |
 
 **Pin the release tag**, and check it exists before handing over:
 `git ls-remote --tags https://github.com/cekura-ai/cekura-github-actions v1.3.0`. If it prints
-nothing, say so first in the handoff: every `uses:` line will fail until it is published.
+nothing, say so first in the handoff — before anything else, a step-1b mismatch included: every
+`uses:` line will fail until it is published.
 
 ## What the customer must already have
 

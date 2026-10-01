@@ -51,8 +51,8 @@ Offer the label only where `references/preview-deploy.md` says the bot qualifies
 that already names the trigger has answered this question — do not ask it. Otherwise ask it while
 reporting what you found, then keep working. **Do not wait for the answer** — if none has arrived by
 step 6, write manual dispatch and say in the handoff how to add a trigger. Nothing else is a
-question: not which files to create, not where to put them, not whether to proceed, and — in the
-dashboard context — not credentials.
+question — not which files to create, where to put them, or whether to proceed — except missing
+credentials in a terminal (step 7); in the dashboard, never credentials.
 
 ## API Access — Cekura MCP Server
 
@@ -240,7 +240,9 @@ Use the live schema returned by the target environment as the authority. A v1 sp
 ```
 
 Keep stable, descriptive `key` values. Put reusable defaults at the suite level only when every
-case actually shares them. Set `language` explicitly on every conditional-actions case.
+case actually shares them; any `defaults` field can be overridden on one case. Set `language`
+explicitly on every conditional-actions case. `tools` gives the simulated caller abilities:
+`dtmf`, `receive_dtmf`, `end_call`, `end_call_only_on_transfer`, `send_sms`, `call_hold`.
 
 Supply test data only where a case needs it:
 
@@ -449,7 +451,8 @@ validating appears to need a write beyond validation itself, stop and report the
 
 ### 8. Deliver
 
-Only once validation has returned `valid: true`.
+Only once validation has returned `valid: true` — or, where credentials could not be had, with
+the suite labelled unvalidated as step 7 says.
 
 **Dashboard** — one `github_open_pull_request` call carrying every file; never one at a time, never
 for a suite that has not validated. The body carries what the repository does not: the coverage
