@@ -25,6 +25,20 @@ poller.**
   It sends the channel the inline template dropped, so `pipecat_v2` and
   `livekit_v2` agents are no longer run on `voice`; GitLab fetches the same
   script at the same tag. One implementation of the gate, nothing vendored.
+- **One pass on real repos.** `preview-deploy.md` says where every template
+  value comes from — the preview base name, `build_context`/`dockerfile` for a
+  bot outside the repo root (from `pcc-deploy.toml`'s `[build]`), cloud build
+  over the toml's fixed `image` (which would deploy production's code), the
+  toml's secret set, region, agent profile, Krisp and session limit, warm-agent
+  cap, `share_link` by repo visibility — and has complete Pipecat and LiveKit
+  workflows. Node `@livekit/agents` 1.4.10+ workers qualify; GitLab repos and
+  bots no preview can reach are not offered the label. Every job's request is
+  validated with its channel, the handoff and PR body list every secret,
+  variable, secret set and label with where it is created, and the release tag
+  is checked.
+- **Discovery traces each config value to where it is consumed**, so a
+  constant nothing reads is reported rather than asserted, and the
+  mid-sentence pause is set from the configured end-of-turn delay.
 - **`run_suite.py` reads `CEKURA_BASE_URL`**, the name every workflow uses. It
   read only `CEKURA_API_URL`, so the documented variable silently meant prod.
 - **The test writer's PR workflow no longer calls `ci/cekura_validate.py`**,

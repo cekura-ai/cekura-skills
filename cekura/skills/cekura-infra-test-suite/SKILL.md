@@ -16,7 +16,7 @@ metadata:
 
 # Cekura Voice AI Infrastructure CI/CD Suite
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.18"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.18"`. It returns immediately and lets Cekura see which skills are in use; if the tool is not available, carry on without it.
 
 Build a compact, reviewable Cekura test suite **in the voice-agent repository**. The deliverable is a
 JSON spec that CI submits to Cekura's Tests-as-Code endpoint. It is not a folder of persistent
@@ -47,7 +47,8 @@ launched from the Cekura dashboard.
 > calls, with a `dry run` box for validating instead. Add a trigger too: push, PR, a schedule — or a
 > `cekura-test` label that deploys each labelled PR as its own preview and runs the suite against it?
 
-Offer the label only where `references/preview-deploy.md` says the bot qualifies. Ask it while
+Offer the label only where `references/preview-deploy.md` says the bot qualifies. A launch message
+that already names the trigger has answered this question — do not ask it. Otherwise ask it while
 reporting what you found, then keep working. **Do not wait for the answer** — if none has arrived by
 step 6, write manual dispatch and say in the handoff how to add a trigger. Nothing else is a
 question: not which files to create, not where to put them, not whether to proceed, and — in the
@@ -398,7 +399,7 @@ If the repository already has a workflow that calls Cekura, extend that one — 
 #### The README section
 
 Append the template in `references/ci-wiring.md`, filled in — what the suite proves, how to trigger
-it, the two secrets, and step 2's coverage table including the uncovered rows.
+it, every secret and variable it reads, and step 2's coverage table including the uncovered rows.
 
 ### 7. Lint, then validate — validation is not optional
 
@@ -410,9 +411,9 @@ accept every tag. A spec that fails any of those is not a weaker suite — it ca
 
 So the order is: lint, then validate, then fix, then validate again, until it comes back valid.
 
-**Validate with the MCP tool `scenarios_validate_json`.** It takes `{agent_id, spec}`, returns
-`{valid, plan}`, creates nothing, and needs neither a key nor a shell — a sandbox without a terminal
-is no reason to ship unvalidated. Never reach for `scenarios_run_json`: same question under
+**Validate with the MCP tool `scenarios_validate_json`.** It takes `{agent_id, spec, channel}`,
+returns `{valid, plan}`, creates nothing, and needs neither a key nor a shell — a sandbox without a
+terminal is no reason to ship unvalidated. Never reach for `scenarios_run_json`: same question under
 `dry_run=true`, but it also spends credit and dials, so it is withheld where destructive tools are.
 
 **In a terminal, if there are no credentials in the session, ask for them** — an API key and the
@@ -427,23 +428,17 @@ estimated cost, without creating objects or placing a call:
 
 ```bash
 python3 <skill>/scripts/lint_suite.py cekura.tests.json --strict   # free, offline, first
-CEKURA_API_KEY=… python3 <skill>/scripts/run_suite.py --dry-run --agent-id 123
+CEKURA_API_KEY=… python3 <skill>/scripts/run_suite.py --dry-run --agent-id 123 --channel pipecat_v2
 ```
 
 Both run from this skill's directory — they are authoring tools, not files the repository keeps.
-The raw form:
+Over raw HTTP, POST the same body to `$CEKURA_BASE_URL/test_framework/v1/scenarios/validate_scenarios_json/`
+with an `X-CEKURA-API-KEY` header.
 
-```bash
-curl -sS -X POST \
-  -H "X-CEKURA-API-KEY: $CEKURA_API_KEY" \
-  -H "Content-Type: application/json" \
-  "$CEKURA_BASE_URL/test_framework/v1/scenarios/validate_scenarios_json/" \
-  -d '{"agent_id": 123, "spec": { ... }}'
-```
-
-For a preview, validate with its `channel` and a placeholder override. Require `valid: true`, and
-read the returned plan rather than glancing at the flag: each case must list the metrics you
-intended, and any case given an inline `test_profile` must report `mode: "inline"`. A case reporting
+Validate every request the workflow sends, each with its `channel` — a preview's also with a
+placeholder override (`references/preview-deploy.md` lists them). Require `valid: true`, and read
+the returned plan rather than glancing at the flag: each case must list the metrics you intended,
+and any case given an inline `test_profile` must report `mode: "inline"`. A case reporting
 `existing` means the inline block did not take effect.
 
 Errors come back keyed by their location in the file — `scenarios[2].metrics[0]` — and all at once,
@@ -456,14 +451,16 @@ validating appears to need a write beyond validation itself, stop and report the
 
 Only once validation has returned `valid: true`.
 
-**Dashboard** — one `github_open_pull_request` call carrying every file; never one at a time,
-never for a suite that has not validated. The body carries what the repository does not: the
-coverage table, the uncovered rows and why, the dry-run plan (cases, planned runs, estimated cost),
-the two secrets, and — if step 1b found the agent contradicts the repository — that mismatch first.
+**Dashboard** — one `github_open_pull_request` call carrying every file; never one at a time, never
+for a suite that has not validated. The body carries what the repository does not: the coverage
+table, the uncovered rows and why, the dry-run plan (cases, planned runs, estimated cost), every
+secret, variable, secret set and label the workflow reads with where each is created, and — if step
+1b found the agent contradicts the repository — that mismatch first.
 
-If the write is refused with `403 Resource not accessible by integration`, the cause is the
-`Workflows` permission named in *The deliverable* above — not repository access, which the checkout
-already proved. Say that plainly instead of suggesting the connection is broken.
+If the write is refused — `403 Resource not accessible by integration`, or `422 … The permissions
+requested are not granted to this installation` — the cause is the `Workflows` permission named in
+*The deliverable* above, not repository access, which the checkout already proved. Say that plainly
+instead of suggesting the connection is broken.
 
 **Terminal** — leave the files in the working tree and stop. Do not commit, branch or
 push unless asked; offer the commit message, and `gh pr create` if they want a PR. Report what the

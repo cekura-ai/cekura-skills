@@ -169,6 +169,9 @@ Do not add a second workflow. Read the existing one and match it:
 - Keep its trigger conventions. If the repo gates on a label, use a label. If it gates on a branch,
   use the branch.
 - Preserve unrelated jobs and steps exactly.
+- Replace an inline Cekura poller or a vendored `ci/` script with `run-suite`; it is the same gate,
+  maintained in one place. Give each existing job an `if:` on its own event before adding new
+  triggers, so a `labeled` or `closed` event does not re-run it.
 
 ## Secrets and what must never be committed
 
