@@ -300,7 +300,8 @@ the Cekura agent's saved credentials must match — and the `gh label create cek
 |---|---|---|
 | `deploy-preview`: crash-looping, with a reason | the PR's bot fails at startup | `pcc agent logs <base>-pr-<n>`; it is the PR's bug |
 | `deploy-preview`: not ready within the timeout | slow cloud build or scale-up | raise `wait_timeout` / `build_timeout` |
-| every run: `Failed to create Pipecat session` | the Cekura agent's key is for a different Pipecat org, or the preview never became ready | match the org (above) |
+| every run: `Failed to create Pipecat session` | the Cekura agent's key is for a different Pipecat org | match the org (above) |
+| only the first few runs: `Failed to create Pipecat session` | the preview had not settled | raise `settle_seconds` on `deploy-preview` (default 180) |
 | `start-worker`: registered under another name, or none | `livekit-agents` older than 1.6, with the name set in code | upgrade, or read `agent_name` from `LIVEKIT_AGENT_NAME` |
 | `start-worker`: registration line does not say which agent name | pre-1.6 or custom logging | upgrade; or confirm the worker reads `LIVEKIT_AGENT_NAME` and set `allow_unverified_agent_name` |
 | LiveKit transcripts show two agents answering | production registers with no name in the same project | a CI-only LiveKit project |
