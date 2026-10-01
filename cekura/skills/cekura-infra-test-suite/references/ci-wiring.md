@@ -18,20 +18,21 @@ passed — and `failed_runs_count` counts only runs that completed and failed th
 out runs that errored or timed out. The gate therefore passes only when `status` is `completed`
 and `success_runs_count` equals `total_runs_count`.
 
-The template below does exactly that. Copy it; do not compose YAML from memory.
+Cekura's published `run-suite` action does exactly that, and the template below uses it. Copy the
+template; do not compose YAML from memory, and do not re-implement the poller inline.
 
-| Step | Needs | Cost | Runs on |
+| Mode | Needs | Cost | Runs on |
 |---|---|---|---|
-| spec is well-formed | nothing | free | every trigger, forks included |
-| validate against Cekura | API key + agent id | free | every trigger where secrets exist |
-| run the suite | API key + agent id | real calls | a manual dispatch, unless `dry run` is ticked |
+| validate (`dry_run: true`) | API key + agent id | free | every trigger where secrets exist |
+| run the suite | API key + agent id | real calls | a manual dispatch unless `dry run` is ticked, or a labelled PR in preview mode |
 
 ## Nothing is vendored into the repository
 
-Earlier versions copied `lint_suite.py` and `run_suite.py` into `cekura/`. They no longer do. The
-linter is an authoring tool that runs from this skill's directory, and the workflow below polls
-inline — about thirty lines of stdlib Python in a heredoc, with no file for the customer to own,
-review, or let rot. The repository ends up with three paths and no vendored code.
+The linter is an authoring tool that runs from this skill's directory. The workflow runs the suite
+through `cekura-ai/cekura-github-actions/run-suite`, pinned to a release tag: it posts the spec with
+the run's channel and override, polls to a terminal state, ends in-flight calls if the job is
+cancelled, and writes a per-case summary. The repository ends up with three paths and no vendored
+code, and a fix to the gate reaches every repository with a tag bump.
 
 ## Choosing the run target
 
@@ -49,23 +50,19 @@ committed file gate staging and production without an edit.
 If the agent is not configured for the channel, the run is rejected with a message naming what is
 missing — so a wrong channel fails loudly rather than testing the wrong thing.
 
+`execution_mode` on `run-suite` is the channel. Set it from step 1b's agent record; leaving the
+default `voice` on a Pipecat or LiveKit agent dials a phone number the agent may not have.
+
 ### Pointing a run at the build under review
 
 This is the difference between "our staging agent still works" and "this PR did not break the bot".
-For WebRTC channels the request can name the deployment to dial:
+For Pipecat Cloud and LiveKit bots, a `cekura-test` label can deploy the pull request under its own
+name and point the run at it — **`references/preview-deploy.md`** has the whole wiring, including
+which bots qualify and what the customer must already have.
 
-```bash
-CEKURA_CHANNEL=pipecat_v2 CEKURA_PIPECAT_AGENT_NAME="mybot-pr-${PR_NUMBER}" \
-  python3 <skill>/scripts/run_suite.py --agent-id "$CEKURA_AGENT_ID"
-```
-
-`run_suite.py` turns those into the request's `pipecat_data.pipecat_agent_name` (or
-`livekit_data.agent_name` / `url` for LiveKit). It requires the PR's ephemeral deployment to exist
-already — wire the suite job `needs:` the deploy job.
-
-Without an ephemeral deployment per PR, the honest framing is different: the suite gates a shared
-staging agent, so it catches regressions after deploy, not before merge. Say which one you have
-built; do not describe the first while wiring the second.
+Without a preview per PR, the honest framing is different: the suite gates a shared staging agent,
+so it catches regressions after deploy, not before merge. Say which one you have built; do not
+describe the first while wiring the second.
 
 ## GitHub Actions
 
@@ -92,6 +89,7 @@ on:
   # asked for one, e.g.
   #   pull_request:
   #     paths: ["cekura.tests.json", "src/**"]
+  # For a labelled-PR preview, use references/preview-deploy.md instead.
 
 permissions:
   contents: read
@@ -101,122 +99,63 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CEKURA_API_KEY: ${{ secrets.CEKURA_API_KEY }}
-      CEKURA_AGENT_ID: ${{ vars.CEKURA_AGENT_ID }}
-      CEKURA_BASE_URL: ${{ vars.CEKURA_BASE_URL || 'https://api.cekura.ai' }}
-      # A manual run honours the checkbox. Anything else validates only —
-      # a push that quietly spends credit is not a default anyone consents to.
-      DRY_RUN: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Spec is well-formed
-        run: python3 -c "import json,sys; json.load(open('cekura.tests.json'))"
-
       # Secrets are absent on fork pull requests; validation there would fail
       # for a reason that has nothing to do with the change.
-      - name: Validate against Cekura
-        if: ${{ env.CEKURA_API_KEY != '' }}
-        run: |
-          python3 - <<'EOF'
-          import json, os, sys, urllib.request
-
-          spec = json.load(open("cekura.tests.json"))
-          body = json.dumps({"agent_id": int(os.environ["CEKURA_AGENT_ID"]), "spec": spec}).encode()
-          url = os.environ["CEKURA_BASE_URL"].rstrip("/") + \
-              "/test_framework/v1/scenarios/validate_scenarios_json/"
-          req = urllib.request.Request(url, body, {
-              "X-CEKURA-API-KEY": os.environ["CEKURA_API_KEY"],
-              "Content-Type": "application/json",
-          })
-          out = json.load(urllib.request.urlopen(req, timeout=60))
-          print(json.dumps(out.get("plan", out), indent=2))
-          if not out.get("valid"):
-              sys.exit("spec rejected by Cekura")
-          EOF
-
-      - name: Run the suite
-        if: ${{ env.DRY_RUN == 'false' && env.CEKURA_API_KEY != '' }}
-        run: |
-          python3 - <<'EOF'
-          import json, os, sys, time, urllib.error, urllib.request
-
-          base = os.environ["CEKURA_BASE_URL"].rstrip("/")
-          key = {"X-CEKURA-API-KEY": os.environ["CEKURA_API_KEY"], "Content-Type": "application/json"}
-          TERMINAL = {"completed", "failed", "timeout", "cancelled"}
-
-          def call(method, path, payload=None):
-              req = urllib.request.Request(base + path, payload, key, method=method)
-              return json.load(urllib.request.urlopen(req, timeout=60))
-
-          spec = json.load(open("cekura.tests.json"))
-          body = json.dumps({"agent_id": int(os.environ["CEKURA_AGENT_ID"]), "spec": spec}).encode()
-          started = call("POST", "/test_framework/v1/scenarios/run_scenarios_json/", body)
-          result_id = started["id"]
-          print(f"result {result_id}: {len(started.get('runs') or [])} run(s) queued")
-
-          # The POST returns once the runs are queued — nothing has been dialled
-          # yet. Poll the result to a terminal state or the job is a gate that cannot fail.
-          deadline = time.time() + 45 * 60
-          while True:
-              if time.time() > deadline:
-                  sys.exit(f"timed out waiting for result {result_id}")
-              try:
-                  result = call("GET", f"/test_framework/v1/results/{result_id}/")
-              except urllib.error.HTTPError as e:
-                  if e.code < 500:
-                      raise
-                  print(f"poll got HTTP {e.code}; retrying")
-              except urllib.error.URLError as e:
-                  print(f"poll failed ({e.reason}); retrying")
-              else:
-                  if result.get("status") in TERMINAL:
-                      break
-              time.sleep(30)
-
-          # Once every run has ended the result is "completed" if any run completed, whether
-          # or not runs passed, and failed_runs_count leaves out runs that errored or timed
-          # out. Gate on passes.
-          runs = result.get("runs") or {}
-          for r in runs.values() if isinstance(runs, dict) else runs:
-              if not r.get("success"):
-                  print(f"FAILED run {r.get('id')} (scenario {r.get('scenario')}): "
-                        f"{r.get('status')} {r.get('error_message') or ''}".rstrip())
-          total, passed = result.get("total_runs_count", 0), result.get("success_runs_count", 0)
-          print(f"{passed}/{total} run(s) passed; result status {result['status']}")
-          if result["status"] != "completed" or total == 0 or passed != total:
-              sys.exit(f"{total - passed} of {total} run(s) did not pass")
-          EOF
+      - if: ${{ env.CEKURA_API_KEY != '' }}
+        uses: cekura-ai/cekura-github-actions/run-suite@v1.3.0
+        with:
+          api_key: ${{ env.CEKURA_API_KEY }}
+          api_url: ${{ vars.CEKURA_BASE_URL || 'https://api.cekura.ai' }}
+          agent_id: ${{ vars.CEKURA_AGENT_ID }}
+          spec: cekura.tests.json
+          execution_mode: voice        # the agent's channel, from step 1b
+          # A manual run honours the checkbox. Anything else validates only —
+          # a push that quietly spends credit is not a default anyone consents to.
+          dry_run: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run }}
 ```
+
+`run-suite` fails the job unless the result is `completed` and every run passed, prints each run
+that did not pass with its reason, and exposes `result_url` and a Markdown `summary_file`.
 
 
 ## GitLab CI
 
-Same two Python blocks as the GitHub template — validate, then poll — with `when: manual` standing
-in for the manual dispatch. Paste each heredoc from the GitHub template in full where marked; do not
-move them into files, since nothing else in the repository would own them.
+GitLab cannot use the GitHub action, so it runs the same script the action runs, fetched at the
+same release tag — one implementation of the gate everywhere, and nothing vendored. The script
+reads its inputs from generic environment names (`API_URL`, `NAME`, `TIMEOUT`, …), and a project
+or group CI/CD variable of the same name would win over a YAML `variables:` entry — an existing
+`API_URL` would receive the Cekura key. So every input is set in the shell, under `env`, never
+through `variables:`.
 
 ```yaml
 variables:
-  CEKURA_BASE_URL: https://api.cekura.ai   # CEKURA_API_KEY and CEKURA_AGENT_ID come from CI/CD variables
+  # CEKURA_API_KEY and CEKURA_AGENT_ID come from CI/CD variables
+  CEKURA_RUN_SUITE: https://raw.githubusercontent.com/cekura-ai/cekura-github-actions/v1.3.0/run-suite/run_suite.py
+
+.cekura:
+  image: python:3.12-slim
+  before_script:
+    - python3 -c "import urllib.request,os; urllib.request.urlretrieve(os.environ['CEKURA_RUN_SUITE'], '/tmp/run_suite.py')"
+    - >-
+      cekura() { env API_URL="${CEKURA_BASE_URL:-https://api.cekura.ai}"
+      API_KEY="$CEKURA_API_KEY" AGENT_ID="$CEKURA_AGENT_ID" SPEC=cekura.tests.json
+      EXECUTION_MODE=voice NAME= TIMEOUT=3600 FREQUENCY= CONCURRENCY_LIMIT=
+      PIPECAT_DATA= LIVEKIT_DATA= SHARE_LINK=true DRY_RUN="$1" python3 /tmp/run_suite.py; }
 
 cekura:validate:
-  image: python:3.12-slim
+  extends: .cekura
   script:
-    - python3 -c "import json; json.load(open('cekura.tests.json'))"
-    - |
-      python3 - <<'EOF'
-      # the "Validate against Cekura" heredoc from the GitHub template, verbatim
-      EOF
+    - cekura true
 
 cekura:run:
-  image: python:3.12-slim
+  extends: .cekura
   needs: [cekura:validate]
-  when: manual                        # real calls stay opt-in, as on GitHub
+  when: manual                          # real calls stay opt-in, as on GitHub
   script:
-    - |
-      python3 - <<'EOF'
-      # the "Run the suite" heredoc from the GitHub template, verbatim
-      EOF
+    - cekura false
 ```
 
 ## Extending a workflow that already calls Cekura
@@ -230,6 +169,9 @@ Do not add a second workflow. Read the existing one and match it:
 - Keep its trigger conventions. If the repo gates on a label, use a label. If it gates on a branch,
   use the branch.
 - Preserve unrelated jobs and steps exactly.
+- Replace an inline Cekura poller or a vendored `ci/` script with `run-suite`; it is the same gate,
+  maintained in one place. Give each existing job an `if:` on its own event before adding new
+  triggers, so a `labeled` or `closed` event does not re-run it.
 
 ## Secrets and what must never be committed
 
@@ -252,9 +194,11 @@ Write that unless the user picks something else.
 | Push to the deploy branch / pre-deploy | the whole suite as a release gate |
 | Nightly on the main branch | catching drift from provider-side changes nobody committed |
 | Pull requests touching the spec or `src/` | only where the suite is small, fast and reliably green |
+| A `cekura-test` label on a pull request | gating **the PR's own build** on a preview — `references/preview-deploy.md`. Places real calls, once per labelling |
 
 Whatever they pick, `workflow_dispatch` with the `dry_run` checkbox stays in the file alongside it,
-and every non-manual trigger validates only unless they explicitly asked otherwise.
+and every non-manual trigger validates only unless they explicitly asked otherwise. Choosing the
+label preview is that explicit ask: applying the label is the per-PR consent to place calls.
 
 Cases in one file run in parallel, so wall-clock is roughly the longest single call, not the sum.
 Cost is not — it scales with case count times `frequency`. That is the real reason for the 10–12

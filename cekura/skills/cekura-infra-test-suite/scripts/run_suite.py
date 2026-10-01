@@ -13,7 +13,7 @@ library only — no pip install on the runner.
 
 Environment:
     CEKURA_API_KEY            required
-    CEKURA_API_URL            default https://api.cekura.ai
+    CEKURA_BASE_URL           default https://api.cekura.ai (CEKURA_API_URL also read)
     CEKURA_AGENT_ID           the agent to test, if --agent-id is not passed
     CEKURA_CHANNEL            voice (default), text, elevenlabs, livekit_v2, pipecat_v2
     CEKURA_PIPECAT_AGENT_NAME pipecat_v2 only — point the run at this deployment
@@ -234,7 +234,10 @@ def main():
     if not args.agent_id:
         print("no agent id: pass --agent-id or set CEKURA_AGENT_ID", file=sys.stderr)
         sys.exit(2)
-    base = (os.environ.get("CEKURA_API_URL") or "https://api.cekura.ai").rstrip("/")
+    # CEKURA_BASE_URL is the name the workflows and the skill use; CEKURA_API_URL is
+    # what this script read first, so both work rather than one silently meaning prod.
+    base = (os.environ.get("CEKURA_BASE_URL") or os.environ.get("CEKURA_API_URL")
+            or "https://api.cekura.ai").rstrip("/")
 
     spec, cases = load_spec(args.spec)
     payload = build_payload(spec, args)

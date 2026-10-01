@@ -4,6 +4,47 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.18.0 — 2026-10-01
+
+**The infra-suite skill can gate a pull request on its own preview deployment,
+and the workflows it writes use Cekura's published actions instead of an inline
+poller.**
+
+- **`cekura-test` label preview.** For Pipecat Cloud and LiveKit Agents bots, the
+  skill's one question now offers a label that deploys each labelled pull
+  request as `<base>-pr-<number>` on the customer's own infrastructure, runs the
+  committed suite against it, comments the result, and removes it. The new
+  `references/preview-deploy.md` says which bots qualify (a Pipecat pipeline
+  that is not on Pipecat Cloud does not), what the customer must already have,
+  the templates, and what each failure means. Applying the label is the consent
+  to place calls; pushes do not re-run it.
+- **Preview steps are in scope.** Deploy, wait, run and teardown steps built
+  from the published actions are part of the Cekura workflow, not a deploy
+  workflow change. Runtime code, Dockerfiles and deploy configs still are.
+- **Workflows run the suite through `cekura-ai/cekura-github-actions/run-suite`.**
+  It sends the channel the inline template dropped, so `pipecat_v2` and
+  `livekit_v2` agents are no longer run on `voice`; GitLab fetches the same
+  script at the same tag. One implementation of the gate, nothing vendored.
+- **One pass on real repos.** `preview-deploy.md` says where every template
+  value comes from — the preview base name, `build_context`/`dockerfile` for a
+  bot outside the repo root (from `pcc-deploy.toml`'s `[build]`), cloud build
+  over the toml's fixed `image` (which would deploy production's code), the
+  toml's secret set, region, agent profile, Krisp and session limit, warm-agent
+  cap, `share_link` by repo visibility — and has complete Pipecat and LiveKit
+  workflows. Node `@livekit/agents` 1.4.10+ workers qualify; GitLab repos and
+  bots no preview can reach are not offered the label. Every job's request is
+  validated with its channel, the handoff and PR body list every secret,
+  variable, secret set and label with where it is created, and the release tag
+  is checked.
+- **Discovery traces each config value to where it is consumed**, so a
+  constant nothing reads is reported rather than asserted, and the
+  mid-sentence pause is set from the configured end-of-turn delay.
+- **`run_suite.py` reads `CEKURA_BASE_URL`**, the name every workflow uses. It
+  read only `CEKURA_API_URL`, so the documented variable silently meant prod.
+- **The test writer's PR workflow no longer calls `ci/cekura_validate.py`**,
+  which nothing creates; it validates with `run-suite` in dry-run mode, and
+  says how it composes with a label preview.
+
 ## 0.17.6 — 2026-09-25
 
 **The CI workflow the infra-suite skill writes can pass again, and it no longer

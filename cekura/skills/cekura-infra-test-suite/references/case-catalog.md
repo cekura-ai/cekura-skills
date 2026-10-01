@@ -52,8 +52,12 @@ positive time that clears the lead-in; `0s` only where the agent is already mid-
 | **Threshold asserts** | probe at the endpointing window ±0.2s |
 | **Drop if** | never |
 
-1.2s is shorter than any plausible endpointing window, so the assertion holds without knowing the
-configured value. Use `<silence>` (interruptible), not `<hold>`.
+Take the pause from the configured end-of-turn delay (`min_endpointing_delay`, a
+`stop_secs`/`speech_timeout`, a VAD `stop_secs`) and stay clearly under it — 1.2s only when that
+delay is longer. With a semantic turn detector on top, the window stretches toward its maximum,
+so make the fragment obviously incomplete ("my postcode is … SW1"). Where the repo sets no value,
+read the default from the installed library version and cite it; do not guess. Use `<silence>`
+(interruptible), not `<hold>`.
 
 ## 3. Idle escalation to hangup
 
@@ -61,7 +65,7 @@ configured value. Use `<silence>` (interruptible), not `<hold>`.
 |---|---|
 | **Shape** | the caller goes silent and stays silent |
 | **Sequence asserts** | the reprompt sequence fires in order, the configured number of times, then the agent ends the call |
-| **Threshold asserts** | fires at the configured threshold; each prompt matches its exact string from the code |
+| **Threshold asserts** | fires at the configured threshold; each prompt is identified by its distinguishing content from the code (the escalation order is the point, not verbatim wording) |
 | **Drop if** | the codebase has no idle timer |
 
 Go silent for longer than any plausible timeout when the value is unknown. A condition whose action
