@@ -1,7 +1,7 @@
 {
   "name": "cekura",
   "displayName": "Cekura",
-  "version": "0.17.6",
+  "version": "0.17.7",
   "description": "Access Cekura voice AI testing & evaluation skills, commands, and MCP tools directly from Cursor.",
   "author": {
     "name": "Cekura",
