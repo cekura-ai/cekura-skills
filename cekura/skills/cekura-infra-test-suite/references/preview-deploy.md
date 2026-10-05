@@ -8,6 +8,16 @@ a PR-scoped name, runs the committed suite against it, comments the result, and 
 Everything runs on the customer's side with the customer's keys — their GitHub secrets, their
 Pipecat Cloud org or LiveKit project. Cekura supplies only the simulated caller.
 
+**Two modes, one workflow file.** The customer picks either or both:
+
+| Mode | Starts on | Tests | Deploys |
+|---|---|---|---|
+| Manual | Actions → Run workflow (with a `dry run` box) | the agent already connected to Cekura — production or staging, as saved on the Cekura agent | nothing |
+| Preview | the `cekura-test` label on a pull request | that pull request's code | a temporary preview, removed after |
+
+Manual is always written. Preview is added when the customer asks for it and the bot qualifies
+(below); otherwise the file stays manual-only and the handoff says why.
+
 The moving parts are published actions in `cekura-ai/cekura-github-actions`, so the customer's
 workflow stays short and nothing is vendored:
 
