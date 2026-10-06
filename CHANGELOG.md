@@ -4,6 +4,23 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.17.7 — 2026-10-05
+
+**The conditional-actions reference no longer says the main agent's key presses
+need an `<ivr>` tag to be seen.**
+
+- **Key presses reach the testing agent in every scenario.** The reference said
+  DTMF pressed by the main agent appears only when the scenario contains an
+  `<ivr>` tag. The voice runtime adds its DTMF aggregator to every call and passes
+  each group of presses to the conditions as a Main Agent turn `DTMF: <digits>`,
+  with no dependency on `<ivr>`. The reference now says so, and explains the
+  grouping (presses under about 2 seconds apart form one turn; `#` ends one).
+- **Identical key-press conditions are resolved by script order.** The condition
+  matcher resolves identically worded conditions to the earliest one not yet
+  executed, so a script whose menu steps all read "picks an option" is matched by
+  position, not by meaning. The reference now asks for each menu step to name its
+  digit, and the menu it answers when a digit repeats across menus.
+
 ## 0.17.6 — 2026-09-25
 
 **The CI workflow the infra-suite skill writes can pass again, and it no longer

@@ -138,7 +138,7 @@ XML tags are interpreted as syntax only when `fixed_message: true`. With `false`
 
 | Tag | Behavior | Constraint |
 |---|---|---|
-| `<ivr text="..." />` | Uninterruptible IVR menu played **by the testing agent**. Can appear in any condition. **When the scenario contains the `<ivr>` tag, any DTMF digits pressed by the main agent appear in the transcript** — use this to write conditions that detect which digit the main agent pressed (e.g., `"The main agent pressed 1"`). | **Must be the entire action.** No surrounding text or other tags. `<hold>` and `<audio>` inside `text` are rejected at save time — use `<ignore_interruptions>` for clip sequences. |
+| `<ivr text="..." />` | Uninterruptible IVR menu played **by the testing agent**. Can appear in any condition. Use it with conditions that detect which digit the main agent pressed (e.g., `"The main agent pressed 1"`) — see **DTMF from the main agent** below. | **Must be the entire action.** No surrounding text or other tags. `<hold>` and `<audio>` inside `text` are rejected at save time — use `<ignore_interruptions>` for clip sequences. |
 | `<voicemail text="..." />` or `<voicemail />` | Uninterruptible voicemail greeting + auto-beep at end. `text` is optional (silent voicemail allowed). | **Must be the entire action.** Post-beep message goes in a separate `action_followup` condition. |
 | `<ignore_interruptions>...</ignore_interruptions>` | Protected playback span: everything inside — text, attached `<audio>` clips, `<hold>`/`<silence>` pauses, or any mix — plays to completion. The main agent's speech during the span **is still transcribed and evaluated**; it just never interrupts playback or triggers a reply. | Block tag scoped to a **span**: content goes between the tags (never in an attribute), it may appear more than once per action with text/tags before and after, and spans cannot nest. |
 | `<endcall />` | Terminates the call | **May be combined with surrounding text** (the only "communication-class" tag that allows this — useful for natural sign-offs like `Thanks, that's all I needed <endcall />`). |
@@ -467,7 +467,7 @@ For the less-common case where the testing agent simulates an external IVR for t
 
 Use this pattern only when the **main agent makes outbound calls** and the scenario simulates a third-party IVR the main agent must navigate. The `<ivr>` tag goes in the testing agent's action because the testing agent plays the IVR audio.
 
-**DTMF transcript visibility:** When the scenario contains an `<ivr>` tag, any DTMF digits pressed by the main agent appear in the transcript. This lets you write precise conditions based on which digit was pressed — for example `"The main agent pressed 1"` instead of the vague `"The agent presses or speaks a menu option"`.
+**DTMF from the main agent:** keys the main agent presses always reach the testing agent — this does not depend on an `<ivr>` tag being in the scenario. They arrive as a Main Agent turn of the form `DTMF: <digits>`: presses less than about 2 seconds apart are grouped into one turn, and `#` ends a group immediately. Each turn is matched against the conditions like speech, so write precise conditions naming the digit — `"The main agent pressed 1"` instead of the vague `"The agent presses or speaks a menu option"`. Several conditions with identical wording are resolved in script order (the earliest one not yet executed), so give each menu step its own wording — name the digit, and the menu it answers if the same digit is pressed at more than one menu.
 
 ```json
 {
@@ -674,7 +674,7 @@ Most common IVR test. The main agent plays its own IVR menu; the testing agent u
 
 ### IVR simulation — outbound (testing agent plays an external IVR)
 
-Less common. The main agent makes an outbound call and the scenario simulates the receiving end's IVR. The testing agent's `id: 0` action plays the IVR menu via `<ivr text="..." />` (entire action). Subsequent conditions react to the main agent's DTMF or speech. **When the scenario contains an `<ivr>` tag, DTMF digits pressed by the main agent appear in the transcript** — write conditions using the digit directly (e.g., `"The main agent pressed 2"`) rather than relying on speech detection. See "Worked Example 2b: IVR Simulation (Outbound)" above.
+Less common. The main agent makes an outbound call and the scenario simulates the receiving end's IVR. The testing agent's `id: 0` action plays the IVR menu via `<ivr text="..." />` (entire action). Subsequent conditions react to the main agent's DTMF or speech. The main agent's key presses arrive as `DTMF: <digits>` turns (see **DTMF from the main agent** above) — write conditions using the digit directly (e.g., `"The main agent pressed 2"`) rather than relying on speech detection. See "Worked Example 2b: IVR Simulation (Outbound)" above.
 
 ### Voicemail with post-beep message
 
