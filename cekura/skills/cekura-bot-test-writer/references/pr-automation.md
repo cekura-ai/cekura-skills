@@ -66,6 +66,9 @@ jobs:
       # Every path the writer is allowed to touch, as one regex: the spec(s)
       # and the coverage note. Nothing else, ever.
       SPEC_ALLOWLIST: '^(<your spec>\.json|<coverage note>\.md)$'
+      CEKURA_BASE_URL: ${{ vars.CEKURA_BASE_URL || 'https://api.cekura.ai' }}
+      # Whether the key exists, without handing the key itself to every step.
+      HAS_CEKURA_KEY: ${{ secrets.CEKURA_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -93,9 +96,6 @@ jobs:
             a PR comment with `gh pr comment`, including every row you left uncovered.
           claude_args: >-
             --allowed-tools "Bash(git diff:*),Bash(git log:*),Bash(git fetch:*),Bash(git merge-base:*),Bash(python3:*),Bash(gh pr comment:*),Bash(gh pr view:*),Read,Edit,Grep,Glob"
-        env:
-          CEKURA_API_KEY: ${{ secrets.CEKURA_API_KEY }}
-          CEKURA_BASE_URL: ${{ vars.CEKURA_BASE_URL || 'https://api.cekura.ai' }}
 
       - name: Guard — only spec files may change
         run: |
@@ -109,16 +109,20 @@ jobs:
             exit 1
           fi
 
+      # Dry run only: validates and prices the edit, never dials. Validate
+      # the request the suite's own workflow sends: its execution_mode, and
+      # for pipecat_v2 / livekit_v2 a placeholder preview override, e.g.
+      #   pipecat_data: '{"pipecat_agent_name": "my-bot-pr-0"}'
       - name: Validate the edited spec
-        if: ${{ env.CEKURA_API_KEY != '' }}
-        env:
-          CEKURA_API_KEY: ${{ secrets.CEKURA_API_KEY }}
-        run: |
-          set -euo pipefail
-          python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$SPEC"
-          # dry run only — see the validate heredoc in
-          # cekura-infra-test-suite/references/ci-wiring.md
-          python3 ci/cekura_validate.py
+        if: ${{ env.HAS_CEKURA_KEY == 'true' }}
+        uses: cekura-ai/cekura-github-actions/run-suite@v1.3.0
+        with:
+          api_key: ${{ secrets.CEKURA_API_KEY }}
+          api_url: ${{ env.CEKURA_BASE_URL }}
+          agent_id: ${{ vars.CEKURA_AGENT_ID }}
+          spec: ${{ env.SPEC }}
+          execution_mode: voice
+          dry_run: true
 
       - name: Commit the suite edit
         run: |
@@ -133,6 +137,11 @@ jobs:
 
 Order matters: guard, then validate, then commit. A spec that has not returned `valid: true` must
 not reach the branch, and a job that commits first has already lost the argument.
+
+**Where the suite's own workflow gates on a `cekura-test` label preview**
+(`cekura-infra-test-suite/references/preview-deploy.md`), the two compose: the writer's commit lands
+on the branch, and a reviewer applies the label to run the edited suite against that pull request's
+preview. The writer never applies the label itself — that would place calls nobody chose.
 
 ## The commit-back gotcha
 

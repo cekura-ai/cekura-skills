@@ -33,6 +33,15 @@ spelling. Keep terminal end-call/max-duration assertions last, preserve strict a
 unsupported transport or fixture-dependent behavior explicitly uncovered rather than pretending it
 is tested.
 
+To gate a pull request rather than staging, a `cekura-test` label can deploy that pull request as
+its own preview and run the suite against it — Pipecat Cloud bots as `<base>-pr-<number>` in the
+customer's org, LiveKit Agents workers inside the CI job under that name — using the published
+`cekura-ai/cekura-github-actions` `run-suite`, `pipecat/*-preview` and `livekit/*-worker` actions.
+The run reaches the preview through a request-only override (`pipecat_data.pipecat_agent_name` or
+`livekit_data.agent_name`), so the Cekura agent's saved credentials must be for the same Pipecat
+org or LiveKit project. A Pipecat pipeline that is not on Pipecat Cloud cannot be reached by
+`pipecat_v2` at all. The label is the consent to place calls; pushes do not re-run it.
+
 Metrics and evaluators are separate concepts. Metrics evaluate transcripts after the fact. Evaluators simulate callers to exercise the agent.
 
 ## API Basics

@@ -6,9 +6,15 @@ you in the spec**. A question whose answer changes no assertion is not worth ask
 Find what you can from the code first. Surface only the gaps you genuinely cannot resolve, in one
 batch, at the end. Do not interview the user through the whole list.
 
-Write the findings to `/tmp/cekura-suite-discovery.md`. Every numeric value and every quoted phrase
-must carry a `file:line`, because those are what turn a sequence assertion into a threshold
-assertion, and an unsourced number is a guess.
+Keep the findings as working notes outside the repository (e.g. `/tmp/cekura-suite-discovery.md`);
+they are not a deliverable, and their substance ends up in the README coverage table. Every
+numeric value and every quoted phrase must carry a `file:line`, because those are what turn a
+sequence assertion into a threshold assertion, and an unsourced number is a guess.
+
+**Trace every value to where it is consumed, not just where it is defined.** A config constant
+that nothing passes to the pipeline is not what runs: an `IDLE_TIMEOUT = 10` the session never
+receives leaves the library default in charge, and asserting 10s fails the suite, not the bot.
+Record the consuming `file:line` too; a value with no consumer is a finding for the handoff.
 
 ---
 
