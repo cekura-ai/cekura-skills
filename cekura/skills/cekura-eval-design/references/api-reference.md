@@ -110,7 +110,7 @@ Returns a result object with `id`, `status`, and `runs` array.
   "scenario_type": "string — one of: 'instruction' (default), 'real_world_smart', 'real_world_fixed', 'conditional_actions'. Must be 'conditional_actions' to use the conditional_actions field below.",
   "scenario_language": "string — language code (e.g., 'en', 'es'). Required when scenario_type is 'conditional_actions'; otherwise inferred from personality.",
   "instructions": "string — free-form, first-person scenario instructions for behavioral evaluators. Do not pass a JSON object here. For conditional-actions evaluators, use the `conditional_actions` field below and leave this unset.",
-  "conditional_actions": "object — required for scenario_type='conditional_actions'. Carries {role, conditions[]}. See 'Authoring a Conditional-Actions Evaluator' below.",
+  "conditional_actions": "object — required for scenario_type='conditional_actions'. Carries {role, first_message, conditions[{when, say, then}]}. See 'Authoring a Conditional-Actions Evaluator' below.",
   "expected_outcome_prompt": "string — what success looks like",
   "metrics": "[integer] — metric IDs to evaluate against",
   "tags": "[string] — tags for filtering",
@@ -143,18 +143,18 @@ Set `scenario_type` to `"conditional_actions"` and pass the structured payload v
   "scenario_language": "en",
   "conditional_actions": {
     "role": "You are an established patient calling to check your appointment status",
+    "first_message": "Hi, I'd like to check on my upcoming appointment",
     "conditions": [
-      { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I'd like to check on my upcoming appointment", "type": "standard", "fixed_message": true },
-      { "id": 1, "condition": "The agent asks for your name", "action": "Provide your name", "type": "standard", "fixed_message": false },
-      { "id": 2, "condition": "The agent confirms your identity", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
+      { "when": "The agent asks for your name", "say": "<ai_generated>Provide your name</ai_generated>" },
+      { "when": "The agent confirms your identity", "say": "Thanks, that's all I needed <endcall />" }
     ]
   }
 }
 ```
 
-Do not set `first_message` or `instructions` when using `conditional_actions` — they are managed for you.
+Every step is spoken verbatim unless the whole step is wrapped in `<ai_generated>…</ai_generated>`; `then` (optional, a list) holds follow-up steps for the testing agent's next turns. Do not set the scenario-level `first_message` or `instructions` when using `conditional_actions` — they are managed for you. On read, `instructions` returns this same `first_message` / `when` / `say` / `then` shape as a JSON string. The older id-based condition shape is still accepted on write but deprecated.
 
-For full field semantics (all 5 required condition fields), validation rules, XML tag constraints, worked examples, anti-patterns, validation checklist, and troubleshooting, see `references/conditional-actions.md`.
+For full field semantics, validation rules, XML tag constraints, worked examples, anti-patterns, validation checklist, and troubleshooting, see `references/conditional-actions.md`.
 
 ## Personality Schema
 

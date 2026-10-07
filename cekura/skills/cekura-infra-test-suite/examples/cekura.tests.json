@@ -3,7 +3,7 @@
   "version": "1",
   "suite": {
     "name": "Voice agent CI gate",
-    "description": "Deterministic pipeline coverage. Every turn on both sides is a fixed message, so a red result means the agent, not the test."
+    "description": "Deterministic pipeline coverage. Every turn on both sides is a verbatim step, so a red result means the agent, not the test."
   },
   "defaults": {
     "language": "en",
@@ -25,41 +25,19 @@
       ],
       "conditional_actions": {
         "role": "You are Priya, calling to ask about opening hours and then to book a slot.",
+        "first_message": "",
         "conditions": [
           {
-            "id": 0,
-            "condition": "FIRST_MESSAGE",
-            "action": "",
-            "type": "standard",
-            "fixed_message": true
+            "when": "The agent greets the caller and offers help",
+            "say": "Hi — could you tell me what your opening hours are, and whether you take walk-ins?",
+            "then": [
+              "<interruption time=\"1.5s\" />mhm",
+              "<interruption time=\"1.2s\" />stop — wait."
+            ]
           },
           {
-            "id": 1,
-            "condition": "The agent greets the caller and offers help",
-            "action": "Hi — could you tell me what your opening hours are, and whether you take walk-ins?",
-            "type": "standard",
-            "fixed_message": true
-          },
-          {
-            "id": 2,
-            "condition": 1,
-            "action": "<interruption time=\"1.5s\" />mhm",
-            "type": "action_followup",
-            "fixed_message": true
-          },
-          {
-            "id": 3,
-            "condition": 2,
-            "action": "<interruption time=\"1.2s\" />stop — wait.",
-            "type": "action_followup",
-            "fixed_message": true
-          },
-          {
-            "id": 4,
-            "condition": "The agent has stopped talking and is waiting for the caller",
-            "action": "Sorry about that. Can I book the Friday ten o'clock slot?",
-            "type": "standard",
-            "fixed_message": true
+            "when": "The agent has stopped talking and is waiting for the caller",
+            "say": "Sorry about that. Can I book the Friday ten o'clock slot?"
           }
         ]
       },
@@ -76,27 +54,15 @@
       ],
       "conditional_actions": {
         "role": "You are a caller who goes quiet after the first question and never speaks again.",
+        "first_message": "",
         "conditions": [
           {
-            "id": 0,
-            "condition": "FIRST_MESSAGE",
-            "action": "",
-            "type": "standard",
-            "fixed_message": true
+            "when": "The agent greets the caller and offers help",
+            "say": "I wanted to ask about a booking. <silence time=\"45s\" />"
           },
           {
-            "id": 1,
-            "condition": "The agent greets the caller and offers help",
-            "action": "I wanted to ask about a booking. <silence time=\"45s\" />",
-            "type": "standard",
-            "fixed_message": true
-          },
-          {
-            "id": 2,
-            "condition": "The agent has asked more than once whether the caller is still there",
-            "action": "<silence time=\"45s\" />",
-            "type": "standard",
-            "fixed_message": true
+            "when": "The agent has asked more than once whether the caller is still there",
+            "say": "<silence time=\"45s\" />"
           }
         ]
       },

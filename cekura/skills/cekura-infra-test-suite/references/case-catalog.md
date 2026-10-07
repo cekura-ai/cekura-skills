@@ -40,7 +40,7 @@ Four assertions, one call. The single highest-yield case in the suite.
 | **Threshold asserts** | the real `min_words` / interrupt gate: one word below it, exactly at it, one above |
 | **Drop if** | never — every pipeline with a barge-in path needs this |
 
-Each barge is `<interruption time="Xs" />` at the very start of an `action_followup` action. Use a
+Each barge is `<interruption time="Xs" />` at the very start of a `then` step. Use a
 positive time that clears the lead-in; `0s` only where the agent is already mid-sentence.
 
 ## 2. Mid-sentence pause
@@ -68,9 +68,9 @@ read the default from the installed library version and cite it; do not guess. U
 | **Threshold asserts** | fires at the configured threshold; each prompt is identified by its distinguishing content from the code (the escalation order is the point, not verbatim wording) |
 | **Drop if** | the codebase has no idle timer |
 
-Go silent for longer than any plausible timeout when the value is unknown. A condition whose action
-is a long deliberate pause is the one place `type: "standard"` is correct — an `action_followup`
-re-executes its action verbatim on interruption, restarting the pause and looping forever. **When
+Go silent for longer than any plausible timeout when the value is unknown. A step that is a long
+deliberate pause belongs in a condition's `say`, never in a `then` step — a `then` step
+re-executes verbatim on interruption, restarting the pause and looping forever. **When
 two conditions both hold pauses, their predicates must be tellable apart**, or the matcher re-picks
 an already-executed condition and you have traded a replay loop for a re-match loop.
 
@@ -113,8 +113,8 @@ Also catches the "Okay." loop — an agent repeating a filler line to itself.
 | **Sequence asserts** | the agent does not treat menu silence as its turn; it presses the right key, or leaves a coherent message after the beep |
 | **Drop if** | the agent never places outbound calls |
 
-`<ivr text="…" />` and `<voicemail text="…" />` must each occupy the **entire** action, self-closing.
-Post-beep speech goes in a later `action_followup`. When `<ivr>` is in play, digits the agent presses
+`<ivr text="…" />` and `<voicemail text="…" />` must each occupy the **entire** step, self-closing.
+Post-beep speech goes in a `then` step. When `<ivr>` is in play, digits the agent presses
 appear in the transcript, so a condition can match on which key it chose.
 
 ## 7. Degraded audio

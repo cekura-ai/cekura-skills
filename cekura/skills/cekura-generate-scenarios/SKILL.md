@@ -27,7 +27,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-generate-scenarios:7q3n6v`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.18"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.19"`. It returns immediately and lets Cekura see which skills are in use.
 
 # generate-scenarios
 
@@ -110,13 +110,13 @@ Identify the **failure point** — the turn where the agent did the wrong thing 
 
 ### C. Build a faithful replay (`conditional_actions`)
 
-Walk the caller's path **turn-by-turn in the same order the real call took**, up to and through the failure point: identity → screening → … → the failing step. Each condition is `{condition: "<observable thing the agent does>", action: "<what the caller says>", fixed_message}`.
+Walk the caller's path **turn-by-turn in the same order the real call took**, up to and through the failure point: identity → screening → … → the failing step. Each condition is `{when: "<observable thing the agent does>", say: "<what the caller says>"}`, plus an optional `then` list for follow-up lines on the caller's next turns; the caller's opener is `first_message`.
 
 - **Anchor the failure.** The condition right before the failure must set it up exactly (the caller corrects a mis-heard value / declines an offer / mentions a medication / says the ambiguous phrase). Add an explicit condition for the FAIL branch (e.g. "the agent says it is transferring you to a human", "the agent ends the call") with a benign caller line, so the metric has a concrete signal to grade against.
-- **`fixed_message` choice (this bites):**
-  - `true` for values that must be reproduced verbatim — DOB, ZIP, the literal trigger phrase ("Speak to me", "Can I talk to somebody?"), a mis-stated-then-corrected number.
-  - `false` (the action text becomes an **instruction the caller paraphrases**) for turns that must **adapt to what the agent offers** — e.g. *"Pick ONE of the specific times the agent offers (the earliest) and name it clearly."* A `fixed_message: true` reply that doesn't actually choose ("that works, thank you") makes the agent re-ask the same question forever — a known slot-selection loop failure. When the agent presents choices, the caller MUST commit to one concrete option.
-  - **`FIRST_MESSAGE` (id 0) MUST stay `fixed_message: true`** (API rejects otherwise). For outbound calls (agent speaks first) set its action to `""`.
+- **Verbatim vs `<ai_generated>` (this bites):** every step is spoken verbatim unless the whole step is wrapped in `<ai_generated>…</ai_generated>`.
+  - Verbatim (plain text) for values that must be reproduced exactly — DOB, ZIP, the literal trigger phrase ("Speak to me", "Can I talk to somebody?"), a mis-stated-then-corrected number.
+  - `<ai_generated>` (the step becomes an **instruction the caller paraphrases**) for turns that must **adapt to what the agent offers** — e.g. *`"<ai_generated>Pick ONE of the specific times the agent offers (the earliest) and name it clearly.</ai_generated>"`*. A verbatim reply that doesn't actually choose ("that works, thank you") makes the agent re-ask the same question forever — a known slot-selection loop failure. When the agent presents choices, the caller MUST commit to one concrete option.
+  - **`first_message` is always verbatim** (`<ai_generated>` is rejected there). For outbound calls (agent speaks first) set it to `""`.
 - **Always include the end-call tool in `tool_ids`** — it's a hard always-on rule for every scenario (Step 4). End the success path with `<endcall />` in the final action; the `<endcall />` marker is a no-op unless that tool is wired in.
 - **Never append `<silence>` (or `<hold>`) tags at the END of an action.** Those SSML pause tags are only for *mid-utterance* pacing (a beat inside a sentence). Trailing them on the end of a line — e.g. `"...thanks <silence time="1.0s" /> <endcall />"` or as the caller's last token — just injects dead air and serves no purpose. End actions on the spoken words; if the turn closes the call, the final action ends with `<endcall />` directly (no preceding `<silence>`). Do not pad actions with trailing silence by default.
 
@@ -135,7 +135,7 @@ Score the specific behavior. Follow the **Metric selection policy** above — re
 
 ### F. Create (after user OK)
 
-1. **Scenario** — this is the `conditional_actions` replay built in C, so it takes the direct-create path: `mcp__cekura__scenarios_create` with agent, `name` ("<failure> (from call <id>)"), **explicit `scenario_type: "conditional_actions"`** (omitting it defaults to `instruction` and the `conditions` are ignored), `personality` (Step 4 heuristics), `metrics=[<metric_id>]`, `folder_path` (if the user named a folder), `expected_outcome_prompt`, `conditions`, `tags=["replay-<call_id>", "<mode>"]`, testing-agent `tool_ids`. If the focal failure was free-form instead (the `instruction` case flagged at the end of C), you generated the scenario there — skip to step 2 and attach to the returned scenario.
+1. **Scenario** — this is the `conditional_actions` replay built in C, so it takes the direct-create path: `mcp__cekura__scenarios_create` with agent, `name` ("<failure> (from call <id>)"), **explicit `scenario_type: "conditional_actions"`** (omitting it defaults to `instruction` and the `conditions` are ignored), `personality` (Step 4 heuristics), `metrics=[<metric_id>]`, `folder_path` (if the user named a folder), `expected_outcome_prompt`, `conditional_actions`, `tags=["replay-<call_id>", "<mode>"]`, testing-agent `tool_ids`. If the focal failure was free-form instead (the `instruction` case flagged at the end of C), you generated the scenario there — skip to step 2 and attach to the returned scenario.
 2. **Test profile** — `mcp__cekura__test_profiles_create` with the camelCase+lowercase identity dict; capture the id.
 3. **Attach the profile** — `mcp__cekura__scenarios_partial_update(id=<scenario_id>, test_profile=<profile_id>)`. The runtime only reads dynamic variables from the attached profile, not the scenario's own `dynamic_variable_values`.
 4. **Attach the evaluator phone** for phone/outbound agents — set the scenario's phone number (e.g. via `scenarios_partial_update`). The create call may not persist it, so **read the scenario back and PATCH if the phone is null.** (Look up the organization's configured evaluator inbound-phone-number ID and use that.)
@@ -215,7 +215,7 @@ For each cluster, draft a scenario spec:
   scenario_language: <from agent>,
   first_message: <verbatim opener from one of the evidence calls, or empty if agent speaks first>,
   instructions: <only if scenario_type == instruction — the testing-agent's prompt: caller's persona, goal, what they will push on>,
-  conditions: <only if scenario_type == conditional_actions — list of {condition, action, fixed_message} that walks the failure path>,
+  conditions: <only if scenario_type == conditional_actions — list of {when, say, then?} that walks the failure path>,
   tool_ids: <testing-agent tool refs (NOT agent-under-test tools) — usually end_call when the testing agent must hang up; see "Picking `tool_ids`" below>,
   expected_outcome_prompt: <one sentence — the right behavior the agent must demonstrate to pass>,
   dynamic_variable_values: <dict — one entry per name in agent_dynamic_vars (from Step 2a); see "Picking dynamic-variable values" below>,
@@ -257,9 +257,9 @@ The most common silent failure of generated scenarios is omitting `end_call` on 
 
 **Hard rules:**
 
-1. **If any `condition.action` contains the inline marker `<endcall />` (XML in `fixed_message`), the scenario MUST include `end_call` in `tool_ids`.** The XML marker is sugar that compiles to an `end_call` tool invocation on the testing-agent side — it's a no-op when the underlying tool isn't wired in. Same applies to `<silence time="..." />` (no extra tool, just timing) — but `<endcall />` is the foot-gun.
+1. **If any step (`first_message`, `say` or a `then` entry) contains the inline marker `<endcall />`, the scenario MUST include `end_call` in `tool_ids`.** The XML marker is sugar that compiles to an `end_call` tool invocation on the testing-agent side — it's a no-op when the underlying tool isn't wired in. Same applies to `<silence time="..." />` (no extra tool, just timing) — but `<endcall />` is the foot-gun.
 2. **If the cluster's `expected_behavior` reads "agent must hang up" / "agent must call end_call", the scenario MUST include `end_call` in `tool_ids`.** Reason: the run needs an authority that can force termination if the agent doesn't end, otherwise the scenario's success condition (which is "agent ended cleanly") can't be distinguished from "framework timeout fired because nobody ended."
-3. **DTMF is an agent-under-test concern, not a testing-agent concern — do NOT add `play_keypad_touch_tone` to scenario `tool_ids`.** When a scenario simulates an IVR menu that the agent-under-test must navigate, the testing agent's job is to *announce the menu options in its `fixed_message`* and loop or advance based on which digit the agent presses. The agent-under-test needs `play_keypad_touch_tone` (ElevenLabs `built_in_tools.play_keypad_touch_tone`, VAPI equivalent) wired into ITS config — that's an agent-creation concern handled by `cekura-create-agent`, not this skill. If the agent under test lacks DTMF capability, surface that as a coverage gap in the report's "Recommendations" section — don't try to compensate via scenario `tool_ids`.
+3. **DTMF is an agent-under-test concern, not a testing-agent concern — do NOT add `play_keypad_touch_tone` to scenario `tool_ids`.** When a scenario simulates an IVR menu that the agent-under-test must navigate, the testing agent's job is to *announce the menu options in a verbatim step* and loop or advance based on which digit the agent presses. The agent-under-test needs `play_keypad_touch_tone` (ElevenLabs `built_in_tools.play_keypad_touch_tone`, VAPI equivalent) wired into ITS config — that's an agent-creation concern handled by `cekura-create-agent`, not this skill. If the agent under test lacks DTMF capability, surface that as a coverage gap in the report's "Recommendations" section — don't try to compensate via scenario `tool_ids`.
 4. **Don't invent tool IDs.** Provider-specific values differ — VAPI uses string constants like `"VAPI_TOOL_END_CALL"`, ElevenLabs / retell scenarios reference the platform's built-in system tool by its platform ID. Read `scenarios_list` output from Step 2a — copy the exact `tool_ids` value used by any existing scenario on the same agent that successfully terminates. If no existing scenario has `tool_ids` populated and you can't resolve the ID, ask the user for the end_call tool reference before creating; do not guess.
 
 ### End the call promptly once the failure is demonstrated
@@ -273,7 +273,7 @@ Having `end_call` wired in (above) is necessary but not sufficient — the testi
 - Where the cluster's whole point is *does the agent recover / does the agent end on its own*, give the agent a bounded window to do so first. The testing agent's end is the **safety net that proves the agent failed to end** — so it must fire late enough that "agent never ended" is unambiguous, but still before the wall-clock timeout. Never end so early that you've pre-empted the agent's own decision to conclude (that would mask the very behavior under test).
 
 **How to encode it:**
-- **`conditional_actions` scenarios:** add a terminal condition keyed to the repeated failure behavior whose action is a brief wrap-up line ending in `<endcall />`. Use an `action_followup` chain to count "the agent did X again" a bounded number of times before firing the end. Example: `{condition: "The agent asks yet another open-ended hypothetical question (3rd+ time)", action: "Okay, I think that covers it — thanks. <endcall />", fixed_message: true}`.
+- **`conditional_actions` scenarios:** add a terminal condition keyed to the repeated failure behavior whose action is a brief wrap-up line ending in `<endcall />`. Use a `then` list to let a bounded number of further agent turns pass before firing the end. Example: `{when: "The agent asks yet another open-ended hypothetical question (3rd+ time)", say: "Okay, I think that covers it — thanks. <endcall />"}`.
 - **`instruction` scenarios:** state the stop rule in plain text in the caller instructions — e.g. *"After the agent has asked roughly 5–6 of these repetitive questions, say once 'Why do you keep asking the same thing?', then end the call."* Make the threshold explicit so the simulated caller doesn't either bail immediately or ride it to the timeout.
 - Either way this is independent of the always-on `tool_ids` rule: the marker/instruction is a no-op unless `end_call` is in `tool_ids`, so both must be present.
 
@@ -283,7 +283,7 @@ Many call-log failures are driven not by *what* the caller said but by *how* it 
 
 **Discover the available tags first — do NOT rely on memory.** The tag set evolves and several tags are Cekura-specific extensions beyond standard SSML, with provider-dependent value ranges. Before building the replay, confirm the current tags + exact syntax by:
 1. **`mcp__cekura__search_cekura("conditional action tags")`** (and related queries like "volume tag", "silence tag") — the Cekura docs are the source of truth, especially for the volume tag and its valid range.
-2. **Reading `conditional_actions` of existing scenarios on the same agent** (already pulled in Step 2a) — copy tag syntax that already works in this org/provider rather than guessing.
+2. **Reading the `instructions` of existing conditional-action scenarios on the same agent** (already pulled in Step 2a) — copy tag syntax that already works in this org/provider rather than guessing.
 
 **Known tags — map the call-log condition to the tag (verify syntax via docs before use):**
 
@@ -421,7 +421,7 @@ This is the path for every `conditional_actions` cluster (drop, tool_error, work
    | `scenario_type` | `conditional_actions` — an `instruction` scenario does not belong on this path (generate it instead) |
    | `personality` | From the cluster |
    | `scenario_language` | Required on CA scenarios — the cluster's language code (`en`, `es`, …) |
-   | `conditional_actions` | `{"role": "<caller role from the cluster>", "conditions": [<drafted turn-by-turn list>]}` — the turns go in **this wrapper**, not a top-level `conditions` field, or they are dropped and the scenario improvises. The cluster's `first_message` is condition `id: 0` (`condition: "FIRST_MESSAGE"`), not a separate field: `first_message` and `instructions` must stay unset on CA scenarios. |
+   | `conditional_actions` | `{"role": "<caller role from the cluster>", "first_message": "<cluster opener; empty if the agent speaks first>", "conditions": [<drafted {when, say, then} list>]}` — the turns go in **this wrapper**, not a top-level `conditions` field, or they are dropped and the scenario improvises. The cluster's `first_message` goes inside this wrapper, not as a separate field: the scenario-level `first_message` and `instructions` must stay unset on CA scenarios. |
    | `tool_ids` | From the cluster |
    | `expected_outcome_prompt` | From the cluster |
 
