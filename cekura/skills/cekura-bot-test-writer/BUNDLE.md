@@ -21,7 +21,7 @@ metadata:
 > Full reference files included at the end of this document: `change-triage.md`, `edit-modes.md`.
 > Any other `references/…` file mentioned below ships only with the installed plugin — install it for the complete set: https://docs.cekura.ai/mcp/overview
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-bot-test-writer"`, `verification_tag="ack:cekura-bot-test-writer:3d7k2m"`, and `plugin_version="0.18"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-bot-test-writer"`, `verification_tag="ack:cekura-bot-test-writer:3d7k2m"`, and `plugin_version="0.19"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Bot Test Writer
 
@@ -199,8 +199,8 @@ the old failure. Say what the case would catch and why; do not report it as prov
   three mistakes dominate: adding a statement no written turn fires (it returns `blocked` forever),
   naming a speaker anything but "main agent" / "testing agent", and slipping a subjective
   descriptor — "promptly", "clearly" — where an observable phrase belongs.
-- **Tag syntax is executable.** `<interruption time="Xs" />` opens its action and its condition is
-  `action_followup`; `<ivr …/>` and `<voicemail …/>` occupy the whole action; `<silence>` is
+- **Tag syntax is executable.** `<interruption time="Xs" />` opens a `then` step; `<ivr …/>` and
+  `<voicemail …/>` occupy the whole step; `<silence>` is
   interruptible and `<hold>` is not; `<audio>` cannot be referenced from a spec at all. The full
   rules live in `cekura-infra-test-suite`.
 
@@ -306,7 +306,7 @@ with no framework at all triages exactly the same way.
 | **LLM provider / model / temperature** | `none` | The judge reads what was said, not which model said it. Regression risk is real but diffuse; it belongs to the whole suite, not to a new case. Trap: an ADD here is how suites double in size with no new coverage. |
 | **TTS provider / voice / speed** | `none` | Nothing about a voice is transcript-observable. Trap: `<speed>` and `<volume>` exercise a path; neither is ever the assertion. |
 | **VAD / endpointing / turn-detection thresholds** | `TIGHTEN` or `EXTEND` on an existing timing case | The observable is *who speaks next and when*: does the agent wait through a mid-sentence pause, does it cut in. Extend the case that already has a silence or interruption turn. Trap: a threshold moved by 100ms that no written pause straddles changes no transcript — quote the old and new values and the pause in the case before deciding. |
-| **Interruption / barge-in handling** | `EXTEND`, else `ADD` | Directly observable: the agent stops, and what it says next. Needs `<interruption time="Xs" />` opening an `action_followup` against speech already in progress. Trap: interrupting a greeting at `0s` interrupts nothing. |
+| **Interruption / barge-in handling** | `EXTEND`, else `ADD` | Directly observable: the agent stops, and what it says next. Needs `<interruption time="Xs" />` opening a `then` step against speech already in progress. Trap: interrupting a greeting at `0s` interrupts nothing. |
 | **Idle timer / "are you still there" / max duration** | `TIGHTEN`, or `REPLACE` when the value moved | The prompt line and the timeout are both observable, and a changed timeout usually invalidates the `<silence>`/`<hold>` in the existing case. Trap: a `<silence>` shorter than the new timer proves nothing and reads as coverage. |
 | **DTMF / IVR navigation** | `EXTEND` on the IVR case, else `ADD` | Digits are observable and deterministic — good value per call. `<dtmf digits="…" />` may share an action with speech; `<ivr text="…" />` may not. Trap: post-IVR speech pushed into the same action never plays. |
 | **Voicemail / answering-machine detection** | `EXTEND`, else `ADD` | A distinct terminal lifecycle: the agent should leave a message, or hang up, and not carry on a conversation with a beep. `<voicemail …/>` occupies its whole action. Trap: stacking further turns after a terminal outcome. |
@@ -373,8 +373,10 @@ the drop-if check calls dead. Count stays at eight.
 
 Work down the ladder and stop at the first mode that closes the gap. Every example below edits the
 v1 spec shape: `scenarios[]` of `type: "conditional_actions"`, each with a stable `key`, a
-`conditional_actions.conditions[]` turn list, and an `expected_outcome` the judge reads line by
-line.
+`conditional_actions` turn script (`first_message` plus `conditions[]` of `when` / `say` / `then`),
+and an `expected_outcome` the judge reads line by line. A case written in the older id-based shape
+(`id` / `condition` / `action` / `type` / `fixed_message`) still validates; when you edit one, keep
+its shape — converting it is a reformat, not part of your change.
 
 ---
 
@@ -426,23 +428,17 @@ another one.
 
 ```diff
          {
-           "id": 4,
-           "condition": "The agent has stopped talking and is waiting for the caller",
-           "action": "Sorry about that. Can I book the Friday ten o'clock slot?",
-           "type": "standard",
-           "fixed_message": true
+           "when": "The agent has stopped talking and is waiting for the caller",
+           "say": "Sorry about that. Can I book the Friday ten o'clock slot?"
 +        },
 +        {
-+          "id": 5,
-+          "condition": "The agent confirms the Friday booking",
-+          "action": "One more thing — what's your cancellation policy?",
-+          "type": "standard",
-+          "fixed_message": true
++          "when": "The agent confirms the Friday booking",
++          "say": "One more thing — what's your cancellation policy?"
          }
 ```
 
-Then add the matching `expected_outcome` line. Ids ascend and never collide; an
-`action_followup` condition holds the integer id of the earlier condition it follows.
+Then add the matching `expected_outcome` line. A line that must follow the previous one on the
+caller's next turn, whatever the agent says, goes in that condition's `then` list instead.
 
 ### Extending can break the case it extends
 
@@ -457,7 +453,7 @@ the **whole** case, not just for your part of it:
 - **The call gets longer, and `max_duration` is a hard cut.** Turns past the limit never run, and
   every statement they were supposed to fire comes back `blocked` — neither pass nor fail, so the
   case stops proving anything without ever going red.
-- **Condition matching is order-sensitive.** A `standard` condition matches an observable main-agent
+- **Condition matching is order-sensitive.** A condition's `when` matches an observable main-agent
   turn. A new turn that produces a similar-looking one earlier can capture the match a later
   condition was written for, and the rest of the script runs against the wrong state.
 
@@ -468,13 +464,13 @@ this case — you have replaced it, and the honest move is to say so and justify
 ### What NOT to do when extending
 
 - Do not weaken or delete an existing statement to make room for the new turns.
-- Do not renumber or reorder existing condition ids. Append.
-- Do not reword an existing action so your addition flows better. If an existing turn is in the
+- Do not reorder existing conditions or `then` steps. Append.
+- Do not reword an existing step so your addition flows better. If an existing turn is in the
   way, that is a REPLACE and needs its own justification.
 - Do not change the case's `language`, `test_profile` or personality to suit the new turns — those
   five fields are the compatibility check, not an obstacle to route around.
 - Do not restructure or reformat the case while you are in there.
-- Do not pad the terminal action with a trailing `<silence>` or `<hold>`.
+- Do not pad the terminal step with a trailing `<silence>` or `<hold>`.
 
 ---
 
@@ -485,12 +481,9 @@ required phrase, or restructured a flow the case walks through.
 
 ```diff
          {
-           "id": 1,
-           "condition": "The agent greets the caller and offers help",
--          "action": "I wanted to ask about a booking. <silence time=\"8s\" />",
-+          "action": "I wanted to ask about a booking. <silence time=\"14s\" />",
-           "type": "standard",
-           "fixed_message": true
+           "when": "The agent greets the caller and offers help",
+-          "say": "I wanted to ask about a booking. <silence time=\"8s\" />"
++          "say": "I wanted to ask about a booking. <silence time=\"14s\" />"
          },
 ```
 
@@ -548,17 +541,18 @@ A new scenario copies the house shape of the file it joins:
   "tags": ["ci", "language"],
   "conditional_actions": {
     "role": "Eres Marta, llamas para reservar una cita el viernes.",
+    "first_message": "",
     "conditions": [
-      { "id": 0, "condition": "FIRST_MESSAGE", "action": "", "type": "standard", "fixed_message": true },
-      { "id": 1, "condition": "The agent greets the caller in Spanish", "action": "Hola, quiero reservar una cita para el viernes.", "type": "standard", "fixed_message": true }
+      { "when": "The agent greets the caller in Spanish", "say": "Hola, quiero reservar una cita para el viernes." }
     ]
   },
   "expected_outcome": "The main agent should conduct the entire call in Spanish.\nThe main agent should confirm a Friday appointment before the call ends."
 }
 ```
 
-Every condition carries all five fields. `id: 0` is always `FIRST_MESSAGE`, and its action is
-empty only when the agent genuinely speaks first. Set `language` explicitly on the case — a
+Every condition has a `when` and a non-empty `say`, and every step is verbatim — no
+`<ai_generated>` in a CI gate. `first_message` is empty only when the agent genuinely speaks
+first. Set `language` explicitly on the case — a
 missing one silently runs English.
 
 ---

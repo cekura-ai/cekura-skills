@@ -16,7 +16,7 @@ Before the tracking call below and before any Cekura MCP call, load the `cekura-
 ## Tracking (then do this)
 
 Next, call `mcp__cekura__cekura_skill_started` with
-`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.18"`. If a conversation/session ID is available (e.g. you
+`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.19"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
@@ -89,7 +89,7 @@ For updates: show the current agent/project assignment.
 
 **For adaptive (direct creates):** Write instructions in first-person, behavioral, wrapped in `<scenario>` tags. See the eval-design skill for patterns.
 
-**For conditional actions:** Build a conditions array. All five fields are required on every condition: `id` (unique, ascending), `condition` (the trigger — an observer's description of what the main agent does, or an earlier condition's id for a followup), `action` (what the caller says/does), `type` (**`"standard"` or `"action_followup"` — never "say"/"do"**), `fixed_message` (`true` for exact scripted lines and for **every** XML tag, `false` for behavioural instructions). `id: 0` must be `condition: "FIRST_MESSAGE"`, `standard`, `fixed_message: true`, with an empty `action` when the main agent speaks first. Pass the object in the `conditional_actions` field with `scenario_type: "conditional_actions"`, and set `scenario_language`. Load the cekura-eval-design skill for the tag table, the matcher rules and the pre-write self-check.
+**For conditional actions:** Build `{role, first_message, conditions}`. `first_message` is the caller's opening line — always verbatim, `""` when the main agent speaks first, or `{"say": "…", "then": [...]}` to keep talking after it. Each condition is `{"when": …, "say": …, "then": [...]}`: `when` (the trigger — an observer's description of what the main agent does), `say` (what the caller says/does, non-empty), and optional `then` (follow-up steps, one per following turn). Every step is spoken **verbatim** — required for exact scripted lines and for **every** XML tag — unless the whole step is wrapped in `<ai_generated>…</ai_generated>`, which makes it a behavioural instruction. Don't write the old id-based shape (`id`/`condition`/`action`/`type`/`fixed_message`); it is still accepted but deprecated, and reads return the new shape. Pass the object in the `conditional_actions` field with `scenario_type: "conditional_actions"`, and set `scenario_language`. Load the cekura-eval-design skill for the tag table, the matcher rules and the pre-write self-check.
 
 ### 3. Name
 
@@ -106,7 +106,7 @@ Key rules:
 - **NEVER write filler steps** like "Listen to the agent's response", "Wait for agent to speak", "End the call politely". Every step must describe a specific caller action.
 - Be explicit about exact phrases when mock/backend behavior depends on them
 
-**For conditional actions:** Build the conditions array. Use `fixed_message: true` for exact scripted lines (name, DOB, specific phrases), `fixed_message: false` for general behavioral instructions. Include `<silence time="3s"/>` in fixed messages for speech pauses if needed.
+**For conditional actions:** Build the conditions. Use plain verbatim steps for exact scripted lines (name, DOB, specific phrases), and wrap the whole step in `<ai_generated>…</ai_generated>` for general behavioral instructions. Include `<silence time="3s"/>` in verbatim steps for speech pauses if needed.
 
 ### 5. Expected Outcome
 
@@ -250,10 +250,10 @@ the evaluator payload with `scenarios_create`.
 - Name field has 80-char limit
 - `personality` is required on every scenario — the API returns 400 without it
 - Ask about language BEFORE personality — language constrains personality options
-- Instructions are first-person and behavioral (adaptive) or condition→action pairs (deterministic)
+- Instructions are first-person and behavioral (adaptive) or `when`→`say` steps (deterministic)
 - Expected outcomes should be concise and behavioral, not exact
 - Always use test profiles for identity data — never hardcode
 - Always attach metrics — runs without them only report call completion
 - Always enable `TOOL_END_CALL` at minimum — missing tools waste credits
-- For conditional actions: `fixed_message: true` for exact lines, `false` for behavioral
+- For conditional actions: steps are verbatim by default; wrap the whole step in `<ai_generated>…</ai_generated>` for behavioral
 - **VAPI agents use prefixed tool IDs** (e.g., `VAPI_TOOL_END_CALL`)

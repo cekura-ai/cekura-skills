@@ -26,8 +26,8 @@ they come from working configuration. Do not create persistent scenarios, profil
 personalities for a source-controlled suite; validate with `scenarios_validate_json` and create
 nothing until the user explicitly authorizes live calls.
 
-Use deterministic conditional actions for CI regression checks: every condition on both seats has
-`fixed_message: true`; conditional-actions cases set `language`; and outcomes assert only transcript
+Use deterministic conditional actions for CI regression checks: every step on both seats is
+verbatim (never `<ai_generated>`); conditional-actions cases set `language`; and outcomes assert only transcript
 observable behavior. Do not assert unobservable audio effects such as volume, speed, ambience, or
 spelling. Keep terminal end-call/max-duration assertions last, preserve strict assertions, and mark
 unsupported transport or fixture-dependent behavior explicitly uncovered rather than pretending it
@@ -528,65 +528,72 @@ Set `scenario_type: "conditional_actions"` and pass the structured payload in th
   "scenario_type": "conditional_actions",
   "conditional_actions": {
     "role": "You are a patient calling to cancel their appointment",
-    "conditions": [...]
+    "first_message": "Hi, I need to cancel my appointment",
+    "conditions": [
+      { "when": "The agent asks for your date of birth", "say": "March 3rd, 1985" },
+      { "when": "The agent asks why", "say": "<ai_generated>Say you have a scheduling conflict</ai_generated>", "then": ["Thanks, that's all <endcall />"] }
+    ]
   }
 }
 ```
 
-### Condition Fields — All Five Required on Every Condition
+### Fields
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `id` | integer | Unique. First condition must be 0. |
-| `condition` | string or integer | `"FIRST_MESSAGE"` for id:0 (always required, even when agent speaks first). Trigger description for standard. Prior condition's integer ID for action_followup. |
-| `action` | string | Exact text (`fixed_message:true`) or behavioral instruction (`fixed_message:false`). |
-| `type` | string | `"standard"` or `"action_followup"`. **Required — no default.** Omitting returns a validation error. |
-| `fixed_message` | boolean | `true` = spoken verbatim; `false` = natural language instruction. Required. |
+| `first_message` | string or `{say, then}` | Opening line, always verbatim (`<ai_generated>` rejected). `""` when the main agent speaks first. |
+| `conditions[].when` | string | Required. What the main agent does that triggers this condition (third-person). |
+| `conditions[].say` | string | Required, non-empty. The step spoken when the condition matches. |
+| `conditions[].then` | string[] | Optional follow-up steps, in order. |
 
-When the main agent speaks first (IVR/voicemail), set id:0 `action: ""` — the testing agent waits.
-id:0 is sent once and never retried: if the main agent's speech cuts it off (e.g. its greeting lands during a leading `<silence>`, which always yields), the unplayed rest is dropped for good; other conditions still match as usual. To say an exact line after the agent greets, use id:0 `action: ""` + a `standard` id:1.
+**Every step is spoken verbatim by default.** Wrap the **whole** step in `<ai_generated>…</ai_generated>` to make it a behavioral instruction the testing agent phrases itself — partial wrapping or nesting is rejected. Validation errors name the path (`first_message`, `conditions[0].say`, `conditions[1].then[0]`).
 
-### Action Types
+The older id-based shape (`id`, `condition`, `action`, `type`, `fixed_message`, with `FIRST_MESSAGE` at id 0) is still accepted on write but deprecated — don't write it. Reads always return `instructions` in the `first_message`/`when`/`say`/`then` shape, so parse it that way.
 
-- **`standard`** — fires when conversation context matches the condition string
-- **`action_followup`** — fires on the testing agent's **next turn** after the prior condition (one main-agent reply elapses in between, regardless of its content; never fires in the same turn as its parent). `condition` is the integer ID of that prior condition. Use for multi-part responses and `<interruption>`.
+When the main agent speaks first (IVR/voicemail), set `first_message: ""` — the testing agent waits.
+The first message is sent once and never retried: if the main agent's speech cuts it off (e.g. its greeting lands during a leading `<silence>`, which always yields), the unplayed rest is dropped for good; conditions still match as usual. To say an exact line after the agent greets, use `first_message: ""` + a condition whose `when` matches the greeting.
 
-### XML Tags (fixed_message:true only)
+### Conditions and `then` steps
 
-Sibling tags can be combined with text and run left to right. Do not nest tags, except inside a regional `<voice ...>...</voice>` block; `<ivr>` and `<voicemail>` remain whole-action exceptions.
+- **A condition** — its `say` fires when conversation context matches `when`
+- **A `then` step** — fires on the testing agent's **next turn** after the step before it (one main-agent reply elapses in between, regardless of its content; never fires in the same turn). Use for multi-part responses, scripted sequences (`first_message.then`), and `<interruption>`.
+
+### XML Tags (verbatim steps only)
+
+Sibling tags can be combined with text and run left to right. Do not nest tags, except inside a regional `<voice ...>...</voice>` block; `<ivr>` and `<voicemail>` remain whole-step exceptions.
 
 | Tag | Behavior |
 |-----|---------|
-| `<ivr text="..." />` | Uninterruptible IVR message. **Must be entire action.** |
-| `<voicemail text="..." />` or `<voicemail />` | Uninterruptible + beep at end. **Must be entire action.** `text` optional (silent voicemail allowed). Post-beep message goes in a separate action_followup. |
+| `<ivr text="..." />` | Uninterruptible IVR message. **Must be entire step.** |
+| `<voicemail text="..." />` or `<voicemail />` | Uninterruptible + beep at end. **Must be entire step.** `text` optional (silent voicemail allowed). Post-beep message goes in a `then` step. |
 | `<dtmf digits="..." />` | Send touch-tone digits — supports digits, `#`, `*` (e.g. `digits="456#"`, `digits="*9"`), or a `{{test_profile.key}}` placeholder for caller data (`digits="{{test_profile.pin}}#"`) |
 | `<endcall />` | Terminate call. **May be combined with surrounding text** (only "communication-class" tag that allows this). |
 | `<silence time="Xs" />` | Pause on caller's turn — interruptible; background noise continues. Supports decimal seconds (`"0.5s"`) for sub-second precision. |
-| `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per action allowed |
+| `<hold time="Xs" />` | Dead air — not interruptible; background noise stops; multiple per step allowed |
 | `<spell>TEXT</spell>` | Spell letter-by-letter |
-| `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be action_followup AND at start of action string**, followed by spoken text or a `<noise>`/`<audio>` clip. |
-| `<speed ratio="N" />` | Speech rate 0.1–2.0 (0.8–1.2 natural). Anywhere in the action; `text="..."` scopes it. |
-| `<volume ratio="N" />` | Volume 0–2. Anywhere in the action; `text="..."` scopes it. Clips above 1.0. |
+| `<interruption time="Xs" />` | Cut in Xs after agent starts speaking. **Must be a `then` step AND at the start of the step**, followed by spoken text or a `<noise>`/`<audio>` clip. |
+| `<speed ratio="N" />` | Speech rate 0.1–2.0 (0.8–1.2 natural). Anywhere in the step; `text="..."` scopes it. |
+| `<volume ratio="N" />` | Volume 0–2. Anywhere in the step; `text="..."` scopes it. Clips above 1.0. |
 | `<voice provider="P" id="X" model="Y" />` | Switch the testing agent's TTS voice persistently — **the only way to put a second speaker in one call**. Add `text="..."` for a temporary regional voice, or wrap regional text in `<voice ...>...</voice>` (supports nested inline tags); the prior voice resumes afterward. `provider` + `id` must match: cartesia ids are UUIDs, 11labs ids are alphanumeric. `model` optional (defaults `sonic-3.5` / `eleven_turbo_v2_5`). Provider cannot change mid-call. |
 | `<send_sms text="..." />` | Trigger an SMS for SMS-driven workflows |
-| `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent; `t` required, `d` optional, `fixed_message: true` |
+| `<client_message t="..." d='...' />` | Send an app-defined RTVI client message to a Pipecat agent; `t` required, `d` optional, verbatim step |
 | `<network_simulation packet_loss="N" />` | Only `packet_loss` supported — `jitter`/`latency` are ignored. |
 | `<background_noise sound="NAME" volume="0.x">text</background_noise>` | Continuous ambient sound (e.g. `coffee-shop`, `office-ambience`, `rain-thunder`, `vacuum-cleaner`, `construction-site`) |
 | `<noise sound="NAME" volume="N" time="Xms" />` | One-shot effect: `office`, `beep`, `cough1`, `cough2`, `female-crying`, `male-crying` (~10s of sobbing, for distress-detection tests), `ringback` (~6s phone ringback tone), plus newer catalog sounds — any name the platform accepts at save works, and a direct `https://` audio URL is also valid. `volume` and `time` (milliseconds) are optional. |
-| `<audio id="..." />` | Plays an uploaded recording. One recording can be referenced from several steps and more than once per action; read the scenario's `condition_audio` for the available ids and never fabricate one. |
+| `<audio id="..." />` | Plays an uploaded recording. One recording can be referenced from several steps and more than once per step; read the scenario's `condition_audio` for the available ids and never fabricate one. |
 
-### Test Profile Variables in Fixed Messages
+### Test Profile Variables in Verbatim Steps
 
 Inject test profile data into verbatim text: `"My name is {{test_profile.first_name}} {{test_profile.last_name}}"`. Also works nested (`{{test_profile.address.city}}`) and with XML tags (`<spell>{{test_profile.account_number}}</spell>`).
 
 ### Key Anti-Patterns
 
 - **Multiple branches in one evaluator** — Each path (success/failure) is a separate evaluator
-- **XML tags with `fixed_message:false`** — Tags only parse when `fixed_message:true`
-- **`<ivr>` or `<voicemail>` combined with other text/tags** — Must be the entire action
-- **`<interruption>` not at start of action or not as `action_followup`** — Both constraints required
+- **XML tags in an `<ai_generated>` step** — Tags only work in verbatim steps; the save is rejected
+- **`<ivr>` or `<voicemail>` combined with other text/tags** — Must be the entire step
+- **`<interruption>` not at the start of a `then` step** — Both constraints required
 - **`<network_simulation>` with `jitter`/`latency`** — Only `packet_loss` is supported
-- **Missing `type` field** — Required on every condition, no default
+- **Partial `<ai_generated>`** — It must wrap the whole step; split mixed content into `say` + a `then` step
 - **No `<endcall />` at end** — Calls run to timeout without it
 
 ---

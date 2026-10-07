@@ -106,7 +106,7 @@ Tool-driven hangup, task-completion hangup, or never.
 
 ## Q8 — Does it speak first, and what does it say?
 
-**Buys you:** the shape of condition `id: 0`. If the agent speaks first, `action` is `""` and the
+**Buys you:** the shape of `first_message`. If the agent speaks first, it is `""` and the
 caller waits. Getting this backwards desynchronises every following turn.
 
 ## Q9 — Which languages?

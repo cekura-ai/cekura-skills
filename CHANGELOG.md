@@ -4,6 +4,34 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.0 — 2026-10-07
+
+**Conditional actions are written in the simplified `first_message` / `when` /
+`say` / `then` shape.**
+
+- **New payload shape everywhere a skill teaches it.** `conditional_actions` is
+  now `{role, first_message, conditions: [{when, say, then}], functions}`.
+  `first_message` is a string, or `{say, then}` to keep talking after the opener;
+  `then` replaces chained `action_followup` rows. The eval-design authoring card
+  and reference, the generate-scenarios replay builder, the self-improving-agent
+  repro/regression payloads, the infra-suite and bot-test-writer specs, the
+  manual-create command and `codex/AGENTS.md` / `GEMINI.md` all use it.
+- **Every step is verbatim unless wrapped.** `fixed_message` is gone from the
+  taught shape: a step is spoken word-for-word, and wrapping the whole step in
+  `<ai_generated>…</ai_generated>` lets the testing agent improvise. Partial or
+  nested wrapping is rejected, the first message is always verbatim, and tags
+  still need a verbatim step (`<interruption>` must open a `then` step).
+- **The old id-based shape is still accepted but deprecated.** Writes in
+  `{id, condition, action, type, fixed_message}` keep working; reads always
+  return the new shape, so anything parsing `instructions` must expect
+  `when` / `say` / `then`. The conditional-actions reference carries the
+  old → new mapping, and validation errors now name API paths such as
+  `conditions[1].then[0]`.
+- **`lint_suite.py` validates the new shape** — `<ai_generated>` wrapping, the
+  verbatim first message, `then` placement for `<interruption>`, unknown fields —
+  and keeps accepting suites written in the old one. The example suite is
+  converted.
+
 ## 0.18.0 — 2026-10-01
 
 **The infra-suite skill can gate a pull request on its own preview deployment,

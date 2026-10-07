@@ -24,7 +24,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, `plugin_version="0.18"`, and `skill_version="0.11.0"`. It returns immediately and lets Cekura see which skills are in use, and which revision of this one.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, `plugin_version="0.19"`, and `skill_version="0.11.0"`. It returns immediately and lets Cekura see which skills are in use, and which revision of this one.
 
 # Cekura Eval Design
 
@@ -54,7 +54,7 @@ Fetch the agent's **full record** before the first authoring write — the singl
 | Field | What it decides |
 |---|---|
 | `description` | every workflow, branch, KB fact, transfer and policy you are allowed to test or grade |
-| `inbound`, and the greeting the description scripts | who speaks first: the main agent opens ⇒ CA `id: 0` has `action: ""` and behavioral scenarios need no opening line; otherwise the testing agent opens. Read the description for this and ask when it is unclear |
+| `inbound`, and the greeting the description scripts | who speaks first: the main agent opens ⇒ CA `first_message` is `""` and behavioral scenarios need no opening line; otherwise the testing agent opens. Read the description for this and ask when it is unclear |
 | `language` | the personality language and `scenario_language` |
 | `assistant_provider`, `transcript_provider`, `websocket_url` | whether tool calls reach the evaluation transcript (see **Expected outcomes**) |
 | `mock_tools` (request them explicitly — the default agent read omits them), `auto_dynamic_variables` | which tool inputs/outputs and variables the test data must match |
@@ -92,7 +92,7 @@ Do not ask about personality, metrics or tags — pick the documented defaults b
 | Mode | When |
 |---|---|
 | **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Open-ended personas, exploratory red-team, tone/empathy, general quality probing, any request without a structural commitment. The default. A category-level ask for one scenario is still `num_scenarios: 1`; never hand-author in this mode — only a complete user-supplied verbatim payload is created directly. |
-| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, conditions[]}` | Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, data-bound turn-by-turn verification, anything needing an XML tag. When generating, put the tag requirements into `extra_instructions` ("the caller enters the account number by DTMF", "hold 20 s after the greeting", "the caller reaches an IVR menu first") and check the output against the self-check below. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
+| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, first_message, conditions[]}` | Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, data-bound turn-by-turn verification, anything needing an XML tag. When generating, put the tag requirements into `extra_instructions` ("the caller enters the account number by DTMF", "hold 20 s after the greeting", "the caller reaches an IVR menu first") and check the output against the self-check below. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
 
 **Switch to CA with no confirmation** when the user says: conditional actions, structured or scripted scenario/test, deterministic test, unit test, regression test, exact flow, fixed sequence, compliance test, infra/infrastructure/pipeline/CI test or gate.
 
@@ -106,7 +106,7 @@ Do not ask about personality, metrics or tags — pick the documented defaults b
 |---|---|---|
 | Appointment scheduling happy path | Behavioral | Predictable path, no exact phrasing needed; the caller improvises naturally |
 | Scheduling as an exact-sequence regression test | CA | "Regression test" is a trigger phrase |
-| Compliance disclosure / account-number read-back | CA | Verbatim phrasing (`fixed_message: true`, `<spell>`); "compliance" is a trigger phrase |
+| Compliance disclosure / account-number read-back | CA | Verbatim phrasing (verbatim steps, `<spell>`); "compliance" is a trigger phrase |
 | Identity verification: name + DOB + last-4 | CA | Every turn is data-bound to the profile; structure prevents drift |
 | Inbound IVR menu navigation | Ask first | Tag-supported (`<dtmf>`), mode not named |
 | Voicemail handling | Ask first | `<voicemail>` is purpose-built; behavioural can work |
@@ -264,35 +264,37 @@ Everything needed to write a valid, deterministic CA scenario is here. Load **`r
   "scenario_type": "conditional_actions", "scenario_language": "en",
   "conditional_actions": {
     "role": "You are a patient calling to cancel an appointment",
+    "first_message": "Hi, I need to cancel my appointment",
     "conditions": [
-      { "id": 0, "condition": "FIRST_MESSAGE", "action": "Hi, I need to cancel my appointment", "type": "standard", "fixed_message": true },
-      { "id": 1, "condition": "The main agent asks for the date of birth", "action": "Provide your date of birth", "type": "standard", "fixed_message": false },
-      { "id": 2, "condition": "The main agent confirms the cancellation", "action": "Thanks, that's all I needed <endcall />", "type": "standard", "fixed_message": true }
+      { "when": "The main agent asks for the date of birth", "say": "<ai_generated>Provide your date of birth</ai_generated>" },
+      { "when": "The main agent confirms the cancellation", "say": "Thanks, that's all I needed <endcall />" }
     ]
   }
 }
 ```
 
 - `role` describes **only** the testing agent's persona — never what the main agent is or does.
-- **When the description mandates an exact script** — a compliance disclosure, a voicemail message, a required phrase — reproduce it **verbatim** in the action with `fixed_message: true`, including every number and name in it. Paraphrasing a mandated script tests something the agent was never asked to say.
-- All five condition fields are **required on every condition**: `id`, `condition`, `action`, `type`, `fixed_message`. `type` is `"standard"` or `"action_followup"` — **not** "say"/"do". Ids must be unique and ascending. `id: 0` must be `condition: "FIRST_MESSAGE"`, `type: "standard"`, `fixed_message: true`, and `action: ""` when the main agent speaks first.
-- `scenario_language` is required (or inherited from the personality, whose language it must match). Do not set `first_message` or `instructions` yourself.
-- No `others` catch-all condition. One action ≤ 16 KB.
+- **When the description mandates an exact script** — a compliance disclosure, a voicemail message, a required phrase — reproduce it **verbatim** as a plain (not `<ai_generated>`) step, including every number and name in it. Paraphrasing a mandated script tests something the agent was never asked to say.
+- A condition takes only `when` (required), `say` (required, non-empty) and optional `then` (list of follow-up steps). `first_message` is a string, or `{"say": "…", "then": [...]}` to keep talking after the opener; it is `""` when the main agent speaks first and is always verbatim.
+- **Every step** (`first_message`, each `say`, each `then` entry) **is spoken verbatim by default.** To let the testing agent improvise, wrap the **whole** step: `"<ai_generated>Provide your date of birth</ai_generated>"` — partial wrapping, nesting and an `<ai_generated>` first message are rejected.
+- The older id-based shape (`id`/`condition`/`action`/`type`/`fixed_message`) is still accepted on write but deprecated; reads always return `when`/`say`/`then`. Write only the new shape. Errors point at paths such as `conditions[1].then[0]`.
+- `scenario_language` is required (or inherited from the personality, whose language it must match). Do not set the scenario-level `first_message` or `instructions` yourself.
+- No `others` catch-all condition. One step ≤ 16 KB.
 
-### Writing the `condition` string
+### Writing the `when` string
 
 The runtime matcher compares the main agent's **latest message** against each condition and fires every exact match — so a condition is an observer's description of what the agent does, and it must be able to fire:
 
 - **`asks X` triggers only fire on a direct question ending in "?"**. If the description shows the agent *stating* a need ("I'll need your phone number"), write it as a statement: `"The main agent says it needs the phone number"` — otherwise the step never fires and the call stalls.
 - Never a quote of the agent's words (`"Can you provide your DOB?"` ✗) and never one vague word (`"verification"` ✗). Be specific: `"The main agent asks for the caller's name and date of birth to verify their identity"`.
 - Conditions **re-fire** on any later turn that matches. When one main-agent turn matches several conditions (a multi-item offer), the testing agent consolidates all their actions into one reply — do not split those across turns.
-- `action_followup`: `condition` is the **id of an earlier condition**, and the action fires on the testing agent's **next** turn after that one — one main-agent reply always elapses in between. Never use it for two caller actions with no agent reply between them; put those in one `action` string.
+- `then`: each entry fires on the testing agent's **next** turn after the step before it — one main-agent reply always elapses in between, whatever it says. Never use it for two caller actions with no agent reply between them; put those in one step.
 
-### `fixed_message`
+### Verbatim vs `<ai_generated>`
 
-`true` = the action text is spoken verbatim (required for exact phrasing, compliance lines, and **every XML tag except `<function>`** — with `false` the brackets are read aloud). `false` = the action is an instruction the testing agent phrases naturally.
+A plain step is spoken verbatim (required for exact phrasing, compliance lines, and **every XML tag except `<function>`** — a tag inside an `<ai_generated>` step is rejected). A step wrapped whole in `<ai_generated>…</ai_generated>` is an instruction the testing agent phrases naturally.
 
-### Tags (`fixed_message: true`)
+### Tags (verbatim steps only)
 
 | Tag | Rule |
 |---|---|
@@ -300,14 +302,14 @@ The runtime matcher compares the main agent's **latest message** against each co
 | `<dtmf digits="123#" />` | `0-9`, `#`, `*`; combinable with text; use `digits="{{test_profile.pin}}#"` for caller data — formatting is stripped |
 | `<spell>TEXT</spell>` | spells letter by letter (ids, account numbers) |
 | `<silence time="1.5s" />` | interruptible pause, decimals allowed; matching restarts after an interrupt. **Not for idle-timer tests** — the testing agent's own idle prompt (default 10 s) still runs and will fire before the threshold you are measuring |
-| `<hold time="30s" />` | dead air, **not** interruptible, several per action; pauses the testing agent's idle timer — so this is the tag for **any silence longer than ~8 s**, and the only correct one for testing the main agent's own idle/no-input behaviour (bracket the threshold: one hold just under it, one just over) |
+| `<hold time="30s" />` | dead air, **not** interruptible, several per step; pauses the testing agent's idle timer — so this is the tag for **any silence longer than ~8 s**, and the only correct one for testing the main agent's own idle/no-input behaviour (bracket the threshold: one hold just under it, one just over) |
 | `<ignore_interruptions>…</ignore_interruptions>` | protects a **span** (text, `<audio>`, `<hold>`) from interruption; content goes between the tags |
-| `<interruption time="2s" />` | **`type: "action_followup"` and at the very start of the action**; cuts in Xs after the agent's next turn begins; must be followed by spoken text or a `<noise>`/`<audio>` clip (a cough alone is fine; a bare tag or a pause is rejected) |
-| `<ivr text="…" />` | uninterruptible menu played by the testing agent; **must be the entire action**; put post-menu content in an `action_followup`; `<hold>`/`<audio>` cannot go inside it — use `<ignore_interruptions>` instead |
-| `<voicemail text="…" />` or `<voicemail />` | greeting + beep; **entire action**; post-beep message goes in an `action_followup` |
-| `<speed ratio="1.1" />` | ratio **0.1–2.0** (0.8–1.2 keeps speech natural); anywhere in the action, holds until the next `<speed>` tag |
+| `<interruption time="2s" />` | **a `then` step, at the very start of it**; cuts in Xs after the agent's next turn begins; must be followed by spoken text or a `<noise>`/`<audio>` clip (a cough alone is fine; a bare tag or a pause is rejected) |
+| `<ivr text="…" />` | uninterruptible menu played by the testing agent; **must be the entire step**; put post-menu content in a `then` step; `<hold>`/`<audio>` cannot go inside it — use `<ignore_interruptions>` instead |
+| `<voicemail text="…" />` or `<voicemail />` | greeting + beep; **entire step**; post-beep message goes in a `then` step |
+| `<speed ratio="1.1" />` | ratio **0.1–2.0** (0.8–1.2 keeps speech natural); anywhere in the step, holds until the next `<speed>` tag |
 | `<speed ratio="1.1" text="..." />` | same ratio, scoped to that text only — the prior rate resumes afterwards |
-| `<volume ratio="1.5" />` | **0–2.0**, single or double quotes; anywhere in the action; clips above 1.0 |
+| `<volume ratio="1.5" />` | **0–2.0**, single or double quotes; anywhere in the step; clips above 1.0 |
 | `<volume ratio="1.5" text="..." />` | same ratio, scoped to that text only |
 | `<voice provider="11labs" id="…" model="…" />` | switches TTS voice persistently — the only way to put a second speaker in one call; add `text="…"` for a one-off regional line, or use the block form `<voice …>…</voice>`; `provider` must match the id format and cannot change mid-call |
 | `<background_noise sound="coffee-shop" volume="0.3">text</background_noise>` | wraps the spoken text; **`volume` is 0–1.0**; `sound` must be a supported preset name or an `http(s)` URL |
@@ -315,30 +317,30 @@ The runtime matcher compares the main agent's **latest message** against each co
 | `<network_simulation packet_loss="20" jitter="50" latency="100" />` | `packet_loss` %, `jitter` ms, `latency` ms — any combination |
 | `<audio id="hold-music" />` | plays an **already-uploaded** clip by name; reusable across conditions; never re-upload for a second step |
 | `<client_message t="order_update" d='{…}' />` | silent RTVI message to a Pipecat agent; `t` required |
-| `<function name="lookup" />` | runs a declared function; any non-first condition, fixed or not. `{{function.lookup.status}}` renders an output — `fixed_message: true` only, key must be in that function's `response_mapping`, and always declare a `default` |
+| `<function name="lookup" />` | runs a declared function; any step except the first message itself, verbatim or not. `{{function.lookup.status}}` renders an output — verbatim steps only, key must be in that function's `response_mapping`, and always declare a `default` |
 
-**IVR direction decides `id: 0`.** Inbound (the main agent *is* the IVR): `id: 0` has `action: ""` and the testing agent navigates with `<dtmf>`. Outbound (the main agent dials into a third-party IVR): the testing agent plays the menu — `<ivr text="…" />` as the whole `id: 0` action, post-menu content in an `action_followup`, and `RECEIVE_DTMF` enabled so the main agent's key presses are heard.
+**IVR direction decides `first_message`.** Inbound (the main agent *is* the IVR): `first_message` is `""` and the testing agent navigates with `<dtmf>`. Outbound (the main agent dials into a third-party IVR): the testing agent plays the menu — `<ivr text="…" />` as the whole `first_message`, post-menu content in a `then` step, and `RECEIVE_DTMF` enabled so the main agent's key presses are heard.
 
 Use a **tag, not a personality**, for anything transient (interruption, noise, hold, silence) and keep the Normal personality for the call's language. Never apply both.
 
-**Test profile placeholders** (`{{test_profile.field}}`, nested `{{test_profile.address.city}}`) resolve at run time on `fixed_message: true` actions; every key must exist in the attached profile.
+**Test profile placeholders** (`{{test_profile.field}}`, nested `{{test_profile.address.city}}`) resolve at run time on every step (spoken verbatim on verbatim steps); every key must exist in the attached profile.
 
-**Live data** — `functions[]` sits beside `role` and `conditions` inside `conditional_actions`: `{name, type: "rest_api", auto_run, config: {method GET|POST, url (public http(s)), headers, query_params, body, timeout_seconds 1–30, response_mapping}}`. `auto_run: true` fetches once at call start; a `<function>` tag re-fetches at that turn. **An update that sends only `conditions` deletes every function** — always read, modify, then send the whole object back.
+**Live data** — `functions[]` sits beside `role`, `first_message` and `conditions` inside `conditional_actions`: `{name, type: "rest_api", auto_run, config: {method GET|POST, url (public http(s)), headers, query_params, body, timeout_seconds 1–30, response_mapping}}`. `auto_run: true` fetches once at call start; a `<function>` tag re-fetches at that turn. **An update that omits `functions` deletes every function** — always read, modify, then send the whole object back.
 
 ### Self-check before every CA write
 
 Refuse to send a payload that fails any of these:
 
 1. `scenario_type: "conditional_actions"` set; object in `conditional_actions`; `scenario_language` set.
-2. `id: 0` is `FIRST_MESSAGE` + `standard` + `fixed_message: true`; `action` empty iff the main agent speaks first; no leading `<silence>` to wait out a greeting (a barge-in drops the opener, never retried — use `action: ""` + a `standard` `id: 1`).
-3. Every condition has all five fields; ids unique and ascending; no `others`.
+2. `first_message` is verbatim (no `<ai_generated>`) and `""` iff the main agent speaks first; no leading `<silence>` to wait out a greeting (a barge-in drops the opener, never retried — use `""` + a condition triggered by the greeting).
+3. Every condition has `when` and a non-empty `say`, and nothing else besides `then`; every `<ai_generated>` wraps a whole step; no `others`.
 4. Every `asks …` condition corresponds to a question the description mandates; no quoted agent speech; no one-word triggers. When the user names an agent utterance that must be verbatim (a disclosure, a read-back), one condition's trigger is anchored on it and the outcome states it as an exact fact in backticks (see **Expected outcomes**).
-5. Each `standard` condition names **one thing the main agent can be seen to do in its latest message**. Silence is not one of them: a condition waiting for no reply — or joining a reply and silence with `or` — cannot fire on the path it was written for, and the flow stalls exactly when the agent behaves correctly. Put the pause in the preceding action and trigger on what the agent says next. Elapsed time and retry counts are not observable from one message either ("after a while", "the third time"); get those from ordering, an `action_followup` chain, or a `<hold>`/`<silence>` you place yourself. A condition qualified by an earlier phase ("once the agent has confirmed…") is matched by a judge reading the history rather than by the message alone — a weaker guarantee than ordering, so use it only where ordering cannot express the phase.
+5. Each condition's `when` names **one thing the main agent can be seen to do in its latest message**. Silence is not one of them: a condition waiting for no reply — or joining a reply and silence with `or` — cannot fire on the path it was written for, and the flow stalls exactly when the agent behaves correctly. Put the pause in the preceding action and trigger on what the agent says next. Elapsed time and retry counts are not observable from one message either ("after a while", "the third time"); get those from ordering, a `then` chain, or a `<hold>`/`<silence>` you place yourself. A condition qualified by an earlier phase ("once the agent has confirmed…") is matched by a judge reading the history rather than by the message alone — a weaker guarantee than ordering, so use it only where ordering cannot express the phase.
 6. **Triggers that cannot collide.** The runtime checks every condition against each main-agent message and fires all that match, merging their actions into one spoken turn — it does not pick one — so two conditions must not be able to match the same message unless their actions belong in the same turn. No catch-all. Match two fields in one trigger only where the description shows the agent asks for them together; otherwise one condition per prompt — and a request for the combined trigger does not change that: a condition the description says will never match leaves the evaluator stalled, not stricter, so split it and say in the summary why.
-7. Every action containing a tag other than `<function>` has `fixed_message: true`; `<interruption>` is first in an `action_followup` and followed by text or a sound clip; `<ivr>`/`<voicemail>` are whole actions; ratios and volumes are in range.
-8. Every `action_followup.condition` names an earlier id, and one agent reply really does elapse first — and that id is not one that ends the call, because a hung-up call has no next turn.
-9. Every `{{test_profile.*}}` key exists in the attached profile **and holds a value**; every `{{function.*}}` key is declared and the action is fixed.
-10. **Every branch ends, and nothing is chained past an ending.** Conditions are matched against each message, not walked in order, so a terminal action — `<endcall />` or a terminal transfer — may sit at any position, and a flow whose branches end differently carries one per branch. What can never fire is anything that needs a turn after the hang-up: an `action_followup` on a terminal condition (rule 8), or an outcome line about what follows it. Every branch the agent can take must reach a terminal or the call runs to timeout — unless the user asked for the caller to stay on the line. Split into two evaluators only when the caller, not the agent, decides which ending happens; where the agent decides, the outcome must hold on every branch (see **Expected outcomes**, contingent branches).
+7. Every step containing a tag other than `<function>` is verbatim (not `<ai_generated>`); `<interruption>` is first in a `then` step and followed by text or a sound clip; `<ivr>`/`<voicemail>` are whole steps; ratios and volumes are in range.
+8. Every `then` step really has one agent reply elapse before it — and no `then` follows a step that ends the call, because a hung-up call has no next turn.
+9. Every `{{test_profile.*}}` key exists in the attached profile **and holds a value**; every `{{function.*}}` key is declared and the step is verbatim.
+10. **Every branch ends, and nothing is chained past an ending.** Conditions are matched against each message, not walked in order, so a terminal action — `<endcall />` or a terminal transfer — may sit at any position, and a flow whose branches end differently carries one per branch. What can never fire is anything that needs a turn after the hang-up: a `then` step after a terminal step (rule 8), or an outcome line about what follows it. Every branch the agent can take must reach a terminal or the call runs to timeout — unless the user asked for the caller to stay on the line. Split into two evaluators only when the caller, not the agent, decides which ending happens; where the agent decides, the outcome must hold on every branch (see **Expected outcomes**, contingent branches).
 11. `personality` set and its language matches `scenario_language`.
 12. Metrics, test profile, `tool_ids`, folder and tags attached.
 
@@ -419,7 +421,7 @@ Most real work is editing evaluators, not creating them. This procedure governs 
 1. **Read first.** Retrieve each scenario by id (or read the `scenarios.json` the Evaluators page attached to this conversation — do not page the list endpoint when it is already on disk).
 2. **Audit against the rubric** above (steps/conditions, outcomes, placeholders, metrics, personality, tools). Report what you found before changing it.
 3. **Objective check — does this edit keep the evaluator's purpose?** Compare the request against what the evaluator tests today: its name, role, flow and expected outcome. Refining that purpose proceeds — a step added, a trigger fixed, an outcome line tightened, a value changed. Introducing a *different* purpose is a second evaluator, not an edit: ask once, in a single question, whether to keep this one and add a separate evaluator or to replace it, and never take replacement as the default. The wording of the request does not settle this: "instead", "rather than", "should now test", or the same said in another language, names the new objective — it says nothing about what happens to the old evaluator, so the question stands. Only an explicit statement about the old one ("replace it", "I don't need the old test", "keep it and add") answers it. An update rewrites the stored object in place, so the coverage the evaluator held goes with no copy kept and no warning shown. Where the user has already said which they want, act on it and do not ask again.
-4. **Minimal diff.** PATCH only the fields that are wrong. For CA, mutate the retrieved `conditional_actions` object and send it back **whole** — an update replaces the whole stored object, so one carrying only `conditions` drops `functions[]`. `scenario_type` need not be resent. Pass `version_name` when the user wants the change labelled.
+4. **Minimal diff.** PATCH only the fields that are wrong. For CA, parse the retrieved `instructions` (returned in the `when`/`say`/`then` shape), change it, and send it back **whole** as `conditional_actions` — an update replaces the whole stored object, so one carrying only `first_message`/`conditions` drops `functions[]`. `scenario_type` need not be resent. Pass `version_name` when the user wants the change labelled.
 5. **Many at once:** use the bulk update (merge lists such as `tool_ids`/`metrics` — do not blank the rest). **Copies:** duplicate the scenario; never re-create by hand. **Conversions** (CA → instruction or back) are updates to the same scenario id — PATCH `scenario_type` with the new body (written to the rules of the target mode, an instruction flow ending in `End the call when …`); duplicate first and convert the copy when the original's run history matters (ask if unsure). **A conversion out of conditional actions is available only when no runtime control is in play.** Keypad tones, timed holds and pauses, IVR and voicemail simulation, interruptions, voice switches, live functions, and exact retry or timing behaviour are effects of tags; asked for in prose — "send DTMF 1", "stay silent", "retry three times" — they read to the testing agent as narration and execute nothing, so the converted evaluator drifts and its failures say nothing about the agent under test. Never convert to make a failing run pass: fix the condition that did not fire. A duplicate arrives carrying the source's expected outcome, tools, profile and metrics, and none of them are re-checked for you: after any copy or conversion, rewrite the outcome for what the scenario now does and re-pick `tool_ids` for its direction — inherited outcomes left in place are how a conversion ships broken.
 6. **Reconcile and report.** Account for every item you set out to write from the write responses themselves — accepted, rejected then fixed, or rejected and reported with the reason — and show a per-scenario diff of what changed. A write returns the stored record, so this is arithmetic on what you already hold, not a second read of each id.
 

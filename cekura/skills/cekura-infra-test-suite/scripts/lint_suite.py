@@ -23,6 +23,13 @@ MAX_CASES = 200
 MAX_NAME = 80
 CASE_TYPES = {"instruction", "conditional_actions", "real_world_smart", "real_world_fixed"}
 CONDITION_TYPES = {"standard", "action_followup"}
+# The scenarios API takes {first_message, conditions: [{when, say, then}]}; the older
+# id-based {id, condition, action, type, fixed_message} shape is still accepted.
+API_CONDITION_KEYS = {"when", "say", "then"}
+API_FIRST_MESSAGE_KEYS = {"say", "then"}
+STORED_CONDITION_KEYS = {"id", "condition", "action", "type", "fixed_message"}
+AI_GENERATED = re.compile(r"^\s*<ai_generated>(.*)</ai_generated>\s*$", re.DOTALL)
+AI_GENERATED_TAG = re.compile(r"</?ai_generated\s*>")
 TOOLS = {"call_hold", "dtmf", "end_call", "end_call_only_on_transfer", "receive_dtmf", "send_sms"}
 DEFAULTS_KEYS = {"concurrency_limit", "frequency", "language", "max_duration",
                  "metrics", "personality", "tags", "test_profile"}
@@ -136,14 +143,14 @@ def check_wrapper(action, tag, where, report):
         return
     if not any(re.search(p, action, re.DOTALL) for p in WRAPPERS[tag]):
         report.error(where, f'<{tag}> must cover the entire action — no text or other tags '
-                            f"outside it. Move following speech into its own condition")
+                            f"outside it. Move following speech into a `then` step")
         return
     if re.search(r"<%s\s+text=[\"\'][^>]*<\s*(?:hold|audio)\b" % tag, action, re.DOTALL):
         report.error(where, f"<hold> and <audio> break at runtime inside <{tag} text=\"…\"> — "
                             "use <ignore_interruptions>…</ignore_interruptions> instead")
 
 
-def check_action_tags(action, ctype, where, report):
+def check_action_tags(action, followup, where, report):
     stripped = action.strip()
 
     if len(action) > MAX_ACTION:
@@ -164,9 +171,9 @@ def check_action_tags(action, ctype, where, report):
         if not spoken and not re.search(r"<(?:noise|audio)\s", action):
             report.error(where, "<interruption> must be followed by spoken text or a "
                                 "<noise>/<audio> clip; a bare tag or a pause is rejected")
-        if ctype != "action_followup":
-            report.error(where, 'a condition whose action carries <interruption> must use '
-                                'type "action_followup"')
+        if not followup:
+            report.error(where, '<interruption> must open a `then` step (type "action_followup" '
+                                'in the id-based shape)')
         if re.search(r'<interruption\s+time=["\']0(?:\.0+)?s["\']', action):
             report.warn(where, 'time="0s" cuts in the moment the agent starts its next turn. '
                                "That only asserts something if the agent is already speaking "
@@ -310,7 +317,112 @@ def check_conditions(conditions, where, report):
                                "and only when the agent speaks first)")
             continue
 
-        check_action_tags(action, ctype, spot, report)
+        check_action_tags(action, ctype == "action_followup", spot, report)
+
+
+def is_api_shape(actions):
+    """Mirror the API's own detection: any when/say/then key means the new shape."""
+    conditions = actions.get("conditions")
+    conditions = [c for c in conditions if isinstance(c, dict)] if isinstance(conditions, list) else []
+    if any(set(c) & API_CONDITION_KEYS for c in conditions):
+        return True
+    if any(set(c) & STORED_CONDITION_KEYS for c in conditions):
+        return False
+    return "first_message" in actions
+
+
+def check_step(step, where, report, followup=False, first=False):
+    if not isinstance(step, str):
+        report.error(where, "must be a string")
+        return
+    match = AI_GENERATED.match(step)
+    if match:
+        inner = match.group(1)
+        if first:
+            report.error(where, "the first message is always said verbatim; <ai_generated> is "
+                                "not allowed")
+        elif AI_GENERATED_TAG.search(inner):
+            report.error(where, "<ai_generated> cannot be nested")
+        elif not inner.strip():
+            report.error(where, "<ai_generated> cannot be empty")
+        else:
+            report.warn(where, "<ai_generated> makes this an LLM-generated turn — a CI suite "
+                               "should be verbatim, or a red result is ambiguous")
+            if re.search(r"<(?!function\b)[A-Za-z_]+[\s/>]", inner) or "{{function." in inner:
+                report.error(where, "tags and {{function.*}} placeholders need a verbatim step, "
+                                    "not one wrapped in <ai_generated>")
+        return
+    if AI_GENERATED_TAG.search(step):
+        report.error(where, '<ai_generated> must wrap the whole step, e.g. '
+                            '"<ai_generated>Ask about pricing</ai_generated>"')
+        return
+    if not step.strip():
+        if not first:
+            report.error(where, "must be a non-empty string (only first_message may be empty, "
+                                "and only when the agent speaks first)")
+        return
+    if first and ("<function" in step or "{{function." in step):
+        report.error(where, "function tags and placeholders are not allowed in the first "
+                            "message — use auto_run and reference the value from a later step")
+    check_action_tags(step, followup, where, report)
+
+
+def check_then(steps, parent, report):
+    if steps is None:
+        return 0
+    if not isinstance(steps, list):
+        report.error(parent + ".then", "must be a list of strings")
+        return 0
+    for index, step in enumerate(steps):
+        check_step(step, f"{parent}.then[{index}]", report, followup=True)
+    return len(steps)
+
+
+def check_script(actions, where, report):
+    """The when/say/then shape the scenarios API returns."""
+    steps = 0
+    first = actions.get("first_message")
+    if isinstance(first, str):
+        check_step(first, where + ".first_message", report, first=True)
+    elif isinstance(first, dict):
+        unknown = set(first) - API_FIRST_MESSAGE_KEYS
+        if unknown:
+            report.error(where + ".first_message", "unknown field(s) "
+                         + ", ".join(sorted(unknown)) + ". Allowed: say, then")
+        check_step(first.get("say", ""), where + ".first_message.say", report, first=True)
+        steps += check_then(first.get("then"), where + ".first_message", report)
+    elif first is not None:
+        report.error(where + ".first_message", "must be a string or an object with say and then")
+
+    conditions = actions.get("conditions")
+    if conditions is None:
+        conditions = []
+    if not isinstance(conditions, list):
+        report.error(where + ".conditions", "must be a list")
+        return
+    for index, condition in enumerate(conditions):
+        spot = f"{where}.conditions[{index}]"
+        if not isinstance(condition, dict):
+            report.error(spot, "each condition must be an object")
+            continue
+        unknown = set(condition) - API_CONDITION_KEYS
+        if unknown:
+            report.error(spot, "unknown field(s) " + ", ".join(sorted(unknown))
+                         + ". Allowed: when, say, then")
+        trigger = condition.get("when")
+        if not isinstance(trigger, str) or not trigger.strip():
+            report.error(spot + ".when", "is required — a description of what the agent "
+                                         "observably does")
+        elif re.search(r"[\"'][^\"']{15,}[\"']", trigger):
+            report.warn(spot + ".when", "reads like a verbatim quote of the agent — describe the "
+                                        "observable turn instead (\"the agent asks for the date "
+                                        "of birth\")")
+        check_step(condition.get("say", ""), spot + ".say", report)
+        steps += 1 + check_then(condition.get("then"), spot, report)
+
+    if not steps:
+        report.error(where, "the script has no steps — add conditions, or first_message.then "
+                            "for a fixed sequence")
 
 
 def check_expected_outcome(text, where, report, is_endcall_case):
@@ -431,14 +543,16 @@ def check_case(case, index, defaults, report):
         actions = case.get("conditional_actions")
         if not isinstance(actions, dict):
             report.error(where, 'type "conditional_actions" requires a conditional_actions '
-                                "object with role and conditions")
+                                "object with role, first_message and conditions")
         else:
             if not isinstance(actions.get("role"), str) or not actions["role"].strip():
                 report.error(where + ".conditional_actions",
                              "role is required — one sentence describing who the simulated "
                              "caller is")
             conditions = actions.get("conditions")
-            if not isinstance(conditions, list) or not conditions:
+            if is_api_shape(actions):
+                check_script(actions, where + ".conditional_actions", report)
+            elif not isinstance(conditions, list) or not conditions:
                 report.error(where + ".conditional_actions",
                              "conditions must be a non-empty list")
             else:
