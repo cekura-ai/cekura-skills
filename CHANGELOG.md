@@ -4,6 +4,55 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.18.1 — 2026-10-08
+
+**New skill: `cekura-results-report` — a client-ready, read-only report on test
+results that already exist, shaped by what the user asks, and emitted as a V0
+report block (the format and rules of Cekura's in-product Custom Reports).**
+
+- **The ask decides the content.** A weekly status, a leadership summary, "how
+  responsive is the agent?", "only the failed calls", "only P0 flows" and
+  "compare these two agents" each produce a different report from the same
+  results (`references/data.md`): only the main and related areas
+  get cards; call filters apply to every number and are named in every section;
+  P0 counts only when tests declare it.
+- **One JSON block** between `CEKURA-V0-REPORT-START/END`: title, selection,
+  date range, agents, the covered `result_ids` (used for the PDF's share link),
+  a 12-column `layout` and one `output` per section (glance
+  figures, area cards, key findings, executive summary, bar and pareto charts,
+  recommended changes), with layout rules, ask shapes and a full example
+  (`references/v0-report-format.md`). Numeric fields hold counts, never
+  percentages; text states a percentage only with its count ("52% (25/48)").
+  The reply ends with "Open the report above, or use Download PDF on it."
+- **Seven focus areas and evidence-based check placement**
+  (`references/data.md`): built-ins by function and category, custom checks
+  by failure explanations, then description, then expected outcomes — never by
+  name. Infrastructure failures count under Call reliability only.
+- **V0's key-findings rules and the insight form**
+  (`references/writing.md`): severity, ranking by affected calls,
+  top 4, no single-call findings, fixes only from the results' next steps;
+  Expected Outcome categories appear as rows on the Workflow card only.
+- **Reliable data access** (`references/data.md`): the project and agent are
+  resolved before any data call ("my agent" with several agents gets one
+  clarification, never a silent pick); one results call covers one agent, and
+  comparisons make one combined-report call per agent; no retry loops. It
+  checks what data exists first (cancelled excluded and named, running marked
+  not final), never guesses today's date, passes `ql={-runs}` on every result
+  tool, and reads per-call data only from `runs_bulk_retrieve`, with run IDs
+  from the combined report's `performance_metrics`, `runs_by_tags` and
+  `failed_reasons`.
+- **Rules, edits and a required quality check** (`references/writing.md`):
+  numbers traced to tool output, no comparison or pattern words under 3 calls,
+  no caller personal details; follow-ups change only the sections they concern.
+- **New command `/cekura-results-report [agent] [ask]`**, restricted to read
+  tools. Production-call asks load `cekura-flag-call-log-failures`.
+- **`cekura-coordinator` routes every report ask to it** — any report on tests
+  or simulations, including vague ones ("a report", "how is my agent doing?").
+  `/cekura-report` stays the route for generating and running new evals.
+
+Install with `npx skills add cekura-ai/cekura-skills --skill cekura-results-report`
+(or `--all`).
+
 ## 0.18.0 — 2026-10-01
 
 **The infra-suite skill can gate a pull request on its own preview deployment,
