@@ -40,6 +40,7 @@ cekura-skills/
       cekura-bot-test-writer/
       cekura-flag-call-log-failures/
       cekura-generate-scenarios/
+      cekura-results-report/
     commands/                    # Slash commands (Claude Code only)
     hooks/                       # MCP failure detection + session-start auto-update (Claude Code CLI only)
   _template/                     # SKILL.md.tmpl scaffold for new skills (dev-only)
@@ -56,12 +57,12 @@ cekura-skills/
 
 ### Two install paths, one source of truth
 
-The 13 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
+The 14 SKILL.md files inside `cekura/skills/` are the **only** source of skill content. Both install paths consume the same files:
 
 1. **Claude Code plugin marketplace** (`/plugin marketplace add cekura-ai/cekura-skills`) — gets skills + slash commands + MCP auto-config + hooks. Full functionality.
 2. **Agent Skills via npx** (`npx skills add cekura-ai/cekura-skills`) — gets skills only. Works with any Agent Skills-compatible client (Cursor, Codex, Windsurf, OpenCode, etc.).
 
-The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 13 skills under `cekura/skills/`. The bare repo URL works cleanly.
+The upstream `vercel-labs/skills` CLI reads `.claude-plugin/marketplace.json`, follows the `source` path (`./cekura`), and discovers all 14 skills under `cekura/skills/`. The bare repo URL works cleanly.
 
 ### Skill content rules
 
@@ -137,6 +138,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `cekura-bot-test-writer` | Update a committed suite from a PR diff — triage the change, make the smallest edit, most often none |
 | `cekura-flag-call-log-failures` | Triage recent production call logs against KPIs — flagged calls, failure rates, outcome distribution |
 | `cekura-generate-scenarios` | Cluster flagged production failures and create one evaluator scenario per failure mode |
+| `cekura-results-report` | Client-ready, read-only report on existing test results, shaped by the user's ask — emits a V0 report block (focus areas, key findings, layout) |
 
 ### Commands
 | Component | Purpose |
@@ -155,6 +157,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 | `run-evals` | Execute evaluators |
 | `eval-results` | Check results from a test run |
 | `cekura-report` | End-to-end quality report: generate 10 evals, run them, produce structured analysis |
+| `cekura-results-report` | Read-only report on existing results, shaped by the ask (loads the `cekura-results-report` skill) |
 
 ### Hooks
 | Component | Purpose |
