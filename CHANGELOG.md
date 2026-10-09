@@ -7,11 +7,8 @@ All notable changes to the Cekura plugin. Versions follow
 ## 0.18.2 — 2026-10-09
 
 **Mock tools can simulate failing or slow tools.** `cekura-create-agent` now
-documents the optional `response: {status_code, headers, delay_ms}` on a mock
-mapping (`phase7-mock-tools.md`, `references/api-reference.md`,
-`references/mock-tool-design.md`): the allowed values, and how webhooks (real
-HTTP status), VAPI (HTTP 200 with `Error <status>: <output>`) and MCP
-(`isError: true`) each surface the failure.
+documents the optional `response` (`status_code`, `headers`, `delay_ms`) on a
+mock mapping and how webhook, VAPI and MCP tools see a failure.
 
 ## 0.18.1 — 2026-10-08
 

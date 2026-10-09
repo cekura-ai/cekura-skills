@@ -108,7 +108,7 @@ PATCH /test_framework/v2/aiagents/{agent_id}/
     {
       "name": "string (required, max 64 chars)",
       "description": "string",
-      "mock_data": [{"input": {}, "output": {}, "response": {"status_code": 200, "headers": {}, "delay_ms": 0}}],
+      "mock_data": [{"input": {}, "output": {}}],
       "freetext_params": ["notes"]
     }
   ]
@@ -117,7 +117,7 @@ PATCH /test_framework/v2/aiagents/{agent_id}/
 
 **Critical: Full-list replace** — always include all tools; omitting a tool removes it. GET existing `mock_tools` first, merge, then PATCH the full list.
 
-`response` on a mapping is optional (default: status 200, no headers, no delay). `status_code` is 200–299 (except 204/205) or 400–599, `headers` holds at most 20 strings, and `delay_ms` is 0–30000. See `mock-tool-design.md` for how each transport surfaces it.
+A mapping can also have an optional `response` to simulate a failing or slow tool. See `mock-tool-design.md`.
 
 ### Custom (self-hosted) MCP mock endpoints — REST only
 

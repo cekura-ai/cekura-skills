@@ -32,13 +32,13 @@ Detailed guidance for setting up mock tools (Phase 4 of the create-agent flow). 
 **When designing mock data, think about:**
 - What different inputs will the main agent send to this tool across all test scenarios?
 - What should each distinct input return?
-- What error cases matter? (Add a mapping with a `response` status code for tool-failure scenarios — see [Simulating Tool Failures](#simulating-tool-failures-and-latency))
+- What error cases matter? (Add a mapping with a `response` status code — see [Simulating Tool Failures and Latency](#simulating-tool-failures-and-latency))
 
 If you only create one mapping, every tool call — regardless of input — returns the same output. This masks bugs where the agent sends the wrong parameters.
 
 ## Simulating Tool Failures and Latency
 
-A mapping can carry an optional `response` to simulate an upstream error, a rate limit or a slow tool:
+A mapping can have an optional `response` to simulate a failing or slow tool:
 
 ```json
 {
@@ -48,16 +48,16 @@ A mapping can carry an optional `response` to simulate an upstream error, a rate
 }
 ```
 
-- `status_code`: 200–299 (except 204/205) or 400–599. Default 200.
-- `headers`: at most 20 string headers. `Content-Type`, `Content-Length`, `Content-Encoding`, `Transfer-Encoding`, `Connection`, `Set-Cookie` and `Strict-Transport-Security` are rejected.
+- `status_code`: 200–299 (except 204 and 205) or 400–599. Default 200.
+- `headers`: up to 20 headers with string values. `Content-Type`, `Content-Length`, `Content-Encoding`, `Transfer-Encoding`, `Connection`, `Set-Cookie` and `Strict-Transport-Security` are not allowed.
 - `delay_ms`: 0–30000. Default 0.
 
-How each transport sees it:
-- **Webhook tools** get the real HTTP status and headers, with `output` as the body.
-- **VAPI function tools** always get HTTP 200, with the result `Error 503: {"detail":"Service temporarily unavailable"}`.
-- **MCP tools** get a normal result with `isError: true` and the same text.
+How the agent sees a status of 400 or above:
+- **Webhook tools** get that HTTP status and the headers, with `output` as the body.
+- **VAPI function tools** get HTTP 200 with the result `Error 503: {"detail":"Service temporarily unavailable"}`.
+- **MCP tools** get a tool result with `isError: true` and the same text.
 
-Use a distinct input for the failure case (for example, a pinned date from the test profile). Two mappings with the same input and output but a different `response` are rejected as a conflict.
+One input can only have one outcome, so give the failure case its own input.
 
 ## Tool Data Design
 
@@ -82,7 +82,7 @@ A PATCH that omits an existing tool **removes it entirely**.
 ## Key Rules Reminder
 
 - **`name`** must exactly match the tool name in the main agent description (max 64 chars, alphanumeric + underscores + hyphens)
-- **`information`** is an array of input/output mappings — Cekura matches incoming tool calls to the closest input and returns the corresponding output, with that mapping's optional `response` status, headers and delay
+- **`information`** is an array of input/output mappings — Cekura matches incoming tool calls to the closest input and returns the corresponding output
 - **`freetext_params`** — Parameter names to skip during mock matching (free-text fields like "notes" or "reason" that vary per call)
 - **Phone format variants** — For phone-based lookups, add mappings for ALL variants: 10-digit, 11-digit with leading 1, and full E.164
 - **Chain dependencies** — If tool B depends on output from tool A, the mock data must be consistent across tools
