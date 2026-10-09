@@ -32,9 +32,32 @@ Detailed guidance for setting up mock tools (Phase 4 of the create-agent flow). 
 **When designing mock data, think about:**
 - What different inputs will the main agent send to this tool across all test scenarios?
 - What should each distinct input return?
-- What error cases matter? (Add a mapping with an error response for tool-failure scenarios)
+- What error cases matter? (Add a mapping with a `response` status code for tool-failure scenarios — see [Simulating Tool Failures](#simulating-tool-failures-and-latency))
 
 If you only create one mapping, every tool call — regardless of input — returns the same output. This masks bugs where the agent sends the wrong parameters.
+
+## Simulating Tool Failures and Latency
+
+A mapping can carry an optional `response` to simulate an upstream error, a rate limit or a slow tool:
+
+```json
+{
+  "input": {"date": "2026-07-11"},
+  "output": {"detail": "Service temporarily unavailable"},
+  "response": {"status_code": 503, "headers": {"Retry-After": "30"}, "delay_ms": 2000}
+}
+```
+
+- `status_code`: 200–299 (except 204/205) or 400–599. Default 200.
+- `headers`: at most 20 string headers. `Content-Type`, `Content-Length`, `Content-Encoding`, `Transfer-Encoding`, `Connection`, `Set-Cookie` and `Strict-Transport-Security` are rejected.
+- `delay_ms`: 0–30000. Default 0.
+
+How each transport sees it:
+- **Webhook tools** get the real HTTP status and headers, with `output` as the body.
+- **VAPI function tools** always get HTTP 200, with the result `Error 503: {"detail":"Service temporarily unavailable"}`.
+- **MCP tools** get a normal result with `isError: true` and the same text.
+
+Use a distinct input for the failure case (for example, a pinned date from the test profile). Two mappings with the same input and output but a different `response` are rejected as a conflict.
 
 ## Tool Data Design
 
@@ -59,7 +82,7 @@ A PATCH that omits an existing tool **removes it entirely**.
 ## Key Rules Reminder
 
 - **`name`** must exactly match the tool name in the main agent description (max 64 chars, alphanumeric + underscores + hyphens)
-- **`information`** is an array of input/output mappings — Cekura matches incoming tool calls to the closest input and returns the corresponding output
+- **`information`** is an array of input/output mappings — Cekura matches incoming tool calls to the closest input and returns the corresponding output, with that mapping's optional `response` status, headers and delay
 - **`freetext_params`** — Parameter names to skip during mock matching (free-text fields like "notes" or "reason" that vary per call)
 - **Phone format variants** — For phone-based lookups, add mappings for ALL variants: 10-digit, 11-digit with leading 1, and full E.164
 - **Chain dependencies** — If tool B depends on output from tool A, the mock data must be consistent across tools

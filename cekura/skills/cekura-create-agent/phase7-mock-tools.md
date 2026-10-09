@@ -119,6 +119,7 @@ curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/ \
 
 - **`name`** must exactly match the tool name in the main agent config (max 64 chars, `[a-z0-9_-]`)
 - **Multiple mappings per tool** — one entry per distinct input (different users, topics, error cases)
+- **Failing or slow tools** — add an optional `"response": {"status_code": 503, "headers": {"Retry-After": "30"}, "delay_ms": 2000}` to a mapping. `status_code` is 200–299 (not 204/205) or 400–599, and `delay_ms` is 0–30000. Webhooks get the real status, VAPI gets HTTP 200 with `Error 503: <output>`, and MCP gets `isError: true`. See `references/mock-tool-design.md`
 - **`freetext_params`** — fields to skip during match (free-text like "notes", "reason" that vary per call)
 - **Phone format variants** — for phone lookups, add 10-digit, 11-digit-with-1, and E.164 forms
 - **Chain dependencies** — if tool B uses output from tool A, mock data must be consistent across tools
