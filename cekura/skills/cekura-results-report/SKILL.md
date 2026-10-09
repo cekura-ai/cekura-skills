@@ -103,11 +103,12 @@ The report is **one JSON block** between the V0 markers — never a markdown rep
 <!-- CEKURA-V0-REPORT-START -->
 ```json
 { "version": 1, "title": "…", "selection_label": "…", "date_range": "…", "agents": ["…"],
-  "result_ids": [ … ], "layout": [ … ], "outputs": { … } }
+  "project_id": <id>, "result_ids": [ … ], "layout": [ … ], "outputs": { … } }
 ```
 <!-- CEKURA-V0-REPORT-END -->
 ````
 
+- `project_id` is the Cekura project the report's results belong to (the `project_id` used to fetch them); a report covers one project only, so if the ask spans several projects, ask which one to report on.
 - Valid JSON; every layout key has exactly one output and vice versa; at most 12 sections.
 - **Counts, not percentages**, inside the block (`{"x": passed, "y": total}`); the renderer computes percentages, shares and sorting.
 - Shapes, statuses, layout rules, ask shapes and a full example: `references/v0-report-format.md`.
