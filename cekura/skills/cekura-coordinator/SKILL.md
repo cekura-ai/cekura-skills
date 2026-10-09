@@ -68,6 +68,7 @@ Skills activate when the user describes a relevant task. Commands are slash comm
 | `/run-evals` | Execute evaluators (run test scenarios) |
 | `/eval-results` | Check results from a test run |
 | `/cekura-report` | Full end-to-end quality report — generates 10 evals, runs them, produces structured analysis |
+| `/cekura-results-report` | Read-only report on existing test or simulation results, shaped by the ask |
 
 ## Routing Guide
 
@@ -107,6 +108,7 @@ When the user describes what they need, route them:
 | "What % of calls have <problem>" / "analyze my recent calls" | **cekura-flag-call-log-failures** skill |
 | "Create scenarios from failed calls" / "replay prod failures as tests" | **cekura-generate-scenarios** skill |
 | "Run a full quality report" / "generate evals and run them end-to-end" | `/cekura-report` command |
+| Any report on tests or simulations — "a report" / "weekly status" / "a summary for my client or leadership" / "how is my agent doing?", including vague report asks | **cekura-results-report** skill (`/cekura-results-report` command) |
 
 ## Typical User Journeys
 
