@@ -119,6 +119,7 @@ curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/ \
 
 - **`name`** must exactly match the tool name in the main agent config (max 64 chars, `[a-z0-9_-]`)
 - **Multiple mappings per tool** — one entry per distinct input (different users, topics, error cases)
+- **Failing or slow tools** — add an optional `response` (`status_code`, `headers`, `delay_ms`) to a mapping. See `references/mock-tool-design.md`
 - **`freetext_params`** — fields to skip during match (free-text like "notes", "reason" that vary per call)
 - **Phone format variants** — for phone lookups, add 10-digit, 11-digit-with-1, and E.164 forms
 - **Chain dependencies** — if tool B uses output from tool A, mock data must be consistent across tools

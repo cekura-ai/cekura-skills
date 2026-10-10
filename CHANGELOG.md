@@ -4,6 +4,12 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.18.2 — 2026-10-09
+
+**Mock tools can simulate failing or slow tools.** `cekura-create-agent` now
+documents the optional `response` (`status_code`, `headers`, `delay_ms`) on a
+mock mapping and how webhook, VAPI and MCP tools see a failure.
+
 ## 0.18.1 — 2026-10-08
 
 **New skill: `cekura-results-report` — a client-ready, read-only report on test
