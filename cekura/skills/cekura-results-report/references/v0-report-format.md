@@ -6,7 +6,7 @@
 <!-- CEKURA-V0-REPORT-START -->
 ```json
 { "version": 1, "title": "…", "selection_label": "…", "date_range": "24 Sep 2026 – 7 Oct 2026", "agents": ["…"],
-  "result_ids": [5591, 5592],
+  "project_id": 4021, "result_ids": [5591, 5592],
   "layout": [{"key": "glance", "x": 0, "y": 0, "w": 12, "h": 3}, …],
   "outputs": {"glance": {…}, …} }
 ```
@@ -14,7 +14,8 @@
 ````
 
 - Every layout key has exactly one output, and vice versa.
-- `result_ids` lists every result the report covers, as integer IDs from tool output: exactly the results its numbers come from (the ones passed to `results_reports_retrieve`; for several agents, all of them). Cancelled and left-out results are not in it; every example's `result_id` is. The app uses it to create the PDF's public share link. On a follow-up that changes which results the report covers, update it.
+- `project_id` (required, integer) is the Cekura project the report's results belong to: the `project_id` used to fetch them. A report covers one project only; if the ask spans several projects, ask which one to report on.
+- `result_ids` lists every result the report covers, as integer IDs from tool output: exactly the results its numbers come from (the ones passed to `results_reports_retrieve`; for several agents, all of them). Cancelled and left-out results are not in it; every example's `result_id` is. The app uses it, with `project_id`, to create the PDF's public share link. On a follow-up that changes which results the report covers, update it.
 - Keys are short snake_case ids (`glance`, `area_security`, `findings`, `summary`, `by_area`, `by_personality`, `causes`, `changes`).
 - At most 12 sections.
 
@@ -131,6 +132,7 @@ The block:
   "selection_label": "All calls · Clinic Receptionist",
   "date_range": "24 Sep 2026 – 7 Oct 2026",
   "agents": ["Clinic Receptionist"],
+  "project_id": 4021,
   "result_ids": [5591, 5592, 5593],
   "layout": [
     {"key": "glance", "x": 0, "y": 0, "w": 12, "h": 3},
