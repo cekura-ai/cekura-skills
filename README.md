@@ -24,13 +24,13 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 
 ## What's Included
 
-### 13 Skills, 14 Commands in one plugin
+### 14 Skills, 15 Commands in one plugin
 
 | Skills | Commands |
 |--------|----------|
 | `cekura-coordinator` | `cekura-onboarding`, `setup-mcp`, `upgrade-skills`, `report-bug` |
 | `cekura-onboarding` | `create-metric`, `list-metrics`, `evaluate-calls`, `improve-metric` |
-| `cekura-create-agent` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report` |
+| `cekura-create-agent` | `manual-create-update-eval`, `autogen-eval`, `list-evals`, `run-evals`, `eval-results`, `cekura-report`, `cekura-results-report` |
 | `cekura-self-improving-agent` | |
 | `cekura-metric-design` | |
 | `cekura-metric-improvement` | |
@@ -41,6 +41,7 @@ AI-powered skills for building and improving voice agent tests and metrics on th
 | `cekura-bot-test-writer` | |
 | `cekura-flag-call-log-failures` | |
 | `cekura-generate-scenarios` | |
+| `cekura-results-report` | |
 
 **`cekura-self-improving-agent`** covers both "improve my agent / auto-tune from eval
 results" and "fix a production call bug end-to-end". It works on dashboard-managed
@@ -96,7 +97,7 @@ npx skills remove --all                 # everything
 
 ### What gets installed
 
-Thirteen skills, scoped to specific Cekura workflows:
+Fourteen skills, scoped to specific Cekura workflows:
 
 | Skill | When it activates |
 |---|---|
@@ -113,6 +114,7 @@ Thirteen skills, scoped to specific Cekura workflows:
 | `cekura-bot-test-writer` | "Update the tests for this PR / does this diff need new voice tests / keep my suite in sync" |
 | `cekura-flag-call-log-failures` | "Analyze the last N calls for issues / what % of calls have <problem>" |
 | `cekura-generate-scenarios` | "Create scenarios from failed calls / regression-test the agent on prod issues" |
+| `cekura-results-report` | "A weekly status report / a leadership summary / how responsive or secure is the agent? / only failed calls / compare agents / report on this result" |
 
 ### Want full functionality?
 
@@ -484,6 +486,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `/run-evals` | Execute test scenarios |
 | `/eval-results` | Check results from a test run |
 | `/cekura-report` | Full end-to-end quality report — generates 10 evals, runs them, produces structured analysis |
+| `/cekura-results-report` | Client-ready report on existing test results, shaped by your question — focus areas, key findings, charts; read-only |
 
 ### Skills (load automatically — both install paths)
 
@@ -502,6 +505,7 @@ All plugins connect to the Cekura API through an MCP (Model Context Protocol) se
 | `cekura-bot-test-writer` | Keeping a committed suite in step with the code — reads a PR diff and makes the smallest edit that closes a real gap |
 | `cekura-flag-call-log-failures` | Triaging recent production call logs against KPIs — failure rates + outcome distribution |
 | `cekura-generate-scenarios` | Turning flagged production failures into regression evaluator scenarios |
+| `cekura-results-report` | Designing a client-ready report on test results that already exist — the ask decides the focus areas, filters and sections (status, leadership, responsiveness, security, P0 flows, failed calls, agent comparison, a topic) |
 
 ### Getting Started Flow
 
