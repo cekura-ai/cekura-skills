@@ -198,7 +198,7 @@ For legitimate deviations where the metric should not apply (tool failures, user
 
 ### Gated Metrics
 
-Access upstream metric results via `data.get("Exact Metric Name")`. The key must match the upstream metric's `name` field exactly. Use to branch evaluation logic based on prior classification.
+Access upstream metric results via `data.get("Exact Metric Name")` or `data["metrics"]["<slug>"]["value"]`. The name key must match the upstream metric's `name` field exactly. Use to branch evaluation logic based on prior classification. The platform runs the upstream metric first: a literal `data["..."]` read is inferred as a prerequisite, and `configuration.metric_dependencies` (list of metric IDs) declares it explicitly. When the upstream metric has no result for a call, the gated metric is saved unscored with `extra.dependency_failed` and is not charged, so the `None` gate in the examples is only reached in the preview. LLM-judge metrics can gate too, with `{{metrics.<slug>.score}}` in `description`.
 
 ### Pythonic Section Extraction
 

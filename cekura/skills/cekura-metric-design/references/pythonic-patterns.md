@@ -167,7 +167,7 @@ _result, _explanation = parse_llm_result(res, prefix="[Metric Name] ")
 
 ## Gated Metric Pattern
 
-When a metric depends on another metric's output:
+When a metric depends on another metric's output (the upstream metric is scheduled first; declare it in `configuration.metric_dependencies` if the read is not a literal `data["..."]`):
 
 ```python
 from utils import extract_section, parse_llm_result, METRIC_SECTIONS

@@ -4,6 +4,19 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.1 — 2026-10-15
+
+**Metric prerequisites are documented as a platform feature.**
+
+- **Gated metrics run in dependency order.** `cekura-metric-design` now says the
+  upstream metric is evaluated first (inferred from a literal `data["..."]`
+  read, or declared in `configuration.metric_dependencies`), that a missing
+  upstream result leaves the gated metric unscored with
+  `extra.dependency_failed`, and that LLM-judge metrics can gate with
+  `{{metrics.<slug>.score}}` in `description`. The API reference lists the new
+  `configuration.metric_dependencies` field and the `metrics` entry of the
+  custom-code `data` dict.
+
 ## 0.19.0 — 2026-10-13
 
 **Conditional actions are written in the simplified `first_message` / `when` /
