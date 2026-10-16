@@ -96,7 +96,7 @@ Keep names under 80 chars (API limit on the `name` field).
 
 ## Eval Types
 
-A complete suite has coverage across these categories. Each type can be **behavioral** (free-form instructions) or **conditional actions** (structured `{role, first_message, conditions[]}`) — see "Choosing Authoring Mode" in `SKILL.md` for the decision rule. That choice also fixes how the scenario gets written: behavioral ⇒ generated via `generate-bg`, always; conditional actions ⇒ created directly when the structure is exactly known (generation emits conditional actions when the request sets `simulation_type: "conditional_actions"` or for red-team categories; direct create is for structures that are exactly known).
+A complete suite has coverage across these categories. Each type can be **behavioral** (free-form instructions) or **conditional actions** (structured `{role, first_message, conditions[]}`) — see "Mode and write path" in `SKILL.md` for the decision rule. On an organization on conditional actions scenarios (`conditional_actions_generation_enabled` on) every category is conditional actions, with adaptive caller turns as `<ai_generated>` steps — read "behavioral" below as that. The choice also fixes how the scenario gets written: behavioral ⇒ generated via `generate-bg`, always; conditional actions ⇒ generated with `simulation_type: "conditional_actions"` for a batch or category (red-team categories return them on their own), created directly when the structure is exactly known.
 
 ### Workflow Evals (Core)
 

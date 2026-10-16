@@ -20,20 +20,22 @@ Generate the first evaluators with the **background generation endpoint**:
 }
 ```
 
+Leave `simulation_type` out: the server then uses the organization's scenario format. Every new organization is on conditional actions scenarios (`conditional_actions_generation_enabled`, read once with `user_organizations_list` on the organization that owns the project), so its first evaluators come back as conditional actions; an older organization with the setting off gets behavioral (`instruction`) scenarios. Never send `simulation_type: "instruction"` when the setting is on.
+
 2. Poll **`scenarios_generate_progress`** with the returned `progress_id` until complete.
 3. List and review the generated scenarios.
 
-**Do NOT hand-author evaluators with `scenarios_create` during onboarding.** Generation grounds evaluators in the agent description; hand-written ones depend entirely on improvisation. These evaluators are behavioral (`instruction`), and behavioral scenarios are always generated.
+**Do NOT hand-author evaluators with `scenarios_create` during onboarding.** Generation grounds evaluators in the agent description; hand-written ones depend entirely on improvisation — whichever format the organization uses.
 
 - **If `scenarios_generate_bg` fails**, retry once with a smaller `num_scenarios` and sharper `extra_instructions`. If it still fails, **stop and report the failure** — do not hand-write a stopgap set. A hand-written set looks like progress while leaving the user with evaluators nobody grounded in their agent. Offer `/report-bug`.
-- **The one exception:** the user supplies the scenario text themselves and wants it verbatim. Create that one directly and say that it bypassed generation.
+- **The one exception:** the user supplies the scenario text themselves and wants it verbatim. With the setting off, create that one directly and say that it bypassed generation. With it on, never save it as `instruction`: generate from it (`num_scenarios: 1`, the text as `extra_instructions`) and say it became conditional actions.
 
 If the agent description is a flagged placeholder from Phase 2, **stop and resolve the description first** — generation from a placeholder produces junk.
 
 ## 4b. Review the generated set
 
 Check:
-- Instructions are specific and behavioral.
+- Steps are specific: behavioral instructions in first person, or conditions that fire on what the agent actually says, with `<ai_generated>` steps where the caller adapts.
 - Expected outcomes are concise and achievable.
 - The right tools are enabled.
 - For non-English agents: PATCH `scenario_language` to the correct code.

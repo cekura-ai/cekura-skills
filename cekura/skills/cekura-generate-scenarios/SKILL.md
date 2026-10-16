@@ -20,14 +20,14 @@ compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign 
 allowed-tools: AskUserQuestion Bash Read Write Edit Grep Glob Skill mcp__cekura__cekura_skill_started
 metadata:
   author: cekura
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-generate-scenarios:7q3n6v -->
 > **Cekura skill verification tag:** `ack:cekura-generate-scenarios:7q3n6v`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.19"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-generate-scenarios"`, `verification_tag="ack:cekura-generate-scenarios:7q3n6v"`, and `plugin_version="0.20"`. It returns immediately and lets Cekura see which skills are in use.
 
 # generate-scenarios
 
@@ -40,15 +40,16 @@ This skill is **read-first**: it never creates a scenario without an explicit us
 | `scenario_type` | Write path |
 |---|---|
 | `conditional_actions` — drop, tool_error, workflow_miss (turn-by-turn replays) | `mcp__cekura__scenarios_create` with the drafted `conditions` — the evidence call dictates the turn sequence, which is the one case that outranks generation. When you have the failure mode but not the turns, `scenarios_generate_bg` with `simulation_type: "conditional_actions"` emits grounded, validated conditions. |
-| `instruction` — drift, hallucination, comprehension, refusal, safety (free-form) | **Generate:** `mcp__cekura__call_logs_create_scenarios` (preferred — grounded in the evidence calls) or `scenarios_generate_bg`, passing the drafted `expected_behavior` + failure mode as `extra_instructions`. Behavioral instructions are never hand-authored. |
+| `instruction` — drift, hallucination, comprehension, refusal, safety (free-form; organizations not on conditional actions) | **Generate:** `mcp__cekura__call_logs_create_scenarios` (preferred — grounded in the evidence calls) or `scenarios_generate_bg`, passing the drafted `expected_behavior` + failure mode as `extra_instructions`. Behavioral instructions are never hand-authored. |
 
-A mixed report takes **both** paths in one pass; say which clusters went which way in the summary. The only reason to hand-author an `instruction` scenario is that the user dictated its text themselves.
+A mixed report takes **both** paths in one pass; say which clusters went which way in the summary. The only reason to hand-author an `instruction` scenario is that the user dictated its text themselves. **On an organization on conditional actions scenarios** (`conditional_actions_generation_enabled` on — Step 2a) every cluster is `conditional_actions` and nothing is created as `instruction`: the free-form clusters keep the generate path, with `simulation_type: "conditional_actions"` on any `scenarios_generate_bg` call and the caller's latitude in `<ai_generated>` steps.
 
 ## Step 0 — Prerequisites
 
 This skill reads + writes through the Cekura MCP. Confirm these tools are present before starting:
 
-- `mcp__cekura__aiagents_retrieve` — agent description, language, scenario defaults, tool wiring
+- `mcp__cekura__aiagents_retrieve` — agent description, language, tool wiring
+- `mcp__cekura__user_organizations_list` — the organization's scenario format (`conditional_actions_generation_enabled`)
 - `mcp__cekura__call_logs_retrieve` — transcript, metric evaluations, ended_reason for each flagged call (to build the replay)
 - `mcp__cekura__scenarios_list` — existing scenarios on the agent (dedup)
 - `mcp__cekura__scenarios_create` — single-scenario create
@@ -120,7 +121,7 @@ Walk the caller's path **turn-by-turn in the same order the real call took**, up
 - **Always include the end-call tool in `tool_ids`** — it's a hard always-on rule for every scenario (Step 4). End the success path with `<endcall />` in the final action; the `<endcall />` marker is a no-op unless that tool is wired in.
 - **Never append `<silence>` (or `<hold>`) tags at the END of an action.** Those SSML pause tags are only for *mid-utterance* pacing (a beat inside a sentence). Trailing them on the end of a line — e.g. `"...thanks <silence time="1.0s" /> <endcall />"` or as the caller's last token — just injects dead air and serves no purpose. End actions on the spoken words; if the turn closes the call, the final action ends with `<endcall />` directly (no preceding `<silence>`). Do not pad actions with trailing silence by default.
 
-(For free-form calls — hallucination/drift/refusal, where the caller needs latitude — the scenario is `scenario_type: instruction` instead, and per **Write path** above it must be **generated**, not hand-written: skip C and use `mcp__cekura__call_logs_create_scenarios` with this one `call_log_id`, or `scenarios_generate_bg` with `num_scenarios: 1` and the focal failure + expected behavior as `extra_instructions`. Then attach the test profile, metric, and phone per D–F exactly as below.)
+(For free-form calls — hallucination/drift/refusal, where the caller needs latitude — the scenario is `scenario_type: instruction` instead (`conditional_actions` with `<ai_generated>` steps on a conditional-actions organization), and per **Write path** above it must be **generated**, not hand-written: skip C and use `mcp__cekura__call_logs_create_scenarios` with this one `call_log_id`, or `scenarios_generate_bg` with `num_scenarios: 1` and the focal failure + expected behavior as `extra_instructions` (plus `simulation_type: "conditional_actions"` on such an organization). Then attach the test profile, metric, and phone per D–F exactly as below.)
 
 ### D. Caller identity → test profile (camelCase keys — load-bearing)
 
@@ -135,7 +136,7 @@ Score the specific behavior. Follow the **Metric selection policy** above — re
 
 ### F. Create (after user OK)
 
-1. **Scenario** — this is the `conditional_actions` replay built in C, so it takes the direct-create path: `mcp__cekura__scenarios_create` with agent, `name` ("<failure> (from call <id>)"), **explicit `scenario_type: "conditional_actions"`** (omitting it defaults to `instruction` and the `conditions` are ignored), `personality` (Step 4 heuristics), `metrics=[<metric_id>]`, `folder_path` (if the user named a folder), `expected_outcome_prompt`, `conditional_actions`, `tags=["replay-<call_id>", "<mode>"]`, testing-agent `tool_ids`. If the focal failure was free-form instead (the `instruction` case flagged at the end of C), you generated the scenario there — skip to step 2 and attach to the returned scenario.
+1. **Scenario** — this is the `conditional_actions` replay built in C, so it takes the direct-create path: `mcp__cekura__scenarios_create` with agent, `name` ("<failure> (from call <id>)"), **explicit `scenario_type: "conditional_actions"`** (omitting it defaults to `instruction` and the `conditions` are ignored), `personality` (Step 4 heuristics), `metrics=[<metric_id>]`, `folder_path` (if the user named a folder), `expected_outcome_prompt`, `conditional_actions`, `tags=["replay-<call_id>", "<mode>"]`, testing-agent `tool_ids`. If the focal failure was free-form instead (the generated case flagged at the end of C), you generated the scenario there — skip to step 2 and attach to the returned scenario.
 2. **Test profile** — `mcp__cekura__test_profiles_create` with the camelCase+lowercase identity dict; capture the id.
 3. **Attach the profile** — `mcp__cekura__scenarios_partial_update(id=<scenario_id>, test_profile=<profile_id>)`. The runtime only reads dynamic variables from the attached profile, not the scenario's own `dynamic_variable_values`.
 4. **Attach the evaluator phone** for phone/outbound agents — set the scenario's phone number (e.g. via `scenarios_partial_update`). The create call may not persist it, so **read the scenario back and PATCH if the phone is null.** (Look up the organization's configured evaluator inbound-phone-number ID and use that.)
@@ -159,7 +160,7 @@ Call `mcp__cekura__aiagents_retrieve(id=<agent_id>)` and capture:
 |---|---|
 | `agent_description` | Intent — what the agent is *supposed* to do (defines what counts as a failure) |
 | `agent_name`, `project_id` | Report header, scenario creation scope |
-| `scenario_type` default | Pick `instruction` vs `conditional_actions` per cluster |
+| Organization's `conditional_actions_generation_enabled` (one `user_organizations_list` call; the organization owning `project_id`) | On ⇒ every cluster is `conditional_actions`; off or unreadable ⇒ pick per cluster (Step 4) |
 | `scenario_language` / `language` | Required field on new CA scenarios |
 | `inbound`, `contact_number`, `outbound_numbers` | Direction matters for the scenario's `first_message` choice |
 | `tool_ids` / tool wiring | Mirror the agent's available tools in scenarios that need them |
@@ -234,8 +235,8 @@ For every name in `agent_dynamic_vars`, pick a value that's *consistent with the
 
 ### Picking `scenario_type`
 
-- **`instruction`** for free-form / red-teamy clusters: hallucinations, drift, refusal, comprehension, safety. The testing agent needs latitude to push. → **generated** (see **Write path**); the draft becomes `extra_instructions`.
-- **`conditional_actions`** for sequential workflow clusters: workflow_miss, tool_error, drop-mid-workflow. Walk the exact failure path turn by turn. → **created directly**; generation can't emit these.
+- **`instruction`** for free-form / red-teamy clusters: hallucinations, drift, refusal, comprehension, safety. The testing agent needs latitude to push. → **generated** (see **Write path**); the draft becomes `extra_instructions`. On a conditional-actions organization these clusters are `conditional_actions`, generated the same way with `simulation_type: "conditional_actions"`.
+- **`conditional_actions`** for sequential workflow clusters: workflow_miss, tool_error, drop-mid-workflow. Walk the exact failure path turn by turn. → **created directly** when the evidence call gives the turns; with only the failure mode, `scenarios_generate_bg` with `simulation_type: "conditional_actions"`.
 
 Picking the type therefore picks the write path. Don't pick `conditional_actions` for a free-form cluster just to keep control of the wording.
 
@@ -332,7 +333,7 @@ Save as `failure_scenarios_<agent_id>.md` in the working directory. Structure:
 - 📞 Call [<call_log_id>](https://dashboard.cekura.ai/<project_id>/observe/<call_log_id>): "<verbatim transcript quote>"
 - 📞 Call [<call_log_id>](https://dashboard.cekura.ai/<project_id>/observe/<call_log_id>): "<verbatim transcript quote>"
 
-**Draft scenario** — this cluster is `instruction`, so the draft is a **spec, not a create payload**: its `instructions` + `expected_outcome_prompt` become the `extra_instructions` passed to the generation endpoint (see **Write path**). Shown in payload form only so the user can review the intent.
+**Draft scenario** — this cluster is `instruction` (on a conditional-actions organization it is `conditional_actions`, generated from the same draft), so the draft is a **spec, not a create payload**: its `instructions` + `expected_outcome_prompt` become the `extra_instructions` passed to the generation endpoint (see **Write path**). Shown in payload form only so the user can review the intent.
 
 ```json
 {
@@ -380,7 +381,7 @@ Save as `failure_scenarios_<agent_id>.md` in the working directory. Structure:
 
 ## Step 6 — Offer to create
 
-After printing the report, split the clusters by `scenario_type` per **Write path** above. That split is already decided — state it, don't offer it as a choice:
+After printing the report, split the clusters by `scenario_type` per **Write path** above (on a conditional-actions organization the free-form clusters form the generated half as conditional actions). That split is already decided — state it, don't offer it as a choice:
 
 > Want me to build these? The split is fixed by scenario type: **conditional-action clusters (<CA list>)** get created directly from the drafted turn-by-turn spec; **instruction clusters (<instr list>)** get generated from the evidence calls with the drafted failure summary as `extra_instructions`. Options:
 >
@@ -393,7 +394,7 @@ Do not collapse the instruction half into direct creates because the drafted wor
 
 ### The instruction half — generate via the platform endpoint
 
-This is the path for every `instruction` cluster (drift, hallucination, comprehension, refusal, safety). Call `mcp__cekura__call_logs_create_scenarios` with:
+This is the path for every free-form cluster (drift, hallucination, comprehension, refusal, safety) — `instruction`, or `conditional_actions` on a conditional-actions organization. Call `mcp__cekura__call_logs_create_scenarios` with:
 
 | Field | Value |
 |---|---|
@@ -483,7 +484,7 @@ Don't create scenarios (and say so) if any of these are true:
 
 ## Quick reference — failure modes → scenario construction
 
-The authoritative failure taxonomy + detection signals live in `cekura-flag-call-log-failures` (the skill that classifies). This table is the **construction map** — given a flagged call's `mode`, how to build its scenario:
+The authoritative failure taxonomy + detection signals live in `cekura-flag-call-log-failures` (the skill that classifies). This table is the **construction map** — given a flagged call's `mode`, how to build its scenario. On a conditional-actions organization read every `instruction` below as `conditional_actions`, generated with `simulation_type: "conditional_actions"`:
 
 | Emoji | Code | Typical scenario_type | Write path | Cluster signal |
 |---|---|---|---|---|
