@@ -4,6 +4,43 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.20.0 — 2026-10-16
+
+**Organizations on conditional actions scenarios get conditional actions from
+every scenario workflow.**
+
+- **The organization decides first.** Every scenario workflow reads the
+  organization's `conditional_actions_generation_enabled` setting once, before
+  its first write. It is on for every new organization; Cekura moves older
+  organizations over one at a time, and the web app then offers only
+  conditional actions ("Structured Tests") when generating or creating
+  scenarios.
+- **When it is on, every new scenario is conditional actions.** Generation
+  sends `simulation_type: "conditional_actions"` or leaves it out (the setting
+  then picks conditional actions) and never sends `"instruction"`; direct
+  creates use `scenario_type: "conditional_actions"` only. Behavioral, adaptive
+  and free-form requests become conditional actions whose adaptive caller turns
+  are `<ai_generated>` steps, and scenario text the user supplies is generated
+  from (or authored as conditional actions) instead of being saved as an
+  instruction scenario. Existing instruction scenarios still run and can still
+  be edited; nothing is converted unless asked.
+- **When it is off, or cannot be read, nothing changes** — behavioral
+  instructions stay the default, with conditional actions for structured and
+  deterministic tests.
+- **Covered everywhere scenarios are written:** the eval-design mode decision
+  and its references, `/autogen-eval` (format decided in step 3 and shown in
+  the plan; CSV/JSON bulk create generates conditional actions instead),
+  `/manual-create-update-eval`, `/cekura-report`, onboarding's first
+  evaluators, the create-agent verification run, generate-scenarios (every
+  cluster is conditional actions on such an organization), the coordinator
+  routing table and `codex/AGENTS.md` / `GEMINI.md`.
+- **Corrected: generation does produce conditional actions.** Several places
+  said the generator could not emit them; it does whenever
+  `simulation_type: "conditional_actions"` is sent, so a category of scripted,
+  IVR or regression tests is a generation run, and a direct create is for turns
+  that are exactly known. The create-agent verification run now passes
+  `num_scenarios: 1` (it said `count`).
+
 ## 0.19.0 — 2026-10-13
 
 **Conditional actions are written in the simplified `first_message` / `when` /

@@ -4,11 +4,12 @@ Detailed schema and gotchas for the scenario auto-generator. Loaded on demand fr
 
 The generator is the default write path in every mode; `simulation_type` selects the output format:
 
-- `"instruction"` (default) — behavioural scenarios, one or many (`num_scenarios: 1` with a specific `extra_instructions` is normal).
-- `"conditional_actions"` — validated `conditions[]` from the same grounding pipeline (agent description, KB, mock tools), tags included: the generator knows the full tag set and honours tag requirements written into `extra_instructions`.
+- `"conditional_actions"` — validated `conditions[]` from the same grounding pipeline (agent description, KB, mock tools), tags included: the generator knows the full tag set and honours tag requirements written into `extra_instructions`. Adaptive caller turns come back as `<ai_generated>` steps.
+- `"instruction"` — behavioural scenarios, one or many (`num_scenarios: 1` with a specific `extra_instructions` is normal). Never sent for an organization on conditional actions scenarios.
+- Left out — the organization's `conditional_actions_generation_enabled` setting decides: conditional actions when it is on (every new organization), otherwise `instruction`, switched to conditional actions when `extra_instructions` asks for interruption, silence or hold.
 - Red-team categories (`scenario_type: "red_teaming_voice" / "red_teaming_text"`) return conditional actions carrying a multi-turn attack plan; review them, never rewrite them into instructions.
 
-Behavioural (`instruction`) scenarios are always generated — a single fully described case is `num_scenarios: 1` with the description in `extra_instructions`. Direct creates are for exactly-known conditional-action structures, and for a complete verbatim instructions payload the user supplied to save unchanged, under the same quality rules as generated output. See `SKILL.md` § Mode and write path.
+Behavioural (`instruction`) scenarios are always generated — a single fully described case is `num_scenarios: 1` with the description in `extra_instructions`. Direct creates are for exactly-known conditional-action structures, and — on an organization not on conditional actions — for a complete verbatim instructions payload the user supplied to save unchanged, under the same quality rules as generated output. On a conditional-actions organization every request, behavioural ones included, is generated or created as conditional actions. See `SKILL.md` § Mode and write path.
 
 ## Endpoint
 
@@ -28,7 +29,7 @@ Behavioural (`instruction`) scenarios are always generated — a single fully de
 | `tool_ids` | array[string] | No | Tools to enable (e.g., `TOOL_END_CALL`) |
 | `scenario_type` | string | No | Category: `workflow` (default), `red_teaming_voice`, `red_teaming_text` |
 | `attack_type` | string | Red team | One of the six attack types (see `SKILL.md`); one generation call per type |
-| `simulation_type` | string | No | Output format: `instruction` (default) or `conditional_actions` |
+| `simulation_type` | string | No | Output format: `conditional_actions` or `instruction`; omitted, the organization setting decides (see above) |
 | `generation_files` | files | No | KB/context uploads, workflow category only |
 
 **Returns:** `{"progress_id": "<uuid>"}`. Poll with `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.

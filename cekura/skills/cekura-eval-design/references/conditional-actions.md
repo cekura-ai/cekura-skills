@@ -19,6 +19,8 @@ Conditional actions create structured, repeatable test flows — **unit tests fo
 | Use case | Unit test, IVR nav, compliance | Edge cases, red-team, exploratory |
 | Example | "Always press 1, then say DOB, then confirm" | "Act confused about billing" |
 
+**Organizations on conditional actions scenarios** (`conditional_actions_generation_enabled` on — every new organization) create only conditional actions: the right-hand column is then written as conditional actions too, with the adaptive caller turns as `<ai_generated>` steps, never as an instruction scenario.
+
 ## API Payload Shape — Two Required Fields
 
 Conditional-actions evaluators use a dedicated `conditional_actions` field on the scenario create/update payload. Do not put the JSON object in `instructions`. Correct payload:
@@ -43,7 +45,7 @@ POST /test_framework/v1/scenarios/
 
 Three fields are load-bearing:
 
-- **`scenario_type`** — must be set to the literal string `"conditional_actions"` (default is `"instruction"`). Other valid values: `"instruction"`, `"real_world_smart"`, `"real_world_fixed"`. Set this explicitly — the type is not inferred from the payload shape.
+- **`scenario_type`** — must be set to the literal string `"conditional_actions"` (default is `"instruction"`, which an organization on conditional actions scenarios never creates). Other valid values: `"instruction"`, `"real_world_smart"`, `"real_world_fixed"`. Set this explicitly — the type is not inferred from the payload shape.
 - **`conditional_actions`** — JSON object carrying `{role, first_message, conditions[]}` (plus an optional `functions[]` array — see "Custom Functions" below). Use this field, not `instructions`.
 - **`scenario_language`** — required when `scenario_type="conditional_actions"`. Set explicitly, or rely on the assigned `personality` to supply it (a personality's configured language is used when `scenario_language` is omitted).
 

@@ -2,7 +2,7 @@
 name: autogen-eval
 description: Auto-generate Cekura evaluators using the generate API with full configuration
 argument-hint: "[agent ID] [count] [scenario type]"
-allowed-tools: ["Skill", "AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Skill", "AskUserQuestion", "Read", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__user_organizations_list", "mcp__cekura__scenarios_generate_bg", "mcp__cekura__scenarios_generate_progress", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__personalities_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 
 <!-- cekura-ack-tag: ack:autogen-eval:3w6k5b -->
@@ -17,7 +17,7 @@ Load the `cekura-eval-design` skill before anything else — in Claude Code the 
 ## Tracking (then do this)
 
 Next, call `mcp__cekura__cekura_skill_started` with
-`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.19"`. If a conversation/session ID is available (e.g.
+`skill_name="autogen-eval"`, `verification_tag="ack:autogen-eval:3w6k5b"`, and `plugin_version="0.20"`. If a conversation/session ID is available (e.g.
 you were invoked from Cekura sandbox), also pass it as `conversation_id`. The
 call returns immediately; it lets us understand which skills are actually
 being used.
@@ -65,7 +65,9 @@ Use the folder path for the `folder_path` parameter in the generate call.
 
 Default: `workflow`. Can combine by running generation multiple times with different types.
 
-**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and upload the KB material as `generation_files` (workflow category only). A separate `simulation_type` field picks the OUTPUT format (`instruction` default, or `conditional_actions` for grounded structured flows). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
+**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and upload the KB material as `generation_files` (workflow category only). A separate `simulation_type` field picks the OUTPUT format — decided by the organization, below. `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
+
+**Output format — decided by the organization.** Call `mcp__cekura__user_organizations_list` once and read `conditional_actions_generation_enabled` on the organization that owns the agent's project. **On** (every new organization): every scenario is conditional actions — send `simulation_type: "conditional_actions"` or leave it out (the setting then picks it), never `"instruction"`, also for behavioral or free-form requests; adaptive caller turns come back as `<ai_generated>` steps. **Off, or unreadable:** `instruction` for behavioral coverage and `conditional_actions` for grounded structured flows (scripted, regression, IVR/DTMF/voicemail, compliance, timing), per the eval-design mode table.
 
 **Every red-team call carries `attack_type`, one call per type.** Ask which threats matter; for "full red-team coverage" run all six and say so in the summary.
 
@@ -141,6 +143,7 @@ Present the full configuration for approval:
 Agent: [agent_id] ([agent_name])
 Folder: [folder_path]
 Scenario type: [workflow / red_teaming_voice / red_teaming_text] (+ attack_type for red team)
+Output format: [conditional_actions / instruction] (organization setting: [on / off])
 Count: [num_scenarios]
 Tags: [tags]
 
@@ -163,7 +166,7 @@ Use `mcp__cekura__scenarios_generate_bg` with:
 | `tags` | From step 6 |
 | `scenario_type` | Category from step 3: `workflow` (default), `red_teaming_voice` or `red_teaming_text` |
 | `attack_type` | Red team only — the type chosen in step 3; **one generation call per attack type** |
-| `simulation_type` | Output format from step 3: `instruction` (default) or `conditional_actions` |
+| `simulation_type` | Output format from step 3: `conditional_actions` (always when the organization setting is on) or `instruction` |
 | `generation_files` | KB/context uploads when the user supplied material (workflow category only) |
 | `personalities` | Personality ids for the scenario language |
 | `generate_expected_outcomes` | `true` unless the user supplied outcomes |
@@ -231,14 +234,14 @@ Test profile `information` uses the sectioned shape `{"main_agent_variables": {.
 ### 5. Quality Review
 Review each generated evaluator:
 - Does it have meaningful, multi-step instructions (not 1-line stubs)?
-- Are instructions in first-person behavioral format?
+- Are instructions in first-person behavioral format (instruction), or do the conditions trigger on observable agent turns with `<ai_generated>` steps where the caller adapts (conditional actions)?
 - Are expected outcomes agent-centric and measurable?
 - Is coverage balanced across the agent's workflows?
 
 If output is poor, offer to:
 - Re-run with different `extra_instructions` (**the default fix** — sharper, category-specific guidance, smaller batches)
 - Use generated evals as a starting point and PATCH them individually
-- Supplement via `/manual-create-update-eval` **only for conditional-action scenarios** — deterministic/scripted tests the generator can't produce. A weak behavioral scenario gets re-generated or patched, never replaced with a hand-authored `instruction` scenario.
+- Supplement via `/manual-create-update-eval` **only for conditional-action scenarios whose turns are exactly known** — a dictated script, a timing value exact to the decimal. Anything else, conditional actions included, is another generation run (`simulation_type: "conditional_actions"` returns conditional actions). A weak behavioral scenario gets re-generated or patched, never replaced with a hand-authored `instruction` scenario.
 
 ## Bulk Creation from Structured Input (CSV/JSON)
 
@@ -251,6 +254,8 @@ S-01,Scheduling,New adult patient,Calls as new patient...,Agent books appointmen
 ```
 
 This is a direct-create path — it uses `mcp__cekura__scenarios_create` to write each row of the user's CSV/JSON into a scenario. It is the **named exception** to the rule that behavioral scenarios are always generated: the user already authored the instruction text, and generating would discard their wording. It applies only when the rows carry actual scenario text. If the CSV is really a *list of topics or titles* ("scheduling", "cancellation edge case") rather than authored instructions, that's generation input — feed it as `extra_instructions` to the Auto-Generate flow above instead of creating stub scenarios from it.
+
+**On a conditional-actions organization this path creates no `instruction` scenarios.** Feed the rows' text to the Auto-Generate flow above instead (one numbered paragraph per row, `num_scenarios` = row count, `simulation_type: "conditional_actions"`), or build a row as conditional actions when it is an exact turn-by-turn script, and tell the user why.
 
 The Auto-Generate flow does not apply on this path, and unlike that flow, `scenarios_create` needs `personalities` and `tool_ids` as explicit per-scenario fields (they aren't inferred from the agent).
 
@@ -274,6 +279,7 @@ After generation (or bulk creation), show:
 ```
 Generated: [X] scenarios in folder "[folder_name]"
 Type: [workflow / red_teaming_voice / red_teaming_text]
+Format: [conditional_actions / instruction]
 
 Coverage breakdown:
   - Scheduling: [N] scenarios
@@ -298,4 +304,4 @@ Missing coverage (behavioral gaps → another generation run; deterministic gaps
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
 - **Metrics come from the project** — generation attaches the project's set; confirm Expected Outcome is present and attach a missing baseline metric only if the project has it
-- **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which uses `scenario_type: "red_teaming_voice"` or `"red_teaming_text"` alongside that guidance text. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.
+- **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which uses `scenario_type: "red_teaming_voice"` or `"red_teaming_text"` alongside that guidance text. On a conditional-actions organization these runs send `simulation_type: "conditional_actions"`. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios whose turns are exactly known — a dictated script, an exact timing; a category of scripted, IVR/DTMF/voicemail or regression tests is a generation run with `simulation_type: "conditional_actions"`.

@@ -1,5 +1,7 @@
 # CSV-to-Evaluator Workflow (Medical Clinic Pattern)
 
+> **Organizations on conditional actions scenarios** (`conditional_actions_generation_enabled` on): do not run the script below — it saves `instruction` scenarios. Generate from the rows instead (`simulation_type: "conditional_actions"`, one numbered paragraph per row in `extra_instructions`, `num_scenarios` = row count), or author a row as conditional actions when it is an exact turn-by-turn script.
+
 ## CSV Structure
 
 ```csv

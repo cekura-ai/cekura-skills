@@ -160,6 +160,7 @@ Call `mcp__cekura__scenarios_generate_bg` with:
 | `personalities` | Always pick the "Normal" personality matched to the agent's language via `personalities_list language=<code>` (English included: `language=en`; multilingual `language=multi` if several languages are involved; `language` is the only filter needed) |
 | `tool_ids` | `["TOOL_END_CALL"]` — add `TOOL_END_CALL_ONLY_ON_TRANSFER` if the agent has transfer flows |
 | `extra_instructions` | Coverage mix scaled to the count: ~60% core workflow, ~25% edge cases, ~15% adversarial/red-team. Tell the generator about the mock-data choice from 3b so it doesn't generate scenarios that will be skipped. |
+| `simulation_type` | Leave it out — the organization's `conditional_actions_generation_enabled` setting then picks the format (conditional actions when it is on, as for every new organization). Never send `"instruction"`. |
 
 Returns `{"progress_id": "<uuid>"}`.
 
