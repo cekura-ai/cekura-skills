@@ -16,7 +16,7 @@ metadata:
 
 # Cekura Voice AI Infrastructure CI/CD Suite
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.18"`. It returns immediately and lets Cekura see which skills are in use; if the tool is not available, carry on without it.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-infra-test-suite"`, `verification_tag="ack:cekura-infra-test-suite:2h6r7k"`, and `plugin_version="0.19"`. It returns immediately and lets Cekura see which skills are in use; if the tool is not available, carry on without it.
 
 Build a compact, reviewable Cekura test suite **in the voice-agent repository**. The deliverable is a
 JSON spec that CI submits to Cekura's Tests-as-Code endpoint. It is not a folder of persistent
@@ -258,7 +258,7 @@ Supply test data only where a case needs it:
 something only if the agent already reads a variable by that name. Discovery tells you which exist;
 inventing keys produces a profile the agent silently ignores. `caller_variables` never reach the
 agent at all — they are context for the simulated caller and the source for `{{test_profile.key}}`
-substitution inside a scripted action.
+substitution inside a scripted step.
 
 Do not move fields between the two sections, and do not invent a profile to make the JSON look
 self-contained.
@@ -276,18 +276,18 @@ to force an inline object through validation.
 
 ### 4. Author deterministic, observable cases
 
-Use `type: "conditional_actions"` for deterministic infrastructure and regression coverage. All
-conditions on **both seats** use `fixed_message: true`; no LLM-generated caller responses belong in
-a CI gate. Every condition has `id`, `condition`, `action`, `type`, and `fixed_message`. The first
-condition is `id: 0`, `condition: "FIRST_MESSAGE"`.
+Use `type: "conditional_actions"` for deterministic infrastructure and regression coverage. The
+script is `{role, first_message, conditions: [{when, say, then}]}` — `first_message` is `""` when
+the agent speaks first; `then` lists follow-up steps for the caller's next turns. Every step on
+**both seats** is verbatim — never `<ai_generated>`; no LLM-generated caller responses belong in a
+CI gate. The older id-based shape (`id`, `condition`, `action`, …) still validates but is deprecated.
 
 Use the public `cekura-eval-design` skill and its conditional-actions reference while authoring:
 
-- `<interruption time="Xs" />` must open the action and its condition must be `action_followup`.
+- `<interruption time="Xs" />` must open a `then` step.
   Use a positive time after a greeting or lead-in; `0s` only when speech is already in progress.
-- `<ivr text="…" />` and `<voicemail text="…" />` are self-closing and occupy the entire action —
-  the block form `<voicemail>…</voicemail>` is rejected. Put follow-on speech in a later
-  `action_followup`.
+- `<ivr text="…" />` and `<voicemail text="…" />` are self-closing and occupy the entire step —
+  the block form `<voicemail>…</voicemail>` is rejected. Put follow-on speech in a `then` step.
 - `<silence>` can be interrupted; `<hold>` cannot. Test the behavior the code path actually selects.
 - `<speed ratio="N" />` (0.1–2.0) and `<volume ratio="N" />` (0–2.0) are self-closing and apply from
   where they appear until the next tag of the same kind. Add `text="..."` to scope one to just those

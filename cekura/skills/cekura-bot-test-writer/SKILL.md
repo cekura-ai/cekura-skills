@@ -17,7 +17,7 @@ metadata:
   version: "0.1.0"
 ---
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-bot-test-writer"`, `verification_tag="ack:cekura-bot-test-writer:3d7k2m"`, and `plugin_version="0.18"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-bot-test-writer"`, `verification_tag="ack:cekura-bot-test-writer:3d7k2m"`, and `plugin_version="0.19"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Bot Test Writer
 
@@ -195,8 +195,8 @@ the old failure. Say what the case would catch and why; do not report it as prov
   three mistakes dominate: adding a statement no written turn fires (it returns `blocked` forever),
   naming a speaker anything but "main agent" / "testing agent", and slipping a subjective
   descriptor — "promptly", "clearly" — where an observable phrase belongs.
-- **Tag syntax is executable.** `<interruption time="Xs" />` opens its action and its condition is
-  `action_followup`; `<ivr …/>` and `<voicemail …/>` occupy the whole action; `<silence>` is
+- **Tag syntax is executable.** `<interruption time="Xs" />` opens a `then` step; `<ivr …/>` and
+  `<voicemail …/>` occupy the whole step; `<silence>` is
   interruptible and `<hold>` is not; `<audio>` cannot be referenced from a spec at all. The full
   rules live in `cekura-infra-test-suite`.
 

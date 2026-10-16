@@ -2,8 +2,10 @@
 
 Work down the ladder and stop at the first mode that closes the gap. Every example below edits the
 v1 spec shape: `scenarios[]` of `type: "conditional_actions"`, each with a stable `key`, a
-`conditional_actions.conditions[]` turn list, and an `expected_outcome` the judge reads line by
-line.
+`conditional_actions` turn script (`first_message` plus `conditions[]` of `when` / `say` / `then`),
+and an `expected_outcome` the judge reads line by line. A case written in the older id-based shape
+(`id` / `condition` / `action` / `type` / `fixed_message`) still validates; when you edit one, keep
+its shape — converting it is a reformat, not part of your change.
 
 ---
 
@@ -55,23 +57,17 @@ another one.
 
 ```diff
          {
-           "id": 4,
-           "condition": "The agent has stopped talking and is waiting for the caller",
-           "action": "Sorry about that. Can I book the Friday ten o'clock slot?",
-           "type": "standard",
-           "fixed_message": true
+           "when": "The agent has stopped talking and is waiting for the caller",
+           "say": "Sorry about that. Can I book the Friday ten o'clock slot?"
 +        },
 +        {
-+          "id": 5,
-+          "condition": "The agent confirms the Friday booking",
-+          "action": "One more thing — what's your cancellation policy?",
-+          "type": "standard",
-+          "fixed_message": true
++          "when": "The agent confirms the Friday booking",
++          "say": "One more thing — what's your cancellation policy?"
          }
 ```
 
-Then add the matching `expected_outcome` line. Ids ascend and never collide; an
-`action_followup` condition holds the integer id of the earlier condition it follows.
+Then add the matching `expected_outcome` line. A line that must follow the previous one on the
+caller's next turn, whatever the agent says, goes in that condition's `then` list instead.
 
 ### Extending can break the case it extends
 
@@ -86,7 +82,7 @@ the **whole** case, not just for your part of it:
 - **The call gets longer, and `max_duration` is a hard cut.** Turns past the limit never run, and
   every statement they were supposed to fire comes back `blocked` — neither pass nor fail, so the
   case stops proving anything without ever going red.
-- **Condition matching is order-sensitive.** A `standard` condition matches an observable main-agent
+- **Condition matching is order-sensitive.** A condition's `when` matches an observable main-agent
   turn. A new turn that produces a similar-looking one earlier can capture the match a later
   condition was written for, and the rest of the script runs against the wrong state.
 
@@ -97,13 +93,13 @@ this case — you have replaced it, and the honest move is to say so and justify
 ### What NOT to do when extending
 
 - Do not weaken or delete an existing statement to make room for the new turns.
-- Do not renumber or reorder existing condition ids. Append.
-- Do not reword an existing action so your addition flows better. If an existing turn is in the
+- Do not reorder existing conditions or `then` steps. Append.
+- Do not reword an existing step so your addition flows better. If an existing turn is in the
   way, that is a REPLACE and needs its own justification.
 - Do not change the case's `language`, `test_profile` or personality to suit the new turns — those
   five fields are the compatibility check, not an obstacle to route around.
 - Do not restructure or reformat the case while you are in there.
-- Do not pad the terminal action with a trailing `<silence>` or `<hold>`.
+- Do not pad the terminal step with a trailing `<silence>` or `<hold>`.
 
 ---
 
@@ -114,12 +110,9 @@ required phrase, or restructured a flow the case walks through.
 
 ```diff
          {
-           "id": 1,
-           "condition": "The agent greets the caller and offers help",
--          "action": "I wanted to ask about a booking. <silence time=\"8s\" />",
-+          "action": "I wanted to ask about a booking. <silence time=\"14s\" />",
-           "type": "standard",
-           "fixed_message": true
+           "when": "The agent greets the caller and offers help",
+-          "say": "I wanted to ask about a booking. <silence time=\"8s\" />"
++          "say": "I wanted to ask about a booking. <silence time=\"14s\" />"
          },
 ```
 
@@ -177,17 +170,18 @@ A new scenario copies the house shape of the file it joins:
   "tags": ["ci", "language"],
   "conditional_actions": {
     "role": "Eres Marta, llamas para reservar una cita el viernes.",
+    "first_message": "",
     "conditions": [
-      { "id": 0, "condition": "FIRST_MESSAGE", "action": "", "type": "standard", "fixed_message": true },
-      { "id": 1, "condition": "The agent greets the caller in Spanish", "action": "Hola, quiero reservar una cita para el viernes.", "type": "standard", "fixed_message": true }
+      { "when": "The agent greets the caller in Spanish", "say": "Hola, quiero reservar una cita para el viernes." }
     ]
   },
   "expected_outcome": "The main agent should conduct the entire call in Spanish.\nThe main agent should confirm a Friday appointment before the call ends."
 }
 ```
 
-Every condition carries all five fields. `id: 0` is always `FIRST_MESSAGE`, and its action is
-empty only when the agent genuinely speaks first. Set `language` explicitly on the case — a
+Every condition has a `when` and a non-empty `say`, and every step is verbatim — no
+`<ai_generated>` in a CI gate. `first_message` is empty only when the agent genuinely speaks
+first. Set `language` explicitly on the case — a
 missing one silently runs English.
 
 ---
