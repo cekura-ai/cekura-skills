@@ -241,7 +241,7 @@ Use `page_size` parameter (up to 200) instead of paginating through multiple pag
 For legitimate deviations where the metric should not apply. The LLM returns "VALID_SKIP:" prefix and the custom_code wrapper converts to `_result = None`.
 
 ### Gated Metrics
-Access upstream metric results via `data.get("Exact Metric Name")`. Key must match exactly.
+Access upstream metric results via `data.get("Exact Metric Name")` or `data["metrics"]["<slug>"]["value"]`. Key must match exactly. The upstream metric runs first (inferred from the literal read, or declared in `configuration.metric_dependencies`); a missing upstream result leaves the gated metric unscored with `extra.dependency_failed`. LLM-judge metrics gate with `{{metrics.<slug>.score}}` in `description`.
 
 ### Metadata Field Migration
 Clients rename fields without backfilling. When this happens, metrics must reference both old and new field names with priority logic. The trigger should fire if EITHER field is populated.

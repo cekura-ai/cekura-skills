@@ -57,9 +57,12 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
   "evaluation_trigger": "always | automatic | custom",
   "trigger_type": "llm_judge | custom_code",
   "evaluation_trigger_prompt": "string — natural language trigger condition",
-  "evaluation_trigger_custom_code": "string — Python trigger code"
+  "evaluation_trigger_custom_code": "string — Python trigger code",
+  "configuration": {"metric_dependencies": ["array of metric IDs this metric reads; evaluated first"]}
 }
 ```
+
+`metric_dependencies` is optional: literal `data["Metric Name"]` reads in `custom_code` and `{{metrics.<slug>...}}` references in `description` are inferred. Declare it when the read is dynamic, or to control ordering explicitly. Cycles, more than 10 inputs, and chains deeper than 5 levels are rejected with a 400 on `configuration`.
 
 ## Metric Types
 
@@ -82,6 +85,9 @@ All requests require header: `X-CEKURA-API-KEY: <key>`
 | `metadata` | dict | Call metadata |
 | `call_end_reason` | string | How the call ended |
 | `voice_recording` | string | Audio recording URL |
+| `"<Metric Name>"` | any | Score or enum of a prerequisite metric, keyed by its exact name |
+| `explanation` | dict | Explanation lists of prerequisite metrics, keyed by name |
+| `metrics` | dict | Prerequisites keyed by slug and name: `{id, name, slug, score, enum, value, explanation}` |
 
 **Available function:**
 ```python
