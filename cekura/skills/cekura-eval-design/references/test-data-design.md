@@ -16,7 +16,7 @@ Pick one approach up front; it shapes all of the below.
 
 The client manages their own mock/staging backend. Cekura doesn't intercept tool calls — the agent hits the real staging endpoints.
 
-**When to use:** Client already has staging data, doesn't want to replicate it in Cekura, or their tool behavior is too complex to mock (multi-step state machines, transactions).
+**When to use:** Client already has staging data, doesn't want to replicate it in Cekura, or their tool behavior is too complex to mock (long multi-step workflows, real transactions). Short flows where one call changes a later reply — fail then retry, book then read back — fit Cekura mocks with `state`/`then` (see `cekura-create-agent` → `references/mock-tool-design.md`, Stateful Mocks).
 
 **Workflow:**
 1. Ask the user: what test data exists in your staging environment? What formats does it use (dates, phone numbers, IDs)?
@@ -64,7 +64,7 @@ Include an entry for a tool ONLY if a caller step actually COMPLETES its trigger
 - Triggers completed before a call exit or terminal transfer still get their entry; anything after the exit does not.
 - **It is valid and often correct for a scenario to have NO mock entries** — prefer an empty list over a speculative entry.
 
-**One input → one output.** Mock lookup is deterministic — if the scenario needs a different outcome, it needs a different input. Never create two entries with the same input and different outputs.
+**One input → one output.** Mock lookup is deterministic — if the scenario needs a different outcome, it needs a different input. Never create two entries with the same input and different outputs. The one exception is a stateful flow inside a single call (fails once, then succeeds on retry): there the same input gets different outputs in different `state`s, configured on the tool's mock data — see `cekura-create-agent` → `references/mock-tool-design.md`, Stateful Mocks. Use it only when the scenario needs it; it also requires a call ID (automatic on Retell, VAPI and LiveKit + SDK, otherwise an `X-Cekura-Mock-Session` header).
 
 **Edge-case fidelity.** Don't normalize deliberately unusual values (impossible dates, malformed IDs) when the edge value IS the test. And if correct agent behavior is rejecting the value BEFORE calling the tool, emit no entry at all.
 

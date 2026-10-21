@@ -106,8 +106,7 @@ curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/ \
             "input": {"phone_number": "14155551234"},
             "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
           }
-        ],
-        "freetext_params": ["notes", "reason"]
+        ]
       }
     ]
   }'
@@ -120,7 +119,9 @@ curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/ \
 - **`name`** must exactly match the tool name in the main agent config (max 64 chars, `[a-z0-9_-]`)
 - **Multiple mappings per tool** — one entry per distinct input (different users, topics, error cases)
 - **Failing or slow tools** — add an optional `response` (`status_code`, `headers`, `delay_ms`) to a mapping. See `references/mock-tool-design.md`
-- **`freetext_params`** — fields to skip during match (free-text like "notes", "reason" that vary per call)
+- **Free-text arguments** — leave fields like "notes" or "reason" out of `input`; arguments a mapping does not list are never compared (`freetext_params` does not change matching)
+- **Exact matching** — add `"match": "exact"` when a near match must not count (identity checks, IDs), plus an exact empty-`input` mapping last for the wrong-input reply
+- **Stateful mocks** — only when an earlier call must change a later reply (fail then retry, book then look up): `state` (where a mapping answers, every call starts in `"start"`) and `then` (where the call moves next). Requires a call ID: automatic for Retell, VAPI and LiveKit + SDK; everything else sends an `X-Cekura-Mock-Session` header unique to the call. Plain `{input, output}` stays the default
 - **Phone format variants** — for phone lookups, add 10-digit, 11-digit-with-1, and E.164 forms
 - **Chain dependencies** — if tool B uses output from tool A, mock data must be consistent across tools
 - **Append-not-replace** — when adding entries, GET first → merge → PATCH full array; partial PATCH replaces all existing mappings
@@ -133,7 +134,7 @@ Full design guide with examples: `references/mock-tool-design.md`
 
 For providers without auto-injection (everything except LiveKit + Cekura SDK), the mocks defined above are not used unless the agent itself routes tool calls to Cekura's mock endpoints. For every place the real tool is invoked, replace the call with the Cekura mock-tool endpoint during testing. This can be done in two ways:
 
-- **In agent code** — wrap the tool call so that when running in test mode it hits `POST /test_framework/v1/mock-tools/<tool_name>/invoke/` instead of the real API. Branch on an env var (e.g. `CEKURA_USE_MOCK_TOOLS=1`) so production traffic still uses real tools.
+- **In agent code** — wrap the tool call so that when running in test mode it POSTs the tool's arguments as JSON to the tool's own mock URL (`mock_tools[].served_via.url` on `GET /test_framework/v2/aiagents/{id}/`; read it from the API, never hand-build it) instead of the real API. If any of the tool's mappings use `state`/`then`, also send `X-Cekura-Mock-Session: <call id>` on every request. Branch on an env var (e.g. `CEKURA_USE_MOCK_TOOLS=1`) so production traffic still uses real tools.
 - **In the provider configuration** — some providers (e.g. VAPI, Retell, ElevenLabs) let you point a tool's URL at an external endpoint. Set that URL to Cekura's mock endpoint for the tool. Tools auto-fetched in 7b are already wired this way.
 - **Via a mock MCP endpoint (custom/self-hosted)** — if you used 7b-2, point the agent's MCP client at the single `mcp_endpoints[0].url` from `mock-status` instead of rewriting each tool. It speaks standard MCP JSON-RPC 2.0 and serves all the agent's mocked tools.
 

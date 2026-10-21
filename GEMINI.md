@@ -419,6 +419,7 @@ Create mock tools with input/output mappings. **Critical rules:**
 - **Phone format variants** — Add mappings for ALL formats: 10-digit, 11-digit with leading 1, full E.164
 - **Chain dependencies** — Downstream tools must have matching data for IDs returned by upstream tools
 - **Append-not-replace** — When PATCHing `information` array, GET existing data first, merge, then PATCH
+- **Keep mappings plain by default** — `{input, output}`. Add `"match": "exact"` only when a near match must not count (identity checks), and `state`/`then` only when an earlier call in the same call must change a later reply (fail then retry, book then read back). Stateful mocks need a call ID: automatic on Retell, VAPI and LiveKit with the Cekura SDK; anything else sends an `X-Cekura-Mock-Session` header unique to the call
 
 ## Pre-Creation Checkpoint — Confirm Before Building
 

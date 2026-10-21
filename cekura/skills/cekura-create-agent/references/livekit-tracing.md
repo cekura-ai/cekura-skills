@@ -145,6 +145,9 @@ When `track_session` is wired, mock tools configured on the Cekura agent are aut
 
 Define mocks in Phase 7. The SDK handles routing.
 
+- **Stateful mocks** (`state`/`then`, see `references/mock-tool-design.md`) work with no extra wiring: the SDK sends the room name as the call ID. Older SDK releases match mocks inside the agent and ignore `match`, `state`, `then` and `response` — upgrade before using them.
+- **Without `track_session`**, the agent's tool code can POST the arguments to each tool's `mock_tools[].served_via.url` itself, with `X-Cekura-Mock-Session: <room name>` on every request. The mock only answers tools: evaluators still need the agent's transcript and tool calls, so keep `track_session` with `CEKURA_MOCK_TOOLS_ENABLED=false` (tracing only) or post the transcript through the Custom Integration webhook.
+
 ---
 
 ## Chat / text-mode tests
