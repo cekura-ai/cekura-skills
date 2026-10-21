@@ -4,6 +4,28 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.20.0 — 2026-10-21
+
+**Mock tools: entry format, exact matching and stateful mocks.**
+
+- **Entry format in one place.** `cekura-create-agent`'s mock-tool design guide
+  lists every mapping key (`input`, `output`, `response`, `match`, `state`,
+  `then`) and keeps plain `{input, output}` as the default.
+- **Exact matching.** `"match": "exact"` for identity checks, with an exact
+  empty-`input` mapping last for the wrong-input reply.
+- **Stateful mocks.** `state` / `then` for fail-then-retry and
+  write-then-read flows within one call, the call-ID requirement
+  (automatic on Retell, VAPI and LiveKit + SDK, otherwise an
+  `X-Cekura-Mock-Session` header), which mapping answers, and the rules.
+  Eval design, repro and the Codex/Gemini presets point to it; "one input →
+  one output" names it as the sole exception.
+- **Corrections.** `delay_ms` is capped at 5000 ms (was documented as 30000),
+  the header blocklist includes `Location`, `Access-Control-*` and `X-Accel-*`,
+  `freetext_params` no longer affects matching (leave free-text arguments out
+  of `input` instead), and phase 7 wires agent code to the tool's
+  `served_via.url` instead of an endpoint that does not exist. The LiveKit
+  reference says how to send the transcript when the SDK does not serve mocks.
+
 ## 0.19.1 — 2026-10-15
 
 **Metric prerequisites are documented as a platform feature.**
