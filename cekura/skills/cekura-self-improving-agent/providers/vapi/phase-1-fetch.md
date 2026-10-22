@@ -1,11 +1,11 @@
-# Phase 1 — VAPI Fetch Reference
+# VAPI Fetch Reference (Setup)
 
-Provider-gate error shapes, VAPI assistant / squad / tool fetch curl bodies, and Phase 1 edge cases.
+Provider-gate error shapes, VAPI assistant / squad / tool fetch curl bodies, and fetch edge cases.
 
 ## Edge cases on the agent retrieve
 
 - **Agent not found / 404**: surface the error directly. Don't retry with a different ID without user confirmation.
-- **`assistant_provider` missing or empty**: treat as unsupported. Point the user to `cekura-create-agent` (Phase 3: Configure Provider Integration).
+- **`assistant_provider` missing or empty**: treat as unsupported. Point the user to `cekura-create-agent` (its provider phase).
 - **Case sensitivity**: compare lowercased — be defensive against `VAPI` in user input.
 
 ## Required environment variable
@@ -24,7 +24,7 @@ curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/assistant/$ID
   || curl -fsS -H "Authorization: Bearer $VAPI_KEY" https://api.vapi.ai/squad/$ID
 ```
 
-Record which endpoint succeeded — Phase 4's PATCH targets the matching endpoint. If both 404, the id is stale; surface and stop. If `assistant_id` is missing, stop and point at `cekura-create-agent`.
+Record which endpoint succeeded — Apply's PATCH targets the matching endpoint. If both 404, the id is stale; surface and stop. If `assistant_id` is missing, stop and point at `cekura-create-agent`.
 
 ## Fetching the config
 
@@ -42,8 +42,8 @@ From each assistant config, capture:
 - `id`, `name`
 - System prompt: `model.messages[*].content` where `role == "system"`
 - `model.tools` — inline function declarations
-- `model.toolIds` — UUIDs of referenced tool definitions (fetch these in Phase 1; they drive Phase 3 diagnosis as much as the prompt)
-- `voice`, `transcriber`, `firstMessage` — for sanity-checking the voice-failure filter in Phase 2
+- `model.toolIds` — UUIDs of referenced tool definitions (fetch these at Setup; they drive Fix diagnosis as much as the prompt)
+- `voice`, `transcriber`, `firstMessage` — for sanity-checking the voice-failure filter in Collect
 
 ## Fetching every referenced tool
 
@@ -78,7 +78,7 @@ VAPI <Assistant|Squad>: <name> (<id>)
 
 ## Squad scope
 
-All members are in scope by default. Phase 3 attributes each failure to the member speaking in the relevant transcript turn and proposes member-scoped edits. Phase 4 PATCHes whichever members the proposal touches. There is no upfront scope-selection question.
+All members are in scope by default. Fix attributes each failure to the member speaking in the relevant transcript turn and proposes member-scoped edits. Apply PATCHes whichever members the proposal touches. There is no upfront scope-selection question.
 
 ## Edge cases on the VAPI fetch
 

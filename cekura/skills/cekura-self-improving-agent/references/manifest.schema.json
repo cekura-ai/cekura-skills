@@ -221,7 +221,7 @@
         "iteration_limits": {
           "type": "object",
           "additionalProperties": false,
-          "properties": { "max_iterations": { "type": "integer", "minimum": 1, "default": 10 } }
+          "properties": { "max_iterations": { "type": "integer", "minimum": 1, "default": 15 } }
         },
         "concurrency": {
           "type": "object",
@@ -263,8 +263,9 @@
       "properties": {
         "dir": {
           "type": "string",
+          "pattern": "^\\.cekura/",
           "default": ".cekura/audit/{session_id}",
-          "description": "Directory for session audit artifacts (hashes, diffs, eval results, pre-promotion backups). Secrets are redacted before writing."
+          "description": "Directory for session audit artifacts (hashes, diffs, eval results, pre-promotion backups, repro.json, clone.json). Secrets are redacted before writing. Must stay under .cekura/: the reproduction-gate hook reads repro.json and clone.json from here and only allows pre-gate writes under .cekura/."
         }
       }
     },

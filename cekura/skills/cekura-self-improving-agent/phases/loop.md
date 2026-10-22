@@ -15,8 +15,8 @@ Reproduce — unless ALL hold:
 1. The file exists and its `result_id` retrieves via
    `mcp__cekura__results_retrieve`.
 2. The fail count satisfies the recorded mode's gate: `deterministic` → 1/1
-   failed; `stochastic` → ≥ 2 fails on the batch (or the user's explicit
-   `repro_threshold` override).
+   failed; `stochastic` → ≥ `stochastic_min_fails` (default 2) fails on the
+   batch, or the user's explicit override.
 3. The gate line is restated verbatim at the top of this iteration's output:
    `Repro gate: result <result_id> — <fails>/<n_runs> failed (mode: <mode>)`.
 
@@ -84,7 +84,7 @@ Zero edits (all Upstream) → stop the loop, report.
 
 - `reset_fixtures` before the batch (customer mock server reset/seed). A
   failed reset → batch invalid, retry; never count invalid batches.
-- Run the failure set via `simulate.runner`, N runs per scenario
+- Run the failure set via `simulate.runner`, R runs per scenario
   (`stochastic_runs`), labeled `[selfimprove:<session_id>] verify iter<N> —
   <failure set | full-set sweep>` via the run call's `name`. Apply `flake_policy`: infra-classified errors are
   retried up to `max_infra_failures`, discarded runs are counted and reported.
@@ -92,7 +92,7 @@ Zero edits (all Upstream) → stop the loop, report.
   identity. A batch that hit something else is invalid.
 - Pass follows the reproduction mode: `deterministic` → 2/2 passes with the
   forced trigger / `CEKURA-REPRO-INJECT` injection still active; `stochastic`
-  → passes ≥ `verify_threshold` of N.
+  → passes ≥ M of R (M = ⌈`pass_ratio`·R⌉).
 
 ## LOOP.6 — overfitting gate
 
@@ -105,12 +105,17 @@ re-enter LOOP.3–4 (including a fresh attest) before re-verify.
 - Failure set < 100% → next iteration (back through Collect re-entry).
 - Failure set = 100%, no sweep yet → run the full set once.
 - Full set = 100% → Regression phase.
-- Regression on the sweep → hand the regressed scenarios back as the new
-  failure set, scope narrower.
-- Stops: `max_iterations`, oscillation, no-change signature (a no-change with
-  a deploy step present → stale-deploy hypothesis: re-run LOOP.4 attestation
-  before concluding wrong-root-cause), same shape 3×, all-upstream.
-- On any stop or convergence: restore/report best state honestly. Repo
+- Regression on the sweep or in the Regression phase → hand the regressed
+  scenarios back as the new failure set, scope narrower; they stay in the
+  validation set.
+- Stops: `max_iterations`; oscillation (iteration N reverses N-1's edit on
+  the same clause or field → stop and flag it); no-change signature (a
+  no-change with a deploy step present → stale-deploy hypothesis: re-run
+  LOOP.4 attestation before concluding wrong-root-cause); same shape 3× (stop
+  narrow edits, ask the user to pick a wider option — FIX.5); all-upstream.
+- On any stop or convergence: restore/report the best state honestly — the
+  last state that passed the failure set with no regressions (none → the
+  starting config). Repo
   components sit on the session branch (nothing to revert on the mainline);
   command/DB components — if the final state is not the best state, run their
   declared `rollback` and re-attest.

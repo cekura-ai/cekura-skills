@@ -9,9 +9,10 @@
 
 The dashboard-managed case expressed as a manifest: the
 agent is created and edited in the provider dashboard/API; there is no repo
-render step, so `read_live` and the component `read` are the same surface and
-the "deploy" is a noop (provider writes are live immediately). The sandbox
-equivalent is a provider-side clone.
+render step, so `read_live` and the component `read` are the same provider GET
+(on the clone and on the original), and the "deploy" is the per-session clone
+([`../phases/clone.md`](../phases/clone.md)), run once before Collect. Provider
+writes to the clone are live immediately.
 
 ```yaml
 version: 1

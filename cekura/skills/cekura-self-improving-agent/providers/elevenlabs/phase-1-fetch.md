@@ -1,4 +1,4 @@
-# Phase 1 — ElevenLabs Fetch Reference
+# ElevenLabs Fetch Reference (Setup)
 
 ## Required environment variable
 
@@ -25,7 +25,7 @@ The response is a `GetAgentResponseModel`. Capture:
 - `agent_id`, `name`
 - **System prompt**: `conversation_config.agent.prompt.prompt` (single string)
 - **LLM config**: `conversation_config.agent.prompt.llm`, `.temperature`, `.max_tokens` — informational; not edited unless the user asks
-- **Referenced tool IDs**: `conversation_config.agent.prompt.tool_ids` — **fetch each separately in Phase 1**
+- **Referenced tool IDs**: `conversation_config.agent.prompt.tool_ids` — **fetch each separately at Setup**
 - **Inline tools (legacy)**: `conversation_config.agent.prompt.tools` — full tool objects; read in place
 - **Built-in / system tools**: `conversation_config.agent.prompt.built_in_tools` — record which are enabled for end-of-call attribution and transfer behavior
 - `conversation_config.agent.first_message`, `.language` — sanity-check for voice-failure filter in Collect

@@ -1,6 +1,6 @@
 # Debug — Establish the Root Cause
 
-Runs **once**, after Setup (and Clone), **before** Reproduce. One job: establish *what is broken and why*. Debug never edits the target and never chooses a fix — selecting and scoping an edit is the Optimization loop's **Fix** step, which runs strictly after the harness fails.
+Runs **once**, after Collect's first pass (Setup and Clone precede it), **before** Reproduce. One job: establish *what is broken and why*. Debug never edits the target and never chooses a fix — selecting and scoping an edit is the Optimization loop's **Fix** step, which runs strictly after the harness fails.
 
 ## Entry (on the signal)
 

@@ -4,7 +4,7 @@ ElevenLabs Conversational AI is a managed provider. Edits to the system prompt a
 
 ## Provider gate
 
-When `assistant_provider == elevenlabs` (compare lowercased), proceed straight to Phase 1.3. No extra confirmation.
+When `assistant_provider == elevenlabs` (compare lowercased), proceed straight to the fetch ([`phase-1-fetch.md`](phase-1-fetch.md)). No extra confirmation.
 
 ElevenLabs has no squad concept; agents link via `built_in_tools.transfer_to_agent` (targets in its `transfers[].agent_id`). Every agent reachable through these links is in scope — the skill fetches, clones, diagnoses, and edits the whole linked graph together, validating through the registered entry agent (transfers exercise the rest). See [`../../phases/clone.md`](../../phases/clone.md).
 
@@ -44,7 +44,7 @@ PATCH tools first → POST new tools → PATCH the agent (system prompt + `tool_
 
 ## Anti-patterns
 
-- **Skipping the Step 4.2 re-fetch.** Arrays (`tool_ids`, `prompt.tools`) replace wholesale when included — a malformed body can silently drop references. Always re-fetch and verify.
+- **Skipping the SYNC.1 re-fetch.** Arrays (`tool_ids`, `prompt.tools`) replace wholesale when included — a malformed body can silently drop references. Always re-fetch and verify.
 - **Sending `{"prompt": "..."}` at the top level.** The prompt is nested at `conversation_config.agent.prompt.prompt` — a top-level `prompt` key is ignored and the edit silently no-ops.
 - **Editing `{{...}}` placeholders without an explicit user ask.** They're owned by the calling system.
 - **Treating ElevenLabs like a VAPI squad.** One agent, one prompt — attribute every prompt-following failure to the single system prompt.

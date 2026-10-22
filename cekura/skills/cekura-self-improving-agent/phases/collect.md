@@ -13,7 +13,7 @@ Before any COLLECT.x work, verify Setup is complete. If any is unresolved, ask t
 - Mode resolved (`vapi` / `retell` / `elevenlabs` / `bland` / `self_hosted`)?
 - Live target: simulation runner resolved? (N/A render-only.)
 - Source-of-truth editable surface loaded? (managed provider configuration + tools; self_hosted: the surface the run-setup points to — source file / DB row / Cekura mock tools / pasted text.)
-- **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`? If not, return to [`../setup.md`](setup.md) § Step 1.4. (N/A for managed providers and render-only.)
+- **Self-hosted live target**: `redeploy_command` resolved to a shell command or `"manual"`? If not, return to [`setup.md`](setup.md) (SETUP.1 interview). (N/A for managed providers and render-only.)
 
 ## Step COLLECT.1 — If input is `scenario_ids`: execute, then wait
 
@@ -31,7 +31,7 @@ CEKURA_API_KEY=<key> python3 <skill_root>/agents/fetch_failures.py <result_id> -
 
 The report contains: a funnel line citing per-run `evaluation_status`; one block per kept failure with run id, scenario name, `evaluation_status`, **`metadata.ended_reason` (Signal 5)**, duration, `error_message`, `scenario_instructions`, expected-outcome bullets, failed alignments (`aligned: no` only), and the flattened transcript.
 
-Exit codes: `0` = kept failures present (→ COLLECT.3); `3` = zero kept (stop early — see "kept = 0 but total > 0" at bottom + Eval EVAL.4); `1` = fetch error; `2` = missing `CEKURA_API_KEY`. Read the emitted file directly into COLLECT.5.
+Exit codes: `0` = kept failures present (→ COLLECT.3); `3` = zero kept (stop early — see "kept = 0 but total > 0" at bottom + Eval EVAL.4); `1` = fetch error; `2` = bad input (missing `CEKURA_API_KEY` or malformed `result_id`). Read the emitted file directly into COLLECT.5.
 
 For shapes the script doesn't cover, fall back to direct MCP:
 
@@ -112,7 +112,7 @@ The call artifact alone isn't always enough. For two failure classes it looks am
 
 **Self-hosted skips this section** — no managed-provider log surface; the user's infra logs are out of band. Telephony-shaped self-hosted failures route directly to Upstream/data.
 
-Group repeating patterns ("all 3 share the same variable-injection failure"). Full per-signal decision tree, squad per-member-message caveat, and the bare-comma bulk-retrieve gotcha: [`../../references/dynamic-variables-debugging.md`](../references/dynamic-variables-debugging.md).
+Group repeating patterns ("all 3 share the same variable-injection failure"). Full per-signal decision tree, squad per-member-message caveat, and the bare-comma bulk-retrieve gotcha: [`../references/dynamic-variables-debugging.md`](../references/dynamic-variables-debugging.md).
 
 ## Step COLLECT.5 — Build the failure summary
 
@@ -122,9 +122,9 @@ Group by **scenario** (runs) or **metric** (call logs). Feeds fix + shown to the
 
 **Collect does not pause for approval** — the user gate is at fix (FIX.6). One exception: if failures are dominated by one or two thin-signal metrics, stop and suggest `cekura-metric-improvement` (metric-quality, not agent-quality).
 
-**Do not surface small-sample / overfitting caveats.** Even for a single-run input, no "N runs risks overfitting" / "5–10+ would be healthier" lines — internal confidence calibration is fine; user-facing hedging reads as a stall. Mechanical overfitting in the edits is the Overfitting Gate's job, not Collect's.
+**State thin evidence plainly.** When the input is small (e.g. a single run), say so in one line of the summary and prefer minimal scoped edits; don't pad it with further hedging. Mechanical overfitting in the edits is the Overfitting Gate's job, not Collect's.
 
-Full template, edge cases (zero failures / all-errored / mixed inputs), and metric-quality hand-off wording: [`../../references/phase-2-failure-collection.md`](../references/phase-2-failure-collection.md).
+Full template, edge cases (zero failures / all-errored / mixed inputs), and metric-quality hand-off wording: [`../references/phase-2-failure-collection.md`](../references/phase-2-failure-collection.md).
 
 ## Step COLLECT.6 — Extract the replay artifacts (first pass only)
 

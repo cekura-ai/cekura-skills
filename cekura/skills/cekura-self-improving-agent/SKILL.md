@@ -16,7 +16,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "3.0.0"
+  version: "3.0.1"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-self-improving-agent:6w3k4p -->
@@ -61,9 +61,10 @@ every project:
    construction or temporary fault injection in the local bot, marked
    `CEKURA-REPRO-INJECT`) → **exactly 1 run, must fail 1/1**; *stochastic*
    (LLM prompt/workflow behavior that can't be forced) → smallest batch
-   expected to fail twice, `N = clamp(⌈2/p̂⌉, 4, 10)` from the observed
+   expected to fail twice, `B = clamp(⌈2/p̂⌉, 4, 10)` runs from the observed
    failure rate, gate = **≥ 2 fails** (all numbers are defaults, overridable
-   via the manifest's `policy.reproduction`). The `result_id` must be a real Cekura
+   via the manifest's `policy.reproduction`: `stochastic_batch_min`,
+   `stochastic_batch_max`, `stochastic_min_fails`). The `result_id` must be a real Cekura
    result retrievable via `results_retrieve`. **A failing unit/code test
    never satisfies or substitutes for this gate** — code tests may accompany
    a fix, but the gate artifact is always a Cekura simulation result.
@@ -75,13 +76,14 @@ every project:
    hook (`hooks/repro-gate.sh`) denies file edits and provider-mutating
    requests while `.cekura/selfimprove.lock` is present and `repro.json` is
    missing or below its mode's threshold (fault-injection edits marked
-   `CEKURA-REPRO-INJECT` and `.cekura/` / `.claude/` writes stay allowed).
+   `CEKURA-REPRO-INJECT`, `.cekura/` / `.claude/` writes, and the Clone
+   phase's writes to the clone it records in `clone.json` stay allowed).
    If a tool call is denied with the gate message, do not work around it —
    complete Reproduce.
    **Blocked reproduction:** when reproducing requires an action only a human
    may take (the sandbox/deploy path is a maintainer-applied CI label, prod
    credentials, a gated environment), Reproduce **parks**: write the full
-   repro plan to the audit dir (scenario spec, mode, N, what human action is
+   repro plan to the audit dir (scenario spec, mode, batch size, what human action is
    needed), ask for that action, and stop. "Please just fix it" does not
    silently waive the gate — an explicit user override is honored only when
    recorded in `repro.json` as `{"gate_override": {"by": "user", "reason":
@@ -89,9 +91,14 @@ every project:
    **UNVERIFIED HYPOTHESIS — reproduction gate overridden**, and the PR must
    state that no Cekura reproduction or verification ran. Never record an
    override the user did not explicitly give in this session.
-2. **Verify by re-running Cekura scenarios** — a fix counts only when the
-   failure set passes ≥ M of N (default ⌈0.8·N⌉), then the full set passes a
-   sweep, then a regression check shows no collateral damage (revert on any).
+2. **Verify by re-running Cekura scenarios** — a fix counts only when each
+   failure-set scenario passes ≥ M of R runs (R = `stochastic_runs`, M =
+   ⌈`pass_ratio`·R⌉, default 7 of 8), then the full set passes a sweep, then
+   a regression check shows no collateral damage. Any regression hands the
+   regressed cases back to Collect as the new failure set, and they stay in
+   the validation set. At any stop, restore the **best state**: the last state
+   that passed the failure set with no regressions (none → the starting
+   config).
 3. **Runtime readback attestation** — after every deploy, read what is actually
    live and compare it to what the source says should exist. Never verify
    against a runtime you have not attested. Three-way check: source render ↔
@@ -101,8 +108,10 @@ every project:
    Promote phase, with confirmation, a rendered diff, and a rollback path.
 5. **Overfitting gate** on edit content (verbatim transcript quotes, hardcoded
    test data, scenario-specific identifiers, hyper-narrow clauses).
-6. **Budgets and stops** — `max_iterations` (default 10), oscillation,
-   no-change signature, same failure shape 3×, all-upstream, zero kept failures.
+6. **Budgets and stops** — `max_iterations` (default 15); oscillation
+   (iteration N reverses N-1's edit on the same clause or field → stop and
+   flag it); no-change signature; same failure shape 3× (stop narrow edits
+   and ask the user to pick a wider option); all-upstream; zero kept failures.
 7. **Audit trail** — every session leaves a replayable record: manifest version,
    baseline config hash, failure set, root cause, edit proposal + diff, eval
    results, final diff. **Every simulation batch is labeled**: pass `name` on
@@ -139,6 +148,7 @@ re-run the Setup self-test after any change.
 | # | Phase | File | Purpose |
 |---|-------|------|---------|
 | 1 | Setup | `phases/setup.md` | Discover or interview → write/validate the manifest → **manifest self-test** (read → deploy/noop → read live → one smoke scenario → trace correlation). Persist run-setup to the host agent's memory file (`.claude/MEMORY.md` on Claude Code; the audit dir otherwise). |
+| 1a | Clone | `phases/clone.md` | Managed providers only, once, before Collect — it is the self-test's deploy step (SETUP.3 step 3). Copy the provider agent graph + tools and the Cekura agent (with scenarios); record the clone ids in the audit dir's `clone.json`. Every later phase targets the clone. |
 | 2 | Collect | `phases/collect.md` | Fetch/filter failures (per-run verdicts, voice filter, `ended_reason`), plus manifest `evidence` sources (trace registries, custom logs). Loop re-entry point. |
 | 3 | Debug | `phases/debug.md` | Root cause + failure class. Component attribution: which manifest component governs the failure. |
 | 4 | Reproduce | `phases/reproduce.md` | Build harness (mocks from real traces — including the customer's own mock server via `reset_fixtures`); must-fail gate. On pass, **write `repro.json`** (invariant 1) to the audit dir — the loop refuses to start without it. |
@@ -177,9 +187,12 @@ Assume drift is normal. Classify — never blur — these outcomes:
 All numbers below are defaults; the manifest's `policy.*` overrides them.
 Reproduction/verification run counts follow the **mode** (invariant 1):
 deterministic → 1 must-fail run, 2/2 verify with the trigger active;
-stochastic → `N = clamp(⌈2/p̂⌉, 4, 10)` with ≥2 fails to reproduce,
-`stochastic_runs` 8 (5–10) and `verify_threshold` ⌈0.8·N⌉ to verify.
-Explicit user overrides replace the sizing. · `max_iterations` 10 · `auto_mode` default true (renders diffs and
+stochastic → batch `B = clamp(⌈2/p̂⌉, stochastic_batch_min 4,
+stochastic_batch_max 10)` with ≥ `stochastic_min_fails` (2) fails to
+reproduce; R = `stochastic_runs` 8 runs per scenario passing ≥
+⌈`pass_ratio` 0.8 · R⌉ to verify. The reproduction dataset holds D varied
+scenarios (default 8, 5–10).
+Explicit user overrides replace the sizing. · `max_iterations` 15 · `auto_mode` default true (renders diffs and
 proceeds; production promotion always requires explicit confirmation
 regardless) · `manifest_path` default `.cekura/selfimprove.yaml`.
 
