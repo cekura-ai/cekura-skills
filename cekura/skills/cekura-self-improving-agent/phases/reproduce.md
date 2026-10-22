@@ -27,7 +27,7 @@ This drives **two** decisions — harness shape (REPRO.5) and the **reproduction
 
 | Class / target | Fix buckets | Harness shape |
 |---|---|---|
-| **LLM-based** on a managed provider | Gap / Conflict / Ambiguity (over-eager-transfer, premature-exit) | **dataset** of N varied scenarios |
+| **LLM-based** on a managed provider | Gap / Conflict / Ambiguity (over-eager-transfer, premature-exit) | **dataset** of D varied scenarios |
 | **Infra**, or **any self-hosted target** | CodeBug (source truncation, broken state, missing tool-result forwarding) / Upstream-infra (mock wiring, idle timer, DTMF, telephony) | **single** evaluator |
 
 When symptoms mix, default to a **dataset** (larger sample is the safe error) unless the target is self-hosted. When in doubt about the *mode*, stochastic is the safe error — a false "deterministic" costs a wasted single run and an immediate reclassify; a false single-run PASS that gets trusted costs the whole loop.
@@ -82,8 +82,8 @@ Call `mcp__cekura__scenarios_create` with:
 
 ## Step REPRO.5 — Branch harness shape on the failure class (REPRO.2)
 
-- **LLM-based (managed provider) → dataset of N scenarios.** One scenario gives too little signal to tell a real fix from a lucky sample. Build `N` (default 8, `dataset_size` 5–10) exercising the *same* failure mode with light variation — vary caller phrasing / order / incidental details, hold the trigger constant. Prod replay is scenario 1; the rest are near-variants. This dataset is the **full set** for the loop (Eval, regression).
-- **Infra, or any self-hosted target → a single evaluator** (still re-run 5–10× at the gate). One faithful replay is the right harness; the trigger is fixed. The single repro scenario is the full set.
+- **LLM-based (managed provider) → dataset of D scenarios.** One scenario gives too little signal to tell a real fix from a lucky sample. Build D scenarios (default 8, 5–10) exercising the *same* failure mode with light variation — vary caller phrasing / order / incidental details, hold the trigger constant. Prod replay is scenario 1; the rest are near-variants. This dataset is the **full set** for the loop (Eval, regression).
+- **Infra, or any self-hosted target → a single evaluator**, run at the gate per its reproduction mode (REPRO.6). One faithful replay is the right harness; the trigger is fixed. The single repro scenario is the full set.
 
 ---
 
@@ -93,8 +93,8 @@ Call `mcp__cekura__scenarios_create` with:
 
 Run the evaluator(s) with Setup's saved runner and require a definitive FAIL before any edit.
 
-The gate produces an **artifact**: record the batch's Cekura `result_id`, N,
-fail count, and mode (the gate line — `Repro gate: result <result_id> —
+The gate produces an **artifact**: record the batch's Cekura `result_id`, run
+count (`n_runs`), fail count, and mode (the gate line — `Repro gate: result <result_id> —
 <fails>/<n_runs> failed (mode: deterministic|stochastic)`, plus any active
 `CEKURA-REPRO-INJECT` injections). The Fix phase pre-flight re-checks this
 artifact and refuses entry without it; the final PR/summary must cite it. A
@@ -118,19 +118,20 @@ results make the dashboard unreadable for whoever reviews the session.
   deterministic runs add cost, not information.
 - **Stochastic mode: smallest batch expected to fail at least twice.**
   Estimate the failure rate p̂ from the collected evidence (e.g. 11 flagged
-  of 40 calls → p̂ ≈ 0.28). Fire `N = clamp(⌈2/p̂⌉, 4, 10)`; with no usable
-  estimate, start at N = 5. **Reproduced only if ≥ 2 runs fail.** Exactly 1
-  fail → extend the batch by 2 runs at a time up to 10 total. Still < 2
-  fails → not reliably reproducible; surface and stop. (An explicit
-  `stochastic_runs` / `repro_threshold` override from the user replaces this
-  sizing.)
+  of 40 calls → p̂ ≈ 0.28). Fire `B = clamp(⌈2/p̂⌉, stochastic_batch_min,
+  stochastic_batch_max)` (defaults 4, 10); with no usable estimate, start at
+  B = 5. **Reproduced only if ≥ `stochastic_min_fails` (default 2) runs
+  fail.** One fail short → extend the batch by 2 runs at a time up to
+  `stochastic_batch_max` total; still short → not reliably reproducible;
+  surface and stop. (An explicit user override of these
+  `policy.reproduction` values replaces this sizing.)
 
 Harness shape still follows the class: LLM-based (managed provider) = dataset
 of varied scenarios; infra / self-hosted = the same single evaluator, run per
 the mode above. Poll each run to terminal; infra-errored runs don't count on
 either side — rerun them.
 
-**Self-hosted targets:** launch the main agent with the per-run Cekura connection details using the run-setup steps in `.claude/CLAUDE.md` / `.claude/MEMORY.md` (Setup 1.4a), with any REPRO.3e trigger conditions active. If those weren't captured, ask now and persist before the first run — don't guess how to start the agent.
+**Self-hosted targets:** launch the main agent with the per-run Cekura connection details using the run-setup steps in `.claude/CLAUDE.md` / `.claude/MEMORY.md` (persisted at SETUP.4), with any REPRO.3e trigger conditions active. If those weren't captured, ask now and persist before the first run — don't guess how to start the agent.
 
 ### What "fails" means
 
@@ -138,11 +139,11 @@ The **Cekura metric / expected-outcome scores** show failure — not merely that
 
 ### Errors are NOT a reproduction
 
-A run that errored / didn't connect / crashed → **fix and retry that run.** An error is not a FAIL and doesn't count toward M-of-N. If the sim won't run at all, stop and ask.
+A run that errored / didn't connect / crashed → **fix and retry that run.** An error is not a FAIL and doesn't count toward the gate. If the sim won't run at all, stop and ask.
 
 ### If it PASSES (below the fail threshold) — STOP and surface
 
-Below M-of-N fails → not reproduced. Most likely causes, in order:
+Below the mode's gate (1/1 deterministic; ≥ `stochastic_min_fails` stochastic) → not reproduced. Most likely causes, in order:
 
 1. **Mock/variable mismatch** — a mock returns a different value than prod (3b), a dynamic var wasn't copied (3c/d), or caller turns were cleaned up instead of replayed verbatim (3d). Re-check the harness against the trace.
 2. **Trigger not forced** — an infra / code bug's condition (3e) isn't active or strong enough. Re-apply and strengthen it.
@@ -158,8 +159,8 @@ Show the replay transcript + scores side-by-side with prod and ask: "this didn't
 
 ## Hand-off to the Optimization loop
 
-When the must-fail gate is satisfied (definitive FAIL in ≥ M of N), hand off to the Optimization loop ([`optimization/fix.md`](optimization/fix.md)) with:
+When the must-fail gate is satisfied (the mode's gate in `repro.json`), hand off to the Optimization loop ([`optimization/fix.md`](optimization/fix.md)) with:
 
 - The **harness** — reproduction scenario IDs — as the loop's validation target; from here the loop iterates against it, not the raw prod log.
-- The **full set** (N-scenario dataset for LLM-based; single scenario for infra / self-hosted) and the **failure class**, which Eval reads for its must-pass re-run policy.
+- The **full set** (D-scenario dataset for LLM-based; single scenario for infra / self-hosted) and the **failure class**, which Eval reads for its must-pass re-run policy.
 - The harness inventory (mocks + variables + any REPRO.3e trigger conditions) and the failing result URLs (reproduction evidence for the PR / summary). The root-cause summary + replay artifacts (from Debug / Collect) travel on run state.

@@ -38,7 +38,7 @@ Call `mcp__cekura__scenarios_create` with:
 
 Run each case with the saved runner one at a time (restore modified conditions between cases), then poll all results. Label each via the run call's `name`: `[selfimprove] regression — <case>`.
 
-Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM and infra alike — must pass in ≥ M of N runs (a single clean pass is never enough), re-run under the ≥ M of N logic when a trigger is intermittent.
+Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM and infra alike — must pass in ≥ M of R runs (a single clean pass is never enough), re-run under the same ≥ M of R logic when a trigger is intermittent.
 
 | Case | Class | Runs | Pass/Fail | Result URL |
 |---|---|---|---|---|
@@ -51,5 +51,6 @@ Apply the same **must-pass stochastic policy** as EVAL.2: every case — LLM and
 
 Any failure = collateral damage — do NOT ship. **Hand back to Optimization · Collect** with the regressed case(s) as the new failure set (exactly like EVAL.4 case 4), so Fix can scope the fix more narrowly (a conditional clause for the specific type rather than a blanket prompt-wide change). This re-enters the loop and counts toward the iteration cap. Keep regressed cases in the validation set thereafter so re-regressions are caught.
 
-When every case passes, report the validated diff and full result-URL set to the
-apply-diff workflow. Never promote or repoint production resources.
+When every case passes, report the validated diff and full result-URL set, then
+offer Promote ([`promote.md`](promote.md)). Nothing reaches production except
+through that phase, on the user's explicit confirmation.

@@ -1,6 +1,6 @@
 # Optimization · Apply — Land the Combined Edit Set
 
-Third sub-phase of optimization. Lands the approved combined edit set (early-end edits from FIX.1 + the rest from FIX.5) via the target's **apply path**, then — for a live self-hosted target — runs `redeploy_command` (or fires the manual restart gate) so the live agent picks up the change. Every step is a real write against live state. Sync ([`sync.md`](sync.md)) immediately follows to verify.
+Second sub-phase of optimization. Lands the approved combined edit set (early-end edits from FIX.1 + the rest from FIX.5) via the target's **apply path**, then — for a live self-hosted target — runs `redeploy_command` (or fires the manual restart gate) so the live agent picks up the change. Every step is a real write against live state. Sync ([`sync.md`](sync.md)) immediately follows to verify.
 
 ## Pre-flight check
 
@@ -9,7 +9,7 @@ Before any APPLY.x work, verify fix handed off cleanly:
 - Combined approved edit set is non-empty (empty → fix should have already stopped the loop; do not reach Apply).
 - In `auto_mode: false`, the user confirmed the FIX.6 proposal.
 - Edits are de-conflicted — no two target the same prompt section / source-file lines without being merged.
-- The apply path is recorded on run state (Setup Step 1.4): provider API PATCH (managed provider), `Edit` + `redeploy_command` (self-hosted live, including source-code edits), live-on-save (`"noop"`), or render-only.
+- The apply path is recorded on run state (SETUP.4 run setup): provider API PATCH (managed provider), `Edit` + `redeploy_command` (self-hosted live, including source-code edits), live-on-save (`"noop"`), or render-only.
 
 If any is missing, return control to the orchestrator.
 

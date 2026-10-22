@@ -1,13 +1,13 @@
 # Optimization · Sync — Verify the Edits Landed
 
-Final sub-phase of optimization. Re-reads the just-edited artifacts and verifies the intended changes are present — the last gate before the Overfitting Gate. Catches four classes of silent failure:
+Final sub-phase of optimization. Re-reads the just-edited artifacts and verifies the intended changes are present — the last gate before Eval. Catches four classes of silent failure:
 
 - **VAPI PATCH nested-object replacement** — a malformed `messages` / `destinations` body wipes the nested object while returning 200 OK.
 - **ElevenLabs wrong-path prompt no-op** — a PATCH nesting the prompt at the wrong path (top-level `prompt` instead of `conversation_config.agent.prompt.prompt`) returns 200 OK and changes nothing; a partial array (`tool_ids` / `prompt.tools`) replaces the whole array.
 - **Ambiguous `Edit` anchors** (self-hosted source-file / owned-code edits) — an `old_string` matching a near-identical block elsewhere landed the change in the wrong region.
 - **Stale-cache reads** (self-hosted mock-tool edits) — the post-PATCH re-fetch may serve a cached pre-PATCH view; re-read from the platform tool's response, not any local cache.
 
-On drift, do NOT proceed to the Overfitting Gate — roll back to Apply, fix the edit, re-run Apply + Sync.
+On drift, do NOT proceed to Eval — roll back to Apply, fix the edit, re-run Apply + Sync.
 
 ## Pre-flight check
 
@@ -42,11 +42,11 @@ If any field doesn't match its intended value:
 - **Self-hosted DB row: re-fetch shows pre-edit prompt** → wrong row (stale WHERE/bind), a trigger/view rewrote it, or fetch and write point at different environments. Re-issue the UPDATE against the correct row (self-hosted overview DB notes), or in render-only re-render and wait.
 - **Self-hosted mock tools: re-fetch shows old description** → wait 2–3s and re-fetch once (eventual-consistency window). Still stale → re-issue the PATCH; the original may not have committed.
 
-In every drift case, the Overfitting Gate must NOT run on the failed state — return to Apply, fix the edit, re-run Sync, hand off only when Sync confirms.
+In every drift case, Eval must NOT run on the failed state — return to Apply, fix the edit, re-run Sync, hand off only when Sync confirms.
 
-## Hand-off to the Overfitting Gate
+## Hand-off to Eval and the Overfitting Gate
 
-After SYNC.1 confirms every changed field landed, Optimization is complete for this iteration. Hand off to [`../overfitting-gate.md`](../overfitting-gate.md) with:
+After SYNC.1 confirms every changed field landed, Optimization is complete for this iteration. Hand off to [`../eval.md`](../eval.md) for the verify batch; the Overfitting Gate ([`../overfitting-gate.md`](../overfitting-gate.md)) runs right after it with:
 
 - The applied edits, `old_string` + `new_string` per edit (the gate scores whether new text quotes failing transcripts verbatim / overfits; code control-flow and pure deletions are not scored, embedded prompt string literals are).
 - The failing transcripts from COLLECT.4 (gate compares added text against these).

@@ -1,4 +1,4 @@
-# Phase 4 — Apply, Validate, Iterate Reference (ElevenLabs)
+# Apply, Validate, Iterate Reference (ElevenLabs)
 
 Edits land live on ElevenLabs — there is **no redeploy step** (Apply Step APPLY.2 is skipped).
 
@@ -27,7 +27,7 @@ Construction rules:
 
 - The prompt lives at `conversation_config.agent.prompt.prompt`. **Do not** send a top-level `prompt` key — it's ignored and the edit silently no-ops.
 - To change only the prompt and leave tools untouched: `{"conversation_config":{"agent":{"prompt":{"prompt":"<NEW_PROMPT>"}}}}` — omit `tool_ids`.
-- To change `tool_ids`: send the **full new array** (it replaces wholesale). Add/remove ids relative to the array fetched in Phase 1; don't re-sort or de-duplicate without intent.
+- To change `tool_ids`: send the **full new array** (it replaces wholesale). Add/remove ids relative to the array fetched at Setup; don't re-sort or de-duplicate without intent.
 - Preserve other `prompt` sub-fields (`llm`, `temperature`, `max_tokens`, `knowledge_base`) — deep merge keeps them when omitted, but if you include a `prompt` object include all you intend to keep.
 - If the agent has dynamic-variable placeholders (`{{...}}`), confirm they're preserved verbatim.
 
@@ -61,16 +61,16 @@ Construction rules:
 
 ### Tool-backup pattern
 
-Back up the original tool body before PATCHing — one snapshot per tool per iteration:
+Back up the original tool body before PATCHing — one snapshot per tool per iteration, in the session audit dir (`audit.dir`, default `.cekura/audit/{session_id}/`). The audit dir never holds secrets, so drop the request headers on the way in:
 
 ```
-mkdir -p /tmp/elevenlabs_tools
+mkdir -p "$AUDIT_DIR/tools"
 curl -fsS -H "xi-api-key: $ELEVENLABS_API_KEY" \
   https://api.elevenlabs.io/v1/convai/tools/$TOOL_ID \
-  > /tmp/elevenlabs_tools/${TOOL_ID}_pre_iter${N}.json
+  | jq 'del(.tool_config.api_schema.request_headers)' > "$AUDIT_DIR/tools/${TOOL_ID}_pre_iter${N}.json"
 ```
 
-Revert with a PATCH using the backed-up `tool_config`.
+Revert with a PATCH using the backed-up `tool_config`, copying `api_schema.request_headers` back from a fresh `GET /v1/convai/tools/{id}`.
 
 ## ElevenLabs new tool creation
 
@@ -94,7 +94,7 @@ curl -fsS -X DELETE \
 
 Standalone tools are workspace-scoped and may be referenced by other agents. Check `access_info` / `usage_stats` on the tool GET before deleting. Prefer dropping the reference from `prompt.tool_ids` over deleting the definition.
 
-## Step 4.2 — Re-fetch verification
+## Re-fetch verification (SYNC.1)
 
 After all PATCH/POST/DELETE calls return 2xx, re-fetch to confirm:
 
@@ -105,7 +105,7 @@ After all PATCH/POST/DELETE calls return 2xx, re-fetch to confirm:
 
 Don't proceed to validation until both prompt and tool changes are confirmed live — validation on stale state spins the loop.
 
-## Step 4.3 — Validation set construction
+## Validation set construction (EVAL.1)
 
 | Original input | Validation set |
 |----------------|----------------|
@@ -118,24 +118,23 @@ Run with Setup's saved simulation runner. Match the validation set to the failur
 
 If the original input was `call_ids` and any were `reviewed_success`, exclude their re-synthesized scenarios from the validation set.
 
-## Step 4.6 — Decision logic
+## Decision logic (EVAL.4)
 
 Exit criterion is **100% pass rate on the full set**. The voice/infra filter scopes Fix — it is not the loop's stopping criterion. Don't declare success while the agent is still failing.
 
 Decision tree is the cross-mode one in [`../../phases/eval.md`](../../phases/eval.md) Step EVAL.4. ElevenLabs specifics:
 
-- **No-change from stale state** doesn't apply — edits land live. A no-change signature means the edit didn't address the root cause OR Step 4.2 re-fetch verification was skipped and the PATCH silently no-op'd — check verification first.
+- **No-change from stale state** doesn't apply — edits land live. A no-change signature means the edit didn't address the root cause OR the SYNC.1 re-fetch verification was skipped and the PATCH silently no-op'd — check verification first.
 - **Kept failures = 0 but total > 0** (all remaining look voice/infra/tool): re-classify with fresh eyes (a tool error handled badly by the agent is a prompt issue), consider prompt hardening and tool `description` / `api_schema` tightening. ElevenLabs has no spoken `request-start` / `destinations` surfaces — the only mitigation levers are prompt wording and tool `description` / `api_schema`.
 
 ## Iteration cap
 
-Default 10 iterations. After the cap, stop and surface: what's fixed, what's still failing, recommended hand-off skill (`cekura-eval-design` / `cekura-metric-improvement` / `cekura-create-agent`).
+Default 15 iterations. After the cap, stop and surface: what's fixed, what's still failing, recommended hand-off skill (`cekura-eval-design` / `cekura-metric-improvement` / `cekura-create-agent`).
 
 ## Loop guardrails
 
 - Track cumulative diff for prompt AND tools across all iterations, split by surface.
-- Watch for oscillation — if iteration N reverses iteration N-1's edit on the same clause or field, stop and flag it.
 - Don't widen the validation set mid-loop without telling the user.
-- Always back up tool definitions before editing (`GET` → `/tmp/elevenlabs_tools/{id}_pre_iter{N}.json`).
+- Always back up tool definitions before editing (`GET` → `<audit dir>/tools/{id}_pre_iter{N}.json`, secrets dropped).
 - Check `usage_stats` / `access_info` before deleting — tools are workspace-scoped.
 - Don't stop because the failure shape changed — a new bug surfacing after a fix is the loop working.

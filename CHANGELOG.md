@@ -4,6 +4,39 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.2 — 2026-10-22
+
+**`cekura-self-improving-agent` says one thing everywhere, and its hook no
+longer blocks the skill's own Clone phase.**
+
+- **The reproduction-gate hook lets Clone run.** Clone records what it creates
+  in the audit dir's `clone.json`; before `repro.json` exists the hook allows
+  POSTs while that file says `creating: true`, then only writes whose URLs name
+  a recorded clone id. Writes to anything else stay denied.
+- **The hook checks what the skill says.** It reads `repro.json` from the
+  manifest's `audit.dir` (now required to stay under `.cekura/`), refuses an
+  artifact without this session's `session_id`, requires `1 ≤ n_runs` and
+  `fails ≤ n_runs`, deterministic exactly 1/1, and honours
+  `policy.reproduction.stochastic_min_fails`.
+- **One loop order:** verify → overfitting gate → re-verify if the gate changed
+  edits → decide, in every phase file.
+- **One promotion rule:** production changes only through the Promote phase, on
+  explicit user confirmation; the undefined "apply-diff workflow" is gone.
+- **One regression rule:** a regression hands the regressed cases back to
+  Collect and they stay in the validation set; at stop, the best state (last
+  state that passed the failure set with no regressions) is restored.
+- **Clone is in the phase table**, once, before Collect — the self-test's
+  deploy step for managed providers.
+- **Numbers and names match the schema and backend:** `max_iterations` 15;
+  `pass_ratio` / `stochastic_runs` / `stochastic_min_fails` /
+  `stochastic_batch_*` instead of prose-only names; distinct letters for
+  dataset size, repro batch and verify runs; the overfitting frame check is 5
+  consecutive words; oscillation and same-shape-3× stops apply in every mode.
+- **Smaller fixes:** stale step/phase references renamed to current ones;
+  `fetch_failures.py` keeps ambiguous statuses as `collect.md` says; tool
+  backups go to the audit dir with secrets dropped; thin evidence is stated in
+  one plain line instead of being hidden.
+
 ## 0.19.1 — 2026-10-15
 
 **Metric prerequisites are documented as a platform feature.**

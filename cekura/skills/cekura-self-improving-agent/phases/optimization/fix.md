@@ -19,7 +19,8 @@ call state recorded (COLLECT.1–5), **including Signal 5 (end-of-call attributi
 FIX.1 depends on it. If any is missing, return control to the orchestrator.
 
 Also verify the REPRO.6 gate artifact: a Cekura `result_id` from the harness
-batch, failing ≥ `repro_threshold` of N, retrievable via
+batch, meeting its mode's gate (deterministic 1/1; stochastic ≥
+`stochastic_min_fails` fails), retrievable via
 `mcp__cekura__results_retrieve`. Restate it verbatim in the FIX.6 presentation
 header: `Repro gate: result <result_id> — <fails>/<n_runs> failed`. No such
 result id ⇒ return to Reproduce before proposing anything. A failing code/unit
@@ -52,7 +53,7 @@ FIX.5 edits at FIX.6. Everything not flagged here flows to FIX.2.
 
 ## Step FIX.2 — Read both data streams
 
-Re-fetch source-of-truth artifacts if more than a few minutes have passed since Setup 1.3 (dashboard edits don't notify Cekura; a stale copy produces a wrong PATCH):
+Re-fetch source-of-truth artifacts if more than a few minutes have passed since the last read — SETUP.3 or the previous Sync (dashboard edits don't notify Cekura; a stale copy produces a wrong PATCH):
 
 - *Managed providers:* re-fetch the provider configuration + every referenced tool via the provider source-of-truth API/MCP.
 - *Self-hosted:* re-read the editable surface — re-`Read` the source file (user may have edited between iterations), re-run the DB fetch, or re-fetch `mock_tools`. A rendered prompt: re-read only if its source was a file path.
@@ -98,7 +99,7 @@ An early-end failure that wasn't flagged in FIX.1 failed a flag condition (trans
 
 Smallest change that fixes the failure — don't rewrite paragraphs for one missed step.
 
-**Same-shape escape hatch.** Before generating narrow edits, check the same-shape counter per failing scenario. If a scenario's same expected-outcome bullet has failed **three consecutive iterations** under edits targeting the same surface, a fourth narrow edit at that surface is wasted. For that scenario, do NOT generate another; **shift the search space outward** — reason about what level of change would actually move it given the current mode's editable surfaces (different layer / mechanism / model / abstraction, evaluator-side vs agent-side), surface the candidates with trade-offs in FIX.6, and **wait for the user to pick** before doing anything else for that scenario. Do NOT autonomously pick — wider changes carry real cost. Exception: the user already directed an approach. Other scenarios that haven't tripped the counter continue the normal narrow path.
+**Same-shape escape hatch.** Before generating narrow edits, check the same-shape counter per failing scenario. If a scenario's same expected-outcome bullet has failed **three consecutive iterations** under edits targeting the same surface, a fourth narrow edit at that surface is wasted. For that scenario, **stop narrow edits and ask the user to pick a wider option**: **shift the search space outward** — reason about what level of change would actually move it given the current mode's editable surfaces (different layer / mechanism / model / abstraction, evaluator-side vs agent-side), surface the candidates with trade-offs in FIX.6, and **wait for the user to pick** before doing anything else for that scenario. Do NOT autonomously pick — wider changes carry real cost. Exception: the user already directed an approach. Other scenarios that haven't tripped the counter continue the normal narrow path.
 
 **Focused-prompt-override family** (one wider-search pattern for repeated narrow-instruction failures). When the main LLM call keeps drowning a narrow behavior under its many other instructions and adding another main-prompt constraint has demonstrably failed, give the LLM a minimal targeted system prompt for the critical turn. Two shapes; **prefer the first**:
 

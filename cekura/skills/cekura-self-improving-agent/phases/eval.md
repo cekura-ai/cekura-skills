@@ -2,16 +2,15 @@
 
 The "verify the change and decide" half of the loop. Builds the validation set, runs it under the **must-pass stochastic gate**, re-collects failures with Collect's logic, and decides: **exit**, **hand back to Optimization · Collect**, or **pause for the user**. Eval never edits the agent.
 
-**Validation mechanism** is **always Cekura scenarios** (simulation over the agent's transport) — never a code / unit test. Gates stochastically (≥ M of N). Everywhere below, "scenario" = one validation unit.
+**Validation mechanism** is **always Cekura scenarios** (simulation over the agent's transport) — never a code / unit test. Gates stochastically (≥ M of R runs per scenario). Everywhere below, "scenario" = one validation unit.
 
 ## Pre-flight check
 
 Before any EVAL.x work, verify:
 
 - Optimization edits applied (APPLY.1) AND sync confirmed (SYNC.1); OR — render-only (no live target) — the rewrite was rendered and the user asked for new pasted failures.
-- Overfitting Gate ran (GATE.1–GATE.7): either a clean pass-through, or cleanup edits applied + synced. Eval validates the gate-cleaned state.
 - Failure set and full set are on the run state; current iteration number known.
-- Cumulative diff includes Optimization edits (early-end + rest) AND gate cleanup edits.
+- Cumulative diff includes Optimization edits (early-end + rest) AND earlier iterations' gate cleanup edits.
 
 Any missing → return control to the orchestrator; an upstream sub-phase didn't complete cleanly.
 
@@ -44,14 +43,16 @@ Run the failure set with Setup's saved simulation runner. For self-hosted target
 **Re-run policy — mirror REPRO.6's mode on the verification side.** The skill **auto-triggers the verification runs itself** (do NOT ask the user to fire each). Label every batch via the run call's `name`: `[selfimprove] verify iter<N> — failure set` / `[selfimprove] full-set sweep iter<N>`.
 
 - **Deterministic-mode reproductions** (forced trigger / `CEKURA-REPRO-INJECT` fault injection): verify with **2 runs, both passing (2/2), with the trigger still active**. The bug fired every time before the fix; two clean runs under the same forced trigger is conclusive, and more runs add cost, not confidence. Any fail → not fixed.
-- **Stochastic-mode reproductions**: a single passing run never ends the iteration (that's the source of most "looked good in dev, regressed in prod" miscalls). Run **5–10 times** (default `N = 8`, `stochastic_runs`); a scenario is **verified only if it passes in ≥ M of N** (default `M = ⌈0.8·N⌉` — e.g. ≥7/8, ≥4/5; tune via `verify_threshold`). Below M → not fixed, stays in the failure set. Report pass-rate per scenario (`7/8 pass`), not a single verdict.
+- **Stochastic-mode reproductions**: a single passing run never ends the iteration (that's the source of most "looked good in dev, regressed in prod" miscalls). Run each scenario **R times** (R = `stochastic_runs`, default 8, 5–10 in practice); a scenario is **verified only if it passes in ≥ M of R** (M = ⌈`pass_ratio`·R⌉, `pass_ratio` default 0.8 — e.g. ≥7/8, ≥4/5). Below M → not fixed, stays in the failure set. Report pass-rate per scenario (`7/8 pass`), not a single verdict.
 
 This is uniform across classes — the only difference is harness shape:
 
-- **LLM-based failures** (managed provider) — dataset of N varied scenarios.
-- **Infra failures / self-hosted targets** — the single evaluator, re-run N times (over real transport, timing/audio/latency/interruption failures are intermittent; a deterministic fix passes all N).
+- **LLM-based failures** (managed provider) — dataset of D varied scenarios.
+- **Infra failures / self-hosted targets** — the single evaluator, re-run R times (over real transport, timing/audio/latency/interruption failures are intermittent; a deterministic fix passes all R).
 
 In a **render-only run** the skill runs nothing: EVAL.2 collapses to "ask the user for the new failure set" (fresh pasted `{transcript, expected_outcome, verdict}` blocks). Zero new failures = 100%. The gate degrades to whatever the user re-pastes.
+
+**Then the Overfitting Gate** ([`overfitting-gate.md`](overfitting-gate.md)) scores this iteration's edits. If it applies cleanup edits, they go through Apply + Sync and this step re-runs on the cleaned state — only that re-run feeds EVAL.3. No cleanup → this batch stands.
 
 ## Step EVAL.3 — Re-collect failures (same Collect logic)
 
@@ -64,29 +65,33 @@ Run the new result through Collect end to end: verdict pre-filter (keep `failure
 
 ## Step EVAL.4 — Decide: exit, sweep, or loop
 
-Final exit criterion: **100% pass on the full set** — zero failures of any class, every unit clearing its **must-pass stochastic gate** from EVAL.2 (≥ M of N, all classes), not a single lucky pass. 100% on the failure set is necessary but not sufficient; the sweep + Regression phase close the loop.
+Final exit criterion: **100% pass on the full set** — zero failures of any class, every unit clearing its **must-pass gate** from EVAL.2 (≥ M of R, or 2/2 in deterministic mode), not a single lucky pass. 100% on the failure set is necessary but not sufficient; the sweep + Regression phase close the loop.
 
 Decision tree, in order:
 
-1. **Failure set < 100% → hand back to Optimization · Collect.** A *full iteration restart*, not a tweak-and-revalidate: re-enter Collect with the new failure signal and walk every phase in order back to here — Collect → Fix → Apply → Sync → **Overfitting Gate** → Eval. Re-`Read` each phase file at its boundary and announce it (e.g. `Iteration 3 · Overfitting Gate`) per SKILL.md's phase-announcement rule — a missing announcement is the same signal as a missing phase. The Gate is mandatory whenever Optimization produced non-zero edits, *especially* iter 2+ (transcript-leak risk compounds); the only skip is an iteration with literally zero prompt/tool/orchestration edits (all-Upstream). A single prompt-shaped change — including a system-prompt string literal embedded in source, even beside control-flow code — must be inventoried and scored. FIX.6 surfaces a fresh combined proposal and **waits for explicit approval** before Apply (`auto_mode: false`; in auto mode, render and proceed). The failure set may shrink across iterations — track as progress but stay on the same set; don't drop now-passing scenarios until the sweep, or you lose oscillation detection.
+1. **Failure set < 100% → hand back to Optimization · Collect.** A *full iteration restart*, not a tweak-and-revalidate: re-enter Collect with the new failure signal and walk every phase in order back to here — Collect → Fix → Apply → Sync → Eval (EVAL.2 verify) → **Overfitting Gate** → re-verify if the gate changed edits → EVAL.3–4. Re-`Read` each phase file at its boundary and announce it (e.g. `Iteration 3 · Overfitting Gate`) per SKILL.md's phase-announcement rule — a missing announcement is the same signal as a missing phase. The Gate is mandatory whenever Optimization produced non-zero edits, *especially* iter 2+ (transcript-leak risk compounds); the only skip is an iteration with literally zero prompt/tool/orchestration edits (all-Upstream). A single prompt-shaped change — including a system-prompt string literal embedded in source, even beside control-flow code — must be inventoried and scored. FIX.6 surfaces a fresh combined proposal and **waits for explicit approval** before Apply (`auto_mode: false`; in auto mode, render and proceed). The failure set may shrink across iterations — track as progress but stay on the same set; don't drop now-passing scenarios until the sweep, or you lose oscillation detection.
 
 2. **Failure set = 100% AND no sweep yet this loop → trigger the final regression sweep.**
    - Build the **full set** (EVAL.1 table).
    - Full set ≡ failure set (nothing was passing) → skip, treat as case 3.
-   - Else: announce ("All N originally-failing scenarios now pass — running the full M-scenario set as a regression check"), run EVAL.2 → EVAL.3 once against the full set.
+   - Else: announce ("All <k> originally-failing scenarios now pass — running the full <n>-scenario set as a regression check"), run EVAL.2 → EVAL.3 once against the full set.
      - **Full set = 100%** → case 3.
      - **Full set < 100%** → case 4 (hand back with the new failures as the failure set, whether each was originally passing or failing-then-fixed). Fixed scenarios stay in the validation set so re-regressions are caught.
 
-3. **Full set = 100% → converged. Hand off to Regression.** Do NOT exit yet. The in-loop sweep only confirms the reproduction dataset is green; [`regression.md`](regression.md) runs the happy-path + edge-case sweep that catches collateral damage the dataset can't see. Pass forward: cumulative diff, iterations used, which scenarios changed verdict, and all result URLs (REPRO.6 fail-runs + EVAL.2 pass-runs). After Regression passes, hand the validated diff and evidence to the apply-diff workflow and stop.
+3. **Full set = 100% → converged. Hand off to Regression.** Do NOT exit yet. The in-loop sweep only confirms the reproduction dataset is green; [`regression.md`](regression.md) runs the happy-path + edge-case sweep that catches collateral damage the dataset can't see. Pass forward: cumulative diff, iterations used, which scenarios changed verdict, and all result URLs (REPRO.6 fail-runs + EVAL.2 pass-runs). After Regression passes, offer Promote ([`promote.md`](promote.md)) — the only path to production, run only on the user's explicit confirmation.
 
 4. **Regression detected during sweep → do NOT exit. Hand back to Optimization · Collect** with the regressed scenarios as the new failure set. State explicitly that this iteration's edit broke a previously-passing scenario, so Fix can scope the fix more narrowly (conditional clauses for the specific type rather than blanket prompt-wide changes).
 
-## Iteration cap
+## Iteration cap and stops
 
-Default 10; override with `max_iterations` or stop/extend mid-loop ("keep going" / "stop"). The sweep counts as part of its triggering iteration, not a separate one. Don't loop silently past the cap — surface what's fixed, what's still failing, and a recommended next skill.
+Default 15; override with `max_iterations` or stop/extend mid-loop ("keep going" / "stop"). The sweep counts as part of its triggering iteration, not a separate one. Don't loop silently past the cap — surface what's fixed, what's still failing, and a recommended next skill.
+
+- **Oscillation** — iteration N's edit reverses iteration N-1's on the same clause or tool field → stop and flag it; user judgment is needed.
+- **Same shape 3×** — stop narrow edits for that scenario and ask the user to pick a wider option (FIX.5 same-shape escape hatch).
+- **On any stop**, restore the best state — the last state that passed the failure set with no regressions (none → the starting config) — and report it.
 
 ## Early-exit shortcut
 
 If Collect's first pass collected zero failures of any class, the fix sub-phases were skipped and the orchestrator reports success before Eval runs. If everything was filtered out (e.g. all voice/infra failures), Collect surfaces and stops the loop directly — see [`collect.md`](collect.md).
 
-For PATCH curl bodies, the tool-backup pattern, loop guardrails (oscillation detection, validation-set stability, cumulative-diff tracking), and per-iteration scope rules, see [`../providers/vapi/phase-4-apply.md`](../providers/vapi/phase-4-apply.md) or [`../providers/elevenlabs/phase-4-apply.md`](../providers/elevenlabs/phase-4-apply.md) — the guardrails apply across modes.
+For PATCH curl bodies, the tool-backup pattern, loop guardrails (validation-set stability, cumulative-diff tracking), and per-iteration scope rules, see [`../providers/vapi/phase-4-apply.md`](../providers/vapi/phase-4-apply.md) or [`../providers/elevenlabs/phase-4-apply.md`](../providers/elevenlabs/phase-4-apply.md) — the guardrails apply across modes.

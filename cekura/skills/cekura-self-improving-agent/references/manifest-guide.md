@@ -79,8 +79,12 @@ stale → report and ask before replacing.
 
 `audit.dir` (default `.cekura/audit/{session_id}/`) holds the replayable
 record: manifest + config hashes, per-iteration diffs, eval results,
-pre-promotion backups, promotion record. Everything written there is
-secret-redacted first. The host agent's memory file holds only run-setup
+pre-promotion backups, promotion record, and the gate artifacts `repro.json`
+and `clone.json`. Everything written there is secret-redacted first. Keep it
+under `.cekura/` (schema-enforced): the reproduction-gate hook reads the gate
+artifacts from it, and only `.cekura/` is writable before the gate passes.
+The hook reads `audit.dir` with python3 + PyYAML; without them it looks in
+the default directory. The host agent's memory file holds only run-setup
 facts and a pointer to this directory — never artifacts, never values.
 
 ## Blast-radius summary (rendered before apply, every iteration)
