@@ -20,3 +20,8 @@ skills-lock.json
 !.agents/plugins/
 .agents/plugins/*
 !.agents/plugins/marketplace.json
+
+# Benchmark caches and bytecode. Raw evidence is required to live outside checkout.
+__pycache__/
+.pytest_cache/
+/experiments/scenario_skills/runs/

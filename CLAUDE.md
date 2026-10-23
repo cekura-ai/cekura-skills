@@ -204,6 +204,35 @@ The `sync-version` **label** (`.github/workflows/sync-version.yml`) runs `bump_v
 
 `scripts/check_version_bump.py` gates PRs that touch `cekura/**`: the version must be **strictly greater than the one on `origin/main` at CI time**, not merely different from the PR's merge base. Two PRs branched off the same release can otherwise both bump to the same number, and whichever merges second ships its content under a version users already have. Note the `validate` workflow is not currently a *required* status check in the branch ruleset, so this gate is advisory until it is made required (with "branches up to date" enabled so it re-runs when main moves).
 
+## Skill evaluation research
+
+[Scenario skill evaluation](docs/research/scenario-skill-evaluation.md) documents
+the authoring-conversation diagnosis and bounded synthetic evaluation workflow.
+The older case catalog remains research intake. The executable 24-task benchmark,
+stateful local MCP fixtures, Cekura runtime adapter and original Stanford
+Meta-Harness loop with isolated Codex/EC2 Claude proposers live outside the plugin
+in `experiments/scenario_skills/`.
+The exact-Modal adapter and TLS gateway add request-level spending admission;
+their real-runtime probes must pass before paid inference. Offline image success
+alone does not satisfy this gate.
+Its [domain specification](experiments/scenario_skills/domain_spec.md) describes
+commands, target/configuration pinning, private evidence, the initial $25 ceiling,
+explicitly authorized $100 continuation policy and
+human acceptance gates; the [smoke report](docs/research/scenario-skill-smoke-report.md)
+records local verification, measured target comparisons and unapproved suggestions.
+[Optimizer alternatives](docs/research/skill-optimizer-alternatives.md) retains
+the framework research and deferred broader comparison. These files do not
+change released skills or add paid model calls to CI.
+
+The approved follow-up lives in `experiments/scenario_skills/v2/`; its
+[domain specification](experiments/scenario_skills/v2/domain_spec.md) owns the
+72-task benchmark, 36/12/24 split, human-qualified semantic judge, the
+four-attempt/two-evaluation search, the isolated real backend with its metered,
+instrumented generator, and the single cumulative $150 wallet. Human fixture/gold approval precedes inference. The old smoke's
+literal source-input check is retained only for reproducibility, with its
+limitations corrected in the research report. Run artifacts and signoffs stay
+outside the checkout, and no skill patch is exported before acceptance gates.
+
 ## Conventions
 
 - **Skill versions** follow semver in the SKILL.md frontmatter. Bump minor for new sections/patterns, patch for fixes.

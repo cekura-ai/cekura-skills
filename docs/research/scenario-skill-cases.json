@@ -1,0 +1,512 @@
+{
+  "schema_version": 1,
+  "status": "non_executable_case_catalog",
+  "created_at": "2026-10-22",
+  "purpose": "Starting cases for a future scenario-authoring skill evaluation; not Cekura voice-agent Tests-as-Code.",
+  "execution_requirements": [
+    "Materialize fixtures and authoritative runtime/org capability contracts",
+    "Use isolated stateful tools and the actual authoring runtime",
+    "Keep grading labels outside task-visible context",
+    "Confirm provisional contract expectations",
+    "Version fixtures, skills, graders and split assignments",
+    "Run each candidate on the same pinned environment"
+  ],
+  "cases": [
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-01",
+      "name": "Explicit structured interruption batch",
+      "family": "mode_routing",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Generate three structured regression scenarios where the caller cuts in two seconds after the agent begins answering.",
+      "fixture_requirements": [
+        "Confirmed target agent and authorized isolated fixture writes",
+        "Normal personality in the agent's language",
+        "Current interruption-tag and generation capability contract"
+      ],
+      "expected_checks": [
+        "Request conditional_actions explicitly on generation",
+        "Represent the timed cut-in with a valid interruption step and following speech",
+        "Verify all three persisted scenarios and their configuration",
+        "Do not substitute an interruptive personality for the timed event"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-02",
+      "name": "Idle threshold with intentional dead air",
+      "family": "timing",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Create two deterministic tests for the main agent's 12-second no-input threshold: one just under it and one just over it.",
+      "fixture_requirements": [
+        "Agent contract says its threshold is 12 seconds",
+        "Runtime supports hold and exposes timed events",
+        "Exact supported durations and expected agent response are supplied"
+      ],
+      "expected_checks": [
+        "Use conditional actions and noninterruptible hold for intentional dead air",
+        "Do not wait for silence in a when condition",
+        "Bracket the threshold with the supplied durations",
+        "Do not reject a justified terminal hold under a blanket pause rule"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-03",
+      "name": "Sustained personality with explicit behavioral choice",
+      "family": "mode_routing",
+      "severity": "medium",
+      "skill": "cekura-eval-design",
+      "request": "Generate one instruction-format scenario with a caller who generally speaks over people. Use the supported interruptive personality; I do not want a timed interruption.",
+      "fixture_requirements": [
+        "Organization supports instruction format",
+        "Supported interruptive personality exists",
+        "No exact timed event is requested"
+      ],
+      "expected_checks": [
+        "Pass instruction as the explicit output format",
+        "Use the supported personality rather than a runtime interruption tag",
+        "Do not silently switch formats or claim to create timed behavior"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-04",
+      "name": "Mixed request under legacy capabilities",
+      "family": "batch_routing",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Generate one exploratory angry-caller scenario in instruction format and one structured scenario where the caller holds for 15 seconds.",
+      "fixture_requirements": [
+        "Organization supports both formats",
+        "Suitable personalities and hold-tag contract",
+        "Both requested workflows have agent context"
+      ],
+      "expected_checks": [
+        "Preserve the explicit format of each requested case",
+        "Use separate generation requests when output formats differ",
+        "Represent the temporary dead air with a supported runtime tag",
+        "Reconcile the two requested cases against saved output"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-05",
+      "name": "Save user-supplied text unchanged",
+      "family": "verbatim_input",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Save this instruction scenario exactly as written: <scenario>1. Ask about the order. 2. Say thanks.</scenario>",
+      "fixture_requirements": [
+        "Organization supports instruction format",
+        "Caller text and whitespace supplied as an exact fixture string",
+        "Permission to save that exact payload is explicit"
+      ],
+      "expected_checks": [
+        "Persist the complete exact instructions including the wrapper",
+        "Do not paraphrase or convert numbered steps into conditional actions",
+        "Verify the persisted text rather than the assistant summary"
+      ],
+      "layers": [
+        "authoring_contract"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-06",
+      "name": "Agent speaks first",
+      "family": "call_direction",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Create a structured callback test. The main agent starts by greeting the customer; the caller responds only after that greeting.",
+      "fixture_requirements": [
+        "Agent greeting and direction are unambiguous",
+        "Runtime documents opener behavior on interruption"
+      ],
+      "expected_checks": [
+        "Set CA first_message to the empty string",
+        "Trigger the caller response from the greeting",
+        "Do not use leading silence to delay a nonempty opener"
+      ],
+      "layers": [
+        "authoring_contract",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-07",
+      "name": "Follow-up is a turn, not a timer",
+      "family": "turn_semantics",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Create a scripted voicemail sequence with a greeting and beep, then ten seconds of dead air before the next action; there is no main-agent reply between those caller actions.",
+      "fixture_requirements": [
+        "Runtime turn and voicemail-tag contract",
+        "Observable intended main-agent behavior",
+        "Known-correct and faulty voicemail fixtures"
+      ],
+      "expected_checks": [
+        "Do not put an action into then when no main-agent reply can release it",
+        "Use supported same-turn composition or restructuring",
+        "Keep whole-step voicemail constraints valid",
+        "Demonstrate that the intended action can actually execute"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-08",
+      "name": "Avoid colliding conditions",
+      "family": "trigger_reachability",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Create a verification scenario. Sometimes the main agent asks for name and date of birth together, and sometimes separately.",
+      "fixture_requirements": [
+        "Both legal verification paths are documented",
+        "Matcher contract says how multiple matches are composed"
+      ],
+      "expected_checks": [
+        "Handle both legal paths without duplicate or conflicting caller replies",
+        "Use specific observable triggers",
+        "Do not assume an agent message can match only one condition",
+        "Accept any valid structure that satisfies the outcome"
+      ],
+      "layers": [
+        "semantics",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-09",
+      "name": "Required variable names and unusable values",
+      "family": "profiles",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Generate a booking test using the registered main-agent variables and the supplied test customer.",
+      "fixture_requirements": [
+        "Active variables firstName and outbound_details; deleted variable obsoleteCode",
+        "Supplied firstName value is valid; stored outbound_details candidates include null, empty string and literal None",
+        "Variable schema declares which values are usable; missing required information is available through a fixture clarification"
+      ],
+      "expected_checks": [
+        "Match registered case-sensitive names and reject unusable required values",
+        "Do not synthesize arbitrary duplicate lowercase keys",
+        "Ignore soft-deleted definitions in completeness checks",
+        "Resolve missing required information or report a precise blocker before persisting an unrunnable candidate"
+      ],
+      "layers": [
+        "authoring_contract",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-10",
+      "name": "Repair unsupported sound names",
+      "family": "validation_repair",
+      "severity": "medium",
+      "skill": "cekura-eval-design",
+      "request": "Generate a structured scenario with a short cough while the agent is speaking.",
+      "fixture_requirements": [
+        "Generator first returns an unsupported sound alias",
+        "Authoritative sound catalog and validation error path are supplied",
+        "Fixed repair budget declared by the harness"
+      ],
+      "expected_checks": [
+        "Use or provide the exact supported sound catalog in repair feedback",
+        "Do not repeatedly anchor repairs to the invalid alias",
+        "Respect the repair budget and report unresolved rejection honestly",
+        "Verify supported sound configuration after persistence"
+      ],
+      "layers": [
+        "authoring_contract",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-11",
+      "name": "Respect existing mock input/output contracts",
+      "family": "mocks",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Generate a booking-failure test using the existing availability mock.",
+      "fixture_requirements": [
+        "Existing normalized mock input maps to a reserved output and response metadata",
+        "Requested failure requires a distinct supported fixture input or a compatible existing response",
+        "Mock state is isolated per trial"
+      ],
+      "expected_checks": [
+        "Inspect or receive the reserved mapping before repair",
+        "Reuse a compatible output or choose distinct consistent inputs",
+        "Do not overwrite a conflicting shared mapping",
+        "Verify scenario profile and mock selection agree"
+      ],
+      "layers": [
+        "authoring_contract",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-12",
+      "name": "Partial generation and truthful completion",
+      "family": "completion",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Generate five refund scenarios in the agreed folder.",
+      "fixture_requirements": [
+        "Generation job finishes with three valid scenarios and two explained rejections",
+        "Readback exposes actual resources",
+        "Fixed retry budget and expected requested-case list"
+      ],
+      "expected_checks": [
+        "Reconcile persisted count and coverage with all five requests",
+        "Repair or regenerate eligible missing cases within budget",
+        "Report rejected or blocked cases separately",
+        "Do not claim five created when only three exist"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-13",
+      "name": "Reuse applicable metrics",
+      "family": "metrics",
+      "severity": "medium",
+      "skill": "cekura-generate-scenarios",
+      "request": "Create a regression scenario for this flagged premature-transfer failure.",
+      "fixture_requirements": [
+        "Confirmed source call and target agent",
+        "Existing agent metric already measures the focal transfer failure",
+        "A predefined template is also available as a secondary candidate"
+      ],
+      "expected_checks": [
+        "Reuse the existing applicable metric without creating a duplicate",
+        "Keep the expected outcome focused on the supplied failure",
+        "Verify the selected metric and profile are attached"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-14",
+      "name": "Fair expected outcome",
+      "family": "expected_outcome",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Generate a scheduling scenario where the customer accepts one of the available appointments.",
+      "fixture_requirements": [
+        "Availability mock offers variable valid slots",
+        "Main-agent contract permits more than one correct offer",
+        "No fixed appointment date was mandated"
+      ],
+      "expected_checks": [
+        "Caller commits to one concrete offered slot",
+        "Expected outcome accepts any authorized correctly confirmed slot",
+        "Do not hardcode an unsupported date or force an unrelated workflow",
+        "Known-correct agent passes and a confirmed-slot mismatch is detected"
+      ],
+      "layers": [
+        "semantics",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-15",
+      "name": "Reproduce the causal failure while permitting a fix",
+      "family": "reproduction",
+      "severity": "high",
+      "skill": "cekura-generate-scenarios",
+      "request": "Create a regression test for this call where the main agent treated an ambiguous reply as verification.",
+      "fixture_requirements": [
+        "Source context identifies the exact ambiguous triggering reply",
+        "Metric defines that explicit verification is required",
+        "Known-correct fixture asks again; faulty fixture proceeds without confirmation"
+      ],
+      "expected_checks": [
+        "Preserve the causal trigger and sufficient setup",
+        "Allow the caller to answer a legitimate corrective follow-up",
+        "Do not force the original incorrect agent path",
+        "Verify trigger reach and the same target fault on the defective fixture"
+      ],
+      "layers": [
+        "semantics",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-16",
+      "name": "Do not manufacture a caller hang-up",
+      "family": "termination",
+      "severity": "high",
+      "skill": "cekura-generate-scenarios",
+      "request": "Create a replay-based test for this call. Keep the caller connected so we can check whether the main agent ends it correctly.",
+      "fixture_requirements": [
+        "Source ending ownership and requested main-agent end behavior",
+        "Runtime/tool contract distinguishes availability of end-call tooling from a scripted end-call action"
+      ],
+      "expected_checks": [
+        "Do not inject a testing-agent endcall action that defeats the requested check",
+        "Keep required tool wiring consistent with the runtime contract",
+        "Do not evaluate an ending that the scenario itself forced"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics",
+        "runtime"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-17",
+      "name": "Necessary clarification with ambiguous target",
+      "family": "clarification",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Generate tests for my agent.",
+      "fixture_requirements": [
+        "Two plausible agents in scope",
+        "Neither conversation prefix nor page context selects one",
+        "Fixture user answers one focused agent-selection question"
+      ],
+      "expected_checks": [
+        "Ask a necessary target-selection question before writes",
+        "Use the selected agent consistently afterwards",
+        "Do not count waiting for that answer as an authoring failure",
+        "Do not fabricate certainty or create resources on both agents"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-18",
+      "name": "Approval persists through asynchronous generation",
+      "family": "clarification",
+      "severity": "medium",
+      "skill": "cekura-eval-design",
+      "request": "Generate the agreed scenarios and finish checking them. If it is still running, keep waiting until it finishes.",
+      "fixture_requirements": [
+        "Authorized scope and target already supplied",
+        "Job requires multiple polls and eventually completes",
+        "Polling cadence and overall time budget are fixed"
+      ],
+      "expected_checks": [
+        "Continue polling within the authorized scope without repeated keep-waiting questions",
+        "Follow the fixed cadence and budget",
+        "Verify final results or honestly report a terminal failure",
+        "Distinguish runtime cancellation from poor skill behavior"
+      ],
+      "layers": [
+        "authoring_contract"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "contract_confirmation_required",
+      "id": "SG-19",
+      "name": "Organization format default with explicit override",
+      "family": "platform_capabilities",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Generate two ordinary scheduling scenarios using this organization's default format.",
+      "fixture_requirements": [
+        "Authoritative org setting says default conditional_actions",
+        "Separate paired fixture is a legacy organization that supports instruction",
+        "Effective rollout/capability contract must be confirmed before grading"
+      ],
+      "expected_checks": [
+        "Use the effective organization default for an unspecified format",
+        "In the paired supported case, preserve an explicit instruction-format request",
+        "Do not infer capabilities solely from signup date or old skills"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics"
+      ]
+    },
+    {
+      "source": "synthetic",
+      "readiness": "fixtures_required",
+      "id": "SG-20",
+      "name": "Installed reference versus condensed skill loading",
+      "family": "skill_loading",
+      "severity": "high",
+      "skill": "cekura-eval-design",
+      "request": "Create a structured multi-turn idle test using a supported background sound and verify that its steps cannot stall.",
+      "fixture_requirements": [
+        "Identical task and runtime across installed and MCP-loaded contexts",
+        "Only advertised skill catalog is initially visible in activation trials",
+        "Complete source files are retrievable in installed trial; condensed bundle contains only its actual included references",
+        "Pinned sound catalog and runtime turn rules"
+      ],
+      "expected_checks": [
+        "Record actual loaded context hashes and reference requests",
+        "Do not silently preload grader-only or unavailable reference content",
+        "Compare structural validity and runtime trigger reach under both loading paths",
+        "Report inaccessible-reference behavior and actual completion separately"
+      ],
+      "layers": [
+        "authoring_contract",
+        "semantics",
+        "runtime"
+      ]
+    }
+  ]
+}

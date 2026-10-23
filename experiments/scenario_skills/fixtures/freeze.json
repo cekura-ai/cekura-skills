@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "packs_sha256": "06343eb70cca798ee685e4db9801a129fc905a65c23c5650222f4907bf70c84a",
+  "expectations_sha256": "b0bad4c91ded1fed9fd8df292e9b9e5b979241c162874e67cf87aee93e22deed",
+  "engineering_review": "Fixture requests, source licenses, family counts and state contracts reviewed during implementation; domain signoff remains pending.",
+  "human_domain_signoff": "pending",
+  "source": "Synthetic reconstructions informed by product_chat authoring diagnosis; no customer transcripts or identifiers."
+}
