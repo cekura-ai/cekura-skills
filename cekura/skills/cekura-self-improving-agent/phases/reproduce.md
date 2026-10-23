@@ -149,7 +149,7 @@ Below the mode's gate (1/1 deterministic; ≥ `stochastic_min_fails` stochastic)
 2. **Trigger not forced** — an infra / code bug's condition (3e) isn't active or strong enough. Re-apply and strengthen it.
 3. **Stale fix** — already fixed on the live agent since the call. Confirm; if so, nothing to do.
 4. **Wrong evaluator** — bullets / metric don't detect this failure (REPRO.4) — including a thresholded metric that is *structurally blind in sim* (the defect fires but its observable magnitude never crosses the threshold with this counterpart). Fix by asserting the defect itself, not by re-running.
-5. **Scenario mechanics** — the trigger never actually fired because of tag/interruption semantics (REPRO.3e′): an interrupted standard action re-evaluated and re-fired, a `<hold>` was pre-empted before it began, an injection was consumed by overlap. Diagnose against `conditional-actions.md`, not by intuition.
+5. **Scenario mechanics** — the trigger never actually fired because of tag/interruption semantics (REPRO.3e′): an interrupted standard action re-evaluated and re-fired, a `<hold>` was pre-empted before it began, an injection was consumed by overlap. Diagnose against `conditional-actions.md` and the error→fix troubleshooting in `conditional-actions-patterns.md`, not by intuition.
 
 **Two consecutive non-triggering runs with an unchanged harness → stop firing runs.** Re-diagnose the harness against the causes above (read the mechanics doc, inspect the bot/provider logs for whether the trigger fired) before spending another call. Three runs on an evaluator that cannot observe the failure is evidence about the instrument, not the bug.
 
