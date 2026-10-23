@@ -4,6 +4,40 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.3 — 2026-10-23
+
+**`cekura-eval-design` now reaches the assistant in full.**
+
+- **The skill fits its loader.** `SKILL.md` was 62,582 characters against the
+  60,000-character Skill loader cap, so its end — the rest of the negative-test
+  rule, Infrastructure Suite guidance, routing to other skills and the whole
+  reference-file index — was never delivered. It is now about 56,900
+  characters. The reference index and skill routing moved directly after
+  **Workflow**. Repeated rules (no hand-authored instruction scenarios, silence,
+  metrics on direct creates, Normal personality for conditional actions) are
+  stated once. The red-team attack table, custom SIP/WebSocket headers, run
+  variants, smoke cohorts and Infrastructure Suite details moved verbatim into
+  `references/auto-generation.md`, `test-data-design.md` and
+  `coverage-patterns.md`.
+- **The conditional-actions reference fits one read.** It was 87,540 bytes, so a
+  single 50 KiB read never reached the multi-turn probe and duration control,
+  anti-patterns, validation checklist or troubleshooting. The pattern library
+  and everything after it moved to the new
+  `references/conditional-actions-patterns.md`. Pointers in `api-reference.md`
+  and `cekura-self-improving-agent` were updated.
+- **Generation facts corrected against the backend.**
+  - `simulation_type` should always be sent: when absent, the organization
+    setting and interruption, silence or hold wording decide the format.
+  - A generated scenario's language follows its personality; it is not always
+    `en`.
+  - Generation and duplication create a missing `folder_path`; only direct
+    creates need an existing folder.
+  - A job is finished on `status` `completed`, `failed` or `cancelled`. A failed
+    job never reaches `completed == total`.
+  - A duplicate without `scenario_agent` belongs to no agent.
+  - In a Cekura chat, `generation_files` takes an attached file's name.
+
+  `codex/AGENTS.md` and `GEMINI.md` carry the same corrections.
 ## 0.19.2 — 2026-10-22
 
 **`cekura-self-improving-agent` says one thing everywhere, and its hook no
