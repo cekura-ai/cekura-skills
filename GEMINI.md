@@ -303,10 +303,10 @@ On `evaluation.metrics[]` entries: `score` field (0 = FAIL, 5 = PASS, None = N/A
 
 1. **Understand the agent** — Read the agent description to identify all workflows, decision points, and edge cases
 2. **Choose a tool strategy** — Ask the user which of the three approaches below
-3. **Create a folder first** — Always create a folder before generating or creating scenarios
+3. **Put the batch in a folder** — Generation and duplication create a missing `folder_path` themselves; a direct create needs the folder to exist, so create it first
 4. **Run the pre-creation checkpoint** — Confirm tool strategy, test profile, run mode, personality, adaptive vs conditional, folder, metrics
-5. **Write by type — behavioral ⇒ generate, conditional actions ⇒ create directly** (see "Auto-Generation" below; the generate endpoint cannot emit conditional actions). Set `folder_path` either way
-6. **Review and fix** — PATCH `scenario_language` for non-English, fix `first_message` if auto-gen added greetings
+5. **Write by type — behavioral ⇒ generate; conditional actions ⇒ generate with `simulation_type: "conditional_actions"`, or create directly when the structure is exactly known** (see "Auto-Generation" below). Always send `simulation_type` — when absent, the organization setting and interruption/silence/hold wording decide the format. Set `folder_path` either way
+6. **Review and fix** — check `scenario_language` (it follows the personality used, so pass a personality in the target language), fix `first_message` if auto-gen added greetings
 7. **Set up test infrastructure** — Test profiles + tool data per chosen strategy
 8. **Supplement by type, same rule as step 5** — behavioral gaps (edge cases, free-form red-team) ⇒ another generation run with `extra_instructions` naming the gaps; deterministic gaps ⇒ author conditional-action scenarios directly. Never hand-write an `instruction` scenario to close a gap
 9. **Attach metrics** — Always include baseline metrics
@@ -356,7 +356,10 @@ Poll progress at `GET /test_framework/v1/scenarios/generate-progress/?progress_i
 **Gotchas:**
 - `personality` is required (400 without it). Default: the "Normal" personality matched to the scenario's language — always look it up via personalities_list (language=<code>, English included: language=en; language is the only filter needed), or a multilingual (language=multi) one when languages are mixed. If the language-matched personality returns "Personality is not enabled", enable it for the project or create/fork a Normal personality in the target language and use it (scenario_language is coupled to the personality's language by design — mismatches are rejected; multilingual voice models handle any supported language)
 - Generation can partially complete — check progress, generate remainder in smaller batch
-- `scenario_language` defaults to "en" regardless of content — PATCH to correct code after generation
+- Generated `scenario_language` follows the personality passed in `personalities` — pass one in the target language; PATCH only a mismatch
+- A job is finished when `status` is `completed`, `failed` or `cancelled` (or completed + failed reaches the total) — a failed job never reaches completed == total, so stop and report its `errors`
+- Duplicates: pass `scenario_agent` (and `folder_path`) — a copy made without `scenario_agent` belongs to no agent
+- `generation_files` in a Cekura chat: pass the name of a file already attached to the conversation
 - Auto-gen may add greetings to `first_message` instead of exact questions — PATCH after
 
 **Generation reliability rules:**

@@ -154,7 +154,7 @@ Set `scenario_type` to `"conditional_actions"` and pass the structured payload v
 
 Every step is spoken verbatim unless the whole step is wrapped in `<ai_generated>…</ai_generated>`; `then` (optional, a list) holds follow-up steps for the testing agent's next turns. Do not set the scenario-level `first_message` or `instructions` when using `conditional_actions` — they are managed for you. On read, `instructions` returns this same `first_message` / `when` / `say` / `then` shape as a JSON string. The older id-based condition shape is still accepted on write but deprecated.
 
-For full field semantics, validation rules, XML tag constraints, worked examples, anti-patterns, validation checklist, and troubleshooting, see `references/conditional-actions.md`.
+For full field semantics, validation rules, XML tag constraints and worked examples, see `references/conditional-actions.md`; for anti-patterns, the validation checklist and troubleshooting, see `references/conditional-actions-patterns.md`.
 
 ## Personality Schema
 
