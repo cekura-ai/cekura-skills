@@ -113,6 +113,32 @@ class WalletTests(unittest.TestCase):
         with self.assertRaises(BudgetError):
             self.ledger.reserve("next", "target", 1)
 
+    def test_unknown_usage_resolves_only_with_evidence_and_within_its_bound(self):
+        self.ledger.reserve("session", "proposer", 2.5)
+        with self.assertRaises(BudgetError):
+            self.ledger.settle("session", None)
+        proof = {"reason": "pre-inference check failed", "proof": ["no response saved"]}
+        with self.assertRaises(BudgetError):
+            self.ledger.resolve_unknown("session", 0, {"reason": "no proof"})
+        with self.assertRaises(BudgetError):
+            self.ledger.resolve_unknown("session", 3, proof)
+        self.assertTrue(self.ledger.resolve_unknown("session", 0, proof))
+        state = read(budget.wallet_path())
+        self.assertFalse(state["blocked"])
+        self.assertEqual((state["entries"]["session"]["charged"], state["entries"]["session"]["resolution"]["previous_charge"]), ("0", "2.5"))
+        with self.assertRaises(BudgetError):
+            self.ledger.resolve_unknown("session", 0, proof)  # Already settled: nothing to resolve.
+        self.ledger.reserve("next", "target", 1)  # Execution may continue.
+
+    def test_resolution_keeps_the_wallet_blocked_while_another_entry_is_unknown(self):
+        for key in ("a", "b"):
+            self.ledger.reserve(key, "proposer", 1)
+        for key in ("a", "b"):
+            with self.assertRaises(BudgetError):
+                self.ledger.settle(key, None)
+        self.assertFalse(self.ledger.resolve_unknown("a", 0, {"reason": "r", "proof": ["p"]}))
+        self.assertTrue(read(budget.wallet_path())["blocked"])
+
 
 if __name__ == "__main__":
     unittest.main()

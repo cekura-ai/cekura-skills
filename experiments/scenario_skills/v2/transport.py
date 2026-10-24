@@ -13,7 +13,7 @@ from jsonschema import validate
 
 from ..budget import BudgetError, require_cumulative
 from ..common import read, write
-from ..remote_claude import cli_args, execute
+from ..remote_claude import cli_args, execute, preconditions
 
 
 class ClaudeSession:
@@ -34,6 +34,8 @@ class ClaudeSession:
         response_path = self.directory / (key + ".response.json")
         role = "proposer" if self.config.get("read_training_files") else "judge"
         require_cumulative(self.ledger)
+        if not response_path.exists():
+            preconditions(self.config)  # Before reserving: a failed precondition must not leave unknown usage.
         with self.ledger.transaction():
             entry = self.ledger.state["entries"].get(key)
             if entry is None:

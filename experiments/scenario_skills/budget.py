@@ -244,6 +244,30 @@ class Ledger:
         with self.transaction():
             return self._settle(key, actual)
 
+    def resolve_unknown(self, key, actual, evidence):
+        """Settle a ``usage_unknown`` entry from recorded evidence, at or below its reservation.
+
+        Only for a charge established after the fact (for example a session whose pre-inference
+        check failed, so no process ran). The evidence and the earlier bound stay in the entry.
+        The wallet unblocks only when no entry is still unknown or over its reservation.
+        """
+        from datetime import datetime, timezone
+        if not isinstance(evidence, dict) or not evidence.get("reason") or not evidence.get("proof"):
+            raise BudgetError("Resolving unknown usage requires a reason and proof")
+        with self.transaction():
+            entry = self.state["entries"][key]
+            amount = Decimal(str(actual))
+            if entry["status"] != "usage_unknown":
+                raise BudgetError("Only usage_unknown entries can be resolved: " + key)
+            if not amount.is_finite() or amount < 0 or amount > Decimal(entry["reserved"]):
+                raise BudgetError("A resolved charge must lie between 0 and the reservation")
+            entry["resolution"] = {"previous_charge": entry.get("charged"), "resolved_at": datetime.now(timezone.utc).isoformat(), **evidence}
+            entry["charged"], entry["status"] = str(amount), "complete"
+            self.state["blocked"] = any(e["status"] == "usage_unknown" or (e["status"] == "complete" and Decimal(e["charged"]) > Decimal(e["reserved"]))
+                                        for e in self.state["entries"].values())
+            write(self.path, self.state)
+            return not self.state["blocked"]
+
     def _settle(self, key, actual):
         entry = self.state["entries"][key]
         if entry["status"] in ("complete", "usage_unknown"):

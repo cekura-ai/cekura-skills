@@ -63,6 +63,14 @@ class Fixtures(unittest.TestCase):
         self.assertEqual(set(TEMPLATES) - set(REPLAYABLE), {"T06", "C02"})  # Only generation templates are offline-only.
         self.assertEqual(set(proof_hashes()), {"tasks_sha256", "grader_sha256", "checks_sha256", "bridge_sha256", "followups_sha256", "replay_sha256"})
 
+    def test_subscription_identity_survives_token_refresh(self):
+        from experiments.scenario_skills.remote_claude import same_subscription
+        recorded = {"credential_sha256": "old", "organization_sha256": "org", "subscription_type": "team"}
+        self.assertTrue(same_subscription({"credential_sha256": "rotated", "organization_sha256": "org", "subscription_type": "team"}, recorded))
+        self.assertFalse(same_subscription({"credential_sha256": "old", "organization_sha256": "other", "subscription_type": "team"}, recorded))
+        self.assertFalse(same_subscription({"credential_sha256": "rotated", "organization_sha256": "org", "subscription_type": "team"},
+                                           {"credential_sha256": "old"}))  # Legacy records still need the same token.
+
     def test_sandbox_receives_only_the_opening_turn(self):
         task = sandbox_task(TASKS[0])
         self.assertEqual(set(task), {"id", "benchmark_version", "request", "documents", "context"})

@@ -151,6 +151,12 @@ def main():
         if cfg.get("benchmark_version", 2) != 2:
             parser.error("--from must name a prepared v2 directory")
         cfg.update(benchmark_version=3, max_repeats=72)
+        from ..remote_claude import subscription_status
+        status = subscription_status()  # Re-verified now: extra usage must still be off; no inference.
+        if status["extra_usage_enabled"] is not False:
+            parser.error("Claude extra usage is enabled; v3 requires subscription-only sessions")
+        for role in ("proposer", "judge"):
+            cfg[role]["subscription"] = status
         cfg["target"]["v3_replay_proof_path"] = str(directory / "v3-replay-proof.json")
         # The transport probe binds the runtime code; v3 re-proves it here and leaves the v2 evidence untouched.
         cfg["target"]["gateway_probe_path"] = str(directory / "transport-probe/gateway-probe.json")

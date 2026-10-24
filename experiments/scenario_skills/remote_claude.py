@@ -82,6 +82,9 @@ def subscription_status():
         value = json.load(response)
     return {"source": "https://api.anthropic.com/api/oauth/usage", "checked_at": datetime.now(timezone.utc).isoformat(),
             "credential_sha256": hashlib.sha256(token.encode()).hexdigest(),
+            # Stable across token refreshes: the account's organization and plan, hashed or non-identifying.
+            "organization_sha256": hashlib.sha256(str(credentials.get("organizationUuid", "")).encode()).hexdigest(),
+            "subscription_type": credentials["claudeAiOauth"].get("subscriptionType"),
             "extra_usage_enabled": (value.get("extra_usage") or {}).get("is_enabled")}
 
 
@@ -118,16 +121,35 @@ def prepare():
                           "offline_network": "none"}, "inference_requests": 0}
 
 
+def preconditions(config):
+    """Checks that must pass before any reservation or inference; a failure here never starts a session.
+
+    The CLI that runs is the one copied into the immutable, content-addressed image at
+    preparation (``cli_sha256`` records it). The host binary may auto-update afterwards
+    without changing what executes, so the image digest, not the host file, is verified.
+    """
+    image = config["image"]
+    found = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", image], capture_output=True, text=True)
+    if found.returncode or found.stdout.strip() != image:
+        raise ValueError("Pinned Claude image unavailable; no inference started")
+    usage = subscription_status() if config.get("subscription_only") else None
+    if config.get("subscription_only") and (usage["extra_usage_enabled"] is not False or not same_subscription(usage, config["subscription"])):
+        raise ValueError("Claude subscription changed or extra usage is enabled; no inference started")
+    return usage
+
+
+def same_subscription(now, recorded):
+    """Access tokens rotate on refresh; the organization and plan identify the subscription."""
+    if recorded.get("organization_sha256"):
+        return now["organization_sha256"] == recorded["organization_sha256"] and now["subscription_type"] == recorded.get("subscription_type")
+    return now["credential_sha256"] == recorded["credential_sha256"]
+
+
 def execute(request):
     config = request["config"]
     image = config["image"]
     name = "cekura-proposer-" + hashlib.sha256(request["prompt"].encode()).hexdigest()[:16]
-    if hashlib.sha256(Path(CLI).resolve().read_bytes()).hexdigest() != config["cli_sha256"]:
-        raise ValueError("Remote Claude CLI changed after preparation")
-    usage = subscription_status() if config.get("subscription_only") else None
-    if config.get("subscription_only") and (usage["extra_usage_enabled"] is not False
-            or usage["credential_sha256"] != config["subscription"]["credential_sha256"]):
-        raise ValueError("Claude subscription changed or extra usage is enabled; no inference started")
+    usage = preconditions(config)
     command = container_args(image, name, network=True)
     import tempfile
     workspace = tempfile.TemporaryDirectory(prefix="cekura-training-")
