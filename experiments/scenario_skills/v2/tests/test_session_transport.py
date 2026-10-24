@@ -48,6 +48,15 @@ class SessionTransport(unittest.TestCase):
         with patch.object(transport, "execute", lambda v: self.fail("replay must not start a session")):
             self.assertEqual(self.session("p", {}, SCHEMA, "judge-k"), {"ok": True})
 
+    def test_a_resolved_entry_without_a_response_is_retried_under_a_new_attempt(self):
+        self.ledger.reserve("judge-r", "proposer", 2.5, entry_type="claude_session", role="judge")
+        with self.assertRaises(BudgetError):
+            self.ledger.settle("judge-r", None)
+        self.ledger.resolve_unknown("judge-r", 0, {"reason": "never launched", "proof": ["no container event"]})
+        with patch.object(transport, "execute", lambda value: OK):
+            self.assertEqual(self.session("p", {}, SCHEMA, "judge-r"), {"ok": True})
+        self.assertEqual(self.entries()["judge-r-attempt1"]["status"], "complete")
+
     def test_three_not_started_attempts_stop_without_blocking(self):
         def fake(value):
             raise NotStarted("image missing")

@@ -24,7 +24,8 @@ class ClaudeSession:
 
     def _reserve(self, key, role):
         # Sessions that never started (no container ran) do not count against the allowance.
-        count = sum(e.get("entry_type") == "claude_session" and e.get("role") == role and not e.get("not_started")
+        # A resolved entry (settled from evidence that no session produced output) is not counted either.
+        count = sum(e.get("entry_type") == "claude_session" and e.get("role") == role and not (e.get("not_started") or e.get("resolution"))
                     for e in self.ledger.state["entries"].values())
         if count >= (5 if role == "proposer" else 384):
             raise ValueError("Bounded Claude session allowance exhausted")
@@ -76,7 +77,7 @@ class ClaudeSession:
                 self._reserve(key, role)
         if entry is not None and response_path.exists() and entry["status"] == "complete":
             response = read(response_path)  # Replay: no new session, no new charge.
-        elif entry is not None and not entry.get("not_started"):
+        elif entry is not None and not (entry.get("not_started") or entry.get("resolution")):
             raise BudgetError("Claude session %s started earlier without a settled, saved response" % key)
         else:
             write(self.directory / (key + ".input.json"), value)
