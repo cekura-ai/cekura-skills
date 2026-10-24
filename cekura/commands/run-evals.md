@@ -2,7 +2,7 @@
 name: run-evals
 description: Execute Cekura evaluators (voice, text, websocket, sip, pipecat, vapi, retell, elevenlabs, livekit); also use when the user wants to run a cron job's evaluators immediately or trigger a scheduled run on demand
 argument-hint: "[evaluator IDs or 'all'] [mode: voice/text/websocket/sip/pipecat/pipecat-v2/vapi/retell/elevenlabs/livekit]"
-allowed-tools: ["AskUserQuestion", "mcp__cekura__aiagents_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__scenarios_run_pipecat_v2", "mcp__cekura__scenarios_run_vapi_webrtc", "mcp__cekura__scenarios_run_retell_webrtc", "mcp__cekura__scenarios_run_elevenlabs", "mcp__cekura__scenarios_run_livekit_v2", "mcp__cekura__scenarios_run_sip", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["AskUserQuestion", "mcp__cekura__aiagents_retrieve", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_run_websocket", "mcp__cekura__scenarios_run_pipecat_v1", "mcp__cekura__scenarios_run_pipecat_v2", "mcp__cekura__scenarios_run_vapi_webrtc", "mcp__cekura__scenarios_run_retell_webrtc", "mcp__cekura__scenarios_run_elevenlabs", "mcp__cekura__scenarios_run_livekit_v2", "mcp__cekura__scenarios_run_sip", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__end_call", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-tracking-beacon -->
 
@@ -30,7 +30,7 @@ Execute one or more evaluators against the target agent.
 
    If the user passed `[mode]` as an argument, honor it (skip detection).
 
-   Otherwise, fetch the agent with `mcp__cekura__aiagents_retrieve(id=<agent_id>)` and inspect `provider.type`, `telephony.phone_number`, `telephony.websocket_url`, `provider.chat_agent_details`, `telephony.sip_uri`. Derive candidate modes:
+   Otherwise, fetch the agent with `mcp__cekura__aiagents_retrieve(id=<agent_id>)`. Its `enabled_connections` field lists the transports the agent can run over (`voice`, `sip`, `text`, `email`, `vapi_webrtc`, `retell_webrtc`, `elevenlabs`, `livekit_v2`, `pipecat_v2`, `chirp`, `agora`); use that list as the candidates. If the field is absent, inspect `provider.type`, `telephony.phone_number`, `telephony.websocket_url`, `provider.chat_agent_details`, `telephony.sip_uri` and derive candidate modes:
 
    - **`voice`** = PSTN. Valid whenever `telephony.phone_number` is set. Note: a bare phone number is `voice`, never `sip`.
    - **`sip`** = only when `telephony.sip_uri` is set (e.g. `sip:agent@host`).
@@ -51,9 +51,27 @@ Execute one or more evaluators against the target agent.
    - Execution mode (auto-selected or chosen)
    - Worst-case call length: each scenario's `max_duration`, or the project's `max_call_duration` where it is unset — a stalled main agent runs to that cap. State it; do not change the project setting.
 
-4. **Execute using batch endpoint** (preferred for multiple evals). Pass `agent_id`, `scenarios` (array of IDs), and optionally `frequency` (for repeat runs).
+4. **Execute with `mcp__cekura__scenarios_run`.** Pass `transport` (table below), `agent`, `scenarios` (array of IDs), and optionally `frequency` (for repeat runs), `personality_ids`, `test_profile_ids`, `concurrency_limit`, `mock_tool_names`. Send only the fields that belong to the chosen transport (`vapi_assistant_id` for `vapi_webrtc`, `sip_endpoint` for `sip`, `outbound_phone_number` / `agent_number` for `voice` and `text`, …); a field from another transport is rejected. `websocket` and `pipecat_v1` take their evaluators inside `websocket_urls` / `pipecat_rooms` (one entry per evaluator with its URL) instead of `scenarios`. A transport that is not in `enabled_connections` is rejected with the list of enabled ones — surface that list, do not retry another transport silently.
+
+   | Mode | `transport` |
+   |---|---|
+   | voice | `voice` |
+   | text | `text` |
+   | websocket | `websocket` |
+   | pipecat | `pipecat_v1` |
+   | pipecat-v2 | `pipecat_v2` |
+   | vapi | `vapi_webrtc` |
+   | retell | `retell_webrtc` |
+   | elevenlabs | `elevenlabs` |
+   | livekit | `livekit_v2` |
+   | agora | `agora` |
+   | chirp | `chirp` |
+   | sip | `sip` |
+   | email | `email` |
 
    **Smoke cohort first on paid transports.** For voice, SIP and WebRTC runs of more than five evaluators, launch 3–5 representative ones first and read their results — connected, finished inside the cap, no setup error — before launching the rest. Text and websocket runs may go in one batch. Skip the cohort only when the user explicitly asks for the whole suite at once, and say that you skipped it.
+
+   If `mcp__cekura__scenarios_run` is not in the tool list (older MCP server), use the per-transport tool instead; each takes `agent_id` and `scenarios`:
 
    | Mode | Tool |
    |---|---|

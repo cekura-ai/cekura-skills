@@ -20,6 +20,8 @@ Retrieve the agent (`aiagents_retrieve`) and match its configured connection:
 | custom websocket | `scenarios_run_websocket` |
 | chat/text | `scenarios_run_text` |
 
+When `scenarios_run` is available, call it with `transport` set to the matching value (`voice`, `sip`, `chirp`, `pipecat_v2`, `livekit_v2`, `vapi_webrtc`, `retell_webrtc`, `elevenlabs`, `websocket`, `text`) instead of the per-transport tool; the agent's `enabled_connections` field is the authoritative list of what it can run over.
+
 **Custom SIP/WebSocket headers:** if the user's agent expects custom headers on incoming calls (routing, tenant, or auth headers), create a test profile whose `main_agent_variables` contain the `X-` prefixed keys (`test_profiles_create`) and pass its ID in `test_profile_ids` on the run. For SIP runs that is the only mechanism — headers cannot be set on the agent record or in the run request body, and non-`X-` keys are not sent as headers. (WebSocket agents can also carry static headers in `websocket_headers` on the agent.)
 
 **Pick the tool from the agent's ACTUAL connection — never downgrade.** `scenarios_run_text` is for chat/text agents only; running a voice agent's verification as a text simulation (e.g. because provider credentials are unverified) is NOT a verification — it proves nothing about the connection. If no working connection exists, that IS the finding: surface it and collect a connection (phone number, or fixed credentials) instead of running a fake check.
