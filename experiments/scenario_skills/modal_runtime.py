@@ -154,7 +154,7 @@ class ModalRuntime:
                   "app/pi_extension.ts": (pinned / "pi_extension.ts").read_bytes(),
                   "home/agent/.pi/agent/settings.json": (pinned / ".benchmark_pi_settings.json").read_bytes(),
                   "app/.context.json": json.dumps(task.get("context", {})).encode(),
-                  "root/benchmark/task.json": json.dumps(task).encode(), "root/benchmark/catalog.json": json.dumps(cfg["catalog"]).encode(),
+                  "root/benchmark/task.json": json.dumps(sandbox_task(task)).encode(), "root/benchmark/catalog.json": json.dumps(cfg["catalog"]).encode(),
                   "root/benchmark/runtime-config.json": json.dumps({"snapshot": cfg["snapshot"]}).encode(),
                   "app/benchmark-ca.pem": gateway.ca.read_bytes(),
                   "opt/benchmark/experiments/__init__.py": b"", "opt/benchmark/experiments/scenario_skills/__init__.py": b""}
@@ -337,6 +337,13 @@ def offline_transport():
     return Transport()
 
 
+def sandbox_task(task):
+    """v3 follow-ups, expectations and plants stay on the host; the sandbox needs only the opening turn."""
+    if task.get("benchmark_version") != 3:
+        return task
+    return {k: task[k] for k in ("id", "benchmark_version", "request", "documents", "context") if k in task}
+
+
 def run_inside():
     """Root owns fixture evidence; original runner drops itself to uid 1000."""
     import subprocess
@@ -344,7 +351,10 @@ def run_inside():
     from .fixture import FixtureServer, Store
     evidence, app = Path("/root/benchmark"), Path("/app")
     task, cfg = read(evidence / "task.json"), read(evidence / "runtime-config.json")
-    version2 = task.get("benchmark_version") == 2
+    version2 = task.get("benchmark_version") in (2, 3)
+    version3 = task.get("benchmark_version") == 3
+    if version3 and not os.environ.get("BENCHMARK_BRIDGE_PORT"):
+        raise SystemExit("v3 tasks run only against the real-backend bridge")
     if version2:
         from .v2.fixture import Store
     if os.environ.get("BENCHMARK_BRIDGE_PORT"):
@@ -378,7 +388,7 @@ def run_inside():
         env = dict(os.environ, HTTP_PROXY=proxy, HTTPS_PROXY=proxy, NO_PROXY="localhost,127.0.0.1",
                    NODE_USE_ENV_PROXY="1", NODE_EXTRA_CA_CERTS="/app/benchmark-ca.pem")
         env.pop("PYTHONPATH", None)
-        max_turns = 8 if version2 else 4
+        max_turns = 12 if version3 else 8 if version2 else 4
         followup_index = 0
         run["user_turns"] = []
         for turn in range(max_turns):
@@ -423,7 +433,12 @@ def run_inside():
             history.extend(["user: " + prompt, "assistant: " + message])
             write(evidence / "run.json", run)
             next_followup = task.get("followups", [])[followup_index] if followup_index < len(task.get("followups", [])) else None
-            if version2 and final["type"] == "needs_clarification" and not (next_followup and next_followup.get("reply_to_clarification")):
+            if version3:
+                # Conditional follow-ups: the host bridge decides from stored state.
+                prompt = store.followup(turn, final["type"], run["messages"])
+                if prompt is None:
+                    break
+            elif version2 and final["type"] == "needs_clarification" and not (next_followup and next_followup.get("reply_to_clarification")):
                 prompt = task["clarification_reply"]
             elif version2 and next_followup:
                 prompt = next_followup["message"]

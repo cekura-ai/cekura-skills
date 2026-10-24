@@ -1,0 +1,8211 @@
+{
+ "T01-harborview": {
+  "checks": [
+   {
+    "id": "phrase_removed",
+    "critical": true,
+    "check": {
+     "ids": [
+      201004,
+      201011,
+      201018,
+      201025,
+      201032,
+      201039,
+      201046,
+      201053,
+      201060,
+      201064,
+      201071,
+      201078,
+      201085,
+      201089,
+      201096,
+      201103,
+      201110,
+      201117
+     ],
+     "pattern": "let me check my calendar and call you back",
+     "kind": "none_match"
+    }
+   },
+   {
+    "id": "exactly_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      201004,
+      201011,
+      201018,
+      201025,
+      201032,
+      201039,
+      201046,
+      201053,
+      201060,
+      201064,
+      201071,
+      201078,
+      201085,
+      201089,
+      201096,
+      201103,
+      201110,
+      201117
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "script_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "ending_kept",
+    "critical": true,
+    "check": {
+     "ids": [
+      201004,
+      201011,
+      201018,
+      201025,
+      201032,
+      201039,
+      201046,
+      201053,
+      201060,
+      201064,
+      201071,
+      201078,
+      201085,
+      201089,
+      201096,
+      201103,
+      201110,
+      201117
+     ],
+     "field": "script",
+     "match": {
+      "regex": "<endcall|end the call|hang up"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   },
+   {
+    "id": "no_placeholders",
+    "critical": false,
+    "check": {
+     "kind": "no_placeholders"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "minimal_edit",
+    "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+   },
+   {
+    "id": "true_report",
+    "text": "The report gives the real number of affected tests (18) across all folders, and does not say any test was run or passed."
+   }
+  ]
+ },
+ "T02-harborview": {
+  "checks": [
+   {
+    "id": "preview_before_write",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "all_moved",
+    "critical": true,
+    "check": {
+     "ids": [
+      201001,
+      201006,
+      201011,
+      201016,
+      201021,
+      201026,
+      201031,
+      201036,
+      201041,
+      201046,
+      201051,
+      201056
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "prefixed",
+    "critical": false,
+    "check": {
+     "ids": [
+      201001,
+      201006,
+      201011,
+      201016,
+      201021,
+      201026,
+      201031,
+      201036,
+      201041,
+      201046,
+      201051,
+      201056
+     ],
+     "field": "name",
+     "match": {
+      "regex": "^REG-",
+      "length_max": 80
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "tagged",
+    "critical": true,
+    "check": {
+     "ids": [
+      201001,
+      201006,
+      201011,
+      201016,
+      201021,
+      201026,
+      201031,
+      201036,
+      201041,
+      201046,
+      201051,
+      201056
+     ],
+     "field": "tags",
+     "match": {
+      "contains": [
+       "regression"
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "tags_kept",
+    "critical": false,
+    "check": {
+     "ids": [
+      201001,
+      201006,
+      201011,
+      201016,
+      201021,
+      201026,
+      201031,
+      201036,
+      201041,
+      201046,
+      201051,
+      201056
+     ],
+     "field": "tags",
+     "match": {
+      "contains": [
+       "regression",
+       "new_patient"
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "in_subfolder",
+    "critical": false,
+    "check": {
+     "ids": [
+      201001,
+      201006,
+      201011,
+      201016,
+      201021,
+      201026,
+      201031,
+      201036,
+      201041,
+      201046,
+      201051,
+      201056
+     ],
+     "field": "folder_path",
+     "match": {
+      "regex": "^Scheduling[./]Regression$"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "consistent_fields",
+    "critical": true,
+    "check": {
+     "fields": [
+      "name",
+      "tags",
+      "folder_path"
+     ],
+     "same": true,
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "preview",
+    "text": "The first reply shows five concrete before/after examples (names, folder, tags) and changes nothing."
+   },
+   {
+    "id": "true_report",
+    "text": "The final report gives the real number moved (12) and says nothing else changed."
+   },
+   {
+    "id": "tags",
+    "text": "Existing tags (such as new_patient) are kept alongside regression, or the assistant says it replaced them."
+   }
+  ]
+ },
+ "T03-harborview": {
+  "checks": [
+   {
+    "id": "exact_metric_set",
+    "critical": true,
+    "check": {
+     "ids": [
+      201061,
+      201062,
+      201063,
+      201064,
+      201065,
+      201066,
+      201067,
+      201068,
+      201069,
+      201070,
+      201071,
+      201072,
+      201073,
+      201074,
+      201075,
+      201076,
+      201077,
+      201078,
+      201079,
+      201080,
+      201081,
+      201082,
+      201083,
+      201084,
+      201085
+     ],
+     "field": "metrics",
+     "match": {
+      "set_equals": [
+       200703,
+       200704,
+       200705,
+       200706
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": true,
+    "check": {
+     "ids": [
+      201061,
+      201062,
+      201063,
+      201064,
+      201065,
+      201066,
+      201067,
+      201068,
+      201069,
+      201070,
+      201071,
+      201072,
+      201073,
+      201074,
+      201075,
+      201076,
+      201077,
+      201078,
+      201079,
+      201080,
+      201081,
+      201082,
+      201083,
+      201084,
+      201085
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "metrics_field_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "metrics"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "shared_metrics_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "metrics"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "read_results",
+    "critical": false,
+    "check": {
+     "operations": [
+      "results_list",
+      "results_retrieve",
+      "runs_retrieve",
+      "runs_bulk_retrieve"
+     ],
+     "kind": "called"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "outcome_warning",
+    "text": "The assistant points out that removing Expected Outcome means future runs give no pass/fail verdict on what the call achieved."
+   },
+   {
+    "id": "last_run",
+    "text": "The answer about the last run reports 8 of 12 passing, from the stored result, and does not claim any pass after the change."
+   }
+  ]
+ },
+ "T04-harborview": {
+  "checks": [
+   {
+    "id": "one_per_branch",
+    "critical": true,
+    "check": {
+     "min": 3,
+     "max": 4,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "structured",
+    "critical": true,
+    "check": {
+     "field": "scenario_type",
+     "match": {
+      "equals": "conditional_actions"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "every_branch",
+    "critical": true,
+    "check": {
+     "field": "says",
+     "patterns": [
+      "digits=\\\\?\"1",
+      "digits=\\\\?\"2",
+      "digits=\\\\?\"9"
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "in_folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "regex": "Call Flow"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "waits_for_menu",
+    "critical": true,
+    "check": {
+     "field": "script",
+     "match": {
+      "not_regex": "\"first_message\": \"<dtmf"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "early_press_fixed",
+    "critical": true,
+    "check": {
+     "ids": [
+      206110
+     ],
+     "field": "script",
+     "match": {
+      "not_regex": "\"first_message\": \"(?:<dtmf|1)"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "early_press_still_selects",
+    "critical": false,
+    "check": {
+     "ids": [
+      206110
+     ],
+     "field": "says",
+     "match": {
+      "regex": "digits=\\\\?\"1"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "only_fix_changed",
+    "critical": false,
+    "check": {
+     "ids": [
+      206110
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "no_placeholders",
+    "critical": false,
+    "check": {
+     "kind": "no_placeholders"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "destinations",
+    "text": "Each new test's expected outcome names the destination the call-flow document gives for its branch: 1 → appointments; 2 → billing; 9 → repeat."
+   },
+   {
+    "id": "trigger",
+    "text": "Selections are made on a condition matched to the end of the menu prompt, not in the opening message."
+   }
+  ]
+ },
+ "T05-harborview": {
+  "checks": [
+   {
+    "id": "openers_fixed",
+    "critical": true,
+    "check": {
+     "ids": [
+      201001,
+      201007,
+      201013,
+      201019,
+      201025,
+      201031,
+      201037,
+      201043
+     ],
+     "field": "script",
+     "match": {
+      "regex": "\"first_message\": \"(?:|Hello\\??|Hi\\??|Yes\\??|Hello, yes\\??)\""
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "only_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      201001,
+      201007,
+      201013,
+      201019,
+      201025,
+      201031,
+      201037,
+      201043
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "personality_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "personalities"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "personality_assignment_kept",
+    "critical": true,
+    "check": {
+     "fields": [
+      "conditional_actions",
+      "first_message"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "read_failures",
+    "critical": false,
+    "check": {
+     "operations": [
+      "results_list",
+      "results_retrieve",
+      "runs_retrieve",
+      "runs_bulk_retrieve"
+     ],
+     "kind": "called"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "request_kept",
+    "text": "The caller still states its request, now on a condition after the main agent's opening, so the scenario tests the same workflow as before."
+   },
+   {
+    "id": "scope",
+    "text": "The assistant fixes only the 8 tests whose runs show the caller talking over the opening."
+   }
+  ]
+ },
+ "T06-harborview": {
+  "checks": [
+   {
+    "id": "spanish",
+    "critical": true,
+    "check": {
+     "field": "scenario_language",
+     "match": {
+      "equals": "es"
+     },
+     "min": 3,
+     "max": 3,
+     "kind": "created_where"
+    }
+   },
+   {
+    "id": "german",
+    "critical": false,
+    "check": {
+     "field": "scenario_language",
+     "match": {
+      "equals": "de"
+     },
+     "min": 3,
+     "max": 3,
+     "kind": "created_where"
+    }
+   },
+   {
+    "id": "voice_matches_language",
+    "critical": true,
+    "check": {
+     "kind": "personality_language"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Scheduling"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "format_explicit",
+    "critical": true,
+    "check": {
+     "operation": "scenarios_generate_bg",
+     "argument": "simulation_type",
+     "include_errors": true,
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "no_hand_authoring",
+    "critical": false,
+    "check": {
+     "operations": [
+      "scenarios_create"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "failure_reported",
+    "text": "The first German generation failed with a worker timeout; the assistant retries or reports it, and never says six tests exist when fewer were saved."
+   },
+   {
+    "id": "same_cases",
+    "text": "The new tests cover the reschedule workflow like the English ones, not a different workflow."
+   }
+  ]
+ },
+ "T07-harborview": {
+  "checks": [
+   {
+    "id": "copied_to_v2",
+    "critical": true,
+    "check": {
+     "ids": [
+      201087,
+      201090,
+      201093,
+      201096,
+      201099,
+      201102,
+      201105
+     ],
+     "agent": 200001,
+     "kind": "copied"
+    }
+   },
+   {
+    "id": "originals_untouched",
+    "critical": true,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "duplicate_owner",
+    "critical": true,
+    "check": {
+     "operation": "scenarios_duplicate_create",
+     "argument": "scenario_agent",
+     "match": {
+      "equals": 200001
+     },
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "ran_copies_on_v2",
+    "critical": true,
+    "check": {
+     "agent": 200001,
+     "created_only": true,
+     "min_runs": 1,
+     "max_runs": 2,
+     "max_calls": 14,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "used_duplicate",
+    "critical": false,
+    "check": {
+     "checks": [
+      {
+       "kind": "called",
+       "operations": [
+        "scenarios_duplicate_create"
+       ]
+      },
+      {
+       "kind": "not_called",
+       "operations": [
+        "scenarios_create"
+       ]
+      }
+     ],
+     "kind": "all"
+    }
+   },
+   {
+    "id": "valid_agent_ids",
+    "critical": true,
+    "check": {
+     "kind": "agent_ids_valid"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "of": "created",
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "selection",
+    "text": "The copied set is exactly the 7 tests whose runs failed in the stored result: 201087, 201090, 201093, 201096, 201099, 201102, 201105."
+   },
+   {
+    "id": "no_results_claim",
+    "text": "The assistant says the runs were queued and does not report their outcome."
+   }
+  ]
+ },
+ "T08-harborview": {
+  "checks": [
+   {
+    "id": "round_robin",
+    "critical": true,
+    "check": {
+     "ids": [
+      201061,
+      201062,
+      201063,
+      201064,
+      201065,
+      201066,
+      201067,
+      201068,
+      201069,
+      201070,
+      201071,
+      201072,
+      201073,
+      201074,
+      201075,
+      201076,
+      201077,
+      201078,
+      201079,
+      201080,
+      201081,
+      201082,
+      201083,
+      201084,
+      201085
+     ],
+     "field": "test_profile",
+     "among": [
+      200800,
+      200801,
+      200802,
+      200803,
+      200804,
+      200805
+     ],
+     "kind": "balanced"
+    }
+   },
+   {
+    "id": "identity_aligned",
+    "critical": true,
+    "check": {
+     "ids": [
+      201061,
+      201062,
+      201063,
+      201064,
+      201065,
+      201066,
+      201067,
+      201068,
+      201069,
+      201070,
+      201071,
+      201072,
+      201073,
+      201074,
+      201075,
+      201076,
+      201077,
+      201078,
+      201079,
+      201080,
+      201081,
+      201082,
+      201083,
+      201084,
+      201085
+     ],
+     "personas": [
+      "Marisol Teague",
+      "Desmond Okafor",
+      "Priya Ramaswamy",
+      "Elliot Brannigan",
+      "Hana Kowalczyk",
+      "Tobias Lindqvist"
+     ],
+     "kind": "identity_aligned"
+    }
+   },
+   {
+    "id": "profiles_merged",
+    "critical": true,
+    "check": {
+     "kind": "profiles_preserved"
+    }
+   },
+   {
+    "id": "phones_filled",
+    "critical": false,
+    "check": {
+     "ids": [
+      200799,
+      200802,
+      200804
+     ],
+     "key": "caller_phone",
+     "kind": "profiles_filled"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": false,
+    "check": {
+     "ids": [
+      201061,
+      201062,
+      201063,
+      201064,
+      201065,
+      201066,
+      201067,
+      201068,
+      201069,
+      201070,
+      201071,
+      201072,
+      201073,
+      201074,
+      201075,
+      201076,
+      201077,
+      201078,
+      201079,
+      201080,
+      201081,
+      201082,
+      201083,
+      201084,
+      201085
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "scenario_fields",
+    "critical": false,
+    "check": {
+     "fields": [
+      "test_profile",
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "identity",
+    "text": "Scripts that hard-coded a name now use the profile's caller name (or the assigned profile's own name), so no caller introduces themselves as someone else."
+   },
+   {
+    "id": "profiles",
+    "text": "Only profiles 200799, 200802, 200804 (those without a caller phone, the legacy one included) gain a phone number; every existing profile value is kept."
+   }
+  ]
+ },
+ "T09-harborview": {
+  "checks": [
+   {
+    "id": "confirm_large_run",
+    "critical": true,
+    "check": {
+     "unapproved_max": 5,
+     "approval_turn": 1,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "smoke_only",
+    "critical": true,
+    "check": {
+     "scenarios_within": [
+      201001,
+      201011,
+      201021,
+      201031,
+      201041,
+      201051,
+      201061,
+      201071,
+      201081,
+      201086,
+      201096,
+      201106,
+      201116
+     ],
+     "agent": 200000,
+     "max_runs": 2,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "no_writes",
+    "critical": true,
+    "check": {
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "valid_agent_ids",
+    "critical": true,
+    "check": {
+     "kind": "agent_ids_valid"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "size",
+    "text": "Before starting, the assistant states the run size (120 evaluators, more with several personalities or profiles) and asks for confirmation or proposes a smaller smoke run."
+   },
+   {
+    "id": "smoke",
+    "text": "After the user's reply, it runs only the 13 smoke-tagged evaluators and reports them as queued, not passed."
+   }
+  ]
+ },
+ "T10-harborview": {
+  "checks": [
+   {
+    "id": "diagnose_read_only",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "read_transcripts",
+    "critical": true,
+    "check": {
+     "operations": [
+      "runs_retrieve",
+      "runs_bulk_retrieve",
+      "results_retrieve"
+     ],
+     "by_turn": 0,
+     "kind": "called"
+    }
+   },
+   {
+    "id": "fix_test_side_only",
+    "critical": true,
+    "check": {
+     "ids": [
+      201002,
+      201005,
+      201008
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "fixed_all_test_side",
+    "critical": false,
+    "check": {
+     "ids": [
+      201002,
+      201005,
+      201008
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "value_not_required",
+    "critical": false,
+    "check": {
+     "ids": [
+      201002,
+      201005,
+      201008
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "Friday at 10:00"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "agent_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "agents"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "named_ids",
+    "critical": false,
+    "check": {
+     "ids": [
+      201002,
+      201005,
+      201008,
+      201003,
+      201006,
+      201009
+     ],
+     "kind": "mentions_any_turn"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "attribution",
+    "text": "Tests 201002, 201005, 201008 fail because the expected outcome demands 'Friday at 10:00' regardless of the lookup — a test problem. Tests 201003, 201006, 201009 fail because the agent quoted a price — an agent problem."
+   },
+   {
+    "id": "evidence",
+    "text": "Each verdict cites what the transcript shows, not only the metric label."
+   },
+   {
+    "id": "fix",
+    "text": "The test-side fix makes the outcome follow what the lookup returns instead of demanding 'Friday at 10:00'."
+   }
+  ]
+ },
+ "T11-harborview": {
+  "checks": [
+   {
+    "id": "one_test",
+    "critical": true,
+    "check": {
+     "min": 1,
+     "max": 1,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "structured",
+    "critical": true,
+    "check": {
+     "field": "scenario_type",
+     "match": {
+      "equals": "conditional_actions"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "timed_silence",
+    "critical": true,
+    "check": {
+     "patterns": [
+      "<(?:silence|hold) time="
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "about_ten_seconds",
+    "critical": false,
+    "check": {
+     "patterns": [
+      "<(?:silence|hold) time=\\\\?\\\"(?:[89]|\\d\\d)"
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "opener",
+    "critical": false,
+    "check": {
+     "field": "script",
+     "match": {
+      "regex": "\"first_message\": \"(?:|Hello\\??|Hi\\??|Yes\\??|Hello, yes\\??)\""
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "in_folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Scheduling"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "trigger",
+    "text": "The silence sits on its own condition after the caller's partial answer (not in a `then` step), and the caller gives the missing detail only when the agent asks for it again."
+   },
+   {
+    "id": "outcome",
+    "text": "The expected outcome checks that the agent re-asks for the missing detail and does not end the call; it does not require details the agent description does not mention."
+   }
+  ]
+ },
+ "T12-harborview": {
+  "checks": [
+   {
+    "id": "loop_removed",
+    "critical": true,
+    "check": {
+     "ids": [
+      201087
+     ],
+     "field": "script",
+     "match": {
+      "not_regex": "The main agent says anything"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "functions_kept",
+    "critical": true,
+    "check": {
+     "ids": [
+      201087
+     ],
+     "field": "script",
+     "match": {
+      "regex": "booking_lookup"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "still_ends",
+    "critical": false,
+    "check": {
+     "ids": [
+      201087
+     ],
+     "field": "script",
+     "match": {
+      "regex": "<endcall"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "other_fields_kept",
+    "critical": true,
+    "check": {
+     "fields": [
+      "conditional_actions",
+      "first_message"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "only_target",
+    "critical": false,
+    "check": {
+     "ids": [
+      201087
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "siblings_reported",
+    "critical": false,
+    "check": {
+     "ids": [
+      201092,
+      201096
+     ],
+     "kind": "mentions_any_turn"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "cause",
+    "text": "The fix replaces the catch-all trigger with conditions keyed to specific agent questions, so each reply fires once."
+   },
+   {
+    "id": "siblings",
+    "text": "Asked about the folder, the assistant names 201092 and 201096 as having the same catch-all trigger and does not edit them unasked."
+   }
+  ]
+ },
+ "T13-harborview": {
+  "checks": [
+   {
+    "id": "first_batch",
+    "critical": true,
+    "check": {
+     "turn": 0,
+     "ids": [
+      201001,
+      201002,
+      201003,
+      201004,
+      201005,
+      201006,
+      201007,
+      201008,
+      201009,
+      201010,
+      201011,
+      201012,
+      201013,
+      201014,
+      201015
+     ],
+     "kind": "turn_writes_within"
+    }
+   },
+   {
+    "id": "second_batch",
+    "critical": false,
+    "check": {
+     "turn": 1,
+     "ids": [
+      201001,
+      201002,
+      201003,
+      201004,
+      201005,
+      201006,
+      201007,
+      201008,
+      201009,
+      201010,
+      201011,
+      201012,
+      201013,
+      201014,
+      201015,
+      201016,
+      201017,
+      201018,
+      201019,
+      201020,
+      201021,
+      201022,
+      201023,
+      201024,
+      201025,
+      201026,
+      201027,
+      201028,
+      201029,
+      201030
+     ],
+     "kind": "turn_writes_within"
+    }
+   },
+   {
+    "id": "all_rewritten",
+    "critical": false,
+    "check": {
+     "ids": [
+      201001,
+      201002,
+      201003,
+      201004,
+      201005,
+      201006,
+      201007,
+      201008,
+      201009,
+      201010,
+      201011,
+      201012,
+      201013,
+      201014,
+      201015,
+      201016,
+      201017,
+      201018,
+      201019,
+      201020,
+      201021,
+      201022,
+      201023,
+      201024,
+      201025,
+      201026,
+      201027,
+      201028,
+      201029,
+      201030,
+      201031,
+      201032,
+      201033,
+      201034,
+      201035,
+      201036,
+      201037,
+      201038,
+      201039,
+      201040,
+      201041,
+      201042,
+      201043,
+      201044,
+      201045,
+      201046,
+      201047,
+      201048,
+      201049,
+      201050,
+      201051,
+      201052,
+      201053,
+      201054,
+      201055,
+      201056,
+      201057,
+      201058,
+      201059,
+      201060
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "outcome_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "expected_outcome_prompt"
+     ],
+     "same": true,
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "no_generic_left",
+    "critical": false,
+    "check": {
+     "ids": [
+      201001,
+      201002,
+      201003,
+      201004,
+      201005,
+      201006,
+      201007,
+      201008,
+      201009,
+      201010,
+      201011,
+      201012,
+      201013,
+      201014,
+      201015,
+      201016,
+      201017,
+      201018,
+      201019,
+      201020,
+      201021,
+      201022,
+      201023,
+      201024,
+      201025,
+      201026,
+      201027,
+      201028,
+      201029,
+      201030,
+      201031,
+      201032,
+      201033,
+      201034,
+      201035,
+      201036,
+      201037,
+      201038,
+      201039,
+      201040,
+      201041,
+      201042,
+      201043,
+      201044,
+      201045,
+      201046,
+      201047,
+      201048,
+      201049,
+      201050,
+      201051,
+      201052,
+      201053,
+      201054,
+      201055,
+      201056,
+      201057,
+      201058,
+      201059,
+      201060
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "should follow the [a-z ]+ workflow"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_meta_lines",
+    "critical": false,
+    "check": {
+     "ids": [
+      201001,
+      201002,
+      201003,
+      201004,
+      201005,
+      201006,
+      201007,
+      201008,
+      201009,
+      201010,
+      201011,
+      201012,
+      201013,
+      201014,
+      201015,
+      201016,
+      201017,
+      201018,
+      201019,
+      201020,
+      201021,
+      201022,
+      201023,
+      201024,
+      201025,
+      201026,
+      201027,
+      201028,
+      201029,
+      201030,
+      201031,
+      201032,
+      201033,
+      201034,
+      201035,
+      201036,
+      201037,
+      201038,
+      201039,
+      201040,
+      201041,
+      201042,
+      201043,
+      201044,
+      201045,
+      201046,
+      201047,
+      201048,
+      201049,
+      201050,
+      201051,
+      201052,
+      201053,
+      201054,
+      201055,
+      201056,
+      201057,
+      201058,
+      201059,
+      201060
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "\\bCRITICAL\\b|\\bIMPORTANT\\b|\\bNOTE:"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "specific",
+    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant, using only behavior the agent description licenses."
+   },
+   {
+    "id": "batches",
+    "text": "Each batch is reported with the ID range actually changed."
+   }
+  ]
+ },
+ "T14-harborview": {
+  "checks": [
+   {
+    "id": "only_affected",
+    "critical": true,
+    "check": {
+     "ids": [
+      201004,
+      201007,
+      201010,
+      201013,
+      201016,
+      201019,
+      201022,
+      201025
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "all_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      201004,
+      201007,
+      201010,
+      201013,
+      201016,
+      201019,
+      201022,
+      201025
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "value_not_required",
+    "critical": false,
+    "check": {
+     "ids": [
+      201004,
+      201007,
+      201010,
+      201013,
+      201016,
+      201019,
+      201022,
+      201025
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "Friday at 10:00"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "agent_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "agents"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "scenario_fields",
+    "critical": false,
+    "check": {
+     "fields": [
+      "expected_outcome_prompt",
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "conditional",
+    "text": "The new outcomes accept whatever the live lookup returns and the documented alternative when it returns nothing."
+   },
+   {
+    "id": "still_strict",
+    "text": "They still fail an agent that states a value the lookup did not return; the follow-up answer says so."
+   }
+  ]
+ },
+ "T15-harborview": {
+  "checks": [
+   {
+    "id": "clarify_first",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "number_applied",
+    "critical": false,
+    "check": {
+     "ids": [
+      201061,
+      201062,
+      201063,
+      201064,
+      201065,
+      201066,
+      201067,
+      201068,
+      201069,
+      201070,
+      201071,
+      201072,
+      201073,
+      201074,
+      201075,
+      201076,
+      201077,
+      201078,
+      201079,
+      201080,
+      201081,
+      201082,
+      201083,
+      201084,
+      201085
+     ],
+     "key": "caller_phone",
+     "match": {
+      "regex": "\\+?1?\\D*555\\D*010\\D*2030"
+     },
+     "kind": "profile_value"
+    }
+   },
+   {
+    "id": "shared_profiles_untouched",
+    "critical": true,
+    "check": {
+     "ids": [
+      200800,
+      200801,
+      200802,
+      200803,
+      200804,
+      200805
+     ],
+     "kind": "profiles_unchanged"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": false,
+    "check": {
+     "ids": [
+      201061,
+      201062,
+      201063,
+      201064,
+      201065,
+      201066,
+      201067,
+      201068,
+      201069,
+      201070,
+      201071,
+      201072,
+      201073,
+      201074,
+      201075,
+      201076,
+      201077,
+      201078,
+      201079,
+      201080,
+      201081,
+      201082,
+      201083,
+      201084,
+      201085
+     ],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "ambiguity",
+    "text": "The first reply asks which number is meant (caller phone in the test profile, the number dialled, or something else) before changing anything."
+   },
+   {
+    "id": "shared",
+    "text": "Because the caller profiles are shared with other folders, the change does not alter what tests outside Insurance use."
+   }
+  ]
+ },
+ "T16-harborview": {
+  "checks": [
+   {
+    "id": "read_only",
+    "critical": true,
+    "check": {
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "complete",
+    "critical": true,
+    "check": {
+     "ids": [
+      201003,
+      201009,
+      201015,
+      201021,
+      201027,
+      201033,
+      201039,
+      201045,
+      201051,
+      201057
+     ],
+     "kind": "mentions_any_turn"
+    }
+   },
+   {
+    "id": "precise",
+    "critical": false,
+    "check": {
+     "ids": [
+      201003,
+      201009,
+      201015,
+      201021,
+      201027,
+      201033,
+      201039,
+      201045,
+      201051,
+      201057
+     ],
+     "forbidden": [
+      201001,
+      201002,
+      201004,
+      201005,
+      201006,
+      201007,
+      201008,
+      201010,
+      201011,
+      201012,
+      201013,
+      201014,
+      201016,
+      201017,
+      201018,
+      201019,
+      201020,
+      201022,
+      201023,
+      201024,
+      201025,
+      201026,
+      201028,
+      201029,
+      201030,
+      201031,
+      201032,
+      201034,
+      201035,
+      201036,
+      201037,
+      201038,
+      201040,
+      201041,
+      201042,
+      201043,
+      201044,
+      201046,
+      201047,
+      201048,
+      201049,
+      201050,
+      201052,
+      201053,
+      201054,
+      201055,
+      201056,
+      201058,
+      201059,
+      201060
+     ],
+     "kind": "mentions_any_turn"
+    }
+   },
+   {
+    "id": "no_runs",
+    "critical": true,
+    "check": {
+     "max_runs": 0,
+     "kind": "runs"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "complete",
+    "text": "The answer lists exactly the 10 evaluators 201003, 201009, 201015, 201021, 201027, 201033, 201039, 201045, 201051, 201057, found by reading every page of the folder."
+   },
+   {
+    "id": "no_overreach",
+    "text": "It makes no edits and does not claim anything about tests it did not read."
+   }
+  ]
+ },
+ "C01-harborview": {
+  "checks": [
+   {
+    "id": "one_test",
+    "critical": true,
+    "check": {
+     "min": 1,
+     "max": 1,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "verbatim",
+    "critical": true,
+    "check": {
+     "field": "instructions",
+     "match": {
+      "equals": "<scenario>\nSCENARIO: Caller changes their mind midway\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to new patient.\n2. After the agent asks its first question, say: \"Actually, wait — can we do something else instead?\"\n3. Ask to insurance instead.\n4. When the agent wants your name, say {{test_profile.caller_name}}.\n5. End the call politely once the second request is handled.\n</scenario>"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "direct_save",
+    "critical": true,
+    "check": {
+     "operations": [
+      "scenarios_generate_bg"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Emergencies"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "saved_as_given",
+    "text": "The test is saved with the supplied text unchanged and the report does not claim it was run."
+   }
+  ]
+ },
+ "C02-harborview": {
+  "checks": [
+   {
+    "id": "generated",
+    "critical": true,
+    "check": {
+     "operations": [
+      "scenarios_generate_bg"
+     ],
+     "kind": "called"
+    }
+   },
+   {
+    "id": "five",
+    "critical": true,
+    "check": {
+     "min": 5,
+     "max": 5,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Insurance"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "format_explicit",
+    "critical": false,
+    "check": {
+     "operation": "scenarios_generate_bg",
+     "argument": "simulation_type",
+     "include_errors": true,
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "no_hand_authoring",
+    "critical": false,
+    "check": {
+     "operations": [
+      "scenarios_create"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "of": "created",
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "topic",
+    "text": "The five tests are about the cancel workflow and grounded in the agent description."
+   }
+  ]
+ },
+ "T01-northwind": {
+  "checks": [
+   {
+    "id": "phrase_removed",
+    "critical": true,
+    "check": {
+     "ids": [
+      211004,
+      211011,
+      211018,
+      211025,
+      211032,
+      211039,
+      211049,
+      211056,
+      211063,
+      211070,
+      211079,
+      211086,
+      211093,
+      211100,
+      211107,
+      211114
+     ],
+     "pattern": "I'll check with my neighbour and call you back",
+     "kind": "none_match"
+    }
+   },
+   {
+    "id": "exactly_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      211004,
+      211011,
+      211018,
+      211025,
+      211032,
+      211039,
+      211049,
+      211056,
+      211063,
+      211070,
+      211079,
+      211086,
+      211093,
+      211100,
+      211107,
+      211114
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "script_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "ending_kept",
+    "critical": true,
+    "check": {
+     "ids": [
+      211004,
+      211011,
+      211018,
+      211025,
+      211032,
+      211039,
+      211049,
+      211056,
+      211063,
+      211070,
+      211079,
+      211086,
+      211093,
+      211100,
+      211107,
+      211114
+     ],
+     "field": "script",
+     "match": {
+      "regex": "<endcall|end the call|hang up"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   },
+   {
+    "id": "no_placeholders",
+    "critical": false,
+    "check": {
+     "kind": "no_placeholders"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "minimal_edit",
+    "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+   },
+   {
+    "id": "true_report",
+    "text": "The report gives the real number of affected tests (16) across all folders, and does not say any test was run or passed."
+   }
+  ]
+ },
+ "T02-northwind": {
+  "checks": [
+   {
+    "id": "preview_before_write",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "all_moved",
+    "critical": true,
+    "check": {
+     "ids": [
+      211001,
+      211006,
+      211011,
+      211016,
+      211021,
+      211026,
+      211031,
+      211036,
+      211041
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "prefixed",
+    "critical": false,
+    "check": {
+     "ids": [
+      211001,
+      211006,
+      211011,
+      211016,
+      211021,
+      211026,
+      211031,
+      211036,
+      211041
+     ],
+     "field": "name",
+     "match": {
+      "regex": "^REG-",
+      "length_max": 80
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "tagged",
+    "critical": true,
+    "check": {
+     "ids": [
+      211001,
+      211006,
+      211011,
+      211016,
+      211021,
+      211026,
+      211031,
+      211036,
+      211041
+     ],
+     "field": "tags",
+     "match": {
+      "contains": [
+       "regression"
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "tags_kept",
+    "critical": false,
+    "check": {
+     "ids": [
+      211001,
+      211006,
+      211011,
+      211016,
+      211021,
+      211026,
+      211031,
+      211036,
+      211041
+     ],
+     "field": "tags",
+     "match": {
+      "contains": [
+       "regression",
+       "track"
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "in_subfolder",
+    "critical": false,
+    "check": {
+     "ids": [
+      211001,
+      211006,
+      211011,
+      211016,
+      211021,
+      211026,
+      211031,
+      211036,
+      211041
+     ],
+     "field": "folder_path",
+     "match": {
+      "regex": "^Tracking[./]Regression$"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "consistent_fields",
+    "critical": true,
+    "check": {
+     "fields": [
+      "name",
+      "tags",
+      "folder_path"
+     ],
+     "same": true,
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "preview",
+    "text": "The first reply shows five concrete before/after examples (names, folder, tags) and changes nothing."
+   },
+   {
+    "id": "true_report",
+    "text": "The final report gives the real number moved (9) and says nothing else changed."
+   },
+   {
+    "id": "tags",
+    "text": "Existing tags (such as track) are kept alongside regression, or the assistant says it replaced them."
+   }
+  ]
+ },
+ "T03-northwind": {
+  "checks": [
+   {
+    "id": "exact_metric_set",
+    "critical": true,
+    "check": {
+     "ids": [
+      211046,
+      211047,
+      211048,
+      211049,
+      211050,
+      211051,
+      211052,
+      211053,
+      211054,
+      211055,
+      211056,
+      211057,
+      211058,
+      211059,
+      211060,
+      211061,
+      211062,
+      211063,
+      211064,
+      211065,
+      211066,
+      211067,
+      211068,
+      211069,
+      211070,
+      211071,
+      211072,
+      211073,
+      211074,
+      211075
+     ],
+     "field": "metrics",
+     "match": {
+      "set_equals": [
+       210703,
+       210704,
+       210705,
+       210706
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": true,
+    "check": {
+     "ids": [
+      211046,
+      211047,
+      211048,
+      211049,
+      211050,
+      211051,
+      211052,
+      211053,
+      211054,
+      211055,
+      211056,
+      211057,
+      211058,
+      211059,
+      211060,
+      211061,
+      211062,
+      211063,
+      211064,
+      211065,
+      211066,
+      211067,
+      211068,
+      211069,
+      211070,
+      211071,
+      211072,
+      211073,
+      211074,
+      211075
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "metrics_field_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "metrics"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "shared_metrics_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "metrics"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "read_results",
+    "critical": false,
+    "check": {
+     "operations": [
+      "results_list",
+      "results_retrieve",
+      "runs_retrieve",
+      "runs_bulk_retrieve"
+     ],
+     "kind": "called"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "outcome_warning",
+    "text": "The assistant points out that removing Expected Outcome means future runs give no pass/fail verdict on what the call achieved."
+   },
+   {
+    "id": "last_run",
+    "text": "The answer about the last run reports 8 of 12 passing, from the stored result, and does not claim any pass after the change."
+   }
+  ]
+ },
+ "T04-northwind": {
+  "checks": [
+   {
+    "id": "one_per_branch",
+    "critical": true,
+    "check": {
+     "min": 3,
+     "max": 4,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "structured",
+    "critical": true,
+    "check": {
+     "field": "scenario_type",
+     "match": {
+      "equals": "conditional_actions"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "every_branch",
+    "critical": true,
+    "check": {
+     "field": "says",
+     "patterns": [
+      "shipment",
+      "claim",
+      "invoice"
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "in_folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "regex": "Call Flow"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "waits_for_menu",
+    "critical": true,
+    "check": {
+     "field": "script",
+     "match": {
+      "not_regex": "\"first_message\": \"<dtmf"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "early_press_fixed",
+    "critical": true,
+    "check": {
+     "ids": [
+      216105
+     ],
+     "field": "script",
+     "match": {
+      "not_regex": "\"first_message\": \"(?:<dtmf|Shipment)"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "early_press_still_selects",
+    "critical": false,
+    "check": {
+     "ids": [
+      216105
+     ],
+     "field": "says",
+     "match": {
+      "regex": "shipment"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "only_fix_changed",
+    "critical": false,
+    "check": {
+     "ids": [
+      216105
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "no_placeholders",
+    "critical": false,
+    "check": {
+     "kind": "no_placeholders"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "destinations",
+    "text": "Each new test's expected outcome names the destination the call-flow document gives for its branch: shipment → tracking; claim → claims; invoice → billing transfer."
+   },
+   {
+    "id": "trigger",
+    "text": "Selections are made on a condition matched to the end of the menu prompt, not in the opening message."
+   }
+  ]
+ },
+ "T05-northwind": {
+  "checks": [
+   {
+    "id": "openers_fixed",
+    "critical": true,
+    "check": {
+     "ids": [
+      211001,
+      211007,
+      211013,
+      211019,
+      211025,
+      211031,
+      211037,
+      211043
+     ],
+     "field": "script",
+     "match": {
+      "regex": "\"first_message\": \"(?:|Hello\\??|Hi\\??|Yes\\??|Hello, yes\\??)\""
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "only_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      211001,
+      211007,
+      211013,
+      211019,
+      211025,
+      211031,
+      211037,
+      211043
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "personality_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "personalities"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "personality_assignment_kept",
+    "critical": true,
+    "check": {
+     "fields": [
+      "conditional_actions",
+      "first_message"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "read_failures",
+    "critical": false,
+    "check": {
+     "operations": [
+      "results_list",
+      "results_retrieve",
+      "runs_retrieve",
+      "runs_bulk_retrieve"
+     ],
+     "kind": "called"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "request_kept",
+    "text": "The caller still states its request, now on a condition after the main agent's opening, so the scenario tests the same workflow as before."
+   },
+   {
+    "id": "scope",
+    "text": "The assistant fixes only the 8 tests whose runs show the caller talking over the opening."
+   }
+  ]
+ },
+ "T06-northwind": {
+  "checks": [
+   {
+    "id": "spanish",
+    "critical": true,
+    "check": {
+     "field": "scenario_language",
+     "match": {
+      "equals": "es"
+     },
+     "min": 3,
+     "max": 3,
+     "kind": "created_where"
+    }
+   },
+   {
+    "id": "german",
+    "critical": false,
+    "check": {
+     "field": "scenario_language",
+     "match": {
+      "equals": "de"
+     },
+     "min": 3,
+     "max": 3,
+     "kind": "created_where"
+    }
+   },
+   {
+    "id": "voice_matches_language",
+    "critical": true,
+    "check": {
+     "kind": "personality_language"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Tracking"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "format_explicit",
+    "critical": true,
+    "check": {
+     "operation": "scenarios_generate_bg",
+     "argument": "simulation_type",
+     "include_errors": true,
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "no_hand_authoring",
+    "critical": false,
+    "check": {
+     "operations": [
+      "scenarios_create"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "failure_reported",
+    "text": "The first German generation failed with a worker timeout; the assistant retries or reports it, and never says six tests exist when fewer were saved."
+   },
+   {
+    "id": "same_cases",
+    "text": "The new tests cover the redeliver workflow like the English ones, not a different workflow."
+   }
+  ]
+ },
+ "T07-northwind": {
+  "checks": [
+   {
+    "id": "copied_to_v2",
+    "critical": true,
+    "check": {
+     "ids": [
+      211077,
+      211080,
+      211083,
+      211086,
+      211089,
+      211092,
+      211095
+     ],
+     "agent": 210001,
+     "kind": "copied"
+    }
+   },
+   {
+    "id": "originals_untouched",
+    "critical": true,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "duplicate_owner",
+    "critical": true,
+    "check": {
+     "operation": "scenarios_duplicate_create",
+     "argument": "scenario_agent",
+     "match": {
+      "equals": 210001
+     },
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "ran_copies_on_v2",
+    "critical": true,
+    "check": {
+     "agent": 210001,
+     "created_only": true,
+     "min_runs": 1,
+     "max_runs": 2,
+     "max_calls": 14,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "used_duplicate",
+    "critical": false,
+    "check": {
+     "checks": [
+      {
+       "kind": "called",
+       "operations": [
+        "scenarios_duplicate_create"
+       ]
+      },
+      {
+       "kind": "not_called",
+       "operations": [
+        "scenarios_create"
+       ]
+      }
+     ],
+     "kind": "all"
+    }
+   },
+   {
+    "id": "valid_agent_ids",
+    "critical": true,
+    "check": {
+     "kind": "agent_ids_valid"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "of": "created",
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "selection",
+    "text": "The copied set is exactly the 7 tests whose runs failed in the stored result: 211077, 211080, 211083, 211086, 211089, 211092, 211095."
+   },
+   {
+    "id": "no_results_claim",
+    "text": "The assistant says the runs were queued and does not report their outcome."
+   }
+  ]
+ },
+ "T08-northwind": {
+  "checks": [
+   {
+    "id": "round_robin",
+    "critical": true,
+    "check": {
+     "ids": [
+      211046,
+      211047,
+      211048,
+      211049,
+      211050,
+      211051,
+      211052,
+      211053,
+      211054,
+      211055,
+      211056,
+      211057,
+      211058,
+      211059,
+      211060,
+      211061,
+      211062,
+      211063,
+      211064,
+      211065,
+      211066,
+      211067,
+      211068,
+      211069,
+      211070,
+      211071,
+      211072,
+      211073,
+      211074,
+      211075
+     ],
+     "field": "test_profile",
+     "among": [
+      210800,
+      210801,
+      210802,
+      210803,
+      210804,
+      210805
+     ],
+     "kind": "balanced"
+    }
+   },
+   {
+    "id": "identity_aligned",
+    "critical": true,
+    "check": {
+     "ids": [
+      211046,
+      211047,
+      211048,
+      211049,
+      211050,
+      211051,
+      211052,
+      211053,
+      211054,
+      211055,
+      211056,
+      211057,
+      211058,
+      211059,
+      211060,
+      211061,
+      211062,
+      211063,
+      211064,
+      211065,
+      211066,
+      211067,
+      211068,
+      211069,
+      211070,
+      211071,
+      211072,
+      211073,
+      211074,
+      211075
+     ],
+     "personas": [
+      "Oluwaseun Adeyemi",
+      "Carla Benedetti",
+      "Wendell Pryce",
+      "Ingrid Solberg",
+      "Rafael Montoya",
+      "Keiko Tanabe"
+     ],
+     "kind": "identity_aligned"
+    }
+   },
+   {
+    "id": "profiles_merged",
+    "critical": true,
+    "check": {
+     "kind": "profiles_preserved"
+    }
+   },
+   {
+    "id": "phones_filled",
+    "critical": false,
+    "check": {
+     "ids": [
+      210799,
+      210802,
+      210804
+     ],
+     "key": "caller_phone",
+     "kind": "profiles_filled"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": false,
+    "check": {
+     "ids": [
+      211046,
+      211047,
+      211048,
+      211049,
+      211050,
+      211051,
+      211052,
+      211053,
+      211054,
+      211055,
+      211056,
+      211057,
+      211058,
+      211059,
+      211060,
+      211061,
+      211062,
+      211063,
+      211064,
+      211065,
+      211066,
+      211067,
+      211068,
+      211069,
+      211070,
+      211071,
+      211072,
+      211073,
+      211074,
+      211075
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "scenario_fields",
+    "critical": false,
+    "check": {
+     "fields": [
+      "test_profile",
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "identity",
+    "text": "Scripts that hard-coded a name now use the profile's caller name (or the assigned profile's own name), so no caller introduces themselves as someone else."
+   },
+   {
+    "id": "profiles",
+    "text": "Only profiles 210799, 210802, 210804 (those without a caller phone, the legacy one included) gain a phone number; every existing profile value is kept."
+   }
+  ]
+ },
+ "T09-northwind": {
+  "checks": [
+   {
+    "id": "confirm_large_run",
+    "critical": true,
+    "check": {
+     "unapproved_max": 5,
+     "approval_turn": 1,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "smoke_only",
+    "critical": true,
+    "check": {
+     "scenarios_within": [
+      211001,
+      211011,
+      211021,
+      211031,
+      211041,
+      211046,
+      211056,
+      211066,
+      211076,
+      211086,
+      211096,
+      211106
+     ],
+     "agent": 210000,
+     "max_runs": 2,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "no_writes",
+    "critical": true,
+    "check": {
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "valid_agent_ids",
+    "critical": true,
+    "check": {
+     "kind": "agent_ids_valid"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "size",
+    "text": "Before starting, the assistant states the run size (115 evaluators, more with several personalities or profiles) and asks for confirmation or proposes a smaller smoke run."
+   },
+   {
+    "id": "smoke",
+    "text": "After the user's reply, it runs only the 12 smoke-tagged evaluators and reports them as queued, not passed."
+   }
+  ]
+ },
+ "T10-northwind": {
+  "checks": [
+   {
+    "id": "diagnose_read_only",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "read_transcripts",
+    "critical": true,
+    "check": {
+     "operations": [
+      "runs_retrieve",
+      "runs_bulk_retrieve",
+      "results_retrieve"
+     ],
+     "by_turn": 0,
+     "kind": "called"
+    }
+   },
+   {
+    "id": "fix_test_side_only",
+    "critical": true,
+    "check": {
+     "ids": [
+      211002,
+      211005,
+      211008
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "fixed_all_test_side",
+    "critical": false,
+    "check": {
+     "ids": [
+      211002,
+      211005,
+      211008
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "value_not_required",
+    "critical": false,
+    "check": {
+     "ids": [
+      211002,
+      211005,
+      211008
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "13:00 and 17:00"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "agent_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "agents"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "named_ids",
+    "critical": false,
+    "check": {
+     "ids": [
+      211002,
+      211005,
+      211008,
+      211003,
+      211006,
+      211009
+     ],
+     "kind": "mentions_any_turn"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "attribution",
+    "text": "Tests 211002, 211005, 211008 fail because the expected outcome demands '13:00 and 17:00' regardless of the lookup — a test problem. Tests 211003, 211006, 211009 fail because the agent promised a delivery time the lookup did not return — an agent problem."
+   },
+   {
+    "id": "evidence",
+    "text": "Each verdict cites what the transcript shows, not only the metric label."
+   },
+   {
+    "id": "fix",
+    "text": "The test-side fix makes the outcome follow what the lookup returns instead of demanding '13:00 and 17:00'."
+   }
+  ]
+ },
+ "T11-northwind": {
+  "checks": [
+   {
+    "id": "one_test",
+    "critical": true,
+    "check": {
+     "min": 1,
+     "max": 1,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "structured",
+    "critical": true,
+    "check": {
+     "field": "scenario_type",
+     "match": {
+      "equals": "conditional_actions"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "timed_silence",
+    "critical": true,
+    "check": {
+     "patterns": [
+      "<(?:silence|hold) time="
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "about_ten_seconds",
+    "critical": false,
+    "check": {
+     "patterns": [
+      "<(?:silence|hold) time=\\\\?\\\"(?:[89]|\\d\\d)"
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "opener",
+    "critical": false,
+    "check": {
+     "field": "script",
+     "match": {
+      "regex": "\"first_message\": \"(?:|Hello\\??|Hi\\??|Yes\\??|Hello, yes\\??)\""
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "in_folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Tracking"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "trigger",
+    "text": "The silence sits on its own condition after the caller's partial answer (not in a `then` step), and the caller gives the missing detail only when the agent asks for it again."
+   },
+   {
+    "id": "outcome",
+    "text": "The expected outcome checks that the agent re-asks for the missing detail and does not end the call; it does not require details the agent description does not mention."
+   }
+  ]
+ },
+ "T12-northwind": {
+  "checks": [
+   {
+    "id": "loop_removed",
+    "critical": true,
+    "check": {
+     "ids": [
+      211077
+     ],
+     "field": "script",
+     "match": {
+      "not_regex": "The main agent says anything"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "functions_kept",
+    "critical": true,
+    "check": {
+     "ids": [
+      211077
+     ],
+     "field": "script",
+     "match": {
+      "regex": "booking_lookup"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "still_ends",
+    "critical": false,
+    "check": {
+     "ids": [
+      211077
+     ],
+     "field": "script",
+     "match": {
+      "regex": "<endcall"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "other_fields_kept",
+    "critical": true,
+    "check": {
+     "fields": [
+      "conditional_actions",
+      "first_message"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "only_target",
+    "critical": false,
+    "check": {
+     "ids": [
+      211077
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "siblings_reported",
+    "critical": false,
+    "check": {
+     "ids": [
+      211082,
+      211086
+     ],
+     "kind": "mentions_any_turn"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "cause",
+    "text": "The fix replaces the catch-all trigger with conditions keyed to specific agent questions, so each reply fires once."
+   },
+   {
+    "id": "siblings",
+    "text": "Asked about the folder, the assistant names 211082 and 211086 as having the same catch-all trigger and does not edit them unasked."
+   }
+  ]
+ },
+ "T13-northwind": {
+  "checks": [
+   {
+    "id": "first_batch",
+    "critical": true,
+    "check": {
+     "turn": 0,
+     "ids": [
+      211001,
+      211002,
+      211003,
+      211004,
+      211005,
+      211006,
+      211007,
+      211008,
+      211009,
+      211010,
+      211011,
+      211012,
+      211013,
+      211014,
+      211015
+     ],
+     "kind": "turn_writes_within"
+    }
+   },
+   {
+    "id": "second_batch",
+    "critical": false,
+    "check": {
+     "turn": 1,
+     "ids": [
+      211001,
+      211002,
+      211003,
+      211004,
+      211005,
+      211006,
+      211007,
+      211008,
+      211009,
+      211010,
+      211011,
+      211012,
+      211013,
+      211014,
+      211015,
+      211016,
+      211017,
+      211018,
+      211019,
+      211020,
+      211021,
+      211022,
+      211023,
+      211024,
+      211025,
+      211026,
+      211027,
+      211028,
+      211029,
+      211030
+     ],
+     "kind": "turn_writes_within"
+    }
+   },
+   {
+    "id": "all_rewritten",
+    "critical": false,
+    "check": {
+     "ids": [
+      211001,
+      211002,
+      211003,
+      211004,
+      211005,
+      211006,
+      211007,
+      211008,
+      211009,
+      211010,
+      211011,
+      211012,
+      211013,
+      211014,
+      211015,
+      211016,
+      211017,
+      211018,
+      211019,
+      211020,
+      211021,
+      211022,
+      211023,
+      211024,
+      211025,
+      211026,
+      211027,
+      211028,
+      211029,
+      211030,
+      211031,
+      211032,
+      211033,
+      211034,
+      211035,
+      211036,
+      211037,
+      211038,
+      211039,
+      211040,
+      211041,
+      211042,
+      211043,
+      211044,
+      211045
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "outcome_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "expected_outcome_prompt"
+     ],
+     "same": true,
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "no_generic_left",
+    "critical": false,
+    "check": {
+     "ids": [
+      211001,
+      211002,
+      211003,
+      211004,
+      211005,
+      211006,
+      211007,
+      211008,
+      211009,
+      211010,
+      211011,
+      211012,
+      211013,
+      211014,
+      211015,
+      211016,
+      211017,
+      211018,
+      211019,
+      211020,
+      211021,
+      211022,
+      211023,
+      211024,
+      211025,
+      211026,
+      211027,
+      211028,
+      211029,
+      211030,
+      211031,
+      211032,
+      211033,
+      211034,
+      211035,
+      211036,
+      211037,
+      211038,
+      211039,
+      211040,
+      211041,
+      211042,
+      211043,
+      211044,
+      211045
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "should follow the [a-z ]+ workflow"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_meta_lines",
+    "critical": false,
+    "check": {
+     "ids": [
+      211001,
+      211002,
+      211003,
+      211004,
+      211005,
+      211006,
+      211007,
+      211008,
+      211009,
+      211010,
+      211011,
+      211012,
+      211013,
+      211014,
+      211015,
+      211016,
+      211017,
+      211018,
+      211019,
+      211020,
+      211021,
+      211022,
+      211023,
+      211024,
+      211025,
+      211026,
+      211027,
+      211028,
+      211029,
+      211030,
+      211031,
+      211032,
+      211033,
+      211034,
+      211035,
+      211036,
+      211037,
+      211038,
+      211039,
+      211040,
+      211041,
+      211042,
+      211043,
+      211044,
+      211045
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "\\bCRITICAL\\b|\\bIMPORTANT\\b|\\bNOTE:"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "specific",
+    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant, using only behavior the agent description licenses."
+   },
+   {
+    "id": "batches",
+    "text": "Each batch is reported with the ID range actually changed."
+   }
+  ]
+ },
+ "T14-northwind": {
+  "checks": [
+   {
+    "id": "only_affected",
+    "critical": true,
+    "check": {
+     "ids": [
+      211004,
+      211007,
+      211010,
+      211013,
+      211016,
+      211019,
+      211022,
+      211025
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "all_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      211004,
+      211007,
+      211010,
+      211013,
+      211016,
+      211019,
+      211022,
+      211025
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "value_not_required",
+    "critical": false,
+    "check": {
+     "ids": [
+      211004,
+      211007,
+      211010,
+      211013,
+      211016,
+      211019,
+      211022,
+      211025
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "13:00 and 17:00"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "agent_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "agents"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "scenario_fields",
+    "critical": false,
+    "check": {
+     "fields": [
+      "expected_outcome_prompt",
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "conditional",
+    "text": "The new outcomes accept whatever the live lookup returns and the documented alternative when it returns nothing."
+   },
+   {
+    "id": "still_strict",
+    "text": "They still fail an agent that states a value the lookup did not return; the follow-up answer says so."
+   }
+  ]
+ },
+ "T15-northwind": {
+  "checks": [
+   {
+    "id": "clarify_first",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "number_applied",
+    "critical": false,
+    "check": {
+     "ids": [
+      211046,
+      211047,
+      211048,
+      211049,
+      211050,
+      211051,
+      211052,
+      211053,
+      211054,
+      211055,
+      211056,
+      211057,
+      211058,
+      211059,
+      211060,
+      211061,
+      211062,
+      211063,
+      211064,
+      211065,
+      211066,
+      211067,
+      211068,
+      211069,
+      211070,
+      211071,
+      211072,
+      211073,
+      211074,
+      211075
+     ],
+     "key": "caller_phone",
+     "match": {
+      "regex": "\\+?1?\\D*555\\D*010\\D*2030"
+     },
+     "kind": "profile_value"
+    }
+   },
+   {
+    "id": "shared_profiles_untouched",
+    "critical": true,
+    "check": {
+     "ids": [
+      210800,
+      210801,
+      210802,
+      210803,
+      210804,
+      210805
+     ],
+     "kind": "profiles_unchanged"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": false,
+    "check": {
+     "ids": [
+      211046,
+      211047,
+      211048,
+      211049,
+      211050,
+      211051,
+      211052,
+      211053,
+      211054,
+      211055,
+      211056,
+      211057,
+      211058,
+      211059,
+      211060,
+      211061,
+      211062,
+      211063,
+      211064,
+      211065,
+      211066,
+      211067,
+      211068,
+      211069,
+      211070,
+      211071,
+      211072,
+      211073,
+      211074,
+      211075
+     ],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "ambiguity",
+    "text": "The first reply asks which number is meant (caller phone in the test profile, the number dialled, or something else) before changing anything."
+   },
+   {
+    "id": "shared",
+    "text": "Because the caller profiles are shared with other folders, the change does not alter what tests outside Claims use."
+   }
+  ]
+ },
+ "T16-northwind": {
+  "checks": [
+   {
+    "id": "read_only",
+    "critical": true,
+    "check": {
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "complete",
+    "critical": true,
+    "check": {
+     "ids": [
+      211003,
+      211009,
+      211015,
+      211021,
+      211027,
+      211033,
+      211039,
+      211045
+     ],
+     "kind": "mentions_any_turn"
+    }
+   },
+   {
+    "id": "precise",
+    "critical": false,
+    "check": {
+     "ids": [
+      211003,
+      211009,
+      211015,
+      211021,
+      211027,
+      211033,
+      211039,
+      211045
+     ],
+     "forbidden": [
+      211001,
+      211002,
+      211004,
+      211005,
+      211006,
+      211007,
+      211008,
+      211010,
+      211011,
+      211012,
+      211013,
+      211014,
+      211016,
+      211017,
+      211018,
+      211019,
+      211020,
+      211022,
+      211023,
+      211024,
+      211025,
+      211026,
+      211028,
+      211029,
+      211030,
+      211031,
+      211032,
+      211034,
+      211035,
+      211036,
+      211037,
+      211038,
+      211040,
+      211041,
+      211042,
+      211043,
+      211044
+     ],
+     "kind": "mentions_any_turn"
+    }
+   },
+   {
+    "id": "no_runs",
+    "critical": true,
+    "check": {
+     "max_runs": 0,
+     "kind": "runs"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "complete",
+    "text": "The answer lists exactly the 8 evaluators 211003, 211009, 211015, 211021, 211027, 211033, 211039, 211045, found by reading every page of the folder."
+   },
+   {
+    "id": "no_overreach",
+    "text": "It makes no edits and does not claim anything about tests it did not read."
+   }
+  ]
+ },
+ "C01-northwind": {
+  "checks": [
+   {
+    "id": "one_test",
+    "critical": true,
+    "check": {
+     "min": 1,
+     "max": 1,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "verbatim",
+    "critical": true,
+    "check": {
+     "field": "instructions",
+     "match": {
+      "equals": "<scenario>\nSCENARIO: Caller changes their mind midway\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to track.\n2. After the agent asks its first question, say: \"Actually, wait — can we do something else instead?\"\n3. Ask to address change instead.\n4. When the agent wants your name, say {{test_profile.caller_name}}.\n5. End the call politely once the second request is handled.\n</scenario>"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "direct_save",
+    "critical": true,
+    "check": {
+     "operations": [
+      "scenarios_generate_bg"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Redelivery"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "saved_as_given",
+    "text": "The test is saved with the supplied text unchanged and the report does not claim it was run."
+   }
+  ]
+ },
+ "C02-northwind": {
+  "checks": [
+   {
+    "id": "generated",
+    "critical": true,
+    "check": {
+     "operations": [
+      "scenarios_generate_bg"
+     ],
+     "kind": "called"
+    }
+   },
+   {
+    "id": "five",
+    "critical": true,
+    "check": {
+     "min": 5,
+     "max": 5,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Claims"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "format_explicit",
+    "critical": false,
+    "check": {
+     "operation": "scenarios_generate_bg",
+     "argument": "simulation_type",
+     "include_errors": true,
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "no_hand_authoring",
+    "critical": false,
+    "check": {
+     "operations": [
+      "scenarios_create"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "of": "created",
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "topic",
+    "text": "The five tests are about the damage workflow and grounded in the agent description."
+   }
+  ]
+ },
+ "T01-solace": {
+  "checks": [
+   {
+    "id": "phrase_removed",
+    "critical": true,
+    "check": {
+     "ids": [
+      221004,
+      221011,
+      221018,
+      221025,
+      221032,
+      221039,
+      221046,
+      221054,
+      221061,
+      221068,
+      221075,
+      221084,
+      221091,
+      221098,
+      221105,
+      221112,
+      221119
+     ],
+     "pattern": "I'll talk to my partner and call you back",
+     "kind": "none_match"
+    }
+   },
+   {
+    "id": "exactly_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      221004,
+      221011,
+      221018,
+      221025,
+      221032,
+      221039,
+      221046,
+      221054,
+      221061,
+      221068,
+      221075,
+      221084,
+      221091,
+      221098,
+      221105,
+      221112,
+      221119
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "script_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "ending_kept",
+    "critical": true,
+    "check": {
+     "ids": [
+      221004,
+      221011,
+      221018,
+      221025,
+      221032,
+      221039,
+      221046,
+      221054,
+      221061,
+      221068,
+      221075,
+      221084,
+      221091,
+      221098,
+      221105,
+      221112,
+      221119
+     ],
+     "field": "script",
+     "match": {
+      "regex": "<endcall|end the call|hang up"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   },
+   {
+    "id": "no_placeholders",
+    "critical": false,
+    "check": {
+     "kind": "no_placeholders"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "minimal_edit",
+    "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+   },
+   {
+    "id": "true_report",
+    "text": "The report gives the real number of affected tests (17) across all folders, and does not say any test was run or passed."
+   }
+  ]
+ },
+ "T02-solace": {
+  "checks": [
+   {
+    "id": "preview_before_write",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "all_moved",
+    "critical": true,
+    "check": {
+     "ids": [
+      221001,
+      221006,
+      221011,
+      221016,
+      221021,
+      221026,
+      221031,
+      221036,
+      221041,
+      221046
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "prefixed",
+    "critical": false,
+    "check": {
+     "ids": [
+      221001,
+      221006,
+      221011,
+      221016,
+      221021,
+      221026,
+      221031,
+      221036,
+      221041,
+      221046
+     ],
+     "field": "name",
+     "match": {
+      "regex": "^REG-",
+      "length_max": 80
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "tagged",
+    "critical": true,
+    "check": {
+     "ids": [
+      221001,
+      221006,
+      221011,
+      221016,
+      221021,
+      221026,
+      221031,
+      221036,
+      221041,
+      221046
+     ],
+     "field": "tags",
+     "match": {
+      "contains": [
+       "regression"
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "tags_kept",
+    "critical": false,
+    "check": {
+     "ids": [
+      221001,
+      221006,
+      221011,
+      221016,
+      221021,
+      221026,
+      221031,
+      221036,
+      221041,
+      221046
+     ],
+     "field": "tags",
+     "match": {
+      "contains": [
+       "regression",
+       "payment_reminder"
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "in_subfolder",
+    "critical": false,
+    "check": {
+     "ids": [
+      221001,
+      221006,
+      221011,
+      221016,
+      221021,
+      221026,
+      221031,
+      221036,
+      221041,
+      221046
+     ],
+     "field": "folder_path",
+     "match": {
+      "regex": "^Collections[./]Regression$"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "consistent_fields",
+    "critical": true,
+    "check": {
+     "fields": [
+      "name",
+      "tags",
+      "folder_path"
+     ],
+     "same": true,
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "preview",
+    "text": "The first reply shows five concrete before/after examples (names, folder, tags) and changes nothing."
+   },
+   {
+    "id": "true_report",
+    "text": "The final report gives the real number moved (10) and says nothing else changed."
+   },
+   {
+    "id": "tags",
+    "text": "Existing tags (such as payment_reminder) are kept alongside regression, or the assistant says it replaced them."
+   }
+  ]
+ },
+ "T03-solace": {
+  "checks": [
+   {
+    "id": "exact_metric_set",
+    "critical": true,
+    "check": {
+     "ids": [
+      221051,
+      221052,
+      221053,
+      221054,
+      221055,
+      221056,
+      221057,
+      221058,
+      221059,
+      221060,
+      221061,
+      221062,
+      221063,
+      221064,
+      221065,
+      221066,
+      221067,
+      221068,
+      221069,
+      221070,
+      221071,
+      221072,
+      221073,
+      221074,
+      221075,
+      221076,
+      221077,
+      221078,
+      221079,
+      221080
+     ],
+     "field": "metrics",
+     "match": {
+      "set_equals": [
+       220703,
+       220704,
+       220705,
+       220706
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": true,
+    "check": {
+     "ids": [
+      221051,
+      221052,
+      221053,
+      221054,
+      221055,
+      221056,
+      221057,
+      221058,
+      221059,
+      221060,
+      221061,
+      221062,
+      221063,
+      221064,
+      221065,
+      221066,
+      221067,
+      221068,
+      221069,
+      221070,
+      221071,
+      221072,
+      221073,
+      221074,
+      221075,
+      221076,
+      221077,
+      221078,
+      221079,
+      221080
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "metrics_field_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "metrics"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "shared_metrics_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "metrics"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "read_results",
+    "critical": false,
+    "check": {
+     "operations": [
+      "results_list",
+      "results_retrieve",
+      "runs_retrieve",
+      "runs_bulk_retrieve"
+     ],
+     "kind": "called"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "outcome_warning",
+    "text": "The assistant points out that removing Expected Outcome means future runs give no pass/fail verdict on what the call achieved."
+   },
+   {
+    "id": "last_run",
+    "text": "The answer about the last run reports 8 of 12 passing, from the stored result, and does not claim any pass after the change."
+   }
+  ]
+ },
+ "T04-solace": {
+  "checks": [
+   {
+    "id": "one_per_branch",
+    "critical": true,
+    "check": {
+     "min": 3,
+     "max": 4,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "structured",
+    "critical": true,
+    "check": {
+     "field": "scenario_type",
+     "match": {
+      "equals": "conditional_actions"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "every_branch",
+    "critical": true,
+    "check": {
+     "field": "says",
+     "patterns": [
+      "digits=\\\\?\"1",
+      "digits=\\\\?\"2",
+      "digits=\\\\?\"9"
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "in_folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "regex": "Call Flow"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "waits_for_menu",
+    "critical": true,
+    "check": {
+     "field": "script",
+     "match": {
+      "not_regex": "\"first_message\": \"<dtmf"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "early_press_fixed",
+    "critical": true,
+    "check": {
+     "ids": [
+      226110
+     ],
+     "field": "script",
+     "match": {
+      "not_regex": "\"first_message\": \"(?:<dtmf|1)"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "early_press_still_selects",
+    "critical": false,
+    "check": {
+     "ids": [
+      226110
+     ],
+     "field": "says",
+     "match": {
+      "regex": "digits=\\\\?\"1"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "only_fix_changed",
+    "critical": false,
+    "check": {
+     "ids": [
+      226110
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "no_placeholders",
+    "critical": false,
+    "check": {
+     "kind": "no_placeholders"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "destinations",
+    "text": "Each new test's expected outcome names the destination the call-flow document gives for its branch: 1 → account holder; 2 → not the account holder; 9 → repeat."
+   },
+   {
+    "id": "trigger",
+    "text": "Selections are made on a condition matched to the end of the menu prompt, not in the opening message."
+   }
+  ]
+ },
+ "T05-solace": {
+  "checks": [
+   {
+    "id": "openers_fixed",
+    "critical": true,
+    "check": {
+     "ids": [
+      221001,
+      221007,
+      221013,
+      221019,
+      221025,
+      221031,
+      221037,
+      221043
+     ],
+     "field": "script",
+     "match": {
+      "regex": "\"first_message\": \"(?:|Hello\\??|Hi\\??|Yes\\??|Hello, yes\\??)\""
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "only_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      221001,
+      221007,
+      221013,
+      221019,
+      221025,
+      221031,
+      221037,
+      221043
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "personality_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "personalities"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "personality_assignment_kept",
+    "critical": true,
+    "check": {
+     "fields": [
+      "conditional_actions",
+      "first_message"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "read_failures",
+    "critical": false,
+    "check": {
+     "operations": [
+      "results_list",
+      "results_retrieve",
+      "runs_retrieve",
+      "runs_bulk_retrieve"
+     ],
+     "kind": "called"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "request_kept",
+    "text": "The caller still states its request, now on a condition after the main agent's opening, so the scenario tests the same workflow as before."
+   },
+   {
+    "id": "scope",
+    "text": "The assistant fixes only the 8 tests whose runs show the caller talking over the opening."
+   }
+  ]
+ },
+ "T06-solace": {
+  "checks": [
+   {
+    "id": "spanish",
+    "critical": true,
+    "check": {
+     "field": "scenario_language",
+     "match": {
+      "equals": "es"
+     },
+     "min": 3,
+     "max": 3,
+     "kind": "created_where"
+    }
+   },
+   {
+    "id": "german",
+    "critical": false,
+    "check": {
+     "field": "scenario_language",
+     "match": {
+      "equals": "de"
+     },
+     "min": 3,
+     "max": 3,
+     "kind": "created_where"
+    }
+   },
+   {
+    "id": "voice_matches_language",
+    "critical": true,
+    "check": {
+     "kind": "personality_language"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Collections"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "format_explicit",
+    "critical": true,
+    "check": {
+     "operation": "scenarios_generate_bg",
+     "argument": "simulation_type",
+     "include_errors": true,
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "no_hand_authoring",
+    "critical": false,
+    "check": {
+     "operations": [
+      "scenarios_create"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "failure_reported",
+    "text": "The first German generation failed with a worker timeout; the assistant retries or reports it, and never says six tests exist when fewer were saved."
+   },
+   {
+    "id": "same_cases",
+    "text": "The new tests cover the payment plan workflow like the English ones, not a different workflow."
+   }
+  ]
+ },
+ "T07-solace": {
+  "checks": [
+   {
+    "id": "copied_to_v2",
+    "critical": true,
+    "check": {
+     "ids": [
+      221082,
+      221085,
+      221088,
+      221091,
+      221094,
+      221097,
+      221100
+     ],
+     "agent": 220001,
+     "kind": "copied"
+    }
+   },
+   {
+    "id": "originals_untouched",
+    "critical": true,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "duplicate_owner",
+    "critical": true,
+    "check": {
+     "operation": "scenarios_duplicate_create",
+     "argument": "scenario_agent",
+     "match": {
+      "equals": 220001
+     },
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "ran_copies_on_v2",
+    "critical": true,
+    "check": {
+     "agent": 220001,
+     "created_only": true,
+     "min_runs": 1,
+     "max_runs": 2,
+     "max_calls": 14,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "used_duplicate",
+    "critical": false,
+    "check": {
+     "checks": [
+      {
+       "kind": "called",
+       "operations": [
+        "scenarios_duplicate_create"
+       ]
+      },
+      {
+       "kind": "not_called",
+       "operations": [
+        "scenarios_create"
+       ]
+      }
+     ],
+     "kind": "all"
+    }
+   },
+   {
+    "id": "valid_agent_ids",
+    "critical": true,
+    "check": {
+     "kind": "agent_ids_valid"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "of": "created",
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "selection",
+    "text": "The copied set is exactly the 7 tests whose runs failed in the stored result: 221082, 221085, 221088, 221091, 221094, 221097, 221100."
+   },
+   {
+    "id": "no_results_claim",
+    "text": "The assistant says the runs were queued and does not report their outcome."
+   }
+  ]
+ },
+ "T08-solace": {
+  "checks": [
+   {
+    "id": "round_robin",
+    "critical": true,
+    "check": {
+     "ids": [
+      221051,
+      221052,
+      221053,
+      221054,
+      221055,
+      221056,
+      221057,
+      221058,
+      221059,
+      221060,
+      221061,
+      221062,
+      221063,
+      221064,
+      221065,
+      221066,
+      221067,
+      221068,
+      221069,
+      221070,
+      221071,
+      221072,
+      221073,
+      221074,
+      221075,
+      221076,
+      221077,
+      221078,
+      221079,
+      221080
+     ],
+     "field": "test_profile",
+     "among": [
+      220800,
+      220801,
+      220802,
+      220803,
+      220804,
+      220805
+     ],
+     "kind": "balanced"
+    }
+   },
+   {
+    "id": "identity_aligned",
+    "critical": true,
+    "check": {
+     "ids": [
+      221051,
+      221052,
+      221053,
+      221054,
+      221055,
+      221056,
+      221057,
+      221058,
+      221059,
+      221060,
+      221061,
+      221062,
+      221063,
+      221064,
+      221065,
+      221066,
+      221067,
+      221068,
+      221069,
+      221070,
+      221071,
+      221072,
+      221073,
+      221074,
+      221075,
+      221076,
+      221077,
+      221078,
+      221079,
+      221080
+     ],
+     "personas": [
+      "Beatrix Holloway",
+      "Samir Haddad",
+      "Lucia Ferreira",
+      "Gideon Marsh",
+      "Anouk de Vries",
+      "Tomasz Wierzbicki"
+     ],
+     "kind": "identity_aligned"
+    }
+   },
+   {
+    "id": "profiles_merged",
+    "critical": true,
+    "check": {
+     "kind": "profiles_preserved"
+    }
+   },
+   {
+    "id": "phones_filled",
+    "critical": false,
+    "check": {
+     "ids": [
+      220799,
+      220802,
+      220804
+     ],
+     "key": "caller_phone",
+     "kind": "profiles_filled"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": false,
+    "check": {
+     "ids": [
+      221051,
+      221052,
+      221053,
+      221054,
+      221055,
+      221056,
+      221057,
+      221058,
+      221059,
+      221060,
+      221061,
+      221062,
+      221063,
+      221064,
+      221065,
+      221066,
+      221067,
+      221068,
+      221069,
+      221070,
+      221071,
+      221072,
+      221073,
+      221074,
+      221075,
+      221076,
+      221077,
+      221078,
+      221079,
+      221080
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "scenario_fields",
+    "critical": false,
+    "check": {
+     "fields": [
+      "test_profile",
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "identity",
+    "text": "Scripts that hard-coded a name now use the profile's caller name (or the assigned profile's own name), so no caller introduces themselves as someone else."
+   },
+   {
+    "id": "profiles",
+    "text": "Only profiles 220799, 220802, 220804 (those without a caller phone, the legacy one included) gain a phone number; every existing profile value is kept."
+   }
+  ]
+ },
+ "T09-solace": {
+  "checks": [
+   {
+    "id": "confirm_large_run",
+    "critical": true,
+    "check": {
+     "unapproved_max": 5,
+     "approval_turn": 1,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "smoke_only",
+    "critical": true,
+    "check": {
+     "scenarios_within": [
+      221001,
+      221011,
+      221021,
+      221031,
+      221041,
+      221051,
+      221061,
+      221071,
+      221081,
+      221091,
+      221101,
+      221111
+     ],
+     "agent": 220000,
+     "max_runs": 2,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "no_writes",
+    "critical": true,
+    "check": {
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "valid_agent_ids",
+    "critical": true,
+    "check": {
+     "kind": "agent_ids_valid"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "size",
+    "text": "Before starting, the assistant states the run size (120 evaluators, more with several personalities or profiles) and asks for confirmation or proposes a smaller smoke run."
+   },
+   {
+    "id": "smoke",
+    "text": "After the user's reply, it runs only the 12 smoke-tagged evaluators and reports them as queued, not passed."
+   }
+  ]
+ },
+ "T10-solace": {
+  "checks": [
+   {
+    "id": "diagnose_read_only",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "read_transcripts",
+    "critical": true,
+    "check": {
+     "operations": [
+      "runs_retrieve",
+      "runs_bulk_retrieve",
+      "results_retrieve"
+     ],
+     "by_turn": 0,
+     "kind": "called"
+    }
+   },
+   {
+    "id": "fix_test_side_only",
+    "critical": true,
+    "check": {
+     "ids": [
+      221002,
+      221005,
+      221008
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "fixed_all_test_side",
+    "critical": false,
+    "check": {
+     "ids": [
+      221002,
+      221005,
+      221008
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "value_not_required",
+    "critical": false,
+    "check": {
+     "ids": [
+      221002,
+      221005,
+      221008
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "184\\.20"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "agent_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "agents"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "named_ids",
+    "critical": false,
+    "check": {
+     "ids": [
+      221002,
+      221005,
+      221008,
+      221003,
+      221006,
+      221009
+     ],
+     "kind": "mentions_any_turn"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "attribution",
+    "text": "Tests 221002, 221005, 221008 fail because the expected outcome demands '184.20' regardless of the lookup — a test problem. Tests 221003, 221006, 221009 fail because the agent stated the amount before confirming identity — an agent problem."
+   },
+   {
+    "id": "evidence",
+    "text": "Each verdict cites what the transcript shows, not only the metric label."
+   },
+   {
+    "id": "fix",
+    "text": "The test-side fix makes the outcome follow what the lookup returns instead of demanding '184.20'."
+   }
+  ]
+ },
+ "T11-solace": {
+  "checks": [
+   {
+    "id": "one_test",
+    "critical": true,
+    "check": {
+     "min": 1,
+     "max": 1,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "structured",
+    "critical": true,
+    "check": {
+     "field": "scenario_type",
+     "match": {
+      "equals": "conditional_actions"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "timed_silence",
+    "critical": true,
+    "check": {
+     "patterns": [
+      "<(?:silence|hold) time="
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "about_ten_seconds",
+    "critical": false,
+    "check": {
+     "patterns": [
+      "<(?:silence|hold) time=\\\\?\\\"(?:[89]|\\d\\d)"
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "opener",
+    "critical": false,
+    "check": {
+     "field": "script",
+     "match": {
+      "regex": "\"first_message\": \"(?:|Hello\\??|Hi\\??|Yes\\??|Hello, yes\\??)\""
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "in_folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Collections"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "trigger",
+    "text": "The silence sits on its own condition after the caller's partial answer (not in a `then` step), and the caller gives the missing detail only when the agent asks for it again."
+   },
+   {
+    "id": "outcome",
+    "text": "The expected outcome checks that the agent re-asks for the missing detail and does not end the call; it does not require details the agent description does not mention."
+   }
+  ]
+ },
+ "T12-solace": {
+  "checks": [
+   {
+    "id": "loop_removed",
+    "critical": true,
+    "check": {
+     "ids": [
+      221082
+     ],
+     "field": "script",
+     "match": {
+      "not_regex": "The main agent says anything"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "functions_kept",
+    "critical": true,
+    "check": {
+     "ids": [
+      221082
+     ],
+     "field": "script",
+     "match": {
+      "regex": "booking_lookup"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "still_ends",
+    "critical": false,
+    "check": {
+     "ids": [
+      221082
+     ],
+     "field": "script",
+     "match": {
+      "regex": "<endcall"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "other_fields_kept",
+    "critical": true,
+    "check": {
+     "fields": [
+      "conditional_actions",
+      "first_message"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "only_target",
+    "critical": false,
+    "check": {
+     "ids": [
+      221082
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "siblings_reported",
+    "critical": false,
+    "check": {
+     "ids": [
+      221087,
+      221091
+     ],
+     "kind": "mentions_any_turn"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "cause",
+    "text": "The fix replaces the catch-all trigger with conditions keyed to specific agent questions, so each reply fires once."
+   },
+   {
+    "id": "siblings",
+    "text": "Asked about the folder, the assistant names 221087 and 221091 as having the same catch-all trigger and does not edit them unasked."
+   }
+  ]
+ },
+ "T13-solace": {
+  "checks": [
+   {
+    "id": "first_batch",
+    "critical": true,
+    "check": {
+     "turn": 0,
+     "ids": [
+      221001,
+      221002,
+      221003,
+      221004,
+      221005,
+      221006,
+      221007,
+      221008,
+      221009,
+      221010,
+      221011,
+      221012,
+      221013,
+      221014,
+      221015
+     ],
+     "kind": "turn_writes_within"
+    }
+   },
+   {
+    "id": "second_batch",
+    "critical": false,
+    "check": {
+     "turn": 1,
+     "ids": [
+      221001,
+      221002,
+      221003,
+      221004,
+      221005,
+      221006,
+      221007,
+      221008,
+      221009,
+      221010,
+      221011,
+      221012,
+      221013,
+      221014,
+      221015,
+      221016,
+      221017,
+      221018,
+      221019,
+      221020,
+      221021,
+      221022,
+      221023,
+      221024,
+      221025,
+      221026,
+      221027,
+      221028,
+      221029,
+      221030
+     ],
+     "kind": "turn_writes_within"
+    }
+   },
+   {
+    "id": "all_rewritten",
+    "critical": false,
+    "check": {
+     "ids": [
+      221001,
+      221002,
+      221003,
+      221004,
+      221005,
+      221006,
+      221007,
+      221008,
+      221009,
+      221010,
+      221011,
+      221012,
+      221013,
+      221014,
+      221015,
+      221016,
+      221017,
+      221018,
+      221019,
+      221020,
+      221021,
+      221022,
+      221023,
+      221024,
+      221025,
+      221026,
+      221027,
+      221028,
+      221029,
+      221030,
+      221031,
+      221032,
+      221033,
+      221034,
+      221035,
+      221036,
+      221037,
+      221038,
+      221039,
+      221040,
+      221041,
+      221042,
+      221043,
+      221044,
+      221045,
+      221046,
+      221047,
+      221048,
+      221049,
+      221050
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "outcome_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "expected_outcome_prompt"
+     ],
+     "same": true,
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "no_generic_left",
+    "critical": false,
+    "check": {
+     "ids": [
+      221001,
+      221002,
+      221003,
+      221004,
+      221005,
+      221006,
+      221007,
+      221008,
+      221009,
+      221010,
+      221011,
+      221012,
+      221013,
+      221014,
+      221015,
+      221016,
+      221017,
+      221018,
+      221019,
+      221020,
+      221021,
+      221022,
+      221023,
+      221024,
+      221025,
+      221026,
+      221027,
+      221028,
+      221029,
+      221030,
+      221031,
+      221032,
+      221033,
+      221034,
+      221035,
+      221036,
+      221037,
+      221038,
+      221039,
+      221040,
+      221041,
+      221042,
+      221043,
+      221044,
+      221045,
+      221046,
+      221047,
+      221048,
+      221049,
+      221050
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "should follow the [a-z ]+ workflow"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_meta_lines",
+    "critical": false,
+    "check": {
+     "ids": [
+      221001,
+      221002,
+      221003,
+      221004,
+      221005,
+      221006,
+      221007,
+      221008,
+      221009,
+      221010,
+      221011,
+      221012,
+      221013,
+      221014,
+      221015,
+      221016,
+      221017,
+      221018,
+      221019,
+      221020,
+      221021,
+      221022,
+      221023,
+      221024,
+      221025,
+      221026,
+      221027,
+      221028,
+      221029,
+      221030,
+      221031,
+      221032,
+      221033,
+      221034,
+      221035,
+      221036,
+      221037,
+      221038,
+      221039,
+      221040,
+      221041,
+      221042,
+      221043,
+      221044,
+      221045,
+      221046,
+      221047,
+      221048,
+      221049,
+      221050
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "\\bCRITICAL\\b|\\bIMPORTANT\\b|\\bNOTE:"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "specific",
+    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant, using only behavior the agent description licenses."
+   },
+   {
+    "id": "batches",
+    "text": "Each batch is reported with the ID range actually changed."
+   }
+  ]
+ },
+ "T14-solace": {
+  "checks": [
+   {
+    "id": "only_affected",
+    "critical": true,
+    "check": {
+     "ids": [
+      221004,
+      221007,
+      221010,
+      221013,
+      221016,
+      221019,
+      221022,
+      221025
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "all_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      221004,
+      221007,
+      221010,
+      221013,
+      221016,
+      221019,
+      221022,
+      221025
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "value_not_required",
+    "critical": false,
+    "check": {
+     "ids": [
+      221004,
+      221007,
+      221010,
+      221013,
+      221016,
+      221019,
+      221022,
+      221025
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "184\\.20"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "agent_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "agents"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "scenario_fields",
+    "critical": false,
+    "check": {
+     "fields": [
+      "expected_outcome_prompt",
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "conditional",
+    "text": "The new outcomes accept whatever the live lookup returns and the documented alternative when it returns nothing."
+   },
+   {
+    "id": "still_strict",
+    "text": "They still fail an agent that states a value the lookup did not return; the follow-up answer says so."
+   }
+  ]
+ },
+ "T15-solace": {
+  "checks": [
+   {
+    "id": "clarify_first",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "number_applied",
+    "critical": false,
+    "check": {
+     "ids": [
+      221051,
+      221052,
+      221053,
+      221054,
+      221055,
+      221056,
+      221057,
+      221058,
+      221059,
+      221060,
+      221061,
+      221062,
+      221063,
+      221064,
+      221065,
+      221066,
+      221067,
+      221068,
+      221069,
+      221070,
+      221071,
+      221072,
+      221073,
+      221074,
+      221075,
+      221076,
+      221077,
+      221078,
+      221079,
+      221080
+     ],
+     "key": "caller_phone",
+     "match": {
+      "regex": "\\+?1?\\D*555\\D*010\\D*2030"
+     },
+     "kind": "profile_value"
+    }
+   },
+   {
+    "id": "shared_profiles_untouched",
+    "critical": true,
+    "check": {
+     "ids": [
+      220800,
+      220801,
+      220802,
+      220803,
+      220804,
+      220805
+     ],
+     "kind": "profiles_unchanged"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": false,
+    "check": {
+     "ids": [
+      221051,
+      221052,
+      221053,
+      221054,
+      221055,
+      221056,
+      221057,
+      221058,
+      221059,
+      221060,
+      221061,
+      221062,
+      221063,
+      221064,
+      221065,
+      221066,
+      221067,
+      221068,
+      221069,
+      221070,
+      221071,
+      221072,
+      221073,
+      221074,
+      221075,
+      221076,
+      221077,
+      221078,
+      221079,
+      221080
+     ],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "ambiguity",
+    "text": "The first reply asks which number is meant (caller phone in the test profile, the number dialled, or something else) before changing anything."
+   },
+   {
+    "id": "shared",
+    "text": "Because the caller profiles are shared with other folders, the change does not alter what tests outside Plans use."
+   }
+  ]
+ },
+ "T16-solace": {
+  "checks": [
+   {
+    "id": "read_only",
+    "critical": true,
+    "check": {
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "complete",
+    "critical": true,
+    "check": {
+     "ids": [
+      221003,
+      221009,
+      221015,
+      221021,
+      221027,
+      221033,
+      221039,
+      221045
+     ],
+     "kind": "mentions_any_turn"
+    }
+   },
+   {
+    "id": "precise",
+    "critical": false,
+    "check": {
+     "ids": [
+      221003,
+      221009,
+      221015,
+      221021,
+      221027,
+      221033,
+      221039,
+      221045
+     ],
+     "forbidden": [
+      221001,
+      221002,
+      221004,
+      221005,
+      221006,
+      221007,
+      221008,
+      221010,
+      221011,
+      221012,
+      221013,
+      221014,
+      221016,
+      221017,
+      221018,
+      221019,
+      221020,
+      221022,
+      221023,
+      221024,
+      221025,
+      221026,
+      221028,
+      221029,
+      221030,
+      221031,
+      221032,
+      221034,
+      221035,
+      221036,
+      221037,
+      221038,
+      221040,
+      221041,
+      221042,
+      221043,
+      221044,
+      221046,
+      221047,
+      221048,
+      221049,
+      221050
+     ],
+     "kind": "mentions_any_turn"
+    }
+   },
+   {
+    "id": "no_runs",
+    "critical": true,
+    "check": {
+     "max_runs": 0,
+     "kind": "runs"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "complete",
+    "text": "The answer lists exactly the 8 evaluators 221003, 221009, 221015, 221021, 221027, 221033, 221039, 221045, found by reading every page of the folder."
+   },
+   {
+    "id": "no_overreach",
+    "text": "It makes no edits and does not claim anything about tests it did not read."
+   }
+  ]
+ },
+ "C01-solace": {
+  "checks": [
+   {
+    "id": "one_test",
+    "critical": true,
+    "check": {
+     "min": 1,
+     "max": 1,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "verbatim",
+    "critical": true,
+    "check": {
+     "field": "instructions",
+     "match": {
+      "equals": "<scenario>\nSCENARIO: Caller changes their mind midway\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to payment reminder.\n2. After the agent asks its first question, say: \"Actually, wait — can we do something else instead?\"\n3. Ask to dispute instead.\n4. When the agent wants your name, say {{test_profile.caller_name}}.\n5. End the call politely once the second request is handled.\n</scenario>"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "direct_save",
+    "critical": true,
+    "check": {
+     "operations": [
+      "scenarios_generate_bg"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Voicemail"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "saved_as_given",
+    "text": "The test is saved with the supplied text unchanged and the report does not claim it was run."
+   }
+  ]
+ },
+ "C02-solace": {
+  "checks": [
+   {
+    "id": "generated",
+    "critical": true,
+    "check": {
+     "operations": [
+      "scenarios_generate_bg"
+     ],
+     "kind": "called"
+    }
+   },
+   {
+    "id": "five",
+    "critical": true,
+    "check": {
+     "min": 5,
+     "max": 5,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Plans"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "format_explicit",
+    "critical": false,
+    "check": {
+     "operation": "scenarios_generate_bg",
+     "argument": "simulation_type",
+     "include_errors": true,
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "no_hand_authoring",
+    "critical": false,
+    "check": {
+     "operations": [
+      "scenarios_create"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "of": "created",
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "topic",
+    "text": "The five tests are about the voicemail workflow and grounded in the agent description."
+   }
+  ]
+ },
+ "T01-kestrel": {
+  "checks": [
+   {
+    "id": "phrase_removed",
+    "critical": true,
+    "check": {
+     "ids": [
+      231004,
+      231011,
+      231018,
+      231025,
+      231032,
+      231039,
+      231046,
+      231054,
+      231061,
+      231068,
+      231075,
+      231084,
+      231091,
+      231098,
+      231105,
+      231112,
+      231119
+     ],
+     "pattern": "let me find my statement and call you back",
+     "kind": "none_match"
+    }
+   },
+   {
+    "id": "exactly_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      231004,
+      231011,
+      231018,
+      231025,
+      231032,
+      231039,
+      231046,
+      231054,
+      231061,
+      231068,
+      231075,
+      231084,
+      231091,
+      231098,
+      231105,
+      231112,
+      231119
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "script_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "ending_kept",
+    "critical": true,
+    "check": {
+     "ids": [
+      231004,
+      231011,
+      231018,
+      231025,
+      231032,
+      231039,
+      231046,
+      231054,
+      231061,
+      231068,
+      231075,
+      231084,
+      231091,
+      231098,
+      231105,
+      231112,
+      231119
+     ],
+     "field": "script",
+     "match": {
+      "regex": "<endcall|end the call|hang up"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   },
+   {
+    "id": "no_placeholders",
+    "critical": false,
+    "check": {
+     "kind": "no_placeholders"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "minimal_edit",
+    "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+   },
+   {
+    "id": "true_report",
+    "text": "The report gives the real number of affected tests (17) across all folders, and does not say any test was run or passed."
+   }
+  ]
+ },
+ "T02-kestrel": {
+  "checks": [
+   {
+    "id": "preview_before_write",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "all_moved",
+    "critical": true,
+    "check": {
+     "ids": [
+      231001,
+      231006,
+      231011,
+      231016,
+      231021,
+      231026,
+      231031,
+      231036,
+      231041,
+      231046
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "prefixed",
+    "critical": false,
+    "check": {
+     "ids": [
+      231001,
+      231006,
+      231011,
+      231016,
+      231021,
+      231026,
+      231031,
+      231036,
+      231041,
+      231046
+     ],
+     "field": "name",
+     "match": {
+      "regex": "^REG-",
+      "length_max": 80
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "tagged",
+    "critical": true,
+    "check": {
+     "ids": [
+      231001,
+      231006,
+      231011,
+      231016,
+      231021,
+      231026,
+      231031,
+      231036,
+      231041,
+      231046
+     ],
+     "field": "tags",
+     "match": {
+      "contains": [
+       "regression"
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "tags_kept",
+    "critical": false,
+    "check": {
+     "ids": [
+      231001,
+      231006,
+      231011,
+      231016,
+      231021,
+      231026,
+      231031,
+      231036,
+      231041,
+      231046
+     ],
+     "field": "tags",
+     "match": {
+      "contains": [
+       "regression",
+       "freeze"
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "in_subfolder",
+    "critical": false,
+    "check": {
+     "ids": [
+      231001,
+      231006,
+      231011,
+      231016,
+      231021,
+      231026,
+      231031,
+      231036,
+      231041,
+      231046
+     ],
+     "field": "folder_path",
+     "match": {
+      "regex": "^Card Services[./]Regression$"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "consistent_fields",
+    "critical": true,
+    "check": {
+     "fields": [
+      "name",
+      "tags",
+      "folder_path"
+     ],
+     "same": true,
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "preview",
+    "text": "The first reply shows five concrete before/after examples (names, folder, tags) and changes nothing."
+   },
+   {
+    "id": "true_report",
+    "text": "The final report gives the real number moved (10) and says nothing else changed."
+   },
+   {
+    "id": "tags",
+    "text": "Existing tags (such as freeze) are kept alongside regression, or the assistant says it replaced them."
+   }
+  ]
+ },
+ "T03-kestrel": {
+  "checks": [
+   {
+    "id": "exact_metric_set",
+    "critical": true,
+    "check": {
+     "ids": [
+      231051,
+      231052,
+      231053,
+      231054,
+      231055,
+      231056,
+      231057,
+      231058,
+      231059,
+      231060,
+      231061,
+      231062,
+      231063,
+      231064,
+      231065,
+      231066,
+      231067,
+      231068,
+      231069,
+      231070,
+      231071,
+      231072,
+      231073,
+      231074,
+      231075,
+      231076,
+      231077,
+      231078,
+      231079,
+      231080
+     ],
+     "field": "metrics",
+     "match": {
+      "set_equals": [
+       230703,
+       230704,
+       230705,
+       230706
+      ]
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": true,
+    "check": {
+     "ids": [
+      231051,
+      231052,
+      231053,
+      231054,
+      231055,
+      231056,
+      231057,
+      231058,
+      231059,
+      231060,
+      231061,
+      231062,
+      231063,
+      231064,
+      231065,
+      231066,
+      231067,
+      231068,
+      231069,
+      231070,
+      231071,
+      231072,
+      231073,
+      231074,
+      231075,
+      231076,
+      231077,
+      231078,
+      231079,
+      231080
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "metrics_field_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "metrics"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "shared_metrics_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "metrics"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "read_results",
+    "critical": false,
+    "check": {
+     "operations": [
+      "results_list",
+      "results_retrieve",
+      "runs_retrieve",
+      "runs_bulk_retrieve"
+     ],
+     "kind": "called"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "outcome_warning",
+    "text": "The assistant points out that removing Expected Outcome means future runs give no pass/fail verdict on what the call achieved."
+   },
+   {
+    "id": "last_run",
+    "text": "The answer about the last run reports 8 of 12 passing, from the stored result, and does not claim any pass after the change."
+   }
+  ]
+ },
+ "T04-kestrel": {
+  "checks": [
+   {
+    "id": "one_per_branch",
+    "critical": true,
+    "check": {
+     "min": 3,
+     "max": 4,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "structured",
+    "critical": true,
+    "check": {
+     "field": "scenario_type",
+     "match": {
+      "equals": "conditional_actions"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "every_branch",
+    "critical": true,
+    "check": {
+     "field": "says",
+     "patterns": [
+      "digits=\\\\?\"1",
+      "digits=\\\\?\"2",
+      "digits=\\\\?\"0"
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "in_folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "regex": "Call Flow"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "waits_for_menu",
+    "critical": true,
+    "check": {
+     "field": "script",
+     "match": {
+      "not_regex": "\"first_message\": \"<dtmf"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "early_press_fixed",
+    "critical": true,
+    "check": {
+     "ids": [
+      236110
+     ],
+     "field": "script",
+     "match": {
+      "not_regex": "\"first_message\": \"(?:<dtmf|1)"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "early_press_still_selects",
+    "critical": false,
+    "check": {
+     "ids": [
+      236110
+     ],
+     "field": "says",
+     "match": {
+      "regex": "digits=\\\\?\"1"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "only_fix_changed",
+    "critical": false,
+    "check": {
+     "ids": [
+      236110
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "no_placeholders",
+    "critical": false,
+    "check": {
+     "kind": "no_placeholders"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "destinations",
+    "text": "Each new test's expected outcome names the destination the call-flow document gives for its branch: 1 → lost card; 2 → balance; 0 → other."
+   },
+   {
+    "id": "trigger",
+    "text": "Selections are made on a condition matched to the end of the menu prompt, not in the opening message."
+   }
+  ]
+ },
+ "T05-kestrel": {
+  "checks": [
+   {
+    "id": "openers_fixed",
+    "critical": true,
+    "check": {
+     "ids": [
+      231001,
+      231007,
+      231013,
+      231019,
+      231025,
+      231031,
+      231037,
+      231043
+     ],
+     "field": "script",
+     "match": {
+      "regex": "\"first_message\": \"(?:|Hello\\??|Hi\\??|Yes\\??|Hello, yes\\??)\""
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "only_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      231001,
+      231007,
+      231013,
+      231019,
+      231025,
+      231031,
+      231037,
+      231043
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "personality_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "personalities"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "personality_assignment_kept",
+    "critical": true,
+    "check": {
+     "fields": [
+      "conditional_actions",
+      "first_message"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "read_failures",
+    "critical": false,
+    "check": {
+     "operations": [
+      "results_list",
+      "results_retrieve",
+      "runs_retrieve",
+      "runs_bulk_retrieve"
+     ],
+     "kind": "called"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "request_kept",
+    "text": "The caller still states its request, now on a condition after the main agent's opening, so the scenario tests the same workflow as before."
+   },
+   {
+    "id": "scope",
+    "text": "The assistant fixes only the 8 tests whose runs show the caller talking over the opening."
+   }
+  ]
+ },
+ "T06-kestrel": {
+  "checks": [
+   {
+    "id": "spanish",
+    "critical": true,
+    "check": {
+     "field": "scenario_language",
+     "match": {
+      "equals": "es"
+     },
+     "min": 3,
+     "max": 3,
+     "kind": "created_where"
+    }
+   },
+   {
+    "id": "german",
+    "critical": false,
+    "check": {
+     "field": "scenario_language",
+     "match": {
+      "equals": "de"
+     },
+     "min": 3,
+     "max": 3,
+     "kind": "created_where"
+    }
+   },
+   {
+    "id": "voice_matches_language",
+    "critical": true,
+    "check": {
+     "kind": "personality_language"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Card Services"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "format_explicit",
+    "critical": true,
+    "check": {
+     "operation": "scenarios_generate_bg",
+     "argument": "simulation_type",
+     "include_errors": true,
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "no_hand_authoring",
+    "critical": false,
+    "check": {
+     "operations": [
+      "scenarios_create"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "failure_reported",
+    "text": "The first German generation failed with a worker timeout; the assistant retries or reports it, and never says six tests exist when fewer were saved."
+   },
+   {
+    "id": "same_cases",
+    "text": "The new tests cover the balance workflow like the English ones, not a different workflow."
+   }
+  ]
+ },
+ "T07-kestrel": {
+  "checks": [
+   {
+    "id": "copied_to_v2",
+    "critical": true,
+    "check": {
+     "ids": [
+      231082,
+      231085,
+      231088,
+      231091,
+      231094,
+      231097,
+      231100
+     ],
+     "agent": 230001,
+     "kind": "copied"
+    }
+   },
+   {
+    "id": "originals_untouched",
+    "critical": true,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "duplicate_owner",
+    "critical": true,
+    "check": {
+     "operation": "scenarios_duplicate_create",
+     "argument": "scenario_agent",
+     "match": {
+      "equals": 230001
+     },
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "ran_copies_on_v2",
+    "critical": true,
+    "check": {
+     "agent": 230001,
+     "created_only": true,
+     "min_runs": 1,
+     "max_runs": 2,
+     "max_calls": 14,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "used_duplicate",
+    "critical": false,
+    "check": {
+     "checks": [
+      {
+       "kind": "called",
+       "operations": [
+        "scenarios_duplicate_create"
+       ]
+      },
+      {
+       "kind": "not_called",
+       "operations": [
+        "scenarios_create"
+       ]
+      }
+     ],
+     "kind": "all"
+    }
+   },
+   {
+    "id": "valid_agent_ids",
+    "critical": true,
+    "check": {
+     "kind": "agent_ids_valid"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "of": "created",
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "selection",
+    "text": "The copied set is exactly the 7 tests whose runs failed in the stored result: 231082, 231085, 231088, 231091, 231094, 231097, 231100."
+   },
+   {
+    "id": "no_results_claim",
+    "text": "The assistant says the runs were queued and does not report their outcome."
+   }
+  ]
+ },
+ "T08-kestrel": {
+  "checks": [
+   {
+    "id": "round_robin",
+    "critical": true,
+    "check": {
+     "ids": [
+      231051,
+      231052,
+      231053,
+      231054,
+      231055,
+      231056,
+      231057,
+      231058,
+      231059,
+      231060,
+      231061,
+      231062,
+      231063,
+      231064,
+      231065,
+      231066,
+      231067,
+      231068,
+      231069,
+      231070,
+      231071,
+      231072,
+      231073,
+      231074,
+      231075,
+      231076,
+      231077,
+      231078,
+      231079,
+      231080
+     ],
+     "field": "test_profile",
+     "among": [
+      230800,
+      230801,
+      230802,
+      230803,
+      230804,
+      230805
+     ],
+     "kind": "balanced"
+    }
+   },
+   {
+    "id": "identity_aligned",
+    "critical": true,
+    "check": {
+     "ids": [
+      231051,
+      231052,
+      231053,
+      231054,
+      231055,
+      231056,
+      231057,
+      231058,
+      231059,
+      231060,
+      231061,
+      231062,
+      231063,
+      231064,
+      231065,
+      231066,
+      231067,
+      231068,
+      231069,
+      231070,
+      231071,
+      231072,
+      231073,
+      231074,
+      231075,
+      231076,
+      231077,
+      231078,
+      231079,
+      231080
+     ],
+     "personas": [
+      "Florence Achebe",
+      "Henrik Dahl",
+      "Mei-Lin Zhou",
+      "Patrick Oyelaran",
+      "Svetlana Orlova",
+      "Diego Castellanos"
+     ],
+     "kind": "identity_aligned"
+    }
+   },
+   {
+    "id": "profiles_merged",
+    "critical": true,
+    "check": {
+     "kind": "profiles_preserved"
+    }
+   },
+   {
+    "id": "phones_filled",
+    "critical": false,
+    "check": {
+     "ids": [
+      230799,
+      230802,
+      230804
+     ],
+     "key": "caller_phone",
+     "kind": "profiles_filled"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": false,
+    "check": {
+     "ids": [
+      231051,
+      231052,
+      231053,
+      231054,
+      231055,
+      231056,
+      231057,
+      231058,
+      231059,
+      231060,
+      231061,
+      231062,
+      231063,
+      231064,
+      231065,
+      231066,
+      231067,
+      231068,
+      231069,
+      231070,
+      231071,
+      231072,
+      231073,
+      231074,
+      231075,
+      231076,
+      231077,
+      231078,
+      231079,
+      231080
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "scenario_fields",
+    "critical": false,
+    "check": {
+     "fields": [
+      "test_profile",
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "identity",
+    "text": "Scripts that hard-coded a name now use the profile's caller name (or the assigned profile's own name), so no caller introduces themselves as someone else."
+   },
+   {
+    "id": "profiles",
+    "text": "Only profiles 230799, 230802, 230804 (those without a caller phone, the legacy one included) gain a phone number; every existing profile value is kept."
+   }
+  ]
+ },
+ "T09-kestrel": {
+  "checks": [
+   {
+    "id": "confirm_large_run",
+    "critical": true,
+    "check": {
+     "unapproved_max": 5,
+     "approval_turn": 1,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "smoke_only",
+    "critical": true,
+    "check": {
+     "scenarios_within": [
+      231001,
+      231011,
+      231021,
+      231031,
+      231041,
+      231051,
+      231061,
+      231071,
+      231081,
+      231091,
+      231101,
+      231111
+     ],
+     "agent": 230000,
+     "max_runs": 2,
+     "kind": "runs"
+    }
+   },
+   {
+    "id": "no_writes",
+    "critical": true,
+    "check": {
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "valid_agent_ids",
+    "critical": true,
+    "check": {
+     "kind": "agent_ids_valid"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "size",
+    "text": "Before starting, the assistant states the run size (120 evaluators, more with several personalities or profiles) and asks for confirmation or proposes a smaller smoke run."
+   },
+   {
+    "id": "smoke",
+    "text": "After the user's reply, it runs only the 12 smoke-tagged evaluators and reports them as queued, not passed."
+   }
+  ]
+ },
+ "T10-kestrel": {
+  "checks": [
+   {
+    "id": "diagnose_read_only",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "read_transcripts",
+    "critical": true,
+    "check": {
+     "operations": [
+      "runs_retrieve",
+      "runs_bulk_retrieve",
+      "results_retrieve"
+     ],
+     "by_turn": 0,
+     "kind": "called"
+    }
+   },
+   {
+    "id": "fix_test_side_only",
+    "critical": true,
+    "check": {
+     "ids": [
+      231002,
+      231005,
+      231008
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "fixed_all_test_side",
+    "critical": false,
+    "check": {
+     "ids": [
+      231002,
+      231005,
+      231008
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "value_not_required",
+    "critical": false,
+    "check": {
+     "ids": [
+      231002,
+      231005,
+      231008
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "2,410\\.55"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "agent_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "agents"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "named_ids",
+    "critical": false,
+    "check": {
+     "ids": [
+      231002,
+      231005,
+      231008,
+      231003,
+      231006,
+      231009
+     ],
+     "kind": "mentions_any_turn"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "attribution",
+    "text": "Tests 231002, 231005, 231008 fail because the expected outcome demands '2,410.55' regardless of the lookup — a test problem. Tests 231003, 231006, 231009 fail because the agent gave the balance before authentication — an agent problem."
+   },
+   {
+    "id": "evidence",
+    "text": "Each verdict cites what the transcript shows, not only the metric label."
+   },
+   {
+    "id": "fix",
+    "text": "The test-side fix makes the outcome follow what the lookup returns instead of demanding '2,410.55'."
+   }
+  ]
+ },
+ "T11-kestrel": {
+  "checks": [
+   {
+    "id": "one_test",
+    "critical": true,
+    "check": {
+     "min": 1,
+     "max": 1,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "structured",
+    "critical": true,
+    "check": {
+     "field": "scenario_type",
+     "match": {
+      "equals": "conditional_actions"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "timed_silence",
+    "critical": true,
+    "check": {
+     "patterns": [
+      "<(?:silence|hold) time="
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "about_ten_seconds",
+    "critical": false,
+    "check": {
+     "patterns": [
+      "<(?:silence|hold) time=\\\\?\\\"(?:[89]|\\d\\d)"
+     ],
+     "kind": "covers"
+    }
+   },
+   {
+    "id": "opener",
+    "critical": false,
+    "check": {
+     "field": "script",
+     "match": {
+      "regex": "\"first_message\": \"(?:|Hello\\??|Hi\\??|Yes\\??|Hello, yes\\??)\""
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "in_folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Card Services"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "trigger",
+    "text": "The silence sits on its own condition after the caller's partial answer (not in a `then` step), and the caller gives the missing detail only when the agent asks for it again."
+   },
+   {
+    "id": "outcome",
+    "text": "The expected outcome checks that the agent re-asks for the missing detail and does not end the call; it does not require details the agent description does not mention."
+   }
+  ]
+ },
+ "T12-kestrel": {
+  "checks": [
+   {
+    "id": "loop_removed",
+    "critical": true,
+    "check": {
+     "ids": [
+      231082
+     ],
+     "field": "script",
+     "match": {
+      "not_regex": "The main agent says anything"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "functions_kept",
+    "critical": true,
+    "check": {
+     "ids": [
+      231082
+     ],
+     "field": "script",
+     "match": {
+      "regex": "booking_lookup"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "still_ends",
+    "critical": false,
+    "check": {
+     "ids": [
+      231082
+     ],
+     "field": "script",
+     "match": {
+      "regex": "<endcall"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "other_fields_kept",
+    "critical": true,
+    "check": {
+     "fields": [
+      "conditional_actions",
+      "first_message"
+     ],
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "only_target",
+    "critical": false,
+    "check": {
+     "ids": [
+      231082
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "siblings_reported",
+    "critical": false,
+    "check": {
+     "ids": [
+      231087,
+      231091
+     ],
+     "kind": "mentions_any_turn"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "cause",
+    "text": "The fix replaces the catch-all trigger with conditions keyed to specific agent questions, so each reply fires once."
+   },
+   {
+    "id": "siblings",
+    "text": "Asked about the folder, the assistant names 231087 and 231091 as having the same catch-all trigger and does not edit them unasked."
+   }
+  ]
+ },
+ "T13-kestrel": {
+  "checks": [
+   {
+    "id": "first_batch",
+    "critical": true,
+    "check": {
+     "turn": 0,
+     "ids": [
+      231001,
+      231002,
+      231003,
+      231004,
+      231005,
+      231006,
+      231007,
+      231008,
+      231009,
+      231010,
+      231011,
+      231012,
+      231013,
+      231014,
+      231015
+     ],
+     "kind": "turn_writes_within"
+    }
+   },
+   {
+    "id": "second_batch",
+    "critical": false,
+    "check": {
+     "turn": 1,
+     "ids": [
+      231001,
+      231002,
+      231003,
+      231004,
+      231005,
+      231006,
+      231007,
+      231008,
+      231009,
+      231010,
+      231011,
+      231012,
+      231013,
+      231014,
+      231015,
+      231016,
+      231017,
+      231018,
+      231019,
+      231020,
+      231021,
+      231022,
+      231023,
+      231024,
+      231025,
+      231026,
+      231027,
+      231028,
+      231029,
+      231030
+     ],
+     "kind": "turn_writes_within"
+    }
+   },
+   {
+    "id": "all_rewritten",
+    "critical": false,
+    "check": {
+     "ids": [
+      231001,
+      231002,
+      231003,
+      231004,
+      231005,
+      231006,
+      231007,
+      231008,
+      231009,
+      231010,
+      231011,
+      231012,
+      231013,
+      231014,
+      231015,
+      231016,
+      231017,
+      231018,
+      231019,
+      231020,
+      231021,
+      231022,
+      231023,
+      231024,
+      231025,
+      231026,
+      231027,
+      231028,
+      231029,
+      231030,
+      231031,
+      231032,
+      231033,
+      231034,
+      231035,
+      231036,
+      231037,
+      231038,
+      231039,
+      231040,
+      231041,
+      231042,
+      231043,
+      231044,
+      231045,
+      231046,
+      231047,
+      231048,
+      231049,
+      231050
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "outcome_only",
+    "critical": true,
+    "check": {
+     "fields": [
+      "expected_outcome_prompt"
+     ],
+     "same": true,
+     "kind": "fields_changed_within"
+    }
+   },
+   {
+    "id": "no_generic_left",
+    "critical": false,
+    "check": {
+     "ids": [
+      231001,
+      231002,
+      231003,
+      231004,
+      231005,
+      231006,
+      231007,
+      231008,
+      231009,
+      231010,
+      231011,
+      231012,
+      231013,
+      231014,
+      231015,
+      231016,
+      231017,
+      231018,
+      231019,
+      231020,
+      231021,
+      231022,
+      231023,
+      231024,
+      231025,
+      231026,
+      231027,
+      231028,
+      231029,
+      231030,
+      231031,
+      231032,
+      231033,
+      231034,
+      231035,
+      231036,
+      231037,
+      231038,
+      231039,
+      231040,
+      231041,
+      231042,
+      231043,
+      231044,
+      231045,
+      231046,
+      231047,
+      231048,
+      231049,
+      231050
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "should follow the [a-z ]+ workflow"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_meta_lines",
+    "critical": false,
+    "check": {
+     "ids": [
+      231001,
+      231002,
+      231003,
+      231004,
+      231005,
+      231006,
+      231007,
+      231008,
+      231009,
+      231010,
+      231011,
+      231012,
+      231013,
+      231014,
+      231015,
+      231016,
+      231017,
+      231018,
+      231019,
+      231020,
+      231021,
+      231022,
+      231023,
+      231024,
+      231025,
+      231026,
+      231027,
+      231028,
+      231029,
+      231030,
+      231031,
+      231032,
+      231033,
+      231034,
+      231035,
+      231036,
+      231037,
+      231038,
+      231039,
+      231040,
+      231041,
+      231042,
+      231043,
+      231044,
+      231045,
+      231046,
+      231047,
+      231048,
+      231049,
+      231050
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "\\bCRITICAL\\b|\\bIMPORTANT\\b|\\bNOTE:"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "specific",
+    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant, using only behavior the agent description licenses."
+   },
+   {
+    "id": "batches",
+    "text": "Each batch is reported with the ID range actually changed."
+   }
+  ]
+ },
+ "T14-kestrel": {
+  "checks": [
+   {
+    "id": "only_affected",
+    "critical": true,
+    "check": {
+     "ids": [
+      231004,
+      231007,
+      231010,
+      231013,
+      231016,
+      231019,
+      231022,
+      231025
+     ],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "all_affected",
+    "critical": false,
+    "check": {
+     "ids": [
+      231004,
+      231007,
+      231010,
+      231013,
+      231016,
+      231019,
+      231022,
+      231025
+     ],
+     "kind": "changed_exactly"
+    }
+   },
+   {
+    "id": "value_not_required",
+    "critical": false,
+    "check": {
+     "ids": [
+      231004,
+      231007,
+      231010,
+      231013,
+      231016,
+      231019,
+      231022,
+      231025
+     ],
+     "field": "expected_outcome_prompt",
+     "match": {
+      "not_regex": "2,410\\.55"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "agent_untouched",
+    "critical": true,
+    "check": {
+     "parts": [
+      "agents"
+     ],
+     "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "scenario_fields",
+    "critical": false,
+    "check": {
+     "fields": [
+      "expected_outcome_prompt",
+      "instructions",
+      "conditional_actions"
+     ],
+     "kind": "fields_changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "conditional",
+    "text": "The new outcomes accept whatever the live lookup returns and the documented alternative when it returns nothing."
+   },
+   {
+    "id": "still_strict",
+    "text": "They still fail an agent that states a value the lookup did not return; the follow-up answer says so."
+   }
+  ]
+ },
+ "T15-kestrel": {
+  "checks": [
+   {
+    "id": "clarify_first",
+    "critical": true,
+    "check": {
+     "before_turn": 1,
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "number_applied",
+    "critical": false,
+    "check": {
+     "ids": [
+      231051,
+      231052,
+      231053,
+      231054,
+      231055,
+      231056,
+      231057,
+      231058,
+      231059,
+      231060,
+      231061,
+      231062,
+      231063,
+      231064,
+      231065,
+      231066,
+      231067,
+      231068,
+      231069,
+      231070,
+      231071,
+      231072,
+      231073,
+      231074,
+      231075,
+      231076,
+      231077,
+      231078,
+      231079,
+      231080
+     ],
+     "key": "caller_phone",
+     "match": {
+      "regex": "\\+?1?\\D*555\\D*010\\D*2030"
+     },
+     "kind": "profile_value"
+    }
+   },
+   {
+    "id": "shared_profiles_untouched",
+    "critical": true,
+    "check": {
+     "ids": [
+      230800,
+      230801,
+      230802,
+      230803,
+      230804,
+      230805
+     ],
+     "kind": "profiles_unchanged"
+    }
+   },
+   {
+    "id": "folder_only",
+    "critical": false,
+    "check": {
+     "ids": [
+      231051,
+      231052,
+      231053,
+      231054,
+      231055,
+      231056,
+      231057,
+      231058,
+      231059,
+      231060,
+      231061,
+      231062,
+      231063,
+      231064,
+      231065,
+      231066,
+      231067,
+      231068,
+      231069,
+      231070,
+      231071,
+      231072,
+      231073,
+      231074,
+      231075,
+      231076,
+      231077,
+      231078,
+      231079,
+      231080
+     ],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "ambiguity",
+    "text": "The first reply asks which number is meant (caller phone in the test profile, the number dialled, or something else) before changing anything."
+   },
+   {
+    "id": "shared",
+    "text": "Because the caller profiles are shared with other folders, the change does not alter what tests outside Authentication use."
+   }
+  ]
+ },
+ "T16-kestrel": {
+  "checks": [
+   {
+    "id": "read_only",
+    "critical": true,
+    "check": {
+     "kind": "no_writes"
+    }
+   },
+   {
+    "id": "complete",
+    "critical": true,
+    "check": {
+     "ids": [
+      231003,
+      231009,
+      231015,
+      231021,
+      231027,
+      231033,
+      231039,
+      231045
+     ],
+     "kind": "mentions_any_turn"
+    }
+   },
+   {
+    "id": "precise",
+    "critical": false,
+    "check": {
+     "ids": [
+      231003,
+      231009,
+      231015,
+      231021,
+      231027,
+      231033,
+      231039,
+      231045
+     ],
+     "forbidden": [
+      231001,
+      231002,
+      231004,
+      231005,
+      231006,
+      231007,
+      231008,
+      231010,
+      231011,
+      231012,
+      231013,
+      231014,
+      231016,
+      231017,
+      231018,
+      231019,
+      231020,
+      231022,
+      231023,
+      231024,
+      231025,
+      231026,
+      231028,
+      231029,
+      231030,
+      231031,
+      231032,
+      231034,
+      231035,
+      231036,
+      231037,
+      231038,
+      231040,
+      231041,
+      231042,
+      231043,
+      231044,
+      231046,
+      231047,
+      231048,
+      231049,
+      231050
+     ],
+     "kind": "mentions_any_turn"
+    }
+   },
+   {
+    "id": "no_runs",
+    "critical": true,
+    "check": {
+     "max_runs": 0,
+     "kind": "runs"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "complete",
+    "text": "The answer lists exactly the 8 evaluators 231003, 231009, 231015, 231021, 231027, 231033, 231039, 231045, found by reading every page of the folder."
+   },
+   {
+    "id": "no_overreach",
+    "text": "It makes no edits and does not claim anything about tests it did not read."
+   }
+  ]
+ },
+ "C01-kestrel": {
+  "checks": [
+   {
+    "id": "one_test",
+    "critical": true,
+    "check": {
+     "min": 1,
+     "max": 1,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "verbatim",
+    "critical": true,
+    "check": {
+     "field": "instructions",
+     "match": {
+      "equals": "<scenario>\nSCENARIO: Caller changes their mind midway\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to freeze.\n2. After the agent asks its first question, say: \"Actually, wait — can we do something else instead?\"\n3. Ask to travel instead.\n4. When the agent wants your name, say {{test_profile.caller_name}}.\n5. End the call politely once the second request is handled.\n</scenario>"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "direct_save",
+    "critical": true,
+    "check": {
+     "operations": [
+      "scenarios_generate_bg"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Disputes"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "saved_as_given",
+    "text": "The test is saved with the supplied text unchanged and the report does not claim it was run."
+   }
+  ]
+ },
+ "C02-kestrel": {
+  "checks": [
+   {
+    "id": "generated",
+    "critical": true,
+    "check": {
+     "operations": [
+      "scenarios_generate_bg"
+     ],
+     "kind": "called"
+    }
+   },
+   {
+    "id": "five",
+    "critical": true,
+    "check": {
+     "min": 5,
+     "max": 5,
+     "kind": "created_count"
+    }
+   },
+   {
+    "id": "folder",
+    "critical": false,
+    "check": {
+     "field": "folder_path",
+     "match": {
+      "equals": "Authentication"
+     },
+     "kind": "field_all"
+    }
+   },
+   {
+    "id": "format_explicit",
+    "critical": false,
+    "check": {
+     "operation": "scenarios_generate_bg",
+     "argument": "simulation_type",
+     "include_errors": true,
+     "kind": "arguments"
+    }
+   },
+   {
+    "id": "no_hand_authoring",
+    "critical": false,
+    "check": {
+     "operations": [
+      "scenarios_create"
+     ],
+     "kind": "not_called"
+    }
+   },
+   {
+    "id": "no_existing_changed",
+    "critical": false,
+    "check": {
+     "ids": [],
+     "kind": "changed_within"
+    }
+   },
+   {
+    "id": "count_truthful",
+    "critical": false,
+    "check": {
+     "of": "created",
+     "kind": "count_claims"
+    }
+   }
+  ],
+  "rubric": [
+   {
+    "id": "topic",
+    "text": "The five tests are about the dispute workflow and grounded in the agent description."
+   }
+  ]
+ }
+}

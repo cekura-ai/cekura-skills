@@ -65,6 +65,7 @@ class Bridge:
         self.trace, self.turn, self.lock = [], 0, threading.Lock()
         self.counts, self.applied, self.rewrites, self.injected_jobs = {}, set(), {}, {}
         self.initial_ids = set()
+        self.allowed = ALLOWED
         self.http = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
     # --- REST ---------------------------------------------------------------------------
@@ -113,7 +114,7 @@ class Bridge:
 
     def _dispatch(self, op, arguments):
         tool = self.catalog.get(op)
-        if tool is None or op not in ALLOWED:
+        if tool is None or op not in self.allowed:
             raise ToolError("403: operation unavailable in the isolated experiment")
         schema = tool["inputSchema"]
         try:
@@ -253,17 +254,20 @@ class Bridge:
                 return
             (method, path, _), headers = request
             body = json.loads(stream.read(int(headers.get("content-length", "0"))) or b"{}")
-            if method != "POST" or path not in ("/call", "/events"):
-                value, status = {"error": "unknown bridge endpoint"}, 404
-            elif path == "/call":
-                response, cancel = self.call(body["name"], body.get("arguments", {}), int(body["turn"]))
-                value, status = {"response": response, "cancel": cancel}, 200
-            else:
-                value, status = {"cancel": self.apply_events(int(body["turn"]), body.get("boundary", "before_turn"))}, 200
+            value, status = self.endpoint(method, path, body)
             data = json.dumps(value, ensure_ascii=False).encode()
             connection.sendall(b"HTTP/1.1 %d X\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n" % (status, len(data)) + data)
         finally:
             stream.close()
+
+
+    def endpoint(self, method, path, body):
+        if method != "POST" or path not in ("/call", "/events"):
+            return {"error": "unknown bridge endpoint"}, 404
+        if path == "/call":
+            response, cancel = self.call(body["name"], body.get("arguments", {}), int(body["turn"]))
+            return {"response": response, "cancel": cancel}, 200
+        return {"cancel": self.apply_events(int(body["turn"]), body.get("boundary", "before_turn"))}, 200
 
 
 class ToolError(Exception):

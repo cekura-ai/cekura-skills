@@ -10,6 +10,8 @@ with the rollout scope.
 """
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
 import re
@@ -63,8 +65,8 @@ while True:
 """
 
 
-def docker(*args, check=True, capture=True, timeout=600):
-    result = subprocess.run(["docker", *args], capture_output=capture, text=True, timeout=timeout)
+def docker(*args, check=True, capture=True, timeout=600, stdin=None):
+    result = subprocess.run(["docker", *args], capture_output=capture, text=True, timeout=timeout, input=stdin)
     if check and result.returncode:
         raise RuntimeError("docker %s failed: %s" % (args[0], (result.stderr or "")[-800:]))
     return result.stdout.strip() if capture else ""
@@ -85,7 +87,9 @@ def base_environment(database, network_names):
         "CUSTOM_CODE_EXECUTION": "local", "ENVIRONMENT": "cekura-experiment",
         "VERTEX_PROJECT_ID": "cekura-experiment-offline", "LITELLM_LOCAL_MODEL_COST_MAP": "True",
         "DD_TRACE_ENABLED": "false", "DD_INSTRUMENTATION_TELEMETRY_ENABLED": "false", "DISABLE_DD_LOGGING": "True",
-        "PYTHONUNBUFFERED": "1"}
+        "PYTHONUNBUFFERED": "1",
+        # Seeded run transcripts are encrypted fields; never the repository's default key.
+        "CRYPTO_KEY": base64.urlsafe_b64encode(hashlib.sha256(("crypto:" + network_names["secret_key"]).encode()).digest()).decode()}
 
 
 def offline_vertex_credentials(directory):
@@ -266,7 +270,8 @@ class Stack:
 
     def manage(self, script, role="worker", timeout=300):
         """Run ORM code inside the rollout's own backend container (seeding, readback, events)."""
-        return docker("exec", "-i", self.containers[role], "python", "manage.py", "shell", "-c", script, timeout=timeout)
+        # On stdin: a seeded v3 workspace is far larger than the kernel's argument limit.
+        return docker("exec", "-i", self.containers[role], "python", "manage.py", "shell", timeout=timeout, stdin=script)
 
     def sandboxes(self):
         if self.sandbox_backend == "local-docker":

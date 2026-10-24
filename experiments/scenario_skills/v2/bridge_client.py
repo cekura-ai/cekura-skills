@@ -34,3 +34,7 @@ class ForwardingStore:
         if cancelled:
             self.trace.append({"kind": "cancel", "turn": turn})
         return cancelled
+
+    def followup(self, turn, final_type, messages):
+        """v3: the host bridge picks the simulated user's next message from stored state; ``None`` ends the session."""
+        return _post("/followup", {"turn": turn, "final_type": final_type, "messages": messages})["message"]

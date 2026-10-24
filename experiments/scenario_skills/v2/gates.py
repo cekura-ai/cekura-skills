@@ -59,3 +59,41 @@ def unstable(records, task_ids):
         if len(values) > 1:
             out.append(i)
     return out
+
+
+# --- v3: noise-tolerant acceptance ---------------------------------------------------------------
+def consistent(records, task_ids, disputed=()):
+    """Per task: 'pass' or 'fail' when every observation agrees (and there are at least two), else 'inconsistent'."""
+    out = {}
+    for i in task_ids:
+        values = [observation(r, disputed) for r in records if r["task_id"] == i]
+        if not values:
+            raise ValueError("Incomplete comparison: " + i)
+        out[i] = values[0] if len(values) >= 2 and len(set(values)) == 1 and values[0] != "unresolved" else "inconsistent"
+    return out
+
+
+def critical_regressions(baseline, candidate, task_ids):
+    """Critical checks the candidate fails on every observation of a task where the baseline never failed them."""
+    out = []
+    for i in task_ids:
+        mine = [set(r["grade"].get("critical_failed", [])) for r in candidate if r["task_id"] == i]
+        theirs = set().union(*[set(r["grade"].get("critical_failed", [])) for r in baseline if r["task_id"] == i])
+        if mine:
+            out += [(i, c) for c in sorted(set.intersection(*mine) - theirs)]
+    return out
+
+
+def compare_consistent(baseline, candidate, task_ids, min_gain, disputed=()):
+    """Gain counts tasks the candidate passes on every trial and the baseline fails on every trial.
+
+    A regression is the reverse. Acceptance needs at least ``min_gain`` gains, no regression and
+    no new critical defect; inconsistent tasks are reported but neither credited nor charged.
+    """
+    before, after = consistent(baseline, task_ids, disputed), consistent(candidate, task_ids, disputed)
+    gains = sorted(i for i in task_ids if before[i] == "fail" and after[i] == "pass")
+    regressions = sorted(i for i in task_ids if before[i] == "pass" and after[i] == "fail")
+    critical = critical_regressions(baseline, candidate, task_ids)
+    return {"passed": len(gains) >= min_gain and not regressions and not critical, "gains": gains, "regressions": regressions,
+            "critical_regressions": critical, "min_gain": min_gain, "baseline": before, "candidate": after,
+            "inconsistent": sorted(i for i in task_ids if "inconsistent" in (before[i], after[i]))}

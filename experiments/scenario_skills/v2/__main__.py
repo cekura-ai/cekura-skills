@@ -50,7 +50,13 @@ def main():
     parser.add_argument("--historical-usd", default="29.13728485")
     parser.add_argument("--env-file", type=Path)
     parser.add_argument("--backend-source", type=Path, help="Extracted pinned backend 650297f source tree")
+    parser.add_argument("--benchmark", type=int, choices=(2, 3), default=2, help="Task set to prepare or validate (v3: product-chat-derived)")
     args = parser.parse_args()
+    if args.command == "validate" and args.benchmark == 3:
+        from ..v3.dataset import load as load_v3
+        tasks = load_v3()
+        print("%d v3 tasks; 18 templates x 4 domains split by domain (36/18/18); 36 draft gold examples. Human approval is separate." % len(tasks))
+        return 0
     if args.command == "validate":
         from .dataset import load
         load()
@@ -107,7 +113,7 @@ def main():
         cfg = translate(copy.deepcopy(read(args.base_config)), args.evidence_root, directory)
         wallet = read(budget.wallet_path())
         claude, generator = read(directory / "claude-preparation.json"), read(directory / "generator-preparation.json")
-        cfg.update(experiment_version=2, execution_goal="acceptance", fixture_review_mode="human",
+        cfg.update(experiment_version=2, benchmark_version=args.benchmark, execution_goal="acceptance", fixture_review_mode="human",
                    budget_ledger_path=str(budget.CANONICAL_WALLET), budget_policy=wallet["authorization"])
         for role in ("proposer", "judge"):
             section = cfg[role]
@@ -127,10 +133,12 @@ def main():
                           "images": dict(generator["images"], backend=generator["backend_image"], pinned=generator["pinned_image"]),
                           "openapi_sha256": generator["openapi_sha256"], "infrastructure_state": str(directory / "backend/backend-infrastructure.json")}
         cfg.pop("review_authorization", None)
+        if args.benchmark == 3:
+            cfg["max_repeats"] = 72  # Every held-out task, both arms, a second time.
         if config_path.exists() and read(config_path) != cfg:
             raise ValueError("A different experiment is already prepared here; use a new artifacts directory")
         write(config_path, cfg)
-        prepare_review(directory)
+        prepare_review(directory, args.benchmark)
         print("Prepared %s; review human-review.md, then sign fixture-and-gold-signoff.json. No inference started." % directory)
         return 0
     cfg = read(config_path)

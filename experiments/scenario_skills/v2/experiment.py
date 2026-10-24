@@ -26,7 +26,7 @@ from ..selection import review_packet
 from ..skill import SKILL, candidate, material, manifest, split
 from . import gates
 from .budget import CLAUDE_SESSION_RESERVATION, COST_DISCOVERY_CAP, admit, minimum_plan, open_ledger, trial_cost
-from .dataset import load, canaries
+from .dataset import load as load_v2, canaries as canaries_v2
 from .evaluator import results
 from .judge import ClaudeJudge, packet
 from .proposer import Proposer, screen
@@ -36,6 +36,16 @@ DEADLINE_SECONDS = 24 * 3600
 MAX_ATTEMPTS, MAX_EVALUATED = 4, 2
 REPEATS = {"validation": ("variables-3", "lifecycle-3", "triggers-3"), "sealed": ("verbatim-4", "sources-4", "causal-4")}
 MAX_DIAGNOSTICS = 12
+# v3: every held-out task runs twice per arm; a task counts only when both trials agree.
+V3_MIN_GAIN = {"validation": 2, "sealed": 3}
+
+
+def benchmark(config):
+    """(load, canaries) for the configured benchmark; v2 stays the default and unchanged."""
+    if config.get("benchmark_version", 2) == 3:
+        from ..v3.dataset import canaries as canaries_v3, load as load_v3
+        return load_v3, canaries_v3
+    return load_v2, canaries_v2
 
 
 class Terminal(Exception):
@@ -46,7 +56,7 @@ class Terminal(Exception):
 
 
 def identity(config):
-    return {"config_sha256": digest({k: v for k, v in config.items() if k != "budget_policy"}), "tasks_sha256": digest(load()),
+    return {"config_sha256": digest({k: v for k, v in config.items() if k != "budget_policy"}), "tasks_sha256": digest(benchmark(config)[0]()),
             "baseline_sha256": digest(SKILL), "materials": manifest(material()),
             "fixed_skills": {str(p.relative_to(REPO)): digest(p) for p in (REPO / "cekura/skills").rglob("*") if p.is_file()},
             "code": {str(p.relative_to(ROOT)): digest(p) for p in ROOT.rglob("*.py") if "tests" not in p.parts}}
@@ -93,7 +103,8 @@ class Controller:
         if self.state["identity"] != self.ident:
             raise ValueError("Experiment identity changed; prepare a new run carrying the wallet, never reuse held-outs for search")
         self.ledger = open_ledger(config)
-        self.tasks = load()
+        self.version = config.get("benchmark_version", 2)
+        self.tasks, self.canaries = benchmark(config)[0](), benchmark(config)[1]
         self.training, self.validation, self.sealed = [[t for t in self.tasks if t["split"] == s] for s in ("training", "validation", "sealed")]
         self.baseline = SKILL.read_bytes()
         self.records = []
@@ -172,7 +183,7 @@ class Controller:
         if hasattr(self.proposer, "verify"):
             self.proposer.verify()
 
-        sample = canaries(self.training)
+        sample = self.canaries(self.training)
         try:
             with self.ledger.staged("baseline-cost-discovery", COST_DISCOVERY_CAP):
                 cost_sample = self.stage(self.baseline, sample, "baseline_cost_sample")
@@ -195,17 +206,27 @@ class Controller:
         data = (directory / (finalist + ".md")).read_bytes()
         self.save(finalist=finalist)
         val_before, val_after = self.paired(data, self.validation, "validation")
-        validation = gates.compare(val_before, val_after, [t["id"] for t in self.validation])
+        if self.version == 3:
+            again = self.paired(data, self.validation, "validation", repeat=1)
+            val_before, val_after = val_before + again[0], val_after + again[1]
+            validation = gates.compare_consistent(val_before, val_after, [t["id"] for t in self.validation], V3_MIN_GAIN["validation"])
+        else:
+            validation = gates.compare(val_before, val_after, [t["id"] for t in self.validation])
         self.save(validation=validation)
         if not validation["passed"]:
             raise Terminal("validation_no_supported_improvement", "Validation needs a strict worst-case gain and no regression; search ends")
         sealed_before, sealed_after = self.paired(data, self.sealed, "sealed")
-        repeats = {split: self.paired(data, [t for t in self.tasks if t["id"] in names], "repeat_" + split, repeat=1)
-                   for split, names in REPEATS.items()}
-        self.diagnostics(data)
+        if self.version == 3:
+            self.paired(data, self.sealed, "sealed", repeat=1)
+        else:
+            repeats = {split: self.paired(data, [t for t in self.tasks if t["id"] in names], "repeat_" + split, repeat=1)
+                       for split, names in REPEATS.items()}
+            self.diagnostics(data)
         self.decide(data)
 
     def repeat_tasks(self):
+        if self.version == 3:
+            return self.validation + self.sealed
         return [t for t in self.tasks if t["id"] in REPEATS["validation"] + REPEATS["sealed"]]
 
     def search(self, before, config):
@@ -213,7 +234,7 @@ class Controller:
         if self.state.get("finalist_frozen"):
             return self.state["finalist"]
         directory, ids = self.directory, [t["id"] for t in self.training]
-        sample = canaries(self.training)
+        sample = self.canaries(self.training)
         history, parent, parent_passes = list(before), self.baseline, gates.passes(before, ids)
         evaluated, zero_gain, attempts = 0, 0, []
         forbidden = forbidden_material(self.tasks)
@@ -314,7 +335,11 @@ class Controller:
             ids = [t["id"] for t in items]
             base = [r for r in self.records if r["candidate_sha256"] == digest(self.baseline) and r["task_id"] in ids]
             final = [r for r in self.records if r["candidate_sha256"] == sha and r["task_id"] in ids]
-            held[split] = dict(gates.compare(base, final, ids, disputed), critical_defects=gates.critical_defects(final))
+            if self.version == 3:
+                gate_ = gates.compare_consistent(base, final, ids, V3_MIN_GAIN[split], disputed)
+                held[split] = dict(gate_, critical_defects=gate_["critical_regressions"])
+            else:
+                held[split] = dict(gates.compare(base, final, ids, disputed), critical_defects=gates.critical_defects(final))
         self.save(final_gates=held, disputed=sorted(map(list, disputed)))
         accepted = all(g["passed"] and not g["critical_defects"] for g in held.values())
         tasks = self.validation + self.sealed

@@ -28,6 +28,8 @@ SOURCE_ROOTS = ("request", "followups", "agent", "context", "documents", "config
 
 
 def packet(task, result):
+    if task.get("benchmark_version") == 3:
+        return packet_v3(task, result)
     agent = dict(task["fixture"]["agent"])
     agent.pop("required_variables", None)
     fixture = task["fixture"]
@@ -39,6 +41,36 @@ def packet(task, result):
                 "messages": result["messages"], "user_turns": result.get("user_turns", []), "initial_state": result["initial_state"], "final_state": result["final_state"],
                 "trace": [c for c in result["trace"] if not any(x in c.get("name", "") for x in ("load_skill", "skill_started"))],
                 "status": result["status"]}}
+
+
+def packet_v3(task, result):
+    """A v3 workspace holds 100+ evaluators: the judge sees what changed, the stored results and a bounded trace."""
+    before = {r["id"]: r for r in result["initial_state"].get("scenarios", [])}
+    after = {r["id"]: r for r in result["final_state"].get("scenarios", [])}
+    fixture = task["fixture"]
+    trace = []
+    for c in result["trace"]:
+        if any(x in c.get("name", "") for x in ("load_skill", "skill_started")):
+            continue
+        if "name" in c:
+            text = c["response"]["content"][0]["text"] if c["response"].get("content") else ""
+            trace.append({"turn": c["turn"], "name": c["name"], "arguments": c["arguments"], "isError": c["response"].get("isError", False),
+                          "response": text[:3000] + ("…[truncated]" if len(text) > 3000 else ""),
+                          "stub_run": (c.get("backend") or {}).get("stub_run"), "injection": c.get("injection")})
+        elif c.get("kind") != "followup":
+            trace.append(c)
+    return {"request": task["request"], "followups": result.get("user_turns", [])[1:], "agent": dict(fixture["agent"], required_variables=None),
+            "context": task.get("context", {}), "documents": task.get("documents", []),
+            "configuration": {"personalities": fixture.get("personalities", []), "metrics": fixture.get("metrics", []),
+                              "other_agents": [dict(a, required_variables=None) for a in fixture.get("other_agents", [])],
+                              "profiles": result["initial_state"].get("profiles", []), "prior_results": task.get("results", [])},
+            "rubric": task["expected"]["rubric"], "evidence": {
+                "messages": result["messages"], "user_turns": result.get("user_turns", []),
+                "changed": [{"id": i, "before": before[i], "after": after[i]} for i in sorted(before) if i in after and before[i] != after[i]],
+                "created": [after[i] for i in sorted(after) if i not in before],
+                "deleted": [before[i] for i in sorted(before) if i not in after],
+                "unchanged_count": sum(1 for i in before if after.get(i) == before[i]),
+                "profiles_after": result["final_state"].get("profiles", []), "trace": trace, "status": result["status"]}}
 
 
 def check(value, evidence):
@@ -128,7 +160,8 @@ class ClaudeJudge:
             rows.append({"id": g["id"], "stage": g["stage"], "expected": g["expected_verdict"], "observed": observed,
                          "critical": g["critical"], "correct": observed == g["expected_verdict"]})
         test = [r for r in rows if r["stage"] == "qualification"]
-        passed = sum(r["correct"] for r in test) >= 22 and not any(r["critical"] and r["observed"] == "pass" and r["expected"] != "pass" for r in test)
+        needed = material.get("qualification_min", 22)
+        passed = sum(r["correct"] for r in test) >= needed and not any(r["critical"] and r["observed"] == "pass" and r["expected"] != "pass" for r in test)
         passed = passed and all(r["correct"] for r in test if "paraphrase" in r["id"])
         result = {"passed": passed, "judge_sha256": self.identity, "review_sha256": digest(material), "adjudications_sha256": self.adjudication_hash(self.gold_keys()), "rows": rows}
         write(self.directory / "judge-qualification.json", result)

@@ -28,7 +28,7 @@ MAX_CORE, MAX_REPEATS = 216, 24
 
 
 def code_identity():
-    files = [*ROOT.glob("*.py"), *(ROOT / "v2").glob("*.py"), *(ROOT / "v2/generator").glob("*.py")]
+    files = [*ROOT.glob("*.py"), *(ROOT / "v2").glob("*.py"), *(ROOT / "v2/generator").glob("*.py"), *(ROOT / "v3").glob("*.py")]
     return {str(p.relative_to(ROOT)): digest(p) for p in sorted(files)}
 
 
@@ -89,13 +89,26 @@ class Evaluator:
                             "backend_images": config["backend"]["images"], "openapi_sha256": config["backend"]["openapi_sha256"]}
         self.environment_hash = digest(self.environment)
         self.grader_hash = digest(ROOT / "v2/grader.py")
+        self.v3_grader_hash = digest({"grader": digest(ROOT / "v3/grader.py"), "checks": digest(ROOT / "v3/checks.py")})
         self.stack_factory = stack_factory
         self.records = []
 
     def key(self, candidate, task, repeat):
         files = dict(self.base_material, **{"SKILL.md": candidate})
         return digest({"candidate": digest(candidate), "task": task, "environment": self.environment_hash,
-                       "material": manifest(files), "grader": self.grader_hash, "repeat": repeat})
+                       "material": manifest(files), "grader": self._grader(task)[1], "repeat": repeat})
+
+    def _grader(self, task):
+        if task.get("benchmark_version") == 3:
+            from ..v3.grader import grade as grade_v3
+            return grade_v3, self.v3_grader_hash
+        return grade, self.grader_hash
+
+    def _bridge(self, task):
+        if task.get("benchmark_version") == 3:
+            from ..v3.bridge import Bridge as BridgeV3
+            return BridgeV3
+        return Bridge
 
     def execute(self, candidate, task, repeat=0):
         """Cached complete execution, else up to ATTEMPTS fresh attempts, each with its own scope."""
@@ -121,7 +134,7 @@ class Evaluator:
 
     def _limits(self, repeat):
         rollouts = self.ledger.rollouts()
-        if repeat and sum(e.get("repeat", 0) != 0 for e in rollouts) >= MAX_REPEATS * ATTEMPTS:
+        if repeat and sum(e.get("repeat", 0) != 0 for e in rollouts) >= self.config.get("max_repeats", MAX_REPEATS) * ATTEMPTS:
             raise ValueError("Repeat allowance reached")
         if not repeat and len({e.get("trial") for e in rollouts if not e.get("repeat")}) >= MAX_CORE:
             raise ValueError("Core rollout allowance reached")
@@ -140,8 +153,10 @@ class Evaluator:
             with stack:
                 session = seed(stack, task, self.generator["settings"])
                 initial, _ = readback(stack, task["fixture"]["agent"]["project"])
-                bridge = Bridge(task, stack.base_url, session, self.target["catalog"], files, operations(read(self.infra.spec_path)))
+                bridge = self._bridge(task)(task, stack.base_url, session, self.target["catalog"], files, operations(read(self.infra.spec_path)))
                 bridge.initial_ids = {r["id"] for r in initial["scenarios"]}
+                bridge.initial_state = initial
+                bridge.state_reader = lambda: readback(stack, task["fixture"]["agent"]["project"])[0]
                 write(directory / "seed.json", {k: v for k, v in session.items() if k != "token"})
                 run = self.runtime.run(task, files, bridge, None, directory)
                 final, raw = readback(stack, task["fixture"]["agent"]["project"])
@@ -155,7 +170,7 @@ class Evaluator:
         result = dict(run, status=status, attempt=attempt, scope=scope, candidate_sha256=digest(candidate), candidate_body=split(candidate)[1].decode(),
                       task_id=task["id"], pack_id=task.get("pack_id"), split=task["split"], family=task["family"], repeat=repeat,
                       request=task["request"], followups=task.get("followups", []), context=task.get("context", {}), documents=task.get("documents", []),
-                      environment_sha256=self.environment_hash, material_sha256=manifest(files), grader_sha256=self.grader_hash,
+                      environment_sha256=self.environment_hash, material_sha256=manifest(files), grader_sha256=self._grader(task)[1],
                       initial_state=initial, final_state=final, raw_backend_scenarios=raw, trace=bridge.trace if bridge else [],
                       id_mapping="identity: seeded rows keep fixture IDs; created rows keep backend-assigned IDs",
                       backend_teardown=teardown, generator_cost_usd=float(generator_cost) if generator_cost is not None else None,
@@ -169,7 +184,7 @@ class Evaluator:
             result["delivery"] = {"error": type(error).__name__ + ": " + str(error)[:500]}
         if result["generator_cost_usd"] is None and result["status"] == "complete":
             result["status"] = "infrastructure_failure"  # Unsettled generator usage cannot support a comparison.
-        result["grade"] = grade(task, result["trace"], initial, final, run.get("messages", []), result["status"])
+        result["grade"] = self._grader(task)[0](task, result["trace"], initial, final, run.get("messages", []), result["status"])
         write(directory / "result.json", result)
         for name, data in files.items():
             target = directory / "installed_material" / name

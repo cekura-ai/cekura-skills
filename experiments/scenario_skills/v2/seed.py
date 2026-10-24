@@ -17,7 +17,7 @@ from django.db import connection
 from django.db.models.signals import post_save
 from django.apps import apps
 from test_framework.models import (create_user_related, AIAgent, AIAgentDynamicVariable, Tool, AIAgentTestProfile,
-                                   Personality, Metric, ScenarioFolder, Scenario, SettingValue)
+                                   Personality, Metric, ScenarioFolder, Scenario, SettingValue, Result, Run)
 from test_framework.conditional_actions_format import to_stored_validated
 from user.models import Organization, Project, Membership
 from test_framework.enums import RoleChoices
@@ -42,7 +42,7 @@ project = Project.objects.bulk_create([Project(id=agent["project"], organization
 personalities = {}
 for p in fixture["personalities"]:
     personalities[p["id"]] = Personality.objects.create(id=p["id"], organization=org, project=project, name=p["name"],
-        description=p["name"], prompt="You are a " + p["name"].lower() + ".", language=p["language"], vapi_settings={})
+        description=p["name"], prompt=p.get("prompt", "You are a " + p["name"].lower() + "."), language=p["language"], vapi_settings={})
     project.enabled_personalities.add(personalities[p["id"]])
 
 agents = {}
@@ -72,16 +72,30 @@ for f in resources.get("folders", []):
 for m in fixture.get("metrics", []):
     Metric.objects.create(id=m["id"], agent=agents[m.get("agent", agent["id"])], project=project, name=m["name"],
                           type="llm_judge", eval_type="binary", description=m["name"], prompt="Evaluate: " + m["name"])
+metrics = {m.id: m for m in Metric.objects.filter(project=project)}
 first_personality = personalities[fixture["personalities"][0]["id"]]
 for s in resources.get("scenarios", []):
     mode = s.get("scenario_type", "instruction")
     instructions = s.get("instructions", "")
     if mode == "conditional_actions":
         instructions = json.dumps(to_stored_validated(s["conditional_actions"])[0])
-    Scenario.objects.create(id=s["id"], agent=agents[s["agent"]], project=project, name=s["name"], personality=first_personality,
+    row = Scenario.objects.create(id=s["id"], agent=agents[s["agent"]], project=project, name=s["name"],
+        personality=personalities.get(s.get("personality"), first_personality),
         scenario_language=s.get("scenario_language", "en"), scenario_type=mode, instructions=instructions,
         expected_outcome_prompt=s.get("expected_outcome_prompt", ""), folder=folders[s["folder_path"]],
-        test_profile_id=s.get("test_profile"), first_message="", retell_agent_id="")
+        test_profile_id=s.get("test_profile"), first_message="", retell_agent_id="", tags=s.get("tags", []))
+    if s.get("metrics"):
+        row.metrics.set([metrics[i] for i in s["metrics"]])
+# Prior test results the target may read: transcripts and metric verdicts, never executed here.
+for r in task.get("results") or fixture.get("results", []):
+    result = Result.objects.create(id=r["id"], agent=agents[r["agent"]], project=project, name=r["name"], status=r.get("status", "completed"),
+                                   success_rate=r.get("success_rate", 0), failed_reasons=r.get("failed_reasons", {}))
+    for run in r["runs"]:
+        Run.objects.create(id=run["id"], result=result, scenario_id=run["scenario"], personality_id=run.get("personality"),
+                           test_profile_id=run.get("test_profile"), status=run.get("status", "completed"), success=run["success"],
+                           evaluation=run["evaluation"], transcript_object=run["transcript_object"],
+                           transcript="\n".join("%s: %s" % (t["role"], t["content"]) for t in run["transcript_object"]),
+                           expected_outcome=run.get("expected_outcome"), duration=run.get("duration", 60.0), call_id="fixture-%d" % run["id"])
 for key, value in settings_rows.items():
     SettingValue.objects.update_or_create(key=key, defaults={"value": value})
 conversation = Conversation.objects.create(user=user, organization=org, name="Experiment conversation")
@@ -116,7 +130,7 @@ for s in Scenario.objects.filter(project_id=project, is_deleted=False).order_by(
     row = {"id": s.id, "agent": s.agent_id, "project": s.project_id, "name": s.name, "folder_path": path(s.folder.path) if s.folder_id else None,
            "scenario_type": s.scenario_type, "scenario_language": s.scenario_language, "expected_outcome_prompt": s.expected_outcome_prompt,
            "test_profile": s.test_profile_id, "personality": s.personality_id, "first_message": s.first_message,
-           "tool_ids": s.tool_ids, "metrics": sorted(s.metrics.values_list("id", flat=True))}
+           "tool_ids": s.tool_ids, "metrics": sorted(s.metrics.values_list("id", flat=True)), "tags": s.tags}
     if s.scenario_type == "conditional_actions":
         row["conditional_actions"] = json.loads(data["instructions"]) if isinstance(data["instructions"], str) else data["instructions"]
     else:
@@ -134,7 +148,14 @@ agents = [{"id": a.id, "name": a.agent_name, "description": a.description, "lang
           for a in AIAgent.objects.filter(project_id=project).order_by("id")]
 metrics = [{"id": m.id, "name": m.name, "agent": m.agent_id, "deleted": m.is_deleted, "prompt": m.prompt}
            for m in Metric.objects.filter(project_id=project).order_by("id")]
-personalities = [{"id": p.id, "name": p.name, "language": p.language} for p in Personality.objects.filter(project_id=project).order_by("id")]
+from django.forms.models import model_to_dict
+def fingerprint(obj):
+    # Every stored field except bookkeeping timestamps: any edit to shared configuration shows.
+    values = model_to_dict(obj)
+    return {k: values[k] for k in sorted(values) if k not in ("created_at", "updated_at", "last_updated_by")}
+personalities = [{"id": p.id, "name": p.name, "language": p.language, "fingerprint": json.loads(json.dumps(fingerprint(p), default=str))}
+                 for p in Personality.objects.filter(project_id=project).order_by("id")]
+metrics = [dict(m, fingerprint=json.loads(json.dumps(fingerprint(Metric.objects.get(id=m["id"])), default=str))) for m in metrics]
 print(MARKER + json.dumps({"scenarios": scenarios, "profiles": profiles, "folders": folders,
                            "configuration": {"agents": agents, "metrics": metrics, "personalities": personalities},
                            "raw_scenarios": raw}, default=str))

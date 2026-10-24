@@ -233,6 +233,14 @@ literal source-input check is retained only for reproducibility, with its
 limitations corrected in the research report. Run artifacts and signoffs stay
 outside the checkout, and no skill patch is exported before acceptance gates.
 
+The v3 task set in `experiments/scenario_skills/v3/` replaces v2's tasks for that
+experiment (selected with `--benchmark 3`; v2 stays frozen). Its
+[domain specification](experiments/scenario_skills/v3/domain_spec.md) covers the
+18 templates derived from real product-chat failures, the 4 fictional domains
+split 36/18/18, the stateful follow-ups, the stored-state graders, the
+consistent-gain acceptance rule and the privacy scan. The source chats stay
+private and outside the repository.
+
 ## Conventions
 
 - **Skill versions** follow semver in the SKILL.md frontmatter. Bump minor for new sections/patterns, patch for fixes.
