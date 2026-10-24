@@ -16,6 +16,7 @@ allowed-tools:
     "mcp__cekura__scenarios_partial_update",
     "mcp__cekura__scenarios_folder_create",
     "mcp__cekura__scenarios_folders_list",
+    "mcp__cekura__scenarios_run",
     "mcp__cekura__scenarios_run_voice",
     "mcp__cekura__scenarios_run_text",
     "mcp__cekura__scenarios_run_websocket",
@@ -235,6 +236,8 @@ The user can still override by passing a mode explicitly in their initial comman
 | elevenlabs | `mcp__cekura__scenarios_run_elevenlabs` |
 | agora | `mcp__cekura__scenarios_run_agora` |
 | chirp | `mcp__cekura__scenarios_run_chirp` |
+
+Prefer `mcp__cekura__scenarios_run` with `transport` set to the mode (`voice`, `text`, `websocket`, `pipecat_v1`, `pipecat_v2`, `retell_webrtc`, `vapi_webrtc`, `livekit_v2`, `elevenlabs`, `agora`, `chirp`, `sip`); the agent's `enabled_connections` (from `aiagents_retrieve`) says which are available. The per-transport tools above are the fallback when `scenarios_run` is not listed.
 | sip | `mcp__cekura__scenarios_run_sip` |
 
 Pass `agent_id` and `scenarios` (array of IDs). Capture the returned `result_id`.
