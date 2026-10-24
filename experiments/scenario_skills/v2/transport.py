@@ -13,7 +13,7 @@ from jsonschema import validate
 
 from ..budget import BudgetError, require_cumulative
 from ..common import read, write
-from ..remote_claude import cli_args, execute, preconditions
+from ..remote_claude import NotStarted, cli_args, execute, preconditions
 
 
 class ClaudeSession:
@@ -21,6 +21,40 @@ class ClaudeSession:
         if config.get("subscription_only") is not True or config.get("hard_cost_bound_verified") is not True:
             raise ValueError("v2 requires verified subscription-only Claude with extra usage disabled")
         self.config, self.directory, self.ledger = config, directory, ledger
+
+    def _reserve(self, key, role):
+        # Sessions that never started (no container ran) do not count against the allowance.
+        count = sum(e.get("entry_type") == "claude_session" and e.get("role") == role and not e.get("not_started")
+                    for e in self.ledger.state["entries"].values())
+        if count >= (5 if role == "proposer" else 384):
+            raise ValueError("Bounded Claude session allowance exhausted")
+        self.ledger.reserve(key, "proposer", 2.5, entry_type="claude_session", role=role)
+
+    def _run(self, key, role, value, fresh):
+        """Up to three attempts; one that never launched is settled at $0 and retried under a new entry."""
+        for attempt in range(3):
+            current = key
+            if attempt or not fresh:
+                with self.ledger.transaction():
+                    entries = self.ledger.state["entries"]
+                    current = next("%s-attempt%d" % (key, n) for n in range(1, 100) if "%s-attempt%d" % (key, n) not in entries)
+                    self._reserve(current, role)
+            try:
+                response = execute(value)
+            except NotStarted as error:
+                write(self.directory / (current + ".error.json"), {"not_started": True, "error": str(error)})
+                self.ledger.settle(current, 0)
+                with self.ledger.transaction():
+                    self.ledger.state["entries"][current]["not_started"] = str(error)[:500]
+                    write(self.ledger.path, self.ledger.state)
+                continue
+            except Exception as error:
+                write(self.directory / (current + ".error.json"), {"not_started": False, "error": "%s: %s" % (type(error).__name__, error)})
+                self.ledger.settle(current, None)
+                raise
+            self.ledger.settle(current, response.get("incremental_cost_usd"))
+            return response
+        raise RuntimeError("Claude session %s could not start after 3 attempts (no inference ran); see its error files" % key)
 
     def __call__(self, prompt, evidence, schema, key, workspace=None):
         cli_args(self.config, schema)
@@ -39,23 +73,15 @@ class ClaudeSession:
         with self.ledger.transaction():
             entry = self.ledger.state["entries"].get(key)
             if entry is None:
-                count = sum(e.get("entry_type") == "claude_session" and e.get("role") == role for e in self.ledger.state["entries"].values())
-                if count >= (5 if role == "proposer" else 384):
-                    raise ValueError("Bounded Claude session allowance exhausted")
-                self.ledger.reserve(key, "proposer", 2.5, entry_type="claude_session", role=role)
-        if entry is not None:
-            if entry["status"] != "complete" or not response_path.exists():
-                raise BudgetError("Claude session %s started earlier without a settled, saved response" % key)
+                self._reserve(key, role)
+        if entry is not None and response_path.exists() and entry["status"] == "complete":
             response = read(response_path)  # Replay: no new session, no new charge.
+        elif entry is not None and not entry.get("not_started"):
+            raise BudgetError("Claude session %s started earlier without a settled, saved response" % key)
         else:
             write(self.directory / (key + ".input.json"), value)
-            try:
-                response = execute(value)
-            except Exception:
-                self.ledger.settle(key, None)
-                raise
+            response = self._run(key, role, value, fresh=entry is None)
             write(response_path, response)
-            self.ledger.settle(key, response.get("incremental_cost_usd"))
         events = []
         for line in response["events"].splitlines():
             try:

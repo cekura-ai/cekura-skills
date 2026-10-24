@@ -78,8 +78,16 @@ def subscription_status():
     token = credentials["claudeAiOauth"]["accessToken"]
     request = Request("https://api.anthropic.com/api/oauth/usage", headers={
         "Authorization": "Bearer " + token, "anthropic-beta": "oauth-2025-04-20"})
-    with urlopen(request, timeout=20) as response:
-        value = json.load(response)
+    for attempt in range(3):  # Transient errors on the status endpoint are retried; it never runs inference.
+        try:
+            with urlopen(request, timeout=20) as response:
+                value = json.load(response)
+            break
+        except OSError:
+            if attempt == 2:
+                raise
+            import time
+            time.sleep(2 * (attempt + 1))
     return {"source": "https://api.anthropic.com/api/oauth/usage", "checked_at": datetime.now(timezone.utc).isoformat(),
             "credential_sha256": hashlib.sha256(token.encode()).hexdigest(),
             # Stable across token refreshes: the account's organization and plan, hashed or non-identifying.
@@ -145,39 +153,49 @@ def same_subscription(now, recorded):
     return now["credential_sha256"] == recorded["credential_sha256"]
 
 
+class NotStarted(RuntimeError):
+    """Raised before the Claude container is launched: no session ran, so nothing was used."""
+
+
 def execute(request):
+    """Run one Claude session. Any failure before the container launches raises ``NotStarted``."""
     config = request["config"]
     image = config["image"]
     name = "cekura-proposer-" + hashlib.sha256(request["prompt"].encode()).hexdigest()[:16]
-    usage = preconditions(config)
-    command = container_args(image, name, network=True)
     import tempfile
     workspace = tempfile.TemporaryDirectory(prefix="cekura-training-")
-    root = Path(workspace.name)
-    root.chmod(0o755)
-    for filename, content in request.get("workspace", {}).items():
-        relative = Path(filename)
-        if relative.is_absolute() or ".." in relative.parts or not isinstance(content, str):
-            raise ValueError("Invalid allowed workspace file")
-        path = root / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
-        for parent in path.parents:
-            if parent == root.parent:
-                break
-            parent.chmod(0o755)
-        path.write_text(content)
-        path.chmod(0o444)
-    if request.get("workspace"):
-        command += ["--mount=type=bind,src=" + str(root) + ",dst=/workspace,readonly"]
-    command += cli_args(config, request["schema"])
     try:
-        process = subprocess.run(command, input=request["prompt"], capture_output=True, text=True, timeout=600)
-        if len(process.stdout.encode()) + len(process.stderr.encode()) > LIMIT:
-            raise ValueError("Claude evidence exceeded the capture limit")
-        return {"returncode": process.returncode, "events": process.stdout, "stderr": process.stderr,
-                "subscription": usage, "incremental_cost_usd": 0 if usage is not None else None}
+        try:
+            usage = preconditions(config)
+            command = container_args(image, name, network=True)
+            root = Path(workspace.name)
+            root.chmod(0o755)
+            for filename, content in request.get("workspace", {}).items():
+                relative = Path(filename)
+                if relative.is_absolute() or ".." in relative.parts or not isinstance(content, str):
+                    raise ValueError("Invalid allowed workspace file")
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                for parent in path.parents:
+                    if parent == root.parent:
+                        break
+                    parent.chmod(0o755)
+                path.write_text(content)
+                path.chmod(0o444)
+            if request.get("workspace"):
+                command += ["--mount=type=bind,src=" + str(root) + ",dst=/workspace,readonly"]
+            command += cli_args(config, request["schema"])
+        except Exception as error:
+            raise NotStarted("%s: %s" % (type(error).__name__, error)) from error
+        try:
+            process = subprocess.run(command, input=request["prompt"], capture_output=True, text=True, timeout=600)
+            if len(process.stdout.encode()) + len(process.stderr.encode()) > LIMIT:
+                raise ValueError("Claude evidence exceeded the capture limit")
+            return {"returncode": process.returncode, "events": process.stdout, "stderr": process.stderr,
+                    "subscription": usage, "incremental_cost_usd": 0 if usage is not None else None}
+        finally:
+            subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=30)
     finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=30)
         workspace.cleanup()
 
 
