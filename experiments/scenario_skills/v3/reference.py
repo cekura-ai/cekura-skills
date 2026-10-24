@@ -344,8 +344,9 @@ def s13(task, d, fx, folders, good):
         def edit(state):
             for r in rows(state, chunk):
                 variant = source[r["id"]]["name"].split(": ", 1)[-1]
-                r["expected_outcome_prompt"] = ("For this %s call, the main agent verifies the caller, completes the request using only lookup results, and reads back "
-                                                "the outcome before ending." % variant) if good else "CRITICAL: The main agent should handle the call correctly."
+                workflow = next(text for name, text in d["workflows"] if label(name) in variant)
+                r["expected_outcome_prompt"] = ("This is a %s call. %s The main agent confirms each collected value before acting on it."
+                                                % (variant, workflow)) if good else "CRITICAL: The main agent should handle the call correctly."
         return edit
     if good:
         return [turn("Rewrote %d–%d (15 tests)." % (ids[0], ids[14]), batch(ids[:15])), turn("Rewrote %d–%d (15 tests)." % (ids[15], ids[29]), batch(ids[15:30])),

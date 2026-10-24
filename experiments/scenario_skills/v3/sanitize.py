@@ -7,7 +7,7 @@ Rejects a fixture string that
 
 The report names fixture locations only; packet text is never printed or written.
 
-    python3 -I -m experiments.scenario_skills.v3.sanitize <packet-dir>
+    python3 -m experiments.scenario_skills.v3.sanitize <packet-dir>
 """
 from __future__ import annotations
 

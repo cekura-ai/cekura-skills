@@ -127,7 +127,7 @@ The templates were reviewed in turn against two tests: a correct answer must alw
 
 ## Privacy (`v3/sanitize.py`)
 
-`python3 -I -m experiments.scenario_skills.v3.sanitize <packet-dir>` rejects any fixture or gold string that:
+`python3 -m experiments.scenario_skills.v3.sanitize <packet-dir>` rejects any fixture or gold string that:
 - shares 8 consecutive words with a packet transcript or metric explanation;
 - contains an email address;
 - contains a phone number outside the fictional 555 range;

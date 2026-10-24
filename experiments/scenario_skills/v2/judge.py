@@ -73,6 +73,37 @@ def packet_v3(task, result):
                 "profiles_after": result["final_state"].get("profiles", []), "trace": trace, "status": result["status"]}}
 
 
+def resolves(pointer, evidence):
+    current = evidence
+    try:
+        for token in pointer[1:].split("/"):
+            token = token.replace("~1", "/").replace("~0", "~")
+            current = current[int(token)] if isinstance(current, list) else current[token]
+        return True
+    except (KeyError, IndexError, ValueError, TypeError):
+        return False
+
+
+def fail_closed(value, evidence):
+    """Keep only citations that exist; a criterion left without observed evidence, or missing, becomes uncertain."""
+    wanted = [r["id"] for r in evidence["rubric"]]
+    given = {c["id"]: c for c in value.get("criteria", []) if c.get("id") in wanted}
+    out = []
+    for cid in wanted:
+        c = dict(given.get(cid) or {"id": cid, "verdict": "uncertain", "attribution": "authoring", "evidence": [], "reason": "No valid judgment returned."})
+        c["evidence"] = [p for p in c.get("evidence", []) if p.split("/")[1:2] and p.split("/")[1] in SOURCE_ROOTS + ("evidence",) and resolves(p, evidence)]
+        if not any(p.startswith("/evidence/") for p in c["evidence"]) or c.get("verdict") not in ("pass", "fail", "uncertain"):
+            c.update(verdict="uncertain", evidence=c["evidence"] or ["/evidence/messages"], reason="Fail-closed: " + str(c.get("reason", ""))[:500])
+        if c["verdict"] == "pass" and c.get("attribution") != "not_applicable":
+            c["attribution"] = "not_applicable"
+        if c["verdict"] == "fail" and c.get("attribution") == "not_applicable":
+            c["verdict"] = "uncertain"
+        if c["verdict"] == "uncertain" and c.get("attribution") not in ("authoring", "generator", "both", "not_applicable"):
+            c["attribution"] = "authoring"
+        out.append({k: c[k] for k in ("id", "verdict", "attribution", "evidence", "reason")})
+    return {"criteria": out}
+
+
 def check(value, evidence):
     validate(value, SCHEMA)
     wanted = {r["id"] for r in evidence["rubric"]}
@@ -144,8 +175,20 @@ class ClaudeJudge:
         if path.exists():
             value = check(read(path)["verdict"], evidence)
         else:
-            value = check(self.session(PROMPT, evidence, SCHEMA, "judge-" + key), evidence)
-            write(path, {"judge_sha256": self.identity, "evidence_sha256": digest(evidence), "trial": trial, "verdict": value})
+            value, attempts = None, []
+            # A structurally invalid judgment (e.g. a citation that does not exist) gets one fresh session;
+            # if that is invalid too, it fails closed: unsupported criteria become uncertain, never a pass.
+            for attempt in range(2):
+                raw = self.session(PROMPT, evidence, SCHEMA, "judge-" + (key if attempt == 0 else self.key(evidence, (trial, "retry"))))
+                try:
+                    value = check(raw, evidence)
+                    break
+                except ValueError as error:
+                    attempts.append({"error": str(error), "verdict": raw})
+            if value is None:
+                value = check(fail_closed(attempts[-1]["verdict"], evidence), evidence)
+            write(path, {"judge_sha256": self.identity, "evidence_sha256": digest(evidence), "trial": trial, "verdict": value,
+                         "invalid_attempts": attempts})
         return adjudicate(self.directory, key, evidence, self.identity, value)
 
     def qualify(self):

@@ -116,7 +116,7 @@
   "rubric": [
    {
     "id": "minimal_edit",
-    "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+    "text": "Each affected script loses the quoted stalling line and still ends the call; a neutral closing such as 'Thanks, goodbye' in its place is fine. No other step, tag or field changes."
    },
    {
     "id": "true_report",
@@ -2185,7 +2185,7 @@
   "rubric": [
    {
     "id": "minimal_edit",
-    "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+    "text": "Each affected script loses the quoted stalling line and still ends the call; a neutral closing such as 'Thanks, goodbye' in its place is fine. No other step, tag or field changes."
    },
    {
     "id": "true_report",
@@ -4214,7 +4214,7 @@
   "rubric": [
    {
     "id": "minimal_edit",
-    "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+    "text": "Each affected script loses the quoted stalling line and still ends the call; a neutral closing such as 'Thanks, goodbye' in its place is fine. No other step, tag or field changes."
    },
    {
     "id": "true_report",
@@ -6268,7 +6268,7 @@
   "rubric": [
    {
     "id": "minimal_edit",
-    "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+    "text": "Each affected script loses the quoted stalling line and still ends the call; a neutral closing such as 'Thanks, goodbye' in its place is fine. No other step, tag or field changes."
    },
    {
     "id": "true_report",

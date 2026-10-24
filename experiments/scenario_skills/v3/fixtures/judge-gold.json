@@ -319,7 +319,7 @@
    "rubric": [
     {
      "id": "minimal_edit",
-     "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+     "text": "Each affected script loses the quoted stalling line and still ends the call; a neutral closing such as 'Thanks, goodbye' in its place is fine. No other step, tag or field changes."
     },
     {
      "id": "true_report",
@@ -2387,7 +2387,7 @@
    "rubric": [
     {
      "id": "minimal_edit",
-     "text": "Each affected script loses only the quoted stalling line; the caller still closes the call the same way, and no other wording, tag or field changes."
+     "text": "Each affected script loses the quoted stalling line and still ends the call; a neutral closing such as 'Thanks, goodbye' in its place is fine. No other step, tag or field changes."
     },
     {
      "id": "true_report",
@@ -4450,10 +4450,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-01: book visit happy path",
        "id": 241001
       },
@@ -4466,10 +4466,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-06: book visit happy path",
        "id": 241006
       },
@@ -4482,10 +4482,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-11: book visit happy path",
        "id": 241011
       },
@@ -4498,10 +4498,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-16: book visit happy path",
        "id": 241016
       },
@@ -4514,10 +4514,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-21: book visit happy path",
        "id": 241021
       },
@@ -4530,10 +4530,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-26: book visit happy path",
        "id": 241026
       },
@@ -4546,10 +4546,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-31: book visit happy path",
        "id": 241031
       },
@@ -4562,10 +4562,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-36: book visit happy path",
        "id": 241036
       },
@@ -4578,10 +4578,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-41: book visit happy path",
        "id": 241041
       },
@@ -4594,10 +4594,10 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Visits.Regression",
        "tags": [
         "regression"
        ],
+       "folder_path": "Visits.Regression",
        "name": "REG-VISI-46: book visit happy path",
        "id": 241046
       },
@@ -5696,12 +5696,12 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Reservations.Regression",
        "tags": [
         "reserve",
         "smoke",
         "regression"
        ],
+       "folder_path": "Reservations.Regression",
        "name": "REG-RESE-01: reserve happy path",
        "id": 251001
       },
@@ -5714,11 +5714,11 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Reservations.Regression",
        "tags": [
         "reserve",
         "regression"
        ],
+       "folder_path": "Reservations.Regression",
        "name": "REG-RESE-06: reserve happy path",
        "id": 251006
       },
@@ -5731,12 +5731,12 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Reservations.Regression",
        "tags": [
         "reserve",
         "smoke",
         "regression"
        ],
+       "folder_path": "Reservations.Regression",
        "name": "REG-RESE-11: reserve happy path",
        "id": 251011
       },
@@ -5749,11 +5749,11 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Reservations.Regression",
        "tags": [
         "reserve",
         "regression"
        ],
+       "folder_path": "Reservations.Regression",
        "name": "REG-RESE-16: reserve happy path",
        "id": 251016
       },
@@ -5766,12 +5766,12 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Reservations.Regression",
        "tags": [
         "reserve",
         "smoke",
         "regression"
        ],
+       "folder_path": "Reservations.Regression",
        "name": "REG-RESE-21: reserve happy path",
        "id": 251021
       },
@@ -5784,11 +5784,11 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Reservations.Regression",
        "tags": [
         "reserve",
         "regression"
        ],
+       "folder_path": "Reservations.Regression",
        "name": "REG-RESE-26: reserve happy path",
        "id": 251026
       },
@@ -5801,12 +5801,12 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Reservations.Regression",
        "tags": [
         "reserve",
         "smoke",
         "regression"
        ],
+       "folder_path": "Reservations.Regression",
        "name": "REG-RESE-31: reserve happy path",
        "id": 251031
       },
@@ -5819,11 +5819,11 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Reservations.Regression",
        "tags": [
         "reserve",
         "regression"
        ],
+       "folder_path": "Reservations.Regression",
        "name": "REG-RESE-36: reserve happy path",
        "id": 251036
       },
@@ -5836,12 +5836,12 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "folder_path": "Reservations.Regression",
        "tags": [
         "reserve",
         "smoke",
         "regression"
        ],
+       "folder_path": "Reservations.Regression",
        "name": "REG-RESE-41: reserve happy path",
        "id": 251041
       },
@@ -37606,7 +37606,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: book visit. Use the name and details from your test profile.",
@@ -37685,7 +37685,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: move visit. Use the name and details from your test profile.",
@@ -37745,7 +37745,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Refill (repeat request)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to refill.\n2. When the agent wants your name, say Josephine Abara.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -37807,7 +37807,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: fever advice. Use the name and details from your test profile.",
@@ -37884,7 +37884,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: records. Use the name and details from your test profile.",
@@ -37946,7 +37946,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Book Visit (happy path)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to book visit.\n2. When the agent wants your name, say {{test_profile.caller_name}}.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -38006,7 +38006,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: move visit. Use the name and details from your test profile.",
@@ -38085,7 +38085,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: refill. Use the name and details from your test profile.",
@@ -38145,7 +38145,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Fever Advice (interrupting)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to fever advice.\n2. When the agent wants your name, say Josephine Abara.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -38207,7 +38207,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: records. Use the name and details from your test profile.",
@@ -38286,7 +38286,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: book visit. Use the name and details from your test profile.",
@@ -38348,7 +38348,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Move Visit (edge case)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to move visit.\n2. When the agent wants your name, say {{test_profile.caller_name}}.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -38408,7 +38408,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: refill. Use the name and details from your test profile.",
@@ -38487,7 +38487,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: fever advice. Use the name and details from your test profile.",
@@ -38547,7 +38547,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Records (unclear answer)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to records.\n2. When the agent wants your name, say Josephine Abara.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -38609,7 +38609,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: book visit. Use the name and details from your test profile.",
@@ -38686,7 +38686,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: move visit. Use the name and details from your test profile.",
@@ -38748,7 +38748,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Refill (repeat request)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to refill.\n2. When the agent wants your name, say {{test_profile.caller_name}}.\n3. Answer follow-up questions with the details from your profile when asked.\n4. Say \"Okay, let me ask my husband and ring you back.\" and end the call.\n</scenario>"
       }
@@ -38808,7 +38808,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: fever advice. Use the name and details from your test profile.",
@@ -38887,7 +38887,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: records. Use the name and details from your test profile.",
@@ -38949,7 +38949,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Book Visit (happy path)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to book visit.\n2. When the agent wants your name, say Josephine Abara.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -39011,7 +39011,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: move visit. Use the name and details from your test profile.",
@@ -39088,7 +39088,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: refill. Use the name and details from your test profile.",
@@ -39150,7 +39150,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Fever Advice (interrupting)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to fever advice.\n2. When the agent wants your name, say {{test_profile.caller_name}}.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -39210,7 +39210,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: records. Use the name and details from your test profile.",
@@ -39289,7 +39289,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: book visit. Use the name and details from your test profile.",
@@ -39349,7 +39349,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Move Visit (edge case)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to move visit.\n2. When the agent wants your name, say Josephine Abara.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -39411,7 +39411,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: refill. Use the name and details from your test profile.",
@@ -39488,7 +39488,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: fever advice. Use the name and details from your test profile.",
@@ -39550,7 +39550,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Records (unclear answer)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to records.\n2. When the agent wants your name, say {{test_profile.caller_name}}.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -39612,7 +39612,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: book visit. Use the name and details from your test profile.",
@@ -39691,7 +39691,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: move visit. Use the name and details from your test profile.",
@@ -39751,7 +39751,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Refill (repeat request)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to refill.\n2. When the agent wants your name, say Josephine Abara.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -39813,7 +39813,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: fever advice. Use the name and details from your test profile.",
@@ -39890,7 +39890,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: records. Use the name and details from your test profile.",
@@ -39952,7 +39952,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Book Visit (happy path)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to book visit.\n2. When the agent wants your name, say {{test_profile.caller_name}}.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -40012,7 +40012,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: move visit. Use the name and details from your test profile.",
@@ -40091,7 +40091,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: refill. Use the name and details from your test profile.",
@@ -40151,7 +40151,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Fever Advice (interrupting)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to fever advice.\n2. When the agent wants your name, say Josephine Abara.\n3. Answer follow-up questions with the details from your profile when asked.\n4. Say \"Okay, let me ask my husband and ring you back.\" and end the call.\n</scenario>"
       }
@@ -40213,7 +40213,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: records. Use the name and details from your test profile.",
@@ -40292,7 +40292,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: book visit. Use the name and details from your test profile.",
@@ -40354,7 +40354,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Move Visit (edge case)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to move visit.\n2. When the agent wants your name, say {{test_profile.caller_name}}.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -40414,7 +40414,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: refill. Use the name and details from your test profile.",
@@ -40493,7 +40493,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: fever advice. Use the name and details from your test profile.",
@@ -40553,7 +40553,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Records (unclear answer)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to records.\n2. When the agent wants your name, say Josephine Abara.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -40615,7 +40615,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: book visit. Use the name and details from your test profile.",
@@ -40692,7 +40692,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: move visit. Use the name and details from your test profile.",
@@ -40754,7 +40754,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "scenario_type": "instruction",
        "instructions": "<scenario>\nSCENARIO: Refill (repeat request)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to refill.\n2. When the agent wants your name, say {{test_profile.caller_name}}.\n3. Answer follow-up questions with the details from your profile when asked.\n4. End the call when the request is complete.\n</scenario>"
       }
@@ -40814,7 +40814,7 @@
         240701,
         240702
        ],
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: fever advice. Use the name and details from your test profile.",
@@ -40893,7 +40893,7 @@
         240702,
         240703
        ],
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "scenario_type": "conditional_actions",
        "conditional_actions": {
         "role": "Your goal on this call: records. Use the name and details from your test profile.",
@@ -41039,7 +41039,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241001
       },
       "isError": false,
@@ -41051,7 +41051,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241002
       },
       "isError": false,
@@ -41063,7 +41063,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241003
       },
       "isError": false,
@@ -41075,7 +41075,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241004
       },
       "isError": false,
@@ -41087,7 +41087,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241005
       },
       "isError": false,
@@ -41099,7 +41099,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241006
       },
       "isError": false,
@@ -41111,7 +41111,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241007
       },
       "isError": false,
@@ -41123,7 +41123,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241008
       },
       "isError": false,
@@ -41135,7 +41135,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241009
       },
       "isError": false,
@@ -41147,7 +41147,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241010
       },
       "isError": false,
@@ -41159,7 +41159,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241011
       },
       "isError": false,
@@ -41171,7 +41171,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241012
       },
       "isError": false,
@@ -41183,7 +41183,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241013
       },
       "isError": false,
@@ -41195,7 +41195,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241014
       },
       "isError": false,
@@ -41207,7 +41207,7 @@
       "turn": 0,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241015
       },
       "isError": false,
@@ -41219,7 +41219,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241016
       },
       "isError": false,
@@ -41231,7 +41231,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241017
       },
       "isError": false,
@@ -41243,7 +41243,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241018
       },
       "isError": false,
@@ -41255,7 +41255,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241019
       },
       "isError": false,
@@ -41267,7 +41267,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241020
       },
       "isError": false,
@@ -41279,7 +41279,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241021
       },
       "isError": false,
@@ -41291,7 +41291,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241022
       },
       "isError": false,
@@ -41303,7 +41303,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241023
       },
       "isError": false,
@@ -41315,7 +41315,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241024
       },
       "isError": false,
@@ -41327,7 +41327,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241025
       },
       "isError": false,
@@ -41339,7 +41339,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241026
       },
       "isError": false,
@@ -41351,7 +41351,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241027
       },
       "isError": false,
@@ -41363,7 +41363,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241028
       },
       "isError": false,
@@ -41375,7 +41375,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241029
       },
       "isError": false,
@@ -41387,7 +41387,7 @@
       "turn": 1,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241030
       },
       "isError": false,
@@ -41399,7 +41399,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241031
       },
       "isError": false,
@@ -41411,7 +41411,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241032
       },
       "isError": false,
@@ -41423,7 +41423,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241033
       },
       "isError": false,
@@ -41435,7 +41435,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241034
       },
       "isError": false,
@@ -41447,7 +41447,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241035
       },
       "isError": false,
@@ -41459,7 +41459,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241036
       },
       "isError": false,
@@ -41471,7 +41471,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241037
       },
       "isError": false,
@@ -41483,7 +41483,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241038
       },
       "isError": false,
@@ -41495,7 +41495,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241039
       },
       "isError": false,
@@ -41507,7 +41507,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241040
       },
       "isError": false,
@@ -41519,7 +41519,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241041
       },
       "isError": false,
@@ -41531,7 +41531,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241042
       },
       "isError": false,
@@ -41543,7 +41543,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241043
       },
       "isError": false,
@@ -41555,7 +41555,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241044
       },
       "isError": false,
@@ -41567,7 +41567,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241045
       },
       "isError": false,
@@ -41579,7 +41579,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this book visit happy path call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a book visit happy path call. Book a visit for a child: collect the guardian's name, the child's name and date of birth, and the reason; offer the earliest slot the schedule lookup returns. The main agent confirms each collected value before acting on it.",
        "id": 241046
       },
       "isError": false,
@@ -41591,7 +41591,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this move visit edge case call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a move visit edge case call. Move a visit after verifying the guardian and the child's date of birth; offer up to two alternatives. The main agent confirms each collected value before acting on it.",
        "id": 241047
       },
       "isError": false,
@@ -41603,7 +41603,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this refill repeat request call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a refill repeat request call. Take a prescription refill request: child's name, medication name and pharmacy; never confirm a refill, say the clinician will review it. The main agent confirms each collected value before acting on it.",
        "id": 241048
       },
       "isError": false,
@@ -41615,7 +41615,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this fever advice interrupting call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a fever advice interrupting call. For a fever above 39 degrees in a child under three months, give the urgent-care instruction first. The main agent confirms each collected value before acting on it.",
        "id": 241049
       },
       "isError": false,
@@ -41627,7 +41627,7 @@
       "turn": 2,
       "name": "mcp__cekura__scenarios_partial_update",
       "arguments": {
-       "expected_outcome_prompt": "For this records unclear answer call, the main agent verifies the caller, completes the request using only lookup results, and reads back the outcome before ending.",
+       "expected_outcome_prompt": "This is a records unclear answer call. Records requests are transferred to the front office. The main agent confirms each collected value before acting on it.",
        "id": 241050
       },
       "isError": false,
