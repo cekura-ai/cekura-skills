@@ -318,3 +318,7 @@ Filter for unassigned (`scenario_name: null`), US format (`+1` prefix, 12 chars)
 |--------|------|---------|
 | POST | `/test_framework/v1/aiagents/{agent_id}/dynamic-variables/` | Upsert variables (full array) |
 | GET | `/test_framework/v1/aiagents/{agent_id}/dynamic-variables/` | List registered variables |
+
+## Custom SIP / WebSocket headers
+
+- **Custom headers**: `X-`prefixed keys in `main_agent_variables` are sent as SIP headers (the **only** way to pass custom SIP headers — they cannot be set on the agent or on the run) or as WebSocket connection headers (merged over the agent's static `websocket_headers`); attach the profile to the run via `test_profile_ids`. `X-Run-Id`, `X-Scenario-Id` and `X-Result-Id` are reserved.
