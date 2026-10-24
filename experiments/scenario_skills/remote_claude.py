@@ -71,29 +71,50 @@ def cli_args(config, schema):
     return args
 
 
-def subscription_status():
-    """Read the authenticated usage service; never emit account data or tokens."""
+_STATUS_CACHE = {}
+STATUS_MAX_AGE = 300
+
+
+def subscription_status(max_age=STATUS_MAX_AGE):
+    """Read the authenticated usage service; never emit account data or tokens.
+
+    The result is reused within one process for ``max_age`` seconds: back-to-back sessions
+    otherwise hit the endpoint's rate limit. Rate-limit and transient errors are retried,
+    honouring Retry-After; the endpoint never runs inference.
+    """
+    import time
     from datetime import datetime, timezone
+    from urllib.error import HTTPError
     credentials = json.loads(Path(CREDENTIALS).read_text())
     token = credentials["claudeAiOauth"]["accessToken"]
+    cached = _STATUS_CACHE.get(token)
+    if cached and time.monotonic() - cached[0] < max_age:
+        return dict(cached[1])
     request = Request("https://api.anthropic.com/api/oauth/usage", headers={
         "Authorization": "Bearer " + token, "anthropic-beta": "oauth-2025-04-20"})
-    for attempt in range(3):  # Transient errors on the status endpoint are retried; it never runs inference.
+    for attempt in range(5):
         try:
             with urlopen(request, timeout=20) as response:
                 value = json.load(response)
             break
-        except OSError:
-            if attempt == 2:
+        except OSError as error:
+            if attempt == 4:
                 raise
-            import time
-            time.sleep(2 * (attempt + 1))
-    return {"source": "https://api.anthropic.com/api/oauth/usage", "checked_at": datetime.now(timezone.utc).isoformat(),
+            wait = 5 * 2 ** attempt
+            if isinstance(error, HTTPError) and error.code == 429:
+                try:
+                    wait = max(wait, int(error.headers.get("Retry-After") or 0))
+                except ValueError:
+                    pass
+            time.sleep(min(wait, 120))
+    status = {"source": "https://api.anthropic.com/api/oauth/usage", "checked_at": datetime.now(timezone.utc).isoformat(),
             "credential_sha256": hashlib.sha256(token.encode()).hexdigest(),
             # Stable across token refreshes: the account's organization and plan, hashed or non-identifying.
             "organization_sha256": hashlib.sha256(str(credentials.get("organizationUuid", "")).encode()).hexdigest(),
             "subscription_type": credentials["claudeAiOauth"].get("subscriptionType"),
             "extra_usage_enabled": (value.get("extra_usage") or {}).get("is_enabled")}
+    _STATUS_CACHE[token] = (time.monotonic(), status)
+    return dict(status)
 
 
 def prepare():

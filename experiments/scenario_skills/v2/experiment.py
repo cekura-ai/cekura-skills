@@ -118,7 +118,7 @@ class Controller:
             self._run()
         except Terminal as end:
             self.save(status=end.status, reason=str(end))
-        except (BudgetError, RuntimeError, ValueError, SchemaValidationError) as error:
+        except (BudgetError, RuntimeError, ValueError, SchemaValidationError, OSError) as error:
             self.save(status="stopped", reason=type(error).__name__ + ": " + str(error))
         finally:
             self.save()

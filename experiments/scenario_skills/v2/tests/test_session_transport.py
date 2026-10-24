@@ -65,5 +65,28 @@ class SessionTransport(unittest.TestCase):
         self.assertTrue((self.directory / "s/judge-y.error.json").exists())
 
 
+class StatusEndpoint(unittest.TestCase):
+    def test_status_is_cached_and_rate_limits_are_retried(self):
+        import io
+        from urllib.error import HTTPError
+        from experiments.scenario_skills import remote_claude
+        credentials = Path(tempfile.mkdtemp()) / "c.json"
+        credentials.write_text(json.dumps({"organizationUuid": "org", "claudeAiOauth": {"accessToken": "t", "subscriptionType": "team"}}))
+        replies = [HTTPError("u", 429, "Too Many Requests", {"Retry-After": "0"}, io.BytesIO()), io.BytesIO(b'{"extra_usage": {"is_enabled": false}}')]
+        calls = []
+        def fake(request, timeout):
+            calls.append(1)
+            reply = replies.pop(0)
+            if isinstance(reply, Exception):
+                raise reply
+            return reply
+        remote_claude._STATUS_CACHE.clear()
+        with patch.object(remote_claude, "CREDENTIALS", str(credentials)), patch.object(remote_claude, "urlopen", fake), \
+                patch("time.sleep", lambda seconds: None):
+            first = remote_claude.subscription_status()
+            second = remote_claude.subscription_status()
+        self.assertEqual((first["extra_usage_enabled"], second["subscription_type"], len(calls)), (False, "team", 2))
+
+
 if __name__ == "__main__":
     unittest.main()
