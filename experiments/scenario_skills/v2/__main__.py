@@ -40,7 +40,7 @@ def load_env(path, names):
 
 def main():
     parser = argparse.ArgumentParser(description="72-task authoring optimization against the isolated real backend")
-    parser.add_argument("command", choices=("validate", "authorize-budget", "prepare-claude", "prepare-generator", "prepare",
+    parser.add_argument("command", choices=("validate", "authorize-budget", "prepare-claude", "prepare-generator", "prepare", "prepare-v3",
                                             "contract-probe", "transport-probe", "preflight", "run", "report", "accept"))
     parser.add_argument("--artifacts", type=Path, default=Path.home() / "cekura-scenario-v2-run")
     parser.add_argument("--base-config", type=Path)
@@ -51,6 +51,7 @@ def main():
     parser.add_argument("--env-file", type=Path)
     parser.add_argument("--backend-source", type=Path, help="Extracted pinned backend 650297f source tree")
     parser.add_argument("--benchmark", type=int, choices=(2, 3), default=2, help="Task set to prepare or validate (v3: product-chat-derived)")
+    parser.add_argument("--from", dest="source", type=Path, help="prepare-v3: an already prepared v2 artifacts directory to reuse")
     args = parser.parse_args()
     if args.command == "validate" and args.benchmark == 3:
         from ..v3.dataset import load as load_v3
@@ -141,8 +142,31 @@ def main():
         prepare_review(directory, args.benchmark)
         print("Prepared %s; review human-review.md, then sign fixture-and-gold-signoff.json. No inference started." % directory)
         return 0
+    if args.command == "prepare-v3":
+        # Reuses the v2 preparation (images, infrastructure, probes, credentials) read-only; only the task set changes.
+        from .review import prepare as prepare_review
+        if not args.source or not (args.source / "config.json").is_file():
+            parser.error("prepare-v3 needs --from <prepared v2 artifacts directory>")
+        cfg = read(args.source / "config.json")
+        if cfg.get("benchmark_version", 2) != 2:
+            parser.error("--from must name a prepared v2 directory")
+        cfg.update(benchmark_version=3, max_repeats=72)
+        cfg["target"]["v3_replay_proof_path"] = str(directory / "v3-replay-proof.json")
+        # The transport probe binds the runtime code; v3 re-proves it here and leaves the v2 evidence untouched.
+        cfg["target"]["gateway_probe_path"] = str(directory / "transport-probe/gateway-probe.json")
+        if config_path.exists() and read(config_path) != cfg:
+            raise ValueError("A different experiment is already prepared here; use a new artifacts directory")
+        write(config_path, cfg)
+        prepare_review(directory, 3)
+        print("Prepared v3 in %s from %s; next: contract-probe --benchmark 3, preflight, signoff. No inference started." % (directory, args.source))
+        return 0
     cfg = read(config_path)
     ledger = budget.Ledger(Path(cfg["budget_ledger_path"]), cfg["budget_policy"])
+    if args.command == "contract-probe" and cfg.get("benchmark_version") == 3:
+        from ..v3.replay import prove
+        result = prove(cfg, cfg["target"]["v3_replay_proof_path"])
+        print({"passed": result["passed"], "tasks": len(result["replayed"]), "model_requests": 0})
+        return int(not result["passed"])
     if args.command == "contract-probe":
         from .contract_probe import probe
         result = probe(read(cfg["target"]["catalog_path"]), directory / "v2-contract-probe.json")

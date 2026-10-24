@@ -265,8 +265,21 @@ def preflight(config):
         if (judge.get("subscription_only") is not True or judge.get("read_training_files") is not False or
                 any(judge.get(k) != proposer.get(k) for k in ("model", "image", "cli_sha256", "reasoning_effort", "transport", "subscription"))):
             failures.append("Fixed separate judge configuration is missing or differs from the qualified Claude transport")
+        if cfg.get("benchmark_version") == 3:
+            from .modal_runtime import V3_LIFETIME, infrastructure_bound
+            from .v3.replay import proof_hashes
+            try:
+                infrastructure_bound(target.get("infrastructure_rates", {}), V3_LIFETIME)
+            except ValueError as error:
+                failures.append("v3 rollout lifetime: " + str(error))
+            path = Path(target.get("v3_replay_proof_path") or "")
+            proof = read(path) if path.is_file() else {}
+            if proof.get("passed") is not True or any(proof.get(k) != v for k, v in proof_hashes().items()):
+                failures.append("v3 real-backend replay proof is missing, failed or stale (run contract-probe --benchmark 3)")
         path = Path(target.get("v2_contract_probe_path") or "")
-        if not path.is_file():
+        if cfg.get("benchmark_version") == 3:
+            pass  # The v3 replay proof above replaces the v2 task contract probe.
+        elif not path.is_file():
             failures.append("72-task captured-schema contract probe missing")
         else:
             proof = read(path)

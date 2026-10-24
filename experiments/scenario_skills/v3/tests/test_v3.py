@@ -51,6 +51,18 @@ class Fixtures(unittest.TestCase):
                     continue  # The verbatim control pastes a complete script.
                 self.assertIsNone(re.search(r"(?<!\w)%s(?!\w)" % re.escape(word), t["request"]), t["id"])
 
+    def test_v3_rollouts_get_a_longer_lifetime_within_the_reservation(self):
+        from experiments.scenario_skills.modal_probe import RATES
+        from experiments.scenario_skills.modal_runtime import LIFETIME, V3_LIFETIME, infrastructure_bound, lifetime
+        self.assertEqual((lifetime(TASKS[0]), lifetime({"benchmark_version": 2})), (V3_LIFETIME, LIFETIME))
+        evidence = {"source": "https://modal.com/pricing", "verified_at": "test", "rates": RATES}
+        self.assertLess(infrastructure_bound(evidence, V3_LIFETIME), 0.10)
+
+    def test_replay_proof_is_bound_to_the_frozen_tasks_and_graders(self):
+        from experiments.scenario_skills.v3.replay import REPLAYABLE, proof_hashes
+        self.assertEqual(set(TEMPLATES) - set(REPLAYABLE), {"T06", "C02"})  # Only generation templates are offline-only.
+        self.assertEqual(set(proof_hashes()), {"tasks_sha256", "grader_sha256", "checks_sha256", "bridge_sha256", "followups_sha256", "replay_sha256"})
+
     def test_sandbox_receives_only_the_opening_turn(self):
         task = sandbox_task(TASKS[0])
         self.assertEqual(set(task), {"id", "benchmark_version", "request", "documents", "context"})

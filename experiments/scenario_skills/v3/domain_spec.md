@@ -140,12 +140,19 @@ It reports fixture locations only. The final fixtures scan clean. Three generic 
 ```bash
 python3 -m experiments.scenario_skills.v3.build_fixtures        # authoring only: rebuild and refreeze
 python3 -m experiments.scenario_skills.v2 validate --benchmark 3
-python3 -m experiments.scenario_skills.v2 prepare --benchmark 3 --artifacts ~/cekura-scenario-v3-run ...   # writes human-review.md
+python3 -m experiments.scenario_skills.v2 prepare-v3 --artifacts ~/cekura-scenario-v3-run --from ~/cekura-scenario-v2-run  # reuses the v2 preparation; writes human-review.md
+python3 -m experiments.scenario_skills.v2 contract-probe --artifacts ~/cekura-scenario-v3-run   # real-backend replay proof (no inference)
+python3 -m experiments.scenario_skills.v2 preflight --artifacts ~/cekura-scenario-v3-run --env-file <approved.env>
 python3 -m unittest experiments.scenario_skills.v3.tests.test_v3
 CEKURA_BACKEND_INTEGRATION=1 python3 -m unittest experiments.scenario_skills.v3.tests.test_real_backend
 ```
 
 A v3 run needs its own artifacts directory, since the controller refuses a changed identity.
+`prepare-v3` copies the prepared v2 configuration (images, infrastructure, probes, credentials file), switches it to `benchmark_version: 3` and `max_repeats: 72`, and leaves the v2 files read-only.
+
+Preflight for v3 replaces the v2 task contract probe with `v3-replay-proof.json`: every replayable template must pass on the configured pinned backend, bound to the hashes of the frozen tasks, grader, checks, bridge, follow-ups and replayer.
+
+v3 rollouts get a 1,800-second sandbox lifetime (v2 keeps 600), since sessions run up to 12 turns over 100+ evaluators. The worst-case sandbox charge ($0.086) still fits the fixed $0.10 infrastructure reservation, and a timeout is scored as a result, not retried.
 
 ## Gates before and after inference
 

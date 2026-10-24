@@ -19,16 +19,21 @@ from .gateway import AdmissionGateway
 from .runtime import delivered_skill, pin_runtime_files
 
 LIFETIME = 600
+V3_LIFETIME = 1800  # v3 sessions run up to 12 turns over 100+ evaluators.
 CPU, MEMORY = (1.0, 1.0), (1024, 1024)
 INFRA_RESERVATION = .10
 MAX_TRANSFER = 64 * 1024 * 1024
 
 
-def infrastructure_bound(evidence):
+def lifetime(task):
+    return V3_LIFETIME if task.get("benchmark_version") == 3 else LIFETIME
+
+
+def infrastructure_bound(evidence, seconds=LIFETIME):
     from .modal_probe import RATES
     if evidence.get("source") != "https://modal.com/pricing" or not evidence.get("verified_at") or evidence.get("rates") != RATES:
         raise ValueError("Verified Modal sandbox rates are required")
-    bound = LIFETIME * (RATES["cpu_core_second"] + RATES["memory_gib_second"]) + MAX_TRANSFER / 1024**3 * RATES["egress_gib"]
+    bound = seconds * (RATES["cpu_core_second"] + RATES["memory_gib_second"]) + MAX_TRANSFER / 1024**3 * RATES["egress_gib"]
     if bound >= INFRA_RESERVATION:
         raise ValueError("Infrastructure bound cannot fit its reservation")
     return bound
@@ -142,7 +147,8 @@ class ModalRuntime:
         from modal_proto import api_pb2
         cfg, scope = self.config, directory.name
         bridge = store if hasattr(store, "handle") else None  # Real-backend bridge instead of the local fixture.
-        infrastructure_bound(cfg["infrastructure_rates"])
+        seconds = lifetime(task)
+        infrastructure_bound(cfg["infrastructure_rates"], seconds)
         infra_key = scope + "/infrastructure"
         endpoint = urlparse(cfg["snapshot"]["model_base_url"])
         gateway = AdmissionGateway(endpoint.hostname, endpoint.path.rstrip("/") + "/v1/messages", "anthropic", cfg,
@@ -186,14 +192,14 @@ class ModalRuntime:
             write(directory / "phase.json", {"phase": "app_lookup"})
             app = await _App.lookup("cekura-scenario-skill-evaluation", client=client, create_if_missing=True)
             image = synchronizer._translate_in(_Image.from_id(cfg["image"], client=client))
-            sandbox = await _Sandbox.create("sleep", str(LIFETIME), image=image, app=app, client=client,
-                cpu=CPU, memory=MEMORY, timeout=LIFETIME, block_network=True,
+            sandbox = await _Sandbox.create("sleep", str(seconds), image=image, app=app, client=client,
+                cpu=CPU, memory=MEMORY, timeout=seconds, block_network=True,
                 env=cfg["snapshot"]["runtime_env"], include_oidc_identity_token=False)
             write(directory / "phase.json", {"phase": "sandbox_created"})
-            write(directory / "sandbox.json", {"id": sandbox.object_id, "image": cfg["image"], "timeout": LIFETIME})
+            write(directory / "sandbox.json", {"id": sandbox.object_id, "image": cfg["image"], "timeout": seconds})
             response = await client.stub.SandboxList(api_pb2.SandboxListRequest(app_id=app.app_id, include_finished=False))
             actual = next(s for s in response.sandboxes if s.id == sandbox.object_id)
-            if (actual.image_id != cfg["image"] or actual.timeout_secs != LIFETIME
+            if (actual.image_id != cfg["image"] or actual.timeout_secs != seconds
                     or actual.resource_info.milli_cpu_max != 1000 or actual.resource_info.memory_mb_max != 1024):
                 raise ValueError("Modal image or hard resource limits differ from the pinned allocation")
             await sandbox.filesystem.write_bytes(archive, "/tmp/benchmark.tar.gz")
@@ -203,7 +209,7 @@ class ModalRuntime:
                 raise RuntimeError("Fixture installation failed")
             write(directory / "phase.json", {"phase": "installed"})
             services = ("--services", "model,mcp") if bridge is not None else ()
-            relay = await sandbox.exec("python3", "-m", "experiments.scenario_skills.relay", *services, env={"PYTHONPATH": "/opt/benchmark"}, timeout=LIFETIME, bufsize=1)
+            relay = await sandbox.exec("python3", "-m", "experiments.scenario_skills.relay", *services, env={"PYTHONPATH": "/opt/benchmark"}, timeout=seconds, bufsize=1)
             relay_stderr = asyncio.create_task(relay.stderr.read())
             ready = asyncio.get_running_loop().create_future()
             relay_task = asyncio.create_task(relay_connections(relay, gateway, ready, bridge))
@@ -214,7 +220,7 @@ class ModalRuntime:
                    cfg["credential_env"]: "offline-transport-probe" if self.offline else os.environ[cfg["credential_env"]]}
             if bridge is not None:
                 env["BENCHMARK_BRIDGE_PORT"] = str(ports["mcp"])
-            remaining = max(1, int(LIFETIME - (time.monotonic() - start)))
+            remaining = max(1, int(seconds - (time.monotonic() - start)))
             if self.offline:
                 remaining = min(remaining, 90)
             process = await sandbox.exec("python3", "-m", "experiments.scenario_skills.modal_runtime", "--in-container", env=env, workdir="/app", timeout=remaining)
@@ -410,7 +416,7 @@ def run_inside():
                 proc = subprocess.Popen([sys.executable, "/app/agent_runner.py", "--prompt-file", "/app/prompt.txt"],
                                         stdout=out, stderr=err, env=env, start_new_session=True)
                 try:
-                    proc.wait(timeout=max(1, LIFETIME - (time.monotonic() - start)))
+                    proc.wait(timeout=max(1, lifetime(task) - (time.monotonic() - start)))
                 except subprocess.TimeoutExpired:
                     import signal
                     os.killpg(proc.pid, signal.SIGKILL); proc.wait()

@@ -175,7 +175,7 @@ class Controller:
         if not self.judge.qualified():
             self.save(stage="judge_qualification")
             if not self.judge.qualify()["passed"]:
-                raise Terminal("judge_not_qualified", "The judge did not meet 22/24, zero critical false passes and the paraphrase control")
+                raise Terminal("judge_not_qualified", "The judge did not meet its qualification threshold with zero critical false passes")
         if self.evaluator is None:
             from .evaluator import Evaluator
             self.evaluator = Evaluator(config, directory, self.ledger, self.judge)
@@ -189,7 +189,7 @@ class Controller:
                 cost_sample = self.stage(self.baseline, sample, "baseline_cost_sample")
         except BudgetError as error:
             if "Stage allowance" in str(error):
-                raise Terminal("cost_discovery_cap_exhausted", "The 12 baseline canaries did not fit the $15 cost-discovery cap")
+                raise Terminal("cost_discovery_cap_exhausted", "The %d baseline canaries did not fit the $15 cost-discovery cap" % len(sample))
             raise
         rest = [t for t in self.training if t not in sample]
         plan = minimum_plan(cost_sample, rest, self.training, self.validation, self.sealed, self.repeat_tasks(), config)
