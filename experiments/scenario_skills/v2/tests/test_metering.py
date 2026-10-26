@@ -317,5 +317,30 @@ class RelayAttach(unittest.TestCase):
         cekura_metering._attached.pop("sb-1", None)
 
 
+class EdgeResolver(unittest.TestCase):
+    def query(self, name, qtype=1):
+        question = b"".join(bytes([len(p)]) + p.encode() for p in name.split(".")) + b"\x00" + qtype.to_bytes(2, "big") + b"\x00\x01"
+        return b"\x12\x34\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00" + question
+
+    def test_modal_task_hosts_resolve_to_the_edge_and_nothing_else_does(self):
+        from experiments.scenario_skills.v2.backend_stack import dns_answer
+        a = dns_answer(self.query("task-abc.w.modal.host"), "172.20.0.5")
+        self.assertEqual((a[:2], a[2:4], int.from_bytes(a[6:8], "big"), list(a[-4:])), (b"\x12\x34", b"\x81\x80", 1, [172, 20, 0, 5]))
+        aaaa = dns_answer(self.query("task-abc.w.modal.host", 28), "172.20.0.5")
+        self.assertEqual((aaaa[2:4], int.from_bytes(aaaa[6:8], "big")), (b"\x81\x80", 0))  # No IPv6 detour.
+        other = dns_answer(self.query("api.anthropic.com"), "172.20.0.5")
+        self.assertEqual((other[2:4], int.from_bytes(other[6:8], "big")), (b"\x81\x83", 0))  # NXDOMAIN.
+        self.assertIsNone(dns_answer(b"\x00" * 5, "172.20.0.5"))
+
+    def test_metering_splices_modal_task_hosts_only_with_the_modal_control_plane(self):
+        from experiments.scenario_skills.v2.metering import Metering
+        probe = Metering.__new__(Metering)
+        probe.passthrough = {"api.modal.com"}
+        self.assertTrue(probe.is_passthrough("task-abc.w.modal.host"))
+        self.assertFalse(probe.is_passthrough("evil.example.com"))
+        probe.passthrough = set()
+        self.assertFalse(probe.is_passthrough("task-abc.w.modal.host"))
+
+
 if __name__ == "__main__":
     unittest.main()
