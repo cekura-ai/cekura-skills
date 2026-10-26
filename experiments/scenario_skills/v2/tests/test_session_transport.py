@@ -57,6 +57,23 @@ class SessionTransport(unittest.TestCase):
             self.assertEqual(self.session("p", {}, SCHEMA, "judge-r"), {"ok": True})
         self.assertEqual(self.entries()["judge-r-attempt1"]["status"], "complete")
 
+    def test_a_cli_that_exits_before_any_event_is_not_started(self):
+        replies = iter([{"returncode": 1, "events": "", "stderr": "error: unknown option"}, OK])
+        with patch.object(transport, "execute", lambda value: next(replies)):
+            self.assertEqual(self.session("p", {}, SCHEMA, "proposer-probe"), {"ok": True})
+        e = self.entries()
+        self.assertTrue(e["proposer-probe"]["not_started"])
+        self.assertEqual((e["proposer-probe-attempt1"]["status"], e["proposer-probe-attempt1"].get("not_started")), ("complete", None))
+
+    def test_a_saved_eventless_failure_is_retried_on_resume(self):
+        with patch.object(transport, "execute", lambda value: {"returncode": 1, "events": "", "stderr": "x", "incremental_cost_usd": 0}), \
+                patch.object(transport, "never_reached_model", lambda r: False):
+            with self.assertRaises(RuntimeError):
+                self.session("p", {}, SCHEMA, "proposer-old")  # Saved as an ordinary failed session (the earlier behaviour).
+        with patch.object(transport, "execute", lambda value: OK):
+            self.assertEqual(self.session("p", {}, SCHEMA, "proposer-old"), {"ok": True})
+        self.assertTrue(self.entries()["proposer-old"]["not_started"])
+
     def test_three_not_started_attempts_stop_without_blocking(self):
         def fake(value):
             raise NotStarted("image missing")
@@ -95,6 +112,26 @@ class StatusEndpoint(unittest.TestCase):
             first = remote_claude.subscription_status()
             second = remote_claude.subscription_status()
         self.assertEqual((first["extra_usage_enabled"], second["subscription_type"], len(calls)), (False, "team", 2))
+
+
+class ContainerCommand(unittest.TestCase):
+    def test_workspace_mount_is_a_docker_option_before_the_image(self):
+        from experiments.scenario_skills import remote_claude
+        captured = {}
+        def run(command, **kwargs):
+            captured.setdefault("command", command)  # The first call is the session; the last is cleanup.
+            class P:
+                returncode, stdout, stderr = 0, "", ""
+            return P()
+        image = "sha256:" + "0" * 64
+        config = {"image": image, "subscription_only": False}
+        with patch.object(remote_claude, "preconditions", lambda c: None), patch.object(remote_claude, "cli_args", lambda c, s: ["-p", "--x"]), \
+                patch.object(remote_claude.subprocess, "run", run):
+            remote_claude.execute({"config": config, "prompt": "p", "schema": {}, "workspace": {"training/a.json": "{}"}})
+        command = captured["command"]
+        mount = next(i for i, a in enumerate(command) if a.startswith("--mount=type=bind,src=/tmp") or "dst=/workspace" in a)
+        self.assertLess(mount, command.index(image))
+        self.assertEqual(command[command.index(image) + 1:], ["-p", "--x"])
 
 
 if __name__ == "__main__":

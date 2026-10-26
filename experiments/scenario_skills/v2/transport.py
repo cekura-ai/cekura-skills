@@ -16,6 +16,11 @@ from ..common import read, write
 from ..remote_claude import NotStarted, cli_args, execute, preconditions
 
 
+def never_reached_model(response):
+    """A CLI that exits non-zero before emitting a single event (e.g. rejected arguments) made no model request."""
+    return bool(response.get("returncode")) and not str(response.get("events", "")).strip()
+
+
 class ClaudeSession:
     def __init__(self, config, directory, ledger):
         if config.get("subscription_only") is not True or config.get("hard_cost_bound_verified") is not True:
@@ -31,6 +36,11 @@ class ClaudeSession:
             raise ValueError("Bounded Claude session allowance exhausted")
         self.ledger.reserve(key, "proposer", 2.5, entry_type="claude_session", role=role)
 
+    def _mark_not_started(self, key, reason):
+        with self.ledger.transaction():
+            self.ledger.state["entries"][key]["not_started"] = reason[:500]
+            write(self.ledger.path, self.ledger.state)
+
     def _run(self, key, role, value, fresh):
         """Up to three attempts; one that never launched is settled at $0 and retried under a new entry."""
         for attempt in range(3):
@@ -42,12 +52,12 @@ class ClaudeSession:
                     self._reserve(current, role)
             try:
                 response = execute(value)
+                if never_reached_model(response):
+                    raise NotStarted("CLI exited %s with no events: %s" % (response.get("returncode"), str(response.get("stderr", ""))[-300:]))
             except NotStarted as error:
                 write(self.directory / (current + ".error.json"), {"not_started": True, "error": str(error)})
                 self.ledger.settle(current, 0)
-                with self.ledger.transaction():
-                    self.ledger.state["entries"][current]["not_started"] = str(error)[:500]
-                    write(self.ledger.path, self.ledger.state)
+                self._mark_not_started(current, str(error))
                 continue
             except Exception as error:
                 write(self.directory / (current + ".error.json"), {"not_started": False, "error": "%s: %s" % (type(error).__name__, error)})
@@ -75,6 +85,11 @@ class ClaudeSession:
             entry = self.ledger.state["entries"].get(key)
             if entry is None:
                 self._reserve(key, role)
+        if entry is not None and response_path.exists() and entry["status"] == "complete" and never_reached_model(read(response_path)):
+            # A saved session that exited before emitting any event never reached the model: mark it and run a fresh attempt.
+            response_path.rename(response_path.with_suffix(".never-started.json"))
+            self._mark_not_started(key, "CLI exited %s with no events" % read(response_path.with_suffix(".never-started.json")).get("returncode"))
+            entry = dict(entry, not_started=True)
         if entry is not None and response_path.exists() and entry["status"] == "complete":
             response = read(response_path)  # Replay: no new session, no new charge.
         elif entry is not None and not (entry.get("not_started") or entry.get("resolution")):

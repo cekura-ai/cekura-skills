@@ -204,7 +204,8 @@ def execute(request):
                 path.write_text(content)
                 path.chmod(0o444)
             if request.get("workspace"):
-                command += ["--mount=type=bind,src=" + str(root) + ",dst=/workspace,readonly"]
+                # A docker option: it must precede the image, after which arguments go to the CLI.
+                command.insert(command.index(image), "--mount=type=bind,src=" + str(root) + ",dst=/workspace,readonly")
             command += cli_args(config, request["schema"])
         except Exception as error:
             raise NotStarted("%s: %s" % (type(error).__name__, error)) from error
