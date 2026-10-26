@@ -71,6 +71,12 @@ class Fixtures(unittest.TestCase):
         self.assertFalse(same_subscription({"credential_sha256": "rotated", "organization_sha256": "org", "subscription_type": "team"},
                                            {"credential_sha256": "old"}))  # Legacy records still need the same token.
 
+    def test_sandbox_gets_the_runner_modules_a_v3_task_imports(self):
+        from experiments.scenario_skills.modal_runtime import runner_modules
+        files = runner_modules(TASKS[0])
+        for module in ("v2/fixture.py", "v2/bridge_client.py", "modal_runtime.py", "fixture.py"):
+            self.assertIn("opt/benchmark/experiments/scenario_skills/" + module, files)
+
     def test_sandbox_receives_only_the_opening_turn(self):
         task = sandbox_task(TASKS[0])
         self.assertEqual(set(task), {"id", "benchmark_version", "request", "documents", "context"})

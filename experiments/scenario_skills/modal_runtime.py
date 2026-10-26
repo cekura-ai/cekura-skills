@@ -168,11 +168,7 @@ class ModalRuntime:
         all_skills.update({"cekura-eval-design/" + k:v for k,v in files.items()})
         for name, data in all_skills.items():
             upload["home/agent/.claude/plugins/marketplaces/cekura-skills/cekura/skills/" + name] = data
-        for name in ("common.py", "fixture.py", "runtime.py", "dataset.py", "network_guard.py", "modal_runtime.py", "relay.py", "gateway.py", "budget.py"):
-            upload["opt/benchmark/experiments/scenario_skills/" + name] = (ROOT / name).read_bytes()
-        if task.get("benchmark_version") == 2:
-            for path in (ROOT / "v2").glob("*.py"):
-                upload["opt/benchmark/experiments/scenario_skills/v2/" + path.name] = path.read_bytes()
+        upload.update(runner_modules(task))
         uploaded = {}
         for document in task.get("documents", []):
             name = Path(document["name"]).name
@@ -341,6 +337,15 @@ def offline_transport():
         def close(self):
             pass
     return Transport()
+
+
+def runner_modules(task):
+    """Experiment code the in-sandbox runner imports. v2 and v3 tasks share the v2 store and bridge client."""
+    files = {"opt/benchmark/experiments/scenario_skills/" + name: (ROOT / name).read_bytes()
+             for name in ("common.py", "fixture.py", "runtime.py", "dataset.py", "network_guard.py", "modal_runtime.py", "relay.py", "gateway.py", "budget.py")}
+    if task.get("benchmark_version") in (2, 3):
+        files.update({"opt/benchmark/experiments/scenario_skills/v2/" + path.name: path.read_bytes() for path in (ROOT / "v2").glob("*.py")})
+    return files
 
 
 def sandbox_task(task):
