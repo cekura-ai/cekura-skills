@@ -1703,7 +1703,7 @@
   "rubric": [
    {
     "id": "conditional",
-    "text": "The new outcomes accept whatever the live lookup returns and the documented alternative when it returns nothing."
+    "text": "The new outcomes accept whatever the live lookup returns and, when it returns nothing, the agent saying so and offering to look up a different option."
    },
    {
     "id": "still_strict",
@@ -3736,7 +3736,7 @@
   "rubric": [
    {
     "id": "conditional",
-    "text": "The new outcomes accept whatever the live lookup returns and the documented alternative when it returns nothing."
+    "text": "The new outcomes accept whatever the live lookup returns and, when it returns nothing, the agent saying so and offering to look up a different option."
    },
    {
     "id": "still_strict",
@@ -5785,7 +5785,7 @@
   "rubric": [
    {
     "id": "conditional",
-    "text": "The new outcomes accept whatever the live lookup returns and the documented alternative when it returns nothing."
+    "text": "The new outcomes accept whatever the live lookup returns and, when it returns nothing, the agent saying so and offering to look up a different option."
    },
    {
     "id": "still_strict",
@@ -7839,7 +7839,7 @@
   "rubric": [
    {
     "id": "conditional",
-    "text": "The new outcomes accept whatever the live lookup returns and the documented alternative when it returns nothing."
+    "text": "The new outcomes accept whatever the live lookup returns and, when it returns nothing, the agent saying so and offering to look up a different option."
    },
    {
     "id": "still_strict",

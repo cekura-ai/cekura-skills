@@ -196,7 +196,7 @@ def description(d):
     lines += ["## Policies"] + ["- " + p for p in d["policies"]] + [""]
     lines += ["## Transfers", d["transfer"], "When transferring, say you are connecting the caller and do not continue the conversation.", ""]
     lookup = d["lookup"]
-    lines += ["## Live data", "%s Use `%s` with %s. If it returns nothing, say so and offer the documented alternative." %
+    lines += ["## Live data", "%s Use `%s` with %s. If it returns nothing, say so plainly and offer to look up a different option; never invent one." %
               (lookup["policy"], lookup["tool"], " and ".join(lookup["fields"])), ""]
     lines += ["## Variables", "These dynamic variables are passed in at call time: " + ", ".join("{{%s}}" % v for v in d["variables"]) + ".", ""]
     lines += ["## Style", "Be concise. Do not repeat information the caller already gave. Never invent facts that are not in this description "

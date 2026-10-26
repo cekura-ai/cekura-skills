@@ -7,7 +7,7 @@
     "id": 200000,
     "project": 200041,
     "name": "Harborview Front Desk",
-    "description": "# Harborview Front Desk — Harborview Dental Group\n\nYou are the Harborview Front Desk for Harborview Dental Group. You answer inbound calls.\n\n## Call start\nThe call is answered by an automated menu before you join. The menu says: \"Thank you for calling Harborview Dental Group. For appointments press 1. For billing press 2. To repeat these options press 9.\"\nAfter the caller selects an option you join with: \"Thanks — how can I help you today?\"\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"This call may be recorded for quality purposes.\"\n\n## Workflows\n\n### New Patient\nBook a first visit for a new patient: collect full name, date of birth, insurance carrier and a preferred weekday; offer the earliest matching slot returned by the availability lookup.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Reschedule\nMove an existing appointment: verify the patient by full name and date of birth together, find the booking, offer up to three alternative slots from the lookup and confirm the chosen one by reading back day and time.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Cancel\nCancel an appointment after verification; cancellations inside 24 hours are recorded with a late-cancellation note and the patient is told the clinic may contact them about the fee.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Insurance\nAnswer coverage questions only for the four in-network carriers; for anything else, offer a transfer to billing.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Emergency\nIf the caller describes swelling, uncontrolled bleeding or trauma, stop the booking flow and give the emergency line instruction before anything else.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- Verification always asks for full name and date of birth in one question.\n- Never quote prices; say the billing team will confirm costs.\n- Same-day slots are offered only when the lookup returns them; never promise one.\n- Minors under 16 need a parent or guardian on the call; ask for the guardian's name first.\n\n## Transfers\nTransfers to a person happen only for billing disputes and when the caller asks twice for a human.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nSlots come only from check_availability. Use `check_availability` with weekday and provider. If it returns nothing, say so and offer the documented alternative.\n\n## Variables\nThese dynamic variables are passed in at call time: {{patient_full_name}}, {{patient_dob}}, {{member_id}}, {{preferred_weekday}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
+    "description": "# Harborview Front Desk — Harborview Dental Group\n\nYou are the Harborview Front Desk for Harborview Dental Group. You answer inbound calls.\n\n## Call start\nThe call is answered by an automated menu before you join. The menu says: \"Thank you for calling Harborview Dental Group. For appointments press 1. For billing press 2. To repeat these options press 9.\"\nAfter the caller selects an option you join with: \"Thanks — how can I help you today?\"\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"This call may be recorded for quality purposes.\"\n\n## Workflows\n\n### New Patient\nBook a first visit for a new patient: collect full name, date of birth, insurance carrier and a preferred weekday; offer the earliest matching slot returned by the availability lookup.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Reschedule\nMove an existing appointment: verify the patient by full name and date of birth together, find the booking, offer up to three alternative slots from the lookup and confirm the chosen one by reading back day and time.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Cancel\nCancel an appointment after verification; cancellations inside 24 hours are recorded with a late-cancellation note and the patient is told the clinic may contact them about the fee.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Insurance\nAnswer coverage questions only for the four in-network carriers; for anything else, offer a transfer to billing.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Emergency\nIf the caller describes swelling, uncontrolled bleeding or trauma, stop the booking flow and give the emergency line instruction before anything else.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- Verification always asks for full name and date of birth in one question.\n- Never quote prices; say the billing team will confirm costs.\n- Same-day slots are offered only when the lookup returns them; never promise one.\n- Minors under 16 need a parent or guardian on the call; ask for the guardian's name first.\n\n## Transfers\nTransfers to a person happen only for billing disputes and when the caller asks twice for a human.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nSlots come only from check_availability. Use `check_availability` with weekday and provider. If it returns nothing, say so plainly and offer to look up a different option; never invent one.\n\n## Variables\nThese dynamic variables are passed in at call time: {{patient_full_name}}, {{patient_dob}}, {{member_id}}, {{preferred_weekday}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
     "language": "en",
     "inbound": true,
     "agent_speaks_first": true,
@@ -87,7 +87,7 @@
      "id": 200001,
      "project": 200041,
      "name": "Harborview Front Desk v2",
-     "description": "# Harborview Front Desk — Harborview Dental Group\n\nYou are the Harborview Front Desk for Harborview Dental Group. You answer inbound calls.\n\n## Call start\nThe call is answered by an automated menu before you join. The menu says: \"Thank you for calling Harborview Dental Group. For appointments press 1. For billing press 2. To repeat these options press 9.\"\nAfter the caller selects an option you join with: \"Thanks — how can I help you today?\"\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"This call may be recorded for quality purposes.\"\n\n## Workflows\n\n### New Patient\nBook a first visit for a new patient: collect full name, date of birth, insurance carrier and a preferred weekday; offer the earliest matching slot returned by the availability lookup.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Reschedule\nMove an existing appointment: verify the patient by full name and date of birth together, find the booking, offer up to three alternative slots from the lookup and confirm the chosen one by reading back day and time.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Cancel\nCancel an appointment after verification; cancellations inside 24 hours are recorded with a late-cancellation note and the patient is told the clinic may contact them about the fee.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Insurance\nAnswer coverage questions only for the four in-network carriers; for anything else, offer a transfer to billing.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Emergency\nIf the caller describes swelling, uncontrolled bleeding or trauma, stop the booking flow and give the emergency line instruction before anything else.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- Verification always asks for full name and date of birth in one question.\n- Never quote prices; say the billing team will confirm costs.\n- Same-day slots are offered only when the lookup returns them; never promise one.\n- Minors under 16 need a parent or guardian on the call; ask for the guardian's name first.\n\n## Transfers\nTransfers to a person happen only for billing disputes and when the caller asks twice for a human.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nSlots come only from check_availability. Use `check_availability` with weekday and provider. If it returns nothing, say so and offer the documented alternative.\n\n## Variables\nThese dynamic variables are passed in at call time: {{patient_full_name}}, {{patient_dob}}, {{member_id}}, {{preferred_weekday}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
+     "description": "# Harborview Front Desk — Harborview Dental Group\n\nYou are the Harborview Front Desk for Harborview Dental Group. You answer inbound calls.\n\n## Call start\nThe call is answered by an automated menu before you join. The menu says: \"Thank you for calling Harborview Dental Group. For appointments press 1. For billing press 2. To repeat these options press 9.\"\nAfter the caller selects an option you join with: \"Thanks — how can I help you today?\"\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"This call may be recorded for quality purposes.\"\n\n## Workflows\n\n### New Patient\nBook a first visit for a new patient: collect full name, date of birth, insurance carrier and a preferred weekday; offer the earliest matching slot returned by the availability lookup.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Reschedule\nMove an existing appointment: verify the patient by full name and date of birth together, find the booking, offer up to three alternative slots from the lookup and confirm the chosen one by reading back day and time.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Cancel\nCancel an appointment after verification; cancellations inside 24 hours are recorded with a late-cancellation note and the patient is told the clinic may contact them about the fee.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Insurance\nAnswer coverage questions only for the four in-network carriers; for anything else, offer a transfer to billing.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Emergency\nIf the caller describes swelling, uncontrolled bleeding or trauma, stop the booking flow and give the emergency line instruction before anything else.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- Verification always asks for full name and date of birth in one question.\n- Never quote prices; say the billing team will confirm costs.\n- Same-day slots are offered only when the lookup returns them; never promise one.\n- Minors under 16 need a parent or guardian on the call; ask for the guardian's name first.\n\n## Transfers\nTransfers to a person happen only for billing disputes and when the caller asks twice for a human.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nSlots come only from check_availability. Use `check_availability` with weekday and provider. If it returns nothing, say so plainly and offer to look up a different option; never invent one.\n\n## Variables\nThese dynamic variables are passed in at call time: {{patient_full_name}}, {{patient_dob}}, {{member_id}}, {{preferred_weekday}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
      "language": "en",
      "inbound": true,
      "agent_speaks_first": true,
@@ -4588,7 +4588,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -4596,7 +4596,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the reschedule workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -4737,7 +4737,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -4745,7 +4745,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the emergency workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -4886,7 +4886,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -4894,7 +4894,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the cancel workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -5035,7 +5035,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -5043,7 +5043,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the new patient workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -7502,7 +7502,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -7510,7 +7510,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the reschedule workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -7647,7 +7647,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -7655,7 +7655,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the emergency workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -7792,7 +7792,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -7800,7 +7800,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the cancel workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -8015,7 +8015,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to new patient</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about insurance</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -8057,7 +8057,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to new patient</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about insurance</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -8081,7 +8081,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to new patient</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about cancel</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -8502,7 +8502,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -8510,7 +8510,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the insurance workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -8549,7 +8549,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -8557,7 +8557,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the reschedule workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -8596,7 +8596,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -8604,7 +8604,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the emergency workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -8643,7 +8643,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -8651,7 +8651,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the cancel workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -8690,7 +8690,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -8698,7 +8698,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the new patient workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -8737,7 +8737,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -8745,7 +8745,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the insurance workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -8784,7 +8784,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -8792,7 +8792,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the reschedule workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -8831,7 +8831,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -8839,7 +8839,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the emergency workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required Friday at 10:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        }
       ]
@@ -9083,7 +9083,7 @@
     "id": 210000,
     "project": 210041,
     "name": "Northwind Shipment Assistant",
-    "description": "# Northwind Shipment Assistant — Northwind Freight\n\nYou are the Northwind Shipment Assistant for Northwind Freight. You answer inbound calls.\n\n## Call start\nA routing step answers first and asks: \"You've reached Northwind Freight. Are you calling about a shipment, a claim, or an invoice?\" You join after the caller answers.\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"Northwind Freight may record this call to improve service.\"\n\n## Workflows\n\n### Track\nTrack a shipment by its 10-digit tracking number entered on the keypad; read back the latest scan and the delivery window from the lookup.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Redeliver\nArrange redelivery for a missed delivery: confirm the address postcode, offer the next two delivery days from the lookup, and send an SMS confirmation.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Damage\nOpen a damage claim: collect tracking number, a description of the damage, and whether the packaging was intact; claims over 500 dollars are transferred to the claims desk.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Address Change\nChange the delivery address only before the parcel is out for delivery; otherwise explain it cannot be changed and offer redelivery.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Invoice\nInvoice questions are not handled by the assistant; transfer to billing immediately.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- Tracking numbers are always entered by keypad, never spoken.\n- Never confirm a delivery time the lookup did not return.\n- Claims require the tracking number before any other detail.\n- Do not discuss other customers' shipments.\n\n## Transfers\nTransfers: invoice questions immediately; damage claims over 500 dollars after intake.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nScans and windows come only from shipment_status. Use `shipment_status` with tracking_number. If it returns nothing, say so and offer the documented alternative.\n\n## Variables\nThese dynamic variables are passed in at call time: {{tracking_number}}, {{postcode}}, {{contact_phone}}, {{account_name}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
+    "description": "# Northwind Shipment Assistant — Northwind Freight\n\nYou are the Northwind Shipment Assistant for Northwind Freight. You answer inbound calls.\n\n## Call start\nA routing step answers first and asks: \"You've reached Northwind Freight. Are you calling about a shipment, a claim, or an invoice?\" You join after the caller answers.\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"Northwind Freight may record this call to improve service.\"\n\n## Workflows\n\n### Track\nTrack a shipment by its 10-digit tracking number entered on the keypad; read back the latest scan and the delivery window from the lookup.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Redeliver\nArrange redelivery for a missed delivery: confirm the address postcode, offer the next two delivery days from the lookup, and send an SMS confirmation.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Damage\nOpen a damage claim: collect tracking number, a description of the damage, and whether the packaging was intact; claims over 500 dollars are transferred to the claims desk.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Address Change\nChange the delivery address only before the parcel is out for delivery; otherwise explain it cannot be changed and offer redelivery.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Invoice\nInvoice questions are not handled by the assistant; transfer to billing immediately.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- Tracking numbers are always entered by keypad, never spoken.\n- Never confirm a delivery time the lookup did not return.\n- Claims require the tracking number before any other detail.\n- Do not discuss other customers' shipments.\n\n## Transfers\nTransfers: invoice questions immediately; damage claims over 500 dollars after intake.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nScans and windows come only from shipment_status. Use `shipment_status` with tracking_number. If it returns nothing, say so plainly and offer to look up a different option; never invent one.\n\n## Variables\nThese dynamic variables are passed in at call time: {{tracking_number}}, {{postcode}}, {{contact_phone}}, {{account_name}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
     "language": "en",
     "inbound": true,
     "agent_speaks_first": true,
@@ -9154,7 +9154,7 @@
      "id": 210001,
      "project": 210041,
      "name": "Northwind Shipment Assistant v2",
-     "description": "# Northwind Shipment Assistant — Northwind Freight\n\nYou are the Northwind Shipment Assistant for Northwind Freight. You answer inbound calls.\n\n## Call start\nA routing step answers first and asks: \"You've reached Northwind Freight. Are you calling about a shipment, a claim, or an invoice?\" You join after the caller answers.\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"Northwind Freight may record this call to improve service.\"\n\n## Workflows\n\n### Track\nTrack a shipment by its 10-digit tracking number entered on the keypad; read back the latest scan and the delivery window from the lookup.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Redeliver\nArrange redelivery for a missed delivery: confirm the address postcode, offer the next two delivery days from the lookup, and send an SMS confirmation.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Damage\nOpen a damage claim: collect tracking number, a description of the damage, and whether the packaging was intact; claims over 500 dollars are transferred to the claims desk.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Address Change\nChange the delivery address only before the parcel is out for delivery; otherwise explain it cannot be changed and offer redelivery.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Invoice\nInvoice questions are not handled by the assistant; transfer to billing immediately.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- Tracking numbers are always entered by keypad, never spoken.\n- Never confirm a delivery time the lookup did not return.\n- Claims require the tracking number before any other detail.\n- Do not discuss other customers' shipments.\n\n## Transfers\nTransfers: invoice questions immediately; damage claims over 500 dollars after intake.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nScans and windows come only from shipment_status. Use `shipment_status` with tracking_number. If it returns nothing, say so and offer the documented alternative.\n\n## Variables\nThese dynamic variables are passed in at call time: {{tracking_number}}, {{postcode}}, {{contact_phone}}, {{account_name}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
+     "description": "# Northwind Shipment Assistant — Northwind Freight\n\nYou are the Northwind Shipment Assistant for Northwind Freight. You answer inbound calls.\n\n## Call start\nA routing step answers first and asks: \"You've reached Northwind Freight. Are you calling about a shipment, a claim, or an invoice?\" You join after the caller answers.\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"Northwind Freight may record this call to improve service.\"\n\n## Workflows\n\n### Track\nTrack a shipment by its 10-digit tracking number entered on the keypad; read back the latest scan and the delivery window from the lookup.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Redeliver\nArrange redelivery for a missed delivery: confirm the address postcode, offer the next two delivery days from the lookup, and send an SMS confirmation.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Damage\nOpen a damage claim: collect tracking number, a description of the damage, and whether the packaging was intact; claims over 500 dollars are transferred to the claims desk.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Address Change\nChange the delivery address only before the parcel is out for delivery; otherwise explain it cannot be changed and offer redelivery.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Invoice\nInvoice questions are not handled by the assistant; transfer to billing immediately.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- Tracking numbers are always entered by keypad, never spoken.\n- Never confirm a delivery time the lookup did not return.\n- Claims require the tracking number before any other detail.\n- Do not discuss other customers' shipments.\n\n## Transfers\nTransfers: invoice questions immediately; damage claims over 500 dollars after intake.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nScans and windows come only from shipment_status. Use `shipment_status` with tracking_number. If it returns nothing, say so plainly and offer to look up a different option; never invent one.\n\n## Variables\nThese dynamic variables are passed in at call time: {{tracking_number}}, {{postcode}}, {{contact_phone}}, {{account_name}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
      "language": "en",
      "inbound": true,
      "agent_speaks_first": true,
@@ -13456,7 +13456,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -13464,7 +13464,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the redeliver workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -13605,7 +13605,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -13613,7 +13613,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the invoice workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -13754,7 +13754,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -13762,7 +13762,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the damage workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -13903,7 +13903,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -13911,7 +13911,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the track workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -16415,7 +16415,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -16423,7 +16423,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the redeliver workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -16560,7 +16560,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -16568,7 +16568,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the invoice workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -16705,7 +16705,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -16713,7 +16713,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the damage workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -16928,7 +16928,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to track</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about address change</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -16970,7 +16970,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to track</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about address change</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -16994,7 +16994,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to track</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about damage</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -17400,7 +17400,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -17408,7 +17408,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the address change workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -17447,7 +17447,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -17455,7 +17455,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the redeliver workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -17494,7 +17494,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -17502,7 +17502,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the invoice workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -17541,7 +17541,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -17549,7 +17549,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the damage workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -17588,7 +17588,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -17596,7 +17596,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the track workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -17635,7 +17635,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -17643,7 +17643,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the address change workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -17682,7 +17682,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -17690,7 +17690,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the redeliver workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -17729,7 +17729,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -17737,7 +17737,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the invoice workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 13:00 and 17:00, but the lookup returned something else and the agent said so and offered a different option."
         }
        }
       ]
@@ -17971,7 +17971,7 @@
     "id": 220000,
     "project": 220041,
     "name": "Solace Account Assistant",
-    "description": "# Solace Account Assistant — Solace Energy\n\nYou are the Solace Account Assistant for Solace Energy. You place outbound calls to account holders.\n\n## Call start\nYou open every call with: \"Hello, this is the Solace Energy account assistant. If you are the account holder press 1. If not, press 2. To hear this again press 9.\" Wait for a key press. Key 1 continues with identity confirmation; key 2 asks for a callback time without revealing any account detail; no key within ten seconds repeats the menu once and then ends the call.\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"Please call Solace Energy back at your convenience about your account. Thank you.\"\n\n## Workflows\n\n### Payment Reminder\nCall a customer with an overdue balance: confirm identity by full name and the last four digits of the account number, state the overdue amount from the lookup and offer a payment plan.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Payment Plan\nSet up a payment plan of three or six monthly instalments; read back the first instalment date.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Voicemail\nIf the call reaches voicemail, leave the mandated message exactly and hang up.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Dispute\nIf the customer disputes the amount, record the reason and transfer to the billing specialist.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Wrong Person\nIf the person is not the account holder, do not reveal any account detail; ask for a callback time.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- The overdue amount is stated only after identity is confirmed.\n- Payment plans are offered only for balances over 50 dollars.\n- The voicemail message must be left word for word.\n- Never threaten disconnection.\n\n## Transfers\nTransfers only for disputes, to the billing specialist.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nAmounts come only from account_balance. Use `account_balance` with account_last4. If it returns nothing, say so and offer the documented alternative.\n\n## Variables\nThese dynamic variables are passed in at call time: {{account_holder_name}}, {{account_last4}}, {{callback_time}}, {{plan_length}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
+    "description": "# Solace Account Assistant — Solace Energy\n\nYou are the Solace Account Assistant for Solace Energy. You place outbound calls to account holders.\n\n## Call start\nYou open every call with: \"Hello, this is the Solace Energy account assistant. If you are the account holder press 1. If not, press 2. To hear this again press 9.\" Wait for a key press. Key 1 continues with identity confirmation; key 2 asks for a callback time without revealing any account detail; no key within ten seconds repeats the menu once and then ends the call.\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"Please call Solace Energy back at your convenience about your account. Thank you.\"\n\n## Workflows\n\n### Payment Reminder\nCall a customer with an overdue balance: confirm identity by full name and the last four digits of the account number, state the overdue amount from the lookup and offer a payment plan.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Payment Plan\nSet up a payment plan of three or six monthly instalments; read back the first instalment date.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Voicemail\nIf the call reaches voicemail, leave the mandated message exactly and hang up.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Dispute\nIf the customer disputes the amount, record the reason and transfer to the billing specialist.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Wrong Person\nIf the person is not the account holder, do not reveal any account detail; ask for a callback time.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- The overdue amount is stated only after identity is confirmed.\n- Payment plans are offered only for balances over 50 dollars.\n- The voicemail message must be left word for word.\n- Never threaten disconnection.\n\n## Transfers\nTransfers only for disputes, to the billing specialist.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nAmounts come only from account_balance. Use `account_balance` with account_last4. If it returns nothing, say so plainly and offer to look up a different option; never invent one.\n\n## Variables\nThese dynamic variables are passed in at call time: {{account_holder_name}}, {{account_last4}}, {{callback_time}}, {{plan_length}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
     "language": "en",
     "inbound": false,
     "agent_speaks_first": true,
@@ -18029,7 +18029,7 @@
      "id": 220001,
      "project": 220041,
      "name": "Solace Account Assistant v2",
-     "description": "# Solace Account Assistant — Solace Energy\n\nYou are the Solace Account Assistant for Solace Energy. You place outbound calls to account holders.\n\n## Call start\nYou open every call with: \"Hello, this is the Solace Energy account assistant. If you are the account holder press 1. If not, press 2. To hear this again press 9.\" Wait for a key press. Key 1 continues with identity confirmation; key 2 asks for a callback time without revealing any account detail; no key within ten seconds repeats the menu once and then ends the call.\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"Please call Solace Energy back at your convenience about your account. Thank you.\"\n\n## Workflows\n\n### Payment Reminder\nCall a customer with an overdue balance: confirm identity by full name and the last four digits of the account number, state the overdue amount from the lookup and offer a payment plan.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Payment Plan\nSet up a payment plan of three or six monthly instalments; read back the first instalment date.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Voicemail\nIf the call reaches voicemail, leave the mandated message exactly and hang up.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Dispute\nIf the customer disputes the amount, record the reason and transfer to the billing specialist.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Wrong Person\nIf the person is not the account holder, do not reveal any account detail; ask for a callback time.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- The overdue amount is stated only after identity is confirmed.\n- Payment plans are offered only for balances over 50 dollars.\n- The voicemail message must be left word for word.\n- Never threaten disconnection.\n\n## Transfers\nTransfers only for disputes, to the billing specialist.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nAmounts come only from account_balance. Use `account_balance` with account_last4. If it returns nothing, say so and offer the documented alternative.\n\n## Variables\nThese dynamic variables are passed in at call time: {{account_holder_name}}, {{account_last4}}, {{callback_time}}, {{plan_length}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
+     "description": "# Solace Account Assistant — Solace Energy\n\nYou are the Solace Account Assistant for Solace Energy. You place outbound calls to account holders.\n\n## Call start\nYou open every call with: \"Hello, this is the Solace Energy account assistant. If you are the account holder press 1. If not, press 2. To hear this again press 9.\" Wait for a key press. Key 1 continues with identity confirmation; key 2 asks for a callback time without revealing any account detail; no key within ten seconds repeats the menu once and then ends the call.\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"Please call Solace Energy back at your convenience about your account. Thank you.\"\n\n## Workflows\n\n### Payment Reminder\nCall a customer with an overdue balance: confirm identity by full name and the last four digits of the account number, state the overdue amount from the lookup and offer a payment plan.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Payment Plan\nSet up a payment plan of three or six monthly instalments; read back the first instalment date.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Voicemail\nIf the call reaches voicemail, leave the mandated message exactly and hang up.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Dispute\nIf the customer disputes the amount, record the reason and transfer to the billing specialist.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Wrong Person\nIf the person is not the account holder, do not reveal any account detail; ask for a callback time.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- The overdue amount is stated only after identity is confirmed.\n- Payment plans are offered only for balances over 50 dollars.\n- The voicemail message must be left word for word.\n- Never threaten disconnection.\n\n## Transfers\nTransfers only for disputes, to the billing specialist.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nAmounts come only from account_balance. Use `account_balance` with account_last4. If it returns nothing, say so plainly and offer to look up a different option; never invent one.\n\n## Variables\nThese dynamic variables are passed in at call time: {{account_holder_name}}, {{account_last4}}, {{callback_time}}, {{plan_length}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
      "language": "en",
      "inbound": false,
      "agent_speaks_first": true,
@@ -22512,7 +22512,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -22520,7 +22520,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the payment plan workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -22661,7 +22661,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -22669,7 +22669,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the wrong person workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -22810,7 +22810,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -22818,7 +22818,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the voicemail workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -22959,7 +22959,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -22967,7 +22967,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the payment reminder workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -25471,7 +25471,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -25479,7 +25479,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the payment plan workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -25616,7 +25616,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -25624,7 +25624,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the wrong person workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -25761,7 +25761,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -25769,7 +25769,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the voicemail workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -25984,7 +25984,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to payment reminder</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about dispute</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -26026,7 +26026,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to payment reminder</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about dispute</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -26050,7 +26050,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to payment reminder</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about voicemail</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -26461,7 +26461,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -26469,7 +26469,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the dispute workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -26508,7 +26508,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -26516,7 +26516,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the payment plan workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -26555,7 +26555,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -26563,7 +26563,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the wrong person workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -26602,7 +26602,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -26610,7 +26610,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the voicemail workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -26649,7 +26649,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -26657,7 +26657,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the payment reminder workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -26696,7 +26696,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -26704,7 +26704,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the dispute workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -26743,7 +26743,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -26751,7 +26751,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the payment plan workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -26790,7 +26790,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -26798,7 +26798,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the wrong person workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 184.20, but the lookup returned something else and the agent said so and offered a different option."
         }
        }
       ]
@@ -27037,7 +27037,7 @@
     "id": 230000,
     "project": 230041,
     "name": "Kestrel Card Services",
-    "description": "# Kestrel Card Services — Kestrel Community Bank\n\nYou are the Kestrel Card Services for Kestrel Community Bank. You answer inbound calls.\n\n## Call start\nThe call is answered by an automated menu before you join. The menu says: \"Welcome to Kestrel Community Bank card services. For a lost or stolen card press 1. For your balance press 2. For anything else press 0.\"\nAfter the caller selects an option you join with: \"Thanks — how can I help you today?\"\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"For your security, Kestrel Community Bank records this call and will never ask for your full card number.\"\n\n## Workflows\n\n### Freeze\nFreeze a lost or stolen card: authenticate with the card's last four digits and the date of birth, then freeze the card and read back the freeze reference.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Balance\nGive the available balance from the lookup after authentication; never estimate.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Dispute\nTake a card dispute: collect the merchant, amount and date; disputes over 1,000 dollars go to a specialist.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Travel\nRecord a travel notice with destination country and dates.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Authentication\nBefore any account detail, read the mandated disclosure and authenticate.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- The disclosure is read before authentication, word for word.\n- Authentication asks for the last four card digits first, then the date of birth, as two separate questions.\n- Balances come only from the lookup.\n- A caller who fails authentication twice is transferred to the fraud team.\n\n## Transfers\nTransfers: disputes over 1,000 dollars to a specialist; two failed authentications to fraud.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nBalances come only from card_balance. Use `card_balance` with card_last4. If it returns nothing, say so and offer the documented alternative.\n\n## Variables\nThese dynamic variables are passed in at call time: {{card_last4}}, {{customer_dob}}, {{travel_country}}, {{dispute_amount}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
+    "description": "# Kestrel Card Services — Kestrel Community Bank\n\nYou are the Kestrel Card Services for Kestrel Community Bank. You answer inbound calls.\n\n## Call start\nThe call is answered by an automated menu before you join. The menu says: \"Welcome to Kestrel Community Bank card services. For a lost or stolen card press 1. For your balance press 2. For anything else press 0.\"\nAfter the caller selects an option you join with: \"Thanks — how can I help you today?\"\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"For your security, Kestrel Community Bank records this call and will never ask for your full card number.\"\n\n## Workflows\n\n### Freeze\nFreeze a lost or stolen card: authenticate with the card's last four digits and the date of birth, then freeze the card and read back the freeze reference.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Balance\nGive the available balance from the lookup after authentication; never estimate.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Dispute\nTake a card dispute: collect the merchant, amount and date; disputes over 1,000 dollars go to a specialist.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Travel\nRecord a travel notice with destination country and dates.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Authentication\nBefore any account detail, read the mandated disclosure and authenticate.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- The disclosure is read before authentication, word for word.\n- Authentication asks for the last four card digits first, then the date of birth, as two separate questions.\n- Balances come only from the lookup.\n- A caller who fails authentication twice is transferred to the fraud team.\n\n## Transfers\nTransfers: disputes over 1,000 dollars to a specialist; two failed authentications to fraud.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nBalances come only from card_balance. Use `card_balance` with card_last4. If it returns nothing, say so plainly and offer to look up a different option; never invent one.\n\n## Variables\nThese dynamic variables are passed in at call time: {{card_last4}}, {{customer_dob}}, {{travel_country}}, {{dispute_amount}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
     "language": "en",
     "inbound": true,
     "agent_speaks_first": true,
@@ -27094,7 +27094,7 @@
      "id": 230001,
      "project": 230041,
      "name": "Kestrel Card Services v2",
-     "description": "# Kestrel Card Services — Kestrel Community Bank\n\nYou are the Kestrel Card Services for Kestrel Community Bank. You answer inbound calls.\n\n## Call start\nThe call is answered by an automated menu before you join. The menu says: \"Welcome to Kestrel Community Bank card services. For a lost or stolen card press 1. For your balance press 2. For anything else press 0.\"\nAfter the caller selects an option you join with: \"Thanks — how can I help you today?\"\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"For your security, Kestrel Community Bank records this call and will never ask for your full card number.\"\n\n## Workflows\n\n### Freeze\nFreeze a lost or stolen card: authenticate with the card's last four digits and the date of birth, then freeze the card and read back the freeze reference.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Balance\nGive the available balance from the lookup after authentication; never estimate.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Dispute\nTake a card dispute: collect the merchant, amount and date; disputes over 1,000 dollars go to a specialist.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Travel\nRecord a travel notice with destination country and dates.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Authentication\nBefore any account detail, read the mandated disclosure and authenticate.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- The disclosure is read before authentication, word for word.\n- Authentication asks for the last four card digits first, then the date of birth, as two separate questions.\n- Balances come only from the lookup.\n- A caller who fails authentication twice is transferred to the fraud team.\n\n## Transfers\nTransfers: disputes over 1,000 dollars to a specialist; two failed authentications to fraud.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nBalances come only from card_balance. Use `card_balance` with card_last4. If it returns nothing, say so and offer the documented alternative.\n\n## Variables\nThese dynamic variables are passed in at call time: {{card_last4}}, {{customer_dob}}, {{travel_country}}, {{dispute_amount}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
+     "description": "# Kestrel Card Services — Kestrel Community Bank\n\nYou are the Kestrel Card Services for Kestrel Community Bank. You answer inbound calls.\n\n## Call start\nThe call is answered by an automated menu before you join. The menu says: \"Welcome to Kestrel Community Bank card services. For a lost or stolen card press 1. For your balance press 2. For anything else press 0.\"\nAfter the caller selects an option you join with: \"Thanks — how can I help you today?\"\n\n## Mandatory disclosure\nSay this exactly, at the start of your first turn: \"For your security, Kestrel Community Bank records this call and will never ask for your full card number.\"\n\n## Workflows\n\n### Freeze\nFreeze a lost or stolen card: authenticate with the card's last four digits and the date of birth, then freeze the card and read back the freeze reference.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Balance\nGive the available balance from the lookup after authentication; never estimate.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Dispute\nTake a card dispute: collect the merchant, amount and date; disputes over 1,000 dollars go to a specialist.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Travel\nRecord a travel notice with destination country and dates.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n### Authentication\nBefore any account detail, read the mandated disclosure and authenticate.\nAsk one question at a time unless this workflow says otherwise. Confirm each collected value before acting on it.\n\n## Policies\n- The disclosure is read before authentication, word for word.\n- Authentication asks for the last four card digits first, then the date of birth, as two separate questions.\n- Balances come only from the lookup.\n- A caller who fails authentication twice is transferred to the fraud team.\n\n## Transfers\nTransfers: disputes over 1,000 dollars to a specialist; two failed authentications to fraud.\nWhen transferring, say you are connecting the caller and do not continue the conversation.\n\n## Live data\nBalances come only from card_balance. Use `card_balance` with card_last4. If it returns nothing, say so plainly and offer to look up a different option; never invent one.\n\n## Variables\nThese dynamic variables are passed in at call time: {{card_last4}}, {{customer_dob}}, {{travel_country}}, {{dispute_amount}}.\n\n## Style\nBe concise. Do not repeat information the caller already gave. Never invent facts that are not in this description or returned by a tool. If the caller goes silent for more than eight seconds, ask once whether they are still there, then end the call politely after another eight seconds of silence.\n",
      "language": "en",
      "inbound": true,
      "agent_speaks_first": true,
@@ -31577,7 +31577,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -31585,7 +31585,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the balance workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -31726,7 +31726,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -31734,7 +31734,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the authentication workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -31875,7 +31875,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -31883,7 +31883,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the dispute workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -32024,7 +32024,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -32032,7 +32032,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the freeze workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -34536,7 +34536,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -34544,7 +34544,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the balance workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -34681,7 +34681,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -34689,7 +34689,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the authentication workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -34826,7 +34826,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -34834,7 +34834,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the dispute workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -35049,7 +35049,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to freeze</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about travel</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -35091,7 +35091,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to freeze</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about travel</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -35115,7 +35115,7 @@
        "conditions": [
         {
          "when": "The main agent says anything",
-         "say": "<ai_generated>Repeat that you want to freeze</ai_generated>"
+         "say": "<ai_generated>Repeat that you are calling about dispute</ai_generated>"
         },
         {
          "when": "The main agent asks you to confirm a detail",
@@ -35526,7 +35526,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -35534,7 +35534,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the travel workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -35573,7 +35573,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -35581,7 +35581,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the balance workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -35620,7 +35620,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -35628,7 +35628,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the authentication workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -35667,7 +35667,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -35675,7 +35675,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the dispute workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -35714,7 +35714,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -35722,7 +35722,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the freeze workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -35761,7 +35761,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -35769,7 +35769,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the travel workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -35808,7 +35808,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -35816,7 +35816,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the balance workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        },
        {
@@ -35855,7 +35855,7 @@
            "type": "binary",
            "score": 0,
            "explanation": [
-            "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+            "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
            ]
           }
          ]
@@ -35863,7 +35863,7 @@
         "expected_outcome": {
          "prompt": "The main agent should follow the authentication workflow.\nThe main agent should confirm each collected value before acting on it.",
          "result": false,
-         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent offered the documented alternative."
+         "explanation": "The expected outcome required 2,410.55, but the lookup returned something else and the agent said so and offered a different option."
         }
        }
       ]

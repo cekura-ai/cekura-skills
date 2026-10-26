@@ -91,7 +91,7 @@ def transcript(d, kind):
         value = RUNTIME[d["name"]][2]
         return [("Main Agent", greet), ("Testing Agent", want), ("Main Agent", "Let me check that for you."),
                 ("Main Agent", "I'm sorry — the system doesn't show %s for you right now. I can offer the alternative that's available." % value),
-                ("Testing Agent", "Okay, that works.")], False, "The expected outcome required %s, but the lookup returned something else and the agent offered the documented alternative." % value
+                ("Testing Agent", "Okay, that works.")], False, "The expected outcome required %s, but the lookup returned something else and the agent said so and offered a different option." % value
     if kind == "agent_fault":
         what, line = AGENT_FAULT[d["name"]]
         return [("Main Agent", greet), ("Testing Agent", want), ("Main Agent", line), ("Testing Agent", "Oh, okay."),
@@ -410,11 +410,12 @@ def t12_looping(d, fx):
     folder = list(d["folders"])[2]
     ca_rows = [r for r in folder_rows(fx, folder) if r["scenario_type"] == "conditional_actions"]
     target, siblings = ca_rows[1], [ca_rows[4]["id"], ca_rows[7]["id"]]
-    loop = {"when": "The main agent says anything", "say": "<ai_generated>Repeat that you want to %s</ai_generated>" % label(d["workflows"][0][0])}
     plants = []
     for r in [target["id"]] + siblings:
-        ca = copy.deepcopy(next(x for x in ca_rows if x["id"] == r)["conditional_actions"])
-        ca["conditions"] = [loop] + ca["conditions"][1:]
+        row = next(x for x in ca_rows if x["id"] == r)
+        ca = copy.deepcopy(row["conditional_actions"])
+        # The scenario's own workflow, restated on every agent turn: the catch-all that loops.
+        ca["conditions"] = [{"when": "The main agent says anything", "say": "<ai_generated>Repeat that you are calling about %s</ai_generated>" % label(row["tags"][0])}] + ca["conditions"][1:]
         if r == target["id"]:
             ca["functions"] = [FUNCTION]
         plants.append({"id": r, "path": ["conditional_actions"], "value": ca})
@@ -476,7 +477,7 @@ def t14_runtime_state(d, fx):
                                     check("value_not_required", "field_all", ids=planted, field="expected_outcome_prompt", match={"not_regex": value.replace(".", r"\.")}),
                                     check("agent_untouched", "configuration_unchanged", True, parts=["agents"]),
                                     check("scenario_fields", "fields_changed_within", fields=["expected_outcome_prompt", "instructions", "conditional_actions"])],
-                         "rubric": [{"id": "conditional", "text": "The new outcomes accept whatever the live lookup returns and the documented alternative when it returns nothing."},
+                         "rubric": [{"id": "conditional", "text": "The new outcomes accept whatever the live lookup returns and, when it returns nothing, the agent saying so and offering to look up a different option."},
                                     {"id": "still_strict", "text": "They still fail an agent that states a value the lookup did not return; the follow-up answer says so."}]}}
 
 

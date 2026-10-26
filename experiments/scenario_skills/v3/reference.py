@@ -227,21 +227,22 @@ def s04(task, d, fx, folders, good):
 def s05(task, d, fx, folders, good):
     ids = ids_of(task, "openers_fixed")["ids"]
     front = d["front"]
-    key = next(iter(front["options"]))
-    select = ('<dtmf digits="%s" />' % key) if front["kind"] != "router" else key.title() + "."
+    def select(workflow):
+        text = (workflow + " " + dict(d["workflows"]).get(workflow, "")).lower()
+        key = next((k for k, dest in front["options"].items() if dest.split()[0][:6].lower() in text), next(iter(front["options"])))
+        return ('<dtmf digits="%s" />' % key) if front["kind"] != "router" else key.title() + "."
     def edit(state):
         for r in rows(state, ids):
             ca = r["conditional_actions"]
-            request = ca["first_message"]
             ca["first_message"] = "" if d["inbound"] else "Hello?"
             if good:
-                # Wait for the opening, take the menu path to the agent, then state the request once asked.
-                ca["conditions"] = [{"when": "The opening finishes listing the options", "say": select},
-                                    {"when": "The main agent invites you to share what you need", "say": request}] + ca["conditions"][1:]
+                # Stay quiet through the opening, take the menu option for this workflow; the scenario's own request condition is kept.
+                ca["conditions"] = [{"when": "The opening finishes listing the options", "say": select(r["tags"][0])}] + ca["conditions"]
             else:
-                ca["conditions"] = ca["conditions"][1:]  # The opener is gone and nothing replaces the request.
-    message = ("Fixed %d tests whose runs show the caller talking over the opening. The caller now stays quiet through the opening, selects %s when the "
-               "options finish, and states its request once the agent asks how it can help. Personalities are unchanged." % (len(ids), select)) if good \
+                ca["conditions"] = ca["conditions"][1:]  # The opener is gone and so is the scenario's request.
+    message = ("Fixed %d tests whose runs show the caller talking over the opening. The talking opener is removed; the caller now stays quiet through "
+               "the opening, picks the menu option for its own workflow when the options finish, and then states its original request when the agent "
+               "asks. Personalities are unchanged." % len(ids)) if good \
         else "Cleared the opening line on %d tests." % len(ids)
     return [turn(message, edit, reads=results_reads(task)),
             turn("Partly: the 'are you there' loops come from the caller talking over the opening; waiting for it removes that trigger." if good else "Yes.")]
@@ -326,8 +327,8 @@ def s10(task, d, fx, folders, good):
     value = RUNTIME[d["name"]][2]
     def fix(state, ids):
         for r in rows(state, ids):
-            r["expected_outcome_prompt"] = ("The main agent offers what the live lookup returns, or the documented alternative when it returns nothing, "
-                                            "and confirms the choice with the caller." if good else "The main agent handles the request.")
+            r["expected_outcome_prompt"] = ("The main agent offers what the live lookup returns; when it returns nothing, it says so and offers to look up "
+                                            "a different option, and it confirms the choice with the caller." if good else "The main agent handles the request.")
     if good:
         return [turn("I read the six failed transcripts. Test side — %s: the agent says \"I'm sorry — the system doesn't show %s for you right now. I can offer "
                      "the alternative that's available.\" That is correct behaviour, but each expected outcome requires %s regardless of what the lookup "
@@ -367,22 +368,26 @@ def s12(task, d, fx, folders, good):
     def edit(state):
         for r in rows(state, [tid] + ([] if good else siblings)):
             ca = r["conditional_actions"]
-            ca["conditions"] = [{"when": "The main agent asks what you need help with", "say": "I want to %s." % label(d["workflows"][0][0])}] + ca["conditions"][1:]
+            topic = label(r["tags"][0])
+            ca["conditions"] = [{"when": "The main agent's first question about why you are calling", "say": "I'm calling about %s." % topic},
+                                {"when": "The main agent asks you to clarify or give more detail about your request",
+                                 "say": "<ai_generated>Give one new concrete detail about your %s request from your profile; never repeat an earlier sentence</ai_generated>" % topic}] + ca["conditions"][1:]
             if not good:
                 ca.pop("functions", None)
     if good:
-        return [turn("Fixed %d: the catch-all trigger fired on every agent turn, so the caller restated its request each time. It now answers once, when asked; its functions are kept." % tid, edit),
+        return [turn("Fixed %d: the catch-all 'says anything' trigger fired on every agent turn, so the caller restated its request each time. Now the caller states its "
+                     "own request once, at the agent's first question, and a clarification request gets a new detail instead of a repeat. Its functions and "
+                     "other fields are unchanged." % tid, edit),
                 turn("Yes — %s use the same catch-all trigger. I haven't changed them; say if you want the same fix." % " and ".join(map(str, siblings)))]
     return [turn("Fixed it, and the others in the folder too.", edit), turn("No, there are no others.")]
 
 
 VARIANT_BEHAVIOUR = {
-    "happy path": "completes the steps in order and reads back the final result",
-    "edge case": "hits a limit the description sets (no matching option, an ineligible request or a missing detail) and offers the documented "
-                 "alternative instead of forcing the request through",
-    "repeat request": "notices the caller repeating something already handled, confirms it is done and does not start the flow again",
-    "interrupting": "stops when the caller talks over it, answers the interruption and resumes where it left off without repeating finished steps",
-    "unclear answer": "asks one clarifying question when an answer is ambiguous and acts only on the clarified value"}
+    "happy path": "confirms each collected value before acting on it",
+    "edge case": "does not invent anything the description or a tool did not provide; if the lookup returns nothing it says so and offers to look up a different option",
+    "repeat request": "does not ask again for information the caller already gave",
+    "interrupting": "asks one question at a time and keeps its replies concise",
+    "unclear answer": "confirms the value with the caller before acting on it"}
 
 
 def s13(task, d, fx, folders, good):
@@ -394,6 +399,8 @@ def s13(task, d, fx, folders, good):
         variant = next(v for v in VARIANT_BEHAVIOUR if name.endswith(v))
         lines = ["The caller is calling about %s (%s)." % (label(workflow[0]), variant), "The main agent follows its %s steps: %s" % (label(workflow[0]), workflow[1]),
                  "In this call it %s." % VARIANT_BEHAVIOUR[variant]]
+        if "transfer" in workflow[1].lower():
+            lines.append("When it transfers, it says it is connecting the caller and does not continue the conversation.")
         script_ = json.dumps(row.get("conditional_actions")) if row["scenario_type"] == "conditional_actions" else row.get("instructions", "")
         if d["phrase"] in script_:
             lines.append("When the caller says they will call back, the agent ends the call politely and does not book a callback it cannot schedule.")
@@ -414,8 +421,8 @@ def s14(task, d, fx, folders, good):
     planted = ids_of(task, "all_affected")["ids"]
     def edit(state):
         for r in rows(state, planted):
-            r["expected_outcome_prompt"] = ("The main agent offers what the live lookup returns, or the documented alternative when it returns nothing, and never states a "
-                                            "value the lookup did not return." if good else "The main agent should be helpful.")
+            r["expected_outcome_prompt"] = ("The main agent offers what the live lookup returns; when it returns nothing, it says so and offers to look up a "
+                                            "different option. It never states a value the lookup did not return." if good else "The main agent should be helpful.")
     return [turn("Updated %d tests so the outcome follows the lookup result instead of one fixed value." % len(planted), edit),
             turn("No: an agent that states a value the lookup did not return still fails." if good else "Yes, they'll pass now.")]
 
@@ -462,10 +469,10 @@ def c01(task, d, fx, folders, good):
     return [turn("Saved it unchanged in %s." % folders[2] if good else "Saved a cleaned-up version.", create=[row], via="create" if good else "generate")]
 
 
-C02_CASES = (("gives every detail in order", "give every detail in order", "completes the flow and reads back the result"),
-             ("gives the details out of order", "give the details out of order", "collects each detail once, confirms each, and does not re-ask for values already given"),
-             ("cannot provide one detail", "cannot provide one of the required details", "explains it is needed, offers the documented alternative, and does not proceed without it"),
-             ("asks a policy question", "ask a policy question in the middle", "answers only from the description's policies, then returns to the flow"),
+C02_CASES = (("gives every detail in order", "give every detail in order", "collects each required detail and confirms each value before acting on it"),
+             ("gives the details out of order", "give the details out of order", "does not ask again for details the caller already gave and confirms each value"),
+             ("cannot provide one detail", "cannot provide one of the required details", "does not invent the missing detail or complete the request without it"),
+             ("asks a policy question", "ask a policy question in the middle", "answers only from the policies in its description, then continues the workflow"),
              ("corrects a detail", "correct one detail after giving it", "uses the corrected value and confirms it before acting"))
 
 
