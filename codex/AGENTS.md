@@ -241,7 +241,7 @@ Use `page_size` parameter (up to 200) instead of paginating through multiple pag
 For legitimate deviations where the metric should not apply. The LLM returns "VALID_SKIP:" prefix and the custom_code wrapper converts to `_result = None`.
 
 ### Gated Metrics
-Access upstream metric results via `data.get("Exact Metric Name")`. Key must match exactly.
+Access upstream metric results via `data.get("Exact Metric Name")` or `data["metrics"]["<slug>"]["value"]`. Key must match exactly. The upstream metric runs first (inferred from the literal read, or declared in `configuration.metric_dependencies`); a missing upstream result leaves the gated metric unscored with `extra.dependency_failed`. LLM-judge metrics gate with `{{metrics.<slug>.score}}` in `description`.
 
 ### Metadata Field Migration
 Clients rename fields without backfilling. When this happens, metrics must reference both old and new field names with priority logic. The trigger should fire if EITHER field is populated.
@@ -301,11 +301,11 @@ On `evaluation.metrics[]` entries: `score` field (0 = FAIL, 5 = PASS, None = N/A
 
 ## The Eval Design Workflow
 
-1. **Understand the agent** — Read the agent description to identify all workflows, decision points, and edge cases; read the organization's scenario format once (`conditional_actions_generation_enabled`, below)
+1. **Understand the agent** — Read the agent description to identify all workflows, decision points, and edge cases
 2. **Choose a tool strategy** — Ask the user which of the three approaches below
 3. **Create a folder first** — Always create a folder before generating or creating scenarios
 4. **Run the pre-creation checkpoint** — Confirm tool strategy, test profile, run mode, personality, adaptive vs conditional, folder, metrics
-5. **Write by type — behavioral ⇒ generate; conditional actions ⇒ generate for a batch or category (`simulation_type: "conditional_actions"`), create directly when the turns are exactly known** (see "Auto-Generation" below). Set `folder_path` either way
+5. **Generate; conditional actions are the default format** — create directly only a conditional-action scenario whose turns are exactly known (see "Auto-Generation" below). Set `folder_path` either way
 6. **Review and fix** — PATCH `scenario_language` for non-English, fix `first_message` if auto-gen added greetings
 7. **Set up test infrastructure** — Test profiles + tool data per chosen strategy
 8. **Supplement by type, same rule as step 5** — behavioral gaps (edge cases, free-form red-team) ⇒ another generation run with `extra_instructions` naming the gaps; deterministic gaps ⇒ conditional-action generation, or a direct create when the turns are exactly known. Never hand-write an `instruction` scenario to close a gap
@@ -327,16 +327,14 @@ Agent doesn't use tools, or tools aren't relevant to these tests. Use test profi
 
 ## Auto-Generation (the only path for behavioral scenarios)
 
-**The organization's scenario format decides first.** `GET /user/organizations/` returns each organization with its `projects` and `conditional_actions_generation_enabled`; read it once, for the organization that owns the agent's project. When it is on (every new organization), every new scenario is `conditional_actions`: generate with `simulation_type: "conditional_actions"` (or leave it out — the setting then picks it), create only with `scenario_type: "conditional_actions"`, and never send `instruction` in either. Behavioral, adaptive or free-form requests become conditional actions whose adaptive caller turns are `<ai_generated>` steps; scenario text the user supplies goes into `extra_instructions` (or is authored as conditional actions), not saved as `instruction`. Existing instruction scenarios still run and can be edited — do not convert them unless asked. When the setting is off or unreadable, the table below applies unchanged.
-
 **The write path follows `scenario_type`, and it is not a preference:**
 
 | `scenario_type` | Path |
 |---|---|
-| `instruction` (behavioral — natural conversation, edge cases, free-form red-team; organizations not on conditional actions) | **Always** `POST /test_framework/v1/scenarios/generate-bg/`. Never hand-author, not even for a single scenario — use `num_scenarios: 1` with the description as `extra_instructions`. |
-| `conditional_actions` (scripted, deterministic, regression, IVR/DTMF/voicemail, compliance, infra — and everything on a conditional-actions organization) | `POST /test_framework/v1/scenarios/generate-bg/` with `simulation_type: "conditional_actions"` for a batch or category; `POST /test_framework/v1/scenarios/` directly when the structure is exactly known. |
+| `instruction` (behavioral — only when the user asks for instruction-based scenarios) | **Always** `POST /test_framework/v1/scenarios/generate-bg/`. Never hand-author, not even for a single scenario — use `num_scenarios: 1` with the description as `extra_instructions`. |
+| `conditional_actions` (the default — every other scenario; adaptive caller turns are `<ai_generated>` steps) | `POST /test_framework/v1/scenarios/generate-bg/`, whose default output is conditional actions; `POST /test_framework/v1/scenarios/` directly only when the turns are exactly known. |
 
-Only exception on the behavioral side, and only with the organization setting off: the user supplies the instruction text themselves (CSV/JSON list, or "create this exact scenario") — generating would discard their wording. Generation gotchas below are routine post-generation PATCHes, not reasons to hand-author.
+Only exception on the behavioral side: the user supplies the instruction text themselves (CSV/JSON list, or "create this exact scenario") — generating would discard their wording. Generation gotchas below are routine post-generation PATCHes, not reasons to hand-author.
 
 Use the generate endpoint with category guidance:
 
@@ -353,7 +351,7 @@ POST /test_framework/v1/scenarios/generate-bg/
 }
 ```
 
-`simulation_type` (`conditional_actions` or `instruction`) picks the output format; left out, as here, the organization setting picks it. Poll progress at `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.
+Poll progress at `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<id>`.
 
 **Gotchas:**
 - `personality` is required (400 without it). Default: the "Normal" personality matched to the scenario's language — always look it up via personalities_list (language=<code>, English included: language=en; language is the only filter needed), or a multilingual (language=multi) one when languages are mixed. If the language-matched personality returns "Personality is not enabled", enable it for the project or create/fork a Normal personality in the target language and use it (scenario_language is coupled to the personality's language by design — mismatches are rejected; multilingual voice models handle any supported language)
@@ -430,7 +428,7 @@ Create mock tools with input/output mappings. **Critical rules:**
 2. **Test profile** — Show the full `information` dict. For A: match client's staging data formats. For B: derive FROM mock tool outputs. For C: caller identity only.
 3. **Run mode** — Default to text/chat (cheapest, same logic coverage). Voice only when explicitly needed.
 4. **Personality** — Default: the "Normal" personality matched to the scenario's language (look it up via personalities_list, English included) and a multilingual (language=multi) one for mixed-language scenarios. Note exceptions but don't change without asking.
-5. **Adaptive vs conditional** — Conditional actions only when the organization's `conditional_actions_generation_enabled` is on. Otherwise default to adaptive, and use conditional actions for explicit unit-test needs.
+5. **Adaptive vs conditional** — Default to conditional actions, with adaptive caller turns as `<ai_generated>` steps. Use instructions only when the user asks for instruction-based scenarios.
 6. **Folder** — Name the folder.
 7. **Metrics** — Confirm baseline metrics attachment.
 
@@ -516,10 +514,9 @@ The `?call_id=` query param holds a `run_id` — use that format only when const
 
 ## Conditional Actions — Deterministic Evaluators
 
-Use conditional actions when the user needs a scenario that runs identically each time: unit tests, regression tests, IVR navigation, compliance testing. For adaptive/exploratory scenarios use behavioral instructions instead — except on an organization on conditional actions scenarios, where they are conditional actions too, with `<ai_generated>` steps for the adaptive turns.
+Conditional actions are the default scenario format. Fixed steps run identically each time (unit tests, regression tests, IVR navigation, compliance testing); adaptive/exploratory caller turns are `<ai_generated>` steps.
 
-**When to use:** Exact flow validation, deterministic regression, IVR nav, compliance — and every new scenario on a conditional-actions organization.
-**When NOT to use (organizations not on conditional actions):** Natural conversation quality, edge cases, red-team — those are behavioral scenarios, which are generated via `generate-bg`, not authored here.
+**When to use:** Every scenario unless the user asks for instruction-based scenarios.
 
 ### Structure
 

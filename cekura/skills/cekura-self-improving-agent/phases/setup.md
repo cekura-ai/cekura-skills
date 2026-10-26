@@ -52,7 +52,9 @@ repair offer (never continue on guessed mechanics):
 2. **Render**: `render_intended` (if declared) produces output; hash it.
 3. **Deploy or noop**: run `deploy.sandbox_command` if present, else
    `deploy.command` against the non-production `target_env`, else noop for
-   live-on-save. Capture `produces` identities (runtime_agent_id, build_sha).
+   live-on-save. For a managed provider this step is the Clone phase
+   ([`clone.md`](clone.md)). Capture `produces` identities (runtime_agent_id,
+   build_sha).
 4. **Read live**: `read_live` returns config; compare to the render using
    `attestation.acceptable_differences` (provider-assigned ids, timestamps).
    Any other mismatch is drift — surface it now.

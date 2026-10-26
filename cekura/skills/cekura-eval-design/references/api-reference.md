@@ -99,10 +99,6 @@ Returns a result object with `id`, `status`, and `runs` array.
 |--------|------|---------|
 | GET | `/test_framework/v1/personalities/` | List available personalities |
 
-## Organization Scenario Format
-
-`GET /user/organizations/` returns each organization with its `projects` and `conditional_actions_generation_enabled`. Read it once, for the organization that owns the agent's project, before creating or generating scenarios. When it is on (every new organization), every new scenario is `conditional_actions`: never create an `instruction` scenario or send `simulation_type: "instruction"`. When it is off or unreadable, both formats apply as described below.
-
 ## Create Evaluator Schema
 
 ```json
@@ -111,7 +107,7 @@ Returns a result object with `id`, `status`, and `runs` array.
   "agent": "integer | null — agent ID (either agent or project required)",
   "project": "integer | null — project ID",
   "name": "string (max 80 chars) — scenario name",
-  "scenario_type": "string — one of: 'instruction' (default), 'real_world_smart', 'real_world_fixed', 'conditional_actions'. Must be 'conditional_actions' to use the conditional_actions field below, and is always 'conditional_actions' on an organization with conditional_actions_generation_enabled on.",
+  "scenario_type": "string — one of: 'instruction' (default), 'real_world_smart', 'real_world_fixed', 'conditional_actions'. Must be 'conditional_actions' to use the conditional_actions field below.",
   "scenario_language": "string — language code (e.g., 'en', 'es'). Required when scenario_type is 'conditional_actions'; otherwise inferred from personality.",
   "instructions": "string — free-form, first-person scenario instructions for behavioral evaluators. Do not pass a JSON object here. For conditional-actions evaluators, use the `conditional_actions` field below and leave this unset.",
   "conditional_actions": "object — required for scenario_type='conditional_actions'. Carries {role, first_message, conditions[{when, say, then}]}. See 'Authoring a Conditional-Actions Evaluator' below.",
@@ -126,7 +122,7 @@ Returns a result object with `id`, `status`, and `runs` array.
 
 ### Behavioral Evaluators — generated, not authored here
 
-**Do not create behavioral scenarios through this endpoint.** `scenario_type: "instruction"` scenarios are produced by `POST /test_framework/v1/scenarios/generate-bg/` (see `references/auto-generation.md`), including single ones. The only exception is scenario text the user supplied verbatim (a CSV/JSON list, or "create this exact scenario") — generating would discard their wording. On an organization on conditional actions scenarios there is no exception: behavioral requests and supplied text become conditional actions (generated with `simulation_type: "conditional_actions"`, or authored as below).
+**Do not create behavioral scenarios through this endpoint.** `scenario_type: "instruction"` scenarios are produced by `POST /test_framework/v1/scenarios/generate-bg/` (see `references/auto-generation.md`), including single ones. The only exception is scenario text the user supplied verbatim (a CSV/JSON list, or "create this exact scenario") — generating would discard their wording.
 
 The payload shape below is documented for that exception and for reading back / PATCHing generated scenarios. `scenario_type` is `"instruction"` (also the default when omitted); `instructions` is a free-form string.
 
@@ -193,7 +189,7 @@ POST /test_framework/v1/scenarios/generate-bg/
 }
 ```
 
-`simulation_type` (`conditional_actions` or `instruction`) picks the output format; left out, as here, the organization setting picks it — conditional actions when `conditional_actions_generation_enabled` is on. Returns `{"progress_id": "<uuid>"}`. Poll with `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<uuid>`.
+Returns `{"progress_id": "<uuid>"}`. Poll with `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<uuid>`.
 
 Progress response:
 ```json

@@ -8,7 +8,7 @@ metadata:
   version: "0.1.0"
 ---
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-results-report"` and `plugin_version="0.20"`. Call it once per conversation. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-results-report"` and `plugin_version="0.19"`. Call it once per conversation. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Results Report
 

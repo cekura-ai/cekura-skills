@@ -1,18 +1,20 @@
 # Clone Phase
 
-Runs **once**, after Setup and before Optimize. Managed providers only; self-hosted and render-only targets skip it.
+Runs **once**, before Collect, as Setup's deploy step (SETUP.3 step 3 — in the manifest model the clone is the sandbox deploy). Managed providers only; self-hosted and render-only targets skip it.
 
 Goal: stand up a disposable copy of the provider agent(s) + their tools (same org, same key) — following any transfer/handoff links so the whole linked graph is cloned — duplicate the Cekura agent (`copy_scenarios=true`), repoint the clone at the cloned entry agent, and rebind the run to the clone. The loop then iterates entirely on the clone — production is never touched. A failed POST **halts**; never fall through to editing the original.
 
 ## Pre-flight
 
-Setup is complete: the live agent and provider configuration were fetched in Setup Step 1.3. Reuse those bodies — do not re-fetch unless a body is missing.
+The manifest is validated and the live agent and provider configuration were read in SETUP.3 step 1. Reuse those bodies — do not re-fetch unless a body is missing.
 
 Required: the provider key already used during Setup, the original Cekura agent id, and the original provider agent id.
 
 ## Step CLONE.1 — Clone provider-side agent + tools
 
 Tools are shared, id-referenced resources. A clone that keeps original `toolIds` / `tool_ids` would PATCH production tools in Apply. Clone every referenced tool first, repoint the assistant at the copies. Build an `old_id → new_id` tool map as you go.
+
+**Record the clone in the audit dir as you build it.** Before the first POST, write `clone.json` = `{"session_id": <active session>, "creating": true, "ids": []}`; append every id a create returns (tools, assistants/agents, squad, LLM/flow); set `"creating": false` as soon as CLONE.1 finishes. The reproduction-gate hook allows provider writes before `repro.json` exists only through this file — POSTs while `creating` is true, then requests whose URLs name a recorded id (the clone repoints below, REPRO.3c's dynamic variables). Never record an original's id.
 
 When copying any provider body, strip server-owned fields before POSTing: `id`, `orgId`, `createdAt`, `updatedAt` (VAPI); `id`, read-only `access_info`, `usage_stats` (ElevenLabs). Suffix every cloned `name` with ` [cekura-selfimprove-clone]`.
 
@@ -115,8 +117,10 @@ validated diff and evidence.
 ## On exit (success or stop)
 
 Surface the cumulative validated diff and result URLs. Leave the original
-provider resources and Cekura agent unchanged; never offer or apply promotion.
-Offer to delete the clone, but do not delete it without approval.
+provider resources and Cekura agent unchanged — the loop never edits them.
+After Regression passes, offer Promote ([`promote.md`](promote.md)); it runs
+only on the user's explicit confirmation. Offer to delete the clone, but do
+not delete it without approval.
 
 ## Edge cases
 

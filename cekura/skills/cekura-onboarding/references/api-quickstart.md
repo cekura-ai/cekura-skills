@@ -44,8 +44,6 @@ POST /test_framework/v1/scenarios/generate-bg/
 }
 ```
 
-`simulation_type` is left out, so the organization's scenario format applies: conditional actions when its `conditional_actions_generation_enabled` is on (every new organization; read it from `GET /user/organizations/`), behavioral instructions otherwise. Never send `"simulation_type": "instruction"` when it is on.
-
 Poll: `GET /test_framework/v1/scenarios/generate-progress/?progress_id=<uuid>`
 
 ### Running Tests

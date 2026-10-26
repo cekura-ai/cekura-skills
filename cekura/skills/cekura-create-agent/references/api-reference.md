@@ -117,6 +117,8 @@ PATCH /test_framework/v2/aiagents/{agent_id}/
 
 **Critical: Full-list replace** — always include all tools; omitting a tool removes it. GET existing `mock_tools` first, merge, then PATCH the full list.
 
+A mapping can also have an optional `response` to simulate a failing or slow tool. See `mock-tool-design.md`.
+
 ### Custom (self-hosted) MCP mock endpoints — REST only
 
 For self-hosted agents with their own MCP server, use `provider="custom"` to auto-discover tools; Cekura hosts a drop-in mock MCP endpoint the agent points at. These are **REST-only** (not exposed as MCP tools) — call with the `X-CEKURA-API-KEY` header. There is **no enable/disable step** for custom: auto-fetch sets up the mock MCP, and enabling/disabling is customer-side (point the agent's MCP client at the URL, or back at the real server).

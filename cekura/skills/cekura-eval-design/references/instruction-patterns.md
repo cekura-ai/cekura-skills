@@ -2,7 +2,7 @@
 
 Detailed guidance on what good behavioral instruction text (`scenario_type: "instruction"`) looks like. Loaded on demand from `SKILL.md`'s "Writing Instructions" section.
 
-**Behavioral scenarios are generated, not hand-authored** (`generate-bg` — the create endpoint is for conditional actions). Use these patterns to write the `extra_instructions` you pass to the generator, to judge and PATCH what it returns, and for the verbatim exception where the user supplied the text. An organization on conditional actions scenarios (`conditional_actions_generation_enabled` on) creates no new instruction scenarios; there these patterns apply only to the `extra_instructions` you write and to editing instruction scenarios it already has.
+**Behavioral scenarios are generated, not hand-authored** (`generate-bg` — the create endpoint is for conditional actions). Use these patterns to write the `extra_instructions` you pass to the generator, to judge and PATCH what it returns, and for the verbatim exception where the user supplied the text.
 
 ## Instruction Style
 

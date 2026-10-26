@@ -2,7 +2,7 @@
 name: manual-create-update-eval
 description: Manually create, update, or duplicate a Cekura evaluator (a.k.a. scenario, eval); loads the cekura-eval-design skill first
 argument-hint: "[create|update|duplicate] [eval type or scenario ID]"
-allowed-tools: ["Skill", "Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__user_organizations_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_duplicate_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Skill", "Read", "Write", "Edit", "Bash", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__personalities_list", "mcp__cekura__aiagents_retrieve", "mcp__cekura__aiagents_list", "mcp__cekura__metrics_list", "mcp__cekura__test_profiles_list", "mcp__cekura__test_profiles_create", "mcp__cekura__scenarios_create", "mcp__cekura__scenarios_duplicate_create", "mcp__cekura__scenarios_retrieve", "mcp__cekura__scenarios_partial_update", "mcp__cekura__scenarios_list", "mcp__cekura__scenarios_run_voice", "mcp__cekura__scenarios_run_text", "mcp__cekura__scenarios_folder_create", "mcp__cekura__scenarios_folders_list", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-ack-tag: ack:manual-create-update-eval:5m4p7c -->
 > **Cekura skill verification tag:** `ack:manual-create-update-eval:5m4p7c`
@@ -16,7 +16,7 @@ Before the tracking call below and before any Cekura MCP call, load the `cekura-
 ## Tracking (then do this)
 
 Next, call `mcp__cekura__cekura_skill_started` with
-`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.20"`. If a conversation/session ID is available (e.g. you
+`skill_name="manual-create-update-eval"`, `verification_tag="ack:manual-create-update-eval:5m4p7c"`, and `plugin_version="0.19"`. If a conversation/session ID is available (e.g. you
 were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
@@ -75,19 +75,17 @@ For updates: show the current agent/project assignment.
 
 ### 2. Scenario Type — Instructions vs Conditional Actions
 
-**Read the organization's format first** — one `mcp__cekura__user_organizations_list` call; on the organization that owns the project, read `conditional_actions_generation_enabled`. **On** (every new organization): do not ask — every new scenario is conditional actions. An adaptive request becomes conditional actions whose adaptive caller turns are `<ai_generated>` steps, and instruction text the user supplies goes to generation (`/autogen-eval`, `simulation_type: "conditional_actions"`, the text as `extra_instructions`) or is built here as conditional actions — never saved as `instruction`; say why. Then follow the conditional-actions bullet below. Updates to existing instruction scenarios still work. **Off, or unreadable:**
-
-**Ask:** "Do you want an adaptive scenario (behavioral instructions) or a deterministic scenario (conditional actions / structured test)?"
+**Default to conditional actions** — do not ask. Use instructions only when the user asks for an instruction-based (prompt-based) scenario.
 
 | Type | When to Use | How It Works |
 |------|------------|--------------|
-| **Adaptive (instructions)** | Most evals — testing natural conversations, edge cases, red-team | Testing agent follows behavioral instructions, adapts to agent responses naturally |
-| **Deterministic (conditional actions)** | Unit tests, regression tests, exact flow validation | Testing agent follows predefined condition→action pairs, repeats identically each run |
+| **Conditional actions** (default) | Every scenario unless the user asks for instructions — adaptive caller turns are `<ai_generated>` steps | Testing agent follows condition→action pairs; fixed steps repeat identically each run |
+| **Instructions** | Only when the user asks for an instruction-based scenario | Testing agent follows behavioral instructions, adapts to agent responses naturally |
 
-**The answer decides whether this command is even the right tool:**
+**The type decides whether this command is even the right tool:**
 
 - **Deterministic (conditional actions):** a batch or a category-level request → `scenarios_generate_bg` with `simulation_type: "conditional_actions"`, the flow and every tag requirement (DTMF entry, hold length, IVR menu, voicemail, interruption) in `extra_instructions`; then walk the result through the fields below and patch what is off. A single fully specified flow — the user dictated the turns, or a timing value must be exact — → build it here against the eval-design CA self-check.
-- **Adaptive (instructions), organizations not on conditional actions only:** a batch or a category-level request ("edge cases around cancellation") → hand off to `/autogen-eval`, which calls `scenarios_generate_bg` and grounds the scenarios in the agent description. A single case the user has already described in full, or supplied verbatim, → create it here: first person, `<scenario>`-wrapped, with outcome, profile, personality, tools and metrics attached (the eval-design skill's direct-create self-check). Updates to an existing adaptive scenario are always direct.
+- **Adaptive (instructions):** a batch or a category-level request ("edge cases around cancellation") → hand off to `/autogen-eval`, which calls `scenarios_generate_bg` and grounds the scenarios in the agent description. A single case the user has already described in full, or supplied verbatim, → create it here: first person, `<scenario>`-wrapped, with outcome, profile, personality, tools and metrics attached (the eval-design skill's direct-create self-check). Updates to an existing adaptive scenario are always direct.
 
 **For adaptive (direct creates):** Write instructions in first-person, behavioral, wrapped in `<scenario>` tags. See the eval-design skill for patterns.
 
@@ -99,7 +97,7 @@ Max 80 characters. Use format: `"[ID] - [Brief description]"` (e.g., `"RS-01: Re
 
 ### 4. Instructions or Conditions
 
-**For adaptive scenarios** (only the verbatim exception from Step 2 on an organization not on conditional actions, or an update to an existing scenario)**:** Write step-by-step instructions wrapped in `<scenario>` tags.
+**For adaptive scenarios** (only the verbatim exception from Step 2, or an update to an existing scenario)**:** Write step-by-step instructions wrapped in `<scenario>` tags.
 
 Key rules:
 - First person: "State your name when asked" NOT "The caller should state their name"

@@ -3,10 +3,10 @@
 fetch_failures.py — One-shot Cekura result → kept-failure summary.
 
 Replaces the manual two-step `results_retrieve` + `runs_bulk_retrieve` fetch
-prescribed in `phases/optimization/collect.md` (Step COLLECT.2). Produces a
+prescribed in `phases/collect.md` (Step COLLECT.2). Produces a
 single consolidated markdown report covering every kept failure with all five
 signals (especially Signal 5: `metadata.ended_reason`) wired up so the
-orchestrator can hand off straight to early-end-call-diagnose.
+orchestrator can hand off straight to the FIX.1 early-end triage.
 
 The script wraps the same Cekura REST endpoints that the `Cekura` MCP
 tools (`results_retrieve`, `runs_bulk_retrieve`) sit on top of:
@@ -28,8 +28,8 @@ EXIT CODES
     0  success — kept-failure summary written
     1  fetch error (network / 4xx / 5xx)
     2  bad input (missing API key, malformed result_id)
-    3  zero failures kept (success or all-reviewed-success — caller should
-        skip Optimization per orchestrator rules)
+    3  zero failures kept (every run success / reviewed_success — caller
+        stops the loop, see collect.md)
 """
 
 from __future__ import annotations
@@ -165,7 +165,7 @@ def render_markdown(
     failures: list[dict],
 ) -> str:
     out: list[str] = []
-    kept = funnel["failure"] + funnel["reviewed_failure"]
+    kept = funnel["failure"] + funnel["reviewed_failure"] + funnel["other"]
     dropped = funnel["reviewed_success"] + funnel["success"]
     out.append(f"# Result {result_id} — kept-failure summary")
     out.append("")
@@ -176,7 +176,7 @@ def render_markdown(
         f"{funnel['reviewed_failure']} `reviewed_failure` kept · "
         f"{funnel['reviewed_success']} `reviewed_success` dropped (human override) · "
         f"{funnel['success']} `success` dropped"
-        + (f" · {funnel['other']} other" if funnel["other"] else "")
+        + (f" · {funnel['other']} other status kept (ambiguous)" if funnel["other"] else "")
     )
     out.append("")
     out.append(f"**Kept failures: {kept}** · **Dropped: {dropped}**")
@@ -259,7 +259,9 @@ def main() -> int:
     except Exception:
         return 1
 
-    kept_ids = [r["id"] for r in index if r["evaluation_status"] in KEEP_VERDICTS and r["id"] is not None]
+    # Non-standard statuses count as kept (COLLECT.3: a false keep recovers in
+    # Fix, a false drop loses signal).
+    kept_ids = [r["id"] for r in index if r["evaluation_status"] not in DROP_VERDICTS and r["id"] is not None]
 
     if not kept_ids:
         # Funnel-only summary; orchestrator should skip the rest of Optimization.

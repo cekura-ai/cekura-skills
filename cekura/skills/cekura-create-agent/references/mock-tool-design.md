@@ -32,9 +32,32 @@ Detailed guidance for setting up mock tools (Phase 4 of the create-agent flow). 
 **When designing mock data, think about:**
 - What different inputs will the main agent send to this tool across all test scenarios?
 - What should each distinct input return?
-- What error cases matter? (Add a mapping with an error response for tool-failure scenarios)
+- What error cases matter? (Add a mapping with a `response` status code — see [Simulating Tool Failures and Latency](#simulating-tool-failures-and-latency))
 
 If you only create one mapping, every tool call — regardless of input — returns the same output. This masks bugs where the agent sends the wrong parameters.
+
+## Simulating Tool Failures and Latency
+
+A mapping can have an optional `response` to simulate a failing or slow tool:
+
+```json
+{
+  "input": {"date": "2026-07-11"},
+  "output": {"detail": "Service temporarily unavailable"},
+  "response": {"status_code": 503, "headers": {"Retry-After": "30"}, "delay_ms": 2000}
+}
+```
+
+- `status_code`: 200–299 (except 204 and 205) or 400–599. Default 200.
+- `headers`: up to 20 headers with string values. `Content-Type`, `Content-Length`, `Content-Encoding`, `Transfer-Encoding`, `Connection`, `Set-Cookie` and `Strict-Transport-Security` are not allowed.
+- `delay_ms`: 0–30000. Default 0.
+
+How the agent sees a status of 400 or above:
+- **Webhook tools** get that HTTP status and the headers, with `output` as the body.
+- **VAPI function tools** get HTTP 200 with the result `Error 503: {"detail":"Service temporarily unavailable"}`.
+- **MCP tools** get a tool result with `isError: true` and the same text.
+
+One input can only have one outcome, so give the failure case its own input.
 
 ## Tool Data Design
 

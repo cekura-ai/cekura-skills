@@ -10,7 +10,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.4.0"
+  version: "0.3.0"
 ---
 
 # Cekura Coordinator
@@ -84,7 +84,7 @@ When the user describes what they need, route them:
 | "I need to test my agent" | **cekura-eval-design** skill |
 | "Generate test scenarios" / any batch or category-level request, either format | **cekura-eval-design** skill (`/autogen-eval` for the walkthrough where slash commands exist) |
 | "Create a specific test scenario" — scripted / deterministic / regression / IVR / DTMF / compliance flow | **cekura-eval-design** skill (conditional actions: generated for a category, created directly for a dictated script), `/manual-create-update-eval` for the field walkthrough where slash commands exist |
-| "Create a specific test scenario" — natural conversation, edge case, red-team | **cekura-eval-design** skill: generate (`num_scenarios: 1`). The format follows the organization: conditional actions when its `conditional_actions_generation_enabled` is on (every new organization), behavioral otherwise |
+| "Create a specific test scenario" — natural conversation, edge case, red-team | **cekura-eval-design** skill: generate (`num_scenarios: 1`) for a category-level ask, create directly for a fully described case |
 | "Update / duplicate an existing scenario" | **cekura-eval-design** skill (§ Changing existing evaluators), `/manual-create-update-eval` for the walkthrough where slash commands exist |
 | "Run my tests" | `/run-evals` command |
 | "Check test results" | `/eval-results` command |

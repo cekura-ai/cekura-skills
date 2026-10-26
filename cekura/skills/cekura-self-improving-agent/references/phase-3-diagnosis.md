@@ -1,4 +1,4 @@
-# Phase 3 — Diagnosis Reference
+# Fix — Diagnosis Reference
 
 Full classification table with examples, before/after templates per edit surface, tool-edit anti-patterns, manual-vs-automated-improver guidance, and Optimization-phase anti-patterns.
 
@@ -176,11 +176,11 @@ End with a summary line: `4 changes proposed and 1 upstream hand-off across 12 p
 
 ## Manual analysis vs. the automated prompt-improver
 
-This skill defaults to the **manual path** because it produces explainable, scoped diffs tied to specific failures, works across mixed inputs in one pass, and respects the voice-failure filter from Phase 2.
+This skill defaults to the **manual path** because it produces explainable, scoped diffs tied to specific failures, works across mixed inputs in one pass, and respects the voice-failure filter from Collect.
 
-Use the automated improver as a **fallback** when manual analysis is inconclusive (failures don't cluster, or the user wants a second opinion). Treat its suggestions as input to Step 3.4, not as the final proposal — still surface them as before/after blocks for user review.
+Use the automated improver as a **fallback** when manual analysis is inconclusive (failures don't cluster, or the user wants a second opinion). Treat its suggestions as input to FIX.5, not as the final proposal — still surface them as before/after blocks for user review.
 
-## Phase 3 anti-patterns
+## Fix anti-patterns
 
 - **Rewriting the whole prompt** because several sections look weak — only edit what the failures justify.
 - **Adding catch-all clauses** ("always be helpful and accurate") — they don't change behavior.

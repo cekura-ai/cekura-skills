@@ -31,7 +31,7 @@ Run through each item:
 
 **Step 1 — Generate one scenario using the MCP generate tool**
 
-Use `mcp__cekura__scenarios_generate_bg` to auto-generate a single scenario for the agent. Do not write or create a scenario manually. Pass `agent_id` and `num_scenarios: 1`, and leave `simulation_type` out — the organization's scenario format then applies (conditional actions when its `conditional_actions_generation_enabled` is on, as for every new organization); never send `"instruction"`. Poll `mcp__cekura__scenarios_generate_progress` until `status` is `completed`, then use the returned scenario ID.
+Use `mcp__cekura__scenarios_generate_bg` to auto-generate a single scenario for the agent. Do not write or create a scenario manually. Pass `agent_id` and `num_scenarios: 1`. Poll `mcp__cekura__scenarios_generate_progress` until `status` is `completed`, then use the returned scenario ID.
 
 **Step 2 — Run the scenario using the MCP run tool**
 

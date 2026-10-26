@@ -13,7 +13,6 @@ allowed-tools:
     "mcp__cekura__projects_list",
     "mcp__cekura__projects_create",
     "mcp__cekura__projects_retrieve",
-    "mcp__cekura__user_organizations_list",
     "mcp__cekura__aiagents_list",
     "mcp__cekura__aiagents_retrieve",
     "mcp__cekura__aiagents_create",

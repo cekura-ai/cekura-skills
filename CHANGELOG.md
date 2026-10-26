@@ -4,42 +4,66 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
-## 0.20.0 — 2026-10-16
+## 0.19.3 — 2026-10-26
 
-**Organizations on conditional actions scenarios get conditional actions from
-every scenario workflow.**
+**Conditional actions are the default scenario format.** Scenario workflows
+generate and create conditional actions unless the user asks for
+instruction-based scenarios; adaptive caller turns are `<ai_generated>` steps.
+The generator's `simulation_type` now defaults to `conditional_actions`.
 
-- **The organization decides first.** Every scenario workflow reads the
-  organization's `conditional_actions_generation_enabled` setting once, before
-  its first write. It is on for every new organization; Cekura moves older
-  organizations over one at a time, and the web app then offers only
-  conditional actions ("Structured Tests") when generating or creating
-  scenarios.
-- **When it is on, every new scenario is conditional actions.** Generation
-  sends `simulation_type: "conditional_actions"` or leaves it out (the setting
-  then picks conditional actions) and never sends `"instruction"`; direct
-  creates use `scenario_type: "conditional_actions"` only. Behavioral, adaptive
-  and free-form requests become conditional actions whose adaptive caller turns
-  are `<ai_generated>` steps, and scenario text the user supplies is generated
-  from (or authored as conditional actions) instead of being saved as an
-  instruction scenario. Existing instruction scenarios still run and can still
-  be edited; nothing is converted unless asked.
-- **When it is off, or cannot be read, nothing changes** — behavioral
-  instructions stay the default, with conditional actions for structured and
-  deterministic tests.
-- **Covered everywhere scenarios are written:** the eval-design mode decision
-  and its references, `/autogen-eval` (format decided in step 3 and shown in
-  the plan; CSV/JSON bulk create generates conditional actions instead),
-  `/manual-create-update-eval`, `/cekura-report`, onboarding's first
-  evaluators, the create-agent verification run, generate-scenarios (every
-  cluster is conditional actions on such an organization), the coordinator
-  routing table and `codex/AGENTS.md` / `GEMINI.md`.
-- **Corrected: generation does produce conditional actions.** Several places
-  said the generator could not emit them; it does whenever
-  `simulation_type: "conditional_actions"` is sent, so a category of scripted,
-  IVR or regression tests is a generation run, and a direct create is for turns
-  that are exactly known. The create-agent verification run now passes
-  `num_scenarios: 1` (it said `count`).
+- `cekura-eval-design`: the mode table defaults to conditional actions; the
+  ask-first question and the request-to-mode table are gone.
+- `/autogen-eval`, `/manual-create-update-eval`, `codex/AGENTS.md` and
+  `GEMINI.md` follow the same default, and no longer say the generator cannot
+  produce conditional actions.
+- `cekura-create-agent` phase 11 sends `num_scenarios: 1` to the generate
+  tool (it sent `count`, which the tool does not have).
+
+## 0.19.2 — 2026-10-22
+
+**`cekura-self-improving-agent` says one thing everywhere, and its hook no
+longer blocks the skill's own Clone phase.**
+
+- **The reproduction-gate hook lets Clone run.** Clone records what it creates
+  in the audit dir's `clone.json`; before `repro.json` exists the hook allows
+  POSTs while that file says `creating: true`, then only writes whose URLs name
+  a recorded clone id. Writes to anything else stay denied.
+- **The hook checks what the skill says.** It reads `repro.json` from the
+  manifest's `audit.dir` (now required to stay under `.cekura/`), refuses an
+  artifact without this session's `session_id`, requires `1 ≤ n_runs` and
+  `fails ≤ n_runs`, deterministic exactly 1/1, and honours
+  `policy.reproduction.stochastic_min_fails`.
+- **One loop order:** verify → overfitting gate → re-verify if the gate changed
+  edits → decide, in every phase file.
+- **One promotion rule:** production changes only through the Promote phase, on
+  explicit user confirmation; the undefined "apply-diff workflow" is gone.
+- **One regression rule:** a regression hands the regressed cases back to
+  Collect and they stay in the validation set; at stop, the best state (last
+  state that passed the failure set with no regressions) is restored.
+- **Clone is in the phase table**, once, before Collect — the self-test's
+  deploy step for managed providers.
+- **Numbers and names match the schema and backend:** `max_iterations` 15;
+  `pass_ratio` / `stochastic_runs` / `stochastic_min_fails` /
+  `stochastic_batch_*` instead of prose-only names; distinct letters for
+  dataset size, repro batch and verify runs; the overfitting frame check is 5
+  consecutive words; oscillation and same-shape-3× stops apply in every mode.
+- **Smaller fixes:** stale step/phase references renamed to current ones;
+  `fetch_failures.py` keeps ambiguous statuses as `collect.md` says; tool
+  backups go to the audit dir with secrets dropped; thin evidence is stated in
+  one plain line instead of being hidden.
+
+## 0.19.1 — 2026-10-15
+
+**Metric prerequisites are documented as a platform feature.**
+
+- **Gated metrics run in dependency order.** `cekura-metric-design` now says the
+  upstream metric is evaluated first (inferred from a literal `data["..."]`
+  read, or declared in `configuration.metric_dependencies`), that a missing
+  upstream result leaves the gated metric unscored with
+  `extra.dependency_failed`, and that LLM-judge metrics can gate with
+  `{{metrics.<slug>.score}}` in `description`. The API reference lists the new
+  `configuration.metric_dependencies` field and the `metrics` entry of the
+  custom-code `data` dict.
 
 ## 0.19.0 — 2026-10-13
 
@@ -68,6 +92,12 @@ every scenario workflow.**
   verbatim first message, `then` placement for `<interruption>`, unknown fields —
   and keeps accepting suites written in the old one. The example suite is
   converted.
+  
+## 0.18.2 — 2026-10-09
+
+**Mock tools can simulate failing or slow tools.** `cekura-create-agent` now
+documents the optional `response` (`status_code`, `headers`, `delay_ms`) on a
+mock mapping and how webhook, VAPI and MCP tools see a failure.
 
 ## 0.18.1 — 2026-10-08
 

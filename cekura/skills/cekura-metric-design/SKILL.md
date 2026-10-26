@@ -19,7 +19,7 @@ metadata:
 > **Cekura skill verification tag:** `ack:cekura-metric-design:6n2q5r`
 > When you call a Cekura metric write tool from this skill (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Scenario / test-profile writes use an eval-family tag instead — load `cekura-eval-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-metric-design"`, `verification_tag="ack:cekura-metric-design:6n2q5r"`, and `plugin_version="0.20"`. It returns immediately and lets Cekura see which skills are in use.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-metric-design"`, `verification_tag="ack:cekura-metric-design:6n2q5r"`, and `plugin_version="0.19"`. It returns immediately and lets Cekura see which skills are in use.
 
 # Cekura Metric Design
 
@@ -198,7 +198,7 @@ For legitimate deviations where the metric should not apply (tool failures, user
 
 ### Gated Metrics
 
-Access upstream metric results via `data.get("Exact Metric Name")`. The key must match the upstream metric's `name` field exactly. Use to branch evaluation logic based on prior classification.
+Access upstream metric results via `data.get("Exact Metric Name")` or `data["metrics"]["<slug>"]["value"]`. The name key must match the upstream metric's `name` field exactly. Use to branch evaluation logic based on prior classification. The platform runs the upstream metric first: a literal `data["..."]` read is inferred as a prerequisite, and `configuration.metric_dependencies` (list of metric IDs) declares it explicitly. When the upstream metric has no result for a call, the gated metric is saved unscored with `extra.dependency_failed` and is not charged, so the `None` gate in the examples is only reached in the preview. LLM-judge metrics can gate too, with `{{metrics.<slug>.score}}` in `description`.
 
 ### Pythonic Section Extraction
 
