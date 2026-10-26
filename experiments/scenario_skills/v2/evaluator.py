@@ -81,7 +81,10 @@ class Evaluator:
             runtime = ModalRuntime(target, ledger)
         self.runtime = runtime
         self.generator = config["backend"]["generator"]
-        self.infra = infrastructure or Infrastructure(self.directory / "backend")
+        # The prepared infrastructure preflight verified (a v3 run reuses the v2 preparation), else this run's own.
+        state = config.get("backend", {}).get("infrastructure_state")
+        # ensure() is idempotent: it restarts the tmpfs Postgres and re-migrates the template if the host lost them.
+        self.infra = infrastructure or Infrastructure(Path(state).parent if state else self.directory / "backend").ensure()
         self.base_material = material()
         self.environment = {"configuration": {k: v for k, v in config.items() if k not in ("budget_policy",)},
                             "python": platform.python_version(), "code": code_identity(), "dependencies": dependencies(),
