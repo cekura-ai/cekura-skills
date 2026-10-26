@@ -43,6 +43,25 @@ def packet(task, result):
                 "status": result["status"]}}
 
 
+LIST_LIMIT, RESPONSE_LIMIT = 24000, 12000
+
+
+def compact(text, field_limit=260):
+    """List-style responses keep every row's identity; long text is cut and nested objects summarised so a page stays visible."""
+    try:
+        value = json.loads(text)
+    except ValueError:
+        return text
+    if not (isinstance(value, dict) and isinstance(value.get("results"), list)):
+        return text
+    def cut(v):
+        if isinstance(v, (dict, list)):
+            v = json.dumps(v, ensure_ascii=False)
+        return v if not isinstance(v, str) or len(v) <= field_limit else v[:field_limit] + "…"
+    rows = [{k: cut(x) for k, x in r.items()} if isinstance(r, dict) else cut(r) for r in value["results"]]
+    return json.dumps(dict(value, results=rows), ensure_ascii=False)
+
+
 def packet_v3(task, result):
     """A v3 workspace holds 100+ evaluators: the judge sees what changed, the stored results and a bounded trace."""
     before = {r["id"]: r for r in result["initial_state"].get("scenarios", [])}
@@ -53,9 +72,11 @@ def packet_v3(task, result):
         if any(x in c.get("name", "") for x in ("load_skill", "skill_started")):
             continue
         if "name" in c:
-            text = c["response"]["content"][0]["text"] if c["response"].get("content") else ""
+            raw = c["response"]["content"][0]["text"] if c["response"].get("content") else ""
+            text = compact(raw)
+            limit = LIST_LIMIT if text is not raw else RESPONSE_LIMIT
             trace.append({"turn": c["turn"], "name": c["name"], "arguments": c["arguments"], "isError": c["response"].get("isError", False),
-                          "response": text[:3000] + ("…[truncated]" if len(text) > 3000 else ""),
+                          "response": text[:limit] + ("…[truncated]" if len(text) > limit else ""),
                           "stub_run": (c.get("backend") or {}).get("stub_run"), "injection": c.get("injection")})
         elif c.get("kind") != "followup":
             trace.append(c)

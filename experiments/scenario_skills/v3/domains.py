@@ -239,7 +239,7 @@ def actions(d, persona, workflow, k):
             "first_message": "" if d["inbound"] else "Hello?",
             "conditions": [{"when": "The main agent invites you to state your reason for calling", "say": "<ai_generated>Explain that you want to %s</ai_generated>" % label(workflow)},
                            {"when": "The main agent asks you to confirm a detail", "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"},
-                           {"when": "The main agent says the request is complete", "say": closing}]}
+                           {"when": "The main agent confirms everything is done", "say": closing}]}
 
 
 def suite(d):

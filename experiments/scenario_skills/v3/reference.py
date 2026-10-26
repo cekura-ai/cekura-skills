@@ -37,6 +37,29 @@ def _ok(value):
     return {"content": [{"type": "text", "text": json.dumps(value)}], "isError": False}
 
 
+PAGE = 50
+
+
+def read_response(op, args, state, task):
+    """What the backend would return for a read, so judged evidence shows what was actually seen."""
+    if op == "scenarios_list":
+        rows_ = [r for r in state["scenarios"] if not args.get("folder_path") or r["folder_path"] == args["folder_path"]]
+        page = int(args.get("page", 1))
+        chunk = rows_[(page - 1) * PAGE: page * PAGE]
+        return {"count": len(rows_), "next": page + 1 if page * PAGE < len(rows_) else None,
+                "results": [{k: r.get(k) for k in ("id", "name", "folder_path", "scenario_type", "instructions", "conditional_actions") if k in r} for r in chunk]}
+    results = {r["id"]: r for r in task.get("results", [])}
+    if op == "results_list":
+        return {"results": [{k: r[k] for k in ("id", "name", "status", "success_rate")} for r in results.values()]}
+    if op == "results_retrieve" and args.get("id") in results:
+        r = results[args["id"]]
+        return dict({k: r[k] for k in ("id", "name", "status", "success_rate")}, runs=[{k: x[k] for k in ("id", "scenario", "success")} for x in r["runs"]])
+    if op == "runs_bulk_retrieve":
+        wanted = set(args.get("run_ids", []))
+        return {"runs": [x for r in results.values() for x in r["runs"] if x["id"] in wanted]}
+    return {}
+
+
 def simulate(task, session):
     state = initial_state(task)
     first = copy.deepcopy(state)
@@ -45,18 +68,23 @@ def simulate(task, session):
     for n, t in enumerate(session):
         before = copy.deepcopy(state)
         for op, args in t["reads"]:
-            trace.append({"name": PREFIX + op, "turn": n, "arguments": args, "response": _ok({}), "sequence": len(trace)})
+            trace.append({"name": PREFIX + op, "turn": n, "arguments": args, "response": _ok(read_response(op, args, state, task)), "sequence": len(trace)})
         for op, args, error in t["errors"]:
             trace.append({"name": PREFIX + op, "turn": n, "arguments": args, "sequence": len(trace),
                           "response": {"content": [{"type": "text", "text": error}], "isError": True}})
         if t["edit"]:
             t["edit"](state)
+        requested = []
         for row in t["create"]:
             row = dict(copy.deepcopy(row), id=next_id)
             next_id += 1
             state["scenarios"].append(row)
             op = {"duplicate": "scenarios_duplicate_create", "generate": "scenarios_generate_bg"}.get(t["via"], "scenarios_create")
             args = dict(row.pop("_args", {})) if "_args" in row else {k: v for k, v in row.items() if k != "id"}
+            if op == "scenarios_generate_bg":
+                if args in requested:
+                    continue  # One background job creates the whole batch.
+                requested.append(args)
             trace.append({"name": PREFIX + op, "turn": n, "arguments": args, "response": _ok({"id": row["id"]}), "sequence": len(trace)})
         state["scenarios"] = [{k: v for k, v in r.items() if k != "_args"} for r in state["scenarios"]]
         old = {r["id"]: r for r in before["scenarios"]}
@@ -198,17 +226,25 @@ def s04(task, d, fx, folders, good):
 
 def s05(task, d, fx, folders, good):
     ids = ids_of(task, "openers_fixed")["ids"]
+    front = d["front"]
+    key = next(iter(front["options"]))
+    select = ('<dtmf digits="%s" />' % key) if front["kind"] != "router" else key.title() + "."
     def edit(state):
         for r in rows(state, ids):
             ca = r["conditional_actions"]
             request = ca["first_message"]
             ca["first_message"] = "" if d["inbound"] else "Hello?"
             if good:
-                ca["conditions"] = [{"when": "The main agent finishes its opening and asks how it can help", "say": request}] + ca["conditions"]
-    message = ("Fixed %d tests whose runs show the caller talking over the opening: the caller now waits, then states its request after the agent's "
-               "opening. Personalities are unchanged." % len(ids)) if good else "Cleared the opening line on %d tests." % len(ids)
+                # Wait for the opening, take the menu path to the agent, then state the request once asked.
+                ca["conditions"] = [{"when": "The opening finishes listing the options", "say": select},
+                                    {"when": "The main agent invites you to share what you need", "say": request}] + ca["conditions"][1:]
+            else:
+                ca["conditions"] = ca["conditions"][1:]  # The opener is gone and nothing replaces the request.
+    message = ("Fixed %d tests whose runs show the caller talking over the opening. The caller now stays quiet through the opening, selects %s when the "
+               "options finish, and states its request once the agent asks how it can help. Personalities are unchanged." % (len(ids), select)) if good \
+        else "Cleared the opening line on %d tests." % len(ids)
     return [turn(message, edit, reads=results_reads(task)),
-            turn("Partly: the 'are you there' loops come from the caller talking before the agent; waiting removes that trigger." if good else "Yes.")]
+            turn("Partly: the 'are you there' loops come from the caller talking over the opening; waiting for it removes that trigger." if good else "Yes.")]
 
 
 def s06(task, d, fx, folders, good):
@@ -218,7 +254,7 @@ def s06(task, d, fx, folders, good):
         return [{"agent": fx["agent"]["id"], "name": "%s (%s) %d" % (label(workflow), lang, i + 1), "folder_path": folders[0], "scenario_type": "instruction",
                  "scenario_language": lang, "personality": personality, "tags": [workflow], "metrics": [], "test_profile": d["base"] + 800 + i,
                  "expected_outcome_prompt": "The main agent completes the %s workflow in the caller's language." % label(workflow),
-                 "instructions": "<scenario>\nYou want to %s. Speak only %s.\n</scenario>" % (label(workflow), {"es": "Spanish", "de": "German"}[lang]),
+                 "instructions": "<scenario>\nYou are calling about %s. Speak only %s.\n</scenario>" % (label(workflow), {"es": "Spanish", "de": "German"}[lang]),
                  "_args": {"agent_id": fx["agent"]["id"], "num_scenarios": 3, "personalities": [personality], "simulation_type": "instruction",
                            "folder_path": folders[0], "extra_instructions": "Cover the %s workflow." % label(workflow)}} for i in range(n)]
     error = [("scenarios_generate_bg", {"agent_id": fx["agent"]["id"], "num_scenarios": 3, "personalities": [de], "simulation_type": "instruction"},
@@ -286,15 +322,18 @@ def s09(task, d, fx, folders, good):
 def s10(task, d, fx, folders, good):
     test_side = ids_of(task, "fixed_all_test_side")["ids"]
     agent_side = [i for i in ids_of(task, "named_ids")["ids"] if i not in test_side]
-    what, _ = __import__("experiments.scenario_skills.v3.templates", fromlist=["AGENT_FAULT"]).AGENT_FAULT[d["name"]]
+    what, line = __import__("experiments.scenario_skills.v3.templates", fromlist=["AGENT_FAULT"]).AGENT_FAULT[d["name"]]
     value = RUNTIME[d["name"]][2]
     def fix(state, ids):
         for r in rows(state, ids):
             r["expected_outcome_prompt"] = ("The main agent offers what the live lookup returns, or the documented alternative when it returns nothing, "
                                             "and confirms the choice with the caller." if good else "The main agent handles the request.")
     if good:
-        return [turn("From the transcripts: %s fail on the test side — the expected outcome demands %s even when the lookup returns nothing. %s fail on the agent side — "
-                     "the agent %s." % (", ".join(map(str, test_side)), value, ", ".join(map(str, agent_side)), what), reads=results_reads(task)),
+        return [turn("I read the six failed transcripts. Test side — %s: the agent says \"I'm sorry — the system doesn't show %s for you right now. I can offer "
+                     "the alternative that's available.\" That is correct behaviour, but each expected outcome requires %s regardless of what the lookup "
+                     "returns, so the test fails a correct agent. Agent side — %s: the agent says \"%s\" — it %s, which the description does not allow; "
+                     "those are real agent failures." % (", ".join(map(str, test_side)), value, value, ", ".join(map(str, agent_side)), line, what),
+                     reads=results_reads(task)),
                 turn("Updated %s so the outcome follows the lookup; left %s for the agent fix." % (", ".join(map(str, test_side)), ", ".join(map(str, agent_side))),
                      lambda s: fix(s, test_side))]
     return [turn("It's the agent: all six show it failing to complete the workflow."), turn("Updated all six outcomes.", lambda s: fix(s, test_side + agent_side))]
@@ -337,19 +376,36 @@ def s12(task, d, fx, folders, good):
     return [turn("Fixed it, and the others in the folder too.", edit), turn("No, there are no others.")]
 
 
+VARIANT_BEHAVIOUR = {
+    "happy path": "completes the steps in order and reads back the final result",
+    "edge case": "hits a limit the description sets (no matching option, an ineligible request or a missing detail) and offers the documented "
+                 "alternative instead of forcing the request through",
+    "repeat request": "notices the caller repeating something already handled, confirms it is done and does not start the flow again",
+    "interrupting": "stops when the caller talks over it, answers the interruption and resumes where it left off without repeating finished steps",
+    "unclear answer": "asks one clarifying question when an answer is ambiguous and acts only on the clarified value"}
+
+
 def s13(task, d, fx, folders, good):
     ids = sorted(ids_of(task, "all_rewritten")["ids"])
     source = {r["id"]: r for r in task["starting_resources"]["scenarios"]}
+    def outcome(row):
+        name = row["name"].split(": ", 1)[-1]
+        workflow = next((w, text) for w, text in d["workflows"] if label(w) in name)
+        variant = next(v for v in VARIANT_BEHAVIOUR if name.endswith(v))
+        lines = ["The caller is calling about %s (%s)." % (label(workflow[0]), variant), "The main agent follows its %s steps: %s" % (label(workflow[0]), workflow[1]),
+                 "In this call it %s." % VARIANT_BEHAVIOUR[variant]]
+        script_ = json.dumps(row.get("conditional_actions")) if row["scenario_type"] == "conditional_actions" else row.get("instructions", "")
+        if d["phrase"] in script_:
+            lines.append("When the caller says they will call back, the agent ends the call politely and does not book a callback it cannot schedule.")
+        return "\n".join(lines)
     def batch(chunk):
         def edit(state):
             for r in rows(state, chunk):
-                variant = source[r["id"]]["name"].split(": ", 1)[-1]
-                workflow = next(text for name, text in d["workflows"] if label(name) in variant)
-                r["expected_outcome_prompt"] = ("This is a %s call. %s The main agent confirms each collected value before acting on it."
-                                                % (variant, workflow)) if good else "CRITICAL: The main agent should handle the call correctly."
+                r["expected_outcome_prompt"] = outcome(source[r["id"]]) if good else "CRITICAL: The main agent should handle the call correctly."
         return edit
     if good:
-        return [turn("Rewrote %d–%d (15 tests)." % (ids[0], ids[14]), batch(ids[:15])), turn("Rewrote %d–%d (15 tests)." % (ids[15], ids[29]), batch(ids[15:30])),
+        return [turn("Rewrote %d–%d (15 tests): each outcome now states the workflow's steps and what this variant of the call should show." % (ids[0], ids[14]), batch(ids[:15])),
+                turn("Rewrote %d–%d (15 tests)." % (ids[15], ids[29]), batch(ids[15:30])),
                 turn("Rewrote the remaining %d (%d–%d)." % (len(ids) - 30, ids[30], ids[-1]), batch(ids[30:]))]
     return [turn("Updated 15 tests.", batch(ids[:20])), turn("Updated 15 more.", batch(ids[20:35])), turn("Done with the rest.", batch(ids[35:]))]
 
@@ -406,14 +462,25 @@ def c01(task, d, fx, folders, good):
     return [turn("Saved it unchanged in %s." % folders[2] if good else "Saved a cleaned-up version.", create=[row], via="create" if good else "generate")]
 
 
+C02_CASES = (("gives every detail in order", "give every detail in order", "completes the flow and reads back the result"),
+             ("gives the details out of order", "give the details out of order", "collects each detail once, confirms each, and does not re-ask for values already given"),
+             ("cannot provide one detail", "cannot provide one of the required details", "explains it is needed, offers the documented alternative, and does not proceed without it"),
+             ("asks a policy question", "ask a policy question in the middle", "answers only from the description's policies, then returns to the flow"),
+             ("corrects a detail", "correct one detail after giving it", "uses the corrected value and confirms it before acting"))
+
+
 def c02(task, d, fx, folders, good):
-    workflow = d["workflows"][2 if good else 0][0]
-    rows_new = [{"agent": fx["agent"]["id"], "name": "%s %d" % (label(workflow), i + 1), "folder_path": folders[1], "scenario_type": "instruction",
+    workflow, text = d["workflows"][2 if good else 0]
+    args = {"agent_id": fx["agent"]["id"], "num_scenarios": 5, "folder_path": folders[1], "simulation_type": "instruction",
+            "extra_instructions": "Cover the %s workflow: %s" % (label(workflow), text)}
+    rows_new = [{"agent": fx["agent"]["id"], "name": "%s: caller %s" % (label(workflow).title(), case), "folder_path": folders[1], "scenario_type": "instruction",
                  "scenario_language": d["language"], "tags": [workflow], "metrics": [], "test_profile": d["base"] + 800 + i, "personality": d["base"] + 600,
-                 "expected_outcome_prompt": "The main agent completes the %s workflow." % label(workflow),
-                 "instructions": "<scenario>\nYou want to %s (case %d).\n</scenario>" % (label(workflow), i + 1),
-                 "_args": {"agent_id": fx["agent"]["id"], "num_scenarios": 5, "folder_path": folders[1], "simulation_type": "instruction"}} for i in range(5)]
-    return [turn("Generated 5 %s tests in %s." % (label(workflow), folders[1]), create=rows_new, via="generate")]
+                 "expected_outcome_prompt": "The main agent runs the %s workflow (%s) and %s." % (label(workflow), text.rstrip("."), outcome),
+                 "instructions": "<scenario>\nYou are calling about %s. During the call you %s. Use the details in your test profile, and give each one only when asked.\n</scenario>"
+                                 % (label(workflow), you),
+                 "_args": args} for i, (case, you, outcome) in enumerate(C02_CASES)]
+    return [turn("Generated 5 %s tests in %s, one background job: %s." % (label(workflow), folders[1], "; ".join(c for c, _, _ in C02_CASES)),
+                 create=rows_new, via="generate")]
 
 
 SESSIONS = {"T01": s01, "T02": s02, "T03": s03, "T04": s04, "T05": s05, "T06": s06, "T07": s07, "T08": s08, "T09": s09, "T10": s10,

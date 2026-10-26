@@ -91,7 +91,7 @@ class Replayer:
 
 def proof_hashes():
     return {"tasks_sha256": digest(load()), **{name + "_sha256": digest(ROOT / ("v3/%s.py" % name))
-                                              for name in ("grader", "checks", "bridge", "followups", "replay")}}
+                                              for name in ("grader", "checks", "bridge", "followups", "replay", "reference")}}
 
 
 def replay(infrastructure, catalog, domain="harborview", templates=REPLAYABLE, directory=None, ledger=None):

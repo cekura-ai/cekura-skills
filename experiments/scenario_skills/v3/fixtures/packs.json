@@ -240,7 +240,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -278,7 +278,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -336,7 +336,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -373,7 +373,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -431,7 +431,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -469,7 +469,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -527,7 +527,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -565,7 +565,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -623,7 +623,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -661,7 +661,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -719,7 +719,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -756,7 +756,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -814,7 +814,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -852,7 +852,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -911,7 +911,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -948,7 +948,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1006,7 +1006,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -1044,7 +1044,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1102,7 +1102,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1139,7 +1139,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1198,7 +1198,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1236,7 +1236,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -1294,7 +1294,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1331,7 +1331,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1389,7 +1389,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1427,7 +1427,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1485,7 +1485,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1523,7 +1523,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1581,7 +1581,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1619,7 +1619,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1677,7 +1677,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -1714,7 +1714,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1772,7 +1772,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1810,7 +1810,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1869,7 +1869,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -1906,7 +1906,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -1964,7 +1964,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2002,7 +2002,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2060,7 +2060,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2097,7 +2097,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2156,7 +2156,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2194,7 +2194,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2252,7 +2252,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -2289,7 +2289,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2347,7 +2347,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2385,7 +2385,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2443,7 +2443,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2481,7 +2481,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -2539,7 +2539,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2577,7 +2577,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2635,7 +2635,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2672,7 +2672,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2730,7 +2730,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2768,7 +2768,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2827,7 +2827,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2864,7 +2864,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2922,7 +2922,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -2960,7 +2960,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -2998,7 +2998,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3056,7 +3056,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -3093,7 +3093,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3151,7 +3151,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3189,7 +3189,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3247,7 +3247,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3285,7 +3285,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -3343,7 +3343,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3381,7 +3381,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3439,7 +3439,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3476,7 +3476,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3534,7 +3534,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3572,7 +3572,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3631,7 +3631,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3668,7 +3668,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3726,7 +3726,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -3764,7 +3764,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3822,7 +3822,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3859,7 +3859,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3918,7 +3918,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -3956,7 +3956,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -4014,7 +4014,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -4051,7 +4051,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -8022,7 +8022,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ],
@@ -8064,7 +8064,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -8088,7 +8088,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me check my calendar and call you back. <endcall />"
         }
        ]
@@ -9307,7 +9307,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9345,7 +9345,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9403,7 +9403,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -9440,7 +9440,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9498,7 +9498,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9536,7 +9536,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9594,7 +9594,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9632,7 +9632,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -9690,7 +9690,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9728,7 +9728,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9786,7 +9786,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9823,7 +9823,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9881,7 +9881,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9919,7 +9919,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -9978,7 +9978,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10015,7 +10015,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10073,7 +10073,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -10111,7 +10111,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10169,7 +10169,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10206,7 +10206,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10265,7 +10265,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10303,7 +10303,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -10361,7 +10361,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10398,7 +10398,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10456,7 +10456,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10494,7 +10494,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10552,7 +10552,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10590,7 +10590,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10648,7 +10648,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10686,7 +10686,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10744,7 +10744,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10782,7 +10782,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10840,7 +10840,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -10877,7 +10877,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10935,7 +10935,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -10973,7 +10973,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11031,7 +11031,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11069,7 +11069,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -11127,7 +11127,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11165,7 +11165,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11223,7 +11223,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11260,7 +11260,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11318,7 +11318,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11356,7 +11356,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11415,7 +11415,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11452,7 +11452,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11510,7 +11510,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -11548,7 +11548,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11606,7 +11606,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11643,7 +11643,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11702,7 +11702,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11740,7 +11740,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11798,7 +11798,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -11835,7 +11835,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11893,7 +11893,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11931,7 +11931,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -11989,7 +11989,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12027,7 +12027,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -12085,7 +12085,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12123,7 +12123,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12181,7 +12181,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12218,7 +12218,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12276,7 +12276,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12314,7 +12314,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12373,7 +12373,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12410,7 +12410,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12468,7 +12468,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -12506,7 +12506,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12564,7 +12564,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12601,7 +12601,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12660,7 +12660,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12698,7 +12698,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -12756,7 +12756,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12793,7 +12793,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12851,7 +12851,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12889,7 +12889,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -12947,7 +12947,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -16935,7 +16935,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ],
@@ -16977,7 +16977,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -17001,7 +17001,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll check with my neighbour and call you back. <endcall />"
         }
        ]
@@ -18182,7 +18182,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18220,7 +18220,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18278,7 +18278,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -18315,7 +18315,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18373,7 +18373,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18411,7 +18411,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18469,7 +18469,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18507,7 +18507,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -18565,7 +18565,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18603,7 +18603,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18661,7 +18661,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18698,7 +18698,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18756,7 +18756,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18794,7 +18794,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18853,7 +18853,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18890,7 +18890,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -18948,7 +18948,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -18986,7 +18986,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19044,7 +19044,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19081,7 +19081,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19140,7 +19140,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19178,7 +19178,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -19236,7 +19236,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19273,7 +19273,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19331,7 +19331,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19369,7 +19369,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19427,7 +19427,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19465,7 +19465,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19523,7 +19523,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19561,7 +19561,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19619,7 +19619,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -19656,7 +19656,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19714,7 +19714,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19752,7 +19752,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19790,7 +19790,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19828,7 +19828,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19886,7 +19886,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -19923,7 +19923,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -19981,7 +19981,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20019,7 +20019,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20077,7 +20077,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20115,7 +20115,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -20173,7 +20173,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20211,7 +20211,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20269,7 +20269,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20306,7 +20306,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20364,7 +20364,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20402,7 +20402,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20461,7 +20461,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20498,7 +20498,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20556,7 +20556,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -20594,7 +20594,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20652,7 +20652,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20689,7 +20689,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20748,7 +20748,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20786,7 +20786,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20844,7 +20844,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -20881,7 +20881,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20939,7 +20939,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -20977,7 +20977,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21035,7 +21035,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21073,7 +21073,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -21131,7 +21131,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21169,7 +21169,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21227,7 +21227,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21264,7 +21264,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21322,7 +21322,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21360,7 +21360,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21419,7 +21419,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21456,7 +21456,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21514,7 +21514,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -21552,7 +21552,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21610,7 +21610,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21647,7 +21647,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21706,7 +21706,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21744,7 +21744,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -21802,7 +21802,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21839,7 +21839,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21897,7 +21897,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21935,7 +21935,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -21993,7 +21993,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -25991,7 +25991,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ],
@@ -26033,7 +26033,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -26057,7 +26057,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, I'll talk to my partner and call you back. <endcall />"
         }
        ]
@@ -27247,7 +27247,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27285,7 +27285,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27343,7 +27343,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -27380,7 +27380,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27438,7 +27438,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27476,7 +27476,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27534,7 +27534,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27572,7 +27572,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -27630,7 +27630,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27668,7 +27668,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27726,7 +27726,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27763,7 +27763,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27821,7 +27821,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27859,7 +27859,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27918,7 +27918,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -27955,7 +27955,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28013,7 +28013,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -28051,7 +28051,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28109,7 +28109,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28146,7 +28146,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28205,7 +28205,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28243,7 +28243,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -28301,7 +28301,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28338,7 +28338,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28396,7 +28396,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28434,7 +28434,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28492,7 +28492,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28530,7 +28530,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28588,7 +28588,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28626,7 +28626,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28684,7 +28684,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -28721,7 +28721,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28779,7 +28779,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28817,7 +28817,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28855,7 +28855,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28893,7 +28893,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -28951,7 +28951,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -28988,7 +28988,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29046,7 +29046,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29084,7 +29084,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29142,7 +29142,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29180,7 +29180,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -29238,7 +29238,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29276,7 +29276,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29334,7 +29334,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29371,7 +29371,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29429,7 +29429,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29467,7 +29467,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29526,7 +29526,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29563,7 +29563,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29621,7 +29621,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -29659,7 +29659,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29717,7 +29717,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29754,7 +29754,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29813,7 +29813,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29851,7 +29851,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -29909,7 +29909,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -29946,7 +29946,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30004,7 +30004,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30042,7 +30042,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30100,7 +30100,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30138,7 +30138,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -30196,7 +30196,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30234,7 +30234,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30292,7 +30292,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30329,7 +30329,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30387,7 +30387,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30425,7 +30425,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30484,7 +30484,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30521,7 +30521,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30579,7 +30579,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -30617,7 +30617,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30675,7 +30675,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30712,7 +30712,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30771,7 +30771,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30809,7 +30809,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
@@ -30867,7 +30867,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30904,7 +30904,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -30962,7 +30962,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -31000,7 +31000,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -31058,7 +31058,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -35056,7 +35056,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ],
@@ -35098,7 +35098,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Thanks, that's everything. <endcall />"
         }
        ]
@@ -35122,7 +35122,7 @@
          "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"
         },
         {
-         "when": "The main agent says the request is complete",
+         "when": "The main agent confirms everything is done",
          "say": "Okay, let me find my statement and call you back. <endcall />"
         }
        ]
