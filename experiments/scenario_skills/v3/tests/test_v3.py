@@ -77,6 +77,14 @@ class Fixtures(unittest.TestCase):
         for module in ("v2/fixture.py", "v2/bridge_client.py", "modal_runtime.py", "fixture.py"):
             self.assertIn("opt/benchmark/experiments/scenario_skills/" + module, files)
 
+    def test_every_task_is_asked_from_its_agent_page(self):
+        for t in TASKS:
+            page = t["context"]["page_context"]
+            self.assertEqual(page["ids"], {"agent_id": t["fixture"]["agent"]["id"]})
+            self.assertEqual((page["tool"], page["fetch_args"]), ("mcp__cekura__aiagents_retrieve", {"id": t["fixture"]["agent"]["id"]}))
+        names = [r["name"] for r in TASKS[0]["starting_resources"]["scenarios"]]
+        self.assertTrue(all(re.match(r"^F\d-\d\d: ", n) or n.startswith("F1-menu") for n in names))  # No folder-name prefixes that echo workflows.
+
     def test_sandbox_receives_only_the_opening_turn(self):
         task = sandbox_task(TASKS[0])
         self.assertEqual(set(task), {"id", "benchmark_version", "request", "documents", "context"})

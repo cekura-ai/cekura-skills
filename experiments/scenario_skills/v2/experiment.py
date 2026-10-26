@@ -185,7 +185,8 @@ class Controller:
 
         sample = self.canaries(self.training)
         try:
-            with self.ledger.staged("baseline-cost-discovery", COST_DISCOVERY_CAP):
+            # One discovery allowance per frozen task set: a fixture correction gets a fresh $15, the wallet still caps all spend.
+            with self.ledger.staged("baseline-cost-discovery" + ("-" + self.ident["tasks_sha256"][:12] if self.version == 3 else ""), COST_DISCOVERY_CAP):
                 cost_sample = self.stage(self.baseline, sample, "baseline_cost_sample")
         except BudgetError as error:
             if "Stage allowance" in str(error):

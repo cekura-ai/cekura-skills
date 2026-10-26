@@ -272,7 +272,7 @@ def suite(d):
             workflow = wf[(k + f_index) % len(wf)][0]
             profile = profiles[k % len(d["persona_names"])]
             persona = profile["information"]["testing_agent_variables"]["caller_name"]
-            row = {"id": sid, "agent": base, "name": "%s-%02d: %s %s" % (folder[:4].upper(), k + 1, label(workflow), VARIANTS[k % 5]),
+            row = {"id": sid, "agent": base, "name": "F%d-%02d: %s %s" % (f_index + 1, k + 1, label(workflow), VARIANTS[k % 5]),
                    "folder_path": folder, "test_profile": profile["id"], "personality": personalities[k % 2]["id"],
                    "scenario_language": d["language"], "tags": [workflow] + (["smoke"] if k % 10 == 0 else []),
                    "metrics": [base + 700, base + 701, base + 702] + ([base + 703] if k % 2 else []),

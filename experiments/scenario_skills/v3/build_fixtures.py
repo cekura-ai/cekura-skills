@@ -12,6 +12,14 @@ from .templates import TEMPLATES, instantiate
 TASK_FIELDS = ("family", "request", "followups", "clarification_reply", "documents", "plants", "add", "results", "injections")
 
 
+def page_context(fx):
+    """The workspace context production attaches: the user asks from the agent's dashboard page."""
+    agent, project = fx["agent"]["id"], fx["agent"]["project"]
+    return {"agent_id": agent, "project_id": project,
+            "page_context": {"label": "agent", "ids": {"agent_id": agent}, "project_id": project,
+                             "tool": "mcp__cekura__aiagents_retrieve", "fetch_args": {"id": agent}}}
+
+
 def make_task(template, domain, fx=None, split="gold"):
     """One materialized task, as the loader would produce it (also for the gold-only domains)."""
     from .dataset import plant
@@ -19,7 +27,7 @@ def make_task(template, domain, fx=None, split="gold"):
     body = instantiate(template, domain, fx)
     return dict({k: body[k] for k in TASK_FIELDS}, id="%s-%s" % (template, domain), template=template, domain=domain, benchmark_version=3,
                 split=split, pack_id=domain, fixture=fx, starting_resources=plant(fx["resources"], body["plants"], body["add"]),
-                expected=body["expected"], context={"agent_id": fx["agent"]["id"], "project_id": fx["agent"]["project"]})
+                expected=body["expected"], context=page_context(fx))
 
 
 def build():
@@ -30,8 +38,7 @@ def build():
         for template in TEMPLATES:
             body = instantiate(template, domain, fx)
             tid = "%s-%s" % (template, domain)
-            tasks.append(dict({k: body[k] for k in TASK_FIELDS}, id=tid, template=template, domain=domain,
-                              context={"agent_id": fx["agent"]["id"], "project_id": fx["agent"]["project"]}))
+            tasks.append(dict({k: body[k] for k in TASK_FIELDS}, id=tid, template=template, domain=domain, context=page_context(fx)))
             expectations[tid] = body["expected"]
         packs.append({"id": domain, "split": split, "fixture": fx, "tasks": tasks})
     data = Path(__file__).parent / "fixtures"

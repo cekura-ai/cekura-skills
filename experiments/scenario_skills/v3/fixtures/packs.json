@@ -211,7 +211,7 @@
      {
       "id": 201001,
       "agent": 200000,
-      "name": "SCHE-01: new patient happy path",
+      "name": "F1-01: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -249,7 +249,7 @@
      {
       "id": 201002,
       "agent": 200000,
-      "name": "SCHE-02: reschedule edge case",
+      "name": "F1-02: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -287,7 +287,7 @@
      {
       "id": 201003,
       "agent": 200000,
-      "name": "SCHE-03: cancel repeat request",
+      "name": "F1-03: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -307,7 +307,7 @@
      {
       "id": 201004,
       "agent": 200000,
-      "name": "SCHE-04: insurance interrupting",
+      "name": "F1-04: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -345,7 +345,7 @@
      {
       "id": 201005,
       "agent": 200000,
-      "name": "SCHE-05: emergency unclear answer",
+      "name": "F1-05: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -382,7 +382,7 @@
      {
       "id": 201006,
       "agent": 200000,
-      "name": "SCHE-06: new patient happy path",
+      "name": "F1-06: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -403,7 +403,7 @@
      {
       "id": 201007,
       "agent": 200000,
-      "name": "SCHE-07: reschedule edge case",
+      "name": "F1-07: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -440,7 +440,7 @@
      {
       "id": 201008,
       "agent": 200000,
-      "name": "SCHE-08: cancel repeat request",
+      "name": "F1-08: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -478,7 +478,7 @@
      {
       "id": 201009,
       "agent": 200000,
-      "name": "SCHE-09: insurance interrupting",
+      "name": "F1-09: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -498,7 +498,7 @@
      {
       "id": 201010,
       "agent": 200000,
-      "name": "SCHE-10: emergency unclear answer",
+      "name": "F1-10: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -536,7 +536,7 @@
      {
       "id": 201011,
       "agent": 200000,
-      "name": "SCHE-11: new patient happy path",
+      "name": "F1-11: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -574,7 +574,7 @@
      {
       "id": 201012,
       "agent": 200000,
-      "name": "SCHE-12: reschedule edge case",
+      "name": "F1-12: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -595,7 +595,7 @@
      {
       "id": 201013,
       "agent": 200000,
-      "name": "SCHE-13: cancel repeat request",
+      "name": "F1-13: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -632,7 +632,7 @@
      {
       "id": 201014,
       "agent": 200000,
-      "name": "SCHE-14: insurance interrupting",
+      "name": "F1-14: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -670,7 +670,7 @@
      {
       "id": 201015,
       "agent": 200000,
-      "name": "SCHE-15: emergency unclear answer",
+      "name": "F1-15: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -690,7 +690,7 @@
      {
       "id": 201016,
       "agent": 200000,
-      "name": "SCHE-16: new patient happy path",
+      "name": "F1-16: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -728,7 +728,7 @@
      {
       "id": 201017,
       "agent": 200000,
-      "name": "SCHE-17: reschedule edge case",
+      "name": "F1-17: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -765,7 +765,7 @@
      {
       "id": 201018,
       "agent": 200000,
-      "name": "SCHE-18: cancel repeat request",
+      "name": "F1-18: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -786,7 +786,7 @@
      {
       "id": 201019,
       "agent": 200000,
-      "name": "SCHE-19: insurance interrupting",
+      "name": "F1-19: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -823,7 +823,7 @@
      {
       "id": 201020,
       "agent": 200000,
-      "name": "SCHE-20: emergency unclear answer",
+      "name": "F1-20: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -861,7 +861,7 @@
      {
       "id": 201021,
       "agent": 200000,
-      "name": "SCHE-21: new patient happy path",
+      "name": "F1-21: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -882,7 +882,7 @@
      {
       "id": 201022,
       "agent": 200000,
-      "name": "SCHE-22: reschedule edge case",
+      "name": "F1-22: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -920,7 +920,7 @@
      {
       "id": 201023,
       "agent": 200000,
-      "name": "SCHE-23: cancel repeat request",
+      "name": "F1-23: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -957,7 +957,7 @@
      {
       "id": 201024,
       "agent": 200000,
-      "name": "SCHE-24: insurance interrupting",
+      "name": "F1-24: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -978,7 +978,7 @@
      {
       "id": 201025,
       "agent": 200000,
-      "name": "SCHE-25: emergency unclear answer",
+      "name": "F1-25: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -1015,7 +1015,7 @@
      {
       "id": 201026,
       "agent": 200000,
-      "name": "SCHE-26: new patient happy path",
+      "name": "F1-26: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -1053,7 +1053,7 @@
      {
       "id": 201027,
       "agent": 200000,
-      "name": "SCHE-27: reschedule edge case",
+      "name": "F1-27: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -1073,7 +1073,7 @@
      {
       "id": 201028,
       "agent": 200000,
-      "name": "SCHE-28: cancel repeat request",
+      "name": "F1-28: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -1111,7 +1111,7 @@
      {
       "id": 201029,
       "agent": 200000,
-      "name": "SCHE-29: insurance interrupting",
+      "name": "F1-29: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -1148,7 +1148,7 @@
      {
       "id": 201030,
       "agent": 200000,
-      "name": "SCHE-30: emergency unclear answer",
+      "name": "F1-30: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -1169,7 +1169,7 @@
      {
       "id": 201031,
       "agent": 200000,
-      "name": "SCHE-31: new patient happy path",
+      "name": "F1-31: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -1207,7 +1207,7 @@
      {
       "id": 201032,
       "agent": 200000,
-      "name": "SCHE-32: reschedule edge case",
+      "name": "F1-32: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -1245,7 +1245,7 @@
      {
       "id": 201033,
       "agent": 200000,
-      "name": "SCHE-33: cancel repeat request",
+      "name": "F1-33: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -1265,7 +1265,7 @@
      {
       "id": 201034,
       "agent": 200000,
-      "name": "SCHE-34: insurance interrupting",
+      "name": "F1-34: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -1303,7 +1303,7 @@
      {
       "id": 201035,
       "agent": 200000,
-      "name": "SCHE-35: emergency unclear answer",
+      "name": "F1-35: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -1340,7 +1340,7 @@
      {
       "id": 201036,
       "agent": 200000,
-      "name": "SCHE-36: new patient happy path",
+      "name": "F1-36: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -1361,7 +1361,7 @@
      {
       "id": 201037,
       "agent": 200000,
-      "name": "SCHE-37: reschedule edge case",
+      "name": "F1-37: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -1398,7 +1398,7 @@
      {
       "id": 201038,
       "agent": 200000,
-      "name": "SCHE-38: cancel repeat request",
+      "name": "F1-38: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -1436,7 +1436,7 @@
      {
       "id": 201039,
       "agent": 200000,
-      "name": "SCHE-39: insurance interrupting",
+      "name": "F1-39: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -1456,7 +1456,7 @@
      {
       "id": 201040,
       "agent": 200000,
-      "name": "SCHE-40: emergency unclear answer",
+      "name": "F1-40: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -1494,7 +1494,7 @@
      {
       "id": 201041,
       "agent": 200000,
-      "name": "SCHE-41: new patient happy path",
+      "name": "F1-41: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -1532,7 +1532,7 @@
      {
       "id": 201042,
       "agent": 200000,
-      "name": "SCHE-42: reschedule edge case",
+      "name": "F1-42: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -1553,7 +1553,7 @@
      {
       "id": 201043,
       "agent": 200000,
-      "name": "SCHE-43: cancel repeat request",
+      "name": "F1-43: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -1590,7 +1590,7 @@
      {
       "id": 201044,
       "agent": 200000,
-      "name": "SCHE-44: insurance interrupting",
+      "name": "F1-44: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -1628,7 +1628,7 @@
      {
       "id": 201045,
       "agent": 200000,
-      "name": "SCHE-45: emergency unclear answer",
+      "name": "F1-45: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -1648,7 +1648,7 @@
      {
       "id": 201046,
       "agent": 200000,
-      "name": "SCHE-46: new patient happy path",
+      "name": "F1-46: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -1686,7 +1686,7 @@
      {
       "id": 201047,
       "agent": 200000,
-      "name": "SCHE-47: reschedule edge case",
+      "name": "F1-47: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -1723,7 +1723,7 @@
      {
       "id": 201048,
       "agent": 200000,
-      "name": "SCHE-48: cancel repeat request",
+      "name": "F1-48: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -1744,7 +1744,7 @@
      {
       "id": 201049,
       "agent": 200000,
-      "name": "SCHE-49: insurance interrupting",
+      "name": "F1-49: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -1781,7 +1781,7 @@
      {
       "id": 201050,
       "agent": 200000,
-      "name": "SCHE-50: emergency unclear answer",
+      "name": "F1-50: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -1819,7 +1819,7 @@
      {
       "id": 201051,
       "agent": 200000,
-      "name": "SCHE-51: new patient happy path",
+      "name": "F1-51: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -1840,7 +1840,7 @@
      {
       "id": 201052,
       "agent": 200000,
-      "name": "SCHE-52: reschedule edge case",
+      "name": "F1-52: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -1878,7 +1878,7 @@
      {
       "id": 201053,
       "agent": 200000,
-      "name": "SCHE-53: cancel repeat request",
+      "name": "F1-53: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -1915,7 +1915,7 @@
      {
       "id": 201054,
       "agent": 200000,
-      "name": "SCHE-54: insurance interrupting",
+      "name": "F1-54: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -1936,7 +1936,7 @@
      {
       "id": 201055,
       "agent": 200000,
-      "name": "SCHE-55: emergency unclear answer",
+      "name": "F1-55: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -1973,7 +1973,7 @@
      {
       "id": 201056,
       "agent": 200000,
-      "name": "SCHE-56: new patient happy path",
+      "name": "F1-56: new patient happy path",
       "folder_path": "Scheduling",
       "test_profile": 200801,
       "personality": 200601,
@@ -2011,7 +2011,7 @@
      {
       "id": 201057,
       "agent": 200000,
-      "name": "SCHE-57: reschedule edge case",
+      "name": "F1-57: reschedule edge case",
       "folder_path": "Scheduling",
       "test_profile": 200802,
       "personality": 200600,
@@ -2031,7 +2031,7 @@
      {
       "id": 201058,
       "agent": 200000,
-      "name": "SCHE-58: cancel repeat request",
+      "name": "F1-58: cancel repeat request",
       "folder_path": "Scheduling",
       "test_profile": 200803,
       "personality": 200601,
@@ -2069,7 +2069,7 @@
      {
       "id": 201059,
       "agent": 200000,
-      "name": "SCHE-59: insurance interrupting",
+      "name": "F1-59: insurance interrupting",
       "folder_path": "Scheduling",
       "test_profile": 200804,
       "personality": 200600,
@@ -2106,7 +2106,7 @@
      {
       "id": 201060,
       "agent": 200000,
-      "name": "SCHE-60: emergency unclear answer",
+      "name": "F1-60: emergency unclear answer",
       "folder_path": "Scheduling",
       "test_profile": 200805,
       "personality": 200601,
@@ -2127,7 +2127,7 @@
      {
       "id": 201061,
       "agent": 200000,
-      "name": "INSU-01: reschedule happy path",
+      "name": "F2-01: reschedule happy path",
       "folder_path": "Insurance",
       "test_profile": 200800,
       "personality": 200600,
@@ -2165,7 +2165,7 @@
      {
       "id": 201062,
       "agent": 200000,
-      "name": "INSU-02: cancel edge case",
+      "name": "F2-02: cancel edge case",
       "folder_path": "Insurance",
       "test_profile": 200801,
       "personality": 200601,
@@ -2203,7 +2203,7 @@
      {
       "id": 201063,
       "agent": 200000,
-      "name": "INSU-03: insurance repeat request",
+      "name": "F2-03: insurance repeat request",
       "folder_path": "Insurance",
       "test_profile": 200802,
       "personality": 200600,
@@ -2223,7 +2223,7 @@
      {
       "id": 201064,
       "agent": 200000,
-      "name": "INSU-04: emergency interrupting",
+      "name": "F2-04: emergency interrupting",
       "folder_path": "Insurance",
       "test_profile": 200803,
       "personality": 200601,
@@ -2261,7 +2261,7 @@
      {
       "id": 201065,
       "agent": 200000,
-      "name": "INSU-05: new patient unclear answer",
+      "name": "F2-05: new patient unclear answer",
       "folder_path": "Insurance",
       "test_profile": 200804,
       "personality": 200600,
@@ -2298,7 +2298,7 @@
      {
       "id": 201066,
       "agent": 200000,
-      "name": "INSU-06: reschedule happy path",
+      "name": "F2-06: reschedule happy path",
       "folder_path": "Insurance",
       "test_profile": 200805,
       "personality": 200601,
@@ -2319,7 +2319,7 @@
      {
       "id": 201067,
       "agent": 200000,
-      "name": "INSU-07: cancel edge case",
+      "name": "F2-07: cancel edge case",
       "folder_path": "Insurance",
       "test_profile": 200800,
       "personality": 200600,
@@ -2356,7 +2356,7 @@
      {
       "id": 201068,
       "agent": 200000,
-      "name": "INSU-08: insurance repeat request",
+      "name": "F2-08: insurance repeat request",
       "folder_path": "Insurance",
       "test_profile": 200801,
       "personality": 200601,
@@ -2394,7 +2394,7 @@
      {
       "id": 201069,
       "agent": 200000,
-      "name": "INSU-09: emergency interrupting",
+      "name": "F2-09: emergency interrupting",
       "folder_path": "Insurance",
       "test_profile": 200802,
       "personality": 200600,
@@ -2414,7 +2414,7 @@
      {
       "id": 201070,
       "agent": 200000,
-      "name": "INSU-10: new patient unclear answer",
+      "name": "F2-10: new patient unclear answer",
       "folder_path": "Insurance",
       "test_profile": 200803,
       "personality": 200601,
@@ -2452,7 +2452,7 @@
      {
       "id": 201071,
       "agent": 200000,
-      "name": "INSU-11: reschedule happy path",
+      "name": "F2-11: reschedule happy path",
       "folder_path": "Insurance",
       "test_profile": 200804,
       "personality": 200600,
@@ -2490,7 +2490,7 @@
      {
       "id": 201072,
       "agent": 200000,
-      "name": "INSU-12: cancel edge case",
+      "name": "F2-12: cancel edge case",
       "folder_path": "Insurance",
       "test_profile": 200805,
       "personality": 200601,
@@ -2511,7 +2511,7 @@
      {
       "id": 201073,
       "agent": 200000,
-      "name": "INSU-13: insurance repeat request",
+      "name": "F2-13: insurance repeat request",
       "folder_path": "Insurance",
       "test_profile": 200800,
       "personality": 200600,
@@ -2548,7 +2548,7 @@
      {
       "id": 201074,
       "agent": 200000,
-      "name": "INSU-14: emergency interrupting",
+      "name": "F2-14: emergency interrupting",
       "folder_path": "Insurance",
       "test_profile": 200801,
       "personality": 200601,
@@ -2586,7 +2586,7 @@
      {
       "id": 201075,
       "agent": 200000,
-      "name": "INSU-15: new patient unclear answer",
+      "name": "F2-15: new patient unclear answer",
       "folder_path": "Insurance",
       "test_profile": 200802,
       "personality": 200600,
@@ -2606,7 +2606,7 @@
      {
       "id": 201076,
       "agent": 200000,
-      "name": "INSU-16: reschedule happy path",
+      "name": "F2-16: reschedule happy path",
       "folder_path": "Insurance",
       "test_profile": 200803,
       "personality": 200601,
@@ -2644,7 +2644,7 @@
      {
       "id": 201077,
       "agent": 200000,
-      "name": "INSU-17: cancel edge case",
+      "name": "F2-17: cancel edge case",
       "folder_path": "Insurance",
       "test_profile": 200804,
       "personality": 200600,
@@ -2681,7 +2681,7 @@
      {
       "id": 201078,
       "agent": 200000,
-      "name": "INSU-18: insurance repeat request",
+      "name": "F2-18: insurance repeat request",
       "folder_path": "Insurance",
       "test_profile": 200805,
       "personality": 200601,
@@ -2702,7 +2702,7 @@
      {
       "id": 201079,
       "agent": 200000,
-      "name": "INSU-19: emergency interrupting",
+      "name": "F2-19: emergency interrupting",
       "folder_path": "Insurance",
       "test_profile": 200800,
       "personality": 200600,
@@ -2739,7 +2739,7 @@
      {
       "id": 201080,
       "agent": 200000,
-      "name": "INSU-20: new patient unclear answer",
+      "name": "F2-20: new patient unclear answer",
       "folder_path": "Insurance",
       "test_profile": 200801,
       "personality": 200601,
@@ -2777,7 +2777,7 @@
      {
       "id": 201081,
       "agent": 200000,
-      "name": "INSU-21: reschedule happy path",
+      "name": "F2-21: reschedule happy path",
       "folder_path": "Insurance",
       "test_profile": 200802,
       "personality": 200600,
@@ -2798,7 +2798,7 @@
      {
       "id": 201082,
       "agent": 200000,
-      "name": "INSU-22: cancel edge case",
+      "name": "F2-22: cancel edge case",
       "folder_path": "Insurance",
       "test_profile": 200803,
       "personality": 200601,
@@ -2836,7 +2836,7 @@
      {
       "id": 201083,
       "agent": 200000,
-      "name": "INSU-23: insurance repeat request",
+      "name": "F2-23: insurance repeat request",
       "folder_path": "Insurance",
       "test_profile": 200804,
       "personality": 200600,
@@ -2873,7 +2873,7 @@
      {
       "id": 201084,
       "agent": 200000,
-      "name": "INSU-24: emergency interrupting",
+      "name": "F2-24: emergency interrupting",
       "folder_path": "Insurance",
       "test_profile": 200805,
       "personality": 200601,
@@ -2894,7 +2894,7 @@
      {
       "id": 201085,
       "agent": 200000,
-      "name": "INSU-25: new patient unclear answer",
+      "name": "F2-25: new patient unclear answer",
       "folder_path": "Insurance",
       "test_profile": 200800,
       "personality": 200600,
@@ -2931,7 +2931,7 @@
      {
       "id": 201086,
       "agent": 200000,
-      "name": "EMER-01: cancel happy path",
+      "name": "F3-01: cancel happy path",
       "folder_path": "Emergencies",
       "test_profile": 200800,
       "personality": 200600,
@@ -2969,7 +2969,7 @@
      {
       "id": 201087,
       "agent": 200000,
-      "name": "EMER-02: insurance edge case",
+      "name": "F3-02: insurance edge case",
       "folder_path": "Emergencies",
       "test_profile": 200801,
       "personality": 200601,
@@ -3007,7 +3007,7 @@
      {
       "id": 201088,
       "agent": 200000,
-      "name": "EMER-03: emergency repeat request",
+      "name": "F3-03: emergency repeat request",
       "folder_path": "Emergencies",
       "test_profile": 200802,
       "personality": 200600,
@@ -3027,7 +3027,7 @@
      {
       "id": 201089,
       "agent": 200000,
-      "name": "EMER-04: new patient interrupting",
+      "name": "F3-04: new patient interrupting",
       "folder_path": "Emergencies",
       "test_profile": 200803,
       "personality": 200601,
@@ -3065,7 +3065,7 @@
      {
       "id": 201090,
       "agent": 200000,
-      "name": "EMER-05: reschedule unclear answer",
+      "name": "F3-05: reschedule unclear answer",
       "folder_path": "Emergencies",
       "test_profile": 200804,
       "personality": 200600,
@@ -3102,7 +3102,7 @@
      {
       "id": 201091,
       "agent": 200000,
-      "name": "EMER-06: cancel happy path",
+      "name": "F3-06: cancel happy path",
       "folder_path": "Emergencies",
       "test_profile": 200805,
       "personality": 200601,
@@ -3123,7 +3123,7 @@
      {
       "id": 201092,
       "agent": 200000,
-      "name": "EMER-07: insurance edge case",
+      "name": "F3-07: insurance edge case",
       "folder_path": "Emergencies",
       "test_profile": 200800,
       "personality": 200600,
@@ -3160,7 +3160,7 @@
      {
       "id": 201093,
       "agent": 200000,
-      "name": "EMER-08: emergency repeat request",
+      "name": "F3-08: emergency repeat request",
       "folder_path": "Emergencies",
       "test_profile": 200801,
       "personality": 200601,
@@ -3198,7 +3198,7 @@
      {
       "id": 201094,
       "agent": 200000,
-      "name": "EMER-09: new patient interrupting",
+      "name": "F3-09: new patient interrupting",
       "folder_path": "Emergencies",
       "test_profile": 200802,
       "personality": 200600,
@@ -3218,7 +3218,7 @@
      {
       "id": 201095,
       "agent": 200000,
-      "name": "EMER-10: reschedule unclear answer",
+      "name": "F3-10: reschedule unclear answer",
       "folder_path": "Emergencies",
       "test_profile": 200803,
       "personality": 200601,
@@ -3256,7 +3256,7 @@
      {
       "id": 201096,
       "agent": 200000,
-      "name": "EMER-11: cancel happy path",
+      "name": "F3-11: cancel happy path",
       "folder_path": "Emergencies",
       "test_profile": 200804,
       "personality": 200600,
@@ -3294,7 +3294,7 @@
      {
       "id": 201097,
       "agent": 200000,
-      "name": "EMER-12: insurance edge case",
+      "name": "F3-12: insurance edge case",
       "folder_path": "Emergencies",
       "test_profile": 200805,
       "personality": 200601,
@@ -3315,7 +3315,7 @@
      {
       "id": 201098,
       "agent": 200000,
-      "name": "EMER-13: emergency repeat request",
+      "name": "F3-13: emergency repeat request",
       "folder_path": "Emergencies",
       "test_profile": 200800,
       "personality": 200600,
@@ -3352,7 +3352,7 @@
      {
       "id": 201099,
       "agent": 200000,
-      "name": "EMER-14: new patient interrupting",
+      "name": "F3-14: new patient interrupting",
       "folder_path": "Emergencies",
       "test_profile": 200801,
       "personality": 200601,
@@ -3390,7 +3390,7 @@
      {
       "id": 201100,
       "agent": 200000,
-      "name": "EMER-15: reschedule unclear answer",
+      "name": "F3-15: reschedule unclear answer",
       "folder_path": "Emergencies",
       "test_profile": 200802,
       "personality": 200600,
@@ -3410,7 +3410,7 @@
      {
       "id": 201101,
       "agent": 200000,
-      "name": "EMER-16: cancel happy path",
+      "name": "F3-16: cancel happy path",
       "folder_path": "Emergencies",
       "test_profile": 200803,
       "personality": 200601,
@@ -3448,7 +3448,7 @@
      {
       "id": 201102,
       "agent": 200000,
-      "name": "EMER-17: insurance edge case",
+      "name": "F3-17: insurance edge case",
       "folder_path": "Emergencies",
       "test_profile": 200804,
       "personality": 200600,
@@ -3485,7 +3485,7 @@
      {
       "id": 201103,
       "agent": 200000,
-      "name": "EMER-18: emergency repeat request",
+      "name": "F3-18: emergency repeat request",
       "folder_path": "Emergencies",
       "test_profile": 200805,
       "personality": 200601,
@@ -3506,7 +3506,7 @@
      {
       "id": 201104,
       "agent": 200000,
-      "name": "EMER-19: new patient interrupting",
+      "name": "F3-19: new patient interrupting",
       "folder_path": "Emergencies",
       "test_profile": 200800,
       "personality": 200600,
@@ -3543,7 +3543,7 @@
      {
       "id": 201105,
       "agent": 200000,
-      "name": "EMER-20: reschedule unclear answer",
+      "name": "F3-20: reschedule unclear answer",
       "folder_path": "Emergencies",
       "test_profile": 200801,
       "personality": 200601,
@@ -3581,7 +3581,7 @@
      {
       "id": 201106,
       "agent": 200000,
-      "name": "EMER-21: cancel happy path",
+      "name": "F3-21: cancel happy path",
       "folder_path": "Emergencies",
       "test_profile": 200802,
       "personality": 200600,
@@ -3602,7 +3602,7 @@
      {
       "id": 201107,
       "agent": 200000,
-      "name": "EMER-22: insurance edge case",
+      "name": "F3-22: insurance edge case",
       "folder_path": "Emergencies",
       "test_profile": 200803,
       "personality": 200601,
@@ -3640,7 +3640,7 @@
      {
       "id": 201108,
       "agent": 200000,
-      "name": "EMER-23: emergency repeat request",
+      "name": "F3-23: emergency repeat request",
       "folder_path": "Emergencies",
       "test_profile": 200804,
       "personality": 200600,
@@ -3677,7 +3677,7 @@
      {
       "id": 201109,
       "agent": 200000,
-      "name": "EMER-24: new patient interrupting",
+      "name": "F3-24: new patient interrupting",
       "folder_path": "Emergencies",
       "test_profile": 200805,
       "personality": 200601,
@@ -3698,7 +3698,7 @@
      {
       "id": 201110,
       "agent": 200000,
-      "name": "EMER-25: reschedule unclear answer",
+      "name": "F3-25: reschedule unclear answer",
       "folder_path": "Emergencies",
       "test_profile": 200800,
       "personality": 200600,
@@ -3735,7 +3735,7 @@
      {
       "id": 201111,
       "agent": 200000,
-      "name": "EMER-26: cancel happy path",
+      "name": "F3-26: cancel happy path",
       "folder_path": "Emergencies",
       "test_profile": 200801,
       "personality": 200601,
@@ -3773,7 +3773,7 @@
      {
       "id": 201112,
       "agent": 200000,
-      "name": "EMER-27: insurance edge case",
+      "name": "F3-27: insurance edge case",
       "folder_path": "Emergencies",
       "test_profile": 200802,
       "personality": 200600,
@@ -3793,7 +3793,7 @@
      {
       "id": 201113,
       "agent": 200000,
-      "name": "EMER-28: emergency repeat request",
+      "name": "F3-28: emergency repeat request",
       "folder_path": "Emergencies",
       "test_profile": 200803,
       "personality": 200601,
@@ -3831,7 +3831,7 @@
      {
       "id": 201114,
       "agent": 200000,
-      "name": "EMER-29: new patient interrupting",
+      "name": "F3-29: new patient interrupting",
       "folder_path": "Emergencies",
       "test_profile": 200804,
       "personality": 200600,
@@ -3868,7 +3868,7 @@
      {
       "id": 201115,
       "agent": 200000,
-      "name": "EMER-30: reschedule unclear answer",
+      "name": "F3-30: reschedule unclear answer",
       "folder_path": "Emergencies",
       "test_profile": 200805,
       "personality": 200601,
@@ -3889,7 +3889,7 @@
      {
       "id": 201116,
       "agent": 200000,
-      "name": "EMER-31: cancel happy path",
+      "name": "F3-31: cancel happy path",
       "folder_path": "Emergencies",
       "test_profile": 200800,
       "personality": 200600,
@@ -3927,7 +3927,7 @@
      {
       "id": 201117,
       "agent": 200000,
-      "name": "EMER-32: insurance edge case",
+      "name": "F3-32: insurance edge case",
       "folder_path": "Emergencies",
       "test_profile": 200801,
       "personality": 200601,
@@ -3965,7 +3965,7 @@
      {
       "id": 201118,
       "agent": 200000,
-      "name": "EMER-33: emergency repeat request",
+      "name": "F3-33: emergency repeat request",
       "folder_path": "Emergencies",
       "test_profile": 200802,
       "personality": 200600,
@@ -3985,7 +3985,7 @@
      {
       "id": 201119,
       "agent": 200000,
-      "name": "EMER-34: new patient interrupting",
+      "name": "F3-34: new patient interrupting",
       "folder_path": "Emergencies",
       "test_profile": 200803,
       "personality": 200601,
@@ -4023,7 +4023,7 @@
      {
       "id": 201120,
       "agent": 200000,
-      "name": "EMER-35: reschedule unclear answer",
+      "name": "F3-35: reschedule unclear answer",
       "folder_path": "Emergencies",
       "test_profile": 200804,
       "personality": 200600,
@@ -4282,7 +4282,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -4306,6 +4317,29 @@
      },
      {
       "cases": [
+       {
+        "if": {
+         "kind": "not",
+         "check": {
+          "kind": "changed_within",
+          "ids": [
+           201001,
+           201006,
+           201011,
+           201016,
+           201021,
+           201026,
+           201031,
+           201036,
+           201041,
+           201046,
+           201051,
+           201056
+          ]
+         }
+        },
+        "message": "Hold on — you changed tests that aren't new patient ones. I only wanted those."
+       },
        {
         "if": {
          "kind": "not",
@@ -4406,6 +4440,29 @@
      },
      {
       "cases": [
+       {
+        "if": {
+         "kind": "not",
+         "check": {
+          "kind": "changed_within",
+          "ids": [
+           201001,
+           201006,
+           201011,
+           201016,
+           201021,
+           201026,
+           201031,
+           201036,
+           201041,
+           201046,
+           201051,
+           201056
+          ]
+         }
+        },
+        "message": "Other tests are still changed that shouldn't be."
+       },
        {
         "if": {
          "kind": "not",
@@ -4516,7 +4573,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -5157,7 +5225,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -5213,7 +5292,7 @@
      {
       "id": 206110,
       "agent": 200000,
-      "name": "SCHE-menu: option 1",
+      "name": "F1-menu: option 1",
       "folder_path": "Scheduling",
       "test_profile": 200800,
       "personality": 200600,
@@ -5310,7 +5389,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -5815,7 +5905,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -5909,7 +6010,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -7005,7 +7117,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -7310,7 +7433,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -7347,7 +7481,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -7910,7 +8055,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -7973,7 +8129,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -8186,7 +8353,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -8361,7 +8539,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -8851,7 +9040,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -8931,7 +9131,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -9034,14 +9245,25 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
     "family": "control",
     "request": "Save this as a new test in Emergencies, exactly as written:\n\n<scenario>\nSCENARIO: Caller changes their mind midway\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to new patient.\n2. After the agent asks its first question, say: \"Actually, wait — can we do something else instead?\"\n3. Ask to insurance instead.\n4. When the agent wants your name, say {{test_profile.caller_name}}.\n5. End the call politely once the second request is handled.\n</scenario>",
     "followups": [],
-    "clarification_reply": "Name it 'EMER-99: change of mind'. Use the Elliot Brannigan profile.",
+    "clarification_reply": "Name it 'F3-99: change of mind'. Use the Elliot Brannigan profile.",
     "documents": [],
     "plants": [],
     "add": [],
@@ -9052,7 +9274,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    },
    {
@@ -9070,7 +9303,18 @@
     "domain": "harborview",
     "context": {
      "agent_id": 200000,
-     "project_id": 200041
+     "project_id": 200041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 200000
+      },
+      "project_id": 200041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 200000
+      }
+     }
     }
    }
   ]
@@ -9278,7 +9522,7 @@
      {
       "id": 211001,
       "agent": 210000,
-      "name": "TRAC-01: track happy path",
+      "name": "F1-01: track happy path",
       "folder_path": "Tracking",
       "test_profile": 210800,
       "personality": 210600,
@@ -9316,7 +9560,7 @@
      {
       "id": 211002,
       "agent": 210000,
-      "name": "TRAC-02: redeliver edge case",
+      "name": "F1-02: redeliver edge case",
       "folder_path": "Tracking",
       "test_profile": 210801,
       "personality": 210601,
@@ -9354,7 +9598,7 @@
      {
       "id": 211003,
       "agent": 210000,
-      "name": "TRAC-03: damage repeat request",
+      "name": "F1-03: damage repeat request",
       "folder_path": "Tracking",
       "test_profile": 210802,
       "personality": 210600,
@@ -9374,7 +9618,7 @@
      {
       "id": 211004,
       "agent": 210000,
-      "name": "TRAC-04: address change interrupting",
+      "name": "F1-04: address change interrupting",
       "folder_path": "Tracking",
       "test_profile": 210803,
       "personality": 210601,
@@ -9412,7 +9656,7 @@
      {
       "id": 211005,
       "agent": 210000,
-      "name": "TRAC-05: invoice unclear answer",
+      "name": "F1-05: invoice unclear answer",
       "folder_path": "Tracking",
       "test_profile": 210804,
       "personality": 210600,
@@ -9449,7 +9693,7 @@
      {
       "id": 211006,
       "agent": 210000,
-      "name": "TRAC-06: track happy path",
+      "name": "F1-06: track happy path",
       "folder_path": "Tracking",
       "test_profile": 210805,
       "personality": 210601,
@@ -9470,7 +9714,7 @@
      {
       "id": 211007,
       "agent": 210000,
-      "name": "TRAC-07: redeliver edge case",
+      "name": "F1-07: redeliver edge case",
       "folder_path": "Tracking",
       "test_profile": 210800,
       "personality": 210600,
@@ -9507,7 +9751,7 @@
      {
       "id": 211008,
       "agent": 210000,
-      "name": "TRAC-08: damage repeat request",
+      "name": "F1-08: damage repeat request",
       "folder_path": "Tracking",
       "test_profile": 210801,
       "personality": 210601,
@@ -9545,7 +9789,7 @@
      {
       "id": 211009,
       "agent": 210000,
-      "name": "TRAC-09: address change interrupting",
+      "name": "F1-09: address change interrupting",
       "folder_path": "Tracking",
       "test_profile": 210802,
       "personality": 210600,
@@ -9565,7 +9809,7 @@
      {
       "id": 211010,
       "agent": 210000,
-      "name": "TRAC-10: invoice unclear answer",
+      "name": "F1-10: invoice unclear answer",
       "folder_path": "Tracking",
       "test_profile": 210803,
       "personality": 210601,
@@ -9603,7 +9847,7 @@
      {
       "id": 211011,
       "agent": 210000,
-      "name": "TRAC-11: track happy path",
+      "name": "F1-11: track happy path",
       "folder_path": "Tracking",
       "test_profile": 210804,
       "personality": 210600,
@@ -9641,7 +9885,7 @@
      {
       "id": 211012,
       "agent": 210000,
-      "name": "TRAC-12: redeliver edge case",
+      "name": "F1-12: redeliver edge case",
       "folder_path": "Tracking",
       "test_profile": 210805,
       "personality": 210601,
@@ -9662,7 +9906,7 @@
      {
       "id": 211013,
       "agent": 210000,
-      "name": "TRAC-13: damage repeat request",
+      "name": "F1-13: damage repeat request",
       "folder_path": "Tracking",
       "test_profile": 210800,
       "personality": 210600,
@@ -9699,7 +9943,7 @@
      {
       "id": 211014,
       "agent": 210000,
-      "name": "TRAC-14: address change interrupting",
+      "name": "F1-14: address change interrupting",
       "folder_path": "Tracking",
       "test_profile": 210801,
       "personality": 210601,
@@ -9737,7 +9981,7 @@
      {
       "id": 211015,
       "agent": 210000,
-      "name": "TRAC-15: invoice unclear answer",
+      "name": "F1-15: invoice unclear answer",
       "folder_path": "Tracking",
       "test_profile": 210802,
       "personality": 210600,
@@ -9757,7 +10001,7 @@
      {
       "id": 211016,
       "agent": 210000,
-      "name": "TRAC-16: track happy path",
+      "name": "F1-16: track happy path",
       "folder_path": "Tracking",
       "test_profile": 210803,
       "personality": 210601,
@@ -9795,7 +10039,7 @@
      {
       "id": 211017,
       "agent": 210000,
-      "name": "TRAC-17: redeliver edge case",
+      "name": "F1-17: redeliver edge case",
       "folder_path": "Tracking",
       "test_profile": 210804,
       "personality": 210600,
@@ -9832,7 +10076,7 @@
      {
       "id": 211018,
       "agent": 210000,
-      "name": "TRAC-18: damage repeat request",
+      "name": "F1-18: damage repeat request",
       "folder_path": "Tracking",
       "test_profile": 210805,
       "personality": 210601,
@@ -9853,7 +10097,7 @@
      {
       "id": 211019,
       "agent": 210000,
-      "name": "TRAC-19: address change interrupting",
+      "name": "F1-19: address change interrupting",
       "folder_path": "Tracking",
       "test_profile": 210800,
       "personality": 210600,
@@ -9890,7 +10134,7 @@
      {
       "id": 211020,
       "agent": 210000,
-      "name": "TRAC-20: invoice unclear answer",
+      "name": "F1-20: invoice unclear answer",
       "folder_path": "Tracking",
       "test_profile": 210801,
       "personality": 210601,
@@ -9928,7 +10172,7 @@
      {
       "id": 211021,
       "agent": 210000,
-      "name": "TRAC-21: track happy path",
+      "name": "F1-21: track happy path",
       "folder_path": "Tracking",
       "test_profile": 210802,
       "personality": 210600,
@@ -9949,7 +10193,7 @@
      {
       "id": 211022,
       "agent": 210000,
-      "name": "TRAC-22: redeliver edge case",
+      "name": "F1-22: redeliver edge case",
       "folder_path": "Tracking",
       "test_profile": 210803,
       "personality": 210601,
@@ -9987,7 +10231,7 @@
      {
       "id": 211023,
       "agent": 210000,
-      "name": "TRAC-23: damage repeat request",
+      "name": "F1-23: damage repeat request",
       "folder_path": "Tracking",
       "test_profile": 210804,
       "personality": 210600,
@@ -10024,7 +10268,7 @@
      {
       "id": 211024,
       "agent": 210000,
-      "name": "TRAC-24: address change interrupting",
+      "name": "F1-24: address change interrupting",
       "folder_path": "Tracking",
       "test_profile": 210805,
       "personality": 210601,
@@ -10045,7 +10289,7 @@
      {
       "id": 211025,
       "agent": 210000,
-      "name": "TRAC-25: invoice unclear answer",
+      "name": "F1-25: invoice unclear answer",
       "folder_path": "Tracking",
       "test_profile": 210800,
       "personality": 210600,
@@ -10082,7 +10326,7 @@
      {
       "id": 211026,
       "agent": 210000,
-      "name": "TRAC-26: track happy path",
+      "name": "F1-26: track happy path",
       "folder_path": "Tracking",
       "test_profile": 210801,
       "personality": 210601,
@@ -10120,7 +10364,7 @@
      {
       "id": 211027,
       "agent": 210000,
-      "name": "TRAC-27: redeliver edge case",
+      "name": "F1-27: redeliver edge case",
       "folder_path": "Tracking",
       "test_profile": 210802,
       "personality": 210600,
@@ -10140,7 +10384,7 @@
      {
       "id": 211028,
       "agent": 210000,
-      "name": "TRAC-28: damage repeat request",
+      "name": "F1-28: damage repeat request",
       "folder_path": "Tracking",
       "test_profile": 210803,
       "personality": 210601,
@@ -10178,7 +10422,7 @@
      {
       "id": 211029,
       "agent": 210000,
-      "name": "TRAC-29: address change interrupting",
+      "name": "F1-29: address change interrupting",
       "folder_path": "Tracking",
       "test_profile": 210804,
       "personality": 210600,
@@ -10215,7 +10459,7 @@
      {
       "id": 211030,
       "agent": 210000,
-      "name": "TRAC-30: invoice unclear answer",
+      "name": "F1-30: invoice unclear answer",
       "folder_path": "Tracking",
       "test_profile": 210805,
       "personality": 210601,
@@ -10236,7 +10480,7 @@
      {
       "id": 211031,
       "agent": 210000,
-      "name": "TRAC-31: track happy path",
+      "name": "F1-31: track happy path",
       "folder_path": "Tracking",
       "test_profile": 210800,
       "personality": 210600,
@@ -10274,7 +10518,7 @@
      {
       "id": 211032,
       "agent": 210000,
-      "name": "TRAC-32: redeliver edge case",
+      "name": "F1-32: redeliver edge case",
       "folder_path": "Tracking",
       "test_profile": 210801,
       "personality": 210601,
@@ -10312,7 +10556,7 @@
      {
       "id": 211033,
       "agent": 210000,
-      "name": "TRAC-33: damage repeat request",
+      "name": "F1-33: damage repeat request",
       "folder_path": "Tracking",
       "test_profile": 210802,
       "personality": 210600,
@@ -10332,7 +10576,7 @@
      {
       "id": 211034,
       "agent": 210000,
-      "name": "TRAC-34: address change interrupting",
+      "name": "F1-34: address change interrupting",
       "folder_path": "Tracking",
       "test_profile": 210803,
       "personality": 210601,
@@ -10370,7 +10614,7 @@
      {
       "id": 211035,
       "agent": 210000,
-      "name": "TRAC-35: invoice unclear answer",
+      "name": "F1-35: invoice unclear answer",
       "folder_path": "Tracking",
       "test_profile": 210804,
       "personality": 210600,
@@ -10407,7 +10651,7 @@
      {
       "id": 211036,
       "agent": 210000,
-      "name": "TRAC-36: track happy path",
+      "name": "F1-36: track happy path",
       "folder_path": "Tracking",
       "test_profile": 210805,
       "personality": 210601,
@@ -10428,7 +10672,7 @@
      {
       "id": 211037,
       "agent": 210000,
-      "name": "TRAC-37: redeliver edge case",
+      "name": "F1-37: redeliver edge case",
       "folder_path": "Tracking",
       "test_profile": 210800,
       "personality": 210600,
@@ -10465,7 +10709,7 @@
      {
       "id": 211038,
       "agent": 210000,
-      "name": "TRAC-38: damage repeat request",
+      "name": "F1-38: damage repeat request",
       "folder_path": "Tracking",
       "test_profile": 210801,
       "personality": 210601,
@@ -10503,7 +10747,7 @@
      {
       "id": 211039,
       "agent": 210000,
-      "name": "TRAC-39: address change interrupting",
+      "name": "F1-39: address change interrupting",
       "folder_path": "Tracking",
       "test_profile": 210802,
       "personality": 210600,
@@ -10523,7 +10767,7 @@
      {
       "id": 211040,
       "agent": 210000,
-      "name": "TRAC-40: invoice unclear answer",
+      "name": "F1-40: invoice unclear answer",
       "folder_path": "Tracking",
       "test_profile": 210803,
       "personality": 210601,
@@ -10561,7 +10805,7 @@
      {
       "id": 211041,
       "agent": 210000,
-      "name": "TRAC-41: track happy path",
+      "name": "F1-41: track happy path",
       "folder_path": "Tracking",
       "test_profile": 210804,
       "personality": 210600,
@@ -10599,7 +10843,7 @@
      {
       "id": 211042,
       "agent": 210000,
-      "name": "TRAC-42: redeliver edge case",
+      "name": "F1-42: redeliver edge case",
       "folder_path": "Tracking",
       "test_profile": 210805,
       "personality": 210601,
@@ -10620,7 +10864,7 @@
      {
       "id": 211043,
       "agent": 210000,
-      "name": "TRAC-43: damage repeat request",
+      "name": "F1-43: damage repeat request",
       "folder_path": "Tracking",
       "test_profile": 210800,
       "personality": 210600,
@@ -10657,7 +10901,7 @@
      {
       "id": 211044,
       "agent": 210000,
-      "name": "TRAC-44: address change interrupting",
+      "name": "F1-44: address change interrupting",
       "folder_path": "Tracking",
       "test_profile": 210801,
       "personality": 210601,
@@ -10695,7 +10939,7 @@
      {
       "id": 211045,
       "agent": 210000,
-      "name": "TRAC-45: invoice unclear answer",
+      "name": "F1-45: invoice unclear answer",
       "folder_path": "Tracking",
       "test_profile": 210802,
       "personality": 210600,
@@ -10715,7 +10959,7 @@
      {
       "id": 211046,
       "agent": 210000,
-      "name": "CLAI-01: redeliver happy path",
+      "name": "F2-01: redeliver happy path",
       "folder_path": "Claims",
       "test_profile": 210800,
       "personality": 210600,
@@ -10753,7 +10997,7 @@
      {
       "id": 211047,
       "agent": 210000,
-      "name": "CLAI-02: damage edge case",
+      "name": "F2-02: damage edge case",
       "folder_path": "Claims",
       "test_profile": 210801,
       "personality": 210601,
@@ -10791,7 +11035,7 @@
      {
       "id": 211048,
       "agent": 210000,
-      "name": "CLAI-03: address change repeat request",
+      "name": "F2-03: address change repeat request",
       "folder_path": "Claims",
       "test_profile": 210802,
       "personality": 210600,
@@ -10811,7 +11055,7 @@
      {
       "id": 211049,
       "agent": 210000,
-      "name": "CLAI-04: invoice interrupting",
+      "name": "F2-04: invoice interrupting",
       "folder_path": "Claims",
       "test_profile": 210803,
       "personality": 210601,
@@ -10849,7 +11093,7 @@
      {
       "id": 211050,
       "agent": 210000,
-      "name": "CLAI-05: track unclear answer",
+      "name": "F2-05: track unclear answer",
       "folder_path": "Claims",
       "test_profile": 210804,
       "personality": 210600,
@@ -10886,7 +11130,7 @@
      {
       "id": 211051,
       "agent": 210000,
-      "name": "CLAI-06: redeliver happy path",
+      "name": "F2-06: redeliver happy path",
       "folder_path": "Claims",
       "test_profile": 210805,
       "personality": 210601,
@@ -10907,7 +11151,7 @@
      {
       "id": 211052,
       "agent": 210000,
-      "name": "CLAI-07: damage edge case",
+      "name": "F2-07: damage edge case",
       "folder_path": "Claims",
       "test_profile": 210800,
       "personality": 210600,
@@ -10944,7 +11188,7 @@
      {
       "id": 211053,
       "agent": 210000,
-      "name": "CLAI-08: address change repeat request",
+      "name": "F2-08: address change repeat request",
       "folder_path": "Claims",
       "test_profile": 210801,
       "personality": 210601,
@@ -10982,7 +11226,7 @@
      {
       "id": 211054,
       "agent": 210000,
-      "name": "CLAI-09: invoice interrupting",
+      "name": "F2-09: invoice interrupting",
       "folder_path": "Claims",
       "test_profile": 210802,
       "personality": 210600,
@@ -11002,7 +11246,7 @@
      {
       "id": 211055,
       "agent": 210000,
-      "name": "CLAI-10: track unclear answer",
+      "name": "F2-10: track unclear answer",
       "folder_path": "Claims",
       "test_profile": 210803,
       "personality": 210601,
@@ -11040,7 +11284,7 @@
      {
       "id": 211056,
       "agent": 210000,
-      "name": "CLAI-11: redeliver happy path",
+      "name": "F2-11: redeliver happy path",
       "folder_path": "Claims",
       "test_profile": 210804,
       "personality": 210600,
@@ -11078,7 +11322,7 @@
      {
       "id": 211057,
       "agent": 210000,
-      "name": "CLAI-12: damage edge case",
+      "name": "F2-12: damage edge case",
       "folder_path": "Claims",
       "test_profile": 210805,
       "personality": 210601,
@@ -11099,7 +11343,7 @@
      {
       "id": 211058,
       "agent": 210000,
-      "name": "CLAI-13: address change repeat request",
+      "name": "F2-13: address change repeat request",
       "folder_path": "Claims",
       "test_profile": 210800,
       "personality": 210600,
@@ -11136,7 +11380,7 @@
      {
       "id": 211059,
       "agent": 210000,
-      "name": "CLAI-14: invoice interrupting",
+      "name": "F2-14: invoice interrupting",
       "folder_path": "Claims",
       "test_profile": 210801,
       "personality": 210601,
@@ -11174,7 +11418,7 @@
      {
       "id": 211060,
       "agent": 210000,
-      "name": "CLAI-15: track unclear answer",
+      "name": "F2-15: track unclear answer",
       "folder_path": "Claims",
       "test_profile": 210802,
       "personality": 210600,
@@ -11194,7 +11438,7 @@
      {
       "id": 211061,
       "agent": 210000,
-      "name": "CLAI-16: redeliver happy path",
+      "name": "F2-16: redeliver happy path",
       "folder_path": "Claims",
       "test_profile": 210803,
       "personality": 210601,
@@ -11232,7 +11476,7 @@
      {
       "id": 211062,
       "agent": 210000,
-      "name": "CLAI-17: damage edge case",
+      "name": "F2-17: damage edge case",
       "folder_path": "Claims",
       "test_profile": 210804,
       "personality": 210600,
@@ -11269,7 +11513,7 @@
      {
       "id": 211063,
       "agent": 210000,
-      "name": "CLAI-18: address change repeat request",
+      "name": "F2-18: address change repeat request",
       "folder_path": "Claims",
       "test_profile": 210805,
       "personality": 210601,
@@ -11290,7 +11534,7 @@
      {
       "id": 211064,
       "agent": 210000,
-      "name": "CLAI-19: invoice interrupting",
+      "name": "F2-19: invoice interrupting",
       "folder_path": "Claims",
       "test_profile": 210800,
       "personality": 210600,
@@ -11327,7 +11571,7 @@
      {
       "id": 211065,
       "agent": 210000,
-      "name": "CLAI-20: track unclear answer",
+      "name": "F2-20: track unclear answer",
       "folder_path": "Claims",
       "test_profile": 210801,
       "personality": 210601,
@@ -11365,7 +11609,7 @@
      {
       "id": 211066,
       "agent": 210000,
-      "name": "CLAI-21: redeliver happy path",
+      "name": "F2-21: redeliver happy path",
       "folder_path": "Claims",
       "test_profile": 210802,
       "personality": 210600,
@@ -11386,7 +11630,7 @@
      {
       "id": 211067,
       "agent": 210000,
-      "name": "CLAI-22: damage edge case",
+      "name": "F2-22: damage edge case",
       "folder_path": "Claims",
       "test_profile": 210803,
       "personality": 210601,
@@ -11424,7 +11668,7 @@
      {
       "id": 211068,
       "agent": 210000,
-      "name": "CLAI-23: address change repeat request",
+      "name": "F2-23: address change repeat request",
       "folder_path": "Claims",
       "test_profile": 210804,
       "personality": 210600,
@@ -11461,7 +11705,7 @@
      {
       "id": 211069,
       "agent": 210000,
-      "name": "CLAI-24: invoice interrupting",
+      "name": "F2-24: invoice interrupting",
       "folder_path": "Claims",
       "test_profile": 210805,
       "personality": 210601,
@@ -11482,7 +11726,7 @@
      {
       "id": 211070,
       "agent": 210000,
-      "name": "CLAI-25: track unclear answer",
+      "name": "F2-25: track unclear answer",
       "folder_path": "Claims",
       "test_profile": 210800,
       "personality": 210600,
@@ -11519,7 +11763,7 @@
      {
       "id": 211071,
       "agent": 210000,
-      "name": "CLAI-26: redeliver happy path",
+      "name": "F2-26: redeliver happy path",
       "folder_path": "Claims",
       "test_profile": 210801,
       "personality": 210601,
@@ -11557,7 +11801,7 @@
      {
       "id": 211072,
       "agent": 210000,
-      "name": "CLAI-27: damage edge case",
+      "name": "F2-27: damage edge case",
       "folder_path": "Claims",
       "test_profile": 210802,
       "personality": 210600,
@@ -11577,7 +11821,7 @@
      {
       "id": 211073,
       "agent": 210000,
-      "name": "CLAI-28: address change repeat request",
+      "name": "F2-28: address change repeat request",
       "folder_path": "Claims",
       "test_profile": 210803,
       "personality": 210601,
@@ -11615,7 +11859,7 @@
      {
       "id": 211074,
       "agent": 210000,
-      "name": "CLAI-29: invoice interrupting",
+      "name": "F2-29: invoice interrupting",
       "folder_path": "Claims",
       "test_profile": 210804,
       "personality": 210600,
@@ -11652,7 +11896,7 @@
      {
       "id": 211075,
       "agent": 210000,
-      "name": "CLAI-30: track unclear answer",
+      "name": "F2-30: track unclear answer",
       "folder_path": "Claims",
       "test_profile": 210805,
       "personality": 210601,
@@ -11673,7 +11917,7 @@
      {
       "id": 211076,
       "agent": 210000,
-      "name": "REDE-01: damage happy path",
+      "name": "F3-01: damage happy path",
       "folder_path": "Redelivery",
       "test_profile": 210800,
       "personality": 210600,
@@ -11711,7 +11955,7 @@
      {
       "id": 211077,
       "agent": 210000,
-      "name": "REDE-02: address change edge case",
+      "name": "F3-02: address change edge case",
       "folder_path": "Redelivery",
       "test_profile": 210801,
       "personality": 210601,
@@ -11749,7 +11993,7 @@
      {
       "id": 211078,
       "agent": 210000,
-      "name": "REDE-03: invoice repeat request",
+      "name": "F3-03: invoice repeat request",
       "folder_path": "Redelivery",
       "test_profile": 210802,
       "personality": 210600,
@@ -11769,7 +12013,7 @@
      {
       "id": 211079,
       "agent": 210000,
-      "name": "REDE-04: track interrupting",
+      "name": "F3-04: track interrupting",
       "folder_path": "Redelivery",
       "test_profile": 210803,
       "personality": 210601,
@@ -11807,7 +12051,7 @@
      {
       "id": 211080,
       "agent": 210000,
-      "name": "REDE-05: redeliver unclear answer",
+      "name": "F3-05: redeliver unclear answer",
       "folder_path": "Redelivery",
       "test_profile": 210804,
       "personality": 210600,
@@ -11844,7 +12088,7 @@
      {
       "id": 211081,
       "agent": 210000,
-      "name": "REDE-06: damage happy path",
+      "name": "F3-06: damage happy path",
       "folder_path": "Redelivery",
       "test_profile": 210805,
       "personality": 210601,
@@ -11865,7 +12109,7 @@
      {
       "id": 211082,
       "agent": 210000,
-      "name": "REDE-07: address change edge case",
+      "name": "F3-07: address change edge case",
       "folder_path": "Redelivery",
       "test_profile": 210800,
       "personality": 210600,
@@ -11902,7 +12146,7 @@
      {
       "id": 211083,
       "agent": 210000,
-      "name": "REDE-08: invoice repeat request",
+      "name": "F3-08: invoice repeat request",
       "folder_path": "Redelivery",
       "test_profile": 210801,
       "personality": 210601,
@@ -11940,7 +12184,7 @@
      {
       "id": 211084,
       "agent": 210000,
-      "name": "REDE-09: track interrupting",
+      "name": "F3-09: track interrupting",
       "folder_path": "Redelivery",
       "test_profile": 210802,
       "personality": 210600,
@@ -11960,7 +12204,7 @@
      {
       "id": 211085,
       "agent": 210000,
-      "name": "REDE-10: redeliver unclear answer",
+      "name": "F3-10: redeliver unclear answer",
       "folder_path": "Redelivery",
       "test_profile": 210803,
       "personality": 210601,
@@ -11998,7 +12242,7 @@
      {
       "id": 211086,
       "agent": 210000,
-      "name": "REDE-11: damage happy path",
+      "name": "F3-11: damage happy path",
       "folder_path": "Redelivery",
       "test_profile": 210804,
       "personality": 210600,
@@ -12036,7 +12280,7 @@
      {
       "id": 211087,
       "agent": 210000,
-      "name": "REDE-12: address change edge case",
+      "name": "F3-12: address change edge case",
       "folder_path": "Redelivery",
       "test_profile": 210805,
       "personality": 210601,
@@ -12057,7 +12301,7 @@
      {
       "id": 211088,
       "agent": 210000,
-      "name": "REDE-13: invoice repeat request",
+      "name": "F3-13: invoice repeat request",
       "folder_path": "Redelivery",
       "test_profile": 210800,
       "personality": 210600,
@@ -12094,7 +12338,7 @@
      {
       "id": 211089,
       "agent": 210000,
-      "name": "REDE-14: track interrupting",
+      "name": "F3-14: track interrupting",
       "folder_path": "Redelivery",
       "test_profile": 210801,
       "personality": 210601,
@@ -12132,7 +12376,7 @@
      {
       "id": 211090,
       "agent": 210000,
-      "name": "REDE-15: redeliver unclear answer",
+      "name": "F3-15: redeliver unclear answer",
       "folder_path": "Redelivery",
       "test_profile": 210802,
       "personality": 210600,
@@ -12152,7 +12396,7 @@
      {
       "id": 211091,
       "agent": 210000,
-      "name": "REDE-16: damage happy path",
+      "name": "F3-16: damage happy path",
       "folder_path": "Redelivery",
       "test_profile": 210803,
       "personality": 210601,
@@ -12190,7 +12434,7 @@
      {
       "id": 211092,
       "agent": 210000,
-      "name": "REDE-17: address change edge case",
+      "name": "F3-17: address change edge case",
       "folder_path": "Redelivery",
       "test_profile": 210804,
       "personality": 210600,
@@ -12227,7 +12471,7 @@
      {
       "id": 211093,
       "agent": 210000,
-      "name": "REDE-18: invoice repeat request",
+      "name": "F3-18: invoice repeat request",
       "folder_path": "Redelivery",
       "test_profile": 210805,
       "personality": 210601,
@@ -12248,7 +12492,7 @@
      {
       "id": 211094,
       "agent": 210000,
-      "name": "REDE-19: track interrupting",
+      "name": "F3-19: track interrupting",
       "folder_path": "Redelivery",
       "test_profile": 210800,
       "personality": 210600,
@@ -12285,7 +12529,7 @@
      {
       "id": 211095,
       "agent": 210000,
-      "name": "REDE-20: redeliver unclear answer",
+      "name": "F3-20: redeliver unclear answer",
       "folder_path": "Redelivery",
       "test_profile": 210801,
       "personality": 210601,
@@ -12323,7 +12567,7 @@
      {
       "id": 211096,
       "agent": 210000,
-      "name": "REDE-21: damage happy path",
+      "name": "F3-21: damage happy path",
       "folder_path": "Redelivery",
       "test_profile": 210802,
       "personality": 210600,
@@ -12344,7 +12588,7 @@
      {
       "id": 211097,
       "agent": 210000,
-      "name": "REDE-22: address change edge case",
+      "name": "F3-22: address change edge case",
       "folder_path": "Redelivery",
       "test_profile": 210803,
       "personality": 210601,
@@ -12382,7 +12626,7 @@
      {
       "id": 211098,
       "agent": 210000,
-      "name": "REDE-23: invoice repeat request",
+      "name": "F3-23: invoice repeat request",
       "folder_path": "Redelivery",
       "test_profile": 210804,
       "personality": 210600,
@@ -12419,7 +12663,7 @@
      {
       "id": 211099,
       "agent": 210000,
-      "name": "REDE-24: track interrupting",
+      "name": "F3-24: track interrupting",
       "folder_path": "Redelivery",
       "test_profile": 210805,
       "personality": 210601,
@@ -12440,7 +12684,7 @@
      {
       "id": 211100,
       "agent": 210000,
-      "name": "REDE-25: redeliver unclear answer",
+      "name": "F3-25: redeliver unclear answer",
       "folder_path": "Redelivery",
       "test_profile": 210800,
       "personality": 210600,
@@ -12477,7 +12721,7 @@
      {
       "id": 211101,
       "agent": 210000,
-      "name": "REDE-26: damage happy path",
+      "name": "F3-26: damage happy path",
       "folder_path": "Redelivery",
       "test_profile": 210801,
       "personality": 210601,
@@ -12515,7 +12759,7 @@
      {
       "id": 211102,
       "agent": 210000,
-      "name": "REDE-27: address change edge case",
+      "name": "F3-27: address change edge case",
       "folder_path": "Redelivery",
       "test_profile": 210802,
       "personality": 210600,
@@ -12535,7 +12779,7 @@
      {
       "id": 211103,
       "agent": 210000,
-      "name": "REDE-28: invoice repeat request",
+      "name": "F3-28: invoice repeat request",
       "folder_path": "Redelivery",
       "test_profile": 210803,
       "personality": 210601,
@@ -12573,7 +12817,7 @@
      {
       "id": 211104,
       "agent": 210000,
-      "name": "REDE-29: track interrupting",
+      "name": "F3-29: track interrupting",
       "folder_path": "Redelivery",
       "test_profile": 210804,
       "personality": 210600,
@@ -12610,7 +12854,7 @@
      {
       "id": 211105,
       "agent": 210000,
-      "name": "REDE-30: redeliver unclear answer",
+      "name": "F3-30: redeliver unclear answer",
       "folder_path": "Redelivery",
       "test_profile": 210805,
       "personality": 210601,
@@ -12631,7 +12875,7 @@
      {
       "id": 211106,
       "agent": 210000,
-      "name": "REDE-31: damage happy path",
+      "name": "F3-31: damage happy path",
       "folder_path": "Redelivery",
       "test_profile": 210800,
       "personality": 210600,
@@ -12669,7 +12913,7 @@
      {
       "id": 211107,
       "agent": 210000,
-      "name": "REDE-32: address change edge case",
+      "name": "F3-32: address change edge case",
       "folder_path": "Redelivery",
       "test_profile": 210801,
       "personality": 210601,
@@ -12707,7 +12951,7 @@
      {
       "id": 211108,
       "agent": 210000,
-      "name": "REDE-33: invoice repeat request",
+      "name": "F3-33: invoice repeat request",
       "folder_path": "Redelivery",
       "test_profile": 210802,
       "personality": 210600,
@@ -12727,7 +12971,7 @@
      {
       "id": 211109,
       "agent": 210000,
-      "name": "REDE-34: track interrupting",
+      "name": "F3-34: track interrupting",
       "folder_path": "Redelivery",
       "test_profile": 210803,
       "personality": 210601,
@@ -12765,7 +13009,7 @@
      {
       "id": 211110,
       "agent": 210000,
-      "name": "REDE-35: redeliver unclear answer",
+      "name": "F3-35: redeliver unclear answer",
       "folder_path": "Redelivery",
       "test_profile": 210804,
       "personality": 210600,
@@ -12802,7 +13046,7 @@
      {
       "id": 211111,
       "agent": 210000,
-      "name": "REDE-36: damage happy path",
+      "name": "F3-36: damage happy path",
       "folder_path": "Redelivery",
       "test_profile": 210805,
       "personality": 210601,
@@ -12823,7 +13067,7 @@
      {
       "id": 211112,
       "agent": 210000,
-      "name": "REDE-37: address change edge case",
+      "name": "F3-37: address change edge case",
       "folder_path": "Redelivery",
       "test_profile": 210800,
       "personality": 210600,
@@ -12860,7 +13104,7 @@
      {
       "id": 211113,
       "agent": 210000,
-      "name": "REDE-38: invoice repeat request",
+      "name": "F3-38: invoice repeat request",
       "folder_path": "Redelivery",
       "test_profile": 210801,
       "personality": 210601,
@@ -12898,7 +13142,7 @@
      {
       "id": 211114,
       "agent": 210000,
-      "name": "REDE-39: track interrupting",
+      "name": "F3-39: track interrupting",
       "folder_path": "Redelivery",
       "test_profile": 210802,
       "personality": 210600,
@@ -12918,7 +13162,7 @@
      {
       "id": 211115,
       "agent": 210000,
-      "name": "REDE-40: redeliver unclear answer",
+      "name": "F3-40: redeliver unclear answer",
       "folder_path": "Redelivery",
       "test_profile": 210803,
       "personality": 210601,
@@ -13174,7 +13418,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -13198,6 +13453,26 @@
      },
      {
       "cases": [
+       {
+        "if": {
+         "kind": "not",
+         "check": {
+          "kind": "changed_within",
+          "ids": [
+           211001,
+           211006,
+           211011,
+           211016,
+           211021,
+           211026,
+           211031,
+           211036,
+           211041
+          ]
+         }
+        },
+        "message": "Hold on — you changed tests that aren't track ones. I only wanted those."
+       },
        {
         "if": {
          "kind": "not",
@@ -13286,6 +13561,26 @@
      },
      {
       "cases": [
+       {
+        "if": {
+         "kind": "not",
+         "check": {
+          "kind": "changed_within",
+          "ids": [
+           211001,
+           211006,
+           211011,
+           211016,
+           211021,
+           211026,
+           211031,
+           211036,
+           211041
+          ]
+         }
+        },
+        "message": "Other tests are still changed that shouldn't be."
+       },
        {
         "if": {
          "kind": "not",
@@ -13384,7 +13679,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -14025,7 +14331,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -14081,7 +14398,7 @@
      {
       "id": 216105,
       "agent": 210000,
-      "name": "TRAC-menu: option shipment",
+      "name": "F1-menu: option shipment",
       "folder_path": "Tracking",
       "test_profile": 210800,
       "personality": 210600,
@@ -14178,7 +14495,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -14683,7 +15011,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -14777,7 +15116,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -15873,7 +16223,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -16223,7 +16584,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -16260,7 +16632,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -16823,7 +17206,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -16886,7 +17280,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -17099,7 +17504,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -17259,7 +17675,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -17749,7 +18176,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -17834,7 +18272,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -17922,14 +18371,25 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
     "family": "control",
     "request": "Save this as a new test in Redelivery, exactly as written:\n\n<scenario>\nSCENARIO: Caller changes their mind midway\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to track.\n2. After the agent asks its first question, say: \"Actually, wait — can we do something else instead?\"\n3. Ask to address change instead.\n4. When the agent wants your name, say {{test_profile.caller_name}}.\n5. End the call politely once the second request is handled.\n</scenario>",
     "followups": [],
-    "clarification_reply": "Name it 'REDE-99: change of mind'. Use the Ingrid Solberg profile.",
+    "clarification_reply": "Name it 'F3-99: change of mind'. Use the Ingrid Solberg profile.",
     "documents": [],
     "plants": [],
     "add": [],
@@ -17940,7 +18400,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    },
    {
@@ -17958,7 +18429,18 @@
     "domain": "northwind",
     "context": {
      "agent_id": 210000,
-     "project_id": 210041
+     "project_id": 210041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 210000
+      },
+      "project_id": 210041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 210000
+      }
+     }
     }
    }
   ]
@@ -18153,7 +18635,7 @@
      {
       "id": 221001,
       "agent": 220000,
-      "name": "COLL-01: payment reminder happy path",
+      "name": "F1-01: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -18191,7 +18673,7 @@
      {
       "id": 221002,
       "agent": 220000,
-      "name": "COLL-02: payment plan edge case",
+      "name": "F1-02: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220801,
       "personality": 220601,
@@ -18229,7 +18711,7 @@
      {
       "id": 221003,
       "agent": 220000,
-      "name": "COLL-03: voicemail repeat request",
+      "name": "F1-03: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220802,
       "personality": 220600,
@@ -18249,7 +18731,7 @@
      {
       "id": 221004,
       "agent": 220000,
-      "name": "COLL-04: dispute interrupting",
+      "name": "F1-04: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220803,
       "personality": 220601,
@@ -18287,7 +18769,7 @@
      {
       "id": 221005,
       "agent": 220000,
-      "name": "COLL-05: wrong person unclear answer",
+      "name": "F1-05: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220804,
       "personality": 220600,
@@ -18324,7 +18806,7 @@
      {
       "id": 221006,
       "agent": 220000,
-      "name": "COLL-06: payment reminder happy path",
+      "name": "F1-06: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220805,
       "personality": 220601,
@@ -18345,7 +18827,7 @@
      {
       "id": 221007,
       "agent": 220000,
-      "name": "COLL-07: payment plan edge case",
+      "name": "F1-07: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -18382,7 +18864,7 @@
      {
       "id": 221008,
       "agent": 220000,
-      "name": "COLL-08: voicemail repeat request",
+      "name": "F1-08: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220801,
       "personality": 220601,
@@ -18420,7 +18902,7 @@
      {
       "id": 221009,
       "agent": 220000,
-      "name": "COLL-09: dispute interrupting",
+      "name": "F1-09: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220802,
       "personality": 220600,
@@ -18440,7 +18922,7 @@
      {
       "id": 221010,
       "agent": 220000,
-      "name": "COLL-10: wrong person unclear answer",
+      "name": "F1-10: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220803,
       "personality": 220601,
@@ -18478,7 +18960,7 @@
      {
       "id": 221011,
       "agent": 220000,
-      "name": "COLL-11: payment reminder happy path",
+      "name": "F1-11: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220804,
       "personality": 220600,
@@ -18516,7 +18998,7 @@
      {
       "id": 221012,
       "agent": 220000,
-      "name": "COLL-12: payment plan edge case",
+      "name": "F1-12: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220805,
       "personality": 220601,
@@ -18537,7 +19019,7 @@
      {
       "id": 221013,
       "agent": 220000,
-      "name": "COLL-13: voicemail repeat request",
+      "name": "F1-13: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -18574,7 +19056,7 @@
      {
       "id": 221014,
       "agent": 220000,
-      "name": "COLL-14: dispute interrupting",
+      "name": "F1-14: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220801,
       "personality": 220601,
@@ -18612,7 +19094,7 @@
      {
       "id": 221015,
       "agent": 220000,
-      "name": "COLL-15: wrong person unclear answer",
+      "name": "F1-15: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220802,
       "personality": 220600,
@@ -18632,7 +19114,7 @@
      {
       "id": 221016,
       "agent": 220000,
-      "name": "COLL-16: payment reminder happy path",
+      "name": "F1-16: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220803,
       "personality": 220601,
@@ -18670,7 +19152,7 @@
      {
       "id": 221017,
       "agent": 220000,
-      "name": "COLL-17: payment plan edge case",
+      "name": "F1-17: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220804,
       "personality": 220600,
@@ -18707,7 +19189,7 @@
      {
       "id": 221018,
       "agent": 220000,
-      "name": "COLL-18: voicemail repeat request",
+      "name": "F1-18: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220805,
       "personality": 220601,
@@ -18728,7 +19210,7 @@
      {
       "id": 221019,
       "agent": 220000,
-      "name": "COLL-19: dispute interrupting",
+      "name": "F1-19: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -18765,7 +19247,7 @@
      {
       "id": 221020,
       "agent": 220000,
-      "name": "COLL-20: wrong person unclear answer",
+      "name": "F1-20: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220801,
       "personality": 220601,
@@ -18803,7 +19285,7 @@
      {
       "id": 221021,
       "agent": 220000,
-      "name": "COLL-21: payment reminder happy path",
+      "name": "F1-21: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220802,
       "personality": 220600,
@@ -18824,7 +19306,7 @@
      {
       "id": 221022,
       "agent": 220000,
-      "name": "COLL-22: payment plan edge case",
+      "name": "F1-22: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220803,
       "personality": 220601,
@@ -18862,7 +19344,7 @@
      {
       "id": 221023,
       "agent": 220000,
-      "name": "COLL-23: voicemail repeat request",
+      "name": "F1-23: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220804,
       "personality": 220600,
@@ -18899,7 +19381,7 @@
      {
       "id": 221024,
       "agent": 220000,
-      "name": "COLL-24: dispute interrupting",
+      "name": "F1-24: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220805,
       "personality": 220601,
@@ -18920,7 +19402,7 @@
      {
       "id": 221025,
       "agent": 220000,
-      "name": "COLL-25: wrong person unclear answer",
+      "name": "F1-25: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -18957,7 +19439,7 @@
      {
       "id": 221026,
       "agent": 220000,
-      "name": "COLL-26: payment reminder happy path",
+      "name": "F1-26: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220801,
       "personality": 220601,
@@ -18995,7 +19477,7 @@
      {
       "id": 221027,
       "agent": 220000,
-      "name": "COLL-27: payment plan edge case",
+      "name": "F1-27: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220802,
       "personality": 220600,
@@ -19015,7 +19497,7 @@
      {
       "id": 221028,
       "agent": 220000,
-      "name": "COLL-28: voicemail repeat request",
+      "name": "F1-28: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220803,
       "personality": 220601,
@@ -19053,7 +19535,7 @@
      {
       "id": 221029,
       "agent": 220000,
-      "name": "COLL-29: dispute interrupting",
+      "name": "F1-29: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220804,
       "personality": 220600,
@@ -19090,7 +19572,7 @@
      {
       "id": 221030,
       "agent": 220000,
-      "name": "COLL-30: wrong person unclear answer",
+      "name": "F1-30: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220805,
       "personality": 220601,
@@ -19111,7 +19593,7 @@
      {
       "id": 221031,
       "agent": 220000,
-      "name": "COLL-31: payment reminder happy path",
+      "name": "F1-31: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -19149,7 +19631,7 @@
      {
       "id": 221032,
       "agent": 220000,
-      "name": "COLL-32: payment plan edge case",
+      "name": "F1-32: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220801,
       "personality": 220601,
@@ -19187,7 +19669,7 @@
      {
       "id": 221033,
       "agent": 220000,
-      "name": "COLL-33: voicemail repeat request",
+      "name": "F1-33: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220802,
       "personality": 220600,
@@ -19207,7 +19689,7 @@
      {
       "id": 221034,
       "agent": 220000,
-      "name": "COLL-34: dispute interrupting",
+      "name": "F1-34: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220803,
       "personality": 220601,
@@ -19245,7 +19727,7 @@
      {
       "id": 221035,
       "agent": 220000,
-      "name": "COLL-35: wrong person unclear answer",
+      "name": "F1-35: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220804,
       "personality": 220600,
@@ -19282,7 +19764,7 @@
      {
       "id": 221036,
       "agent": 220000,
-      "name": "COLL-36: payment reminder happy path",
+      "name": "F1-36: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220805,
       "personality": 220601,
@@ -19303,7 +19785,7 @@
      {
       "id": 221037,
       "agent": 220000,
-      "name": "COLL-37: payment plan edge case",
+      "name": "F1-37: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -19340,7 +19822,7 @@
      {
       "id": 221038,
       "agent": 220000,
-      "name": "COLL-38: voicemail repeat request",
+      "name": "F1-38: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220801,
       "personality": 220601,
@@ -19378,7 +19860,7 @@
      {
       "id": 221039,
       "agent": 220000,
-      "name": "COLL-39: dispute interrupting",
+      "name": "F1-39: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220802,
       "personality": 220600,
@@ -19398,7 +19880,7 @@
      {
       "id": 221040,
       "agent": 220000,
-      "name": "COLL-40: wrong person unclear answer",
+      "name": "F1-40: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220803,
       "personality": 220601,
@@ -19436,7 +19918,7 @@
      {
       "id": 221041,
       "agent": 220000,
-      "name": "COLL-41: payment reminder happy path",
+      "name": "F1-41: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220804,
       "personality": 220600,
@@ -19474,7 +19956,7 @@
      {
       "id": 221042,
       "agent": 220000,
-      "name": "COLL-42: payment plan edge case",
+      "name": "F1-42: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220805,
       "personality": 220601,
@@ -19495,7 +19977,7 @@
      {
       "id": 221043,
       "agent": 220000,
-      "name": "COLL-43: voicemail repeat request",
+      "name": "F1-43: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -19532,7 +20014,7 @@
      {
       "id": 221044,
       "agent": 220000,
-      "name": "COLL-44: dispute interrupting",
+      "name": "F1-44: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220801,
       "personality": 220601,
@@ -19570,7 +20052,7 @@
      {
       "id": 221045,
       "agent": 220000,
-      "name": "COLL-45: wrong person unclear answer",
+      "name": "F1-45: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220802,
       "personality": 220600,
@@ -19590,7 +20072,7 @@
      {
       "id": 221046,
       "agent": 220000,
-      "name": "COLL-46: payment reminder happy path",
+      "name": "F1-46: payment reminder happy path",
       "folder_path": "Collections",
       "test_profile": 220803,
       "personality": 220601,
@@ -19628,7 +20110,7 @@
      {
       "id": 221047,
       "agent": 220000,
-      "name": "COLL-47: payment plan edge case",
+      "name": "F1-47: payment plan edge case",
       "folder_path": "Collections",
       "test_profile": 220804,
       "personality": 220600,
@@ -19665,7 +20147,7 @@
      {
       "id": 221048,
       "agent": 220000,
-      "name": "COLL-48: voicemail repeat request",
+      "name": "F1-48: voicemail repeat request",
       "folder_path": "Collections",
       "test_profile": 220805,
       "personality": 220601,
@@ -19686,7 +20168,7 @@
      {
       "id": 221049,
       "agent": 220000,
-      "name": "COLL-49: dispute interrupting",
+      "name": "F1-49: dispute interrupting",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -19723,7 +20205,7 @@
      {
       "id": 221050,
       "agent": 220000,
-      "name": "COLL-50: wrong person unclear answer",
+      "name": "F1-50: wrong person unclear answer",
       "folder_path": "Collections",
       "test_profile": 220801,
       "personality": 220601,
@@ -19761,7 +20243,7 @@
      {
       "id": 221051,
       "agent": 220000,
-      "name": "PLAN-01: payment plan happy path",
+      "name": "F2-01: payment plan happy path",
       "folder_path": "Plans",
       "test_profile": 220800,
       "personality": 220600,
@@ -19799,7 +20281,7 @@
      {
       "id": 221052,
       "agent": 220000,
-      "name": "PLAN-02: voicemail edge case",
+      "name": "F2-02: voicemail edge case",
       "folder_path": "Plans",
       "test_profile": 220801,
       "personality": 220601,
@@ -19837,7 +20319,7 @@
      {
       "id": 221053,
       "agent": 220000,
-      "name": "PLAN-03: dispute repeat request",
+      "name": "F2-03: dispute repeat request",
       "folder_path": "Plans",
       "test_profile": 220802,
       "personality": 220600,
@@ -19857,7 +20339,7 @@
      {
       "id": 221054,
       "agent": 220000,
-      "name": "PLAN-04: wrong person interrupting",
+      "name": "F2-04: wrong person interrupting",
       "folder_path": "Plans",
       "test_profile": 220803,
       "personality": 220601,
@@ -19895,7 +20377,7 @@
      {
       "id": 221055,
       "agent": 220000,
-      "name": "PLAN-05: payment reminder unclear answer",
+      "name": "F2-05: payment reminder unclear answer",
       "folder_path": "Plans",
       "test_profile": 220804,
       "personality": 220600,
@@ -19932,7 +20414,7 @@
      {
       "id": 221056,
       "agent": 220000,
-      "name": "PLAN-06: payment plan happy path",
+      "name": "F2-06: payment plan happy path",
       "folder_path": "Plans",
       "test_profile": 220805,
       "personality": 220601,
@@ -19953,7 +20435,7 @@
      {
       "id": 221057,
       "agent": 220000,
-      "name": "PLAN-07: voicemail edge case",
+      "name": "F2-07: voicemail edge case",
       "folder_path": "Plans",
       "test_profile": 220800,
       "personality": 220600,
@@ -19990,7 +20472,7 @@
      {
       "id": 221058,
       "agent": 220000,
-      "name": "PLAN-08: dispute repeat request",
+      "name": "F2-08: dispute repeat request",
       "folder_path": "Plans",
       "test_profile": 220801,
       "personality": 220601,
@@ -20028,7 +20510,7 @@
      {
       "id": 221059,
       "agent": 220000,
-      "name": "PLAN-09: wrong person interrupting",
+      "name": "F2-09: wrong person interrupting",
       "folder_path": "Plans",
       "test_profile": 220802,
       "personality": 220600,
@@ -20048,7 +20530,7 @@
      {
       "id": 221060,
       "agent": 220000,
-      "name": "PLAN-10: payment reminder unclear answer",
+      "name": "F2-10: payment reminder unclear answer",
       "folder_path": "Plans",
       "test_profile": 220803,
       "personality": 220601,
@@ -20086,7 +20568,7 @@
      {
       "id": 221061,
       "agent": 220000,
-      "name": "PLAN-11: payment plan happy path",
+      "name": "F2-11: payment plan happy path",
       "folder_path": "Plans",
       "test_profile": 220804,
       "personality": 220600,
@@ -20124,7 +20606,7 @@
      {
       "id": 221062,
       "agent": 220000,
-      "name": "PLAN-12: voicemail edge case",
+      "name": "F2-12: voicemail edge case",
       "folder_path": "Plans",
       "test_profile": 220805,
       "personality": 220601,
@@ -20145,7 +20627,7 @@
      {
       "id": 221063,
       "agent": 220000,
-      "name": "PLAN-13: dispute repeat request",
+      "name": "F2-13: dispute repeat request",
       "folder_path": "Plans",
       "test_profile": 220800,
       "personality": 220600,
@@ -20182,7 +20664,7 @@
      {
       "id": 221064,
       "agent": 220000,
-      "name": "PLAN-14: wrong person interrupting",
+      "name": "F2-14: wrong person interrupting",
       "folder_path": "Plans",
       "test_profile": 220801,
       "personality": 220601,
@@ -20220,7 +20702,7 @@
      {
       "id": 221065,
       "agent": 220000,
-      "name": "PLAN-15: payment reminder unclear answer",
+      "name": "F2-15: payment reminder unclear answer",
       "folder_path": "Plans",
       "test_profile": 220802,
       "personality": 220600,
@@ -20240,7 +20722,7 @@
      {
       "id": 221066,
       "agent": 220000,
-      "name": "PLAN-16: payment plan happy path",
+      "name": "F2-16: payment plan happy path",
       "folder_path": "Plans",
       "test_profile": 220803,
       "personality": 220601,
@@ -20278,7 +20760,7 @@
      {
       "id": 221067,
       "agent": 220000,
-      "name": "PLAN-17: voicemail edge case",
+      "name": "F2-17: voicemail edge case",
       "folder_path": "Plans",
       "test_profile": 220804,
       "personality": 220600,
@@ -20315,7 +20797,7 @@
      {
       "id": 221068,
       "agent": 220000,
-      "name": "PLAN-18: dispute repeat request",
+      "name": "F2-18: dispute repeat request",
       "folder_path": "Plans",
       "test_profile": 220805,
       "personality": 220601,
@@ -20336,7 +20818,7 @@
      {
       "id": 221069,
       "agent": 220000,
-      "name": "PLAN-19: wrong person interrupting",
+      "name": "F2-19: wrong person interrupting",
       "folder_path": "Plans",
       "test_profile": 220800,
       "personality": 220600,
@@ -20373,7 +20855,7 @@
      {
       "id": 221070,
       "agent": 220000,
-      "name": "PLAN-20: payment reminder unclear answer",
+      "name": "F2-20: payment reminder unclear answer",
       "folder_path": "Plans",
       "test_profile": 220801,
       "personality": 220601,
@@ -20411,7 +20893,7 @@
      {
       "id": 221071,
       "agent": 220000,
-      "name": "PLAN-21: payment plan happy path",
+      "name": "F2-21: payment plan happy path",
       "folder_path": "Plans",
       "test_profile": 220802,
       "personality": 220600,
@@ -20432,7 +20914,7 @@
      {
       "id": 221072,
       "agent": 220000,
-      "name": "PLAN-22: voicemail edge case",
+      "name": "F2-22: voicemail edge case",
       "folder_path": "Plans",
       "test_profile": 220803,
       "personality": 220601,
@@ -20470,7 +20952,7 @@
      {
       "id": 221073,
       "agent": 220000,
-      "name": "PLAN-23: dispute repeat request",
+      "name": "F2-23: dispute repeat request",
       "folder_path": "Plans",
       "test_profile": 220804,
       "personality": 220600,
@@ -20507,7 +20989,7 @@
      {
       "id": 221074,
       "agent": 220000,
-      "name": "PLAN-24: wrong person interrupting",
+      "name": "F2-24: wrong person interrupting",
       "folder_path": "Plans",
       "test_profile": 220805,
       "personality": 220601,
@@ -20528,7 +21010,7 @@
      {
       "id": 221075,
       "agent": 220000,
-      "name": "PLAN-25: payment reminder unclear answer",
+      "name": "F2-25: payment reminder unclear answer",
       "folder_path": "Plans",
       "test_profile": 220800,
       "personality": 220600,
@@ -20565,7 +21047,7 @@
      {
       "id": 221076,
       "agent": 220000,
-      "name": "PLAN-26: payment plan happy path",
+      "name": "F2-26: payment plan happy path",
       "folder_path": "Plans",
       "test_profile": 220801,
       "personality": 220601,
@@ -20603,7 +21085,7 @@
      {
       "id": 221077,
       "agent": 220000,
-      "name": "PLAN-27: voicemail edge case",
+      "name": "F2-27: voicemail edge case",
       "folder_path": "Plans",
       "test_profile": 220802,
       "personality": 220600,
@@ -20623,7 +21105,7 @@
      {
       "id": 221078,
       "agent": 220000,
-      "name": "PLAN-28: dispute repeat request",
+      "name": "F2-28: dispute repeat request",
       "folder_path": "Plans",
       "test_profile": 220803,
       "personality": 220601,
@@ -20661,7 +21143,7 @@
      {
       "id": 221079,
       "agent": 220000,
-      "name": "PLAN-29: wrong person interrupting",
+      "name": "F2-29: wrong person interrupting",
       "folder_path": "Plans",
       "test_profile": 220804,
       "personality": 220600,
@@ -20698,7 +21180,7 @@
      {
       "id": 221080,
       "agent": 220000,
-      "name": "PLAN-30: payment reminder unclear answer",
+      "name": "F2-30: payment reminder unclear answer",
       "folder_path": "Plans",
       "test_profile": 220805,
       "personality": 220601,
@@ -20719,7 +21201,7 @@
      {
       "id": 221081,
       "agent": 220000,
-      "name": "VOIC-01: voicemail happy path",
+      "name": "F3-01: voicemail happy path",
       "folder_path": "Voicemail",
       "test_profile": 220800,
       "personality": 220600,
@@ -20757,7 +21239,7 @@
      {
       "id": 221082,
       "agent": 220000,
-      "name": "VOIC-02: dispute edge case",
+      "name": "F3-02: dispute edge case",
       "folder_path": "Voicemail",
       "test_profile": 220801,
       "personality": 220601,
@@ -20795,7 +21277,7 @@
      {
       "id": 221083,
       "agent": 220000,
-      "name": "VOIC-03: wrong person repeat request",
+      "name": "F3-03: wrong person repeat request",
       "folder_path": "Voicemail",
       "test_profile": 220802,
       "personality": 220600,
@@ -20815,7 +21297,7 @@
      {
       "id": 221084,
       "agent": 220000,
-      "name": "VOIC-04: payment reminder interrupting",
+      "name": "F3-04: payment reminder interrupting",
       "folder_path": "Voicemail",
       "test_profile": 220803,
       "personality": 220601,
@@ -20853,7 +21335,7 @@
      {
       "id": 221085,
       "agent": 220000,
-      "name": "VOIC-05: payment plan unclear answer",
+      "name": "F3-05: payment plan unclear answer",
       "folder_path": "Voicemail",
       "test_profile": 220804,
       "personality": 220600,
@@ -20890,7 +21372,7 @@
      {
       "id": 221086,
       "agent": 220000,
-      "name": "VOIC-06: voicemail happy path",
+      "name": "F3-06: voicemail happy path",
       "folder_path": "Voicemail",
       "test_profile": 220805,
       "personality": 220601,
@@ -20911,7 +21393,7 @@
      {
       "id": 221087,
       "agent": 220000,
-      "name": "VOIC-07: dispute edge case",
+      "name": "F3-07: dispute edge case",
       "folder_path": "Voicemail",
       "test_profile": 220800,
       "personality": 220600,
@@ -20948,7 +21430,7 @@
      {
       "id": 221088,
       "agent": 220000,
-      "name": "VOIC-08: wrong person repeat request",
+      "name": "F3-08: wrong person repeat request",
       "folder_path": "Voicemail",
       "test_profile": 220801,
       "personality": 220601,
@@ -20986,7 +21468,7 @@
      {
       "id": 221089,
       "agent": 220000,
-      "name": "VOIC-09: payment reminder interrupting",
+      "name": "F3-09: payment reminder interrupting",
       "folder_path": "Voicemail",
       "test_profile": 220802,
       "personality": 220600,
@@ -21006,7 +21488,7 @@
      {
       "id": 221090,
       "agent": 220000,
-      "name": "VOIC-10: payment plan unclear answer",
+      "name": "F3-10: payment plan unclear answer",
       "folder_path": "Voicemail",
       "test_profile": 220803,
       "personality": 220601,
@@ -21044,7 +21526,7 @@
      {
       "id": 221091,
       "agent": 220000,
-      "name": "VOIC-11: voicemail happy path",
+      "name": "F3-11: voicemail happy path",
       "folder_path": "Voicemail",
       "test_profile": 220804,
       "personality": 220600,
@@ -21082,7 +21564,7 @@
      {
       "id": 221092,
       "agent": 220000,
-      "name": "VOIC-12: dispute edge case",
+      "name": "F3-12: dispute edge case",
       "folder_path": "Voicemail",
       "test_profile": 220805,
       "personality": 220601,
@@ -21103,7 +21585,7 @@
      {
       "id": 221093,
       "agent": 220000,
-      "name": "VOIC-13: wrong person repeat request",
+      "name": "F3-13: wrong person repeat request",
       "folder_path": "Voicemail",
       "test_profile": 220800,
       "personality": 220600,
@@ -21140,7 +21622,7 @@
      {
       "id": 221094,
       "agent": 220000,
-      "name": "VOIC-14: payment reminder interrupting",
+      "name": "F3-14: payment reminder interrupting",
       "folder_path": "Voicemail",
       "test_profile": 220801,
       "personality": 220601,
@@ -21178,7 +21660,7 @@
      {
       "id": 221095,
       "agent": 220000,
-      "name": "VOIC-15: payment plan unclear answer",
+      "name": "F3-15: payment plan unclear answer",
       "folder_path": "Voicemail",
       "test_profile": 220802,
       "personality": 220600,
@@ -21198,7 +21680,7 @@
      {
       "id": 221096,
       "agent": 220000,
-      "name": "VOIC-16: voicemail happy path",
+      "name": "F3-16: voicemail happy path",
       "folder_path": "Voicemail",
       "test_profile": 220803,
       "personality": 220601,
@@ -21236,7 +21718,7 @@
      {
       "id": 221097,
       "agent": 220000,
-      "name": "VOIC-17: dispute edge case",
+      "name": "F3-17: dispute edge case",
       "folder_path": "Voicemail",
       "test_profile": 220804,
       "personality": 220600,
@@ -21273,7 +21755,7 @@
      {
       "id": 221098,
       "agent": 220000,
-      "name": "VOIC-18: wrong person repeat request",
+      "name": "F3-18: wrong person repeat request",
       "folder_path": "Voicemail",
       "test_profile": 220805,
       "personality": 220601,
@@ -21294,7 +21776,7 @@
      {
       "id": 221099,
       "agent": 220000,
-      "name": "VOIC-19: payment reminder interrupting",
+      "name": "F3-19: payment reminder interrupting",
       "folder_path": "Voicemail",
       "test_profile": 220800,
       "personality": 220600,
@@ -21331,7 +21813,7 @@
      {
       "id": 221100,
       "agent": 220000,
-      "name": "VOIC-20: payment plan unclear answer",
+      "name": "F3-20: payment plan unclear answer",
       "folder_path": "Voicemail",
       "test_profile": 220801,
       "personality": 220601,
@@ -21369,7 +21851,7 @@
      {
       "id": 221101,
       "agent": 220000,
-      "name": "VOIC-21: voicemail happy path",
+      "name": "F3-21: voicemail happy path",
       "folder_path": "Voicemail",
       "test_profile": 220802,
       "personality": 220600,
@@ -21390,7 +21872,7 @@
      {
       "id": 221102,
       "agent": 220000,
-      "name": "VOIC-22: dispute edge case",
+      "name": "F3-22: dispute edge case",
       "folder_path": "Voicemail",
       "test_profile": 220803,
       "personality": 220601,
@@ -21428,7 +21910,7 @@
      {
       "id": 221103,
       "agent": 220000,
-      "name": "VOIC-23: wrong person repeat request",
+      "name": "F3-23: wrong person repeat request",
       "folder_path": "Voicemail",
       "test_profile": 220804,
       "personality": 220600,
@@ -21465,7 +21947,7 @@
      {
       "id": 221104,
       "agent": 220000,
-      "name": "VOIC-24: payment reminder interrupting",
+      "name": "F3-24: payment reminder interrupting",
       "folder_path": "Voicemail",
       "test_profile": 220805,
       "personality": 220601,
@@ -21486,7 +21968,7 @@
      {
       "id": 221105,
       "agent": 220000,
-      "name": "VOIC-25: payment plan unclear answer",
+      "name": "F3-25: payment plan unclear answer",
       "folder_path": "Voicemail",
       "test_profile": 220800,
       "personality": 220600,
@@ -21523,7 +22005,7 @@
      {
       "id": 221106,
       "agent": 220000,
-      "name": "VOIC-26: voicemail happy path",
+      "name": "F3-26: voicemail happy path",
       "folder_path": "Voicemail",
       "test_profile": 220801,
       "personality": 220601,
@@ -21561,7 +22043,7 @@
      {
       "id": 221107,
       "agent": 220000,
-      "name": "VOIC-27: dispute edge case",
+      "name": "F3-27: dispute edge case",
       "folder_path": "Voicemail",
       "test_profile": 220802,
       "personality": 220600,
@@ -21581,7 +22063,7 @@
      {
       "id": 221108,
       "agent": 220000,
-      "name": "VOIC-28: wrong person repeat request",
+      "name": "F3-28: wrong person repeat request",
       "folder_path": "Voicemail",
       "test_profile": 220803,
       "personality": 220601,
@@ -21619,7 +22101,7 @@
      {
       "id": 221109,
       "agent": 220000,
-      "name": "VOIC-29: payment reminder interrupting",
+      "name": "F3-29: payment reminder interrupting",
       "folder_path": "Voicemail",
       "test_profile": 220804,
       "personality": 220600,
@@ -21656,7 +22138,7 @@
      {
       "id": 221110,
       "agent": 220000,
-      "name": "VOIC-30: payment plan unclear answer",
+      "name": "F3-30: payment plan unclear answer",
       "folder_path": "Voicemail",
       "test_profile": 220805,
       "personality": 220601,
@@ -21677,7 +22159,7 @@
      {
       "id": 221111,
       "agent": 220000,
-      "name": "VOIC-31: voicemail happy path",
+      "name": "F3-31: voicemail happy path",
       "folder_path": "Voicemail",
       "test_profile": 220800,
       "personality": 220600,
@@ -21715,7 +22197,7 @@
      {
       "id": 221112,
       "agent": 220000,
-      "name": "VOIC-32: dispute edge case",
+      "name": "F3-32: dispute edge case",
       "folder_path": "Voicemail",
       "test_profile": 220801,
       "personality": 220601,
@@ -21753,7 +22235,7 @@
      {
       "id": 221113,
       "agent": 220000,
-      "name": "VOIC-33: wrong person repeat request",
+      "name": "F3-33: wrong person repeat request",
       "folder_path": "Voicemail",
       "test_profile": 220802,
       "personality": 220600,
@@ -21773,7 +22255,7 @@
      {
       "id": 221114,
       "agent": 220000,
-      "name": "VOIC-34: payment reminder interrupting",
+      "name": "F3-34: payment reminder interrupting",
       "folder_path": "Voicemail",
       "test_profile": 220803,
       "personality": 220601,
@@ -21811,7 +22293,7 @@
      {
       "id": 221115,
       "agent": 220000,
-      "name": "VOIC-35: payment plan unclear answer",
+      "name": "F3-35: payment plan unclear answer",
       "folder_path": "Voicemail",
       "test_profile": 220804,
       "personality": 220600,
@@ -21848,7 +22330,7 @@
      {
       "id": 221116,
       "agent": 220000,
-      "name": "VOIC-36: voicemail happy path",
+      "name": "F3-36: voicemail happy path",
       "folder_path": "Voicemail",
       "test_profile": 220805,
       "personality": 220601,
@@ -21869,7 +22351,7 @@
      {
       "id": 221117,
       "agent": 220000,
-      "name": "VOIC-37: dispute edge case",
+      "name": "F3-37: dispute edge case",
       "folder_path": "Voicemail",
       "test_profile": 220800,
       "personality": 220600,
@@ -21906,7 +22388,7 @@
      {
       "id": 221118,
       "agent": 220000,
-      "name": "VOIC-38: wrong person repeat request",
+      "name": "F3-38: wrong person repeat request",
       "folder_path": "Voicemail",
       "test_profile": 220801,
       "personality": 220601,
@@ -21944,7 +22426,7 @@
      {
       "id": 221119,
       "agent": 220000,
-      "name": "VOIC-39: payment reminder interrupting",
+      "name": "F3-39: payment reminder interrupting",
       "folder_path": "Voicemail",
       "test_profile": 220802,
       "personality": 220600,
@@ -21964,7 +22446,7 @@
      {
       "id": 221120,
       "agent": 220000,
-      "name": "VOIC-40: payment plan unclear answer",
+      "name": "F3-40: payment plan unclear answer",
       "folder_path": "Voicemail",
       "test_profile": 220803,
       "personality": 220601,
@@ -22222,7 +22704,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -22246,6 +22739,27 @@
      },
      {
       "cases": [
+       {
+        "if": {
+         "kind": "not",
+         "check": {
+          "kind": "changed_within",
+          "ids": [
+           221001,
+           221006,
+           221011,
+           221016,
+           221021,
+           221026,
+           221031,
+           221036,
+           221041,
+           221046
+          ]
+         }
+        },
+        "message": "Hold on — you changed tests that aren't payment reminder ones. I only wanted those."
+       },
        {
         "if": {
          "kind": "not",
@@ -22338,6 +22852,27 @@
      },
      {
       "cases": [
+       {
+        "if": {
+         "kind": "not",
+         "check": {
+          "kind": "changed_within",
+          "ids": [
+           221001,
+           221006,
+           221011,
+           221016,
+           221021,
+           221026,
+           221031,
+           221036,
+           221041,
+           221046
+          ]
+         }
+        },
+        "message": "Other tests are still changed that shouldn't be."
+       },
        {
         "if": {
          "kind": "not",
@@ -22440,7 +22975,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -23081,7 +23627,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -23137,7 +23694,7 @@
      {
       "id": 226110,
       "agent": 220000,
-      "name": "COLL-menu: option 1",
+      "name": "F1-menu: option 1",
       "folder_path": "Collections",
       "test_profile": 220800,
       "personality": 220600,
@@ -23234,7 +23791,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -23739,7 +24307,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -23833,7 +24412,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -24929,7 +25519,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -25279,7 +25880,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -25316,7 +25928,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -25879,7 +26502,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -25942,7 +26576,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -26155,7 +26800,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -26320,7 +26976,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -26810,7 +27477,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -26895,7 +27573,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -26988,14 +27677,25 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
     "family": "control",
     "request": "Save this as a new test in Voicemail, exactly as written:\n\n<scenario>\nSCENARIO: Caller changes their mind midway\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to payment reminder.\n2. After the agent asks its first question, say: \"Actually, wait — can we do something else instead?\"\n3. Ask to dispute instead.\n4. When the agent wants your name, say {{test_profile.caller_name}}.\n5. End the call politely once the second request is handled.\n</scenario>",
     "followups": [],
-    "clarification_reply": "Name it 'VOIC-99: change of mind'. Use the Gideon Marsh profile.",
+    "clarification_reply": "Name it 'F3-99: change of mind'. Use the Gideon Marsh profile.",
     "documents": [],
     "plants": [],
     "add": [],
@@ -27006,7 +27706,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    },
    {
@@ -27024,7 +27735,18 @@
     "domain": "solace",
     "context": {
      "agent_id": 220000,
-     "project_id": 220041
+     "project_id": 220041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 220000
+      },
+      "project_id": 220041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 220000
+      }
+     }
     }
    }
   ]
@@ -27218,7 +27940,7 @@
      {
       "id": 231001,
       "agent": 230000,
-      "name": "CARD-01: freeze happy path",
+      "name": "F1-01: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -27256,7 +27978,7 @@
      {
       "id": 231002,
       "agent": 230000,
-      "name": "CARD-02: balance edge case",
+      "name": "F1-02: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230801,
       "personality": 230601,
@@ -27294,7 +28016,7 @@
      {
       "id": 231003,
       "agent": 230000,
-      "name": "CARD-03: dispute repeat request",
+      "name": "F1-03: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230802,
       "personality": 230600,
@@ -27314,7 +28036,7 @@
      {
       "id": 231004,
       "agent": 230000,
-      "name": "CARD-04: travel interrupting",
+      "name": "F1-04: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230803,
       "personality": 230601,
@@ -27352,7 +28074,7 @@
      {
       "id": 231005,
       "agent": 230000,
-      "name": "CARD-05: authentication unclear answer",
+      "name": "F1-05: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230804,
       "personality": 230600,
@@ -27389,7 +28111,7 @@
      {
       "id": 231006,
       "agent": 230000,
-      "name": "CARD-06: freeze happy path",
+      "name": "F1-06: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230805,
       "personality": 230601,
@@ -27410,7 +28132,7 @@
      {
       "id": 231007,
       "agent": 230000,
-      "name": "CARD-07: balance edge case",
+      "name": "F1-07: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -27447,7 +28169,7 @@
      {
       "id": 231008,
       "agent": 230000,
-      "name": "CARD-08: dispute repeat request",
+      "name": "F1-08: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230801,
       "personality": 230601,
@@ -27485,7 +28207,7 @@
      {
       "id": 231009,
       "agent": 230000,
-      "name": "CARD-09: travel interrupting",
+      "name": "F1-09: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230802,
       "personality": 230600,
@@ -27505,7 +28227,7 @@
      {
       "id": 231010,
       "agent": 230000,
-      "name": "CARD-10: authentication unclear answer",
+      "name": "F1-10: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230803,
       "personality": 230601,
@@ -27543,7 +28265,7 @@
      {
       "id": 231011,
       "agent": 230000,
-      "name": "CARD-11: freeze happy path",
+      "name": "F1-11: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230804,
       "personality": 230600,
@@ -27581,7 +28303,7 @@
      {
       "id": 231012,
       "agent": 230000,
-      "name": "CARD-12: balance edge case",
+      "name": "F1-12: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230805,
       "personality": 230601,
@@ -27602,7 +28324,7 @@
      {
       "id": 231013,
       "agent": 230000,
-      "name": "CARD-13: dispute repeat request",
+      "name": "F1-13: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -27639,7 +28361,7 @@
      {
       "id": 231014,
       "agent": 230000,
-      "name": "CARD-14: travel interrupting",
+      "name": "F1-14: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230801,
       "personality": 230601,
@@ -27677,7 +28399,7 @@
      {
       "id": 231015,
       "agent": 230000,
-      "name": "CARD-15: authentication unclear answer",
+      "name": "F1-15: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230802,
       "personality": 230600,
@@ -27697,7 +28419,7 @@
      {
       "id": 231016,
       "agent": 230000,
-      "name": "CARD-16: freeze happy path",
+      "name": "F1-16: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230803,
       "personality": 230601,
@@ -27735,7 +28457,7 @@
      {
       "id": 231017,
       "agent": 230000,
-      "name": "CARD-17: balance edge case",
+      "name": "F1-17: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230804,
       "personality": 230600,
@@ -27772,7 +28494,7 @@
      {
       "id": 231018,
       "agent": 230000,
-      "name": "CARD-18: dispute repeat request",
+      "name": "F1-18: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230805,
       "personality": 230601,
@@ -27793,7 +28515,7 @@
      {
       "id": 231019,
       "agent": 230000,
-      "name": "CARD-19: travel interrupting",
+      "name": "F1-19: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -27830,7 +28552,7 @@
      {
       "id": 231020,
       "agent": 230000,
-      "name": "CARD-20: authentication unclear answer",
+      "name": "F1-20: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230801,
       "personality": 230601,
@@ -27868,7 +28590,7 @@
      {
       "id": 231021,
       "agent": 230000,
-      "name": "CARD-21: freeze happy path",
+      "name": "F1-21: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230802,
       "personality": 230600,
@@ -27889,7 +28611,7 @@
      {
       "id": 231022,
       "agent": 230000,
-      "name": "CARD-22: balance edge case",
+      "name": "F1-22: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230803,
       "personality": 230601,
@@ -27927,7 +28649,7 @@
      {
       "id": 231023,
       "agent": 230000,
-      "name": "CARD-23: dispute repeat request",
+      "name": "F1-23: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230804,
       "personality": 230600,
@@ -27964,7 +28686,7 @@
      {
       "id": 231024,
       "agent": 230000,
-      "name": "CARD-24: travel interrupting",
+      "name": "F1-24: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230805,
       "personality": 230601,
@@ -27985,7 +28707,7 @@
      {
       "id": 231025,
       "agent": 230000,
-      "name": "CARD-25: authentication unclear answer",
+      "name": "F1-25: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -28022,7 +28744,7 @@
      {
       "id": 231026,
       "agent": 230000,
-      "name": "CARD-26: freeze happy path",
+      "name": "F1-26: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230801,
       "personality": 230601,
@@ -28060,7 +28782,7 @@
      {
       "id": 231027,
       "agent": 230000,
-      "name": "CARD-27: balance edge case",
+      "name": "F1-27: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230802,
       "personality": 230600,
@@ -28080,7 +28802,7 @@
      {
       "id": 231028,
       "agent": 230000,
-      "name": "CARD-28: dispute repeat request",
+      "name": "F1-28: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230803,
       "personality": 230601,
@@ -28118,7 +28840,7 @@
      {
       "id": 231029,
       "agent": 230000,
-      "name": "CARD-29: travel interrupting",
+      "name": "F1-29: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230804,
       "personality": 230600,
@@ -28155,7 +28877,7 @@
      {
       "id": 231030,
       "agent": 230000,
-      "name": "CARD-30: authentication unclear answer",
+      "name": "F1-30: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230805,
       "personality": 230601,
@@ -28176,7 +28898,7 @@
      {
       "id": 231031,
       "agent": 230000,
-      "name": "CARD-31: freeze happy path",
+      "name": "F1-31: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -28214,7 +28936,7 @@
      {
       "id": 231032,
       "agent": 230000,
-      "name": "CARD-32: balance edge case",
+      "name": "F1-32: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230801,
       "personality": 230601,
@@ -28252,7 +28974,7 @@
      {
       "id": 231033,
       "agent": 230000,
-      "name": "CARD-33: dispute repeat request",
+      "name": "F1-33: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230802,
       "personality": 230600,
@@ -28272,7 +28994,7 @@
      {
       "id": 231034,
       "agent": 230000,
-      "name": "CARD-34: travel interrupting",
+      "name": "F1-34: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230803,
       "personality": 230601,
@@ -28310,7 +29032,7 @@
      {
       "id": 231035,
       "agent": 230000,
-      "name": "CARD-35: authentication unclear answer",
+      "name": "F1-35: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230804,
       "personality": 230600,
@@ -28347,7 +29069,7 @@
      {
       "id": 231036,
       "agent": 230000,
-      "name": "CARD-36: freeze happy path",
+      "name": "F1-36: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230805,
       "personality": 230601,
@@ -28368,7 +29090,7 @@
      {
       "id": 231037,
       "agent": 230000,
-      "name": "CARD-37: balance edge case",
+      "name": "F1-37: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -28405,7 +29127,7 @@
      {
       "id": 231038,
       "agent": 230000,
-      "name": "CARD-38: dispute repeat request",
+      "name": "F1-38: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230801,
       "personality": 230601,
@@ -28443,7 +29165,7 @@
      {
       "id": 231039,
       "agent": 230000,
-      "name": "CARD-39: travel interrupting",
+      "name": "F1-39: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230802,
       "personality": 230600,
@@ -28463,7 +29185,7 @@
      {
       "id": 231040,
       "agent": 230000,
-      "name": "CARD-40: authentication unclear answer",
+      "name": "F1-40: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230803,
       "personality": 230601,
@@ -28501,7 +29223,7 @@
      {
       "id": 231041,
       "agent": 230000,
-      "name": "CARD-41: freeze happy path",
+      "name": "F1-41: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230804,
       "personality": 230600,
@@ -28539,7 +29261,7 @@
      {
       "id": 231042,
       "agent": 230000,
-      "name": "CARD-42: balance edge case",
+      "name": "F1-42: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230805,
       "personality": 230601,
@@ -28560,7 +29282,7 @@
      {
       "id": 231043,
       "agent": 230000,
-      "name": "CARD-43: dispute repeat request",
+      "name": "F1-43: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -28597,7 +29319,7 @@
      {
       "id": 231044,
       "agent": 230000,
-      "name": "CARD-44: travel interrupting",
+      "name": "F1-44: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230801,
       "personality": 230601,
@@ -28635,7 +29357,7 @@
      {
       "id": 231045,
       "agent": 230000,
-      "name": "CARD-45: authentication unclear answer",
+      "name": "F1-45: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230802,
       "personality": 230600,
@@ -28655,7 +29377,7 @@
      {
       "id": 231046,
       "agent": 230000,
-      "name": "CARD-46: freeze happy path",
+      "name": "F1-46: freeze happy path",
       "folder_path": "Card Services",
       "test_profile": 230803,
       "personality": 230601,
@@ -28693,7 +29415,7 @@
      {
       "id": 231047,
       "agent": 230000,
-      "name": "CARD-47: balance edge case",
+      "name": "F1-47: balance edge case",
       "folder_path": "Card Services",
       "test_profile": 230804,
       "personality": 230600,
@@ -28730,7 +29452,7 @@
      {
       "id": 231048,
       "agent": 230000,
-      "name": "CARD-48: dispute repeat request",
+      "name": "F1-48: dispute repeat request",
       "folder_path": "Card Services",
       "test_profile": 230805,
       "personality": 230601,
@@ -28751,7 +29473,7 @@
      {
       "id": 231049,
       "agent": 230000,
-      "name": "CARD-49: travel interrupting",
+      "name": "F1-49: travel interrupting",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -28788,7 +29510,7 @@
      {
       "id": 231050,
       "agent": 230000,
-      "name": "CARD-50: authentication unclear answer",
+      "name": "F1-50: authentication unclear answer",
       "folder_path": "Card Services",
       "test_profile": 230801,
       "personality": 230601,
@@ -28826,7 +29548,7 @@
      {
       "id": 231051,
       "agent": 230000,
-      "name": "AUTH-01: balance happy path",
+      "name": "F2-01: balance happy path",
       "folder_path": "Authentication",
       "test_profile": 230800,
       "personality": 230600,
@@ -28864,7 +29586,7 @@
      {
       "id": 231052,
       "agent": 230000,
-      "name": "AUTH-02: dispute edge case",
+      "name": "F2-02: dispute edge case",
       "folder_path": "Authentication",
       "test_profile": 230801,
       "personality": 230601,
@@ -28902,7 +29624,7 @@
      {
       "id": 231053,
       "agent": 230000,
-      "name": "AUTH-03: travel repeat request",
+      "name": "F2-03: travel repeat request",
       "folder_path": "Authentication",
       "test_profile": 230802,
       "personality": 230600,
@@ -28922,7 +29644,7 @@
      {
       "id": 231054,
       "agent": 230000,
-      "name": "AUTH-04: authentication interrupting",
+      "name": "F2-04: authentication interrupting",
       "folder_path": "Authentication",
       "test_profile": 230803,
       "personality": 230601,
@@ -28960,7 +29682,7 @@
      {
       "id": 231055,
       "agent": 230000,
-      "name": "AUTH-05: freeze unclear answer",
+      "name": "F2-05: freeze unclear answer",
       "folder_path": "Authentication",
       "test_profile": 230804,
       "personality": 230600,
@@ -28997,7 +29719,7 @@
      {
       "id": 231056,
       "agent": 230000,
-      "name": "AUTH-06: balance happy path",
+      "name": "F2-06: balance happy path",
       "folder_path": "Authentication",
       "test_profile": 230805,
       "personality": 230601,
@@ -29018,7 +29740,7 @@
      {
       "id": 231057,
       "agent": 230000,
-      "name": "AUTH-07: dispute edge case",
+      "name": "F2-07: dispute edge case",
       "folder_path": "Authentication",
       "test_profile": 230800,
       "personality": 230600,
@@ -29055,7 +29777,7 @@
      {
       "id": 231058,
       "agent": 230000,
-      "name": "AUTH-08: travel repeat request",
+      "name": "F2-08: travel repeat request",
       "folder_path": "Authentication",
       "test_profile": 230801,
       "personality": 230601,
@@ -29093,7 +29815,7 @@
      {
       "id": 231059,
       "agent": 230000,
-      "name": "AUTH-09: authentication interrupting",
+      "name": "F2-09: authentication interrupting",
       "folder_path": "Authentication",
       "test_profile": 230802,
       "personality": 230600,
@@ -29113,7 +29835,7 @@
      {
       "id": 231060,
       "agent": 230000,
-      "name": "AUTH-10: freeze unclear answer",
+      "name": "F2-10: freeze unclear answer",
       "folder_path": "Authentication",
       "test_profile": 230803,
       "personality": 230601,
@@ -29151,7 +29873,7 @@
      {
       "id": 231061,
       "agent": 230000,
-      "name": "AUTH-11: balance happy path",
+      "name": "F2-11: balance happy path",
       "folder_path": "Authentication",
       "test_profile": 230804,
       "personality": 230600,
@@ -29189,7 +29911,7 @@
      {
       "id": 231062,
       "agent": 230000,
-      "name": "AUTH-12: dispute edge case",
+      "name": "F2-12: dispute edge case",
       "folder_path": "Authentication",
       "test_profile": 230805,
       "personality": 230601,
@@ -29210,7 +29932,7 @@
      {
       "id": 231063,
       "agent": 230000,
-      "name": "AUTH-13: travel repeat request",
+      "name": "F2-13: travel repeat request",
       "folder_path": "Authentication",
       "test_profile": 230800,
       "personality": 230600,
@@ -29247,7 +29969,7 @@
      {
       "id": 231064,
       "agent": 230000,
-      "name": "AUTH-14: authentication interrupting",
+      "name": "F2-14: authentication interrupting",
       "folder_path": "Authentication",
       "test_profile": 230801,
       "personality": 230601,
@@ -29285,7 +30007,7 @@
      {
       "id": 231065,
       "agent": 230000,
-      "name": "AUTH-15: freeze unclear answer",
+      "name": "F2-15: freeze unclear answer",
       "folder_path": "Authentication",
       "test_profile": 230802,
       "personality": 230600,
@@ -29305,7 +30027,7 @@
      {
       "id": 231066,
       "agent": 230000,
-      "name": "AUTH-16: balance happy path",
+      "name": "F2-16: balance happy path",
       "folder_path": "Authentication",
       "test_profile": 230803,
       "personality": 230601,
@@ -29343,7 +30065,7 @@
      {
       "id": 231067,
       "agent": 230000,
-      "name": "AUTH-17: dispute edge case",
+      "name": "F2-17: dispute edge case",
       "folder_path": "Authentication",
       "test_profile": 230804,
       "personality": 230600,
@@ -29380,7 +30102,7 @@
      {
       "id": 231068,
       "agent": 230000,
-      "name": "AUTH-18: travel repeat request",
+      "name": "F2-18: travel repeat request",
       "folder_path": "Authentication",
       "test_profile": 230805,
       "personality": 230601,
@@ -29401,7 +30123,7 @@
      {
       "id": 231069,
       "agent": 230000,
-      "name": "AUTH-19: authentication interrupting",
+      "name": "F2-19: authentication interrupting",
       "folder_path": "Authentication",
       "test_profile": 230800,
       "personality": 230600,
@@ -29438,7 +30160,7 @@
      {
       "id": 231070,
       "agent": 230000,
-      "name": "AUTH-20: freeze unclear answer",
+      "name": "F2-20: freeze unclear answer",
       "folder_path": "Authentication",
       "test_profile": 230801,
       "personality": 230601,
@@ -29476,7 +30198,7 @@
      {
       "id": 231071,
       "agent": 230000,
-      "name": "AUTH-21: balance happy path",
+      "name": "F2-21: balance happy path",
       "folder_path": "Authentication",
       "test_profile": 230802,
       "personality": 230600,
@@ -29497,7 +30219,7 @@
      {
       "id": 231072,
       "agent": 230000,
-      "name": "AUTH-22: dispute edge case",
+      "name": "F2-22: dispute edge case",
       "folder_path": "Authentication",
       "test_profile": 230803,
       "personality": 230601,
@@ -29535,7 +30257,7 @@
      {
       "id": 231073,
       "agent": 230000,
-      "name": "AUTH-23: travel repeat request",
+      "name": "F2-23: travel repeat request",
       "folder_path": "Authentication",
       "test_profile": 230804,
       "personality": 230600,
@@ -29572,7 +30294,7 @@
      {
       "id": 231074,
       "agent": 230000,
-      "name": "AUTH-24: authentication interrupting",
+      "name": "F2-24: authentication interrupting",
       "folder_path": "Authentication",
       "test_profile": 230805,
       "personality": 230601,
@@ -29593,7 +30315,7 @@
      {
       "id": 231075,
       "agent": 230000,
-      "name": "AUTH-25: freeze unclear answer",
+      "name": "F2-25: freeze unclear answer",
       "folder_path": "Authentication",
       "test_profile": 230800,
       "personality": 230600,
@@ -29630,7 +30352,7 @@
      {
       "id": 231076,
       "agent": 230000,
-      "name": "AUTH-26: balance happy path",
+      "name": "F2-26: balance happy path",
       "folder_path": "Authentication",
       "test_profile": 230801,
       "personality": 230601,
@@ -29668,7 +30390,7 @@
      {
       "id": 231077,
       "agent": 230000,
-      "name": "AUTH-27: dispute edge case",
+      "name": "F2-27: dispute edge case",
       "folder_path": "Authentication",
       "test_profile": 230802,
       "personality": 230600,
@@ -29688,7 +30410,7 @@
      {
       "id": 231078,
       "agent": 230000,
-      "name": "AUTH-28: travel repeat request",
+      "name": "F2-28: travel repeat request",
       "folder_path": "Authentication",
       "test_profile": 230803,
       "personality": 230601,
@@ -29726,7 +30448,7 @@
      {
       "id": 231079,
       "agent": 230000,
-      "name": "AUTH-29: authentication interrupting",
+      "name": "F2-29: authentication interrupting",
       "folder_path": "Authentication",
       "test_profile": 230804,
       "personality": 230600,
@@ -29763,7 +30485,7 @@
      {
       "id": 231080,
       "agent": 230000,
-      "name": "AUTH-30: freeze unclear answer",
+      "name": "F2-30: freeze unclear answer",
       "folder_path": "Authentication",
       "test_profile": 230805,
       "personality": 230601,
@@ -29784,7 +30506,7 @@
      {
       "id": 231081,
       "agent": 230000,
-      "name": "DISP-01: dispute happy path",
+      "name": "F3-01: dispute happy path",
       "folder_path": "Disputes",
       "test_profile": 230800,
       "personality": 230600,
@@ -29822,7 +30544,7 @@
      {
       "id": 231082,
       "agent": 230000,
-      "name": "DISP-02: travel edge case",
+      "name": "F3-02: travel edge case",
       "folder_path": "Disputes",
       "test_profile": 230801,
       "personality": 230601,
@@ -29860,7 +30582,7 @@
      {
       "id": 231083,
       "agent": 230000,
-      "name": "DISP-03: authentication repeat request",
+      "name": "F3-03: authentication repeat request",
       "folder_path": "Disputes",
       "test_profile": 230802,
       "personality": 230600,
@@ -29880,7 +30602,7 @@
      {
       "id": 231084,
       "agent": 230000,
-      "name": "DISP-04: freeze interrupting",
+      "name": "F3-04: freeze interrupting",
       "folder_path": "Disputes",
       "test_profile": 230803,
       "personality": 230601,
@@ -29918,7 +30640,7 @@
      {
       "id": 231085,
       "agent": 230000,
-      "name": "DISP-05: balance unclear answer",
+      "name": "F3-05: balance unclear answer",
       "folder_path": "Disputes",
       "test_profile": 230804,
       "personality": 230600,
@@ -29955,7 +30677,7 @@
      {
       "id": 231086,
       "agent": 230000,
-      "name": "DISP-06: dispute happy path",
+      "name": "F3-06: dispute happy path",
       "folder_path": "Disputes",
       "test_profile": 230805,
       "personality": 230601,
@@ -29976,7 +30698,7 @@
      {
       "id": 231087,
       "agent": 230000,
-      "name": "DISP-07: travel edge case",
+      "name": "F3-07: travel edge case",
       "folder_path": "Disputes",
       "test_profile": 230800,
       "personality": 230600,
@@ -30013,7 +30735,7 @@
      {
       "id": 231088,
       "agent": 230000,
-      "name": "DISP-08: authentication repeat request",
+      "name": "F3-08: authentication repeat request",
       "folder_path": "Disputes",
       "test_profile": 230801,
       "personality": 230601,
@@ -30051,7 +30773,7 @@
      {
       "id": 231089,
       "agent": 230000,
-      "name": "DISP-09: freeze interrupting",
+      "name": "F3-09: freeze interrupting",
       "folder_path": "Disputes",
       "test_profile": 230802,
       "personality": 230600,
@@ -30071,7 +30793,7 @@
      {
       "id": 231090,
       "agent": 230000,
-      "name": "DISP-10: balance unclear answer",
+      "name": "F3-10: balance unclear answer",
       "folder_path": "Disputes",
       "test_profile": 230803,
       "personality": 230601,
@@ -30109,7 +30831,7 @@
      {
       "id": 231091,
       "agent": 230000,
-      "name": "DISP-11: dispute happy path",
+      "name": "F3-11: dispute happy path",
       "folder_path": "Disputes",
       "test_profile": 230804,
       "personality": 230600,
@@ -30147,7 +30869,7 @@
      {
       "id": 231092,
       "agent": 230000,
-      "name": "DISP-12: travel edge case",
+      "name": "F3-12: travel edge case",
       "folder_path": "Disputes",
       "test_profile": 230805,
       "personality": 230601,
@@ -30168,7 +30890,7 @@
      {
       "id": 231093,
       "agent": 230000,
-      "name": "DISP-13: authentication repeat request",
+      "name": "F3-13: authentication repeat request",
       "folder_path": "Disputes",
       "test_profile": 230800,
       "personality": 230600,
@@ -30205,7 +30927,7 @@
      {
       "id": 231094,
       "agent": 230000,
-      "name": "DISP-14: freeze interrupting",
+      "name": "F3-14: freeze interrupting",
       "folder_path": "Disputes",
       "test_profile": 230801,
       "personality": 230601,
@@ -30243,7 +30965,7 @@
      {
       "id": 231095,
       "agent": 230000,
-      "name": "DISP-15: balance unclear answer",
+      "name": "F3-15: balance unclear answer",
       "folder_path": "Disputes",
       "test_profile": 230802,
       "personality": 230600,
@@ -30263,7 +30985,7 @@
      {
       "id": 231096,
       "agent": 230000,
-      "name": "DISP-16: dispute happy path",
+      "name": "F3-16: dispute happy path",
       "folder_path": "Disputes",
       "test_profile": 230803,
       "personality": 230601,
@@ -30301,7 +31023,7 @@
      {
       "id": 231097,
       "agent": 230000,
-      "name": "DISP-17: travel edge case",
+      "name": "F3-17: travel edge case",
       "folder_path": "Disputes",
       "test_profile": 230804,
       "personality": 230600,
@@ -30338,7 +31060,7 @@
      {
       "id": 231098,
       "agent": 230000,
-      "name": "DISP-18: authentication repeat request",
+      "name": "F3-18: authentication repeat request",
       "folder_path": "Disputes",
       "test_profile": 230805,
       "personality": 230601,
@@ -30359,7 +31081,7 @@
      {
       "id": 231099,
       "agent": 230000,
-      "name": "DISP-19: freeze interrupting",
+      "name": "F3-19: freeze interrupting",
       "folder_path": "Disputes",
       "test_profile": 230800,
       "personality": 230600,
@@ -30396,7 +31118,7 @@
      {
       "id": 231100,
       "agent": 230000,
-      "name": "DISP-20: balance unclear answer",
+      "name": "F3-20: balance unclear answer",
       "folder_path": "Disputes",
       "test_profile": 230801,
       "personality": 230601,
@@ -30434,7 +31156,7 @@
      {
       "id": 231101,
       "agent": 230000,
-      "name": "DISP-21: dispute happy path",
+      "name": "F3-21: dispute happy path",
       "folder_path": "Disputes",
       "test_profile": 230802,
       "personality": 230600,
@@ -30455,7 +31177,7 @@
      {
       "id": 231102,
       "agent": 230000,
-      "name": "DISP-22: travel edge case",
+      "name": "F3-22: travel edge case",
       "folder_path": "Disputes",
       "test_profile": 230803,
       "personality": 230601,
@@ -30493,7 +31215,7 @@
      {
       "id": 231103,
       "agent": 230000,
-      "name": "DISP-23: authentication repeat request",
+      "name": "F3-23: authentication repeat request",
       "folder_path": "Disputes",
       "test_profile": 230804,
       "personality": 230600,
@@ -30530,7 +31252,7 @@
      {
       "id": 231104,
       "agent": 230000,
-      "name": "DISP-24: freeze interrupting",
+      "name": "F3-24: freeze interrupting",
       "folder_path": "Disputes",
       "test_profile": 230805,
       "personality": 230601,
@@ -30551,7 +31273,7 @@
      {
       "id": 231105,
       "agent": 230000,
-      "name": "DISP-25: balance unclear answer",
+      "name": "F3-25: balance unclear answer",
       "folder_path": "Disputes",
       "test_profile": 230800,
       "personality": 230600,
@@ -30588,7 +31310,7 @@
      {
       "id": 231106,
       "agent": 230000,
-      "name": "DISP-26: dispute happy path",
+      "name": "F3-26: dispute happy path",
       "folder_path": "Disputes",
       "test_profile": 230801,
       "personality": 230601,
@@ -30626,7 +31348,7 @@
      {
       "id": 231107,
       "agent": 230000,
-      "name": "DISP-27: travel edge case",
+      "name": "F3-27: travel edge case",
       "folder_path": "Disputes",
       "test_profile": 230802,
       "personality": 230600,
@@ -30646,7 +31368,7 @@
      {
       "id": 231108,
       "agent": 230000,
-      "name": "DISP-28: authentication repeat request",
+      "name": "F3-28: authentication repeat request",
       "folder_path": "Disputes",
       "test_profile": 230803,
       "personality": 230601,
@@ -30684,7 +31406,7 @@
      {
       "id": 231109,
       "agent": 230000,
-      "name": "DISP-29: freeze interrupting",
+      "name": "F3-29: freeze interrupting",
       "folder_path": "Disputes",
       "test_profile": 230804,
       "personality": 230600,
@@ -30721,7 +31443,7 @@
      {
       "id": 231110,
       "agent": 230000,
-      "name": "DISP-30: balance unclear answer",
+      "name": "F3-30: balance unclear answer",
       "folder_path": "Disputes",
       "test_profile": 230805,
       "personality": 230601,
@@ -30742,7 +31464,7 @@
      {
       "id": 231111,
       "agent": 230000,
-      "name": "DISP-31: dispute happy path",
+      "name": "F3-31: dispute happy path",
       "folder_path": "Disputes",
       "test_profile": 230800,
       "personality": 230600,
@@ -30780,7 +31502,7 @@
      {
       "id": 231112,
       "agent": 230000,
-      "name": "DISP-32: travel edge case",
+      "name": "F3-32: travel edge case",
       "folder_path": "Disputes",
       "test_profile": 230801,
       "personality": 230601,
@@ -30818,7 +31540,7 @@
      {
       "id": 231113,
       "agent": 230000,
-      "name": "DISP-33: authentication repeat request",
+      "name": "F3-33: authentication repeat request",
       "folder_path": "Disputes",
       "test_profile": 230802,
       "personality": 230600,
@@ -30838,7 +31560,7 @@
      {
       "id": 231114,
       "agent": 230000,
-      "name": "DISP-34: freeze interrupting",
+      "name": "F3-34: freeze interrupting",
       "folder_path": "Disputes",
       "test_profile": 230803,
       "personality": 230601,
@@ -30876,7 +31598,7 @@
      {
       "id": 231115,
       "agent": 230000,
-      "name": "DISP-35: balance unclear answer",
+      "name": "F3-35: balance unclear answer",
       "folder_path": "Disputes",
       "test_profile": 230804,
       "personality": 230600,
@@ -30913,7 +31635,7 @@
      {
       "id": 231116,
       "agent": 230000,
-      "name": "DISP-36: dispute happy path",
+      "name": "F3-36: dispute happy path",
       "folder_path": "Disputes",
       "test_profile": 230805,
       "personality": 230601,
@@ -30934,7 +31656,7 @@
      {
       "id": 231117,
       "agent": 230000,
-      "name": "DISP-37: travel edge case",
+      "name": "F3-37: travel edge case",
       "folder_path": "Disputes",
       "test_profile": 230800,
       "personality": 230600,
@@ -30971,7 +31693,7 @@
      {
       "id": 231118,
       "agent": 230000,
-      "name": "DISP-38: authentication repeat request",
+      "name": "F3-38: authentication repeat request",
       "folder_path": "Disputes",
       "test_profile": 230801,
       "personality": 230601,
@@ -31009,7 +31731,7 @@
      {
       "id": 231119,
       "agent": 230000,
-      "name": "DISP-39: freeze interrupting",
+      "name": "F3-39: freeze interrupting",
       "folder_path": "Disputes",
       "test_profile": 230802,
       "personality": 230600,
@@ -31029,7 +31751,7 @@
      {
       "id": 231120,
       "agent": 230000,
-      "name": "DISP-40: balance unclear answer",
+      "name": "F3-40: balance unclear answer",
       "folder_path": "Disputes",
       "test_profile": 230803,
       "personality": 230601,
@@ -31287,7 +32009,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -31311,6 +32044,27 @@
      },
      {
       "cases": [
+       {
+        "if": {
+         "kind": "not",
+         "check": {
+          "kind": "changed_within",
+          "ids": [
+           231001,
+           231006,
+           231011,
+           231016,
+           231021,
+           231026,
+           231031,
+           231036,
+           231041,
+           231046
+          ]
+         }
+        },
+        "message": "Hold on — you changed tests that aren't freeze ones. I only wanted those."
+       },
        {
         "if": {
          "kind": "not",
@@ -31403,6 +32157,27 @@
      },
      {
       "cases": [
+       {
+        "if": {
+         "kind": "not",
+         "check": {
+          "kind": "changed_within",
+          "ids": [
+           231001,
+           231006,
+           231011,
+           231016,
+           231021,
+           231026,
+           231031,
+           231036,
+           231041,
+           231046
+          ]
+         }
+        },
+        "message": "Other tests are still changed that shouldn't be."
+       },
        {
         "if": {
          "kind": "not",
@@ -31505,7 +32280,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -32146,7 +32932,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -32202,7 +32999,7 @@
      {
       "id": 236110,
       "agent": 230000,
-      "name": "CARD-menu: option 1",
+      "name": "F1-menu: option 1",
       "folder_path": "Card Services",
       "test_profile": 230800,
       "personality": 230600,
@@ -32299,7 +33096,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -32804,7 +33612,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -32898,7 +33717,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -33994,7 +34824,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -34344,7 +35185,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -34381,7 +35233,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -34944,7 +35807,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -35007,7 +35881,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -35220,7 +36105,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -35385,7 +36281,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -35875,7 +36782,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -35960,7 +36878,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -36053,14 +36982,25 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
     "family": "control",
     "request": "Save this as a new test in Disputes, exactly as written:\n\n<scenario>\nSCENARIO: Caller changes their mind midway\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to freeze.\n2. After the agent asks its first question, say: \"Actually, wait — can we do something else instead?\"\n3. Ask to travel instead.\n4. When the agent wants your name, say {{test_profile.caller_name}}.\n5. End the call politely once the second request is handled.\n</scenario>",
     "followups": [],
-    "clarification_reply": "Name it 'DISP-99: change of mind'. Use the Patrick Oyelaran profile.",
+    "clarification_reply": "Name it 'F3-99: change of mind'. Use the Patrick Oyelaran profile.",
     "documents": [],
     "plants": [],
     "add": [],
@@ -36071,7 +37011,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    },
    {
@@ -36089,7 +37040,18 @@
     "domain": "kestrel",
     "context": {
      "agent_id": 230000,
-     "project_id": 230041
+     "project_id": 230041,
+     "page_context": {
+      "label": "agent",
+      "ids": {
+       "agent_id": 230000
+      },
+      "project_id": 230041,
+      "tool": "mcp__cekura__aiagents_retrieve",
+      "fetch_args": {
+       "id": 230000
+      }
+     }
     }
    }
   ]

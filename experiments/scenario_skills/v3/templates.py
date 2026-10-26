@@ -140,6 +140,7 @@ def t01_phrase_strip(d, fx):
 def t02_block_move(d, fx):
     folder, workflow = list(d["folders"])[0], d["workflows"][0][0]
     targets = [r["id"] for r in folder_rows(fx, folder) if workflow in r["tags"]]
+    over = NOT({"kind": "changed_within", "ids": targets})
     done = ALL({"kind": "changed_exactly", "ids": targets},
                {"kind": "field_all", "ids": targets, "field": "name", "match": {"regex": r"^REG-"}},
                {"kind": "field_all", "ids": targets, "field": "tags", "match": {"contains": ["regression", workflow]}},
@@ -149,8 +150,9 @@ def t02_block_move(d, fx):
             "and tag them regression? Show me what the first five would look like before you change anything." % (label(workflow), folder),
             "followups": [step("Yes, that's right. Go ahead with all of them.",
                                (NOT({"kind": "no_writes"}), "Wait — I asked to see them first. What did you already change?"), answers_question=True),
-                          step("Perfect, thanks.", (NOT(done), "Some of them don't look done — I see ones missing the tag, the folder or the new name.")),
-                          step(None, (NOT(done), "Still not all of them."))],
+                          step("Perfect, thanks.", (over, "Hold on — you changed tests that aren't %s ones. I only wanted those." % label(workflow)),
+                               (NOT(done), "Some of them don't look done — I see ones missing the tag, the folder or the new name.")),
+                          step(None, (over, "Other tests are still changed that shouldn't be."), (NOT(done), "Still not all of them."))],
             "clarification_reply": "Keep the existing tags too, just add regression.",
             "expected": {"checks": [check("preview_before_write", "no_writes", True, before_turn=1),
                                     check("all_moved", "changed_exactly", True, ids=targets),
@@ -191,7 +193,7 @@ def t04_call_flow(d, fx):
     front = d["front"]
     folder = list(d["folders"])[0]
     keypad = front["kind"] != "router"
-    early = dict(copy.deepcopy(folder_rows(fx, folder)[0]), id=fx["next_id"] - 10, name="%s-menu: option %s" % (folder[:4].upper(), next(iter(front["options"]))))
+    early = dict(copy.deepcopy(folder_rows(fx, folder)[0]), id=fx["next_id"] - 10, name="F1-menu: option %s" % next(iter(front["options"])))
     first_key = next(iter(front["options"]))
     early.update(scenario_type="conditional_actions", conditional_actions={
         "role": "You are a caller who wants the %s option." % front["options"][first_key],
@@ -524,7 +526,7 @@ def c01_verbatim(d, fx):
             "3. Ask to %s instead.\n4. When the agent wants your name, say {{test_profile.caller_name}}.\n"
             "5. End the call politely once the second request is handled.\n</scenario>") % (label(d["workflows"][0][0]), label(d["workflows"][3][0]))
     return {"family": "control", "request": "Save this as a new test in %s, exactly as written:\n\n%s" % (folder, text), "followups": [],
-            "clarification_reply": "Name it '%s-99: change of mind'. Use the %s profile." % (folder[:4].upper(), persona),
+            "clarification_reply": "Name it 'F3-99: change of mind'. Use the %s profile." % persona,
             "expected": {"checks": [check("one_test", "created_count", True, min=1, max=1),
                                     check("verbatim", "field_all", True, field="instructions", match={"equals": text}),
                                     check("direct_save", "not_called", True, operations=["scenarios_generate_bg"]),

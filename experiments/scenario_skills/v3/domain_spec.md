@@ -125,6 +125,19 @@ The templates were reviewed in turn against two tests: a correct answer must alw
 - **T14 and T15:** checks that legitimate alternatives could fail are now non-critical (`value_not_required`, `number_applied`).
 - **T16:** completeness (critical) and precision (non-critical) are separate checks.
 
+## Calibration findings (2026-10-26)
+
+The first four paid baseline rollouts exposed three harness defects, fixed before recalibrating:
+- **Missing page context:** tasks set only top-level ids, which the production runner ignores, so the assistant could not tell which of the two agents the user meant. T04 spent four turns asking. Tasks now carry the agent-page `page_context` production attaches.
+- **Name cues:** evaluator names used folder prefixes (`TRAC-`, `RESE-`, `INSU-`) that echo workflow names. In T02 this made "track tests in Tracking" look like the whole folder. Names now use neutral folder codes (`F1-01: …`).
+- **Misleading T02 follow-up:** when too many tests were changed, the simulated user said some were "missing the tag", which was false, and the assistant rightly disputed it. Over-selection now gets an accurate follow-up.
+
+Baseline skill failures that are genuine, and are kept:
+- T02: dropped existing tags while claiming to keep them.
+- T03: claimed earlier failures "would now pass" without a run.
+
+Measured cost per rollout: $0.40–1.38 for model inference, plus a $0.10 sandbox reservation.
+
 ## Privacy (`v3/sanitize.py`)
 
 `python3 -m experiments.scenario_skills.v3.sanitize <packet-dir>` rejects any fixture or gold string that:
