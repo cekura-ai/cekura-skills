@@ -292,5 +292,30 @@ class MeteringTests(unittest.TestCase):
         self.assertTrue(validate_generator(broken))
 
 
+class RelayAttach(unittest.TestCase):
+    def test_the_pump_reads_the_same_stream_iterator_as_the_ready_line(self):
+        """Modal hands a process's output to one iterator; a second iteration would never see the relay's events."""
+        import importlib
+        from unittest import mock
+        from experiments.scenario_skills.v2.generator import cekura_metering
+        events = [json.dumps({"type": "ready", "port": 4100}) + "\n", json.dumps({"type": "close", "id": 1}) + "\n"]
+        class Stream:
+            def __init__(self):
+                self.iterators = 0
+            def __iter__(self):
+                self.iterators += 1
+                return iter(events) if self.iterators == 1 else iter(())
+        stream = Stream()
+        process = mock.Mock(stdout=stream)
+        sandbox = mock.Mock(object_id="sb-1", exec=mock.Mock(return_value=process))
+        with mock.patch.dict(os.environ, {"CEKURA_METERING_CA": __file__, "CEKURA_METERING_CONNECT": "127.0.0.1:1"}), \
+                mock.patch.object(Path, "read_text", return_value="relay source"):
+            self.assertEqual(cekura_metering.attach(sandbox), 4100)
+        import time
+        time.sleep(0.2)
+        self.assertEqual(stream.iterators, 1)
+        cekura_metering._attached.pop("sb-1", None)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -35,6 +35,34 @@ KNOWN_PROVIDER_HOSTS = ("api.anthropic.com", "bedrock-runtime.us-east-1.amazonaw
                         "us-aiplatform.googleapis.com", "oauth2.googleapis.com", "api.openai.com", "api.groq.com",
                         "api.autoloops.ai", "api.vapi.ai", "raw.githubusercontent.com", "statsig.anthropic.com",
                         "deb.nodesource.com", "registry.npmjs.org", "pypi.org")
+# Modal's sandbox exec/filesystem path dials per-task hosts (task-....w.modal.host). Docker's
+# embedded DNS cannot hold a wildcard, so the edge also answers DNS for Modal's task domain
+# with its own address; containers use it as their upstream resolver. Everything else gets
+# NXDOMAIN (container and alias names are answered by Docker before reaching it).
+DNS_SUFFIX = ".modal.host"
+
+
+def dns_answer(packet, ip, suffix=DNS_SUFFIX):
+    """One DNS reply: A records for names under ``suffix``; empty NOERROR for their other types; NXDOMAIN otherwise."""
+    if len(packet) < 12:
+        return None
+    labels, i = [], 12
+    while i < len(packet) and packet[i]:
+        labels.append(packet[i + 1:i + 1 + packet[i]].decode("ascii", "replace"))
+        i += 1 + packet[i]
+    question_end = i + 5
+    if question_end > len(packet):
+        return None
+    name, qtype = ".".join(labels).lower(), int.from_bytes(packet[i + 1:i + 3], "big")
+    ours = ("." + name).endswith(suffix)
+    answer = b""
+    if ours and qtype == 1:
+        answer = b"\xc0\x0c" + (1).to_bytes(2, "big") + (1).to_bytes(2, "big") + (30).to_bytes(4, "big") + (4).to_bytes(2, "big") + bytes(int(x) for x in ip.split("."))
+    flags = 0x8180 if ours else 0x8183
+    header = packet[:2] + flags.to_bytes(2, "big") + (1).to_bytes(2, "big") + (1 if answer else 0).to_bytes(2, "big") + b"\x00\x00\x00\x00"
+    return header + packet[12:question_end] + answer
+
+
 EDGE = """import socket, sys, threading
 target = (sys.argv[1], int(sys.argv[2]))
 def pipe(a, b):
@@ -57,6 +85,15 @@ def serve(client):
         client.close(); return
     threading.Thread(target=pipe, args=(upstream, client), daemon=True).start()
     pipe(client, upstream)
+def dns():
+    own = socket.gethostbyname(socket.gethostname())
+    udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); udp.bind(("0.0.0.0", 53))
+    while True:
+        packet, peer = udp.recvfrom(2048)
+        reply = dns_answer(packet, own)
+        if reply:
+            udp.sendto(reply, peer)
+threading.Thread(target=dns, daemon=True).start()
 server = socket.socket(); server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind(("0.0.0.0", 443)); server.listen(64)
 while True:
@@ -216,7 +253,10 @@ class Stack:
                                  bind=self.infra.gateway, transport=self.transport, splice=splice)
         self.metering.__enter__()
         hosts = sorted(set(self.metering.endpoints) | self.metering.passthrough | set(KNOWN_PROVIDER_HOSTS))
-        self._run("edge", BACKEND, ["python", "-c", EDGE, self.infra.gateway, str(self.metering.port("tls"))], aliases=hosts)
+        import inspect
+        edge_source = "DNS_SUFFIX = %r\n" % DNS_SUFFIX + inspect.getsource(dns_answer) + EDGE
+        edge = self._run("edge", BACKEND, ["python", "-c", edge_source, self.infra.gateway, str(self.metering.port("tls"))], aliases=hosts)
+        resolver = ["--dns", docker("inspect", "-f", "{{(index .NetworkSettings.Networks \"%s\").IPAddress}}" % self.infra.name, edge)]
         ca = self.directory / "metering" / "trust"
         ca.mkdir(exist_ok=True)
         # Public roots stay trusted for the Modal pass-through; provider names terminate at metering.
@@ -248,9 +288,9 @@ class Stack:
             env.update({"MODAL_TOKEN_ID": os.environ["MODAL_TOKEN_ID"], "MODAL_TOKEN_SECRET": os.environ["MODAL_TOKEN_SECRET"]})
         self.env_sha256 = digest({k: v for k, v in env.items() if k not in ("MODAL_TOKEN_ID", "MODAL_TOKEN_SECRET", "DB_PASSWORD", "SECRET_KEY")})
         self.web = self._run("web", BACKEND, ["gunicorn", "synth_voice.asgi:application", "-k", "uvicorn_worker.UvicornWorker",
-                                             "--bind", "0.0.0.0:8000", "--timeout", "600", "--workers", "2"], env, extra=mounts)
+                                             "--bind", "0.0.0.0:8000", "--timeout", "600", "--workers", "2"], env, extra=mounts + resolver)
         self._run("worker", BACKEND, ["celery", "-A", "synth_voice", "worker", "--loglevel=info", "--pool=threads",
-                                      "--concurrency=%d" % self.workers, "-Q", self.generator.get("queues", "simulation-eval")], env, extra=mounts)
+                                      "--concurrency=%d" % self.workers, "-Q", self.generator.get("queues", "simulation-eval")], env, extra=mounts + resolver)
         docker("exec", names["object_store"], "python", "-c",
                "import urllib.request;urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:9000/cekura-experiment',method='PUT'))")
         self.base_url = "http://%s:8000" % docker("inspect", "-f", "{{(index .NetworkSettings.Networks \"%s\").IPAddress}}" % self.infra.name, self.web)

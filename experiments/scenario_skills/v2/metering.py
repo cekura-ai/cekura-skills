@@ -63,6 +63,11 @@ def certificates_for(directory, hostnames):
     return ca, cert, key
 
 
+MODAL_CONTROL = {"api.modal.com"}
+# Sandbox exec and filesystem calls dial task-<id>.w.modal.host directly (modal >= 1.x command router).
+MODAL_TASK_SUFFIX = ".w.modal.host"
+
+
 def client_hello_sni(data):
     """Server name from a TLS ClientHello, or None. Never decrypts anything."""
     try:
@@ -283,7 +288,7 @@ class Metering:
         stream.close()
         target = request[0][1] if request and request[0][0] == "CONNECT" else ""
         host, _, port = target.rpartition(":")
-        if port != "443" or not (host in self.endpoints or host in self.passthrough):
+        if port != "443" or not (host in self.endpoints or self.is_passthrough(host)):
             self.denied.append({"at": time.time(), "reason": "CONNECT denied: " + target[:120]})
             connection.sendall(b"HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n")
             return
@@ -296,7 +301,7 @@ class Metering:
         if self.closed.is_set():
             self.denied.append({"at": time.time(), "reason": "scope closed: " + str(host)})
             return
-        if host in self.passthrough:
+        if self.is_passthrough(host):
             return self._splice(connection, host)
         if host not in self.endpoints:
             self.denied.append({"at": time.time(), "reason": "unmetered host denied: " + str(host)})
@@ -308,6 +313,11 @@ class Metering:
                 request = read_request(incoming)
                 if request is not None:
                     self._request(secure, incoming, host, request)
+
+    def is_passthrough(self, host):
+        """Modal control plane: configured names, plus Modal's per-task sandbox command routers."""
+        host = str(host or "").lower()
+        return host in self.passthrough or (bool(self.passthrough & MODAL_CONTROL) and host.endswith(MODAL_TASK_SUFFIX))
 
     def _splice(self, connection, host):
         """Modal control plane: unchanged TLS bytes; infrastructure, not inference."""

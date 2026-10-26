@@ -80,7 +80,10 @@ def attach(sb):
     sb.filesystem.write_text(Path(__file__).with_name("cekura_relay.py").read_text(), RELAY)
     sb.filesystem.write_text(Path(os.environ["CEKURA_METERING_CA"]).read_text(), CA)
     process = sb.exec("python3", RELAY, bufsize=1)
-    ready = json.loads(next(iter(process.stdout)))
+    # One reader for the whole stream: Modal delivers output to a single iterator, so a second
+    # iteration (e.g. a fresh `for` over process.stdout in the pump) never receives the relay's events.
+    lines = iter(process.stdout)
+    ready = json.loads(next(lines))
     if ready.get("type") != "ready":
         raise RuntimeError("Generator relay did not start")
     host, port = os.environ["CEKURA_METERING_CONNECT"].rsplit(":", 1)
@@ -110,7 +113,7 @@ def attach(sb):
 
     def pump():
         try:
-            for line in process.stdout:
+            for line in lines:
                 event = json.loads(line)
                 if event["type"] == "open":
                     connection = socket.create_connection((host, int(port)), timeout=300)

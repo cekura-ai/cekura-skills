@@ -40,7 +40,7 @@ def load_env(path, names):
 
 def main():
     parser = argparse.ArgumentParser(description="72-task authoring optimization against the isolated real backend")
-    parser.add_argument("command", choices=("validate", "authorize-budget", "prepare-claude", "prepare-generator", "prepare", "prepare-v3",
+    parser.add_argument("command", choices=("validate", "authorize-budget", "prepare-claude", "prepare-generator", "prepare", "prepare-v3", "reinstrument",
                                             "contract-probe", "transport-probe", "preflight", "run", "report", "accept"))
     parser.add_argument("--artifacts", type=Path, default=Path.home() / "cekura-scenario-v2-run")
     parser.add_argument("--base-config", type=Path)
@@ -165,6 +165,21 @@ def main():
         write(config_path, cfg)
         prepare_review(directory, 3)
         print("Prepared v3 in %s from %s; next: contract-probe --benchmark 3, preflight, signoff. No inference started." % (directory, args.source))
+        return 0
+    if args.command == "reinstrument":
+        # Rebuild the instrumented worker image after a metering-transport fix, recorded in this run's directory.
+        # The generator sandbox image and the v2 evidence are untouched; preflight re-verifies the new record.
+        from .generator.instrument import build_image, instrument
+        if not args.backend_source:
+            parser.error("reinstrument needs --backend-source")
+        cfg = read(config_path)
+        output = directory / "generator-instrumented"
+        instrument(args.backend_source, output)
+        record = build_image(output, "cekura-backend-instrumented:650297f")
+        cfg["backend"].update(deviation_path=str(output / "deviation.json"), deviation_sha256=record["record_sha256"])
+        cfg["backend"]["images"]["backend"] = record["image_id"]
+        write(config_path, cfg)
+        print({"backend_image": record["image_id"], "deviation_sha256": record["record_sha256"]})
         return 0
     cfg = read(config_path)
     ledger = budget.Ledger(Path(cfg["budget_ledger_path"]), cfg["budget_policy"])
