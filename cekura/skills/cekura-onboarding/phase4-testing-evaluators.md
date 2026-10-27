@@ -33,7 +33,7 @@ If the agent description is a flagged placeholder from Phase 2, **stop and resol
 ## 4b. Review the generated set
 
 Check:
-- Steps are specific: conditions fire on what the agent says, with `<ai_generated>` steps where the caller adapts (or first-person behavioral instructions, when instruction-based evaluators were requested).
+- Instructions are specific and behavioral.
 - Expected outcomes are concise and achievable.
 - The right tools are enabled.
 - For non-English agents: PATCH `scenario_language` to the correct code.

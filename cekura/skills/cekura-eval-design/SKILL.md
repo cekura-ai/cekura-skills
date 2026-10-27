@@ -89,10 +89,33 @@ Do not ask about personality, metrics or tags — pick the documented defaults b
 
 | Mode | When |
 |---|---|
-| **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Only when the user asks for instruction-based (prompt-based) scenarios. A category-level ask for one scenario is still `num_scenarios: 1`; never hand-author in this mode — only a complete user-supplied verbatim payload is created directly. |
-| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, first_message, conditions[]}` | **The default** for every request that does not ask for instruction-based scenarios. Open-ended personas, tone, de-escalation and free-form red-team are conditional actions too, with the caller's improvised turns as `<ai_generated>` steps. Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, data-bound turn-by-turn verification, anything needing an XML tag. When generating, put the tag requirements into `extra_instructions` ("the caller enters the account number by DTMF", "hold 20 s after the greeting", "the caller reaches an IVR menu first") and check the output against the self-check below. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
+| **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Open-ended personas, exploratory red-team, tone/empathy, general quality probing, any request without a structural commitment — only when the user asks for instruction-based scenarios; otherwise these are conditional actions too. A category-level ask for one scenario is still `num_scenarios: 1`; never hand-author in this mode — only a complete user-supplied verbatim payload is created directly. |
+| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, first_message, conditions[]}` | **The default.** Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, data-bound turn-by-turn verification, anything needing an XML tag. When generating, put the tag requirements into `extra_instructions` ("the caller enters the account number by DTMF", "hold 20 s after the greeting", "the caller reaches an IVR menu first") and check the output against the self-check below. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
+
+**Switch to CA with no confirmation** when the user says: conditional actions, structured or scripted scenario/test, deterministic test, unit test, regression test, exact flow, fixed sequence, compliance test, infra/infrastructure/pipeline/CI test or gate.
 
 **Infrastructure and pipeline tests are always CA — no confirmation.** Tests of STT, VAD, LLM timeout, TTS, interruption handling, idle timers, DTMF or any other pipeline-layer behaviour must trigger the behaviour at an exact moment with exact timing, which behavioural instructions cannot guarantee. Switch immediately; **cekura-infra-test-suite** has the full workflow.
+
+**Which mode for which request** (when the user asked for instruction-based scenarios; otherwise every row is CA — the user's explicit word wins):
+
+| Request | Mode | Why |
+|---|---|---|
+| Appointment scheduling happy path | Behavioral | Predictable path, no exact phrasing needed; the caller improvises naturally |
+| Scheduling as an exact-sequence regression test | CA | "Regression test" is a trigger phrase |
+| Compliance disclosure / account-number read-back | CA | Verbatim phrasing (verbatim steps, `<spell>`); "compliance" is a trigger phrase |
+| Identity verification: name + DOB + last-4 | CA | Every turn is data-bound to the profile; structure prevents drift |
+| Inbound IVR menu navigation | Ask first | Tag-supported (`<dtmf>`), mode not named |
+| Voicemail handling | Ask first | `<voicemail>` is purpose-built; behavioural can work |
+| Angry caller / de-escalation | Behavioral | Tone-driven, exploratory, no fixed sequence |
+| One scripted red-team attack (specific injection, specific fallback) | CA | A fixed attack script; one evaluator per expected outcome |
+| Free-form red-team probing | Behavioral | Path not predictable; the attacker improvises |
+| Multi-language tone test | Behavioral | Soft-skill; `scenario_language` set either way |
+| Multi-language compliance verification | CA | Verbatim disclosures in the target language |
+| Network degradation / packet loss | Ask first | `<network_simulation>` is purpose-built |
+| Tool-failure recovery (specific failure, specific recovery step) | CA | Exact trigger and exact recovery |
+| "Test my agent's quality" | Behavioral | No structural commitment |
+| STT / VAD / LLM timeout / TTS / interruption / idle / DTMF | CA | Pipeline behaviour needs exact timing — no confirmation |
+| A caller who must stay silent, hold, or interrupt | CA (tag) | `<hold>`, `<silence>`, `<interruption>`; prose "remain silent" does nothing |
 
 **Supplied text outranks every mode signal.** When the user hands you scenario text — a `<scenario>` block, numbered steps, a CSV row — and asks for it as written, create it as `scenario_type: "instruction"` with that text unchanged — the `<scenario>` wrapper and numbering included: when the user's text starts with `<scenario>`, the stored `instructions` string starts with `<scenario>` and ends with `</scenario>`. Do not restructure it into conditional actions because the steps look sequential, and do not reword it; rewriting is the one thing they asked you not to do. Attach the personality, metrics, profile and tools as usual.
 
@@ -204,7 +227,7 @@ Start generation as a background job; it returns a `progress_id`. Poll its progr
 | `extra_instructions` | your category guidance — never empty |
 | `scenario_type` | **category**: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and attach the KB material as `generation_files`. |
 | `attack_type` | **required on every red-team call, one call per type** — pick from the table below |
-| `simulation_type` | **output format**: `conditional_actions` (default) or `instruction` (only when the user asks for instruction-based scenarios) |
+| `simulation_type` | **output format**: `conditional_actions` (default) or `instruction` (only when the user asks for it) |
 | `personalities` | personality ids for the scenario's language |
 | `folder_path` | always set it (create the folder first) |
 | `generate_expected_outcomes` | `true` unless the user gave outcomes |

@@ -4,8 +4,8 @@ Detailed schema and gotchas for the scenario auto-generator. Loaded on demand fr
 
 The generator is the default write path in every mode; `simulation_type` selects the output format:
 
+- `"instruction"` — behavioural scenarios, one or many (`num_scenarios: 1` with a specific `extra_instructions` is normal); only when the user asks for instruction-based scenarios.
 - `"conditional_actions"` (default) — validated `conditions[]` from the same grounding pipeline (agent description, KB, mock tools), tags included: the generator knows the full tag set and honours tag requirements written into `extra_instructions`.
-- `"instruction"` — behavioural scenarios, one or many (`num_scenarios: 1` with a specific `extra_instructions` is normal). Send it only when the user asks for instruction-based scenarios.
 - Red-team categories (`scenario_type: "red_teaming_voice" / "red_teaming_text"`) return conditional actions carrying a multi-turn attack plan; review them, never rewrite them into instructions.
 
 Behavioural (`instruction`) scenarios are always generated — a single fully described case is `num_scenarios: 1` with the description in `extra_instructions`. Direct creates are for exactly-known conditional-action structures, and for a complete verbatim instructions payload the user supplied to save unchanged, under the same quality rules as generated output. See `SKILL.md` § Mode and write path.

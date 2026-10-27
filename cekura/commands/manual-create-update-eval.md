@@ -75,12 +75,12 @@ For updates: show the current agent/project assignment.
 
 ### 2. Scenario Type — Instructions vs Conditional Actions
 
-**Default to conditional actions** — do not ask. Use instructions only when the user asks for an instruction-based (prompt-based) scenario.
+**Default to conditional actions — do not ask.** Use instructions only when the user asks for an instruction-based scenario.
 
 | Type | When to Use | How It Works |
 |------|------------|--------------|
-| **Conditional actions** (default) | Every scenario unless the user asks for instructions — adaptive caller turns are `<ai_generated>` steps | Testing agent follows condition→action pairs; fixed steps repeat identically each run |
-| **Instructions** | Only when the user asks for an instruction-based scenario | Testing agent follows behavioral instructions, adapts to agent responses naturally |
+| **Adaptive (instructions)** | Only when the user asks for an instruction-based scenario | Testing agent follows behavioral instructions, adapts to agent responses naturally |
+| **Deterministic (conditional actions)** | Unit tests, regression tests, exact flow validation | Testing agent follows predefined condition→action pairs, repeats identically each run |
 
 **The type decides whether this command is even the right tool:**
 

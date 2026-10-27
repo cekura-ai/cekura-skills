@@ -8,14 +8,12 @@ All notable changes to the Cekura plugin. Versions follow
 
 **Conditional actions are the default scenario format.** Scenario workflows
 generate and create conditional actions unless the user asks for
-instruction-based scenarios; adaptive caller turns are `<ai_generated>` steps.
-The generator's `simulation_type` now defaults to `conditional_actions`.
+instruction-based scenarios; the generator's `simulation_type` now defaults
+to `conditional_actions`.
 
-- `cekura-eval-design`: the mode table defaults to conditional actions; the
-  ask-first question and the request-to-mode table are gone.
-- `/autogen-eval`, `/manual-create-update-eval`, `codex/AGENTS.md` and
-  `GEMINI.md` follow the same default, and no longer say the generator cannot
-  produce conditional actions.
+- `cekura-eval-design`, `/autogen-eval`, `/manual-create-update-eval`,
+  `codex/AGENTS.md` and `GEMINI.md` say so where they named the old default,
+  and no longer say the generator cannot produce conditional actions.
 - `cekura-create-agent` phase 11 sends `num_scenarios: 1` to the generate
   tool (it sent `count`, which the tool does not have).
 
