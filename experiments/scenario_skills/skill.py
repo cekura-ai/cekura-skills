@@ -22,6 +22,8 @@ def candidate(baseline, body, forbidden=()):
     if not isinstance(body, str) or not body.strip():
         raise ValueError("Proposal must contain a nonempty skill body")
     header, original = split(baseline)
+    if body.encode().startswith(header):
+        body = body[len(header.decode()):]  # A returned whole file whose frontmatter is byte-identical: only the body changed.
     proposed = body.encode()
     if body.lstrip().startswith("---") or "\x00" in body:
         raise ValueError("Frontmatter is outside the editable surface")

@@ -135,6 +135,18 @@ class Contracts(unittest.TestCase):
         self.assertTrue(checks.evaluate({"kind": "mentions", "ids": [200001], "forbidden": [200002]}, ctx))
 
 
+class Candidates(unittest.TestCase):
+    def test_a_whole_file_with_unchanged_frontmatter_is_a_body_edit_but_changed_frontmatter_is_not(self):
+        from experiments.scenario_skills.skill import SKILL, candidate, split
+        base = SKILL.read_bytes()
+        header, body = split(base)
+        edited = body.decode() + "\nOne more rule.\n"
+        self.assertEqual(candidate(base, header.decode() + edited), header + edited.encode())
+        self.assertEqual(candidate(base, edited), header + edited.encode())
+        with self.assertRaises(ValueError):
+            candidate(base, header.decode().replace("name:", "name: x") + edited)
+
+
 class Followups(unittest.TestCase):
     def ctx(self, task, messages, trace=(), final=None):
         state = initial_state(task)
