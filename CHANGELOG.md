@@ -9,9 +9,7 @@ All notable changes to the Cekura plugin. Versions follow
 **Conditional actions are the default scenario format.** Scenario workflows
 generate and create conditional actions unless the user asks for
 instruction-based scenarios; the generator's `simulation_type` now defaults
-to `conditional_actions`, and organizations with
-`conditional_actions_generation_enabled` on (every new organization) reject
-`instruction` outright.
+to `conditional_actions`.
 
 - `cekura-eval-design`, `/autogen-eval`, `/manual-create-update-eval`,
   `codex/AGENTS.md` and `GEMINI.md` say so where they named the old default,

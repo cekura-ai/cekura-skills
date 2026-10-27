@@ -79,7 +79,7 @@ For updates: show the current agent/project assignment.
 
 | Type | When to Use | How It Works |
 |------|------------|--------------|
-| **Adaptive (instructions)** | Only when the user asks for an instruction-based scenario; organizations with `conditional_actions_generation_enabled` on (every new organization) reject it with a 400 — say so and use conditional actions | Testing agent follows behavioral instructions, adapts to agent responses naturally |
+| **Adaptive (instructions)** | Only when the user asks for an instruction-based scenario | Testing agent follows behavioral instructions, adapts to agent responses naturally |
 | **Deterministic (conditional actions)** | Unit tests, regression tests, exact flow validation | Testing agent follows predefined condition→action pairs, repeats identically each run |
 
 **The type decides whether this command is even the right tool:**
