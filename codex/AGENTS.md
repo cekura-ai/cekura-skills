@@ -331,7 +331,7 @@ Agent doesn't use tools, or tools aren't relevant to these tests. Use test profi
 
 | `scenario_type` | Path |
 |---|---|
-| `instruction` (behavioral — only when the user asks for instruction-based scenarios) | **Always** `POST /test_framework/v1/scenarios/generate-bg/`. Never hand-author, not even for a single scenario — use `num_scenarios: 1` with the description as `extra_instructions`. |
+| `instruction` (behavioral — only when the user asks for instruction-based scenarios; organizations with `conditional_actions_generation_enabled` on (every new organization) reject it with a 400 — say so and use conditional actions) | **Always** `POST /test_framework/v1/scenarios/generate-bg/`. Never hand-author, not even for a single scenario — use `num_scenarios: 1` with the description as `extra_instructions`. |
 | `conditional_actions` (the default) | `POST /test_framework/v1/scenarios/generate-bg/`, whose output is conditional actions by default; `POST /test_framework/v1/scenarios/` directly only when the structure is exactly known. |
 
 Only exception on the behavioral side: the user supplies the instruction text themselves (CSV/JSON list, or "create this exact scenario") — generating would discard their wording. Generation gotchas below are routine post-generation PATCHes, not reasons to hand-author.

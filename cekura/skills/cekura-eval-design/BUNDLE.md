@@ -231,7 +231,7 @@ Start generation as a background job; it returns a `progress_id`. Poll its progr
 | `extra_instructions` | your category guidance — never empty |
 | `scenario_type` | **category**: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and attach the KB material as `generation_files`. |
 | `attack_type` | **required on every red-team call, one call per type** — pick from the table below |
-| `simulation_type` | **output format**: `conditional_actions` (default) or `instruction` (only when the user asks for it) |
+| `simulation_type` | **output format**: `conditional_actions` (default) or `instruction` (only when the user asks for it; organizations with `conditional_actions_generation_enabled` on (every new organization) reject it with a 400 — say so and use conditional actions) |
 | `personalities` | personality ids for the scenario's language |
 | `folder_path` | always set it (create the folder first) |
 | `generate_expected_outcomes` | `true` unless the user gave outcomes |
