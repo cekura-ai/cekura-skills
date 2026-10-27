@@ -165,6 +165,27 @@ The scoped baseline (14 training tasks) passed 6 and failed 9; T09 never loads t
 
 This is a small comparison. A pass is suggestive, not conclusive, and any patch still needs named human acceptance.
 
+## Results of the scoped run (2026-10-27)
+
+**Outcome: `no_training_candidate_qualifies`.** No skill change is supported. The sealed held-out comparison did not run.
+
+| Template | Baseline | Candidate 1 |
+|---|---|---|
+| T01, T03, T07 | pass | pass |
+| T02, T11, T12 | fail | **pass** |
+| T04, T05, T10, T13, T14 | fail | fail |
+| T08, T15 | pass | **fail** |
+| T16 | fail | inconclusive (skill not loaded) |
+| T09 | excluded (skill never loaded) | — |
+
+- **Candidate 1:** all four proposals targeted write scope. Candidate 1 adds six lines: audits and questions are read-only, what counts as approval, siblings need their own approval, and list fields are replaced rather than merged.
+- **Gate:** it fixed three training failures and regressed two, so the regression gate rejected it.
+- **T08 regression** looks like a genuine side effect: the candidate made no edits at all.
+- **T15 regression** looks like run-to-run noise: the candidate wrote shared profiles without asking, the very behaviour it forbids.
+- **Noise:** baseline outcomes for T02, T03 and T08 varied between runs. A gate on single training observations is noisy at this sample size.
+- **Spend:** $103.74 of the $150 wallet. About $59 went on calibration, baseline, candidate and diagnostics; the rest was history and preparation.
+- **Why no second candidate:** another candidate needs about $55–57 with margin, against $46.26 left, so none was run.
+
 ## Privacy (`v3/sanitize.py`)
 
 `python3 -m experiments.scenario_skills.v3.sanitize <packet-dir>` rejects any fixture or gold string that:
