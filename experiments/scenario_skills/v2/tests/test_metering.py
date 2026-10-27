@@ -294,6 +294,34 @@ class MeteringTests(unittest.TestCase):
         self.assertEqual((entry["status"], Decimal(entry["charged"])), ("complete", Decimal("0.0014")))
         self.assertFalse(read(budget.wallet_path())["blocked"])
 
+    def test_a_failing_provider_is_cut_off_and_a_rollout_cannot_exceed_its_spend_cap(self):
+        """A degraded provider once broke 63 of 70 requests in one rollout, each charged at its bound."""
+        class Broken(Provider):
+            def __call__(self, host):
+                connection = super().__call__(host)
+                connection.getresponse = lambda: (_ for _ in ()).throw(TimeoutError("The read operation timed out"))
+                return connection
+        metering = self.start(Broken(ANTHROPIC, "text/event-stream"))
+        request = lambda: self.post(metering, "api.fireworks.ai", "/inference/v1/messages",
+                                    {"model": "accounts/fireworks/routers/glm-5p3-fast", "max_tokens": 500, "messages": []},
+                                    {"x-api-key": metering.placeholder})
+        for _ in range(6):
+            request()
+        entries = [e for e in read(budget.wallet_path())["entries"].values() if e.get("entry_type") == "generator_request"]
+        from experiments.scenario_skills.v2.metering import CONSECUTIVE_FAILURES
+        self.assertEqual(len(entries), CONSECUTIVE_FAILURES)  # Later requests are denied before any reservation.
+        self.assertTrue(any("consecutive upstream failures" in d["reason"] for d in metering.denied))
+        capped = self.start(Provider(ANTHROPIC, "text/event-stream"))
+        send = lambda: self.post(capped, "api.fireworks.ai", "/inference/v1/messages",
+                                 {"model": "accounts/fireworks/routers/glm-5p3-fast", "max_tokens": 500, "messages": []}, {"x-api-key": capped.placeholder})
+        send()
+        first = capped.requests[0]
+        # The cap counts settled charges plus the next request's bound: set just below what a second request would need.
+        capped.scope_cap = Decimal(first["charged_usd"]) + Decimal(first["reserved_usd"]) - Decimal("0.0001")
+        send()
+        self.assertEqual(len(capped.requests), 1)
+        self.assertTrue(any("spend cap" in d["reason"] for d in capped.denied))
+
     def test_live_upstreams_require_the_canonical_wallet(self):
         from experiments.scenario_skills.budget import BudgetError
         with self.assertRaises(BudgetError):

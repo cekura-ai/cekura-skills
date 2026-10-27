@@ -153,6 +153,13 @@ def validate_generator(config):
     return failures
 
 
+# One rollout's generator spend and its tolerance for a failing provider. A degraded DeepSeek
+# endpoint once broke 63 of 70 requests mid-response in one rollout while the generator kept
+# retrying; each was charged at its $1.28 bound ($82 in total).
+SCOPE_CAP_USD = Decimal("5")
+CONSECUTIVE_FAILURES = 4
+
+
 class Metering:
     def __init__(self, config, ledger, scope, directory, bind="127.0.0.1", transport=None, splice=None, placeholder=None):
         if transport is None or splice is None:
@@ -173,6 +180,9 @@ class Metering:
         self.closed = threading.Event()
         self.live, self.upstreams, self.lock, self.counter = set(), set(), threading.Lock(), 0
         self.instance = os.urandom(4).hex()  # Keys and evidence never collide with an earlier run of a scope.
+        self.scope_cap = Decimal(str(config.get("scope_cap_usd", SCOPE_CAP_USD)))
+        self.committed = {}  # Request key -> its bound until settled, then its charge.
+        self.failures = {}  # Model -> consecutive upstream failures; a success resets it.
         owner = self
 
         def server(handler):
@@ -377,9 +387,20 @@ class Metering:
         except BudgetError as error:
             return self._deny(secure, str(error), secure)
         with self.lock:
-            self.counter += 1
-            number = self.counter
+            if self.failures.get(model, 0) >= CONSECUTIVE_FAILURES:
+                tripped = "provider failing: %d consecutive upstream failures for %s" % (self.failures[model], model)
+            elif sum(self.committed.values(), Decimal(0)) + bound > self.scope_cap:
+                tripped = "rollout generator spend cap $%s reached" % self.scope_cap
+            else:
+                tripped = None
+                self.counter += 1
+                number = self.counter
+        if tripped:
+            self.errors.append(tripped)
+            return self._deny(secure, tripped, secure)
         key = "%s/%s/generator-request-%d" % (self.scope, self.instance, number)
+        with self.lock:
+            self.committed[key] = bound
         try:
             self.ledger.reserve(key, "target", bound, entry_type="generator_request", scope=self.scope, host=host, model=model, api=api)
         except BudgetError as error:
@@ -467,6 +488,10 @@ class Metering:
                 record.update(charged_at_bound="error_response")
             record.update(status="complete" if actual is not None else "usage_unknown", charged_usd=str(actual) if actual is not None else None)
             write(folder / "usage.json", record)
+            with self.lock:
+                self.committed[key] = actual if actual is not None else bound
+                if not cancelled:
+                    self.failures[model] = self.failures.get(model, 0) + 1 if failed else 0
             self.ledger.settle(key, actual)
 
     def _control(self, connection):
