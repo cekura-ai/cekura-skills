@@ -19,8 +19,8 @@ PROTOCOL = {"exclude_templates": ["T06", "C02"], "training_domains": ["harborvie
 
 class Evaluator:
     """The baseline fails three templates everywhere; the candidate fixes them unless told to regress one."""
-    def __init__(self, cost=.01, regress=()):
-        self.cost, self.regress, self.cache, self.calls = cost, set(regress), {}, []
+    def __init__(self, cost=.01, regress=(), unloaded=()):
+        self.cost, self.regress, self.unloaded, self.cache, self.calls = cost, set(regress), set(unloaded), {}, []
 
     def evaluate(self, data, task, repeat=0):
         key = (digest(data), task["id"], repeat)
@@ -36,6 +36,8 @@ class Evaluator:
                                          "attribution": {"x": "authoring"}},
                                "messages": ["Saved"], "trace": [], "initial_state": {}, "final_state": {}, "user_turns": [],
                                "candidate_body": split(data)[1].decode()}
+            if task["template"] in self.unloaded:
+                self.cache[key].update(status="inconclusive", events=[], trace=[])  # The assistant never loaded the skill.
         return self.cache[key]
 
 
@@ -74,6 +76,13 @@ class ScopedController(unittest.TestCase):
         self.assertEqual(calls[(True, "validation", 1)], 0)
         self.assertFalse({t for *_, t, _ in self.evaluator.calls} & {"T06", "C02"})
         self.assertEqual(state["final_gates"]["sealed"]["gains"], sorted("%s-kestrel" % t for t in FAILING))
+
+    def test_templates_whose_baseline_never_loads_the_skill_are_left_out(self):
+        state = self.go(Evaluator(unloaded={"T09", "T05"}))
+        self.assertEqual(state["status"], "recommendation_pending_final_review", state.get("reason"))
+        self.assertEqual(state["skill_not_loaded_templates"], ["T05", "T09"])
+        self.assertEqual(read(self.directory / "forecast.json")["held_out_templates"], ["T03", "T10"])
+        self.assertFalse(any(t in ("T05", "T09") for b, s, t, _ in self.evaluator.calls if not b or s != "training"))
 
     def test_a_candidate_that_regresses_a_template_is_rejected_in_training(self):
         state = self.go(Evaluator(regress={"T01"}))

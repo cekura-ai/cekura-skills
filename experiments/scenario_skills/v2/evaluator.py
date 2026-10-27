@@ -27,9 +27,19 @@ ATTEMPTS = 3  # One trial plus at most two retries, and only after infrastructur
 MAX_CORE, MAX_REPEATS = 216, 24
 
 
+# Code a rollout's execution or grading depends on. Controller, proposer, judge, review and authoring
+# modules are excluded, so changing them never invalidates (and re-bills) cached rollouts.
+ROLLOUT_CODE = ("common.py", "fixture.py", "runtime.py", "relay.py", "gateway.py", "budget.py", "network_guard.py", "modal_runtime.py",
+                "skill.py", "v2/bridge.py", "v2/bridge_client.py", "v2/backend_stack.py", "v2/seed.py", "v2/metering.py", "v2/evaluator.py",
+                "v2/grader.py", "v2/fixture.py", "v3/bridge.py", "v3/checks.py", "v3/grader.py", "v3/followups.py")
+# Configuration keys only the controller reads.
+CONTROLLER_KEYS = ("budget_policy", "v3_protocol", "proposer", "judge", "search", "max_repeats", "preflight_observations",
+                   "execution_goal", "fixture_review_mode")
+
+
 def code_identity():
-    files = [*ROOT.glob("*.py"), *(ROOT / "v2").glob("*.py"), *(ROOT / "v2/generator").glob("*.py"), *(ROOT / "v3").glob("*.py")]
-    return {str(p.relative_to(ROOT)): digest(p) for p in sorted(files)}
+    files = [ROOT / name for name in ROLLOUT_CODE] + sorted((ROOT / "v2/generator").glob("*.py"))
+    return {str(p.relative_to(ROOT)): digest(p) for p in files if p.exists()}
 
 
 def delivery(bodies, candidate, cap):
@@ -86,7 +96,7 @@ class Evaluator:
         # ensure() is idempotent: it restarts the tmpfs Postgres and re-migrates the template if the host lost them.
         self.infra = infrastructure or Infrastructure(Path(state).parent if state else self.directory / "backend").ensure()
         self.base_material = material()
-        self.environment = {"configuration": {k: v for k, v in config.items() if k not in ("budget_policy",)},
+        self.environment = {"configuration": {k: v for k, v in config.items() if k not in CONTROLLER_KEYS},
                             "python": platform.python_version(), "code": code_identity(), "dependencies": dependencies(),
                             "generator_deviation_sha256": config["backend"]["deviation_sha256"],
                             "backend_images": config["backend"]["images"], "openapi_sha256": config["backend"]["openapi_sha256"]}

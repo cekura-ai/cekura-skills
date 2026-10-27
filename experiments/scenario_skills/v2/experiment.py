@@ -48,6 +48,16 @@ def benchmark(config):
     return load_v2, canaries_v2
 
 
+def skill_not_loaded(record):
+    """An inconclusive rollout in which the assistant never loaded the skill under test."""
+    if record.get("status") != "inconclusive":
+        return False
+    loaded = any(e.get("type") == "skill_file_read" for e in record.get("events", []))
+    loaded = loaded or any(c.get("name", "").endswith("cekura_load_skill") and not c.get("response", {}).get("isError")
+                           for c in record.get("trace", []))
+    return not loaded
+
+
 class Terminal(Exception):
     """An ordinary, reportable end of the experiment (not an error)."""
     def __init__(self, status, reason):
@@ -141,10 +151,12 @@ class Controller:
         if self.state.get("deadline") and self.clock() > self.state["deadline"]:
             raise Terminal("deadline_reached", "The 24-hour overall deadline passed; results so far are reported")
 
-    def trial(self, data, task, stage, repeat=0):
+    def trial(self, data, task, stage, repeat=0, allow_unloaded=False):
         self.check_deadline()
         self.save(status="running", stage=stage, current_task=task["id"])
         record = self.evaluator.evaluate(data, task, repeat)
+        if allow_unloaded and skill_not_loaded(record):
+            return record  # The caller excludes this template: no skill change can reach it.
         if record["status"] != "complete" or record.get("cost_usd") is None:
             raise Terminal("inconclusive_execution", "%s on %s ended %s after bounded retries; incomplete evidence cannot support a comparison"
                            % (stage, task["id"], record["status"]))
@@ -253,11 +265,19 @@ class Controller:
         stage = "v3-baseline-training-" + self.ident["tasks_sha256"][:12]
         try:
             with self.ledger.staged(stage, Decimal(str(protocol.get("baseline_cap_usd", "30")))):
-                before = self.stage(self.baseline, self.training, "baseline_training")
+                observed = [self.trial(self.baseline, t, "baseline_training", allow_unloaded=True) for t in self.training]
         except BudgetError as error:
             if "Stage allowance" in str(error):
                 raise Terminal("baseline_cap_exhausted", "The baseline training stage did not fit its cap")
             raise
+        # A template whose task never loads the skill cannot be changed by a skill edit: leave it out everywhere.
+        unloaded = sorted({r["task_id"].split("-")[0] for r in observed if skill_not_loaded(r)})
+        self.save(skill_not_loaded_templates=unloaded)
+        before = [r for r in observed if not skill_not_loaded(r)]
+        self.training = [t for t in self.training if t["template"] not in unloaded]
+        self.validation = [t for t in self.validation if t["template"] not in unloaded]
+        self.sealed = [t for t in self.sealed if t["template"] not in unloaded]
+        ids = [t["id"] for t in self.training]
         failing = sorted({r["task_id"].split("-")[0] for r in before if not r["grade"]["score"]})
         if not failing:
             raise Terminal("training_saturated", "The baseline already passes every training task; there is nothing to search")
