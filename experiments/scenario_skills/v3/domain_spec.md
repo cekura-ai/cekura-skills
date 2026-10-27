@@ -220,6 +220,35 @@ The user raised the wallet to $300 (`v2 extend-budget`, recorded once in the wal
 
 **Smoke:** `v2 smoke` runs two concurrent v3 rollouts through the real evaluator, Modal sandbox and backend stack, with the offline target transport and a provider transport that refuses every connection. Its only charge is the bounded sandbox reservation. The controller refuses a paid stage unless a smoke passed on the current rollout code.
 
+## Results of the adaptive run (2026-10-27)
+
+**Outcome: `no_training_candidate_qualifies`.** Four candidates, each testing a distinct hypothesis, were all rejected at the screen. None reached the regression check, and no skill change is supported.
+
+**Baseline:** of 13 loaded training tasks, 5 passed (T01, T02, T08, T15, C01) and 8 failed. T07 and T09 never loaded the skill. Several outcomes differ from the first run's baseline (T03 now fails; T11 and T13 differ between this run's own trials). The held-out set chosen was T04, T10, T11 and T16.
+
+| Candidate | Hypothesis | Baseline failures fixed (first trial) |
+|---|---|---|
+| 1 | Settle the write scope before the first write | 1 of 9 (T04) |
+| 2 | Outcomes that hold on every runtime-state branch; per-scenario outcomes | 0 of 9 |
+| 3 | Re-ask probe pattern for conditional-action triggers | 0 of 9 |
+| 4 | Diagnose failed runs from transcripts, naming every evaluator id | 0 of 9 |
+
+**What the per-check evidence shows:**
+- **Targeted checks moved:** candidate 2 cleared `semantic:conditional` on T14 and three of T16's five failed checks.
+- **Other checks broke:** the same edits broke `all_affected` or `only_affected` elsewhere in those tasks.
+- **Task-level pass is all or nothing:** a task passes only when every check does, so these partial fixes never registered.
+- **Some checks never move:** T10 (`named_ids`, `semantic:evidence`), T11 (`semantic:trigger`) and T13 (`semantic:specific`) failed under every revision, including candidates written for exactly those checks. They look bound by the target model's ability rather than by missing instructions.
+- **No compounding:** since nothing qualified, every proposal started again from the baseline.
+
+**A cost incident and its safeguards:**
+- **What happened:** one candidate 3 rollout ran 31 minutes against a degraded DeepSeek endpoint on Fireworks. 63 of 70 requests broke mid-response (broken pipes and 180-second read timeouts) while the pinned generator kept retrying.
+- **The charge:** each failed request was charged at its $1.28 bound, $82 in all.
+- **Real cost:** the provider likely billed far less for truncated requests, but the wallet keeps the conservative charge.
+- **Safeguards now in metering:** a rollout's generator spend is capped at $5, and a model is cut off after four consecutive upstream failures.
+- **Early stop tightened:** the screen now stops as soon as the remaining tasks cannot reach the bar. Previously it ran every baseline-failing task.
+
+**Spend:** the wallet stands at $252.88 of $300 ($149.04 in this run, of which $82 is the incident).
+
 ## Privacy (`v3/sanitize.py`)
 
 `python3 -m experiments.scenario_skills.v3.sanitize <packet-dir>` rejects any fixture or gold string that:

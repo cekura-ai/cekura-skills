@@ -174,6 +174,14 @@ class ScopedController(unittest.TestCase):
         self.assertEqual(self.proposer.outcomes[0], [])
         self.assertEqual(self.proposer.outcomes[1][0]["outcome"], "screen_rejected")
 
+    def test_a_screen_stops_as_soon_as_the_bar_is_out_of_reach(self):
+        state = self.go(Evaluator(fixes={1: set(), 2: set()}), max_evaluated=2)
+        self.assertEqual(state["status"], "no_training_candidate_qualifies")
+        # Three failing templates, two needed: after two failures the third cannot help, so it never runs.
+        screens = Counter(t for b, s, t, r in self.evaluator.calls if not b and s == "training")
+        self.assertEqual(sum(screens.values()), 4)
+        self.assertIn("2 run before the early stop", state["attempts"][0]["reason"])
+
     def test_parallel_workers_reach_the_same_verdict_and_wallet_total(self):
         serial = self.go(Evaluator(flaky={"T01"}))
         serial_total = read(Path(self.config["budget_ledger_path"]))["entries"]

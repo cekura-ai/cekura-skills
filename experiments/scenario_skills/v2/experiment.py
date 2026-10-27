@@ -172,19 +172,37 @@ class Controller:
     def stage(self, data, items, name, repeat=0):
         return [self.trial(data, t, name, repeat) for t in items]
 
-    def parallel(self, jobs):
+    def parallel(self, jobs, hopeless=None):
         """Trials as (data, task, stage, repeat, allow_unloaded) on up to the protocol's ``workers`` threads, in job order.
 
         Each rollout has its own backend stack, wallet scope and cache key, so order does not change
         any result. On the first failure, queued trials are cancelled and running ones finish.
+        ``hopeless(finished, outstanding)`` may end the stage early the same way; cancelled trials
+        are simply absent from the returned list.
         """
-        workers = min(int((self.protocol or {}).get("workers", 1)), len(jobs))
-        if workers <= 1:
-            return [self.trial(*job) for job in jobs]
+        workers = max(1, min(int((self.protocol or {}).get("workers", 1)), len(jobs)))
+        stop, guard, finished = threading.Event(), threading.Lock(), {}
+
+        def start(i, job):
+            # The worker decides before it returns, so it never picks up another job past the stop.
+            if stop.is_set():
+                return
+            try:
+                result = self.trial(*job)
+            except BaseException:
+                stop.set()  # A failed trial ends the stage: queued trials do not start.
+                raise
+            with guard:
+                finished[i] = result
+                if hopeless and hopeless(list(finished.values()), len(jobs) - len(finished)):
+                    stop.set()
+
         pool = ThreadPoolExecutor(workers)
-        futures = [pool.submit(self.trial, *job) for job in jobs]
+        futures = [pool.submit(start, i, job) for i, job in enumerate(jobs)]
         try:
-            return [f.result() for f in futures]
+            for future in futures:
+                future.result()
+            return [finished[i] for i in sorted(finished)]
         finally:
             pool.shutdown(wait=True, cancel_futures=True)
 
@@ -421,13 +439,17 @@ class Controller:
             rationale = read(directory / ("candidate-%d.rationale.json" % i))
             name, sha = "candidate-%d" % i, digest(data)
             evaluated += 1
-            screened = self.parallel([(data, t, name + "_screen", 0, True) for t in screen_tasks])
+            # Early stop: cancel the rest of the screen once even passing every remaining task cannot reach the bar.
+            passing = lambda records: sum(not skill_not_loaded(r) and gates.observation(r, (), True) == "pass" for r in records)
+            screened = self.parallel([(data, t, name + "_screen", 0, True) for t in screen_tasks],
+                                     hopeless=lambda done, left: passing(done) + left < min_gain)
             mine = [r for r in screened if not skill_not_loaded(r)]
             fixed = sorted(r["task_id"] for r in mine if gates.observation(r, (), True) == "pass")
             row = {"attempt": i, "name": name, "hypothesis": rationale.get("hypothesis"), "first_trial_fixed": fixed,
                    "skill_not_loaded": sorted(r["task_id"] for r in screened if skill_not_loaded(r))}
             if len(fixed) < min_gain:
-                row.update(outcome="screen_rejected", reason="passed %d of %d baseline-failing tasks; %d needed" % (len(fixed), len(screen_tasks), min_gain))
+                row.update(outcome="screen_rejected", reason="passed %d of %d baseline-failing tasks (%d run before the early stop); %d needed"
+                           % (len(fixed), len(screen_tasks), len(screened), min_gain))
             else:
                 checked = self.parallel([(data, t, name + "_training", 0, True) for t in rest])
                 mine += [r for r in checked if not skill_not_loaded(r)]
