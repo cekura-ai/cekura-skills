@@ -353,6 +353,13 @@ class EdgeResolver(unittest.TestCase):
         self.assertEqual((other[2:4], int.from_bytes(other[6:8], "big")), (b"\x81\x83", 0))  # NXDOMAIN.
         self.assertIsNone(dns_answer(b"\x00" * 5, "172.20.0.5"))
 
+    def test_provider_names_resolve_to_this_stacks_edge_not_a_shared_alias(self):
+        from experiments.scenario_skills.v2.backend_stack import dns_answer
+        a = dns_answer(self.query("api.fireworks.ai"), "172.20.0.9", names=frozenset({"api.fireworks.ai"}))
+        self.assertEqual((a[2:4], list(a[-4:])), (b"\x81\x80", [172, 20, 0, 9]))
+        other = dns_answer(self.query("api.fireworks.ai.evil"), "172.20.0.9", names=frozenset({"api.fireworks.ai"}))
+        self.assertEqual(other[2:4], b"\x81\x83")
+
     def test_metering_splices_modal_task_hosts_only_with_the_modal_control_plane(self):
         from experiments.scenario_skills.v2.metering import Metering
         probe = Metering.__new__(Metering)

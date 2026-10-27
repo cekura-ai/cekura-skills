@@ -17,6 +17,7 @@ import os
 import re
 import secrets
 import subprocess
+import threading
 import time
 import urllib.request
 from pathlib import Path
@@ -37,13 +38,15 @@ KNOWN_PROVIDER_HOSTS = ("api.anthropic.com", "bedrock-runtime.us-east-1.amazonaw
                         "deb.nodesource.com", "registry.npmjs.org", "pypi.org")
 # Modal's sandbox exec/filesystem path dials per-task hosts (task-....w.modal.host). Docker's
 # embedded DNS cannot hold a wildcard, so the edge also answers DNS for Modal's task domain
-# with its own address; containers use it as their upstream resolver. Everything else gets
-# NXDOMAIN (container and alias names are answered by Docker before reaching it).
+# with its own address; containers use it as their upstream resolver. Provider names are
+# answered the same way rather than as network aliases: aliases are shared by every stack on
+# the network, so concurrent rollouts would reach each other's metering. Everything else gets
+# NXDOMAIN (container names are answered by Docker before reaching it).
 DNS_SUFFIX = ".modal.host"
 
 
-def dns_answer(packet, ip, suffix=DNS_SUFFIX):
-    """One DNS reply: A records for names under ``suffix``; empty NOERROR for their other types; NXDOMAIN otherwise."""
+def dns_answer(packet, ip, suffix=DNS_SUFFIX, names=()):
+    """One DNS reply: A records for names under ``suffix`` or in ``names``; empty NOERROR for their other types; NXDOMAIN otherwise."""
     if len(packet) < 12:
         return None
     labels, i = [], 12
@@ -54,7 +57,7 @@ def dns_answer(packet, ip, suffix=DNS_SUFFIX):
     if question_end > len(packet):
         return None
     name, qtype = ".".join(labels).lower(), int.from_bytes(packet[i + 1:i + 3], "big")
-    ours = ("." + name).endswith(suffix)
+    ours = ("." + name).endswith(suffix) or name in names
     answer = b""
     if ours and qtype == 1:
         answer = b"\xc0\x0c" + (1).to_bytes(2, "big") + (1).to_bytes(2, "big") + (30).to_bytes(4, "big") + (4).to_bytes(2, "big") + bytes(int(x) for x in ip.split("."))
@@ -90,7 +93,7 @@ def dns():
     udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); udp.bind(("0.0.0.0", 53))
     while True:
         packet, peer = udp.recvfrom(2048)
-        reply = dns_answer(packet, own)
+        reply = dns_answer(packet, own, names=NAMES)
         if reply:
             udp.sendto(reply, peer)
 threading.Thread(target=dns, daemon=True).start()
@@ -102,10 +105,21 @@ while True:
 """
 
 
+def available_memory():
+    """MemAvailable from /proc/meminfo, in bytes (unbounded where it cannot be read)."""
+    try:
+        for line in Path("/proc/meminfo").read_text().splitlines():
+            if line.startswith("MemAvailable:"):
+                return int(line.split()[1]) * 1024
+    except OSError:
+        pass
+    return float("inf")
+
+
 def docker(*args, check=True, capture=True, timeout=600, stdin=None):
     result = subprocess.run(["docker", *args], capture_output=capture, text=True, timeout=timeout, input=stdin)
     if check and result.returncode:
-        raise RuntimeError("docker %s failed: %s" % (args[0], (result.stderr or "")[-800:]))
+        raise RuntimeError("docker %s failed (exit %d): %s" % (args[0], result.returncode, (result.stderr or result.stdout or "")[-800:]))
     return result.stdout.strip() if capture else ""
 
 
@@ -195,10 +209,13 @@ class Infrastructure:
             write(self.state_path, self.state)
         return self
 
+    database_lock = threading.Lock()  # Concurrent rollouts clone one template; clone one at a time.
+
     def database(self, scope):
         name = "rollout_" + re.sub(r"[^a-z0-9]", "", scope.lower())[:40]
         pg = self.names()["postgres"]
-        docker("exec", pg, "psql", "-U", "postgres", "-c", "DROP DATABASE IF EXISTS %s" % name, "-c", "CREATE DATABASE %s TEMPLATE %s" % (name, TEMPLATE))
+        with self.database_lock:
+            docker("exec", pg, "psql", "-U", "postgres", "-c", "DROP DATABASE IF EXISTS %s" % name, "-c", "CREATE DATABASE %s TEMPLATE %s" % (name, TEMPLATE))
         return name
 
     def drop(self, database):
@@ -241,7 +258,21 @@ class Stack:
     def __exit__(self, *args):
         self.stop("rollout finished" if args[0] is None else "rollout aborted: " + args[0].__name__)
 
+    # A stack holds about 1.75 GB once up and seeding briefly adds about 0.5 GB; the host OOM-killed
+    # celery when three started together. Stacks start one at a time, each only with room to run.
+    start_lock = threading.Lock()
+    STACK_MEMORY_BYTES = int(2.5 * 1024 ** 3)
+
     def start(self):
+        with self.start_lock:
+            deadline = time.time() + 900
+            while available_memory() < self.STACK_MEMORY_BYTES:
+                if time.time() > deadline:
+                    raise RuntimeError("Host memory stayed below %d bytes; not starting another stack" % self.STACK_MEMORY_BYTES)
+                time.sleep(5)
+            return self._start()
+
+    def _start(self):
         self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.database = self.infra.database(self.scope)
         names = dict(self.infra.names(), redis=self._run("redis", REDIS), object_store=self._run("s3", OBJECT_STORE))
@@ -254,8 +285,8 @@ class Stack:
         self.metering.__enter__()
         hosts = sorted(set(self.metering.endpoints) | self.metering.passthrough | set(KNOWN_PROVIDER_HOSTS))
         import inspect
-        edge_source = "DNS_SUFFIX = %r\n" % DNS_SUFFIX + inspect.getsource(dns_answer) + EDGE
-        edge = self._run("edge", BACKEND, ["python", "-c", edge_source, self.infra.gateway, str(self.metering.port("tls"))], aliases=hosts)
+        edge_source = "DNS_SUFFIX = %r\nNAMES = %r\n" % (DNS_SUFFIX, frozenset(hosts)) + inspect.getsource(dns_answer) + EDGE
+        edge = self._run("edge", BACKEND, ["python", "-c", edge_source, self.infra.gateway, str(self.metering.port("tls"))])
         resolver = ["--dns", docker("inspect", "-f", "{{(index .NetworkSettings.Networks \"%s\").IPAddress}}" % self.infra.name, edge)]
         ca = self.directory / "metering" / "trust"
         ca.mkdir(exist_ok=True)
@@ -305,6 +336,13 @@ class Stack:
                 time.sleep(2)
         else:
             raise RuntimeError("Backend web server did not start")
+        # Isolation between concurrent stacks: every metered provider name must reach this stack's own edge.
+        own = resolver[1]
+        for role in ("web", "worker"):
+            seen = docker("exec", self.containers[role], "python", "-c", "import socket,sys;print(' '.join(socket.gethostbyname(h) for h in sys.argv[1:]))",
+                          *sorted(self.metering.endpoints)).split()
+            if set(seen) != {own}:
+                raise RuntimeError("Provider names in %s resolve to %s, not this stack's edge %s" % (role, sorted(set(seen)), own))
         self.env = env
         return self
 
