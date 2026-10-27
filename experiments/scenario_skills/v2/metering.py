@@ -412,7 +412,7 @@ class Metering:
         forwarded = {k: v for k, v in headers.items() if k not in ("connection", "proxy-connection", "proxy-authorization", "x-api-key", "authorization", "x-goog-api-key")}
         for name in presented:
             forwarded[name] = ("Bearer " + real) if name == "authorization" else real
-        upstream, response_bytes, actual, cancelled = None, bytearray(), None, False
+        upstream, response_bytes, actual, cancelled, failed = None, bytearray(), None, False, False
         try:
             upstream = self.transport(host)
             with self.lock:
@@ -422,12 +422,18 @@ class Metering:
             upstream.request(method, target, body=body, headers=forwarded)
             response = upstream.getresponse()
             content_type = response.getheader("Content-Type", "")
-            secure.sendall(("HTTP/1.1 %d %s\r\n" % (response.status, response.reason)).encode())
-            for name, value in response.getheaders():
-                if name.lower() not in ("transfer-encoding", "content-length", "connection", "set-cookie"):
-                    secure.sendall((name + ": " + value + "\r\n").encode("latin1"))
-            secure.sendall(b"Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n")
+            record.update(http_status=response.status)
             disconnected = False
+            try:
+                secure.sendall(("HTTP/1.1 %d %s\r\n" % (response.status, response.reason)).encode())
+                for name, value in response.getheaders():
+                    if name.lower() not in ("transfer-encoding", "content-length", "connection", "set-cookie"):
+                        secure.sendall((name + ": " + value + "\r\n").encode("latin1"))
+                secure.sendall(b"Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n")
+            except OSError:
+                # The client timed out before the provider answered (the pinned generator gives slow providers ~30 s).
+                # The provider still bills the completed request: drain it so the charge is its real usage.
+                disconnected = True
             while True:
                 if self.closed.is_set():
                     cancelled = True
@@ -451,10 +457,11 @@ class Metering:
                         pass
                 usage = gemini_usage(bytes(response_bytes), content_type) if api == "gemini" else extract_usage(bytes(response_bytes), content_type, api)
                 actual = gemini_charge(usage, section["rates"]) if api == "gemini" else usage_charge(usage, section["rates"], api)
-            record.update(http_status=response.status)
-        except (OSError, ValueError, http.client.HTTPException):
+        except (OSError, ValueError, http.client.HTTPException) as error:
             cancelled = self.closed.is_set()
             if not cancelled:
+                failed = True
+                record.update(upstream_error=type(error).__name__ + ": " + str(error)[:300])
                 raise
         finally:
             if upstream:
@@ -466,6 +473,10 @@ class Metering:
                 # A deliberately aborted stream may still be billed; charge its hard bound.
                 actual = bound
                 record.update(charged_at_bound="cancelled")
+            elif failed and actual is None:
+                # The upstream connection broke mid-request; the provider may still bill it, so charge its hard bound.
+                actual = bound
+                record.update(charged_at_bound="upstream_failure")
             elif actual is None and record.get("http_status", 200) >= 400:
                 # An error reply reports no usage; charge the bound rather than assume it was free.
                 actual = bound

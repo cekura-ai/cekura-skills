@@ -273,6 +273,27 @@ class MeteringTests(unittest.TestCase):
         self.assertEqual(body_section(section, b'{"x": 1}')["admission"]["input_token_limit"], 8 + 4096)
         self.assertEqual(body_section(section, b'{"type": "image", "source": {}}')["admission"]["input_token_limit"], 100000)
 
+    def test_a_client_that_times_out_before_the_reply_is_charged_real_usage(self):
+        """The pinned generator abandons slow providers after ~30 s; the provider still bills, so metering drains it."""
+        provider = Provider(ANTHROPIC, "text/event-stream", delay=0.5)
+        metering = self.start(provider)
+        connection = self.tls(metering, "api.fireworks.ai", "direct")
+        body = json.dumps({"model": "accounts/fireworks/routers/glm-5p3-fast", "max_tokens": 500, "messages": []}).encode()
+        connection.sendall(("POST /inference/v1/messages HTTP/1.1\r\nHost: api.fireworks.ai\r\nContent-Length: %d\r\n"
+                            "Content-Type: application/json\r\nx-api-key: %s\r\n\r\n" % (len(body), metering.placeholder)).encode() + body)
+        connection.close()  # Gone before the provider answers.
+        deadline = time.time() + 10
+        key = None
+        while time.time() < deadline:
+            entries = read(budget.wallet_path())["entries"]
+            key = next((k for k in entries if k.endswith("/generator-request-1")), None)
+            if key and entries[key]["status"] != "running":
+                break
+            time.sleep(0.05)
+        entry = read(budget.wallet_path())["entries"][key]
+        self.assertEqual((entry["status"], Decimal(entry["charged"])), ("complete", Decimal("0.0014")))
+        self.assertFalse(read(budget.wallet_path())["blocked"])
+
     def test_live_upstreams_require_the_canonical_wallet(self):
         from experiments.scenario_skills.budget import BudgetError
         with self.assertRaises(BudgetError):
