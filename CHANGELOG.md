@@ -20,6 +20,8 @@ All notable changes to the Cekura plugin. Versions follow
 - The onboarding and manual-eval commands allow `scenarios_run`; generate-scenarios,
   create-agent, onboarding's agent phase and self-improve name it with
   `transport` next to the legacy tool names.
+- autogen-eval's reminders send the follow-up run to `/run-evals` and
+  `scenarios_run`.
 
 ## 0.19.2 — 2026-10-22
 

@@ -298,4 +298,5 @@ Missing coverage (behavioral gaps → another generation run; deterministic gaps
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
 - **Metrics come from the project** — generation attaches the project's set; confirm Expected Outcome is present and attach a missing baseline metric only if the project has it
+- **Running them is `/run-evals`** — `scenarios_run` with `transport` from the agent's `enabled_connections`, not the per-transport `scenarios_run_*` tools
 - **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which uses `scenario_type: "red_teaming_voice"` or `"red_teaming_text"` alongside that guidance text. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.
