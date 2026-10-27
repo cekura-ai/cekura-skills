@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import difflib
 import fcntl
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from pathlib import Path
 
@@ -25,7 +27,7 @@ from ..preflight import preflight
 from ..selection import review_packet
 from ..skill import SKILL, candidate, material, manifest, split
 from . import gates
-from .budget import CLAUDE_SESSION_RESERVATION, COST_DISCOVERY_CAP, admit, minimum_plan, open_ledger, trial_cost
+from .budget import CLAUDE_SESSION_RESERVATION, COST_DISCOVERY_CAP, MARGIN, admit, headroom, minimum_plan, open_ledger, trial_cost
 from .dataset import load as load_v2, canaries as canaries_v2
 from .evaluator import results
 from .judge import ClaudeJudge, packet
@@ -119,6 +121,7 @@ class Controller:
         self.training, self.validation, self.sealed = [[t for t in self.tasks if t["split"] == s] for s in ("training", "validation", "sealed")]
         self.baseline = SKILL.read_bytes()
         self.records = []
+        self.lock = threading.RLock()  # Parallel trials save state from worker threads.
         self.max_evaluated = MAX_EVALUATED
         self.protocol = config.get("v3_protocol") if self.version == 3 else None
         if self.protocol:
@@ -132,8 +135,9 @@ class Controller:
             self.canaries = lambda training: list(training)  # One training domain: the whole set is the screen.
 
     def save(self, **values):
-        self.state.update(values)
-        write(self.path, self.state)
+        with self.lock:
+            self.state.update(values)
+            write(self.path, self.state)
 
     def run(self):
         try:
@@ -168,13 +172,31 @@ class Controller:
     def stage(self, data, items, name, repeat=0):
         return [self.trial(data, t, name, repeat) for t in items]
 
+    def parallel(self, jobs):
+        """Trials as (data, task, stage, repeat, allow_unloaded) on up to the protocol's ``workers`` threads, in job order.
+
+        Each rollout has its own backend stack, wallet scope and cache key, so order does not change
+        any result. On the first failure, queued trials are cancelled and running ones finish.
+        """
+        workers = min(int((self.protocol or {}).get("workers", 1)), len(jobs))
+        if workers <= 1:
+            return [self.trial(*job) for job in jobs]
+        pool = ThreadPoolExecutor(workers)
+        futures = [pool.submit(self.trial, *job) for job in jobs]
+        try:
+            return [f.result() for f in futures]
+        finally:
+            pool.shutdown(wait=True, cancel_futures=True)
+
     def paired(self, finalist, items, name, repeat=0):
-        """Sequential paired trials; the arm order alternates task by task."""
-        before, after = [], []
+        """Paired trials; the arm order alternates task by task (and runs in parallel when configured)."""
+        jobs = []
         for i, task in enumerate(items):
             for arm in (("baseline", "finalist") if i % 2 == 0 else ("finalist", "baseline")):
-                record = self.trial(self.baseline if arm == "baseline" else finalist, task, "%s_%s" % (name, arm), repeat)
-                (before if arm == "baseline" else after).append(record)
+                jobs.append((self.baseline if arm == "baseline" else finalist, task, "%s_%s" % (name, arm), repeat, False))
+        records = self.parallel(jobs)
+        before = [r for r, job in zip(records, jobs) if job[0] is self.baseline]
+        after = [r for r, job in zip(records, jobs) if job[0] is not self.baseline]
         return before, after
 
     # --- protocol -------------------------------------------------------------------------
@@ -194,6 +216,9 @@ class Controller:
             if not check["ready"]:
                 raise Terminal("preflight_failed", "; ".join(check["failures"]))
             config = check["configuration"]
+            from .smoke import smoke_passed
+            if self.protocol and not smoke_passed(directory):
+                raise Terminal("smoke_required", "Run `v2 smoke` on the current rollout code before any paid stage")
         if not self.state.get("deadline"):
             self.save(launched_at=self.clock(), deadline=self.clock() + DEADLINE_SECONDS)
         self.judge = self.judge or ClaudeJudge(config["judge"], directory, self.ledger)
@@ -258,17 +283,16 @@ class Controller:
         1. Baseline on every training task (one capped stage); its costs drive the forecast.
         2. Held-out tasks are limited to templates the baseline failed in training, a choice made on
            training data only; templates the baseline already passes cannot show a gain.
-        3. Search (one evaluated candidate), validation once per arm (strict worst-case gain, no
-           regression), then sealed twice per arm (consistent gains, no consistent regression, no new
-           critical defect).
+        3. Search (``search_scoped``: up to ``max_evaluated`` candidates, each screened, regression-checked
+           and confirmed with adaptive repeats), optionally validation once per arm, then sealed with
+           adaptive repeats (consistent gains, no consistent regression, no new critical defect).
         """
         protocol, directory = self.protocol, self.directory
-        ids = [t["id"] for t in self.training]
         # Caps are immutable once recorded; a new attempt after harness fixes names its own stage (the wallet bounds all spend).
         stage = "v3-baseline-training-" + self.ident["tasks_sha256"][:12] + (("-" + protocol["baseline_stage_label"]) if protocol.get("baseline_stage_label") else "")
         try:
             with self.ledger.staged(stage, Decimal(str(protocol.get("baseline_cap_usd", "30")))):
-                observed = [self.trial(self.baseline, t, "baseline_training", allow_unloaded=True) for t in self.training]
+                observed = self.parallel([(self.baseline, t, "baseline_training", 0, True) for t in self.training])
         except BudgetError as error:
             if "Stage allowance" in str(error):
                 raise Terminal("baseline_cap_exhausted", "The baseline training stage did not fit its cap")
@@ -280,8 +304,10 @@ class Controller:
         self.training = [t for t in self.training if t["template"] not in unloaded]
         self.validation = [t for t in self.validation if t["template"] not in unloaded]
         self.sealed = [t for t in self.sealed if t["template"] not in unloaded]
-        ids = [t["id"] for t in self.training]
-        failing = sorted({r["task_id"].split("-")[0] for r in before if not r["grade"]["score"]})
+        # Generator-only failures are unresolved: a skill edit cannot move them, so they are never targets.
+        failing = sorted({r["task_id"].split("-")[0] for r in before if gates.observation(r, (), True) == "fail"})
+        self.save(generator_only_templates=sorted({r["task_id"].split("-")[0] for r in before
+                                                   if not r["grade"]["score"] and gates.generator_only(r)}))
         if not failing:
             raise Terminal("training_saturated", "The baseline already passes every training task; there is nothing to search")
         costs = {r["task_id"].split("-")[0]: trial_cost(r) for r in before}
@@ -292,22 +318,25 @@ class Controller:
         self.sealed = [t for t in self.sealed if t["template"] in failing]
         mean = sum(costs.values(), Decimal(0)) / len(costs)
         estimate = lambda tasks: sum((costs.get(t["template"], mean) for t in tasks), Decimal(0))
-        work = estimate(self.training) + estimate(self.validation) * 2 + estimate(self.sealed) * 4
-        from .budget import MARGIN, headroom
+        # One candidate: every training task once plus confirmation of up to all of them in both arms
+        # (planned at 2x); held-out: both arms plus a confirming pair for every task (worst case 4x).
+        candidate = estimate(self.training) * 2
+        held_out = estimate(self.validation) * 2 + estimate(self.sealed) * 4
         plan = {"held_out_templates": failing, "training": len(self.training), "validation": len(self.validation), "sealed": len(self.sealed),
-                "rollouts": len(self.training) + 2 * len(self.validation) + 4 * len(self.sealed), "estimate_usd": str(work),
-                "needed_usd": str(work * MARGIN + headroom(config)), "template_costs_usd": {k: str(v) for k, v in sorted(costs.items())}}
+                "candidate_estimate_usd": str(candidate), "held_out_estimate_usd": str(held_out), "estimate_usd": str(candidate + held_out),
+                "needed_usd": str((candidate + held_out) * MARGIN + headroom(config)), "held_out_needed_usd": str(held_out * MARGIN + headroom(config)),
+                "template_costs_usd": {k: str(v) for k, v in sorted(costs.items())}}
         plan["funded"] = self.ledger.can_finish(Decimal(plan["needed_usd"]), CLAUDE_SESSION_RESERVATION)
         self.save(scoped_plan=plan)
         write(directory / "forecast.json", plan)
         if not plan["funded"]:
             raise Terminal("infeasible", "The scoped comparison ($%s with margin) does not fit the remaining authorization" % plan["needed_usd"])
-        finalist = self.search(before, config)
+        finalist = self.search_scoped(before)
         data = (directory / (finalist + ".md")).read_bytes()
         self.save(finalist=finalist)
         held = {}
         if protocol.get("skip_validation"):
-            held["validation"] = {"skipped": "one evaluated candidate; sealed alone decides", "passed": True}
+            held["validation"] = {"skipped": "sealed alone decides", "passed": True}
             return self._sealed_decision(data, held, protocol)
         val_before, val_after = self.paired(data, self.validation, "validation")
         held["validation"] = dict(gates.compare(val_before, val_after, [t["id"] for t in self.validation]))
@@ -318,13 +347,19 @@ class Controller:
             raise Terminal("validation_no_supported_improvement", "Validation needs a strict worst-case gain and no regression; search ends")
         return self._sealed_decision(data, held, protocol)
 
+    def adaptive(self, data, tasks, name):
+        """Paired first trials, then a second pair only where it can still change the consistent verdict."""
+        before, after = self.paired(data, tasks, name)
+        again = set(gates.needs_repeat(before, after, [t["id"] for t in tasks], generator_unresolved=True))
+        second = self.paired(data, [t for t in tasks if t["id"] in again], name, repeat=1)
+        return before + second[0], after + second[1], sorted(again)
+
     def _sealed_decision(self, data, held, protocol):
         directory = self.directory
-        first = self.paired(data, self.sealed, "sealed")
-        second = self.paired(data, self.sealed, "sealed", repeat=1)
+        before, after, repeated = self.adaptive(data, self.sealed, "sealed")
         sids = [t["id"] for t in self.sealed]
-        sealed = gates.compare_consistent(first[0] + second[0], first[1] + second[1], sids, int(protocol.get("sealed_min_gain", 2)), self.disputed(data))
-        held["sealed"] = dict(sealed, critical_defects=sealed["critical_regressions"])
+        sealed = gates.compare_consistent(before, after, sids, int(protocol.get("sealed_min_gain", 2)), self.disputed(data), generator_unresolved=True)
+        held["sealed"] = dict(sealed, critical_defects=sealed["critical_regressions"], repeated=repeated)
         self.save(final_gates=held)
         review_packet(directory, "final", self.validation + self.sealed,
                       [r for r in self.records if r["candidate_sha256"] == digest(self.baseline)],
@@ -332,6 +367,100 @@ class Controller:
         if not sealed["passed"]:
             raise Terminal("no_supported_improvement", "Sealed evidence does not support acceptance")
         raise Terminal("recommendation_pending_final_review", "Automated gates pass; a named reviewer must accept the blinded final packet")
+
+    def search_scoped(self, before):
+        """Training-only search that can actually find a noisy improvement; returns the finalist's name.
+
+        Each candidate runs first on the training tasks the baseline fails, the only place a gain can
+        appear; one that passes fewer than ``training_min_gain`` of them there stops (early stop).
+        Otherwise it runs on the rest of training, and only tasks whose paired first observations
+        disagree (or show a new critical failure) run once more in each arm. The gate is
+        ``compare_consistent`` with generator-only failures unresolved, so a gain or a regression has
+        to repeat: one noisy flip neither accepts nor rejects a candidate. Every candidate's measured
+        per-task wins and losses go to the next proposal, which must test a different hypothesis.
+        """
+        if self.state.get("finalist_frozen"):
+            return self.state["finalist"]
+        protocol, directory = self.protocol, self.directory
+        min_gain = int(protocol.get("training_min_gain", 2))
+        failing_ids = {r["task_id"] for r in before if gates.observation(r, (), True) == "fail"}
+        screen_tasks = [t for t in self.training if t["id"] in failing_ids]
+        rest = [t for t in self.training if t["id"] not in failing_ids]
+        base_sha = digest(self.baseline)
+        history, parent, best = list(before), self.baseline, 0
+        evaluated, attempts = 0, []
+        forbidden = forbidden_material(self.tasks)
+        plan = self.state["scoped_plan"]
+        for i in range(1, MAX_ATTEMPTS + 1):
+            if evaluated >= self.max_evaluated:
+                break
+            rejected, no_change = directory / ("proposal-%d.rejected.json" % i), directory / ("proposal-%d.no-change.json" % i)
+            data_path = directory / ("candidate-%d.md" % i)
+            if no_change.exists():
+                attempts.append({"attempt": i, "outcome": "no_change", "reason": read(no_change).get("rationale")})
+                break
+            if rejected.exists() and not data_path.exists():
+                attempts.append(read(rejected))
+                continue
+            needed = (Decimal(plan["candidate_estimate_usd"]) + Decimal(plan["held_out_estimate_usd"])) * MARGIN + headroom(self.config)
+            if not self.ledger.can_finish(needed, CLAUDE_SESSION_RESERVATION):
+                attempts.append({"attempt": i, "outcome": "budget", "needed_usd": str(needed)})
+                break
+            if not data_path.exists():
+                try:
+                    data, rationale = self.proposer.propose(parent, history, i, forbidden, outcomes=attempts)
+                except (ValueError, SchemaValidationError) as error:
+                    row = {"attempt": i, "outcome": "rejected", "reason": str(error)}
+                    write(rejected, row)
+                    attempts.append(row)
+                    continue
+                if data is None:
+                    attempts.append({"attempt": i, "outcome": "no_change", "reason": rationale.get("rationale")})
+                    break
+            data = data_path.read_bytes()
+            rationale = read(directory / ("candidate-%d.rationale.json" % i))
+            name, sha = "candidate-%d" % i, digest(data)
+            evaluated += 1
+            screened = self.parallel([(data, t, name + "_screen", 0, True) for t in screen_tasks])
+            mine = [r for r in screened if not skill_not_loaded(r)]
+            fixed = sorted(r["task_id"] for r in mine if gates.observation(r, (), True) == "pass")
+            row = {"attempt": i, "name": name, "hypothesis": rationale.get("hypothesis"), "first_trial_fixed": fixed,
+                   "skill_not_loaded": sorted(r["task_id"] for r in screened if skill_not_loaded(r))}
+            if len(fixed) < min_gain:
+                row.update(outcome="screen_rejected", reason="passed %d of %d baseline-failing tasks; %d needed" % (len(fixed), len(screen_tasks), min_gain))
+            else:
+                checked = self.parallel([(data, t, name + "_training", 0, True) for t in rest])
+                mine += [r for r in checked if not skill_not_loaded(r)]
+                row["skill_not_loaded"] += sorted(r["task_id"] for r in checked if skill_not_loaded(r))
+                ids = [t["id"] for t in self.training if any(r["task_id"] == t["id"] for r in mine)]
+                again = gates.needs_repeat(before, mine, ids, generator_unresolved=True)
+                jobs = [job for t in self.training if t["id"] in again
+                        for job in ((self.baseline, t, "baseline_confirm", 1, True), (data, t, name + "_confirm", 1, True))]
+                confirm = [r for r in self.parallel(jobs) if not skill_not_loaded(r)]
+                mine += [r for r in confirm if r["candidate_sha256"] == sha]
+                base = before + [r for r in confirm if r["candidate_sha256"] == base_sha]
+                comparison = gates.compare_consistent(base, mine, ids, min_gain, generator_unresolved=True)
+                row.update(outcome="evaluated", eligible=comparison["passed"], gains=comparison["gains"], regressions=comparison["regressions"],
+                           critical_regressions=comparison["critical_regressions"], inconsistent=comparison["inconsistent"], repeated=sorted(again))
+                item = {"name": name, "sha256": sha, "eligible": comparison["passed"], "gains": comparison["gains"],
+                        "training_passes": sum(gates.observation(r, (), True) == "pass" for r in mine if not r["repeat"]),
+                        "bytes": len(data), "cost_usd": str(sum((trial_cost(r) for r in mine), Decimal(0))),
+                        "comparison": comparison, "hypothesis": rationale.get("hypothesis")}
+                self.state["candidates"] = [c for c in self.state["candidates"] if c["name"] != name] + [item]
+                if item["eligible"] and len(item["gains"]) > best:
+                    parent, best = data, len(item["gains"])
+            history.extend(r for r in mine if r not in history)
+            summary = History(directory / "meta-history")
+            if summary.next_iteration() <= i:
+                summary.record(i, name, rationale.get("rationale", ""), mine)
+            attempts.append(row)
+            self.save(attempts=attempts)
+        eligible = sorted((c for c in self.state["candidates"] if c["eligible"]),
+                          key=lambda c: (-len(c["gains"]), c["bytes"], Decimal(c["cost_usd"]), c["name"]))
+        self.save(attempts=attempts, finalist_frozen=True, finalist=eligible[0]["name"] if eligible else None)
+        if not eligible:
+            raise Terminal("no_training_candidate_qualifies", "No candidate reached %d consistent training gains without a consistent regression" % min_gain)
+        return eligible[0]["name"]
 
     def repeat_tasks(self):
         if self.protocol:

@@ -3,7 +3,7 @@ import json
 
 from ..common import ROOT, digest, write
 from ..proposer import training_payload
-from ..skill import candidate, material, split
+from ..skill import SKILL, candidate, material, split
 from .transport import ClaudeSession
 
 SCHEMA = {"type": "object", "additionalProperties": False, "required": ["status", "body", "hypothesis", "rationale", "targeted_checks"],
@@ -27,8 +27,10 @@ def screen(data, parent, history, rationale, previous):
         raise ValueError("Candidate must target unresolved authoring checks of its retained parent")
 
 
-def training_workspace(parent, history):
+def training_workspace(parent, history, labels=None):
+    """Read-only proposal workspace; ``labels`` names each revision's sha (baseline, candidate-N)."""
     history = training_payload(history)
+    labels = labels or {}
     files = {"SKILL.md": parent.decode()}
     files.update({n: b.decode() for n, b in material().items() if n.startswith(("references/", "examples/"))})
     index = []
@@ -43,8 +45,19 @@ def training_workspace(parent, history):
     for i, r in enumerate(history):
         name = "training/trace-%03d.json" % i
         files[name] = json.dumps(encode(r), ensure_ascii=False, indent=2)
-        index.append({"path": name, "task": r["task_id"], "score": r["grade"]["score"], "failed_checks": r["grade"]["failed_checks"]})
+        index.append({"path": name, "task": r["task_id"], "revision": labels.get(r.get("candidate_sha256"), (r.get("candidate_sha256") or "unknown")[:12]),
+                      "trial": r.get("repeat", 0), "score": r["grade"]["score"], "failed_checks": r["grade"]["failed_checks"],
+                      "attribution": {c: r["grade"].get("attribution", {}).get(c, "authoring") for c in r["grade"]["failed_checks"]}})
     files["training/index.json"] = json.dumps(index, ensure_ascii=False)
+    # Per task: how often each revision passed and which checks failed, so one noisy trial is visible as noise.
+    summary = {}
+    for row in index:
+        cell = summary.setdefault(row["task"], {}).setdefault(row["revision"], {"trials": 0, "passed": 0, "failed_checks": {}})
+        cell["trials"] += 1
+        cell["passed"] += bool(row["score"])
+        for check in row["failed_checks"]:
+            cell["failed_checks"][check] = cell["failed_checks"].get(check, 0) + 1
+    files["training/by_task.json"] = json.dumps(summary, ensure_ascii=False, indent=1, sort_keys=True)
     return files
 
 
@@ -73,10 +86,14 @@ class Proposer:
             raise ValueError("Claude's training-file read capability was not demonstrated")
         return passed
 
-    def propose(self, parent, history, iteration, forbidden):
+    def propose(self, parent, history, iteration, forbidden, outcomes=()):
         if not 1 <= iteration <= 4:
             raise ValueError("At most four distinct candidates")
-        files = training_workspace(parent, history)
+        previous = [(p.read_bytes(), json.loads(p.with_suffix(".rationale.json").read_text()))
+                    for p in sorted(self.directory.glob("candidate-*.md"))]
+        labels = {digest(SKILL): "baseline"}
+        labels.update({digest(p): p.stem for p in self.directory.glob("candidate-*.md")})
+        files = training_workspace(parent, history, labels)
         prompt = ("Use Stanford Meta-Harness history-driven reflection. Inspect /workspace/SKILL.md, references and training/index.json, "
                   "then read relevant complete training traces with the read-only tools. A single-key $text_file object points to its exact, "
                   "losslessly stored text in a shared file; follow these pointers as needed. Propose one targeted general improvement supported by "
@@ -87,9 +104,16 @@ class Proposer:
         prompt += (" List targeted_checks using the exact failed check names of the retained parent's training results; a candidate needs at least one"
                    " unresolved check. Each result's grade.attribution marks failures caused by the generation service ('backend') when the"
                    " assistant's request was correct; those are not skill defects and cannot be targeted.")
-        previous = [(p.read_bytes(), __import__("json").loads(p.with_suffix(".rationale.json").read_text()))
-                    for p in sorted(self.directory.glob("candidate-*.md"))]
         files["training/hypotheses.json"] = json.dumps([r for _, r in previous], ensure_ascii=False)
+        if outcomes:
+            # Measured training outcome of every earlier attempt: tasks it fixed, consistent gains and
+            # regressions, and tasks it newly failed. Training data only.
+            files["training/outcomes.json"] = json.dumps(list(outcomes), ensure_ascii=False, indent=1)
+            prompt += (" training/outcomes.json records how each earlier candidate measured on training (first-trial fixes, consistent gains and"
+                       " regressions, repeated tasks) and training/by_task.json tallies every revision's passes and failed checks per task."
+                       " Outcomes vary between identical trials, so read a single failure as weak evidence. Do not re-test a hypothesis already"
+                       " measured: choose a different remaining failure family, or keep what an earlier candidate fixed while removing what made"
+                       " it fail elsewhere. An edit that makes the assistant refuse or stop short of requested work is a regression.")
         value = self.session(prompt, {"iteration": iteration, "parent_sha256": digest(parent), "index": "training/index.json"}, SCHEMA,
                              "proposal-%d" % iteration, workspace=files)
         if value["status"] == "no_change":

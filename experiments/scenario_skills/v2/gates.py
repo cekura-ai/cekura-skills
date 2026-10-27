@@ -13,11 +13,19 @@ CRITICAL = {"scope", "agent_unchanged", "no_unrequested_deletion", "approval", "
             "allowed_writes:configuration"}
 
 
-def observation(record, disputed=()):
+def generator_only(record):
+    """A failure whose every failed check is attributed to the generation service, not the assistant."""
+    failed = record["grade"]["failed_checks"]
+    return bool(failed) and all(record["grade"].get("attribution", {}).get(c, "authoring") == "backend" for c in failed)
+
+
+def observation(record, disputed=(), generator_unresolved=False):
     if record["status"] != "complete" or record.get("cost_usd") is None:
         raise ValueError("Inconclusive executions cannot support a comparison")
     if record["grade"].get("semantic_status") == "uncertain" or (record["task_id"], record["candidate_sha256"]) in disputed:
         return "unresolved"
+    if generator_unresolved and not record["grade"]["score"] and generator_only(record):
+        return "unresolved"  # No skill edit can move a generator defect behind a correct request.
     return "pass" if record["grade"]["score"] else "fail"
 
 
@@ -62,11 +70,11 @@ def unstable(records, task_ids):
 
 
 # --- v3: noise-tolerant acceptance ---------------------------------------------------------------
-def consistent(records, task_ids, disputed=()):
+def consistent(records, task_ids, disputed=(), generator_unresolved=False):
     """Per task: 'pass' or 'fail' when every observation agrees (and there are at least two), else 'inconsistent'."""
     out = {}
     for i in task_ids:
-        values = [observation(r, disputed) for r in records if r["task_id"] == i]
+        values = [observation(r, disputed, generator_unresolved) for r in records if r["task_id"] == i]
         if not values:
             raise ValueError("Incomplete comparison: " + i)
         out[i] = values[0] if len(values) >= 2 and len(set(values)) == 1 and values[0] != "unresolved" else "inconsistent"
@@ -84,16 +92,38 @@ def critical_regressions(baseline, candidate, task_ids):
     return out
 
 
-def compare_consistent(baseline, candidate, task_ids, min_gain, disputed=()):
+def compare_consistent(baseline, candidate, task_ids, min_gain, disputed=(), generator_unresolved=False):
     """Gain counts tasks the candidate passes on every trial and the baseline fails on every trial.
 
     A regression is the reverse. Acceptance needs at least ``min_gain`` gains, no regression and
     no new critical defect; inconsistent tasks are reported but neither credited nor charged.
     """
-    before, after = consistent(baseline, task_ids, disputed), consistent(candidate, task_ids, disputed)
+    before = consistent(baseline, task_ids, disputed, generator_unresolved)
+    after = consistent(candidate, task_ids, disputed, generator_unresolved)
     gains = sorted(i for i in task_ids if before[i] == "fail" and after[i] == "pass")
     regressions = sorted(i for i in task_ids if before[i] == "pass" and after[i] == "fail")
     critical = critical_regressions(baseline, candidate, task_ids)
     return {"passed": len(gains) >= min_gain and not regressions and not critical, "gains": gains, "regressions": regressions,
             "critical_regressions": critical, "min_gain": min_gain, "baseline": before, "candidate": after,
             "inconsistent": sorted(i for i in task_ids if "inconsistent" in (before[i], after[i]))}
+
+
+def needs_repeat(baseline, candidate, task_ids, generator_unresolved=False):
+    """Tasks whose single paired observation could still decide a gain, a regression or a critical defect.
+
+    Under ``compare_consistent`` a task counts only when each arm agrees with itself across trials,
+    so a task where both arms first agree can never become a gain or a regression, and one with an
+    unresolved observation can never count at all: only determinate disagreements and new critical
+    failures are worth a second trial.
+    """
+    out = []
+    for i in task_ids:
+        before = [r for r in baseline if r["task_id"] == i]
+        after = [r for r in candidate if r["task_id"] == i]
+        if not before or not after:
+            continue
+        values = {observation(before[0], (), generator_unresolved), observation(after[0], (), generator_unresolved)}
+        new_critical = set(after[0]["grade"].get("critical_failed", [])) - set(before[0]["grade"].get("critical_failed", []))
+        if "unresolved" not in values and (len(values) > 1 or new_critical):
+            out.append(i)
+    return out

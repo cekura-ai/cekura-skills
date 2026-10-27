@@ -1,7 +1,7 @@
 """python -m experiments.scenario_skills.v2 --help
 
 Preparation (no inference): authorize-budget → prepare-claude → prepare-generator → prepare →
-contract-probe → transport-probe → preflight. After the fixture/gold signoff and launch
+contract-probe → transport-probe → smoke → preflight. After the fixture/gold signoff and launch
 approval, ``run`` goes to the terminal report in one command. ``accept`` exports a patch only
 after a named reviewer signs the blinded final packet.
 """
@@ -41,7 +41,7 @@ def load_env(path, names):
 def main():
     parser = argparse.ArgumentParser(description="72-task authoring optimization against the isolated real backend")
     parser.add_argument("command", choices=("validate", "authorize-budget", "extend-budget", "prepare-claude", "prepare-generator", "prepare", "prepare-v3", "reinstrument",
-                                            "contract-probe", "transport-probe", "preflight", "run", "report", "accept"))
+                                            "contract-probe", "transport-probe", "smoke", "preflight", "run", "report", "accept"))
     parser.add_argument("--artifacts", type=Path, default=Path.home() / "cekura-scenario-v2-run")
     parser.add_argument("--base-config", type=Path)
     parser.add_argument("--evidence-root", type=Path)
@@ -211,6 +211,11 @@ def main():
         if result["passed"]:
             write(directory / "transport-probe/gateway-probe.json", result)
         print({"passed": result["passed"], "inference_requests": 0, "terminated": result["terminated"]})
+        return int(not result["passed"])
+    if args.command == "smoke":
+        from .smoke import smoke
+        result = smoke(cfg, directory, ledger)
+        print({k: v for k, v in result.items() if k != "code"})
         return int(not result["passed"])
     if args.command == "preflight":
         from ..preflight import preflight

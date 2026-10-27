@@ -48,7 +48,7 @@ class Proposer:
     def __init__(self, directory, reject_first=False):
         self.directory, self.reject_first, self.calls = directory, reject_first, []
 
-    def propose(self, parent, history, i, forbidden):
+    def propose(self, parent, history, i, forbidden, outcomes=()):
         assert all(r["split"] == "training" for r in history), "held-out evidence reached the proposer"
         self.calls.append(i)
         if self.reject_first and i == 1:

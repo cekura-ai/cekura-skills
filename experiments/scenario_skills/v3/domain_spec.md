@@ -186,6 +186,40 @@ This is a small comparison. A pass is suggestive, not conclusive, and any patch 
 - **Spend:** $103.74 of the $150 wallet. About $59 went on calibration, baseline, candidate and diagnostics; the rest was history and preparation.
 - **Why no second candidate:** another candidate needs about $55–57 with margin, against $46.26 left, so none was run.
 
+## Adaptive search (2026-10-27)
+
+**Why this changed:** the scoped run could not find an improvement, and the cause was the loop rather than the model:
+- **One try:** it evaluated a single candidate.
+- **A noise-blind gate:** it rejected a candidate that fixed three tasks because two tasks each failed once.
+- **Repeated hypotheses:** every proposal tested write scope.
+- **Waste:** most of the money went to harness repairs and to worst-case request reservations.
+
+The user raised the wallet to $300 (`v2 extend-budget`, recorded once in the wallet itself; every earlier charge still counts). The target model and the subscription-only Claude proposer and judge are unchanged.
+
+**Training gate** (`search_scoped`; `gates.compare_consistent` with `generator_unresolved`):
+- **Screen:** each candidate first runs on the training tasks the baseline fails, the only place a gain can appear.
+- **Early stop:** a candidate that passes fewer than `training_min_gain` (2) of them stops there, before any regression check.
+- **Confirmation:** otherwise it runs on the rest of training. Only tasks whose paired first observations disagree, or that show a new critical failure, run once more in each arm (`gates.needs_repeat`). A task where both arms agree can never become a gain or a regression, so it is not repeated. Baseline repeats are cached and shared by every candidate.
+- **Decision:** a gain or a regression must repeat. A single noisy flip neither accepts nor rejects a candidate.
+- **Unscored failures:** a failure whose every failed check is attributed to the generator is unresolved, since no skill edit can move it.
+- **Excluded tasks:** tasks where the skill never loaded are left out and reported per attempt.
+
+**Proposals** (`max_evaluated` 4):
+- **Evidence:** each proposal receives every earlier attempt's measured outcome (`training/outcomes.json`) and per-task pass tallies with failed checks by revision (`training/by_task.json`).
+- **Diversity:** it must test a hypothesis that has not already been measured.
+- **Lineage:** a qualifying candidate becomes the parent of later ones.
+
+**Held-out sealed:** paired first trials, then a second pair only where `needs_repeat` says it can still change the verdict.
+
+**Throughput and reservations:**
+- **Parallel rollouts:** two at once (`workers`). Each rollout has its own stack, wallet scope and cache key.
+- **Per-stack DNS:** provider names now resolve through each stack's own edge DNS. They are no longer network aliases, which every stack on the shared network would see. Each stack verifies this at startup.
+- **Memory:** stacks start one at a time and only with 2.5 GB available, after three concurrent stacks (about 1.75 GB each) OOM-killed celery on the 7.6 GB host.
+- **Reservations:** target requests are reserved from their body (bytes plus 4,096 template tokens) instead of the 1M-token context limit, about $1.7 instead of $5.44 at the median 216 KB body.
+- **Forecast headroom:** plans for one 768 KB request per endpoint.
+
+**Smoke:** `v2 smoke` runs two concurrent v3 rollouts through the real evaluator, Modal sandbox and backend stack, with the offline target transport and a provider transport that refuses every connection. Its only charge is the bounded sandbox reservation. The controller refuses a paid stage unless a smoke passed on the current rollout code.
+
 ## Privacy (`v3/sanitize.py`)
 
 `python3 -m experiments.scenario_skills.v3.sanitize <packet-dir>` rejects any fixture or gold string that:
@@ -203,6 +237,7 @@ python3 -m experiments.scenario_skills.v3.build_fixtures        # authoring only
 python3 -m experiments.scenario_skills.v2 validate --benchmark 3
 python3 -m experiments.scenario_skills.v2 prepare-v3 --artifacts ~/cekura-scenario-v3-run --from ~/cekura-scenario-v2-run  # reuses the v2 preparation; writes human-review.md
 python3 -m experiments.scenario_skills.v2 contract-probe --artifacts ~/cekura-scenario-v3-run   # real-backend replay proof (no inference)
+python3 -m experiments.scenario_skills.v2 smoke --artifacts ~/cekura-scenario-v3-run2 --env-file <approved.env>      # no inference; required before a paid stage
 python3 -m experiments.scenario_skills.v2 preflight --artifacts ~/cekura-scenario-v3-run --env-file <approved.env>
 python3 -m unittest experiments.scenario_skills.v3.tests.test_v3
 CEKURA_BACKEND_INTEGRATION=1 python3 -m unittest experiments.scenario_skills.v3.tests.test_real_backend
