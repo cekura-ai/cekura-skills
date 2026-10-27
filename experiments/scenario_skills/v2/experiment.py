@@ -262,7 +262,8 @@ class Controller:
         """
         protocol, directory = self.protocol, self.directory
         ids = [t["id"] for t in self.training]
-        stage = "v3-baseline-training-" + self.ident["tasks_sha256"][:12]
+        # Caps are immutable once recorded; a new attempt after harness fixes names its own stage (the wallet bounds all spend).
+        stage = "v3-baseline-training-" + self.ident["tasks_sha256"][:12] + (("-" + protocol["baseline_stage_label"]) if protocol.get("baseline_stage_label") else "")
         try:
             with self.ledger.staged(stage, Decimal(str(protocol.get("baseline_cap_usd", "30")))):
                 observed = [self.trial(self.baseline, t, "baseline_training", allow_unloaded=True) for t in self.training]
