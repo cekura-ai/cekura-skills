@@ -358,7 +358,12 @@ class Controller:
             if rejected.exists():
                 attempts.append(read(rejected))
                 continue
-            funded, needed = admit(self.ledger, history, self.training, self.validation, self.sealed, self.repeat_tasks(), config)
+            if self.protocol:
+                # Same per-template measured forecast that funded the scoped run; family maxima would over-reserve.
+                needed = Decimal(self.state["scoped_plan"]["needed_usd"])
+                funded = self.ledger.can_finish(needed, CLAUDE_SESSION_RESERVATION)
+            else:
+                funded, needed = admit(self.ledger, history, self.training, self.validation, self.sealed, self.repeat_tasks(), config)
             if not funded:
                 attempts.append({"attempt": i, "outcome": "budget", "needed_usd": str(needed)})
                 break
