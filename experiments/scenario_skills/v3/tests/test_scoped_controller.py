@@ -84,6 +84,18 @@ class ScopedController(unittest.TestCase):
         self.assertEqual(read(self.directory / "forecast.json")["held_out_templates"], ["T03", "T10"])
         self.assertFalse(any(t in ("T05", "T09") for b, s, t, _ in self.evaluator.calls if not b or s != "training"))
 
+    def test_budget_cap_on_held_out_and_skipped_validation(self):
+        self.config["v3_protocol"] = dict(PROTOCOL, held_out_max_templates=2, skip_validation=True, sealed_min_gain=2)
+        write(self.directory / "launch-approval.json", {"reviewer": "Test human", "approved": True, "ceiling_usd": "150",
+                                                       "identity_sha256": digest(identity(self.config))})
+        state = self.go(Evaluator())
+        self.assertEqual(state["status"], "recommendation_pending_final_review", state.get("reason"))
+        self.assertEqual(read(self.directory / "forecast.json")["held_out_templates"], ["T03", "T05"])  # Equal costs: by name.
+        calls = Counter((b, s, r) for b, s, _, r in self.evaluator.calls)
+        self.assertEqual(sum(v for (b, s, r), v in calls.items() if s == "validation"), 0)
+        self.assertEqual(sum(v for (b, s, r), v in calls.items() if s == "sealed"), 8)
+        self.assertTrue(state["final_gates"]["validation"]["skipped"])
+
     def test_a_candidate_that_regresses_a_template_is_rejected_in_training(self):
         state = self.go(Evaluator(regress={"T01"}))
         self.assertEqual(state["status"], "no_training_candidate_qualifies")

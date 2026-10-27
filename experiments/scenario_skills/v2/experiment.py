@@ -282,9 +282,12 @@ class Controller:
         failing = sorted({r["task_id"].split("-")[0] for r in before if not r["grade"]["score"]})
         if not failing:
             raise Terminal("training_saturated", "The baseline already passes every training task; there is nothing to search")
-        self.validation = [t for t in self.validation if t["template"] in failing]
-        self.sealed = [t for t in self.sealed if t["template"] in failing]
         costs = {r["task_id"].split("-")[0]: trial_cost(r) for r in before}
+        if protocol.get("held_out_max_templates"):
+            # Budget-limited: the cheapest failing templates, by measured training cost (training data only).
+            failing = sorted(sorted(failing, key=lambda t: (costs[t], t))[:int(protocol["held_out_max_templates"])])
+        self.validation = [] if protocol.get("skip_validation") else [t for t in self.validation if t["template"] in failing]
+        self.sealed = [t for t in self.sealed if t["template"] in failing]
         mean = sum(costs.values(), Decimal(0)) / len(costs)
         estimate = lambda tasks: sum((costs.get(t["template"], mean) for t in tasks), Decimal(0))
         work = estimate(self.training) + estimate(self.validation) * 2 + estimate(self.sealed) * 4
@@ -301,6 +304,9 @@ class Controller:
         data = (directory / (finalist + ".md")).read_bytes()
         self.save(finalist=finalist)
         held = {}
+        if protocol.get("skip_validation"):
+            held["validation"] = {"skipped": "one evaluated candidate; sealed alone decides", "passed": True}
+            return self._sealed_decision(data, held, protocol)
         val_before, val_after = self.paired(data, self.validation, "validation")
         held["validation"] = dict(gates.compare(val_before, val_after, [t["id"] for t in self.validation]))
         gain = held["validation"]["worst_case_gain"]
@@ -308,6 +314,10 @@ class Controller:
         self.save(validation=held["validation"])
         if not held["validation"]["passed"]:
             raise Terminal("validation_no_supported_improvement", "Validation needs a strict worst-case gain and no regression; search ends")
+        return self._sealed_decision(data, held, protocol)
+
+    def _sealed_decision(self, data, held, protocol):
+        directory = self.directory
         first = self.paired(data, self.sealed, "sealed")
         second = self.paired(data, self.sealed, "sealed", repeat=1)
         sids = [t["id"] for t in self.sealed]

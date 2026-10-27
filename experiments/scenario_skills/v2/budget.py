@@ -39,7 +39,10 @@ def headroom(config):
     target = config["target"]
     total = request_bound({}, target) + INFRASTRUCTURE_RESERVATION
     for endpoint in config.get("backend", {}).get("generator", {}).get("endpoints", []):
-        total += request_bound({}, endpoint)
+        # Admission limits and rates are pinned per model; one maximal request at the costliest model per endpoint.
+        sections = [m for m in endpoint.get("models", {}).values() if m.get("admission")] or ([endpoint] if endpoint.get("admission") else [])
+        if sections:
+            total += max(request_bound({}, m) for m in sections)
     return total
 
 

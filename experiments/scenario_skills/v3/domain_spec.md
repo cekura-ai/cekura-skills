@@ -155,6 +155,16 @@ Before this run, two infrastructure gaps on the real generator path were fixed:
 
 A wallet leak was also fixed: generator-sandbox reservations are now settled at teardown.
 
+## Final sizing (2026-10-27)
+
+The scoped baseline (14 training tasks) passed 6 and failed 9; T09 never loads the skill and is excluded. The scoped forecast needed $119.71 against $62.95 remaining. The run was therefore cut further, with every choice still made on training data only:
+- **No validation stage.** With one evaluated candidate it only selects among candidates.
+- **Sealed held-out:** the four cheapest failing templates by measured training cost (T16, T04, T12, T05), twice per arm.
+- **Acceptance:** at least 2 consistent gains, no consistent regression, no new critical defect.
+- **Candidate training:** the candidate still runs on all 14 training tasks, so a regression on the passing templates rejects it before any held-out spend.
+
+This is a small comparison. A pass is suggestive, not conclusive, and any patch still needs named human acceptance.
+
 ## Privacy (`v3/sanitize.py`)
 
 `python3 -m experiments.scenario_skills.v3.sanitize <packet-dir>` rejects any fixture or gold string that:
