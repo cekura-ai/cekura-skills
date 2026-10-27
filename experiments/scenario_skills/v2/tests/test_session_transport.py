@@ -57,6 +57,20 @@ class SessionTransport(unittest.TestCase):
             self.assertEqual(self.session("p", {}, SCHEMA, "judge-r"), {"ok": True})
         self.assertEqual(self.entries()["judge-r-attempt1"]["status"], "complete")
 
+    def test_runs_in_different_namespaces_reuse_session_names_and_have_their_own_allowance(self):
+        config = {"subscription_only": True, "hard_cost_bound_verified": True, "read_training_files": True}
+        first = transport.ClaudeSession(config, self.directory / "run1", self.ledger, namespace="run-a")
+        second = transport.ClaudeSession(config, self.directory / "run2", self.ledger, namespace="run-b")
+        with patch.object(transport, "execute", lambda value: OK):
+            for i in range(5):
+                first("p", {}, SCHEMA, "proposal-%d" % i)
+            with self.assertRaises(ValueError):
+                first("p", {}, SCHEMA, "proposal-5")  # Five proposer sessions per run.
+            self.assertEqual(second("p", {}, SCHEMA, "proposal-1"), {"ok": True})
+        e = self.entries()
+        self.assertEqual((e["run-a/proposal-1"]["status"], e["run-b/proposal-1"]["namespace"]), ("complete", "run-b"))
+        self.assertNotIn("proposal-1", e)
+
     def test_a_cli_that_exits_before_any_event_is_not_started(self):
         replies = iter([{"returncode": 1, "events": "", "stderr": "error: unknown option"}, OK])
         with patch.object(transport, "execute", lambda value: next(replies)):

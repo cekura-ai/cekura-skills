@@ -1,5 +1,6 @@
 """Fresh training-only proposal sessions; no-change is an ordinary outcome."""
 import json
+from pathlib import Path
 
 from ..common import ROOT, digest, write
 from ..proposer import training_payload
@@ -63,7 +64,9 @@ def training_workspace(parent, history, labels=None):
 
 class Proposer:
     def __init__(self, config, directory, ledger):
-        self.session = ClaudeSession(dict(config, read_training_files=True), directory / "proposal-sessions", ledger)
+        # Proposal session names repeat in every run; the namespace keeps each run's wallet entries and allowance apart.
+        namespace = "run-" + digest(str(Path(directory).resolve()).encode())[:12]
+        self.session = ClaudeSession(dict(config, read_training_files=True), directory / "proposal-sessions", ledger, namespace=namespace)
         self.directory = directory
 
     def verify(self):

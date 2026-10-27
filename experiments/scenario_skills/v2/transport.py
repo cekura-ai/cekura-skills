@@ -22,23 +22,32 @@ def never_reached_model(response):
 
 
 class ClaudeSession:
-    def __init__(self, config, directory, ledger):
+    def __init__(self, config, directory, ledger, namespace=None):
+        """``namespace`` scopes wallet keys and the session allowance to one run.
+
+        Session names such as ``proposal-1`` repeat in every run directory while the wallet is
+        shared, so without a namespace a second run collides with the first run's entries.
+        """
         if config.get("subscription_only") is not True or config.get("hard_cost_bound_verified") is not True:
             raise ValueError("v2 requires verified subscription-only Claude with extra usage disabled")
-        self.config, self.directory, self.ledger = config, directory, ledger
+        self.config, self.directory, self.ledger, self.namespace = config, directory, ledger, namespace
+
+    def wallet_key(self, key):
+        return self.namespace + "/" + key if self.namespace else key
 
     def _reserve(self, key, role):
         # Sessions that never started (no container ran) do not count against the allowance.
         # A resolved entry (settled from evidence that no session produced output) is not counted either.
         count = sum(e.get("entry_type") == "claude_session" and e.get("role") == role and not (e.get("not_started") or e.get("resolution"))
-                    for e in self.ledger.state["entries"].values())
+                    and e.get("namespace") == self.namespace for e in self.ledger.state["entries"].values())
         if count >= (5 if role == "proposer" else 384):
             raise ValueError("Bounded Claude session allowance exhausted")
-        self.ledger.reserve(key, "proposer", 2.5, entry_type="claude_session", role=role)
+        metadata = {"namespace": self.namespace} if self.namespace else {}
+        self.ledger.reserve(self.wallet_key(key), "proposer", 2.5, entry_type="claude_session", role=role, **metadata)
 
     def _mark_not_started(self, key, reason):
         with self.ledger.transaction():
-            self.ledger.state["entries"][key]["not_started"] = reason[:500]
+            self.ledger.state["entries"][self.wallet_key(key)]["not_started"] = reason[:500]
             write(self.ledger.path, self.ledger.state)
 
     def _run(self, key, role, value, fresh):
@@ -48,7 +57,7 @@ class ClaudeSession:
             if attempt or not fresh:
                 with self.ledger.transaction():
                     entries = self.ledger.state["entries"]
-                    current = next("%s-attempt%d" % (key, n) for n in range(1, 100) if "%s-attempt%d" % (key, n) not in entries)
+                    current = next("%s-attempt%d" % (key, n) for n in range(1, 100) if self.wallet_key("%s-attempt%d" % (key, n)) not in entries)
                     self._reserve(current, role)
             try:
                 response = execute(value)
@@ -56,14 +65,14 @@ class ClaudeSession:
                     raise NotStarted("CLI exited %s with no events: %s" % (response.get("returncode"), str(response.get("stderr", ""))[-300:]))
             except NotStarted as error:
                 write(self.directory / (current + ".error.json"), {"not_started": True, "error": str(error)})
-                self.ledger.settle(current, 0)
+                self.ledger.settle(self.wallet_key(current), 0)
                 self._mark_not_started(current, str(error))
                 continue
             except Exception as error:
                 write(self.directory / (current + ".error.json"), {"not_started": False, "error": "%s: %s" % (type(error).__name__, error)})
-                self.ledger.settle(current, None)
+                self.ledger.settle(self.wallet_key(current), None)
                 raise
-            self.ledger.settle(current, response.get("incremental_cost_usd"))
+            self.ledger.settle(self.wallet_key(current), response.get("incremental_cost_usd"))
             return response
         raise RuntimeError("Claude session %s could not start after 3 attempts (no inference ran); see its error files" % key)
 
@@ -82,7 +91,7 @@ class ClaudeSession:
         if not response_path.exists():
             preconditions(self.config)  # Before reserving: a failed precondition must not leave unknown usage.
         with self.ledger.transaction():
-            entry = self.ledger.state["entries"].get(key)
+            entry = self.ledger.state["entries"].get(self.wallet_key(key))
             if entry is None:
                 self._reserve(key, role)
         if entry is not None and response_path.exists() and entry["status"] == "complete" and never_reached_model(read(response_path)):
