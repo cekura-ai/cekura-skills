@@ -32,7 +32,7 @@ from urllib.parse import parse_qsl, urlsplit
 
 from ..budget import BudgetError, require_cumulative
 from ..common import digest, write
-from ..gateway import MAX_BODY, extract_usage, read_request, request_bound, usage_charge
+from ..gateway import MAX_BODY, TEMPLATE_TOKENS, body_section, extract_usage, read_request, request_bound, usage_charge
 
 GEMINI_PATH = r"^/v1beta/models/(?P<model>[A-Za-z0-9._-]+):(?:generateContent|streamGenerateContent)$"
 SPLICE_LIMIT = 256 * 1024 * 1024
@@ -132,22 +132,6 @@ def gemini_bound(payload, section):
     rates = section["rates"]
     rate = max(Decimal(str(rates["input_per_million"])), Decimal(str(rates["cached_input_per_million"])))
     return (Decimal(section["admission"]["input_token_limit"]) * rate + Decimal(maximum) * Decimal(str(rates["output_per_million"]))) / Decimal(1_000_000)
-
-
-TEMPLATE_TOKENS = 4096
-
-
-def body_section(section, body):
-    """Byte-level BPE never yields more tokens than bytes; chat templates add a bounded number.
-
-    The input bound is therefore the request's byte length plus TEMPLATE_TOKENS, never above
-    the provider's verified context limit. Image or audio parts would break the premise, so
-    requests containing them keep the full limit.
-    """
-    if any(marker in body for marker in (b'"image', b'"inlineData"', b'"inline_data"', b'"input_audio"', b'"document"')):
-        return section
-    admission = dict(section["admission"], input_token_limit=min(section["admission"]["input_token_limit"], len(body) + TEMPLATE_TOKENS))
-    return dict(section, admission=admission)
 
 
 def validate_generator(config):

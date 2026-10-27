@@ -16,7 +16,7 @@ from urllib.request import Request, ProxyHandler, HTTPSHandler, build_opener
 
 from experiments.scenario_skills.budget import BudgetError, Ledger
 from experiments.scenario_skills.common import digest, read, write
-from experiments.scenario_skills.gateway import AdmissionGateway, extract_usage, request_bound, usage_charge, validate_admission
+from experiments.scenario_skills.gateway import AdmissionGateway, body_section, extract_usage, request_bound, usage_charge, validate_admission
 from experiments.scenario_skills.modal_runtime import infrastructure_bound
 from experiments.scenario_skills.modal_probe import RATES
 from experiments.scenario_skills.preflight import preflight
@@ -105,7 +105,7 @@ class GatewayTests(unittest.TestCase):
         self.assertEqual((self.directory / "gateway/request-1/response.body").read_bytes(), response)
 
     def test_budget_exhaustion_never_opens_upstream(self):
-        self.ledger.reserve("prior", "target", 19)
+        self.ledger.reserve("prior", "target", 19.5)  # Leaves less than one body-sized request.
         payload = b'{"model":"fixed-model","messages":[]}'
         with self.gateway(b"", verify=False) as gateway:
             self.assertIn(b"402", self.call(gateway, payload))
@@ -120,7 +120,9 @@ class GatewayTests(unittest.TestCase):
         self.assertIsNone(gateway.cost)
         self.assertTrue(self.ledger.state["blocked"])
         self.assertEqual(len(self.received), 1)
-        self.assertEqual(self.ledger.total(), Decimal("1.872"))
+        # Reserved from the body (bytes + template tokens), not the 256k context limit.
+        self.assertEqual(self.ledger.total(), request_bound(json.loads(payload), body_section(section(), payload)))
+        self.assertLess(self.ledger.total(), Decimal("1.872"))
 
     def test_wrong_model_and_production_host_are_not_forwarded(self):
         with self.gateway(b"", verify=False) as gateway:

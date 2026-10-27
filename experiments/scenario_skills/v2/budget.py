@@ -8,6 +8,9 @@ MARGIN = Decimal("1.25")
 COST_DISCOVERY_CAP = Decimal("15")
 CLAUDE_SESSION_RESERVATION = Decimal("2.5")
 INFRASTRUCTURE_RESERVATION = Decimal("0.10")
+# Requests are reserved from their body; a forecast plans for one request this large per endpoint
+# (the largest observed target body was 664 KB, generator 186 KB). The wallet still bounds every request.
+FORECAST_BODY_BYTES = 768 * 1024
 
 
 def open_ledger(config):
@@ -34,15 +37,16 @@ def family_costs(results):
 
 
 def headroom(config):
-    """One maximal request at each metered endpoint plus one sandbox may be in flight when a stage ends."""
-    from ..gateway import request_bound
+    """One large request at each metered endpoint plus one sandbox may be in flight when a stage ends."""
+    from ..gateway import body_section, request_bound
+    body = b" " * FORECAST_BODY_BYTES
     target = config["target"]
-    total = request_bound({}, target) + INFRASTRUCTURE_RESERVATION
+    total = request_bound({}, body_section(target, body)) + INFRASTRUCTURE_RESERVATION
     for endpoint in config.get("backend", {}).get("generator", {}).get("endpoints", []):
         # Admission limits and rates are pinned per model; one maximal request at the costliest model per endpoint.
         sections = [m for m in endpoint.get("models", {}).values() if m.get("admission")] or ([endpoint] if endpoint.get("admission") else [])
         if sections:
-            total += max(request_bound({}, m) for m in sections)
+            total += max(request_bound({}, body_section(m, body)) for m in sections)
     return total
 
 

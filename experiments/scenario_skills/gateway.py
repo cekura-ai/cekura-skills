@@ -66,6 +66,22 @@ def request_bound(payload, section):
             + Decimal(maximum) * Decimal(str(rates["output_per_million"]))) / Decimal(1_000_000)
 
 
+TEMPLATE_TOKENS = 4096
+
+
+def body_section(section, body):
+    """Byte-level BPE never yields more tokens than bytes; chat templates add a bounded number.
+
+    The input bound is therefore the request's byte length plus TEMPLATE_TOKENS, never above
+    the provider's verified context limit. Image or audio parts would break the premise, so
+    requests containing them keep the full limit.
+    """
+    if any(marker in body for marker in (b'"image', b'"inlineData"', b'"inline_data"', b'"input_audio"', b'"document"')):
+        return section
+    admission = dict(section["admission"], input_token_limit=min(section["admission"]["input_token_limit"], len(body) + TEMPLATE_TOKENS))
+    return dict(section, admission=admission)
+
+
 def usage_charge(usage, rates, api):
     """Preserve each API's inclusive/exclusive cache token accounting."""
     if not isinstance(usage, dict):
@@ -283,7 +299,7 @@ class AdmissionGateway:
             self.counter += 1
             number = self.counter
             key = self.scope + "/request-%d" % number
-        bound = request_bound(payload, self.section)
+        bound = request_bound(payload, body_section(self.section, body))
         try:
             self.ledger.reserve(key, self.kind, bound, entry_type="request", scope=self.scope)
         except BudgetError:
