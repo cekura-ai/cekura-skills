@@ -72,12 +72,13 @@ def identity(config):
             "code": {str(p.relative_to(ROOT)): digest(p) for p in ROOT.rglob("*.py") if "tests" not in p.parts}}
 
 
-def launch_gate(directory, ident):
+def launch_gate(directory, ident, ceiling="150"):
+    """Approval bound to this identity and to the wallet ceiling it was given under."""
     path = directory / "launch-approval.json"
     if not path.exists():
         return False
     value = read(path)
-    return bool(value.get("reviewer")) and value.get("approved") is True and value.get("identity_sha256") == digest(ident) and value.get("ceiling_usd") == "150"
+    return bool(value.get("reviewer")) and value.get("approved") is True and value.get("identity_sha256") == digest(ident) and value.get("ceiling_usd") == ceiling
 
 
 def forbidden_material(tasks):
@@ -182,8 +183,9 @@ class Controller:
         if not gate(directory):
             prepare(directory)
             raise Terminal("awaiting_fixture_and_gold_human_review", "Fixture/gold domain signoff is required before any inference")
-        if not launch_gate(directory, self.ident):
-            write(directory / "launch-approval.template.json", {"identity_sha256": digest(self.ident), "ceiling_usd": "150", "reviewer": "", "approved": False})
+        ceiling = self.ledger.authorized_limits["total"]
+        if not launch_gate(directory, self.ident, ceiling):
+            write(directory / "launch-approval.template.json", {"identity_sha256": digest(self.ident), "ceiling_usd": ceiling, "reviewer": "", "approved": False})
             raise Terminal("awaiting_launch_approval", "Launch approval bound to this experiment identity is required")
         config = self.config
         if not self.skip_preflight:
@@ -502,7 +504,7 @@ def report(directory, state, ledger, config=None):
                             ("Sandbox reservations (pending billing)", [e for e in entries if e.get("infrastructure_only")]),
                             ("Claude incremental", [e for e in entries if e.get("entry_type") == "claude_session"])):
         rows.append("- %s: $%s (%d entries)" % (category, sum((Decimal(e["charged"]) for e in group), Decimal(0)), len(group)))
-    rows.append("- Cumulative charged and reserved: $%s of $150." % ledger.total())
+    rows.append("- Cumulative charged and reserved: $%s of $%s." % (ledger.total(), ledger.authorized_limits["total"]))
     for role in ("judge", "proposal"):
         usage = [read(p) for p in (directory / (role + "-sessions")).glob("*.usage.json")]
         rows.append("- Claude %s sessions: %d; nominal API equivalent $%.4f (not spend)." % (role, len(usage), sum(float(u.get("nominal_api_equivalent_usd") or 0) for u in usage)))

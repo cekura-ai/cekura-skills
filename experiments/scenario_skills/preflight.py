@@ -16,9 +16,11 @@ from .fixture import OPERATIONS, PREFIX
 def preflight(config):
     failures = []
     cfg = __import__("copy").deepcopy(config)
-    from .budget import BudgetError, policy_limits
+    from .budget import BudgetError, Ledger, policy_limits
     try:
         limits = policy_limits(cfg.get("budget_policy"))
+        if cfg.get("budget_ledger_path") and Path(cfg["budget_ledger_path"]).exists():
+            limits = Ledger(Path(cfg["budget_ledger_path"]), cfg.get("budget_policy")).authorized_limits  # Includes a recorded extension.
     except BudgetError as error:
         failures.append(str(error))
         limits = {"target": "20", "proposer": "5"}

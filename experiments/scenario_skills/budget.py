@@ -15,6 +15,8 @@ OPTIMIZATION_LIMITS = {"proposer": "5", "target": "195", "total": "200"}
 # subscription-only; its $5 is a reservation bound, not expected spend.
 CUMULATIVE_LIMITS = {"proposer": "5", "target": "145", "total": "150"}
 CUMULATIVE_VERSION = "cumulative-150-v1"
+# The one recorded raise of the same wallet (2026-10-27): history, entries and policy carry over unchanged.
+EXTENDED_LIMITS = {"proposer": "5", "target": "295", "total": "300"}
 
 
 def policy_limits(policy=None):
@@ -100,6 +102,39 @@ def authorize(sources, expected_historical, authorization):
     return policy
 
 
+def extend(authorization):
+    """Raise the canonical wallet once from $150 to $300, recorded in the wallet itself.
+
+    Entries, stage caps and the original policy are untouched, so every earlier charge still
+    counts against the new ceiling. A second extension, or one without a stated authorization, fails.
+    """
+    from datetime import datetime, timezone
+    if not authorization:
+        raise BudgetError("A budget extension needs the user's stated authorization")
+    path = wallet_path()
+    with path.with_suffix(".lock").open("a") as stream:
+        fcntl.flock(stream, fcntl.LOCK_EX)
+        state = read(path)
+        if state.get("extension") or state["limits"] != CUMULATIVE_LIMITS:
+            raise BudgetError("The cumulative wallet was already extended")
+        spent = sum((Decimal(e["charged"]) for e in state["entries"].values()), Decimal(0))
+        state["extension"] = {"from_limits": dict(CUMULATIVE_LIMITS), "limits": dict(EXTENDED_LIMITS), "authorization": authorization,
+                              "policy_sha256": digest(state["authorization"]), "charged_at_extension_usd": str(spent),
+                              "recorded_at": datetime.now(timezone.utc).isoformat()}
+        state["limits"] = dict(EXTENDED_LIMITS)
+        write(path, state)
+    return state["extension"]
+
+
+def wallet_limits(state):
+    """The cumulative wallet's limits: the original $150, or the one recorded extension."""
+    extension = state.get("extension")
+    if extension and extension.get("authorization") and extension.get("limits") == EXTENDED_LIMITS \
+            and extension.get("policy_sha256") == digest(state.get("authorization")):
+        return dict(EXTENDED_LIMITS)
+    return dict(CUMULATIVE_LIMITS)
+
+
 def require_cumulative(ledger, live=False):
     """Every paid path admits through the single $150 ledger; older per-run ledgers are retired."""
     if not getattr(ledger, "cumulative", False):
@@ -122,12 +157,15 @@ class Ledger:
             raise BudgetError("The cumulative ledger is created only by explicit authorization")
         self.state = read(path) if path.exists() else {
             "limits": dict(SMOKE_LIMITS), "entries": {}, "blocked": False}
+        if self.cumulative:
+            self.authorized_limits = wallet_limits(self.state)
         self._validate_limits()
 
     def _validate_limits(self):
         if self.cumulative or "authorization" in self.state:
-            if not self.cumulative or self.state.get("authorization") != self.policy or self.state["limits"] != CUMULATIVE_LIMITS:
+            if not self.cumulative or self.state.get("authorization") != self.policy or self.state["limits"] != wallet_limits(self.state):
                 raise BudgetError("Cumulative ledger requires its exact recorded authorization")
+            self.authorized_limits = dict(self.state["limits"])
             return
         if self.state["limits"] not in (SMOKE_LIMITS, self.authorized_limits):
             raise BudgetError("Ledger limits exceed this execution's authorized budget")

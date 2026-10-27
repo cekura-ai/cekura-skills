@@ -139,6 +139,27 @@ class WalletTests(unittest.TestCase):
         self.assertFalse(self.ledger.resolve_unknown("a", 0, {"reason": "r", "proof": ["p"]}))
         self.assertTrue(read(budget.wallet_path())["blocked"])
 
+    def test_one_recorded_extension_raises_the_ceiling_and_keeps_every_charge(self):
+        self.ledger.reserve("spent", "target", 100)
+        self.ledger.settle("spent", 100)
+        with self.assertRaises(BudgetError):
+            self.ledger.reserve("over", "target", 30)  # 129 + 30 > 150.
+        with self.assertRaises(BudgetError):
+            budget.extend("")
+        extension = budget.extend("User raised the cap to $300")
+        self.assertEqual(extension["charged_at_extension_usd"], "129.13728485")
+        ledger = Ledger(budget.wallet_path(), self.ledger.policy)
+        self.assertEqual((ledger.total(), ledger.authorized_limits["total"]), (Decimal("129.13728485"), "300"))
+        ledger.reserve("next", "target", 30)
+        with self.assertRaises(BudgetError):
+            budget.extend("Again")
+        # A hand edit of the limits without the matching recorded extension is refused.
+        state = read(budget.wallet_path())
+        state["extension"]["limits"] = {"proposer": "5", "target": "995", "total": "1000"}
+        write(budget.wallet_path(), state)
+        with self.assertRaises(BudgetError):
+            Ledger(budget.wallet_path(), self.ledger.policy)
+
 
 if __name__ == "__main__":
     unittest.main()

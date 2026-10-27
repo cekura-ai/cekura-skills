@@ -40,7 +40,7 @@ def load_env(path, names):
 
 def main():
     parser = argparse.ArgumentParser(description="72-task authoring optimization against the isolated real backend")
-    parser.add_argument("command", choices=("validate", "authorize-budget", "prepare-claude", "prepare-generator", "prepare", "prepare-v3", "reinstrument",
+    parser.add_argument("command", choices=("validate", "authorize-budget", "extend-budget", "prepare-claude", "prepare-generator", "prepare", "prepare-v3", "reinstrument",
                                             "contract-probe", "transport-probe", "preflight", "run", "report", "accept"))
     parser.add_argument("--artifacts", type=Path, default=Path.home() / "cekura-scenario-v2-run")
     parser.add_argument("--base-config", type=Path)
@@ -48,6 +48,7 @@ def main():
     parser.add_argument("--pricing", type=Path, help="Verified generator rates/token limits and sandbox rates, with sources")
     parser.add_argument("--historical", type=Path, nargs="*", help="Historical ledgers to reconcile once")
     parser.add_argument("--historical-usd", default="29.13728485")
+    parser.add_argument("--authorization", help="extend-budget: the user's stated authorization for the raise")
     parser.add_argument("--env-file", type=Path)
     parser.add_argument("--backend-source", type=Path, help="Extracted pinned backend 650297f source tree")
     parser.add_argument("--benchmark", type=int, choices=(2, 3), default=2, help="Task set to prepare or validate (v3: product-chat-derived)")
@@ -67,6 +68,15 @@ def main():
     config_path = directory / "config.json"
     if args.env_file:
         load_env(args.env_file, {"MODAL_TOKEN_ID", "MODAL_TOKEN_SECRET", "FIREWORKS_API_KEY", "GEMINI_API_KEY"})
+    if args.command == "extend-budget":
+        extension = budget.extend(args.authorization)
+        if config_path.exists():
+            # The target's admission evidence states the remaining allowance; keep it equal to the new limit.
+            cfg = read(config_path)
+            cfg["target"]["admission"]["hard_cap"]["remaining_usd"] = float(budget.EXTENDED_LIMITS["target"])
+            write(config_path, cfg)
+        print({"limits": extension["limits"], "charged_at_extension_usd": extension["charged_at_extension_usd"]})
+        return 0
     if args.command == "authorize-budget":
         if not args.historical:
             parser.error("authorize-budget needs --historical ledgers")
