@@ -108,6 +108,17 @@ class Controller:
         self.training, self.validation, self.sealed = [[t for t in self.tasks if t["split"] == s] for s in ("training", "validation", "sealed")]
         self.baseline = SKILL.read_bytes()
         self.records = []
+        self.max_evaluated = MAX_EVALUATED
+        self.protocol = config.get("v3_protocol") if self.version == 3 else None
+        if self.protocol:
+            # Budget-sized v3: fewer templates and training domains; held-out chosen after the baseline (see _run_scoped).
+            excluded = set(self.protocol.get("exclude_templates", []))
+            keep = [t for t in self.tasks if t["template"] not in excluded]
+            self.training = [t for t in keep if t["split"] == "training" and t["domain"] in self.protocol["training_domains"]]
+            self.validation = [t for t in keep if t["split"] == "validation"]
+            self.sealed = [t for t in keep if t["split"] == "sealed"]
+            self.max_evaluated = int(self.protocol.get("max_evaluated", 1))
+            self.canaries = lambda training: list(training)  # One training domain: the whole set is the screen.
 
     def save(self, **values):
         self.state.update(values)
@@ -183,6 +194,8 @@ class Controller:
         if hasattr(self.proposer, "verify"):
             self.proposer.verify()
 
+        if self.protocol:
+            return self._run_scoped(config)
         sample = self.canaries(self.training)
         try:
             # One discovery allowance per frozen task set: a fixture correction gets a fresh $15, the wallet still caps all spend.
@@ -225,7 +238,71 @@ class Controller:
             self.diagnostics(data)
         self.decide(data)
 
+    def _run_scoped(self, config):
+        """Budget-sized v3 protocol, chosen after calibration showed the full comparison cannot fit the wallet.
+
+        1. Baseline on every training task (one capped stage); its costs drive the forecast.
+        2. Held-out tasks are limited to templates the baseline failed in training, a choice made on
+           training data only; templates the baseline already passes cannot show a gain.
+        3. Search (one evaluated candidate), validation once per arm (strict worst-case gain, no
+           regression), then sealed twice per arm (consistent gains, no consistent regression, no new
+           critical defect).
+        """
+        protocol, directory = self.protocol, self.directory
+        ids = [t["id"] for t in self.training]
+        stage = "v3-baseline-training-" + self.ident["tasks_sha256"][:12]
+        try:
+            with self.ledger.staged(stage, Decimal(str(protocol.get("baseline_cap_usd", "30")))):
+                before = self.stage(self.baseline, self.training, "baseline_training")
+        except BudgetError as error:
+            if "Stage allowance" in str(error):
+                raise Terminal("baseline_cap_exhausted", "The baseline training stage did not fit its cap")
+            raise
+        failing = sorted({r["task_id"].split("-")[0] for r in before if not r["grade"]["score"]})
+        if not failing:
+            raise Terminal("training_saturated", "The baseline already passes every training task; there is nothing to search")
+        self.validation = [t for t in self.validation if t["template"] in failing]
+        self.sealed = [t for t in self.sealed if t["template"] in failing]
+        costs = {r["task_id"].split("-")[0]: trial_cost(r) for r in before}
+        mean = sum(costs.values(), Decimal(0)) / len(costs)
+        estimate = lambda tasks: sum((costs.get(t["template"], mean) for t in tasks), Decimal(0))
+        work = estimate(self.training) + estimate(self.validation) * 2 + estimate(self.sealed) * 4
+        from .budget import MARGIN, headroom
+        plan = {"held_out_templates": failing, "training": len(self.training), "validation": len(self.validation), "sealed": len(self.sealed),
+                "rollouts": len(self.training) + 2 * len(self.validation) + 4 * len(self.sealed), "estimate_usd": str(work),
+                "needed_usd": str(work * MARGIN + headroom(config)), "template_costs_usd": {k: str(v) for k, v in sorted(costs.items())}}
+        plan["funded"] = self.ledger.can_finish(Decimal(plan["needed_usd"]), CLAUDE_SESSION_RESERVATION)
+        self.save(scoped_plan=plan)
+        write(directory / "forecast.json", plan)
+        if not plan["funded"]:
+            raise Terminal("infeasible", "The scoped comparison ($%s with margin) does not fit the remaining authorization" % plan["needed_usd"])
+        finalist = self.search(before, config)
+        data = (directory / (finalist + ".md")).read_bytes()
+        self.save(finalist=finalist)
+        held = {}
+        val_before, val_after = self.paired(data, self.validation, "validation")
+        held["validation"] = dict(gates.compare(val_before, val_after, [t["id"] for t in self.validation]))
+        gain = held["validation"]["worst_case_gain"]
+        held["validation"]["passed"] = gain >= int(protocol.get("validation_min_gain", 1)) and not held["validation"]["regressions"]
+        self.save(validation=held["validation"])
+        if not held["validation"]["passed"]:
+            raise Terminal("validation_no_supported_improvement", "Validation needs a strict worst-case gain and no regression; search ends")
+        first = self.paired(data, self.sealed, "sealed")
+        second = self.paired(data, self.sealed, "sealed", repeat=1)
+        sids = [t["id"] for t in self.sealed]
+        sealed = gates.compare_consistent(first[0] + second[0], first[1] + second[1], sids, int(protocol.get("sealed_min_gain", 2)), self.disputed(data))
+        held["sealed"] = dict(sealed, critical_defects=sealed["critical_regressions"])
+        self.save(final_gates=held)
+        review_packet(directory, "final", self.validation + self.sealed,
+                      [r for r in self.records if r["candidate_sha256"] == digest(self.baseline)],
+                      [r for r in self.records if r["candidate_sha256"] == digest(data)])
+        if not sealed["passed"]:
+            raise Terminal("no_supported_improvement", "Sealed evidence does not support acceptance")
+        raise Terminal("recommendation_pending_final_review", "Automated gates pass; a named reviewer must accept the blinded final packet")
+
     def repeat_tasks(self):
+        if self.protocol:
+            return self.sealed  # Sealed runs twice per arm; validation once.
         if self.version == 3:
             return self.validation + self.sealed
         return [t for t in self.tasks if t["id"] in REPEATS["validation"] + REPEATS["sealed"]]
@@ -240,7 +317,7 @@ class Controller:
         evaluated, zero_gain, attempts = 0, 0, []
         forbidden = forbidden_material(self.tasks)
         for i in range(1, MAX_ATTEMPTS + 1):
-            if evaluated >= MAX_EVALUATED or zero_gain >= 2 or parent_passes == len(ids):
+            if evaluated >= self.max_evaluated or zero_gain >= 2 or parent_passes == len(ids):
                 break
             rejected, no_change = directory / ("proposal-%d.rejected.json" % i), directory / ("proposal-%d.no-change.json" % i)
             data_path = directory / ("candidate-%d.md" % i)
@@ -367,7 +444,7 @@ def report(directory, state, ledger, config=None):
     for name in ("validation", "final_gates"):
         if state.get(name):
             rows += ["- %s: `%s`" % (name, {k: v for k, v in state[name].items() if k not in ("baseline", "candidate")} if name == "validation"
-                                       else {s: {k: g[k] for k in ("passed", "worst_case_gain", "regressions", "critical_defects")} for s, g in state[name].items()})]
+                                       else {s: {k: g.get(k) for k in ("passed", "worst_case_gain", "gains", "regressions", "critical_defects")} for s, g in state[name].items()})]
     rows += ["- Finalist: %s; proposal attempts: %s" % (state.get("finalist"), state.get("attempts", [])), ""]
     rows += ["## Outcomes by family", "", "| Revision | Split | Family | Passed / trials | Unresolved | Authoring failures | Generator failures |", "|---|---|---|---:|---:|---:|---:|"]
     for sha, split_name, family in sorted({(r["candidate_sha256"], r["split"], r["family"]) for r in records}):

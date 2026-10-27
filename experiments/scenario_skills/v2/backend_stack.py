@@ -325,6 +325,14 @@ class Stack:
             self.metering.close(reason)
             evidence["metering_closed"] = True
         evidence["sandboxes"] = self._terminate_sandboxes()
+        # Each generator sandbox was reserved at its lifetime bound; once terminated it awaits billing at that bound,
+        # like the target sandbox. Left "running", the wallet would hold it open forever.
+        keys = [sandbox["key"] for sandbox in getattr(getattr(self, "metering", None), "sandboxes", [])]
+        if keys and hasattr(self.ledger, "transaction"):
+            with self.ledger.transaction():
+                running = [k for k in keys if self.ledger.state["entries"].get(k, {}).get("status") == "running"]
+            for key in running:
+                self.ledger.transition(key, "bounded_infrastructure_pending_billing")
         for role in ("worker", "web", "edge", "redis", "s3"):
             if role in self.containers:
                 docker("rm", "-f", self.containers.pop(role), check=False)

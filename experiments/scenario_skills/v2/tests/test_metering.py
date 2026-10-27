@@ -342,5 +342,22 @@ class EdgeResolver(unittest.TestCase):
         self.assertFalse(probe.is_passthrough("task-abc.w.modal.host"))
 
 
+class StackTeardown(unittest.TestCase):
+    def test_terminated_generator_sandboxes_leave_the_wallet_awaiting_bounded_billing(self):
+        from experiments.scenario_skills.v2 import backend_stack
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        ledger = cumulative_ledger(self, Path(temp.name))
+        ledger.reserve("scope/i/generator-sandbox-1", "target", "0.03", infrastructure_only=True, generator_sandbox=True)
+        stack = backend_stack.Stack.__new__(backend_stack.Stack)
+        stack.ledger, stack.containers, stack.label, stack.sandbox_backend = ledger, {}, "cekura_scope=scope", "local-docker"
+        stack.directory, stack.database = Path(temp.name), None
+        stack.metering = type("M", (), {"sandboxes": [{"key": "scope/i/generator-sandbox-1"}], "close": lambda self, reason: None})()
+        with patch.object(backend_stack, "docker", lambda *a, **k: ""):
+            evidence = stack.stop("rollout finished")
+        self.assertTrue(evidence["terminated"])
+        self.assertEqual(read(ledger.path)["entries"]["scope/i/generator-sandbox-1"]["status"], "bounded_infrastructure_pending_billing")
+
+
 if __name__ == "__main__":
     unittest.main()

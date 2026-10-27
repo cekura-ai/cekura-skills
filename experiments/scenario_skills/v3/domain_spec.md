@@ -138,6 +138,23 @@ Baseline skill failures that are genuine, and are kept:
 
 Measured cost per rollout: $0.40–1.38 for model inference, plus a $0.10 sandbox reservation.
 
+## Scoped protocol (2026-10-27)
+
+Calibration measured about $0.80–1.20 per ordinary rollout and about $2 per generation-heavy one. The full comparison (about 216 rollouts) cannot fit the remaining wallet (about $103), so the run uses the config block `v3_protocol`:
+- **Templates:** T06 and C02 are excluded; they cost twice as much and mostly exercise the backend generator.
+- **Training:** one domain (harborview, 16 tasks). The baseline runs on all of them inside one capped stage.
+- **Held-out:** only templates the baseline fails in training. This is chosen on training data only, since a template the baseline already passes cannot show a gain.
+- **Search:** one evaluated candidate (up to four proposals, all on the Claude subscription).
+- **Validation:** once per arm, requiring a strict worst-case gain of at least 1 and no regression.
+- **Sealed:** twice per arm; acceptance needs at least 2 consistent gains, no consistent regression and no new critical defect.
+- **Forecast:** built from the baseline's measured per-template cost. The run stops as `infeasible` before search if it does not fit.
+
+Before this run, two infrastructure gaps on the real generator path were fixed:
+- Modal task-router DNS and splicing.
+- The relay pump's second stdout iterator.
+
+A wallet leak was also fixed: generator-sandbox reservations are now settled at teardown.
+
 ## Privacy (`v3/sanitize.py`)
 
 `python3 -m experiments.scenario_skills.v3.sanitize <packet-dir>` rejects any fixture or gold string that:

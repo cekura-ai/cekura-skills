@@ -44,7 +44,7 @@ def review_packet(directory, stage, tasks, baseline, selected):
     for task in tasks:
         item = {"id": task["id"], "request": task["request"], "agent": task["fixture"]["agent"],
                 "followups": task.get("followups", []),
-                "documents": task.get("documents", []), "rubric": task["expected"]["semantic_rubric"], "outputs": {}}
+                "documents": task.get("documents", []), "rubric": task["expected"].get("semantic_rubric", task["expected"].get("rubric")), "outputs": {}}
         for arm, results in arms.items():
             item["outputs"][arm] = [{"messages": result["messages"], "user_turns": result.get("user_turns", []), "resources": result["final_state"],
                                     "calls": [e for e in result["trace"] if not any(token in e.get("name", "") for token in ("skill", "load"))]}
