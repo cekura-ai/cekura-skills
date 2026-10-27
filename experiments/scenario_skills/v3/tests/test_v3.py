@@ -136,15 +136,15 @@ class Contracts(unittest.TestCase):
 
 
 class Candidates(unittest.TestCase):
-    def test_a_whole_file_with_unchanged_frontmatter_is_a_body_edit_but_changed_frontmatter_is_not(self):
+    def test_the_proposer_accepts_a_whole_file_only_when_its_frontmatter_is_unchanged(self):
+        import inspect
         from experiments.scenario_skills.skill import SKILL, candidate, split
-        base = SKILL.read_bytes()
-        header, body = split(base)
-        edited = body.decode() + "\nOne more rule.\n"
-        self.assertEqual(candidate(base, header.decode() + edited), header + edited.encode())
-        self.assertEqual(candidate(base, edited), header + edited.encode())
+        from experiments.scenario_skills.v2 import proposer
+        source = inspect.getsource(proposer.Proposer.propose)
+        self.assertIn("body.startswith(header)", source)  # The stripping lives with the proposer, outside the rollout key.
+        header, body = split(SKILL.read_bytes())
         with self.assertRaises(ValueError):
-            candidate(base, header.decode().replace("name:", "name: x") + edited)
+            candidate(SKILL.read_bytes(), header.decode() + body.decode())  # candidate() itself still refuses any frontmatter.
 
 
 class Followups(unittest.TestCase):

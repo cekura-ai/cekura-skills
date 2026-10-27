@@ -3,7 +3,7 @@ import json
 
 from ..common import ROOT, digest, write
 from ..proposer import training_payload
-from ..skill import candidate, material
+from ..skill import candidate, material, split
 from .transport import ClaudeSession
 
 SCHEMA = {"type": "object", "additionalProperties": False, "required": ["status", "body", "hypothesis", "rationale", "targeted_checks"],
@@ -95,7 +95,10 @@ class Proposer:
         if value["status"] == "no_change":
             write(self.directory / ("proposal-%d.no-change.json" % iteration), value)
             return None, value
-        data = candidate(parent, value["body"], forbidden)
+        body, header = value["body"], split(parent)[0].decode()
+        if body.startswith(header):
+            body = body[len(header):]  # The whole file came back with byte-identical frontmatter: a body-only edit.
+        data = candidate(parent, body, forbidden)
         if len(data.decode()) > 60000:
             raise ValueError("Candidate would truncate under the fixed loader")
         screen(data, parent, history, value, previous)
