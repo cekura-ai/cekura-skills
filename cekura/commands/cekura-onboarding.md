@@ -28,6 +28,7 @@ allowed-tools:
     "mcp__cekura__scenarios_generate_bg",
     "mcp__cekura__scenarios_generate_progress",
     "mcp__cekura__scenarios_partial_update",
+    "mcp__cekura__scenarios_run",
     "mcp__cekura__scenarios_run_voice",
     "mcp__cekura__scenarios_run_text",
     "mcp__cekura__scenarios_run_websocket",

@@ -106,7 +106,7 @@ call-log entry points.
 
 The skill **auto-fires the runs itself** — never ask the user to trigger each.
 
-**Label every batch.** Every `scenarios_run_*` call takes a `name` — it becomes
+**Label every batch.** Every `scenarios_run*` call takes a `name` — it becomes
 the Result's dashboard name. Always pass one so runs are attributable at a
 glance: `[selfimprove] repro <short issue> — attempt <k> (must-fail)`. Unnamed
 results make the dashboard unreadable for whoever reviews the session.

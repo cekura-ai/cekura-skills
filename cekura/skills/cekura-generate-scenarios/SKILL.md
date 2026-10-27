@@ -366,7 +366,7 @@ Save as `failure_scenarios_<agent_id>.md` in the working directory. Structure:
 
 1. Create C1, C3, C5 first — they represent the highest-frequency failure modes (<N> calls combined).
 2. C7 is a single-call critical (PII) — create regardless of frequency.
-3. After scenarios are live, run `mcp__cekura__scenarios_run_<mode>` for each and confirm the agent fails on them today (the failure is reproducible).
+3. After scenarios are live, run `mcp__cekura__scenarios_run` with `transport: <mode>` (legacy `mcp__cekura__scenarios_run_<mode>`) for each and confirm the agent fails on them today (the failure is reproducible).
 4. Re-run after any agent prompt change to confirm the fix.
 ```
 
@@ -469,7 +469,7 @@ Menu option 2. User picks cluster IDs; each selected cluster still follows its o
 
 After creation, print one line per new scenario with `https://dashboard.cekura.ai/test-case/<scenario_id>` so the user can spot-check, and recommend they:
 
-1. Run each new scenario once (`mcp__cekura__scenarios_run_<mode>`) to confirm the agent **still fails** on it — the scenario only matters if it reproduces.
+1. Run each new scenario once (`mcp__cekura__scenarios_run` with `transport: <mode>`) to confirm the agent **still fails** on it — the scenario only matters if it reproduces.
 2. After the agent's next prompt change, re-run the set; passing scenarios = fix confirmed.
 
 ## When to escalate instead

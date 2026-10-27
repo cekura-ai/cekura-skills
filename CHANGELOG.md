@@ -17,6 +17,9 @@ All notable changes to the Cekura plugin. Versions follow
   rejected with the enabled list; surface it instead of retrying.
 - The per-transport `scenarios_run_*` tools stay as the fallback for an MCP
   server that does not list `scenarios_run` yet.
+- The onboarding and manual-eval commands allow `scenarios_run`; generate-scenarios,
+  create-agent, onboarding's agent phase and self-improve name it with
+  `transport` next to the legacy tool names.
 
 ## 0.19.2 — 2026-10-22
 
