@@ -1,7 +1,26 @@
 """The simulated user's next message: one pure decision shared by the bridge and the reference simulator."""
+import re
+
 from . import checks
 
 MAX_CLARIFICATIONS = 2
+# What the user says to a question the task's clarification reply was not written for. A canned
+# reply sent as the answer to an arbitrary question ("re-attach Expected Outcome?" answered with
+# "Just the tests in that folder.") reads as consent; this reply never does.
+NEUTRAL_REPLY = "Go ahead with your best judgement and tell me what you did."
+
+
+def clarification_reply(task, ctx):
+    """The task's reply when the question is the one it anticipates, else the neutral reply.
+
+    ``clarification_pattern`` (a regex over the assistant's last message) says which question the
+    reply answers; a task without one keeps the old behaviour and answers every question with it.
+    """
+    pattern = task.get("clarification_pattern")
+    text = ctx["messages"][-1] if ctx["messages"] else ""
+    if pattern and not re.search(pattern, text, re.I | re.S):
+        return NEUTRAL_REPLY
+    return task["clarification_reply"]
 
 
 def decide(task, position, ctx, turn):
@@ -18,7 +37,7 @@ def decide(task, position, ctx, turn):
     if checks.evaluate({"kind": "asked"}, ctx) and not wrote and not (current and current["answers_question"]) \
             and position["clarifications"] < MAX_CLARIFICATIONS:
         position["clarifications"] += 1
-        message, decision["case"] = task["clarification_reply"], "clarification"
+        message, decision["case"] = clarification_reply(task, ctx), "clarification"
     elif current is None:
         message, decision["case"] = None, "end"
     else:

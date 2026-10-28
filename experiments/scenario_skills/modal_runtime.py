@@ -288,7 +288,10 @@ class ModalRuntime:
             (directory / "delivered_skill.txt").write_bytes(exact)
             write(directory / "skill_delivery.json", {"installed_sha256": digest(files["SKILL.md"]),
                   "delivered_sha256": digest(exact), "truncated": exact != files["SKILL.md"]})
-        elif not any(e.get("name", "").endswith("cekura_load_skill") and not e["response"]["isError"] for e in store.trace):
+        elif not any(e.get("name", "").endswith("cekura_load_skill") and not e["response"]["isError"] for e in store.trace) \
+                and not task.get("skill_optional"):
+            # A task that can be completed correctly without authoring (a read-only audit, a run
+            # request) is graded on what was done; elsewhere an unloaded skill is no evidence.
             run["status"] = "inconclusive" if run["status"] == "complete" else run["status"]
         prompt = directory / "effective_system_prompt.txt"
         if not prompt.exists() or digest(prompt) != cfg["snapshot"]["system_prompt_sha256"]:

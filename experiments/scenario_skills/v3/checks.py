@@ -366,5 +366,14 @@ def _mentions_any_turn(c, ctx):
     return False
 
 
+def _mentions_across_turns(c, ctx):
+    """Every required id is named somewhere in the session and no forbidden id anywhere.
+
+    A diagnosis given over two or three replies is as complete as one given in a single message.
+    """
+    ids = set().union(*[claimed_ids(text) for text in ctx["messages"]]) if ctx["messages"] else set()
+    return set(c.get("ids", [])) <= ids and not ids & set(c.get("forbidden", []))
+
+
 KINDS.update(created_where=_created_where, personality_language=_personality_language, profile_value=_profile_value,
-             profiles_unchanged=_profiles_unchanged, mentions_any_turn=_mentions_any_turn)
+             profiles_unchanged=_profiles_unchanged, mentions_any_turn=_mentions_any_turn, mentions_across_turns=_mentions_across_turns)

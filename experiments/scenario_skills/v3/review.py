@@ -38,7 +38,12 @@ def markdown(packet):
             default = "ends the session" if s["default"] is None else "\"%s\"" % s["default"]
             lines += ["**Follow-up %d:** %s%sotherwise %s%s" % (i + 1, cases, "; " if cases else "", default,
                                                                  " (answers a question)" if s["answers_question"] else "")]
-        lines += ["**Clarification reply:** " + t["clarification_reply"], "", "Checks:"]
+        lines += ["**Clarification reply:** " + t["clarification_reply"]]
+        if t.get("clarification_pattern"):
+            lines.append("**Only for questions matching:** `%s` (any other question gets the neutral reply)" % t["clarification_pattern"])
+        if t.get("skill_optional"):
+            lines.append("**Skill optional:** graded even if the assistant never loads the skill")
+        lines += ["", "Checks:"]
         lines += ["- %s%s: `%s`" % (c["id"], " **(critical)**" if c["critical"] else "", _condition(c["check"])) for c in t["expected"]["checks"]]
         lines += ["", "Rubric:"] + ["- %s: %s" % (r["id"], r["text"]) for r in t["expected"]["rubric"]] + [""]
     lines += ["## Judge labels (%d; qualification needs %d of %d with no critical false pass)" %

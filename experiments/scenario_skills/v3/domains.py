@@ -224,13 +224,30 @@ def label(workflow):
     return workflow.replace("_", " ")
 
 
+# What the caller does differently in each variant: the script step and the matching conditional action.
+# The variant in a scenario's name is backed by this content, so an outcome written "per variant" has
+# something to describe (the T13 rubric asks for it) and an outcome that invents more is not licensed.
+VARIANT_STEPS = {
+    "happy path": ("Answer every question clearly the first time it is asked.",
+                   {"when": "The main agent asks you for a detail", "say": "<ai_generated>Give the detail clearly, from your profile</ai_generated>"}),
+    "edge case": ("Ask for something the agent will not find (a slot, record or option that is not available) and see what it offers instead.",
+                  {"when": "The main agent asks what you want", "say": "<ai_generated>Ask for an option that is not available and listen to the alternative</ai_generated>"}),
+    "repeat request": ("After the agent has acknowledged your request, state the same request once more as if it had not been heard.",
+                       {"when": "The main agent acknowledges your request", "say": "<ai_generated>Repeat the same request once more</ai_generated>"}),
+    "interrupting": ("Start talking before the agent finishes its sentences, and ask two things in one breath.",
+                     {"when": "The main agent is still explaining", "say": "<ai_generated>Interrupt with two questions at once</ai_generated>"}),
+    "unclear answer": ("Give your first answer vaguely (mumble the date, number or name), then say it clearly when the agent asks you to confirm.",
+                       {"when": "The main agent asks you to repeat or confirm a detail", "say": "<ai_generated>Say the detail clearly this time</ai_generated>"})}
+
+
 def script(d, persona, workflow, k, hard_coded):
     """An instruction-format caller script; some carry a hard-coded identity or the domain's stalling phrase."""
     identity = ("When the agent wants your name, say %s." % persona) if hard_coded else "When the agent wants your name, say {{test_profile.caller_name}}."
     ender = ("Say \"Okay, %s.\" and end the call." % d["phrase"]) if k % 7 == 3 else "End the call when the request is complete."
+    variant = VARIANTS[k % 5]
     return ("<scenario>\nSCENARIO: %s (%s)\n\nYOUR BEHAVIOR:\n1. When asked how you can be helped, say you want to %s.\n2. %s\n"
-            "3. Answer follow-up questions with the details from your profile when asked.\n4. %s\n</scenario>"
-            % (label(workflow).title(), VARIANTS[k % 5], label(workflow), identity, ender))
+            "3. Answer follow-up questions with the details from your profile when asked.\n4. %s\n5. %s\n</scenario>"
+            % (label(workflow).title(), variant, label(workflow), identity, VARIANT_STEPS[variant][0], ender))
 
 
 def actions(d, persona, workflow, k):
@@ -239,6 +256,7 @@ def actions(d, persona, workflow, k):
             "first_message": "" if d["inbound"] else "Hello?",
             "conditions": [{"when": "The main agent invites you to state your reason for calling", "say": "<ai_generated>Explain that you want to %s</ai_generated>" % label(workflow)},
                            {"when": "The main agent asks you to confirm a detail", "say": "<ai_generated>Confirm the detail if it matches your information</ai_generated>"},
+                           dict(VARIANT_STEPS[VARIANTS[k % 5]][1]),
                            {"when": "The main agent confirms everything is done", "say": closing}]}
 
 
@@ -292,8 +310,10 @@ def agent(d):
     for t_index, tool in enumerate(d["mock_tools"]):
         for e_index, (inputs, outputs) in enumerate(tool["entries"]):
             tools.append({"id": d["base"] + 500 + t_index * 10 + e_index, "name": tool["name"], "input": inputs, "output": outputs})
+    # A fictional SIP endpoint: a run request is answerable, as it is for every connected production agent.
     return {"id": d["base"], "project": d["base"] + 41, "name": d["agent_name"], "description": description(d), "language": d["language"],
             "inbound": d["inbound"], "agent_speaks_first": True, "required_variables": {},
+            "sip_endpoint": "sip:%s.example.invalid;transport=tcp" % d["name"],
             "auto_dynamic_variables": [{"name": v, "deleted": False} for v in d["variables"]] + [{"name": "legacy_ref", "deleted": True}],
             "mock_tools": tools, "default_scenario_type": "instruction"}
 
@@ -301,7 +321,7 @@ def agent(d):
 def second_agent(d):
     """A newer version of the same agent, for copy-to-new-agent tasks; it has no evaluators yet."""
     a = agent(d)
-    return dict(a, id=d["base"] + 1, name=a["name"] + " v2", mock_tools=[])
+    return dict(a, id=d["base"] + 1, name=a["name"] + " v2", mock_tools=[], sip_endpoint="sip:v2.%s.example.invalid;transport=tcp" % d["name"])
 
 
 def fixture(name):

@@ -1117,7 +1117,7 @@
       201006,
       201009
      ],
-     "kind": "mentions_any_turn"
+     "kind": "mentions_across_turns"
     }
    }
   ],
@@ -1128,7 +1128,7 @@
    },
    {
     "id": "evidence",
-    "text": "Each verdict cites what the transcript shows, not only the metric label."
+    "text": "Each verdict cites what the transcript shows, not only the metric label. Judge only the two causes above; do not require findings about anything else in the agent description."
    },
    {
     "id": "fix",
@@ -1212,7 +1212,7 @@
   "rubric": [
    {
     "id": "trigger",
-    "text": "The silence sits on its own condition after the caller's partial answer (not in a `then` step), and the caller gives the missing detail only when the agent asks for it again."
+    "text": "The caller's silence after the partial answer is scripted so it plays the same every run: a `<silence>`/`<hold>` tag either inside the action that gives the first detail or on its own condition after it, and the caller gives the missing detail only when the agent asks for it again."
    },
    {
     "id": "outcome",
@@ -1612,7 +1612,7 @@
   "rubric": [
    {
     "id": "specific",
-    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant, using only behavior the agent description licenses."
+    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant (the variant is the caller behaviour its script describes), using only behavior the agent description licenses. Scripts with the same workflow and variant may share an outcome."
    },
    {
     "id": "batches",
@@ -1685,6 +1685,22 @@
       "agents"
      ],
      "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "shared_profiles_untouched",
+    "critical": true,
+    "check": {
+     "ids": [
+      200800,
+      200801,
+      200802,
+      200803,
+      200804,
+      200805,
+      200799
+     ],
+     "kind": "profiles_unchanged"
     }
    },
    {
@@ -3195,7 +3211,7 @@
       211006,
       211009
      ],
-     "kind": "mentions_any_turn"
+     "kind": "mentions_across_turns"
     }
    }
   ],
@@ -3206,7 +3222,7 @@
    },
    {
     "id": "evidence",
-    "text": "Each verdict cites what the transcript shows, not only the metric label."
+    "text": "Each verdict cites what the transcript shows, not only the metric label. Judge only the two causes above; do not require findings about anything else in the agent description."
    },
    {
     "id": "fix",
@@ -3290,7 +3306,7 @@
   "rubric": [
    {
     "id": "trigger",
-    "text": "The silence sits on its own condition after the caller's partial answer (not in a `then` step), and the caller gives the missing detail only when the agent asks for it again."
+    "text": "The caller's silence after the partial answer is scripted so it plays the same every run: a `<silence>`/`<hold>` tag either inside the action that gives the first detail or on its own condition after it, and the caller gives the missing detail only when the agent asks for it again."
    },
    {
     "id": "outcome",
@@ -3645,7 +3661,7 @@
   "rubric": [
    {
     "id": "specific",
-    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant, using only behavior the agent description licenses."
+    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant (the variant is the caller behaviour its script describes), using only behavior the agent description licenses. Scripts with the same workflow and variant may share an outcome."
    },
    {
     "id": "batches",
@@ -3718,6 +3734,22 @@
       "agents"
      ],
      "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "shared_profiles_untouched",
+    "critical": true,
+    "check": {
+     "ids": [
+      210800,
+      210801,
+      210802,
+      210803,
+      210804,
+      210805,
+      210799
+     ],
+     "kind": "profiles_unchanged"
     }
    },
    {
@@ -5229,7 +5261,7 @@
       221006,
       221009
      ],
-     "kind": "mentions_any_turn"
+     "kind": "mentions_across_turns"
     }
    }
   ],
@@ -5240,7 +5272,7 @@
    },
    {
     "id": "evidence",
-    "text": "Each verdict cites what the transcript shows, not only the metric label."
+    "text": "Each verdict cites what the transcript shows, not only the metric label. Judge only the two causes above; do not require findings about anything else in the agent description."
    },
    {
     "id": "fix",
@@ -5324,7 +5356,7 @@
   "rubric": [
    {
     "id": "trigger",
-    "text": "The silence sits on its own condition after the caller's partial answer (not in a `then` step), and the caller gives the missing detail only when the agent asks for it again."
+    "text": "The caller's silence after the partial answer is scripted so it plays the same every run: a `<silence>`/`<hold>` tag either inside the action that gives the first detail or on its own condition after it, and the caller gives the missing detail only when the agent asks for it again."
    },
    {
     "id": "outcome",
@@ -5694,7 +5726,7 @@
   "rubric": [
    {
     "id": "specific",
-    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant, using only behavior the agent description licenses."
+    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant (the variant is the caller behaviour its script describes), using only behavior the agent description licenses. Scripts with the same workflow and variant may share an outcome."
    },
    {
     "id": "batches",
@@ -5767,6 +5799,22 @@
       "agents"
      ],
      "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "shared_profiles_untouched",
+    "critical": true,
+    "check": {
+     "ids": [
+      220800,
+      220801,
+      220802,
+      220803,
+      220804,
+      220805,
+      220799
+     ],
+     "kind": "profiles_unchanged"
     }
    },
    {
@@ -7283,7 +7331,7 @@
       231006,
       231009
      ],
-     "kind": "mentions_any_turn"
+     "kind": "mentions_across_turns"
     }
    }
   ],
@@ -7294,7 +7342,7 @@
    },
    {
     "id": "evidence",
-    "text": "Each verdict cites what the transcript shows, not only the metric label."
+    "text": "Each verdict cites what the transcript shows, not only the metric label. Judge only the two causes above; do not require findings about anything else in the agent description."
    },
    {
     "id": "fix",
@@ -7378,7 +7426,7 @@
   "rubric": [
    {
     "id": "trigger",
-    "text": "The silence sits on its own condition after the caller's partial answer (not in a `then` step), and the caller gives the missing detail only when the agent asks for it again."
+    "text": "The caller's silence after the partial answer is scripted so it plays the same every run: a `<silence>`/`<hold>` tag either inside the action that gives the first detail or on its own condition after it, and the caller gives the missing detail only when the agent asks for it again."
    },
    {
     "id": "outcome",
@@ -7748,7 +7796,7 @@
   "rubric": [
    {
     "id": "specific",
-    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant, using only behavior the agent description licenses."
+    "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant (the variant is the caller behaviour its script describes), using only behavior the agent description licenses. Scripts with the same workflow and variant may share an outcome."
    },
    {
     "id": "batches",
@@ -7821,6 +7869,22 @@
       "agents"
      ],
      "kind": "configuration_unchanged"
+    }
+   },
+   {
+    "id": "shared_profiles_untouched",
+    "critical": true,
+    "check": {
+     "ids": [
+      230800,
+      230801,
+      230802,
+      230803,
+      230804,
+      230805,
+      230799
+     ],
+     "kind": "profiles_unchanged"
     }
    },
    {

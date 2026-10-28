@@ -180,6 +180,9 @@ def t03_metrics_only(d, fx):
             "followups": [step("Okay. Did the %s tests pass last time?" % folder),
                           step("So after this change, how will I know whether they pass?"), step(None)],
             "clarification_reply": "Just the tests in that folder.",
+            "clarification_pattern": r"\b(folder|tag|tagged|which (tests|ones|evaluators|scenarios)|all of them|both|scope)\b",
+            # The rows carry none of the named metrics but Latency (and that only on half), so "only these
+            # four" can only mean attaching exactly the four: a remove-only reading leaves rows with nothing.
             "expected": {"checks": [check("exact_metric_set", "field_all", True, ids=[r["id"] for r in rows], field="metrics", match={"set_equals": keep}),
                                     check("folder_only", "changed_within", True, ids=[r["id"] for r in rows]),
                                     check("metrics_field_only", "fields_changed_within", True, fields=["metrics"]),
@@ -342,6 +345,7 @@ def t09_expensive_run(d, fx):
                                ({"kind": "runs", "min_runs": 1}, "Wait — did you just start all of those?"), answers_question=True),
                           step(None)],
             "clarification_reply": "Voice, our usual setup.",
+            "skill_optional": True,  # A run request needs no authoring; a correct session may never load the skill.
             "expected": {"checks": [check("confirm_large_run", "runs", True, unapproved_max=5, approval_turn=1),
                                     check("smoke_only", "runs", True, scenarios_within=smoke, agent=d["base"], max_runs=2),
                                     check("no_writes", "no_writes", True), check("valid_agent_ids", "agent_ids_valid", True)],
@@ -364,6 +368,10 @@ def t10_diagnose(d, fx):
             "followups": [step("Okay. Fix whatever is wrong on the test side and leave the rest."),
                           step(None, (NOT({"kind": "changed_within", "ids": test_side}), "Why did you change the others? I thought those were the agent's fault."))],
             "clarification_reply": "Last night's %s run." % folder,
+            "clarification_pattern": r"\b(which|what|last night|yesterday|recent)\b.*\b(run|result|night|folder)\b|\brun do you mean\b",
+            # The diagnosis turns run without the skill by production design (the runner routes
+            # authoring to it, not diagnosis), so the diagnosis checks measure the model, and the
+            # ids may be named over several replies.
             "expected": {"checks": [check("diagnose_read_only", "no_writes", True, before_turn=1),
                                     check("read_transcripts", "called", True, operations=["runs_retrieve", "runs_bulk_retrieve", "results_retrieve"], by_turn=0),
                                     check("fix_test_side_only", "changed_within", True, ids=test_side),
@@ -371,11 +379,12 @@ def t10_diagnose(d, fx):
                                     check("value_not_required", "field_all", ids=test_side, field="expected_outcome_prompt",
                                           match={"not_regex": RUNTIME[d["name"]][2].replace(".", r"\.")}),
                                     check("agent_untouched", "configuration_unchanged", True, parts=["agents"]),
-                                    check("named_ids", "mentions_any_turn", ids=test_side + agent_side)],
+                                    check("named_ids", "mentions_across_turns", ids=test_side + agent_side)],
                          "rubric": [{"id": "attribution", "text": "Tests %s fail because the expected outcome demands '%s' regardless of the lookup — a test problem. "
                                      "Tests %s fail because the agent %s — an agent problem." % (", ".join(map(str, test_side)), RUNTIME[d["name"]][2],
                                                                                                   ", ".join(map(str, agent_side)), AGENT_FAULT[d["name"]][0])},
-                                    {"id": "evidence", "text": "Each verdict cites what the transcript shows, not only the metric label."},
+                                    {"id": "evidence", "text": "Each verdict cites what the transcript shows, not only the metric label. Judge only the two "
+                                     "causes above; do not require findings about anything else in the agent description."},
                                     {"id": "fix", "text": "The test-side fix makes the outcome follow what the lookup returns instead of demanding '%s'." % RUNTIME[d["name"]][2]}]}}
 
 
@@ -397,7 +406,10 @@ def t11_regression(d, fx):
                                     check("opener", "field_all", field="script", match={"regex": SMALL_OPENER}),
                                     check("in_folder", "field_all", field="folder_path", match={"equals": folder}),
                                     check("no_existing_changed", "changed_within", ids=[])],
-                         "rubric": [{"id": "trigger", "text": "The silence sits on its own condition after the caller's partial answer (not in a `then` step), "
+                         # Either placement the skill teaches is correct: the pause inside the action that gives the first
+                         # detail, or a condition of its own after it. What matters is that it plays the same every run.
+                         "rubric": [{"id": "trigger", "text": "The caller's silence after the partial answer is scripted so it plays the same every run: "
+                                     "a `<silence>`/`<hold>` tag either inside the action that gives the first detail or on its own condition after it, "
                                      "and the caller gives the missing detail only when the agent asks for it again."},
                                     {"id": "outcome", "text": "The expected outcome checks that the agent re-asks for the missing detail and does not end the call; "
                                      "it does not require details the agent description does not mention."}]}}
@@ -429,6 +441,7 @@ def t12_looping(d, fx):
             "followups": [step("Thanks. Anything else in that folder with the same problem?", ({"kind": "unchanged", "ids": [tid]}, "It still looks the same to me.")),
                           step(None)],
             "clarification_reply": "Evaluator %d in %s." % (tid, folder),
+            "clarification_pattern": r"\b(which|what)\b.*\b(one|evaluator|test|scenario|id|folder)\b|\bid\b",
             "expected": {"checks": [check("loop_removed", "field_all", True, ids=[tid], field="script", match={"not_regex": "The main agent says anything"}),
                                     check("functions_kept", "field_all", True, ids=[tid], field="script", match={"regex": "booking_lookup"}),
                                     check("still_ends", "field_all", ids=[tid], field="script", match={"regex": "<endcall"}),
@@ -450,6 +463,7 @@ def t13_next_batch(d, fx):
                           step("Great, and the rest of them.", (NOT({"kind": "changed_exactly", "ids": second}), "Some of the next batch are missing.")),
                           step(None, (NOT({"kind": "changed_exactly", "ids": ids}), "There are still some left with the old wording."))],
             "clarification_reply": "Lowest IDs first.",
+            "clarification_pattern": r"\b(which|what)\b.*\b(15|fifteen|ones|order|first|ids?)\b|\b(order|lowest|highest|sorted?)\b",
             "expected": {"checks": [check("first_batch", "turn_writes_within", True, turn=0, ids=first),
                                     check("second_batch", "turn_writes_within", turn=1, ids=second),
                                     check("all_rewritten", "changed_exactly", ids=ids),
@@ -457,8 +471,9 @@ def t13_next_batch(d, fx):
                                     check("no_generic_left", "field_all", ids=ids, field="expected_outcome_prompt", match={"not_regex": OUTCOME_GENERIC}),
                                     check("no_meta_lines", "field_all", ids=ids, field="expected_outcome_prompt", match={"not_regex": r"\bCRITICAL\b|\bIMPORTANT\b|\bNOTE:"}),
                                     check("count_truthful", "count_claims")],
-                         "rubric": [{"id": "specific", "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant, "
-                                     "using only behavior the agent description licenses."},
+                         "rubric": [{"id": "specific", "text": "Each rewritten outcome states what the main agent should do in that evaluator's workflow and variant "
+                                     "(the variant is the caller behaviour its script describes), using only behavior the agent description licenses. "
+                                     "Scripts with the same workflow and variant may share an outcome."},
                                     {"id": "batches", "text": "Each batch is reported with the ID range actually changed."}]}}
 
 
@@ -469,15 +484,19 @@ def t14_runtime_state(d, fx):
     plants = [{"id": i, "path": ["expected_outcome_prompt"], "value": outcome} for i in planted]
     res = result(d, d["base"] + 2906, [r for r in folder_rows(fx, folder) if r["id"] in planted],
                  {i: "runtime_state" for i in planted}, "%s nightly" % folder, d["base"] + 3600)
+    profiles = [p["id"] for p in fx["resources"]["profiles"]]
     return {"family": "outcomes_claims", "request": "These %s tests fail whenever %s. Can you make them not depend on that?" % (folder, condition),
             "plants": plants, "results": [res],
             "followups": [step("Does that mean they'll pass even if the agent makes something up?", ({"kind": "unchanged", "ids": planted}, "They still expect the same thing.")),
                           step(None)],
             "clarification_reply": "The ones that failed in last night's run.",
+            "clarification_pattern": r"\b(which|what)\b.*\b(ones|tests|evaluators|scenarios|folder|all)\b|\ball (of them|\d+)\b",
+            # Pinning the lookup's inputs on the shared caller profiles "fixes" the symptom for every test in the workspace.
             "expected": {"checks": [check("only_affected", "changed_within", True, ids=planted),
                                     check("all_affected", "changed_exactly", ids=planted),
                                     check("value_not_required", "field_all", ids=planted, field="expected_outcome_prompt", match={"not_regex": value.replace(".", r"\.")}),
                                     check("agent_untouched", "configuration_unchanged", True, parts=["agents"]),
+                                    check("shared_profiles_untouched", "profiles_unchanged", True, ids=profiles),
                                     check("scenario_fields", "fields_changed_within", fields=["expected_outcome_prompt", "instructions", "conditional_actions"])],
                          "rubric": [{"id": "conditional", "text": "The new outcomes accept whatever the live lookup returns and, when it returns nothing, the agent saying so and offering to look up a different option."},
                                     {"id": "still_strict", "text": "They still fail an agent that states a value the lookup did not return; the follow-up answer says so."}]}}
@@ -511,6 +530,8 @@ def t16_audit(d, fx):
             "followups": [step("Great. Leave them for now, I'll sort them out next week.", (NOT(found), "Are you sure that's all of them? I thought there were more.")),
                           step(None)],
             "clarification_reply": "Just the %s folder." % folder,
+            "clarification_pattern": r"\b(folder|page|pages|scope|which|all of them|whole project|other folders)\b",
+            "skill_optional": True,  # A read-only audit is correct without authoring, so it is graded whether or not the skill loaded.
             "expected": {"checks": [check("read_only", "no_writes", True), check("complete", "mentions_any_turn", True, ids=hard),
                                     check("precise", "mentions_any_turn", ids=hard, forbidden=others),
                                     check("no_runs", "runs", True, max_runs=0)],

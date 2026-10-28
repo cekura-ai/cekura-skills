@@ -249,6 +249,21 @@ The user raised the wallet to $300 (`v2 extend-budget`, recorded once in the wal
 
 **Spend:** the wallet stands at $252.88 of $300 ($149.04 in this run, of which $82 is the incident).
 
+## Repairs (2026-10-28)
+
+A transcript audit of the adaptive run found that several of the failures no candidate could move were defects of the benchmark, not of the skill or the model. Each template was re-examined against the rule that a correct session must pass under the production runner's behaviour. The fixes, all refrozen and rescanned:
+
+- **T11:** the `trigger` rubric demanded the silence "on its own condition (not in a `then` step)" while `SKILL.md` teaches the opposite (put the pause in the preceding action). Either placement is now correct; the rubric asks that the silence be scripted so it plays the same every run.
+- **T13:** the sixty scheduling scripts named a variant ("edge case", "interrupting", …) that their bodies did not implement, so an outcome written "per variant" had nothing to describe and was judged as invented. Every script now carries its variant as a caller-behaviour step (`domains.VARIANT_STEPS`, in both instruction and conditional-action form), and the rubric says scripts sharing a workflow and variant may share an outcome.
+- **The simulated user answered any question with the canned clarification.** "Shall I re-attach Expected Outcome?" was answered "Just the tests in that folder." and taken as consent. Templates now carry a `clarification_pattern`; a question the reply was not written for gets a neutral "Go ahead with your best judgement and tell me what you did." (`followups.NEUTRAL_REPLY`). T03, T10, T12, T13, T14 and T16 declare patterns; the rest keep the old behaviour.
+- **T10:** the diagnosis turns run without the skill by production design (the runner routes authoring to the skill, not diagnosis), so those checks measure the model and are documented as such; `named_ids` now accepts the six ids named over several replies (`mentions_across_turns`), and the `evidence` rubric tells the judge to grade only the two stated causes.
+- **T09 and T07:** every fixture agent now has a fictional SIP endpoint (`sip:<domain>.example.invalid;transport=tcp`, seeded into `AIAgent.sip_endpoint`), so a run request is answerable instead of stalling on "this agent has no phone number".
+- **T09 and T16 are `skill_optional`:** a run request and a read-only audit are correct without authoring. Previously a rollout that never loaded the skill was discarded as inconclusive, which threw away exactly the T16 rollouts that behaved correctly and kept only the ones that wrongly wrote. These two templates are now graded whether or not the skill loaded; every other template keeps the exclusion.
+- **T14:** a critical `shared_profiles_untouched` check. Three candidates "fixed" the symptom by pinning `preferred_weekday` on the six shared caller profiles, and nothing caught it.
+- **T03 is unchanged:** the audit suggested `exact_metric_set` punished a remove-only reading, but the rows carry none of the four named metrics except Latency, so "only these four" can only mean attaching exactly the four. Its simulator reply is fixed by the pattern above.
+
+**Check audit (`v3/audit.py`):** `python3 -m experiments.scenario_skills.v3.audit <run dirs>` reads every scored rollout and reports checks that failed under every revision, checks that flipped between repeated baseline trials, and checks that never failed. It reports only; it is run before a search so the gate's noise tolerance and the proposer's targets are chosen with the data in view.
+
 ## Pool search on per-check credit (2026-10-28)
 
 **Why this changed:** two runs and five candidates found nothing because the loop selected on a binary, single-trial, all-or-nothing task score and restarted every proposal from the original skill. The transcript audit showed candidates clearing three of a task's checks while breaking one and scoring zero; the literature the redesign drew on (GEPA's per-instance Pareto pool, SIMBA's variance targeting, ACE's attributed deltas, RLMOpt's paired standard-error gate, Meta-Harness's raw-trace history, Anthropic's three-trial floor) selects on partial credit, keeps a pool, and gates on noise. The target is unchanged: the platform's kimi-k3-fast at low effort, the only model the skill is improved for.

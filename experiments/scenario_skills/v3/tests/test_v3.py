@@ -119,6 +119,31 @@ class Contracts(unittest.TestCase):
         phones = next(c for c in by_id["T08-solace"]["expected"]["checks"] if c["id"] == "phones_filled")["check"]["ids"]
         self.assertEqual(len(phones), 3)
 
+    def test_repairs_2026_10_28(self):
+        by_id = {t["id"]: t for t in TASKS}
+        # T14: pinning the lookup's inputs on shared caller profiles is a critical scope failure.
+        task = by_id["T14-harborview"]
+        e = evidence(task, True)
+        e["final_state"]["profiles"][0]["information"]["main_agent_variables"]["preferred_weekday"] = "monday"
+        g = grade(task, e["trace"], e["initial_state"], e["final_state"], e["messages"])
+        self.assertIn("shared_profiles_untouched", g["critical_failed"])
+        # T10: ids named over two replies count as named.
+        task = by_id["T10-harborview"]
+        e = evidence(task, True)
+        ids = next(c for c in task["expected"]["checks"] if c["id"] == "named_ids")["check"]["ids"]
+        e["messages"] = ["Test side: %s." % ", ".join(map(str, ids[:3])), "Agent side: %s." % ", ".join(map(str, ids[3:]))] + e["messages"][2:]
+        self.assertTrue(grade(task, e["trace"], e["initial_state"], e["final_state"], e["messages"])["checks"]["named_ids"])
+        # T09 and T16 are graded even when the skill never loaded; every other template is not.
+        self.assertEqual({t["template"] for t in TASKS if t.get("skill_optional")}, {"T09", "T16"})
+        # T13: the variant in every scenario's name is backed by caller behaviour in its script.
+        from experiments.scenario_skills.v3.domains import VARIANT_STEPS
+        for row in by_id["T13-harborview"]["starting_resources"]["scenarios"]:
+            variant = next(v for v in VARIANT_STEPS if row["name"].endswith(v))
+            text = json.dumps(row["conditional_actions"]) if row["scenario_type"] == "conditional_actions" else row["instructions"]
+            self.assertIn(VARIANT_STEPS[variant][0] if row["scenario_type"] == "instruction" else VARIANT_STEPS[variant][1]["when"], text)
+        # Every agent in every fixture is connected, so a run request is answerable.
+        self.assertTrue(all(a.get("sip_endpoint") for t in TASKS for a in [t["fixture"]["agent"]] + t["fixture"]["other_agents"]))
+
     def test_unrequested_deletion_is_critical_everywhere(self):
         task = TASKS[0]
         e = evidence(task, True)
@@ -170,6 +195,16 @@ class Followups(unittest.TestCase):
         consent = next(t for t in TASKS if t["template"] == "T09")
         message, decision = decide(consent, {"step": 0, "clarifications": 0}, self.ctx(consent, ["That is 120 calls. Go ahead?"]), 0)
         self.assertEqual(message, consent["followups"][0]["default"])
+
+    def test_a_question_the_reply_was_not_written_for_gets_the_neutral_reply(self):
+        from experiments.scenario_skills.v3.followups import NEUTRAL_REPLY
+        task = next(t for t in TASKS if t["id"] == "T03-harborview")
+        asked = self.ctx(task, ["Shall I re-attach Expected Outcome to them as well?"])
+        self.assertEqual(decide(task, {"step": 0, "clarifications": 0}, asked, 0)[0], NEUTRAL_REPLY)
+        scope = self.ctx(task, ["Do you mean the Insurance folder, or every test tagged insurance?"])
+        self.assertEqual(decide(task, {"step": 0, "clarifications": 0}, scope, 0)[0], task["clarification_reply"])
+        plain = next(t for t in TASKS if t["template"] == "T01")  # no pattern: every question gets the reply, as before
+        self.assertEqual(decide(plain, {"step": 0, "clarifications": 0}, self.ctx(plain, ["Re-attach it?"]), 0)[0], plain["clarification_reply"])
 
     def test_session_ends_after_the_last_step(self):
         task = next(t for t in TASKS if t["template"] == "C02")

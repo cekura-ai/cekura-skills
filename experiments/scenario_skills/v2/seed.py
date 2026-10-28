@@ -52,7 +52,7 @@ for a in [agent] + fixture.get("other_agents", []):
         description += "\nGreeting: " + a["greeting"]
     row = AIAgent.objects.create(id=a["id"], organization=org, project=project, user=user, agent_name=a["name"],
         description=description, language=a["language"], inbound=a.get("inbound", True),
-        agent_gives_first_message=a.get("agent_speaks_first", True),
+        agent_gives_first_message=a.get("agent_speaks_first", True), sip_endpoint=a.get("sip_endpoint") or "",
         auto_dynamic_variables=[{"name": v["name"], "description": v["name"]} for v in a.get("auto_dynamic_variables", []) if not v.get("deleted")])
     for v in a.get("auto_dynamic_variables", []):
         AIAgentDynamicVariable.objects.create(agent=row, name=v["name"], description=v["name"], is_deleted=bool(v.get("deleted")))
