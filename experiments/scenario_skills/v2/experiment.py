@@ -605,11 +605,14 @@ class Controller:
         root, root_name, counters, attempts = self.baseline, "baseline", self.state.get("edit_counters", {}), []
         if protocol.get("restructure_first"):
             path = directory / "candidate-restructure.md"
-            if not path.exists() and not (directory / "proposal-restructure.no-change.json").exists():
+            tries = len(list(directory.glob("proposal-restructure.rejected*.json")))
+            if not path.exists() and not (directory / "proposal-restructure.no-change.json").exists() and tries < 2:
+                # Two tries: a rejected whole-body proposal (a protected line reworded) costs no inference.
                 try:
-                    self.proposer.propose_restructure(self.baseline, history, forbidden, self._pool_labels(), self._pool_context(pool, triage, counters))
+                    self.proposer.propose_restructure(self.baseline, history, forbidden, self._pool_labels(), self._pool_context(pool, triage, counters),
+                                                      attempt=tries + 1)
                 except (ValueError, SchemaValidationError) as error:
-                    write(directory / "proposal-restructure.rejected.json", {"reason": str(error)})
+                    write(directory / ("proposal-restructure.rejected-%d.json" % (tries + 1)), {"reason": str(error)})
             if path.exists():
                 data = path.read_bytes()
                 with self._staged("v3-pool-restructure-" + tag, caps["restructure"], "restructure"):

@@ -62,7 +62,7 @@ class Proposer:
     def __init__(self, directory, restructure=False):
         self.directory, self.restructure, self.contexts = directory, restructure, []
 
-    def propose_restructure(self, parent, history, forbidden, labels, context):
+    def propose_restructure(self, parent, history, forbidden, labels, context, attempt=1):
         assert all(r["split"] == "training" for r in history)
         if not self.restructure:
             write(self.directory / "proposal-restructure.no-change.json", {"status": "no_change", "rationale": "nothing to reorder"})

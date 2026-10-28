@@ -217,11 +217,18 @@ class PoolProposer(Proposer):
         (self.directory / ("candidate-%d.md" % iteration)).write_bytes(data)
         return data, value
 
-    def propose_restructure(self, parent, history, forbidden, labels, context, max_chars=RESTRUCTURE_MAX_CHARS):
+    def propose_restructure(self, parent, history, forbidden, labels, context, max_chars=RESTRUCTURE_MAX_CHARS, attempt=1):
         """One whole-body proposal: the same rules, shorter and reordered for a model that reads top-down."""
+        from ..skill import protected
         files = self.workspace(parent, history, labels, context)
+        lines, links = protected(split(parent)[1])
+        files["training/protected.txt"] = ("Every line below must appear in the body exactly as written (byte for byte), and every reference "
+                                           "path below must still be mentioned at least once:\n\n" + "\n".join(lines) + "\n\nReference paths:\n"
+                                           + "\n".join(sorted(set(links))) + "\n")
         prompt = ("Restructure /workspace/SKILL.md for a fast model that drops instructions by omission as a file grows and weights early text "
-                  "more than late text. Keep the frontmatter, acknowledgement lines and reference links exactly. Return the editable body only, "
+                  "more than late text. Keep the frontmatter, acknowledgement lines and reference links exactly: training/protected.txt lists "
+                  "the exact lines that must survive unchanged and the references/ and examples/ paths that must still be named; a proposal "
+                  "that drops or rewords any of them is rejected unread. Return the editable body only, "
                   "at most %d characters INCLUDING the preserved header and at most 500 lines. Put the rules that govern changing existing "
                   "evaluators (scope, consent, what counts as approval, which fields to touch) and the critical rules first; keep every rule "
                   "the model needs for the training tasks (read training/index.json and the traces); move long reference material, examples "
@@ -230,7 +237,7 @@ class PoolProposer(Proposer):
                   "reordering and shortening should change; targeted_checks lists the parent's failed check names you expect to move."
                   % max_chars)
         value = self.session(prompt, {"iteration": 0, "parent_sha256": digest(parent), "index": "training/index.json"}, SCHEMA,
-                             "proposal-restructure", workspace=files)
+                             "proposal-restructure" + ("" if attempt == 1 else "-%d" % attempt), workspace=files)
         if value["status"] == "no_change":
             write(self.directory / "proposal-restructure.no-change.json", value)
             return None, value
