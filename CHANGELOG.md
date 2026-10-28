@@ -17,11 +17,8 @@ right moment, learned from building a 70-scenario scripted-caller benchmark.**
   agent turns across runs. The "never use history to mean 'not yet'"
   anti-pattern now names this as the one dependable exception, and the DTMF
   note warns against identical-wording twins for spoken moments.
-- **Merged turns lose the verbatim guarantee:** a step is spoken exactly (or
-  its clip played) only when it is the single match; two matches produce one
-  composed reply that can paraphrase, read a clip aloud or drop a line while
-  still running its `then` steps. New anti-pattern on when to let lines merge
-  and when not to.
+- **New anti-pattern on merges:** when to let two lines that match the same
+  message merge, and when to make their triggers mutually exclusive.
 - **A due `then` step takes the turn**, so answers to agent questions belong on
   conditions, not in `then`.
 - **Construction rules:** two answers for every read-back, scripted lines that
