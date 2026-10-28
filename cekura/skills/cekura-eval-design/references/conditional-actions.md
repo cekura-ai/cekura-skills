@@ -818,15 +818,6 @@ The first six are one family: the payload validates, the write returns `ok`, and
 - **Forcing `then` chains on content-dependent turns for determinism.** Converting a natural back-and-forth to positional advancement makes the caller ignore the agent's actual reply, tanking Expected Outcome / Relevancy. Only chain probe turns positionally when the caller's next line is content-independent (see [The condition-matcher stall](#the-condition-matcher-stall-and-when-to-go-positional)).
 - **Scripts longer than ~15 steps.** Split into multiple evaluators by phase (verification, scheduling, confirmation). Long scripts drift from the intended flow and are hard to debug.
 
-## Validating a Scenario Before Relying on It
-
-A payload that validates can still fire lines at the wrong moment. Before a conditional-action evaluator is trusted:
-
-1. **Check each trigger against real agent turns.** Take the agent's messages from previous runs and confirm each condition matches the turn it is meant for and none of the others, especially for one-time lines and phase-gated lines.
-2. **Run it a few times (three is a good default) and read every transcript.** Check that each tested line played once, at the intended turn, word for word (or as the attached clip), and that no answer was merged into another.
-3. **When a line that should have fired didn't,** first check whether the trigger clearly matches that turn. If it does, re-run before rewording; a single miss is not always the wording's fault.
-4. **Don't listen live to validation runs.** Joining and leaving the live audio can end the call on some agent integrations, which looks like a scenario failure.
-
 ## Validation Checklist
 
 - [ ] `conditional_actions` uses `first_message` / `conditions[{when, say, then}]` — no old `id`/`condition`/`action`/`type`/`fixed_message` fields
