@@ -1,0 +1,2 @@
+# Optional offline matching-image probe; host controller requires Python 3.11+.
+modal==1.4.1

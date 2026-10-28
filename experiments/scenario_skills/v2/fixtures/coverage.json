@@ -1,0 +1,442 @@
+[
+  {
+    "requirement": "SG-01",
+    "tasks": [
+      "configuration-5"
+    ],
+    "checks": [
+      "routing",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": "Actual audio timing/voice discrimination and alternate loading paths remain deferred."
+  },
+  {
+    "requirement": "SG-02",
+    "tasks": [
+      "timing-0",
+      "timing-4"
+    ],
+    "checks": [
+      "timing",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": "Actual audio timing/voice discrimination and alternate loading paths remain deferred."
+  },
+  {
+    "requirement": "SG-03",
+    "tasks": [
+      "configuration-4"
+    ],
+    "checks": [
+      "configuration",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-04",
+    "tasks": [
+      "routing-3"
+    ],
+    "checks": [
+      "routing",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-05",
+    "tasks": [
+      "verbatim-0",
+      "verbatim-2",
+      "verbatim-4"
+    ],
+    "checks": [
+      "verbatim",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-06",
+    "tasks": [
+      "timing-1",
+      "timing-2"
+    ],
+    "checks": [
+      "timing",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": "Actual audio timing/voice discrimination and alternate loading paths remain deferred."
+  },
+  {
+    "requirement": "SG-07",
+    "tasks": [
+      "timing-3"
+    ],
+    "checks": [
+      "timing",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": "Actual audio timing/voice discrimination and alternate loading paths remain deferred."
+  },
+  {
+    "requirement": "SG-08",
+    "tasks": [
+      "triggers-0",
+      "triggers-2",
+      "triggers-4"
+    ],
+    "checks": [
+      "triggers",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": "Actual audio timing/voice discrimination and alternate loading paths remain deferred."
+  },
+  {
+    "requirement": "SG-09",
+    "tasks": [
+      "variables-0",
+      "variables-2",
+      "variables-3"
+    ],
+    "checks": [
+      "variables",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-10",
+    "tasks": [
+      "repair-1"
+    ],
+    "checks": [
+      "repair",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-11",
+    "tasks": [
+      "configuration-0",
+      "configuration-1",
+      "configuration-3"
+    ],
+    "checks": [
+      "configuration",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-12",
+    "tasks": [
+      "repair-0",
+      "repair-3"
+    ],
+    "checks": [
+      "repair",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-13",
+    "tasks": [
+      "configuration-2",
+      "configuration-4"
+    ],
+    "checks": [
+      "configuration",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-14",
+    "tasks": [
+      "grounding-0",
+      "grounding-1",
+      "grounding-2"
+    ],
+    "checks": [
+      "grounding",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": "Actual audio timing/voice discrimination and alternate loading paths remain deferred."
+  },
+  {
+    "requirement": "SG-15",
+    "tasks": [
+      "causal-0",
+      "causal-2",
+      "causal-4"
+    ],
+    "checks": [
+      "causal",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": "Actual audio timing/voice discrimination and alternate loading paths remain deferred."
+  },
+  {
+    "requirement": "SG-16",
+    "tasks": [
+      "causal-3"
+    ],
+    "checks": [
+      "causal",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": "Actual audio timing/voice discrimination and alternate loading paths remain deferred."
+  },
+  {
+    "requirement": "SG-17",
+    "tasks": [
+      "authorization-2"
+    ],
+    "checks": [
+      "authorization",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-18",
+    "tasks": [
+      "authorization-4",
+      "repair-4"
+    ],
+    "checks": [
+      "authorization",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-19",
+    "tasks": [
+      "routing-2",
+      "routing-3"
+    ],
+    "checks": [
+      "routing",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "SG-20",
+    "tasks": [
+      "timing-4"
+    ],
+    "checks": [
+      "triggers",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": "Actual audio timing/voice discrimination and alternate loading paths remain deferred."
+  },
+  {
+    "requirement": "P02",
+    "tasks": [
+      "sources-0",
+      "sources-1",
+      "sources-2",
+      "sources-3",
+      "sources-4",
+      "sources-5"
+    ],
+    "checks": [
+      "sources",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "P03",
+    "tasks": [
+      "lifecycle-0",
+      "lifecycle-1",
+      "lifecycle-2",
+      "lifecycle-3",
+      "lifecycle-4",
+      "lifecycle-5"
+    ],
+    "checks": [
+      "lifecycle",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "P04",
+    "tasks": [
+      "variables-0",
+      "variables-1",
+      "variables-2",
+      "variables-3",
+      "variables-4",
+      "variables-5"
+    ],
+    "checks": [
+      "variables",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "P05",
+    "tasks": [
+      "lifecycle-0",
+      "lifecycle-1",
+      "lifecycle-2",
+      "lifecycle-3",
+      "lifecycle-4",
+      "lifecycle-5"
+    ],
+    "checks": [
+      "lifecycle",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "P06",
+    "tasks": [
+      "grounding-0",
+      "grounding-1",
+      "grounding-2",
+      "grounding-3",
+      "grounding-4",
+      "grounding-5"
+    ],
+    "checks": [
+      "grounding",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "P08",
+    "tasks": [
+      "authorization-0",
+      "authorization-1",
+      "authorization-2",
+      "authorization-3",
+      "authorization-4",
+      "authorization-5"
+    ],
+    "checks": [
+      "authorization",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "P11",
+    "tasks": [
+      "authorization-0",
+      "authorization-1",
+      "authorization-2",
+      "authorization-3",
+      "authorization-4",
+      "authorization-5"
+    ],
+    "checks": [
+      "authorization",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "smoke-source",
+    "tasks": [
+      "sources-0",
+      "sources-1",
+      "sources-2",
+      "sources-3",
+      "sources-4",
+      "sources-5"
+    ],
+    "checks": [
+      "sources",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  },
+  {
+    "requirement": "smoke-long-text",
+    "tasks": [
+      "verbatim-0",
+      "verbatim-1",
+      "verbatim-2",
+      "verbatim-3",
+      "verbatim-4",
+      "verbatim-5"
+    ],
+    "checks": [
+      "verbatim",
+      "support",
+      "truth"
+    ],
+    "layer": "authoring_and_semantics",
+    "later_gate": null
+  }
+]

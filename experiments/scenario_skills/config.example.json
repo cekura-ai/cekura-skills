@@ -1,0 +1,105 @@
+{
+  "execution_goal": "acceptance",
+  "fixture_review_mode": "human",
+  "review_authorization": null,
+  "budget_policy": null,
+  "proposer": {
+    "binary": "codex",
+    "cli_version": "codex-cli 0.163.0",
+    "model": "gpt-6.1-sol",
+    "provider": "azure",
+    "reasoning_effort": "high",
+    "credential_env": "CEKURA_LITELLM_KEY",
+    "provider_config": null,
+    "auth_verified": false,
+    "model_available_verified": false,
+    "rates": {
+      "input_per_million": null,
+      "output_per_million": null,
+      "cached_input_per_million": null,
+      "source": null,
+      "verified_at": null
+    },
+    "max_cost_usd": null,
+    "cost_bound_evidence": null,
+    "accounting": "per_request",
+    "billing_usage_verified": false,
+    "gateway_probe_path": null,
+    "admission": {
+      "input_token_limit": null,
+      "output_token_limit": null,
+      "token_bound_evidence": null,
+      "hard_cap": {
+        "verified": false,
+        "experiment_exclusive": false,
+        "remaining_usd": null,
+        "credential_sha256": null,
+        "evidence": null
+      }
+    },
+    "model_base_url": null
+  },
+  "target": {
+    "runner": null,
+    "extension": null,
+    "pi_settings_path": null,
+    "image": "",
+    "network_guard_image": null,
+    "offline_probe_path": null,
+    "catalog_path": null,
+    "contract_probe_path": null,
+    "credential_env": "FIREWORKS_API_KEY",
+    "auth_verified": false,
+    "model_available_verified": false,
+    "snapshot": {
+      "confirmed_effective": false,
+      "deployment_ref": null,
+      "model": null,
+      "model_base_url": null,
+      "reasoning_effort": null,
+      "system_prompt_sha256": null,
+      "skill_max_chars": null,
+      "runtime_env": null,
+      "catalog_sha256": null,
+      "tool_schema_provenance": null,
+      "runner_sha256": null,
+      "extension_sha256": null,
+      "pi_settings_sha256": null,
+      "image": null,
+      "proxy_transport_verified": false
+    },
+    "rates": {
+      "input_per_million": null,
+      "output_per_million": null,
+      "cached_input_per_million": null,
+      "cache_write_per_million": null,
+      "infrastructure_per_second": null,
+      "source": null,
+      "verified_at": null
+    },
+    "max_cost_usd": null,
+    "cost_bound_evidence": null,
+    "accounting": "per_request",
+    "billing_usage_verified": false,
+    "gateway_probe_path": null,
+    "admission": {
+      "input_token_limit": null,
+      "output_token_limit": null,
+      "token_bound_evidence": null,
+      "hard_cap": {
+        "verified": false,
+        "experiment_exclusive": false,
+        "remaining_usd": null,
+        "credential_sha256": null,
+        "evidence": null
+      }
+    },
+    "adapter": "modal",
+    "infrastructure_rates": {
+      "source": null,
+      "verified_at": null,
+      "rates": {}
+    }
+  },
+  "budget_ledger_path": null
+}

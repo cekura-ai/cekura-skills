@@ -150,3 +150,10 @@ Cekura can create an evaluator directly from a real call transcript. Useful when
 
 **Post-creation:** Always review the generated evaluator — the auto-extraction may need refinement. Attach metrics, assign a test profile if identity data is involved, set the folder path, and enable tools.
 
+## Running evaluators and the Infrastructure Suite
+
+Run in text mode for iteration; for voice, use the run variant that matches the agent's connection (phone, VAPI or Retell WebRTC, websocket, SIP, Pipecat, LiveKit, ElevenLabs, email); a tests-as-code spec has its own JSON run. Pass `test_profile_ids` / `personality_ids` to override per run instead of editing scenarios (this is how accent and language sweeps are done), and `frequency` for load. Poll the result before reporting anything, and never state an outcome you did not read back.
+
+On voice, SIP or WebRTC, a batch of more than five evaluators starts with a 3–5 evaluator smoke cohort: read those results — connected, finished inside the cap, no setup error — before launching the rest. A setup or configuration error (the provider rejected a configuration or mock change, a missing phone-number record, bad credentials) hits every run the same way: stop the batch, quote the exact error, fix it first. When reporting, separate a run's `success` from its Expected Outcome score: with project rubric rules, `success` is the rubric verdict over every attached metric, so an Expected Outcome pass with `success: false` failed a project-wide rule — name that rule instead of reporting the scenario as failed.
+
+**Cekura's predefined Infrastructure Suite** (18+ ready-made latency / interruption / noise / packet-loss / hold tests) is not built through the scenario tools: the user adds it from the dashboard (Evaluators → Infrastructure Suite → *Add to my Project*). Point the user there rather than hand-building copies, tell them it also adds an *AI Interrupting user = 0* rubric rule to the project, and tag the copies `infrastructure-suite` so CI can select them. For a suite derived from the customer's own pipeline code, use **cekura-infra-test-suite**.
