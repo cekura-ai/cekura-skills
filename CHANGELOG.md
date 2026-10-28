@@ -24,13 +24,11 @@ right moment, learned from building a 70-scenario scripted-caller benchmark.**
   and when not to.
 - **A due `then` step takes the turn**, so answers to agent questions belong on
   conditions, not in `then`.
-- **Interrupted `say` clips replay from the start:** wrap only the
-  test-critical lines in `<ignore_interruptions>`.
 - **Construction rules:** two answers for every read-back, scripted lines that
   fit every message their trigger can match, script only the tested moments,
   and a test profile that holds every askable fact (dates with the year).
-- **New pattern** for masked or dropped values, a **"Validating a Scenario"**
-  section, four checklist items and three troubleshooting rows.
+- A **"Validating a Scenario"** section, four checklist items and three
+  troubleshooting rows.
 
 ## 0.19.2 — 2026-10-22
 

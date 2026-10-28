@@ -102,8 +102,6 @@ A condition accepts only `when`, `say` and `then`; `first_message` as an object 
 
 `<hold>` is **only** uninterruptible during the hold period itself; any spoken text before or after `<hold>` in the same step remains interruptible (so `"sentence <hold time=\"3s\" /> sentence"` is not safe as a `then` step).
 
-**A condition's `say` that is cut off replays from the start.** A clip or line the main agent talks over is delivered again in full on the next match, so a test-critical line can appear twice in the transcript and confuse the grading. Wrap the lines the test depends on in `<ignore_interruptions>…</ignore_interruptions>`, and only those: ordinary answers should stay interruptible, or the caller stops sounding like a person.
-
 **Practical rule:** put a step on its own condition (`when` + `say`) when the scenario is **intentionally designed to invite an interruption** — most commonly a step containing a long `<silence>` tag (or an opening-line-then-silence pattern) where the test is precisely whether the main agent will speak during the deliberate pause. As a `then` step it loops on the same sentence each time the interruption recurs, because there is no `when` to re-match against. `then` remains the right choice for ordinary multi-part responses, scripted sequences, and `<interruption>` placement — those steps fire and complete quickly and are rarely interrupted in practice. See "Anti-Patterns" and "Troubleshooting" for the failure signature.
 
 ## Writing the `when` String
@@ -736,9 +734,6 @@ Put the sequence in `first_message.then` — each entry fires automatically each
 ### Live data lookup (API-grounded responses)
 
 Declare a `rest_api` function (default `auto_run: true` fetches at call start) and reference its outputs: `{{function.name.output}}` in verbatim steps for exact values, or `<ai_generated>` steps that phrase the fetched data naturally. Chain functions when one call's output feeds the next request. See "Custom Functions — Live API Data" above for the full spec, and always declare `default`s so an API failure degrades to a sane spoken value.
-
-### Masked or dropped values (does the agent check what it couldn't hear?)
-Put the noise in the clip itself, over the exact digit or word, rather than a `<noise>` tag between two clips — only the clip can place it precisely. Trigger the masked line on the value not having been given yet (`"The main agent asks for the card's last four digits before the caller has said any of them"`). Put the clean value on separate, plain re-ask conditions split by scope — `"asks only for the missing digit"` vs `"asks for all four digits again"` — and remove any older `"asks to repeat the X"` condition that overlaps them, or a re-ask matches twice and the reply is merged.
 
 ### Hold / silence behavior
 
