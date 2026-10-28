@@ -62,10 +62,10 @@ class SessionTransport(unittest.TestCase):
         first = transport.ClaudeSession(config, self.directory / "run1", self.ledger, namespace="run-a")
         second = transport.ClaudeSession(config, self.directory / "run2", self.ledger, namespace="run-b")
         with patch.object(transport, "execute", lambda value: OK):
-            for i in range(5):
+            for i in range(transport.PROPOSER_SESSIONS):
                 first("p", {}, SCHEMA, "proposal-%d" % i)
             with self.assertRaises(ValueError):
-                first("p", {}, SCHEMA, "proposal-5")  # Five proposer sessions per run.
+                first("p", {}, SCHEMA, "proposal-%d" % transport.PROPOSER_SESSIONS)  # The per-run proposer allowance.
             self.assertEqual(second("p", {}, SCHEMA, "proposal-1"), {"ok": True})
         e = self.entries()
         self.assertEqual((e["run-a/proposal-1"]["status"], e["run-b/proposal-1"]["namespace"]), ("complete", "run-b"))

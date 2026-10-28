@@ -152,10 +152,25 @@ class WalletTests(unittest.TestCase):
         self.assertEqual((ledger.total(), ledger.authorized_limits["total"]), (Decimal("129.13728485"), "300"))
         ledger.reserve("next", "target", 30)
         with self.assertRaises(BudgetError):
-            budget.extend("Again")
-        # A hand edit of the limits without the matching recorded extension is refused.
+            budget.extend("Again")  # The same ceiling again is not a raise.
+        with self.assertRaises(BudgetError):
+            budget.extend("Lower", 200)
+        with self.assertRaises(BudgetError):
+            budget.extend("Fractional", "550.5")
+        # A second recorded raise follows from the first and keeps every charge.
+        second = budget.extend("User raised the cap to $550 for the repaired-benchmark search", 550)
+        self.assertEqual((second["from_limits"]["total"], second["limits"]), ("300", {"proposer": "5", "target": "545", "total": "550"}))
+        ledger = Ledger(budget.wallet_path(), self.ledger.policy)
+        self.assertEqual((ledger.total(), ledger.authorized_limits["total"]), (Decimal("159.13728485"), "550"))
+        ledger.reserve("more", "target", 300)
+        # A hand edit of a recorded raise is refused, whichever raise is edited.
         state = read(budget.wallet_path())
-        state["extension"]["limits"] = {"proposer": "5", "target": "995", "total": "1000"}
+        state["extensions"][0]["limits"] = {"proposer": "5", "target": "995", "total": "1000"}
+        write(budget.wallet_path(), state)
+        with self.assertRaises(BudgetError):
+            Ledger(budget.wallet_path(), self.ledger.policy)
+        state["extensions"][0]["limits"] = second["limits"]
+        state["extension"]["limits"] = {"proposer": "5", "target": "395", "total": "400"}
         write(budget.wallet_path(), state)
         with self.assertRaises(BudgetError):
             Ledger(budget.wallet_path(), self.ledger.policy)

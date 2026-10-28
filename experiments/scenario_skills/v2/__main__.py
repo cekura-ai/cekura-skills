@@ -49,6 +49,7 @@ def main():
     parser.add_argument("--historical", type=Path, nargs="*", help="Historical ledgers to reconcile once")
     parser.add_argument("--historical-usd", default="29.13728485")
     parser.add_argument("--authorization", help="extend-budget: the user's stated authorization for the raise")
+    parser.add_argument("--total", default=budget.EXTENDED_LIMITS["total"], help="extend-budget: the new whole-dollar ceiling (default $300)")
     parser.add_argument("--env-file", type=Path)
     parser.add_argument("--backend-source", type=Path, help="Extracted pinned backend 650297f source tree")
     parser.add_argument("--benchmark", type=int, choices=(2, 3), default=2, help="Task set to prepare or validate (v3: product-chat-derived)")
@@ -69,11 +70,11 @@ def main():
     if args.env_file:
         load_env(args.env_file, {"MODAL_TOKEN_ID", "MODAL_TOKEN_SECRET", "FIREWORKS_API_KEY", "GEMINI_API_KEY"})
     if args.command == "extend-budget":
-        extension = budget.extend(args.authorization)
+        extension = budget.extend(args.authorization, args.total)
         if config_path.exists():
             # The target's admission evidence states the remaining allowance; keep it equal to the new limit.
             cfg = read(config_path)
-            cfg["target"]["admission"]["hard_cap"]["remaining_usd"] = float(budget.EXTENDED_LIMITS["target"])
+            cfg["target"]["admission"]["hard_cap"]["remaining_usd"] = float(extension["limits"]["target"])
             write(config_path, cfg)
         print({"limits": extension["limits"], "charged_at_extension_usd": extension["charged_at_extension_usd"]})
         return 0

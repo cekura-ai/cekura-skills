@@ -102,11 +102,22 @@ def authorize(sources, expected_historical, authorization):
     return policy
 
 
-def extend(authorization):
-    """Raise the canonical wallet once from $150 to $300, recorded in the wallet itself.
+def extension_limits(total):
+    """Limits for a raised ceiling: Claude's $5 reservation bound is fixed, the rest is the target's."""
+    total = Decimal(str(total))
+    if total != total.to_integral_value() or total <= Decimal(CUMULATIVE_LIMITS["total"]):
+        raise BudgetError("A wallet extension is a whole-dollar total above the original $%s ceiling" % CUMULATIVE_LIMITS["total"])
+    return {"proposer": CUMULATIVE_LIMITS["proposer"], "target": str(total - Decimal(CUMULATIVE_LIMITS["proposer"])), "total": str(total)}
+
+
+def extend(authorization, total=EXTENDED_LIMITS["total"]):
+    """Raise the canonical wallet's ceiling to ``total``, recorded in the wallet itself.
 
     Entries, stage caps and the original policy are untouched, so every earlier charge still
-    counts against the new ceiling. A second extension, or one without a stated authorization, fails.
+    counts against the new ceiling. Each raise is appended with the user's stated authorization,
+    the amount charged when it was recorded and the limits it replaced, so the chain of raises is
+    auditable and a hand-edited limit is refused (``wallet_limits``). A raise to a ceiling that is
+    not above the current one, or one without a stated authorization, fails.
     """
     from datetime import datetime, timezone
     if not authorization:
@@ -115,24 +126,48 @@ def extend(authorization):
     with path.with_suffix(".lock").open("a") as stream:
         fcntl.flock(stream, fcntl.LOCK_EX)
         state = read(path)
-        if state.get("extension") or state["limits"] != CUMULATIVE_LIMITS:
-            raise BudgetError("The cumulative wallet was already extended")
+        current = wallet_limits(state)
+        if state["limits"] != current:
+            raise BudgetError("The wallet's limits do not match its recorded extensions")
+        limits = extension_limits(total)
+        if Decimal(limits["total"]) <= Decimal(current["total"]):
+            raise BudgetError("The cumulative wallet was already extended to $%s" % current["total"])
         spent = sum((Decimal(e["charged"]) for e in state["entries"].values()), Decimal(0))
-        state["extension"] = {"from_limits": dict(CUMULATIVE_LIMITS), "limits": dict(EXTENDED_LIMITS), "authorization": authorization,
-                              "policy_sha256": digest(state["authorization"]), "charged_at_extension_usd": str(spent),
-                              "recorded_at": datetime.now(timezone.utc).isoformat()}
-        state["limits"] = dict(EXTENDED_LIMITS)
+        extension = {"from_limits": dict(current), "limits": limits, "authorization": authorization,
+                     "policy_sha256": digest(state["authorization"]), "charged_at_extension_usd": str(spent),
+                     "recorded_at": datetime.now(timezone.utc).isoformat()}
+        extension["sha256"] = digest(extension)
+        if "extension" in state or limits != EXTENDED_LIMITS:
+            state["extensions"] = state.get("extensions", []) + [extension]
+        else:
+            state["extension"] = extension  # The first raise keeps the field the $300 wallet already records.
+        state["limits"] = dict(limits)
         write(path, state)
-    return state["extension"]
+    return extension
+
+
+def _valid_extension(state, extension, current):
+    body = {k: v for k, v in extension.items() if k != "sha256"}
+    if "sha256" in extension and extension["sha256"] != digest(body):
+        return False  # A recorded raise edited after the fact (the first, $300 raise predates the digest).
+    return (bool(extension.get("authorization")) and extension.get("from_limits") == current
+            and extension.get("policy_sha256") == digest(state.get("authorization"))
+            and Decimal(extension.get("limits", {}).get("total", "0")) > Decimal(current["total"]))
 
 
 def wallet_limits(state):
-    """The cumulative wallet's limits: the original $150, or the one recorded extension."""
-    extension = state.get("extension")
-    if extension and extension.get("authorization") and extension.get("limits") == EXTENDED_LIMITS \
-            and extension.get("policy_sha256") == digest(state.get("authorization")):
-        return dict(EXTENDED_LIMITS)
-    return dict(CUMULATIVE_LIMITS)
+    """The cumulative wallet's limits: the original $150 raised by every validly recorded extension in order.
+
+    The chain stops at the first extension that does not follow from the one before it, so an
+    edit of a recorded limit without its authorization leaves the ceiling where it was.
+    """
+    current = dict(CUMULATIVE_LIMITS)
+    chain = ([state["extension"]] if state.get("extension") else []) + list(state.get("extensions", []))
+    for extension in chain:
+        if not _valid_extension(state, extension, current):
+            break
+        current = dict(extension["limits"])
+    return current
 
 
 def require_cumulative(ledger, live=False):

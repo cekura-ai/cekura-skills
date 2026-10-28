@@ -21,6 +21,10 @@ def never_reached_model(response):
     return bool(response.get("returncode")) and not str(response.get("events", "")).strip()
 
 
+# Proposal sessions per run: the pool search proposes many small deltas, plus one restructure and merges.
+PROPOSER_SESSIONS = 16
+
+
 class ClaudeSession:
     def __init__(self, config, directory, ledger, namespace=None):
         """``namespace`` scopes wallet keys and the session allowance to one run.
@@ -40,7 +44,7 @@ class ClaudeSession:
         # A resolved entry (settled from evidence that no session produced output) is not counted either.
         count = sum(e.get("entry_type") == "claude_session" and e.get("role") == role and not (e.get("not_started") or e.get("resolution"))
                     and e.get("namespace") == self.namespace for e in self.ledger.state["entries"].values())
-        if count >= (5 if role == "proposer" else 384):
+        if count >= (PROPOSER_SESSIONS if role == "proposer" else 384):
             raise ValueError("Bounded Claude session allowance exhausted")
         metadata = {"namespace": self.namespace} if self.namespace else {}
         self.ledger.reserve(self.wallet_key(key), "proposer", 2.5, entry_type="claude_session", role=role, **metadata)
