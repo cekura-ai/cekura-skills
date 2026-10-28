@@ -4,6 +4,28 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.20.0 — 2026-10-28
+
+**`cekura-eval-design`: conditional-action scenarios that fire each line at the
+right moment, learned from building a 70-scenario scripted testing-agent benchmark.**
+
+- **Lines that must play once** (new subsection under "Writing the `when`
+  String"): no condition is once-only and counting words ("first time",
+  "again") don't limit it; anchor the trigger on the testing agent's own line
+  (`"… before the testing agent has said …"`), make the anchor close fully and stay
+  visible in the transcript, gate by phase, and write triggers from real
+  agent turns across runs. The "never use history to mean 'not yet'"
+  anti-pattern now names this as the one dependable exception, and the DTMF
+  note warns against identical-wording twins for spoken moments.
+- **New anti-pattern on merges:** when to let two lines that match the same
+  message merge, and when to make their triggers mutually exclusive.
+- **A due `then` step takes the turn**, so answers to agent questions belong on
+  conditions, not in `then`.
+- **Construction rules:** two answers for every read-back, scripted lines that
+  fit every message their trigger can match, script only the tested moments,
+  and a test profile that holds every askable fact (dates with the year).
+- Four checklist items and a troubleshooting row.
+
 ## 0.19.2 — 2026-10-22
 
 **`cekura-self-improving-agent` says one thing everywhere, and its hook no
