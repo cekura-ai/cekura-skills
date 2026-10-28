@@ -144,7 +144,7 @@ EDIT_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["st
                                                  "reason": {"type": "string"}, "targets": {"type": "array", "items": {"type": "string"}},
                                                  "may_break": {"type": "array", "items": {"type": "string"}}}}}}}
 EDIT_BUDGET_CHARS = 1500
-RESTRUCTURE_MAX_CHARS = 42000
+RESTRUCTURE_MAX_CHARS = 43000  # about a quarter shorter than the 57k baseline; the second proposal came in at 42.5k
 
 
 def contrasts(history, labels):
