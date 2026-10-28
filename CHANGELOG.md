@@ -4,6 +4,34 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.20.0 — 2026-10-28
+
+**`cekura-eval-design`: conditional-action scenarios that fire each line at the
+right moment, learned from building a 70-scenario scripted-caller benchmark.**
+
+- **Lines that must play once** (new subsection under "Writing the `when`
+  String"): no condition is once-only and counting words ("first time",
+  "again") don't limit it; anchor the trigger on the caller's own line
+  (`"… before the caller has said …"`), make the anchor close fully and stay
+  visible in the transcript, gate by phase, and write triggers from real
+  agent turns across runs. The "never use history to mean 'not yet'"
+  anti-pattern now names this as the one dependable exception, and the DTMF
+  note warns against identical-wording twins for spoken moments.
+- **Merged turns lose the verbatim guarantee:** a step is spoken exactly (or
+  its clip played) only when it is the single match; two matches produce one
+  composed reply that can paraphrase, read a clip aloud or drop a line while
+  still running its `then` steps. New anti-pattern on when to let lines merge
+  and when not to.
+- **A due `then` step takes the turn**, so answers to agent questions belong on
+  conditions, not in `then`.
+- **Interrupted `say` clips replay from the start:** wrap only the
+  test-critical lines in `<ignore_interruptions>`.
+- **Construction rules:** two answers for every read-back, scripted lines that
+  fit every message their trigger can match, script only the tested moments,
+  and a test profile that holds every askable fact (dates with the year).
+- **New pattern** for masked or dropped values, a **"Validating a Scenario"**
+  section, four checklist items and three troubleshooting rows.
+
 ## 0.19.2 — 2026-10-22
 
 **`cekura-self-improving-agent` says one thing everywhere, and its hook no
