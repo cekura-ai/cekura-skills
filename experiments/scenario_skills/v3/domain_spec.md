@@ -249,6 +249,26 @@ The user raised the wallet to $300 (`v2 extend-budget`, recorded once in the wal
 
 **Spend:** the wallet stands at $252.88 of $300 ($149.04 in this run, of which $82 is the incident).
 
+## Pool search on per-check credit (2026-10-28)
+
+**Why this changed:** two runs and five candidates found nothing because the loop selected on a binary, single-trial, all-or-nothing task score and restarted every proposal from the original skill. The transcript audit showed candidates clearing three of a task's checks while breaking one and scoring zero; the literature the redesign drew on (GEPA's per-instance Pareto pool, SIMBA's variance targeting, ACE's attributed deltas, RLMOpt's paired standard-error gate, Meta-Harness's raw-trace history, Anthropic's three-trial floor) selects on partial credit, keeps a pool, and gates on noise. The target is unchanged: the platform's kimi-k3-fast at low effort, the only model the skill is improved for.
+
+**Protocol** (`v3_protocol.search = "pool"`, `Controller._run_pool`):
+
+1. **Baseline × `trials` (3)** on every training task. `triage.json` bands each task by its pass count (`solid` 3/3, `high-variance` 1–2/3, `hard` 0/3) and records per-check pass rates: the noise model.
+2. **One restructure candidate** when `restructure_first` is set (`PoolProposer.propose_restructure`): the same rules shorter (≤ 42,000 characters) and reordered for a model that reads top-down, evaluated with full trials. If it clears the gate it becomes the root every later edit applies to.
+3. **Delta proposals** (`propose_edits`): at most three anchored edits of a sampled live parent, net growth ≤ 1,500 characters, each naming the checks it targets and may break. The proposer sees the pool, the triage, per-edit helped/hurt counters and paired passing/failing traces of the same task under the same skill (`training/contrasts.json`), training data only.
+4. **Screen:** one trial on the 2–4 training tasks the edits target. The candidate continues only if its credit there beats the parent's best single trial on the same tasks.
+5. **Confirm:** every other training task once, then paired trials where another trial tells most (`gates.priority`: the arms' credit gap plus an exploration bonus for few trials), up to `trials` per task, until the gate decides.
+6. **Gate (`gates.paired_delta`):** per task, credit = mean pass rate over the checks both arms observed; the gain is the mean of the per-task paired differences and its standard error comes from the same differences. Accepted when gain > `se_multiplier` (1.65) × SE, no check's pass rate fell by more than `regression_floor` (0.34, one trial in three), and no critical check fails that the baseline never failed. Generator-attributed failures are not trials.
+7. **Pool (`v2/pool.py`):** every evaluated candidate joins. It stays live while it leads a (task, check) cell the baseline does not already pass on every trial; parents are drawn in proportion to cells led (seeded per proposal). Every third evaluation, the live members' non-overlapping edits are merged into one candidate and evaluated like any other.
+8. **Selection:** the two best accepted candidates and the baseline run once on the validation domain (the `validation_templates` cheapest non-solid templates); the one with the higher validation credit gain is the finalist.
+9. **Acceptance:** unchanged, on the sealed domain with the task-level consistent rule, then a named reviewer.
+
+**Stage caps** (`*_cap_usd`): baseline 60, restructure 50, search 140, validation 25, sealed 25. The run stops as `infeasible` before any paid stage if their sum plus headroom does not fit the wallet, and each cap ends its own stage with a named status.
+
+**What the simulation shows** (`v3/tests/test_pool_controller.py`): a candidate that fixes one check on four of sixteen tasks is accepted at about 0.06 credit against a standard error of 0.027; a one-task fix is not (0.016 against 0.015 × 1.65) but stays live, and three such proposals compound through lineage and the merge into an accepted candidate; a check that falls on every trial is a regression however much else improved; one flaky trial in three is tolerated.
+
 ## Privacy (`v3/sanitize.py`)
 
 `python3 -m experiments.scenario_skills.v3.sanitize <packet-dir>` rejects any fixture or gold string that:

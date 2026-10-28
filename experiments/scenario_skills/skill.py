@@ -45,3 +45,21 @@ def material(path=SKILL):
 
 def manifest(files):
     return {name: digest(data) for name, data in files.items()}
+
+
+def apply_edits(parent, edits):
+    """The parent's body with each edit's ``anchor`` (exact, occurring once) replaced by its ``replacement``.
+
+    Edits are applied in order to the body only; a missed or ambiguous anchor is an error rather
+    than a silent no-op, so a proposal that quotes text loosely cannot be charged for evaluation.
+    """
+    body = split(parent)[1].decode()
+    for edit in edits:
+        anchor, replacement = edit["anchor"], edit.get("replacement", "")
+        if not anchor or not anchor.strip():
+            raise ValueError("Edit %s has an empty anchor" % edit.get("id"))
+        count = body.count(anchor)
+        if count != 1:
+            raise ValueError("Edit %s anchor occurs %d times; it must occur exactly once" % (edit.get("id"), count))
+        body = body.replace(anchor, replacement, 1)
+    return body

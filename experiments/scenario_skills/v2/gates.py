@@ -127,3 +127,102 @@ def needs_repeat(baseline, candidate, task_ids, generator_unresolved=False):
         if "unresolved" not in values and (len(values) > 1 or new_critical):
             out.append(i)
     return out
+
+
+# --- pool search: per-check credit, a paired noise gate, and trial allocation ---------------------
+def check_matrix(records, task_ids, generator_unresolved=True):
+    """Per task and check, (passes, trials) over complete records; a backend-attributed failure is not a trial.
+
+    The matrix is the unit of comparison for the pool search: a candidate that clears three of a
+    task's checks and newly fails one has moved, whether or not the task as a whole flipped.
+    """
+    out = {i: {} for i in task_ids}
+    for r in records:
+        if r["task_id"] not in out or r["status"] != "complete":
+            continue
+        attribution = r["grade"].get("attribution", {})
+        for check, passed in r["grade"].get("checks", {}).items():
+            if generator_unresolved and not passed and attribution.get(check) == "backend":
+                continue
+            cell = out[r["task_id"]].setdefault(check, [0, 0])
+            cell[0] += bool(passed)
+            cell[1] += 1
+    return out
+
+
+def credit(cells):
+    """Mean pass rate over a task's checks (None without evidence)."""
+    rates = [p / n for p, n in cells.values() if n]
+    return sum(rates) / len(rates) if rates else None
+
+
+def paired_delta(baseline, candidate, task_ids, se_multiplier=1.65, regression_floor=0.34, weights=None, generator_unresolved=True):
+    """Check-credit gain of the candidate over the baseline, paired by task, with a noise gate.
+
+    Per task the credit is the mean pass rate over the checks both arms observed; the aggregate is
+    the (weighted) mean of the per-task differences and its standard error comes from those same
+    differences, so a gain has to be larger than the spread between tasks before it counts. The
+    candidate is accepted when the gain exceeds ``se_multiplier`` standard errors, no single
+    check's pass rate fell by more than ``regression_floor`` (one trial in three), and it never
+    fails a critical check the baseline never failed (``critical_regressions``).
+    """
+    before, after = check_matrix(baseline, task_ids, generator_unresolved), check_matrix(candidate, task_ids, generator_unresolved)
+    weights = weights or {}
+    deltas, regressions, cells = {}, [], {}
+    for i in task_ids:
+        shared = [c for c in after[i] if c in before[i] and before[i][c][1] and after[i][c][1]]
+        if not shared:
+            continue
+        rates = {c: (before[i][c][0] / before[i][c][1], after[i][c][0] / after[i][c][1]) for c in shared}
+        deltas[i] = sum(b - a for a, b in rates.values()) / len(rates)
+        cells[i] = {c: {"baseline": round(a, 3), "candidate": round(b, 3), "trials": [before[i][c][1], after[i][c][1]]} for c, (a, b) in rates.items()}
+        regressions += [(i, c) for c, (a, b) in sorted(rates.items()) if a - b > regression_floor]
+    n = len(deltas)
+    if n == 0:
+        return {"passed": False, "gain": None, "se": None, "tasks": 0, "regressions": [], "critical_regressions": [], "cells": {}, "deltas": {}}
+    w = {i: float(weights.get(i, 1)) for i in deltas}
+    total = sum(w.values())
+    gain = sum(w[i] * d for i, d in deltas.items()) / total
+    variance = sum(w[i] * (d - gain) ** 2 for i, d in deltas.items()) / total
+    se = (variance / n) ** 0.5 if n > 1 else float("inf")
+    critical = critical_regressions(baseline, candidate, task_ids)
+    passed = n >= 2 and gain > se_multiplier * se and not regressions and not critical
+    return {"passed": passed, "gain": round(gain, 4), "se": (round(se, 4) if se != float("inf") else None), "tasks": n,
+            "se_multiplier": se_multiplier, "regression_floor": regression_floor, "regressions": sorted(regressions),
+            "critical_regressions": critical, "deltas": {i: round(d, 4) for i, d in deltas.items()}, "cells": cells}
+
+
+def priority(baseline, candidate, task_ids, exploration=0.5, generator_unresolved=True):
+    """Tasks ordered by how much another paired trial could tell: |delta| plus an exploration bonus for few trials.
+
+    An upper-confidence rule: a task whose arms differ most, or has been tried least, is tried next.
+    Tasks without a candidate observation come first.
+    """
+    import math
+    before, after = check_matrix(baseline, task_ids, generator_unresolved), check_matrix(candidate, task_ids, generator_unresolved)
+    trials = {i: max([n for _, n in after[i].values()] or [0]) for i in task_ids}
+    total = max(sum(trials.values()), 1)
+    scores = {}
+    for i in task_ids:
+        if not trials[i]:
+            scores[i] = float("inf")
+            continue
+        b, c = credit(before[i]), credit(after[i])
+        gap = abs((c or 0) - (b or 0))
+        scores[i] = gap + exploration * math.sqrt(math.log(total + 1) / trials[i])
+    return sorted(task_ids, key=lambda i: (-scores[i], i))
+
+
+def best_trial_credit(records, task_ids, generator_unresolved=True):
+    """Per task, the highest single-trial credit any of its records reached (None without evidence).
+
+    A single-trial screen is compared with this rather than with a mean over trials, so a flaky
+    task cannot make one lucky trial look like a gain over the parent.
+    """
+    out = {}
+    for i in task_ids:
+        mine = [r for r in records if r["task_id"] == i]
+        values = [credit(check_matrix([r], [i], generator_unresolved)[i]) for r in mine]
+        values = [v for v in values if v is not None]
+        out[i] = max(values) if values else None
+    return out

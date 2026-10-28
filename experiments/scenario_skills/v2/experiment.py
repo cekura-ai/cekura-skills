@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import difflib
 import fcntl
+import random
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -31,7 +32,8 @@ from .budget import CLAUDE_SESSION_RESERVATION, COST_DISCOVERY_CAP, MARGIN, admi
 from .dataset import load as load_v2, canaries as canaries_v2
 from .evaluator import results
 from .judge import ClaudeJudge, packet
-from .proposer import Proposer, screen
+from .pool import Pool
+from .proposer import PoolProposer, Proposer, screen
 from .review import gate, prepare
 
 DEADLINE_SECONDS = 24 * 3600
@@ -247,10 +249,14 @@ class Controller:
         if self.evaluator is None:
             from .evaluator import Evaluator
             self.evaluator = Evaluator(config, directory, self.ledger, self.judge)
-        self.proposer = self.proposer or Proposer(config["proposer"], directory, self.ledger)
+        if self.proposer is None:
+            kind = PoolProposer if self.protocol and self.protocol.get("search") == "pool" else Proposer
+            self.proposer = kind(config["proposer"], directory, self.ledger)
         if hasattr(self.proposer, "verify"):
             self.proposer.verify()
 
+        if self.protocol and self.protocol.get("search") == "pool":
+            return self._run_pool(config)
         if self.protocol:
             return self._run_scoped(config)
         sample = self.canaries(self.training)
@@ -484,6 +490,261 @@ class Controller:
             raise Terminal("no_training_candidate_qualifies", "No candidate reached %d consistent training gains without a consistent regression" % min_gain)
         return eligible[0]["name"]
 
+    # --- pool protocol ----------------------------------------------------------------------
+    def _staged(self, name, cap, what):
+        """A capped stage; exhausting the cap ends the run with a named status instead of a traceback."""
+        from contextlib import contextmanager
+
+        @contextmanager
+        def inner():
+            try:
+                with self.ledger.staged(name, Decimal(str(cap))):
+                    yield
+            except BudgetError as error:
+                if "Stage allowance" in str(error):
+                    raise Terminal(what + "_cap_exhausted", "The %s stage did not fit its $%s cap" % (what, cap))
+                raise
+        return inner()
+
+    def triage(self, before, trials):
+        """Per training task: the baseline's pass count, band and per-check pass rates (training data only)."""
+        ids = [t["id"] for t in self.training]
+        matrix = gates.check_matrix(before, ids)
+        out = {}
+        for i in ids:
+            passes = sum(gates.observation(r, (), True) == "pass" for r in before if r["task_id"] == i)
+            n = sum(r["task_id"] == i for r in before)
+            band = "solid" if passes == n else ("hard" if passes == 0 else "high-variance")
+            out[i] = {"passes": passes, "trials": n, "band": band, "checks": {c: round(p / k, 2) for c, (p, k) in sorted(matrix[i].items()) if k}}
+        return out
+
+    def _pool_labels(self):
+        labels = {digest(self.baseline): "baseline"}
+        labels.update({digest(p.read_bytes()): p.stem for p in self.directory.glob("candidate-*.md")})
+        return labels
+
+    def _pool_context(self, pool, triage, counters):
+        hypotheses = [read(p) for p in sorted(self.directory.glob("candidate-*.rationale.json"))]
+        return {"pool": pool.summary(), "triage": triage, "edits": counters, "hypotheses": hypotheses}
+
+    def _confirm(self, data, name, before, ids, trials, protocol, weights, first_repeat=0):
+        """All training tasks once, then paired trials where they tell most, until the gate decides or the cap is hit."""
+        mine = [r for r in self.parallel([(data, t, name + "_training", first_repeat, True) for t in self.training if t["id"] in ids]) if not skill_not_loaded(r)]
+        gate_ = lambda: gates.paired_delta(before, mine, ids, float(protocol.get("se_multiplier", 1.65)), float(protocol.get("regression_floor", 0.34)), weights)
+        delta = gate_()
+        workers = max(1, int(protocol.get("workers", 1)))
+        while True:
+            counts = {i: sum(r["task_id"] == i for r in mine) for i in ids}
+            open_ = [i for i in gates.priority(before, mine, ids) if counts[i] < trials]
+            # Decided: accepted with at least two trials everywhere it counts, or clearly not improving on two trials.
+            settled = all(counts[i] >= 2 for i in ids)
+            if not open_ or (settled and delta["passed"]) or (settled and (delta["gain"] or 0) <= 0):
+                break
+            batch = [(data, next(t for t in self.training if t["id"] == i), name + "_confirm", counts[i], True) for i in open_[:workers]]
+            mine += [r for r in self.parallel(batch) if not skill_not_loaded(r)]
+            delta = gate_()
+        return mine, delta
+
+    def _run_pool(self, config):
+        """Pool search on per-check credit (``v3_protocol.search == "pool"``).
+
+        1. Baseline ``trials`` times on every training task; per-task bands (``triage``) and per-check
+           pass rates are the noise model.
+        2. Optionally one restructure candidate (shorter, reordered), evaluated with full trials.
+        3. Up to ``max_evaluated`` delta proposals from a sampled live parent: screened once on
+           the tasks they target, then confirmed on all of training with trials allocated where
+           they tell most, and gated by ``gates.paired_delta`` against the baseline. Every
+           evaluated candidate joins the pool; non-overlapping live edits are merged periodically.
+        4. The top two by training gain run once on the validation domain; the better one is the finalist.
+        5. The sealed domain decides acceptance with the task-level consistent rule, then a human.
+        """
+        protocol, directory = self.protocol, self.directory
+        trials = int(protocol.get("trials", 3))
+        tag = self.ident["tasks_sha256"][:12] + (("-" + protocol["baseline_stage_label"]) if protocol.get("baseline_stage_label") else "")
+        with self._staged("v3-pool-baseline-" + tag, protocol.get("baseline_cap_usd", "60"), "baseline"):
+            observed = self.parallel([(self.baseline, t, "baseline_training", k, True) for k in range(trials) for t in self.training])
+        unloaded = sorted({tpl for tpl in {r["task_id"].split("-")[0] for r in observed}
+                           if all(skill_not_loaded(r) for r in observed if r["task_id"].split("-")[0] == tpl)})
+        self.save(skill_not_loaded_templates=unloaded)
+        before = [r for r in observed if not skill_not_loaded(r)]
+        for name in ("training", "validation", "sealed"):
+            setattr(self, name, [t for t in getattr(self, name) if t["template"] not in unloaded])
+        ids = [t["id"] for t in self.training]
+        triage = self.triage(before, trials)
+        write(directory / "triage.json", triage)
+        self.save(triage=triage)
+        improvable = sorted(t for t, v in triage.items() if v["band"] != "solid" or any(r < 1 for r in v["checks"].values()))
+        if not improvable:
+            raise Terminal("training_saturated", "The baseline passes every training check on every trial; there is nothing to search")
+        # Hard tasks count fully by default: a sparse gain is already near the gate's detection limit, and down-weighting it hides real fixes.
+        weights = {i: float(protocol.get("hard_weight", 1)) for i, v in triage.items() if v["band"] == "hard"}
+        costs = {}
+        for r in before:
+            costs.setdefault(r["task_id"].split("-")[0], []).append(trial_cost(r))
+        costs = {k: sum(v, Decimal(0)) / len(v) for k, v in costs.items()}
+        failing = sorted({i.split("-")[0] for i, v in triage.items() if v["band"] != "solid"}, key=lambda t: (costs[t], t))
+        self.validation = [t for t in self.validation if t["template"] in failing[:int(protocol.get("validation_templates", 7))]]
+        self.sealed = [t for t in self.sealed if t["template"] in failing[:int(protocol.get("held_out_max_templates", 4))]]
+        caps = {k: Decimal(str(protocol.get(k + "_cap_usd", d))) for k, d in (("restructure", "50"), ("search", "140"), ("validation", "25"), ("sealed", "25"))}
+        plan = {"bands": {b: sorted(i for i, v in triage.items() if v["band"] == b) for b in ("solid", "high-variance", "hard")},
+                "validation_templates": sorted({t["template"] for t in self.validation}), "sealed_templates": sorted({t["template"] for t in self.sealed}),
+                "caps_usd": {k: str(v) for k, v in caps.items()}, "template_costs_usd": {k: str(v) for k, v in sorted(costs.items())}}
+        plan["needed_usd"] = str(sum(caps.values()) + headroom(config))
+        plan["funded"] = self.ledger.can_finish(Decimal(plan["needed_usd"]), CLAUDE_SESSION_RESERVATION)
+        self.save(pool_plan=plan)
+        write(directory / "forecast.json", plan)
+        if not plan["funded"]:
+            raise Terminal("infeasible", "The pool protocol's stage caps ($%s) do not fit the remaining authorization" % plan["needed_usd"])
+
+        forbidden = forbidden_material(self.tasks)
+        pool = Pool(before, ids)
+        history = list(before)
+        root, root_name, counters, attempts = self.baseline, "baseline", self.state.get("edit_counters", {}), []
+        if protocol.get("restructure_first"):
+            path = directory / "candidate-restructure.md"
+            if not path.exists() and not (directory / "proposal-restructure.no-change.json").exists():
+                try:
+                    self.proposer.propose_restructure(self.baseline, history, forbidden, self._pool_labels(), self._pool_context(pool, triage, counters))
+                except (ValueError, SchemaValidationError) as error:
+                    write(directory / "proposal-restructure.rejected.json", {"reason": str(error)})
+            if path.exists():
+                data = path.read_bytes()
+                with self._staged("v3-pool-restructure-" + tag, caps["restructure"], "restructure"):
+                    mine, delta = self._confirm(data, "candidate-restructure", before, ids, trials, protocol, weights)
+                history += mine
+                pool.add("candidate-restructure", data, digest(self.baseline), [], mine, delta, read(path.with_name("candidate-restructure.rationale.json")).get("hypothesis", ""))
+                attempts.append({"attempt": 0, "name": "candidate-restructure", "outcome": "evaluated", "gain": delta["gain"], "se": delta["se"],
+                                 "eligible": delta["passed"], "regressions": delta["regressions"], "critical_regressions": delta["critical_regressions"],
+                                 "bytes": len(data)})
+                if delta["passed"]:
+                    root, root_name = data, "candidate-restructure"
+                self.save(attempts=attempts, pool=pool.summary(), root=root_name)
+
+        evaluated, screen_min = 0, float(protocol.get("screen_min_credit", 0))
+        with self._staged("v3-pool-search-" + tag, caps["search"], "search"):
+            for i in range(1, int(protocol.get("max_proposals", 12)) + 1):
+                if evaluated >= self.max_evaluated:
+                    break
+                rejected, no_change = directory / ("proposal-%d.rejected.json" % i), directory / ("proposal-%d.no-change.json" % i)
+                data_path = directory / ("candidate-%d.md" % i)
+                if no_change.exists():
+                    attempts.append({"attempt": i, "outcome": "no_change", "reason": read(no_change).get("rationale")})
+                    break
+                if rejected.exists() and not data_path.exists():
+                    attempts.append(read(rejected))
+                    continue
+                if not data_path.exists():
+                    parent_name = pool.sample_parent(random.Random(i)) or root_name  # seeded: a resumed run draws the same parent
+                    parent = pool.members[parent_name]["data"] if parent_name in pool.members else root
+                    try:
+                        data, rationale = self.proposer.propose_edits(parent, history, i, forbidden, self._pool_labels(), self._pool_context(pool, triage, counters))
+                    except (ValueError, SchemaValidationError) as error:
+                        row = {"attempt": i, "outcome": "rejected", "reason": str(error), "parent": parent_name}
+                        write(rejected, row)
+                        attempts.append(row)
+                        self.save(attempts=attempts)
+                        continue
+                    if data is None:
+                        attempts.append({"attempt": i, "outcome": "no_change", "reason": rationale.get("rationale")})
+                        break
+                    write(directory / ("candidate-%d.lineage.json" % i), {"parent": parent_name, "root": root_name,
+                          "edits": (pool.members[parent_name]["edits"] if parent_name in pool.members else []) + rationale["edits"]})
+                data, rationale, lineage = data_path.read_bytes(), read(directory / ("candidate-%d.rationale.json" % i)), read(directory / ("candidate-%d.lineage.json" % i))
+                name, parent_name = "candidate-%d" % i, lineage["parent"]
+                evaluated += 1
+                targeted = [t for t in self.training if t["id"] in set(rationale.get("targeted_tasks", [])) & set(improvable)] or \
+                    [t for t in self.training if t["id"] in improvable][:3]
+                screened = [r for r in self.parallel([(data, t, name + "_screen", 0, True) for t in targeted]) if not skill_not_loaded(r)]
+                tids = [r["task_id"] for r in screened]
+                parent_records = [r for r in history if r["candidate_sha256"] == (pool.members[parent_name]["sha256"] if parent_name in pool.members else digest(root))]
+                mine_credit = [gates.credit(c) for c in gates.check_matrix(screened, tids).values() if c]
+                parent_credit = [v for v in gates.best_trial_credit(parent_records, tids).values() if v is not None]  # its best single trial
+                mine_mean = sum(mine_credit) / len(mine_credit) if mine_credit else 0
+                parent_mean = sum(parent_credit) / len(parent_credit) if parent_credit else 0
+                row = {"attempt": i, "name": name, "parent": parent_name, "hypothesis": rationale.get("hypothesis"), "screen_tasks": tids,
+                       "screen_credit": round(mine_mean, 3), "parent_credit": round(parent_mean, 3)}
+                history += screened
+                if mine_mean <= parent_mean + screen_min + 1e-9:  # No movement where the edit was aimed: not worth the rest of training.
+                    row.update(outcome="screen_rejected", reason="credit %.3f on its targets, parent %.3f" % (mine_mean, parent_mean))
+                    pool.add(name, data, digest(root), lineage["edits"], screened, {"passed": False, "gain": None}, rationale.get("hypothesis", ""))
+                else:
+                    rest = [t["id"] for t in self.training if t["id"] not in tids]
+                    more, _ = self._confirm(data, name, before, rest, trials, protocol, weights) if rest else ([], None)
+                    mine = screened + more
+                    # Extra paired trials on the screen tasks too, where they tell most.
+                    mine, delta = self._top_up(data, name, before, mine, ids, trials, protocol, weights)
+                    history += [r for r in mine if r not in history]
+                    pool.add(name, data, digest(root), lineage["edits"], mine, delta, rationale.get("hypothesis", ""))
+                    counters = self._count_edits(counters, rationale["edits"], delta, parent_records, mine, ids)
+                    row.update(outcome="evaluated", eligible=delta["passed"], gain=delta["gain"], se=delta["se"], regressions=delta["regressions"],
+                               critical_regressions=delta["critical_regressions"], trials=len(mine))
+                attempts.append(row)
+                self.save(attempts=attempts, pool=pool.summary(), edit_counters=counters)
+                if evaluated % 3 == 0 and evaluated < self.max_evaluated:
+                    merged = pool.merge(root, forbidden)
+                    if merged:
+                        mname = "candidate-merge-%d" % evaluated
+                        (directory / (mname + ".md")).write_bytes(merged["data"])
+                        write(directory / (mname + ".rationale.json"), {"hypothesis": "merge of " + ", ".join(merged["members"]), "edits": merged["edits"]})
+                        write(directory / (mname + ".lineage.json"), {"parent": root_name, "root": root_name, "edits": merged["edits"]})
+                        mine, delta = self._confirm(merged["data"], mname, before, ids, trials, protocol, weights)
+                        history += mine
+                        pool.add(mname, merged["data"], digest(root), merged["edits"], mine, delta, "merge of " + ", ".join(merged["members"]))
+                        evaluated += 1
+                        attempts.append({"attempt": i, "name": mname, "members": merged["members"], "outcome": "evaluated", "eligible": delta["passed"],
+                                         "gain": delta["gain"], "se": delta["se"], "regressions": delta["regressions"]})
+                        self.save(attempts=attempts, pool=pool.summary())
+        eligible = [n for n in pool.ranked() if pool.members[n]["delta"].get("passed")]
+        self.save(attempts=attempts, pool=pool.summary(), finalist_frozen=True)
+        if not eligible:
+            raise Terminal("no_training_candidate_qualifies", "No candidate's check-credit gain over the baseline cleared the noise gate without a regression")
+        top = eligible[:2]
+        if self.validation and len(top) > 1:
+            vids = [t["id"] for t in self.validation]
+            with self._staged("v3-pool-validation-" + tag, caps["validation"], "validation"):
+                arms = {n: self.parallel([(pool.members[n]["data"], t, n + "_validation", 0, False) for t in self.validation]) for n in top}
+                base = self.parallel([(self.baseline, t, "baseline_validation", 0, False) for t in self.validation])
+            scores = {n: gates.paired_delta(base, arms[n], vids)["gain"] or 0 for n in top}
+            finalist = max(top, key=lambda n: (scores[n], -pool.members[n]["bytes"]))
+            self.save(validation={"selection": scores, "finalist": finalist})
+        else:
+            finalist = top[0]
+        self.save(finalist=finalist)
+        with self._staged("v3-pool-sealed-" + tag, caps["sealed"], "sealed"):
+            return self._sealed_decision(pool.members[finalist]["data"], {"validation": {"selection": self.state.get("validation"), "passed": True}}, protocol)
+
+    def _top_up(self, data, name, before, mine, ids, trials, protocol, weights):
+        """Paired trials where they tell most until the gate decides or every task has ``trials``."""
+        gate_ = lambda m: gates.paired_delta(before, m, ids, float(protocol.get("se_multiplier", 1.65)), float(protocol.get("regression_floor", 0.34)), weights)
+        delta = gate_(mine)
+        workers = max(1, int(protocol.get("workers", 1)))
+        while True:
+            counts = {i: sum(r["task_id"] == i for r in mine) for i in ids}
+            open_ = [i for i in gates.priority(before, mine, ids) if counts[i] < trials]
+            settled = all(counts[i] >= 2 for i in ids)
+            if not open_ or (settled and delta["passed"]) or (settled and (delta["gain"] or 0) <= 0):
+                return mine, delta
+            batch = [(data, next(t for t in self.training if t["id"] == i), name + "_confirm", counts[i], True) for i in open_[:workers]]
+            mine = mine + [r for r in self.parallel(batch) if not skill_not_loaded(r)]
+            delta = gate_(mine)
+
+    @staticmethod
+    def _count_edits(counters, edits, delta, parent_records, mine, ids):
+        """Per edit: checks it targeted that rose against the parent (helped) and checks that fell (hurt)."""
+        counters = {k: dict(v) for k, v in counters.items()}
+        parent, now = gates.check_matrix(parent_records, ids), gates.check_matrix(mine, ids)
+        rose, fell = set(), set()
+        for i in ids:
+            for c, (p, n) in now[i].items():
+                if c in parent[i] and parent[i][c][1] and n:
+                    diff = p / n - parent[i][c][0] / parent[i][c][1]
+                    (rose if diff > 1e-9 else fell if diff < -1e-9 else set()).add(c)
+        for e in edits:
+            cell = counters.setdefault(e["id"], {"helped": 0, "hurt": 0, "targets": e.get("targets", []), "reason": e.get("reason", "")})
+            cell["helped"] += len(set(e.get("targets", [])) & rose)
+            cell["hurt"] += len(fell)
+        return counters
+
     def repeat_tasks(self):
         if self.protocol:
             return self.sealed  # Sealed runs twice per arm; validation once.
@@ -635,6 +896,16 @@ def report(directory, state, ledger, config=None):
             rows += ["- %s: `%s`" % (name, {k: v for k, v in state[name].items() if k not in ("baseline", "candidate")} if name == "validation"
                                        else {s: {k: g.get(k) for k in ("passed", "worst_case_gain", "gains", "regressions", "critical_defects")} for s, g in state[name].items()})]
     rows += ["- Finalist: %s; proposal attempts: %s" % (state.get("finalist"), state.get("attempts", [])), ""]
+    if state.get("pool"):
+        rows += ["", "## Pool (per-check credit against the baseline)", "", "| Candidate | Gain | Accepted | Cells led | Edits | Hypothesis |", "|---|---:|---|---:|---|---|"]
+        for name, m in sorted(state["pool"].items()):
+            rows.append("| %s | %s | %s | %d | %s | %s |" % (name, m.get("gain"), m.get("passed"), m.get("cells_led", 0), ", ".join(m.get("edits", [])),
+                                                        str(m.get("hypothesis", ""))[:160].replace("|", "/")))
+        if state.get("triage"):
+            bands = {}
+            for task, v in state["triage"].items():
+                bands.setdefault(v["band"], []).append(task)
+            rows += ["", "Triage bands: " + "; ".join("%s %s" % (b, sorted(t)) for b, t in sorted(bands.items())), ""]
     rows += ["## Outcomes by family", "", "| Revision | Split | Family | Passed / trials | Unresolved | Authoring failures | Generator failures |", "|---|---|---|---:|---:|---:|---:|"]
     for sha, split_name, family in sorted({(r["candidate_sha256"], r["split"], r["family"]) for r in records}):
         group = [r for r in records if (r["candidate_sha256"], r["split"], r["family"]) == (sha, split_name, family)]

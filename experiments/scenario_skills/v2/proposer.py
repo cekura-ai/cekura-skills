@@ -132,3 +132,116 @@ class Proposer:
         write(self.directory / ("candidate-%d.rationale.json" % iteration), value)
         (self.directory / ("candidate-%d.md" % iteration)).write_bytes(data)
         return data, value
+
+
+# --- pool search: anchored deltas and one restructure -------------------------------------------
+EDIT_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["status", "hypothesis", "rationale", "edits", "targeted_tasks"],
+               "properties": {"status": {"enum": ["candidate", "no_change"]}, "hypothesis": {"type": "string"}, "rationale": {"type": "string"},
+                              "targeted_tasks": {"type": "array", "uniqueItems": True, "items": {"type": "string"}},
+                              "edits": {"type": "array", "maxItems": 3, "items": {
+                                  "type": "object", "additionalProperties": False, "required": ["id", "anchor", "replacement", "reason", "targets", "may_break"],
+                                  "properties": {"id": {"type": "string"}, "anchor": {"type": "string"}, "replacement": {"type": "string"},
+                                                 "reason": {"type": "string"}, "targets": {"type": "array", "items": {"type": "string"}},
+                                                 "may_break": {"type": "array", "items": {"type": "string"}}}}}}}
+EDIT_BUDGET_CHARS = 1500
+RESTRUCTURE_MAX_CHARS = 42000
+
+
+def contrasts(history, labels):
+    """Pairs of trials of one task under one revision that passed and failed: what differed is the behaviour that matters."""
+    by = {}
+    for i, r in enumerate(history):
+        by.setdefault((r["task_id"], r.get("candidate_sha256")), []).append((i, bool(r["grade"]["score"]), r["grade"]["failed_checks"]))
+    out = []
+    for (task, sha), trials in sorted(by.items()):
+        passed = [i for i, ok, _ in trials if ok]
+        failed = [(i, f) for i, ok, f in trials if not ok]
+        if passed and failed:
+            out.append({"task": task, "revision": labels.get(sha, (sha or "unknown")[:12]), "passed_trace": "training/trace-%03d.json" % passed[0],
+                        "failed_trace": "training/trace-%03d.json" % failed[0][0], "failed_checks": failed[0][1]})
+    return out
+
+
+class PoolProposer(Proposer):
+    """Proposals as a few anchored edits of the parent, with the pool, triage and edit counters in view."""
+
+    def workspace(self, parent, history, labels, context):
+        files = training_workspace(parent, history, labels)
+        files["training/contrasts.json"] = json.dumps(contrasts(training_payload(history), labels), ensure_ascii=False, indent=1)
+        for name in ("pool", "triage", "edits", "hypotheses"):
+            files["training/%s.json" % name] = json.dumps(context.get(name, {}), ensure_ascii=False, indent=1)
+        return files
+
+    def propose_edits(self, parent, history, iteration, forbidden, labels, context):
+        """Up to three anchored edits of ``parent`` (at most ``EDIT_BUDGET_CHARS`` net), or no_change."""
+        files = self.workspace(parent, history, labels, context)
+        prompt = ("You are improving SKILL.md for a fast, instruction-dropping model by small, attributable edits. Inspect /workspace/SKILL.md "
+                  "(the current parent), references/, training/index.json and training/by_task.json, then read the relevant complete traces "
+                  "(a $text_file pointer names the exact stored text). training/triage.json bands each training task by the parent's pass rate; "
+                  "prefer high-variance tasks, where the model sometimes already succeeds, and training/contrasts.json pairs a passing and a "
+                  "failing trial of the same task under the same skill: what differs there is the behaviour to pin down. training/pool.json "
+                  "lists every evaluated candidate with its measured gain and the cells it leads; training/edits.json counts, per earlier edit, "
+                  "the checks it helped and hurt. Do not re-test a hypothesis already measured; build on what helped, remove what hurt. "
+                  "Return at most 3 edits, each as an exact anchor quoted verbatim from SKILL.md (occurring exactly once) and its replacement "
+                  "(the anchor text with the change applied, or a replacement for it); the net growth of all edits together must stay under "
+                  "%d characters, so an addition usually needs a cut elsewhere, and the file must stay under 60000 characters and 500 lines. "
+                  "Every edit names the checks it targets and the checks it might break. The skill is read top-down by a model that drops later "
+                  "instructions, so a rule that must hold belongs early and reads as one positive instruction, not a caution. Never include task "
+                  "IDs, domain facts, customer values, grading code or fixture-specific rules; never touch frontmatter, acknowledgement lines or "
+                  "reference links. targeted_tasks lists the training task ids whose traces motivated the edits (2 to 4). Return no_change only "
+                  "when no supported edit remains." % EDIT_BUDGET_CHARS)
+        value = self.session(prompt, {"iteration": iteration, "parent_sha256": digest(parent), "index": "training/index.json"}, EDIT_SCHEMA,
+                             "proposal-%d" % iteration, workspace=files)
+        if value["status"] == "no_change":
+            write(self.directory / ("proposal-%d.no-change.json" % iteration), value)
+            return None, value
+        edits = value["edits"]
+        if not edits or not value["hypothesis"].strip():
+            raise ValueError("A candidate needs at least one edit and a hypothesis")
+        growth = sum(len(e["replacement"]) - len(e["anchor"]) for e in edits)
+        if growth > EDIT_BUDGET_CHARS:
+            raise ValueError("Edits grow the skill by %d characters; at most %d" % (growth, EDIT_BUDGET_CHARS))
+        for n, e in enumerate(edits):
+            e["id"] = "c%d-%d" % (iteration, n + 1)
+        from ..skill import apply_edits
+        data = candidate(parent, apply_edits(parent, edits), forbidden)
+        if len(data.decode()) > 60000:
+            raise ValueError("Candidate would truncate under the fixed loader")
+        known = {digest(parent)} | {digest(p.read_bytes()) for p in self.directory.glob("candidate-*.md")}
+        if digest(data) in known:
+            raise ValueError("Duplicate/no-op candidate cannot consume target evaluation")
+        normalize = lambda s: " ".join(s.casefold().split())
+        if normalize(value["hypothesis"]) in {normalize(h.get("hypothesis", "")) for h in context.get("hypotheses", [])}:
+            raise ValueError("Candidate needs a distinct hypothesis")
+        write(self.directory / ("candidate-%d.rationale.json" % iteration), value)
+        (self.directory / ("candidate-%d.md" % iteration)).write_bytes(data)
+        return data, value
+
+    def propose_restructure(self, parent, history, forbidden, labels, context, max_chars=RESTRUCTURE_MAX_CHARS):
+        """One whole-body proposal: the same rules, shorter and reordered for a model that reads top-down."""
+        files = self.workspace(parent, history, labels, context)
+        prompt = ("Restructure /workspace/SKILL.md for a fast model that drops instructions by omission as a file grows and weights early text "
+                  "more than late text. Keep the frontmatter, acknowledgement lines and reference links exactly. Return the editable body only, "
+                  "at most %d characters INCLUDING the preserved header and at most 500 lines. Put the rules that govern changing existing "
+                  "evaluators (scope, consent, what counts as approval, which fields to touch) and the critical rules first; keep every rule "
+                  "the model needs for the training tasks (read training/index.json and the traces); move long reference material, examples "
+                  "and tables into pointers to the existing references/ files, which the model can read on demand; phrase each rule once, "
+                  "positively, as what to do. Add no new rule and no task, domain or fixture material. State the hypothesis as what the "
+                  "reordering and shortening should change; targeted_checks lists the parent's failed check names you expect to move."
+                  % max_chars)
+        value = self.session(prompt, {"iteration": 0, "parent_sha256": digest(parent), "index": "training/index.json"}, SCHEMA,
+                             "proposal-restructure", workspace=files)
+        if value["status"] == "no_change":
+            write(self.directory / "proposal-restructure.no-change.json", value)
+            return None, value
+        body, header = value["body"], split(parent)[0].decode()
+        if body.startswith(header):
+            body = body[len(header):]
+        data = candidate(parent, body, forbidden)
+        if len(data.decode()) > max_chars:
+            raise ValueError("Restructured skill is %d characters; at most %d" % (len(data.decode()), max_chars))
+        if digest(data) == digest(parent):
+            raise ValueError("Restructure returned the parent unchanged")
+        write(self.directory / "candidate-restructure.rationale.json", value)
+        (self.directory / "candidate-restructure.md").write_bytes(data)
+        return data, value
