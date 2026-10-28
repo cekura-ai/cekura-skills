@@ -595,6 +595,9 @@ class Controller:
         write(directory / "forecast.json", plan)
         if not plan["funded"]:
             raise Terminal("infeasible", "The pool protocol's stage caps ($%s) do not fit the remaining authorization" % plan["needed_usd"])
+        if protocol.get("pause_after_triage") and not (directory / "triage-review.json").exists():
+            # The bands and per-check pass rates are reviewed before the search stage is funded; the baseline is cached.
+            raise Terminal("awaiting_triage_review", "Review triage.json and write triage-review.json to fund the search stage")
 
         forbidden = forbidden_material(self.tasks)
         pool = Pool(before, ids)

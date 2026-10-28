@@ -239,7 +239,11 @@ experiment (selected with `--benchmark 3`; v2 stays frozen). Its
 18 templates derived from real product-chat failures, the 4 fictional domains
 split 36/18/18, the stateful follow-ups, the stored-state graders, the
 consistent-gain acceptance rule and the privacy scan. The source chats stay
-private and outside the repository.
+private and outside the repository. Its "Repairs" and "Pool search" sections
+(2026-10-28) record the benchmark defects a transcript audit found and the
+search that replaced the binary task gate: per-check credit, a paired
+standard-error gate, a candidate pool with lineage and merges, selection on
+the validation domain, and the unchanged sealed acceptance.
 
 ## Conventions
 

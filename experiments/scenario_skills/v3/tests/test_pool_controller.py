@@ -169,6 +169,16 @@ class PoolController(unittest.TestCase):
         self.assertTrue(self.proposer.contexts[-1]["pool"])  # later proposals saw the pool and the edit counters
         self.assertTrue(state["edit_counters"]["c1-1"]["helped"] >= 1)
 
+    def test_the_run_pauses_after_triage_when_asked_and_resumes_from_the_cached_baseline(self):
+        state = self.go(Evaluator(), pause_after_triage=True)
+        self.assertEqual(state["status"], "awaiting_triage_review")
+        self.assertTrue((self.directory / "triage.json").exists())
+        baseline_calls = len(self.evaluator.calls)
+        write(self.directory / "triage-review.json", {"reviewer": "Test human", "approved": True})
+        state = run(self.config, self.directory, evaluator=self.evaluator, proposer=self.proposer, judge=Judge(), skip_preflight=True)
+        self.assertEqual(state["status"], "recommendation_pending_final_review", state.get("reason"))
+        self.assertEqual(sum(1 for b, s, _, _ in self.evaluator.calls[baseline_calls:] if b and s == "training"), 0)
+
     def test_a_restructure_that_qualifies_becomes_the_root(self):
         state = self.go(Evaluator(fixes={9: FAILING, 1: set()}), restructure=True, restructure_first=True)
         self.assertEqual(state["root"], "candidate-restructure")
