@@ -24,7 +24,7 @@ right moment, learned from building a 70-scenario scripted testing-agent benchma
 - **Construction rules:** two answers for every read-back, scripted lines that
   fit every message their trigger can match, script only the tested moments,
   and a test profile that holds every askable fact (dates with the year).
-- Four checklist items and two troubleshooting rows.
+- Four checklist items and a troubleshooting row.
 
 ## 0.19.2 — 2026-10-22
 
