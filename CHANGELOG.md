@@ -7,12 +7,12 @@ All notable changes to the Cekura plugin. Versions follow
 ## 0.20.0 — 2026-10-28
 
 **`cekura-eval-design`: conditional-action scenarios that fire each line at the
-right moment, learned from building a 70-scenario scripted-caller benchmark.**
+right moment, learned from building a 70-scenario scripted testing-agent benchmark.**
 
 - **Lines that must play once** (new subsection under "Writing the `when`
   String"): no condition is once-only and counting words ("first time",
-  "again") don't limit it; anchor the trigger on the caller's own line
-  (`"… before the caller has said …"`), make the anchor close fully and stay
+  "again") don't limit it; anchor the trigger on the testing agent's own line
+  (`"… before the testing agent has said …"`), make the anchor close fully and stay
   visible in the transcript, gate by phase, and write triggers from real
   agent turns across runs. The "never use history to mean 'not yet'"
   anti-pattern now names this as the one dependable exception, and the DTMF
