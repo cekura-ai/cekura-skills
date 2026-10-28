@@ -244,7 +244,7 @@ class PoolProposer(Proposer):
         body, header = value["body"], split(parent)[0].decode()
         if body.startswith(header):
             body = body[len(header):]
-        data = candidate(parent, body, forbidden)
+        data = restructured_candidate(parent, body, forbidden)
         if len(data.decode()) > max_chars:
             raise ValueError("Restructured skill is %d characters; at most %d" % (len(data.decode()), max_chars))
         if digest(data) == digest(parent):
@@ -252,3 +252,29 @@ class PoolProposer(Proposer):
         write(self.directory / "candidate-restructure.rationale.json", value)
         (self.directory / "candidate-restructure.md").write_bytes(data)
         return data, value
+
+
+def restructured_candidate(baseline, body, forbidden=()):
+    """``skill.candidate`` for a reordered body: protected lines and links must all survive, in any order.
+
+    ``candidate`` compares the ordered list of acknowledgement lines and reference-link occurrences,
+    which any reordering changes; a restructure keeps every line and names every reference at least
+    once, which is what the rule protects. Its other rules apply unchanged.
+    """
+    import re
+    from ..skill import protected
+    header, original = split(baseline)
+    if not isinstance(body, str) or not body.strip() or body.lstrip().startswith("---") or "\x00" in body:
+        raise ValueError("Restructure must be a nonempty body without frontmatter")
+    lines, links = protected(original)
+    new_lines, new_links = protected(body.encode())
+    if sorted(lines) != sorted(new_lines) or set(links) != set(new_links):
+        raise ValueError("Acknowledgement lines and reference links must all survive a restructure")
+    for token in forbidden:
+        if len(str(token)) >= 4 and str(token).casefold() in body.casefold() and str(token).casefold() not in original.decode().casefold():
+            raise ValueError("Proposal contains fixture-specific material")
+    if len((header + body.encode()).splitlines()) > 500:
+        raise ValueError("Candidate exceeds the skill loading/packaging limits")
+    if re.search(r"https?://(?:localhost|127\.0\.0\.1)|fixture[_ -]?id|sealed[_ -]?test", body, re.I):
+        raise ValueError("Candidate contains benchmark or internal endpoint material")
+    return header + body.encode()

@@ -149,3 +149,24 @@ class PoolTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Restructure(unittest.TestCase):
+    def test_a_reordered_body_keeps_its_protected_lines_in_any_order(self):
+        from experiments.scenario_skills.v2.proposer import restructured_candidate
+        from experiments.scenario_skills.skill import candidate, protected
+        parent = SKILL.read_bytes()
+        body = split(parent)[1].decode()
+        sections = body.split("\n## ")
+        reordered = sections[0] + "\n## " + "\n## ".join(sections[1:][::-1])  # every section, reverse order
+        self.assertEqual(sorted(protected(body.encode())[0]), sorted(protected(reordered.encode())[0]))
+        with self.assertRaises(ValueError):
+            candidate(parent, reordered)  # the ordered comparison rejects any reordering
+        data = restructured_candidate(parent, reordered)
+        self.assertEqual(split(data)[0], split(parent)[0])
+        line = protected(body.encode())[0][0]
+        with self.assertRaises(ValueError):
+            restructured_candidate(parent, reordered.replace(line, line + " (edited)"))
+        link = sorted(set(protected(body.encode())[1]))[0]
+        with self.assertRaises(ValueError):
+            restructured_candidate(parent, reordered.replace(link, "references/nothing.md"))
