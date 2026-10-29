@@ -183,6 +183,7 @@ POST /test_framework/v1/scenarios/generate-bg/
   "extra_instructions": "Focus on cancellation edge cases and tool failure scenarios",
   "personalities": [<personality_id from personalities_list, matched to the agent's language>],
   "generate_expected_outcomes": true,
+  "simulation_type": "conditional_actions",
   "folder_path": "My Test Folder",
   "tags": ["generated", "cancellation"],
   "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ONLY_ON_TRANSFER"]

@@ -305,7 +305,7 @@ On `evaluation.metrics[]` entries: `score` field (0 = FAIL, 5 = PASS, None = N/A
 2. **Choose a tool strategy** — Ask the user which of the three approaches below
 3. **Create a folder first** — Always create a folder before generating or creating scenarios
 4. **Run the pre-creation checkpoint** — Confirm tool strategy, test profile, run mode, personality, adaptive vs conditional, folder, metrics
-5. **Generate — conditional actions by default, `instruction` only when the user asks** (see "Auto-Generation" below); create directly only a conditional-action scenario whose structure is exactly known. Set `folder_path` either way
+5. **Generate with `simulation_type: "conditional_actions"` — `instruction` only when the user asks** (see "Auto-Generation" below); create directly only a conditional-action scenario whose structure is exactly known. Set `folder_path` either way
 6. **Review and fix** — PATCH `scenario_language` for non-English, fix `first_message` if auto-gen added greetings
 7. **Set up test infrastructure** — Test profiles + tool data per chosen strategy
 8. **Supplement by type, same rule as step 5** — behavioral gaps (edge cases, free-form red-team) ⇒ another generation run with `extra_instructions` naming the gaps; deterministic gaps ⇒ another generation run, or a direct create when the structure is exactly known. Never hand-write an `instruction` scenario to close a gap
@@ -332,7 +332,7 @@ Agent doesn't use tools, or tools aren't relevant to these tests. Use test profi
 | `scenario_type` | Path |
 |---|---|
 | `instruction` (behavioral — only when the user asks for instruction-based scenarios) | **Always** `POST /test_framework/v1/scenarios/generate-bg/`. Never hand-author, not even for a single scenario — use `num_scenarios: 1` with the description as `extra_instructions`. |
-| `conditional_actions` (the default) | `POST /test_framework/v1/scenarios/generate-bg/`, whose output is conditional actions by default; `POST /test_framework/v1/scenarios/` directly only when the structure is exactly known. |
+| `conditional_actions` (the default) | `POST /test_framework/v1/scenarios/generate-bg/` with `simulation_type: "conditional_actions"` (always send it; left out, the API's default depends on the organization); `POST /test_framework/v1/scenarios/` directly only when the structure is exactly known. |
 
 Only exception on the behavioral side: the user supplies the instruction text themselves (CSV/JSON list, or "create this exact scenario") — generating would discard their wording. Generation gotchas below are routine post-generation PATCHes, not reasons to hand-author.
 
@@ -345,6 +345,7 @@ POST /test_framework/v1/scenarios/generate-bg/
   "num_scenarios": 10,
   "personalities": [<personality_id from personalities_list, matched to the agent's language>],
   "generate_expected_outcomes": true,
+  "simulation_type": "conditional_actions",
   "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"],
   "extra_instructions": "Focus on: scheduling workflows, error handling, edge cases",
   "folder_path": "Generated Scenarios"

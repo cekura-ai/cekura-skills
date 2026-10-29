@@ -142,7 +142,7 @@ set into the first selected format.
 - An explicitly requested instruction scenario remains valid for a sustained
   caller manner its personality can express, including an interruptive caller.
   Send `simulation_type: "instruction"` explicitly on that request: when the
-  field is absent, the generator produces conditional actions, and the user
+  field is absent, the API's default depends on the organization, and the user
   would get structured scenarios while you report instruction ones. Only a
   timed/runtime interruption needs the conditional-actions tag.
 - If the user explicitly chose instruction format for a case that needs a
@@ -231,7 +231,7 @@ Start generation as a background job; it returns a `progress_id`. Poll its progr
 | `extra_instructions` | your category guidance — never empty |
 | `scenario_type` | **category**: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and attach the KB material as `generation_files`. |
 | `attack_type` | **required on every red-team call, one call per type** — pick from the table below |
-| `simulation_type` | **output format**: `conditional_actions` (default) or `instruction` (only when the user asks for it) |
+| `simulation_type` | **output format**, always sent: `conditional_actions`, or `instruction` only when the user asks for it |
 | `personalities` | personality ids for the scenario's language |
 | `folder_path` | always set it (create the folder first) |
 | `generate_expected_outcomes` | `true` unless the user gave outcomes |
