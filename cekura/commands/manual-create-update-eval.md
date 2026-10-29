@@ -75,14 +75,14 @@ For updates: show the current agent/project assignment.
 
 ### 2. Scenario Type — Instructions vs Conditional Actions
 
-**Ask:** "Do you want an adaptive scenario (behavioral instructions) or a deterministic scenario (conditional actions / structured test)?"
+**Default to conditional actions — do not ask.** Use instructions only when the user asks for an instruction-based scenario.
 
 | Type | When to Use | How It Works |
 |------|------------|--------------|
-| **Adaptive (instructions)** | Most evals — testing natural conversations, edge cases, red-team | Testing agent follows behavioral instructions, adapts to agent responses naturally |
+| **Adaptive (instructions)** | Only when the user asks for an instruction-based scenario | Testing agent follows behavioral instructions, adapts to agent responses naturally |
 | **Deterministic (conditional actions)** | Unit tests, regression tests, exact flow validation | Testing agent follows predefined condition→action pairs, repeats identically each run |
 
-**The answer decides whether this command is even the right tool:**
+**The type decides whether this command is even the right tool:**
 
 - **Deterministic (conditional actions):** a batch or a category-level request → `scenarios_generate_bg` with `simulation_type: "conditional_actions"`, the flow and every tag requirement (DTMF entry, hold length, IVR menu, voicemail, interruption) in `extra_instructions`; then walk the result through the fields below and patch what is off. A single fully specified flow — the user dictated the turns, or a timing value must be exact — → build it here against the eval-design CA self-check.
 - **Adaptive (instructions):** a batch or a category-level request ("edge cases around cancellation") → hand off to `/autogen-eval`, which calls `scenarios_generate_bg` and grounds the scenarios in the agent description. A single case the user has already described in full, or supplied verbatim, → create it here: first person, `<scenario>`-wrapped, with outcome, profile, personality, tools and metrics attached (the eval-design skill's direct-create self-check). Updates to an existing adaptive scenario are always direct.

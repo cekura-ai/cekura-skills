@@ -4,6 +4,23 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.3 — 2026-10-26
+
+**Conditional actions are the default scenario format.** Scenario workflows
+generate and create conditional actions unless the user asks for
+instruction-based scenarios. Every generate call sends
+`simulation_type: "conditional_actions"` explicitly, because the API's own
+default when the field is left out depends on the organization.
+
+- `cekura-eval-design`, `/autogen-eval`, `/manual-create-update-eval`,
+  `codex/AGENTS.md` and `GEMINI.md` say so where they named the old default,
+  and no longer say the generator cannot produce conditional actions.
+- The generate examples in `/cekura-report`, `cekura-onboarding` phase 4,
+  the eval-design and onboarding API references and `codex/AGENTS.md` send
+  `simulation_type: "conditional_actions"`.
+- `cekura-create-agent` phase 11 sends `num_scenarios: 1` to the generate
+  tool (it sent `count`, which the tool does not have).
+
 ## 0.19.2 — 2026-10-22
 
 **`cekura-self-improving-agent` says one thing everywhere, and its hook no

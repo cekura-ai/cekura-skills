@@ -156,6 +156,7 @@ Call `mcp__cekura__scenarios_generate_bg` with:
 | `agent_id` | Agent ID |
 | `num_scenarios` | Count from 3a (10–20) |
 | `generate_expected_outcomes` | `true` |
+| `simulation_type` | `"conditional_actions"` |
 | `folder_path` | Folder from 3c |
 | `personalities` | Always pick the "Normal" personality matched to the agent's language via `personalities_list language=<code>` (English included: `language=en`; multilingual `language=multi` if several languages are involved; `language` is the only filter needed) |
 | `tool_ids` | `["TOOL_END_CALL"]` — add `TOOL_END_CALL_ONLY_ON_TRANSFER` if the agent has transfer flows |

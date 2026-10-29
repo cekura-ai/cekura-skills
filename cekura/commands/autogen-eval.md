@@ -65,7 +65,7 @@ Use the folder path for the `folder_path` parameter in the generate call.
 
 Default: `workflow`. Can combine by running generation multiple times with different types.
 
-**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and upload the KB material as `generation_files` (workflow category only). A separate `simulation_type` field picks the OUTPUT format (`instruction` default, or `conditional_actions` for grounded structured flows). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
+**How the choice reaches the generator:** `scenarios_generate_bg` has its own `scenario_type` field for the category: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and upload the KB material as `generation_files` (workflow category only). A separate `simulation_type` field picks the OUTPUT format: always send it, as `conditional_actions` unless the user asks for instruction-based scenarios (left out, the API's default depends on the organization). `redteaming` is not a valid value — pick the voice or text variant. Do not confuse it with the create schema's `scenario_type`, which is the output *format* (`instruction` / `conditional_actions` / …), not the category. Reinforce the category in the `extra_instructions` text you build in step 5 (e.g. "Generate adversarial scenarios: prompt injection, social engineering, manipulation attempts").
 
 **Every red-team call carries `attack_type`, one call per type.** Ask which threats matter; for "full red-team coverage" run all six and say so in the summary.
 
@@ -163,7 +163,7 @@ Use `mcp__cekura__scenarios_generate_bg` with:
 | `tags` | From step 6 |
 | `scenario_type` | Category from step 3: `workflow` (default), `red_teaming_voice` or `red_teaming_text` |
 | `attack_type` | Red team only — the type chosen in step 3; **one generation call per attack type** |
-| `simulation_type` | Output format from step 3: `instruction` (default) or `conditional_actions` |
+| `simulation_type` | Output format from step 3, always sent: `conditional_actions`, or `instruction` when the user asks for it |
 | `generation_files` | KB/context uploads when the user supplied material (workflow category only) |
 | `personalities` | Personality ids for the scenario language |
 | `generate_expected_outcomes` | `true` unless the user supplied outcomes |
@@ -238,7 +238,7 @@ Review each generated evaluator:
 If output is poor, offer to:
 - Re-run with different `extra_instructions` (**the default fix** — sharper, category-specific guidance, smaller batches)
 - Use generated evals as a starting point and PATCH them individually
-- Supplement via `/manual-create-update-eval` **only for conditional-action scenarios** — deterministic/scripted tests the generator can't produce. A weak behavioral scenario gets re-generated or patched, never replaced with a hand-authored `instruction` scenario.
+- Supplement via `/manual-create-update-eval` **only for conditional-action scenarios** — deterministic/scripted tests. A weak behavioral scenario gets re-generated or patched, never replaced with a hand-authored `instruction` scenario.
 
 ## Bulk Creation from Structured Input (CSV/JSON)
 
@@ -298,4 +298,4 @@ Missing coverage (behavioral gaps → another generation run; deterministic gaps
 - **Generation can partially complete** — check after 2 minutes, generate remainder separately
 - **`scenario_language` defaults to "en"** — always PATCH non-English scenarios
 - **Metrics come from the project** — generation attaches the project's set; confirm Expected Outcome is present and attach a missing baseline metric only if the project has it
-- **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which uses `scenario_type: "red_teaming_voice"` or `"red_teaming_text"` alongside that guidance text. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions — which generation cannot produce.
+- **Missing behavioral coverage → another generation run**, not hand-authoring. Edge cases and free-form red-team are behavioral: re-run `scenarios_generate_bg` with `extra_instructions` naming exactly the gaps — including adversarial coverage, which uses `scenario_type: "red_teaming_voice"` or `"red_teaming_text"` alongside that guidance text. Reach for `/manual-create-update-eval` only for **conditional-action** scenarios — scripted/deterministic tests, IVR/DTMF/voicemail flows, exact-sequence regressions.
