@@ -4,6 +4,25 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.3 — 2026-10-24
+
+**Runs go through the unified `scenarios_run` tool.**
+
+- `run-evals`, `cekura-report`, onboarding's first run and create-agent's
+  verify step call `scenarios_run` with `transport` set to the connection
+  mode (`voice`, `sip`, `text`, `email`, `vapi_webrtc`, `retell_webrtc`,
+  `elevenlabs`, `livekit_v2`, `pipecat_v2`, `chirp`, `agora`, `websocket`,
+  `pipecat_v1`) and `agent`, and read the agent's `enabled_connections` to
+  know which modes it can run over. A transport that is not enabled is
+  rejected with the enabled list; surface it instead of retrying.
+- The per-transport `scenarios_run_*` tools stay as the fallback for an MCP
+  server that does not list `scenarios_run` yet.
+- The onboarding and manual-eval commands allow `scenarios_run`; generate-scenarios,
+  create-agent, onboarding's agent phase and self-improve name it with
+  `transport` next to the legacy tool names.
+- autogen-eval's reminders send the follow-up run to `/run-evals` and
+  `scenarios_run`.
+
 ## 0.19.2 — 2026-10-22
 
 **`cekura-self-improving-agent` says one thing everywhere, and its hook no
