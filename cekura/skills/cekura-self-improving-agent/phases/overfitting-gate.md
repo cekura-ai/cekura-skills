@@ -97,7 +97,8 @@ Show each cleanup edit as a **before / after** block (Optimization edit on "befo
 Apply via the same machinery APPLY.1 uses (provider PATCH ordering, `Edit`+redeploy, or DB/mock update — see the provider apply docs). Live-immediate paths (provider API) need no redeploy.
 
 **Redeploy (self-hosted live target)** — cleanup changes live state again, so the `redeploy_command` flow runs a second time:
-- **Command provided** → run via Bash; same exit-code handling as APPLY.2.
+- **Command from project memory** → reuse its current-session approval only if the exact command is unchanged; otherwise apply the [memory-command gate](../providers/self-hosted/overview.md#memory-command-gate) before Bash. Same exit-code handling as APPLY.2.
+- **Command from the current session** → run via Bash; same exit-code handling as APPLY.2.
 - **`"manual"`** → fire the manual restart gate; wait for user confirmation.
 - **Unset + `auto_mode: true`** → proceed to GATE.7 without pausing.
 

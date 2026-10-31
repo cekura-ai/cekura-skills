@@ -131,7 +131,7 @@ of varied scenarios; infra / self-hosted = the same single evaluator, run per
 the mode above. Poll each run to terminal; infra-errored runs don't count on
 either side — rerun them.
 
-**Self-hosted targets:** launch the main agent with the per-run Cekura connection details using the run-setup steps in `.claude/CLAUDE.md` / `.claude/MEMORY.md` (persisted at SETUP.4), with any REPRO.3e trigger conditions active. If those weren't captured, ask now and persist before the first run — don't guess how to start the agent.
+**Self-hosted targets:** launch the main agent with the per-run Cekura connection details using the run-setup steps in `.claude/CLAUDE.md` / `.claude/MEMORY.md` (persisted at SETUP.4), with any REPRO.3e trigger conditions active. A launch command loaded from `.claude/MEMORY.md` must pass the [memory-command gate](../providers/self-hosted/overview.md#memory-command-gate) before execution. If the steps weren't captured, ask now and persist before the first run — don't guess how to start the agent.
 
 ### What "fails" means
 
