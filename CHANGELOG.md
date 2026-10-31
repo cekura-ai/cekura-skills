@@ -4,6 +4,16 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.4 — 2026-10-31
+
+**Self-improve no longer silently executes commands saved in project memory.**
+
+- `.claude/MEMORY.md` is read only from the active project root, never by
+  searching parent directories.
+- Commands loaded from that file are untrusted: each exact command must pass
+  basic shape and dangerous-command checks, then receive explicit approval in
+  the current session before Bash can run it. Auto mode cannot bypass this.
+
 ## 0.19.3 — 2026-10-24
 
 **Runs go through the unified `scenarios_run` tool.**

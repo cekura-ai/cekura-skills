@@ -30,7 +30,8 @@ Apply the whole edit set as a single batch; it was de-conflicted in FIX.5, so on
 
 Skip entirely for managed providers and render-only (no live target to refresh). For a self-hosted live target, branch on `redeploy_command`:
 
-- **Command provided** → run via Bash. Capture exit code + stderr. Non-zero → surface the failure, do NOT proceed to Sync, ask whether to retry or abort. Success (or success-with-warnings) → Sync.
+- **Command from project memory** → apply the [memory-command gate](../../providers/self-hosted/overview.md#memory-command-gate) before Bash. Show the exact command and wait for its explicit, current-session approval even in `auto_mode`; if it is declined or fails validation, switch to the manual restart gate. Once approved, capture exit code + stderr. Non-zero → surface the failure, do NOT proceed to Sync, ask whether to retry or abort. Success (or success-with-warnings) → Sync.
+- **Command from the current session** → run via Bash. Capture exit code + stderr. Non-zero → surface the failure, do NOT proceed to Sync, ask whether to retry or abort. Success (or success-with-warnings) → Sync.
 - **`"manual"`** (or unset and `auto_mode: false`) → fire the manual restart gate ([self-hosted overview](../../providers/self-hosted/overview.md) § "Redeploy command flow"); wait for explicit confirmation (`done` / `restarted` / `redeployed` / `yes`).
 - **`"noop"`** (live agent re-reads state per request) → no pause, proceed to Sync; the edit is already live.
 - **Unset and `auto_mode: true`** → proceed to Sync without pausing; Eval's no-change detector surfaces stale-state hypotheses after the fact.
