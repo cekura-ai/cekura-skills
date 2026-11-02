@@ -21,6 +21,25 @@ def never_reached_model(response):
     return bool(response.get("returncode")) and not str(response.get("events", "")).strip()
 
 
+def auth_failed(response):
+    """The CLI ran but could not authenticate (a revoked or expired subscription token): no model request was made.
+
+    Such a saved response is not evidence about the task; on resume it is set aside and the session
+    runs again, as a never-started one is, once the host has a valid login.
+    """
+    finals = []
+    for line in str(response.get("events", "")).splitlines():
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if event.get("type") == "result":
+            finals.append(event)
+    final = finals[-1] if finals else {}
+    text = str(final.get("result", ""))
+    return bool(final.get("is_error")) and (final.get("api_error_status") == 401 or "authenticate" in text.lower() or "token revoked" in text.lower())
+
+
 # Proposal sessions per run: the pool search proposes many small deltas, plus one restructure and merges.
 PROPOSER_SESSIONS = 16
 
@@ -102,6 +121,12 @@ class ClaudeSession:
             # A saved session that exited before emitting any event never reached the model: mark it and run a fresh attempt.
             response_path.rename(response_path.with_suffix(".never-started.json"))
             self._mark_not_started(key, "CLI exited %s with no events" % read(response_path.with_suffix(".never-started.json")).get("returncode"))
+            entry = dict(entry, not_started=True)
+        if entry is not None and response_path.exists() and entry["status"] == "complete" and auth_failed(read(response_path)):
+            # A saved session that could not authenticate never reached the model either: set it aside and run again.
+            n = next(i for i in range(1, 100) if not (self.directory / ("%s.auth-failed-%d.response.json" % (key, i))).exists())
+            response_path.rename(self.directory / ("%s.auth-failed-%d.response.json" % (key, n)))
+            self._mark_not_started(key, "CLI could not authenticate (attempt set aside as auth-failed-%d)" % n)
             entry = dict(entry, not_started=True)
         if entry is not None and response_path.exists() and entry["status"] == "complete":
             response = read(response_path)  # Replay: no new session, no new charge.

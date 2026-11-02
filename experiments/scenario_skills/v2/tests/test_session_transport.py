@@ -150,3 +150,31 @@ class ContainerCommand(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AuthFailure(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory(prefix="cekura-session-auth-")
+        self.addCleanup(temp.cleanup)
+        self.directory = Path(temp.name)
+        self.ledger = cumulative_ledger(self, self.directory)
+        for name in ("cli_args", "preconditions"):
+            patcher = patch.object(transport, name, lambda *a, **k: None)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.session = transport.ClaudeSession({"subscription_only": True, "hard_cost_bound_verified": True}, self.directory / "s", self.ledger)
+
+    def test_a_saved_auth_failure_is_set_aside_and_the_session_runs_again_on_resume(self):
+        revoked = {"returncode": 0, "subscription": {}, "incremental_cost_usd": 0,
+                   "events": json.dumps({"type": "result", "is_error": True, "api_error_status": 401, "subtype": "success",
+                                         "result": "Failed to authenticate: OAuth token revoked. Please log in again or contact your administrator."})}
+        with patch.object(transport, "execute", lambda v: revoked):
+            with self.assertRaises(RuntimeError):
+                self.session("p", {}, SCHEMA, "judge-a")
+        with patch.object(transport, "execute", lambda v: OK):
+            self.assertEqual(self.session("p", {}, SCHEMA, "judge-a"), {"ok": True})
+        self.assertTrue((self.directory / "s" / "judge-a.auth-failed-1.response.json").exists())
+        e = read(self.ledger.path)["entries"]
+        self.assertTrue(e["judge-a"]["not_started"])
+        self.assertEqual((e["judge-a"]["charged"], e["judge-a-attempt1"]["status"]), ("0", "complete"))
+        self.assertFalse(read(self.ledger.path)["blocked"])
