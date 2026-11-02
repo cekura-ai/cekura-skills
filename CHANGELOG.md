@@ -8,6 +8,10 @@ All notable changes to the Cekura plugin. Versions follow
 
 **`cekura-eval-design` now reaches the assistant in full.**
 
+- **Nested folders are named `Parent.Child`.** A `/` in `folder_path` is rejected by the API;
+  the skill and the agents preset now say so (verified against the pinned backend). Skill
+  version 0.11.2.
+
 - **The skill fits its loader.** `SKILL.md` was 62,582 characters against the
   60,000-character Skill loader cap, so its end — the rest of the negative-test
   rule, Infrastructure Suite guidance, routing to other skills and the whole

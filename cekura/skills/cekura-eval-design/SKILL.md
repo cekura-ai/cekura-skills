@@ -17,14 +17,14 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.11.1"
+  version: "0.11.2"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-eval-design:7k3m4q -->
 > **Cekura skill verification tag:** `ack:cekura-eval-design:7k3m4q`
 > When you call a Cekura scenario or test-profile write tool from this skill (`scenarios_*` / `test_profiles_*` create and update calls), pass this exact string as the `skill_ack` argument on that tool call. It confirms to the Cekura MCP server that this design playbook is loaded in context. Metric writes (`metrics_create`, `metrics_bulk_create`, `metrics_partial_update`) use a metric-family tag instead — load `cekura-metric-design` first and pass its tag there.
 
-Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, `plugin_version="0.19"`, and `skill_version="0.11.1"`. It returns immediately and lets Cekura see which skills are in use, and which revision of this one.
+Before taking any action, call `mcp__cekura__cekura_skill_started` with `skill_name="cekura-eval-design"`, `verification_tag="ack:cekura-eval-design:7k3m4q"`, `plugin_version="0.19"`, and `skill_version="0.11.2"`. It returns immediately and lets Cekura see which skills are in use, and which revision of this one.
 
 # Cekura Eval Design
 
@@ -40,7 +40,7 @@ This file says **what** to do. The Cekura tools available in your session — MC
 1. **Read the agent, and list its evaluators** (mandatory, below).
 2. **Decide mode and write path** — behavioral vs conditional actions.
 3. **One consolidated checkpoint** — only for what you could not infer.
-4. **Put the batch in a folder**; never write into the project root. Generation and duplication create a missing `folder_path` themselves; a direct create needs the folder to exist, so create it first.
+4. **Put the batch in a folder**; never write into the project root. Generation and duplication create a missing `folder_path` themselves; a direct create needs the folder to exist, so create it first. Nested folders are named `Parent.Child`; a `/` in `folder_path` is rejected.
 5. **Author** — generate, or create directly, per the write-path rules.
 6. **Attach metrics and supporting fields** — profile, personality, tools, tags.
 7. **Verify and say what it proves** — reconcile every write from its own response; run if the user asked, and if nothing ran, say so.
