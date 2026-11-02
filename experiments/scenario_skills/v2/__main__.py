@@ -41,7 +41,8 @@ def load_env(path, names):
 def main():
     parser = argparse.ArgumentParser(description="72-task authoring optimization against the isolated real backend")
     parser.add_argument("command", choices=("validate", "authorize-budget", "extend-budget", "prepare-claude", "prepare-generator", "prepare", "prepare-v3", "reinstrument",
-                                            "contract-probe", "transport-probe", "smoke", "preflight", "run", "report", "accept"))
+                                            "contract-probe", "transport-probe", "smoke", "preflight", "run", "report", "accept",
+                                            "evaluate-revision", "release-report"))
     parser.add_argument("--artifacts", type=Path, default=Path.home() / "cekura-scenario-v2-run")
     parser.add_argument("--base-config", type=Path)
     parser.add_argument("--evidence-root", type=Path)
@@ -54,6 +55,12 @@ def main():
     parser.add_argument("--backend-source", type=Path, help="Extracted pinned backend 650297f source tree")
     parser.add_argument("--benchmark", type=int, choices=(2, 3), default=2, help="Task set to prepare or validate (v3: product-chat-derived)")
     parser.add_argument("--from", dest="source", type=Path, help="prepare-v3: an already prepared v2 artifacts directory to reuse")
+    parser.add_argument("--skill-dir", type=Path, help="evaluate-revision: a skill directory (SKILL.md and references) to measure as delivered")
+    parser.add_argument("--label", help="evaluate-revision: the arm's name in the release report")
+    parser.add_argument("--split", choices=("training", "validation", "sealed"), default="training", help="evaluate-revision: the task split")
+    parser.add_argument("--trials", type=int, default=3, help="evaluate-revision: trials per task")
+    parser.add_argument("--cap", default="60", help="evaluate-revision: the stage cap in USD")
+    parser.add_argument("--reference", help="release-report: the arm the others are measured against (default: the first)")
     args = parser.parse_args()
     if args.command == "validate" and args.benchmark == 3:
         from ..v3.dataset import load as load_v3
@@ -230,6 +237,19 @@ def main():
         state = run(cfg, directory)
         print({"status": state["status"], "finalist": state.get("finalist"), "reason": state.get("reason")})
         return int(state["status"] in ("preflight_failed", "stopped", "inconclusive_execution"))
+    if args.command == "evaluate-revision":
+        from .release import evaluate_revision
+        if not args.skill_dir or not args.label:
+            raise SystemExit("evaluate-revision needs --skill-dir and --label")
+        out = evaluate_revision(cfg, directory, ledger, args.skill_dir, args.label, args.split, args.trials, args.cap)
+        print({"label": out["label"], "split": out["split"], "records": len(out["records"]), "passes": sum(1 for r in out["records"] if r["score"]),
+               "cost_usd": out["cost_usd"], "truncated": out["truncated"]})
+        return 0
+    if args.command == "release-report":
+        from .release import report as release_report
+        print(release_report(directory, args.reference))
+        print(directory / "release-report.md")
+        return 0
     if args.command == "report":
         from .experiment import report
         report(directory, read(directory / "experiment.json"), ledger, cfg)

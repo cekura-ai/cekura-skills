@@ -76,6 +76,20 @@ def identity(config):
             "code": {str(p.relative_to(ROOT)): digest(p) for p in ROOT.rglob("*.py") if "tests" not in p.parts}}
 
 
+def judge_for(config, directory, ledger):
+    """The run's judge with its sessions scoped to the run, like the proposer's.
+
+    Judge session names repeat in every run, and the 384-session allowance is counted per
+    namespace; three runs had used the shared, un-namespaced allowance up. Judgments are cached
+    by key in judgments/ before any session, so the namespace never re-judges cached evidence.
+    The session is built here, not in judge.py, so the judge identity (and every cached
+    judgment keyed on it) is unchanged.
+    """
+    from .transport import ClaudeSession
+    namespace = "run-" + digest(str(Path(directory).resolve()).encode())[:12]
+    return ClaudeJudge(config["judge"], directory, ledger, call=ClaudeSession(config["judge"], directory / "judge-sessions", ledger, namespace=namespace))
+
+
 def launch_gate(directory, ident, ceiling="150"):
     """Approval bound to this identity and to the wallet ceiling it was given under."""
     path = directory / "launch-approval.json"
@@ -241,7 +255,7 @@ class Controller:
                 raise Terminal("smoke_required", "Run `v2 smoke` on the current rollout code before any paid stage")
         if not self.state.get("deadline"):
             self.save(launched_at=self.clock(), deadline=self.clock() + DEADLINE_SECONDS)
-        self.judge = self.judge or ClaudeJudge(config["judge"], directory, self.ledger)
+        self.judge = self.judge or judge_for(config, directory, self.ledger)
         if not self.judge.qualified():
             self.save(stage="judge_qualification")
             if not self.judge.qualify()["passed"]:
