@@ -303,7 +303,7 @@ On `evaluation.metrics[]` entries: `score` field (0 = FAIL, 5 = PASS, None = N/A
 
 1. **Understand the agent** — Read the agent description to identify all workflows, decision points, and edge cases
 2. **Choose a tool strategy** — Ask the user which of the three approaches below
-3. **Put the batch in a folder** — Generation and duplication create a missing `folder_path` themselves; a direct create needs the folder to exist, so create it first
+3. **Put the batch in a folder** — Generation and duplication create a missing `folder_path` themselves; a direct create needs the folder to exist, so create it first. Nested folders are named `Parent.Child`; a `/` in `folder_path` is rejected
 4. **Run the pre-creation checkpoint** — Confirm tool strategy, test profile, run mode, personality, adaptive vs conditional, folder, metrics
 5. **Generate with `simulation_type: "conditional_actions"` — `instruction` only when the user asks** (see "Auto-Generation" below); create directly only a conditional-action scenario whose structure is exactly known. Set `folder_path` either way
 6. **Review and fix** — check `scenario_language` (it follows the personality used, so pass a personality in the target language), fix `first_message` if auto-gen added greetings
