@@ -115,7 +115,7 @@ every project:
 7. **Audit trail** — every session leaves a replayable record: manifest version,
    baseline config hash, failure set, root cause, edit proposal + diff, eval
    results, final diff. **Every simulation batch is labeled**: pass `name` on
-   each `scenarios_run_*` call — `[selfimprove:<session_id>] <phase> — <detail>`
+   each `scenarios_run*` call — `[selfimprove:<session_id>] <phase> — <detail>`
    (e.g. `[selfimprove:s-0818] repro attempt 2 (must-fail)`, `verify iter3 —
    failure set`, `regression — happy path`) — so dashboard results map back to
    the session and phase without opening transcripts.

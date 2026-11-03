@@ -139,7 +139,7 @@ After the import completes, retrieve the agent via `mcp__cekura__aiagents_tool_r
 | `telephony.inbound` | boolean, default `false` |
 | `telephony.sip_uri` | e.g. `sip:agent@domain.com` |
 | `telephony.sip_auth` | `{"username": "...", "password": "..."}` |
-| `telephony.websocket_url` | Raw-PCM 16 kHz WebSocket voice endpoint (`wss://…`); runs via `scenarios_run_chirp` |
+| `telephony.websocket_url` | Raw-PCM 16 kHz WebSocket voice endpoint (`wss://…`); runs via `scenarios_run` with `transport: chirp` (legacy `scenarios_run_chirp`) |
 | `telephony.websocket_auth` | `{"username": "...", "password": "..."}` basic-auth for the WebSocket endpoint |
 | `telephony.outbound_numbers` | Array of E.164 numbers for outbound webhook validation |
 

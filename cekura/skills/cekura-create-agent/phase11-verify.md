@@ -48,6 +48,8 @@ Use the appropriate MCP tool based on the main agent's connection mode. Do not c
 | WebRTC (Pipecat) | `mcp__cekura__scenarios_run_pipecat_v2` |
 | WebRTC (ElevenLabs) | `mcp__cekura__scenarios_run_elevenlabs` |
 
+When `mcp__cekura__scenarios_run` is listed, use it with `transport` (`text`, `voice`, `sip`, `vapi_webrtc`, `retell_webrtc`, `livekit_v2`, `pipecat_v2`, `elevenlabs`) and `agent` instead; pick the transport from the agent's `enabled_connections`.
+
 Poll the result using `mcp__cekura__results_retrieve` until the run is complete, then inspect the transcript.
 
 **Step 3 — Check the transcript**

@@ -43,7 +43,7 @@ All other fields are optional. PATCH requires no mandatory fields.
 | `inbound` | boolean | Default `false` |
 | `sip_uri` | string\|null | e.g. `sip:user@domain.com` |
 | `sip_auth` | object\|null | `{username, password}` |
-| `websocket_url` | string\|null | Raw-PCM 16 kHz WebSocket voice endpoint (`wss://…`); runs via `scenarios_run_chirp` |
+| `websocket_url` | string\|null | Raw-PCM 16 kHz WebSocket voice endpoint (`wss://…`); runs via `scenarios_run` with `transport: chirp` (legacy `scenarios_run_chirp`) |
 | `websocket_auth` | object\|null | `{username, password}` basic-auth for the WebSocket endpoint |
 | `outbound_numbers` | string[] | E.164 numbers for outbound webhook validation |
 
