@@ -10,6 +10,14 @@ All notable changes to the Cekura plugin. Versions follow
 
 - Rebased on 0.19.4: the compacted skill keeps conditional actions as the default
   format and always sends `simulation_type`.
+- **API facts the benchmark rollouts exposed, confirmed in the backend source:** the
+  bulk update merges `metric_ids_to_add`/`_remove`, has no `tags` field, rejects
+  string tool ids and reassigns every listed evaluator when `agent` is passed; a
+  scenario PATCH replaces `tags`, `metrics` and `tool_ids` wholesale; a profile's
+  `agent`/`project` cannot change after creation; run and result reads need
+  `agent_id`, `project_id` or `result_id`; lists return 30 per page (`page_size`
+  up to 200) and a page past the end is a 404. The API reference's profile
+  examples now show the sectioned `information` shape the platform uses.
 
 - **Nested folders are named `Parent.Child`.** A `/` in `folder_path` is rejected by the API;
   the skill and the agents preset now say so (verified against the pinned backend). Skill

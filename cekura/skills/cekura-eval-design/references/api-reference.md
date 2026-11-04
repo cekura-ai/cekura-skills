@@ -42,6 +42,8 @@ Use `?call_id=` only when constructing a dashboard UI link to a specific run. In
 | GET | `/test_framework/v1/scenarios/{id}/` | Get evaluator |
 | PATCH | `/test_framework/v1/scenarios/{id}/` | Update evaluator |
 | DELETE | `/test_framework/v1/scenarios/{id}/` | Delete evaluator |
+
+Lists are paginated: `count`, `next`, `results`; 30 per page by default, `page_size` up to 200. Read until `next` is null; a page past the end is a 404, not an empty page.
 | POST | `/test_framework/v1/scenarios/generate-bg/` | Auto-generate evaluators (background) |
 | GET | `/test_framework/v1/scenarios/generate-progress/` | Check generation progress (`?progress_id=<id>`) |
 | POST | `/test_framework/v1/scenarios/from-transcript/` | Create evaluator from call transcript |
@@ -92,6 +94,8 @@ Returns a result object with `id`, `status`, and `runs` array.
 |--------|------|---------|
 | GET | `/test_framework/v2/runs/` | List runs |
 | POST | `/test_framework/v1/runs/{id}/end-call/` | End a single call |
+
+Run and result list or bulk reads require a scope: `agent_id`, `project_id` or `result_id` (runs), `agent_id`, `assistant_id` or `project_id` (results). Prefer `result_id` to read a result's runs; a bulk run read takes up to 100 comma-separated `run_ids`.
 
 ## Personality Endpoints
 
@@ -237,6 +241,8 @@ Creates an evaluator based on a real call transcript.
 | PATCH | `/test_framework/v1/test-profiles/{id}/` | Update profile |
 | DELETE | `/test_framework/v1/test-profiles/{id}/` | Delete profile |
 
+A PATCH sends only the fields that change (usually `information`, which is replaced whole). `agent` and `project` are fixed after creation; resending a different value, including a value where the stored one is null, is a 400.
+
 ### Create Test Profile Schema
 
 ```json
@@ -245,7 +251,8 @@ Creates an evaluator based on a real call transcript.
   "agent": "integer | null — agent ID (either agent or project required)",
   "project": "integer | null — project ID",
   "information": {
-    "key": "value — arbitrary key-value pairs for identity/context data"
+    "main_agent_variables": { "patient_full_name": "string — values the main agent's dynamic variables take" },
+    "testing_agent_variables": { "caller_name": "string — what the simulated caller knows and says" }
   }
 }
 ```
@@ -259,9 +266,8 @@ Creates an evaluator based on a real call transcript.
   "agent": 12345,
   "project": null,
   "information": {
-    "name": "Sarah Johnson",
-    "date_of_birth": "01/01/1990",
-    "patient_id": "PT-12345"
+    "main_agent_variables": { "patient_full_name": "Sarah Johnson", "patient_dob": "01/01/1990", "patient_id": "PT-12345" },
+    "testing_agent_variables": { "caller_name": "Sarah Johnson", "caller_phone": "+15550102030" }
   }
 }
 ```
