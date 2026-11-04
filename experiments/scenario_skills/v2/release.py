@@ -63,9 +63,20 @@ def evaluate_revision(config, directory, ledger, skill_dir, label, split="traini
         raise Terminal("no_tasks", "No %s tasks selected" % split)
     # A stage cap is immutable once recorded; a top-up after retries exhausted it runs under its own labelled stage.
     stage = "release-%s-%s-%s" % (label, split, digest(candidate)[:12]) + ("-" + stage_label if stage_label else "")
+    # Unlike a search, a measurement keeps going past a trial that ended without evidence (an
+    # infrastructure failure after bounded retries): that trial is reported as missing, the other
+    # trials of the task still count, and the arm's record says how many were lost.
+    workers = max(1, int(protocol.get("workers", 1)))
+    records = []
     try:
         with ledger.staged(stage, Decimal(str(cap))):
-            records = controller.parallel([(candidate, t, "%s_%s" % (label, split), k, True) for k in range(trials) for t in tasks])
+            from concurrent.futures import ThreadPoolExecutor
+            jobs = [(t, k) for k in range(trials) for t in tasks]
+            with ThreadPoolExecutor(workers) as pool:
+                for record in pool.map(lambda job: evaluator.evaluate(candidate, job[0], job[1]), jobs):
+                    records.append(record)
+                    print({"stage": "%s_%s" % (label, split), "task": record["task_id"], "repeat": record.get("repeat"), "status": record["status"],
+                           "score": (record.get("grade") or {}).get("score")}, flush=True)
     except Exception as error:
         if "Stage allowance" in str(error):
             raise Terminal("release_cap_exhausted", "The %s stage did not fit its $%s cap" % (stage, cap))
@@ -76,7 +87,8 @@ def evaluate_revision(config, directory, ledger, skill_dir, label, split="traini
              "critical_failed": (r.get("grade") or {}).get("critical_failed", []), "skill_not_loaded": skill_not_loaded(r),
              "cost_usd": str(trial_cost(r)) if r["status"] == "complete" else None} for r in records]
     delivered = delivered_skill(candidate, config["target"]["snapshot"]["skill_max_chars"])
-    out = {"label": label, "split": split, "trials": trials, "skill_dir": str(skill_dir), "sha256": digest(candidate),
+    lost = [(r["task"], r["repeat"], r["status"]) for r in rows if r["status"] != "complete"]
+    out = {"label": label, "split": split, "trials": trials, "skill_dir": str(skill_dir), "sha256": digest(candidate), "lost_trials": lost,
            "characters": len(candidate.decode()), "delivered_characters": len(delivered.decode()), "truncated": delivered != candidate,
            "tasks": [t["id"] for t in tasks], "records": rows, "cost_usd": str(sum((Decimal(r["cost_usd"]) for r in rows if r["cost_usd"]), Decimal(0)))}
     write(directory / ("release-%s-%s.json" % (label, split)), out)
