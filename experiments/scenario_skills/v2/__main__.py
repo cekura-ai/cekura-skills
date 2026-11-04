@@ -61,6 +61,7 @@ def main():
     parser.add_argument("--trials", type=int, default=3, help="evaluate-revision: trials per task")
     parser.add_argument("--cap", default="60", help="evaluate-revision: the stage cap in USD")
     parser.add_argument("--reference", help="release-report: the arm the others are measured against (default: the first)")
+    parser.add_argument("--stage-label", help="evaluate-revision: a suffix for the stage name, for a top-up after a cap was exhausted")
     args = parser.parse_args()
     if args.command == "validate" and args.benchmark == 3:
         from ..v3.dataset import load as load_v3
@@ -241,7 +242,7 @@ def main():
         from .release import evaluate_revision
         if not args.skill_dir or not args.label:
             raise SystemExit("evaluate-revision needs --skill-dir and --label")
-        out = evaluate_revision(cfg, directory, ledger, args.skill_dir, args.label, args.split, args.trials, args.cap)
+        out = evaluate_revision(cfg, directory, ledger, args.skill_dir, args.label, args.split, args.trials, args.cap, stage_label=args.stage_label)
         print({"label": out["label"], "split": out["split"], "records": len(out["records"]), "passes": sum(1 for r in out["records"] if r["score"]),
                "cost_usd": out["cost_usd"], "truncated": out["truncated"]})
         return 0

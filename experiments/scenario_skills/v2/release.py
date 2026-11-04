@@ -31,7 +31,7 @@ def revision_tasks(controller, split, protocol):
 
 
 def evaluate_revision(config, directory, ledger, skill_dir, label, split="training", trials=3, cap="60", judge=None, evaluator=None,
-                      skip_preflight=False, clock=time.time):
+                      skip_preflight=False, clock=time.time, stage_label=None):
     """Every task of ``split`` ``trials`` times with the skill in ``skill_dir``; records are cached like any rollout."""
     skill_dir = Path(skill_dir)
     candidate = (skill_dir / "SKILL.md").read_bytes()
@@ -61,7 +61,8 @@ def evaluate_revision(config, directory, ledger, skill_dir, label, split="traini
     tasks = revision_tasks(controller, split, protocol)
     if not tasks:
         raise Terminal("no_tasks", "No %s tasks selected" % split)
-    stage = "release-%s-%s-%s" % (label, split, digest(candidate)[:12])
+    # A stage cap is immutable once recorded; a top-up after retries exhausted it runs under its own labelled stage.
+    stage = "release-%s-%s-%s" % (label, split, digest(candidate)[:12]) + ("-" + stage_label if stage_label else "")
     try:
         with ledger.staged(stage, Decimal(str(cap))):
             records = controller.parallel([(candidate, t, "%s_%s" % (label, split), k, True) for k in range(trials) for t in tasks])
