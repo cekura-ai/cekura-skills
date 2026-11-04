@@ -51,7 +51,8 @@ class Release(unittest.TestCase):
         self.assertEqual(len({(b, s, t, r) for b, s, t, r in evaluator.calls}), 64)
         for label, d in (("main", self.main_dir), ("released", self.new_dir)):
             evaluate_revision(self.config, self.directory, self.ledger, d, label, "sealed", 2, judge=judge, evaluator=evaluator, skip_preflight=True)
-        summary = report(self.directory, reference="main")
+        report(self.directory, reference="main")
+        summary = report(self.directory, reference="main")  # a second report must ignore its own summary file
         self.assertTrue(summary["training"]["released"]["passed"])
         self.assertGreater(summary["training"]["released"]["gain"], 0)
         self.assertEqual(summary["sealed"]["released"]["consistent"]["gains"], sorted("%s-kestrel" % t for t in sorted(FAILING)[:2]))

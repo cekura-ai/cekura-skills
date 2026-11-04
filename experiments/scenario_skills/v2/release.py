@@ -93,7 +93,8 @@ def _records(entry):
 
 def report(directory, reference=None):
     """One markdown comparison of every ``release-*.json`` in ``directory``; ``reference`` names the arm others are measured against."""
-    entries = [read(p) for p in sorted(Path(directory).glob("release-*.json"))]
+    # Arm files only: the report also writes release-summary.json into the same directory.
+    entries = [e for e in (read(p) for p in sorted(Path(directory).glob("release-*.json"))) if "split" in e and "records" in e]
     by_split = {}
     for e in entries:
         by_split.setdefault(e["split"], []).append(e)
