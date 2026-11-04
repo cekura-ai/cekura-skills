@@ -305,10 +305,10 @@ On `evaluation.metrics[]` entries: `score` field (0 = FAIL, 5 = PASS, None = N/A
 2. **Choose a tool strategy** — Ask the user which of the three approaches below
 3. **Create a folder first** — Always create a folder before generating or creating scenarios
 4. **Run the pre-creation checkpoint** — Confirm tool strategy, test profile, run mode, personality, adaptive vs conditional, folder, metrics
-5. **Write by type — behavioral ⇒ generate, conditional actions ⇒ create directly** (see "Auto-Generation" below; the generate endpoint cannot emit conditional actions). Set `folder_path` either way
+5. **Generate with `simulation_type: "conditional_actions"` — `instruction` only when the user asks** (see "Auto-Generation" below); create directly only a conditional-action scenario whose structure is exactly known. Set `folder_path` either way
 6. **Review and fix** — PATCH `scenario_language` for non-English, fix `first_message` if auto-gen added greetings
 7. **Set up test infrastructure** — Test profiles + tool data per chosen strategy
-8. **Supplement by type, same rule as step 5** — behavioral gaps (edge cases, free-form red-team) ⇒ another generation run with `extra_instructions` naming the gaps; deterministic gaps ⇒ author conditional-action scenarios directly. Never hand-write an `instruction` scenario to close a gap
+8. **Supplement by type, same rule as step 5** — behavioral gaps (edge cases, free-form red-team) ⇒ another generation run with `extra_instructions` naming the gaps; deterministic gaps ⇒ another generation run, or a direct create when the structure is exactly known. Never hand-write an `instruction` scenario to close a gap
 9. **Attach metrics** — Always include baseline metrics
 10. **Run and validate** — Execute, review transcripts, iterate
 
@@ -331,8 +331,8 @@ Agent doesn't use tools, or tools aren't relevant to these tests. Use test profi
 
 | `scenario_type` | Path |
 |---|---|
-| `instruction` (behavioral — natural conversation, edge cases, free-form red-team) | **Always** `POST /test_framework/v1/scenarios/generate-bg/`. Never hand-author, not even for a single scenario — use `num_scenarios: 1` with the description as `extra_instructions`. |
-| `conditional_actions` (scripted, deterministic, regression, IVR/DTMF/voicemail, compliance, infra) | **Always** `POST /test_framework/v1/scenarios/` directly. The generate endpoint cannot emit conditional actions. |
+| `instruction` (behavioral — only when the user asks for instruction-based scenarios) | **Always** `POST /test_framework/v1/scenarios/generate-bg/`. Never hand-author, not even for a single scenario — use `num_scenarios: 1` with the description as `extra_instructions`. |
+| `conditional_actions` (the default) | `POST /test_framework/v1/scenarios/generate-bg/` with `simulation_type: "conditional_actions"` (always send it; left out, the API's default depends on the organization); `POST /test_framework/v1/scenarios/` directly only when the structure is exactly known. |
 
 Only exception on the behavioral side: the user supplies the instruction text themselves (CSV/JSON list, or "create this exact scenario") — generating would discard their wording. Generation gotchas below are routine post-generation PATCHes, not reasons to hand-author.
 
@@ -345,6 +345,7 @@ POST /test_framework/v1/scenarios/generate-bg/
   "num_scenarios": 10,
   "personalities": [<personality_id from personalities_list, matched to the agent's language>],
   "generate_expected_outcomes": true,
+  "simulation_type": "conditional_actions",
   "tool_ids": ["TOOL_END_CALL", "TOOL_END_CALL_ON_TRANSFER"],
   "extra_instructions": "Focus on: scheduling workflows, error handling, edge cases",
   "folder_path": "Generated Scenarios"
@@ -428,7 +429,7 @@ Create mock tools with input/output mappings. **Critical rules:**
 2. **Test profile** — Show the full `information` dict. For A: match client's staging data formats. For B: derive FROM mock tool outputs. For C: caller identity only.
 3. **Run mode** — Default to text/chat (cheapest, same logic coverage). Voice only when explicitly needed.
 4. **Personality** — Default: the "Normal" personality matched to the scenario's language (look it up via personalities_list, English included) and a multilingual (language=multi) one for mixed-language scenarios. Note exceptions but don't change without asking.
-5. **Adaptive vs conditional** — Default to adaptive. Only use conditional actions for explicit unit-test needs.
+5. **Adaptive vs conditional** — Default to conditional actions. Use instructions only when the user asks for instruction-based scenarios.
 6. **Folder** — Name the folder.
 7. **Metrics** — Confirm baseline metrics attachment.
 
@@ -514,10 +515,10 @@ The `?call_id=` query param holds a `run_id` — use that format only when const
 
 ## Conditional Actions — Deterministic Evaluators
 
-Use conditional actions when the user needs a scenario that runs identically each time: unit tests, regression tests, IVR navigation, compliance testing. For adaptive/exploratory scenarios use behavioral instructions instead.
+Use conditional actions when the user needs a scenario that runs identically each time: unit tests, regression tests, IVR navigation, compliance testing. They are the default format; use behavioral instructions only when the user asks for instruction-based scenarios.
 
 **When to use:** Exact flow validation, deterministic regression, IVR nav, compliance.
-**When NOT to use:** Natural conversation quality, edge cases, red-team — those are behavioral scenarios, which are generated via `generate-bg`, not authored here.
+**When NOT to use:** Only when the user asks for instruction-based scenarios — those are generated via `generate-bg`, not authored here.
 
 ### Structure
 

@@ -73,8 +73,6 @@ Skip the question entirely when the user said "proceed autonomously", "don't ask
 
 If you did ask, **wait for the answer** — no create or generate call in the same turn. And when the user says "first ask me", "show me the plan" or "confirm before creating", present the whole plan (mode, count and coverage, folder, profile, personality, metrics) and wait for approval even if the request already names the agent and the count.
 
-When the request sits in an **Ask first** row of the mode table and the user has not chosen a structure, ask — one short question offering behavioural vs conditional actions with the reason. Existing evaluators of one type in the project do not answer it for them; the no-confirmation rows (infra, pipeline, explicit CA vocabulary) still switch without asking.
-
 What to confirm (drop every line you can already answer):
 
 1. **Tool data strategy** — (A) their staging backend, (B) Cekura mock tools, (C) tools irrelevant. Default: B when `mock_tools` exist, C when the agent has no tools.
@@ -91,16 +89,14 @@ Do not ask about personality, metrics or tags — pick the documented defaults b
 
 | Mode | When |
 |---|---|
-| **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Open-ended personas, exploratory red-team, tone/empathy, general quality probing, any request without a structural commitment. The default. A category-level ask for one scenario is still `num_scenarios: 1`; never hand-author in this mode — only a complete user-supplied verbatim payload is created directly. |
-| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, first_message, conditions[]}` | Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, data-bound turn-by-turn verification, anything needing an XML tag. When generating, put the tag requirements into `extra_instructions` ("the caller enters the account number by DTMF", "hold 20 s after the greeting", "the caller reaches an IVR menu first") and check the output against the self-check below. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
+| **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Open-ended personas, exploratory red-team, tone/empathy, general quality probing, any request without a structural commitment — only when the user asks for instruction-based scenarios; otherwise these are conditional actions too. A category-level ask for one scenario is still `num_scenarios: 1`; never hand-author in this mode — only a complete user-supplied verbatim payload is created directly. |
+| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, first_message, conditions[]}` | **The default.** Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, data-bound turn-by-turn verification, anything needing an XML tag. When generating, put the tag requirements into `extra_instructions` ("the caller enters the account number by DTMF", "hold 20 s after the greeting", "the caller reaches an IVR menu first") and check the output against the self-check below. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
 
 **Switch to CA with no confirmation** when the user says: conditional actions, structured or scripted scenario/test, deterministic test, unit test, regression test, exact flow, fixed sequence, compliance test, infra/infrastructure/pipeline/CI test or gate.
 
 **Infrastructure and pipeline tests are always CA — no confirmation.** Tests of STT, VAD, LLM timeout, TTS, interruption handling, idle timers, DTMF or any other pipeline-layer behaviour must trigger the behaviour at an exact moment with exact timing, which behavioural instructions cannot guarantee. Switch immediately; **cekura-infra-test-suite** has the full workflow.
 
-**Ask one short question** when the request names a tag-supported feature — voicemail, IVR menu, DTMF entry, hold music, interruption, network simulation/packet loss, background noise — without naming a mode: *"This involves [IVR]. Conditional actions support `<dtmf>` / `<ivr>` tags directly for a high-fidelity test; behavioural instructions are looser. Which do you want?"* Then proceed with the answer.
-
-**Which mode for which request** (defaults — the user's explicit word wins):
+**Which mode for which request** (when the user asked for instruction-based scenarios; otherwise every row is CA — the user's explicit word wins):
 
 | Request | Mode | Why |
 |---|---|---|
@@ -142,8 +138,7 @@ set into the first selected format.
 - An explicitly requested instruction scenario remains valid for a sustained
   caller manner its personality can express, including an interruptive caller.
   Send `simulation_type: "instruction"` explicitly on that request: when the
-  field is absent, the generator auto-selects conditional actions for any
-  interruption, silence or hold wording in `extra_instructions`, and the user
+  field is absent, the API's default depends on the organization, and the user
   would get structured scenarios while you report instruction ones. Only a
   timed/runtime interruption needs the conditional-actions tag.
 - If the user explicitly chose instruction format for a case that needs a
@@ -232,7 +227,7 @@ Start generation as a background job; it returns a `progress_id`. Poll its progr
 | `extra_instructions` | your category guidance — never empty |
 | `scenario_type` | **category**: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and attach the KB material as `generation_files`. |
 | `attack_type` | **required on every red-team call, one call per type** — pick from the table below |
-| `simulation_type` | **output format**: `instruction` (default) or `conditional_actions` |
+| `simulation_type` | **output format**, always sent: `conditional_actions`, or `instruction` only when the user asks for it |
 | `personalities` | personality ids for the scenario's language |
 | `folder_path` | always set it (create the folder first) |
 | `generate_expected_outcomes` | `true` unless the user gave outcomes |
