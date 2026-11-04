@@ -8,6 +8,9 @@ All notable changes to the Cekura plugin. Versions follow
 
 **`cekura-eval-design` now reaches the assistant in full.**
 
+- Rebased on 0.19.4: the compacted skill keeps conditional actions as the default
+  format and always sends `simulation_type`.
+
 - **Nested folders are named `Parent.Child`.** A `/` in `folder_path` is rejected by the API;
   the skill and the agents preset now say so (verified against the pinned backend). Skill
   version 0.11.2.

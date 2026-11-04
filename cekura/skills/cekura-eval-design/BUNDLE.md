@@ -79,8 +79,6 @@ Ask **once**, in a single message, and only for what the request and the agent r
 
 If you did ask, **wait for the answer** — no create or generate call in the same turn. And when the user says "first ask me", "show me the plan" or "confirm before creating", present the whole plan (mode, count and coverage, folder, profile, personality, metrics) and wait for approval even if the request already names the agent and the count.
 
-For an **Ask first** row of the mode table with no structure chosen, ask one short question (behavioural vs conditional actions, with the reason); existing evaluators of one type do not answer it. The no-confirmation rows (infra, pipeline, explicit CA vocabulary) switch without asking.
-
 What to confirm (drop every line you can already answer):
 
 1. **Tool data strategy** — (A) their staging backend, (B) Cekura mock tools, (C) tools irrelevant. Default: B when `mock_tools` exist, C when the agent has no tools.
@@ -101,14 +99,12 @@ Do not ask about personality, metrics or tags — pick the documented defaults b
 
 | Mode | When |
 |---|---|
-| **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Open-ended personas, exploratory red-team, tone/empathy, general quality probing, any request without a structural commitment. The default. |
-| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, first_message, conditions[]}` | Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, data-bound turn-by-turn verification, anything needing an XML tag. When generating, put the tag requirements into `extra_instructions` ("the caller enters the account number by DTMF", "hold 20 s after the greeting", "the caller reaches an IVR menu first") and check the output against the self-check below. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
+| **Behavioral** (`scenario_type: "instruction"`) — free-form, first-person instructions | Open-ended personas, exploratory red-team, tone/empathy, general quality probing, any request without a structural commitment — only when the user asks for instruction-based scenarios; otherwise these are conditional actions too. A category-level ask for one scenario is still `num_scenarios: 1`; never hand-author in this mode — only a complete user-supplied verbatim payload is created directly. |
+| **Conditional actions** (`scenario_type: "conditional_actions"`) — `{role, first_message, conditions[]}` | **The default.** Verbatim/compliance phrasing, exact-sequence regression, IVR/voicemail/DTMF, interruption/idle/network/noise tests, infra & CI tests, one scripted attack, data-bound turn-by-turn verification, anything needing an XML tag. When generating, put the tag requirements into `extra_instructions` ("the caller enters the account number by DTMF", "hold 20 s after the greeting", "the caller reaches an IVR menu first") and check the output against the self-check below. **Numbered steps in the request are not by themselves a CA signal** — behavioural instructions are normally written as numbered steps too. |
 
 **Switch to CA with no confirmation** when the user says: conditional actions, structured or scripted scenario/test, deterministic test, unit test, regression test, exact flow, fixed sequence, compliance test, infra/infrastructure/pipeline/CI test or gate. **Infrastructure and pipeline tests are always CA** — STT, VAD, LLM timeout, TTS, interruption handling, idle timers, DTMF or any other pipeline-layer behaviour must trigger at an exact moment with exact timing, which behavioural instructions cannot guarantee; **cekura-infra-test-suite** has the full workflow.
 
-**Ask one short question** when the request names a tag-supported feature — voicemail, IVR menu, DTMF entry, hold music, interruption, network simulation/packet loss, background noise — without naming a mode: *"This involves [IVR]. Conditional actions support `<dtmf>` / `<ivr>` tags directly for a high-fidelity test; behavioural instructions are looser. Which do you want?"* Then proceed with the answer.
-
-**Which mode for which request** (defaults — the user's explicit word wins; trigger phrases above already decide regression, compliance and pipeline cases):
+**Which mode for which request** (when the user asked for instruction-based scenarios; otherwise every row is CA — the user's explicit word wins):
 
 | Request | Mode | Why |
 |---|---|---|
@@ -132,7 +128,7 @@ When a user supplies a test-case document or asks for a category batch, classify
 
 - A temporary non-verbal effect—silence/hold, timed interruption, or background noise—goes in its own generation request with `simulation_type: "conditional_actions"` and the required tag stated in `extra_instructions` (`<hold>` for dead air after a trigger; `<silence>` only for a short, interruptible pause). When the trigger and duration are exactly known, a direct conditional-actions create is equally valid.
 - An explicitly requested instruction scenario remains valid for a sustained caller manner its personality can express, including an interruptive caller; only a timed/runtime interruption needs the CA tag. If the user chose instruction format for a case that needs a runtime tag, say it cannot be represented there and offer the structured alternative first — never silently omit it or claim it was generated.
-- **Always send `simulation_type` explicitly.** When it is absent, the generator picks the format itself — conditional actions when the organization enables conditional-actions generation, and also for any interruption, silence or hold wording in `extra_instructions` — and the user would get a format other than the one you report.
+- **Always send `simulation_type` explicitly**: `conditional_actions`, or `instruction` only when the user asks for instruction-based scenarios. When it is absent, the API's default depends on the organization, so the user may get structured scenarios while you report instruction ones.
 - Before drafting, read existing evaluators in the folder and one completed run when available; put only reusable conventions (connection mode, call-flow shape, profile and personality conventions) into `extra_instructions` — never transcripts, customer data or evaluator ids.
 - Track which cases went into which request and which were deferred; after polling, reconcile requested cases against persisted evaluators as described under **Post-generation verification**, reporting validation rejections separately from provider or evaluation failures.
 
@@ -207,7 +203,7 @@ Start generation as a background job; it returns a `progress_id`. Poll its progr
 | `extra_instructions` | your category guidance — never empty |
 | `scenario_type` | **category**: `workflow` (default), `red_teaming_voice`, `red_teaming_text`. For knowledge-base coverage use `workflow` and attach the KB material as `generation_files`. |
 | `attack_type` | **required on every red-team call, one call per type**: `system_prompt_leak`, `data_leak`, `harmful_content`, `biased_output`, `unauthorized_actions`, `off_task` — what each covers and how the attacker pipeline works: **`references/auto-generation.md`** |
-| `simulation_type` | **output format**: `instruction` or `conditional_actions` — always send it (see **Batch routing**) |
+| `simulation_type` | **output format**, always sent: `conditional_actions`, or `instruction` only when the user asks for it (see **Batch routing**) |
 | `personalities` | personality ids in the scenario's language — generated scenarios take their `scenario_language` from the personality |
 | `folder_path` | always set it; a missing folder is created |
 | `generate_expected_outcomes` | `true` unless the user gave outcomes |
