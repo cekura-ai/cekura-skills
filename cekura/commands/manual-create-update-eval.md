@@ -235,6 +235,12 @@ Get explicit "looks good" before proceeding — unless the user said to proceed 
 
 **Update:** Use `mcp__cekura__scenarios_partial_update` with only the changed fields.
 
+**Many evaluators at once:**
+- A condition change on conditional-actions evaluators goes one evaluator at a time: the bulk instruction append skips that type while still answering success. Send the updates in parallel, about ten per response, and finish every evaluator in this turn. A large set is not a reason to stop and ask the user to continue.
+- The list call already returns each evaluator's instructions. Edit from it; do not retrieve each evaluator again before writing.
+- Apply the rule the user gave for each group they named to every evaluator in it; never skip one on your own judgment. Without such a rule, an evaluator that already meets the request is left as it is and listed as unchanged.
+- Change only what was asked. A tool, personality or metric that looks wrong is reported and offered, never changed as a side effect.
+
 **Duplicate:** Use `mcp__cekura__scenarios_duplicate_create`; do not recreate
 the evaluator payload with `scenarios_create`.
 
