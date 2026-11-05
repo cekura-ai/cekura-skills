@@ -237,7 +237,6 @@ Get explicit "looks good" before proceeding — unless the user said to proceed 
 
 **Many evaluators at once:**
 - A condition change on conditional-actions evaluators goes one evaluator at a time: the bulk instruction append skips that type while still answering success. Send the updates in parallel, about ten per response, and finish every evaluator in this turn. A large set is not a reason to stop and ask the user to continue.
-- The list call already returns each evaluator's instructions. Edit from it; do not retrieve each evaluator again before writing.
 - Apply the rule the user gave for each group they named to every evaluator in it; never skip one on your own judgment. Without such a rule, an evaluator that already meets the request is left as it is and listed as unchanged.
 - Change only what was asked. A tool, personality or metric that looks wrong is reported and offered, never changed as a side effect.
 - Report totals from the write responses you received, not from the calls you sent: an update with no response is not done. Name any evaluator that was not updated.

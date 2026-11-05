@@ -18,8 +18,8 @@ from a session where 126 evaluators each needed one appended condition.
 - Fields the user did not ask about (tools, personality, metrics) are reported
   and offered, never changed as a side effect.
 - `/manual-create-update-eval` carries the same rules, because the product
-  agent loads that command for evaluator edits; it also edits from the list
-  response instead of retrieving each evaluator again.
+  agent loads that command for evaluator edits; it also reports bulk totals
+  from the write responses received.
 
 ## 0.19.4 — 2026-11-03
 
