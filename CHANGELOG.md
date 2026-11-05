@@ -4,6 +4,20 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.5 — 2026-11-05
+
+**Bulk edits of conditional-actions evaluators.** `cekura-eval-design` 0.11.1,
+from a session where 126 evaluators each needed one appended condition.
+
+- Condition changes on conditional-actions evaluators go one evaluator at a
+  time, in parallel batches, and the whole set is finished in one turn: the
+  bulk instruction append skips them while still answering success.
+- The rule the user gave for each group they named applies to every
+  evaluator in it; without one, an evaluator that already meets the request
+  is left unchanged and listed as such.
+- Fields the user did not ask about (tools, personality, metrics) are reported
+  and offered, never changed as a side effect.
+
 ## 0.19.4 — 2026-11-03
 
 **Conditional actions are the default scenario format.** Scenario workflows
