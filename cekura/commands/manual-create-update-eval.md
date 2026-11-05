@@ -240,6 +240,7 @@ Get explicit "looks good" before proceeding — unless the user said to proceed 
 - The list call already returns each evaluator's instructions. Edit from it; do not retrieve each evaluator again before writing.
 - Apply the rule the user gave for each group they named to every evaluator in it; never skip one on your own judgment. Without such a rule, an evaluator that already meets the request is left as it is and listed as unchanged.
 - Change only what was asked. A tool, personality or metric that looks wrong is reported and offered, never changed as a side effect.
+- Report totals from the write responses you received, not from the calls you sent: an update with no response is not done. Name any evaluator that was not updated.
 
 **Duplicate:** Use `mcp__cekura__scenarios_duplicate_create`; do not recreate
 the evaluator payload with `scenarios_create`.
