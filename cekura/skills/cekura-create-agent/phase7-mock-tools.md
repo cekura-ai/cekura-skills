@@ -121,7 +121,8 @@ curl -X PATCH https://api.cekura.ai/test_framework/v2/aiagents/{agent_id}/ \
 - **Multiple mappings per tool** — one entry per distinct input (different users, topics, error cases)
 - **Failing or slow tools** — add an optional `response` (`status_code`, `headers`, `delay_ms`) to a mapping. See `references/mock-tool-design.md`
 - **`freetext_params`** — fields to skip during match (free-text like "notes", "reason" that vary per call)
-- **Phone format variants** — for phone lookups, add 10-digit, 11-digit-with-1, and E.164 forms
+- **Phone format variants** — for phone lookups, add 10-digit, 11-digit-with-1, and E.164 forms, or one pattern mapping that accepts all three
+- **Patterns** — an input value written `"r'...'"` is a regex the whole value must match, ignoring case (RE2 syntax, up to 200 characters, backslashes doubled in JSON). List specific mappings before a pattern catch-all. See `references/mock-tool-design.md`
 - **Chain dependencies** — if tool B uses output from tool A, mock data must be consistent across tools
 - **Append-not-replace** — when adding entries, GET first → merge → PATCH full array; partial PATCH replaces all existing mappings
 
