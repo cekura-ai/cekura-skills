@@ -17,7 +17,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "0.11.1"
+  version: "0.11.2"
 ---
 
 > **Condensed skill bundle** — loaded on the fly because the Cekura plugin is not installed in this session.
@@ -369,7 +369,7 @@ Mock tool entries, test profiles and dynamic variables are one data set — desi
 
 - **Why profiles**: the testing agent reliably uses profile data, and the same fact written in instructions *and* a profile that disagree makes it hallucinate — the profile is the single source of truth, and its `main_agent_variables` is what reaches the agent under test.
 - **Approach A (client staging)**: discover their formats first, then build a profile that matches exactly.
-- **Approach B (Cekura mocks)**: design mock entries **first**, then derive every profile value from the mock outputs — identical strings, never invented independently. One input → one output; a different outcome needs a different input. Add 10-digit, 11-digit and E.164 phone variants. Keep new entries distinct from existing ones so the fuzzy lookup cannot return the wrong record. Mark free-text arguments in `freetext_params` instead of adding an entry per phrasing. **An entry exists only when a caller step completes the trigger** — asking about a balance is not a tool call; offered ≠ completed; a refusal or an abandoned request gets no entry; an empty entry list is often correct — and every completed tool-backed step must have one. One mapping per distinct input the agent might send, not one per tool. Derive in one direction only: profile values from mock outputs, never an entry edited to match a story value.
+- **Approach B (Cekura mocks)**: design mock entries **first**, then derive every profile value from the mock outputs — identical strings, never invented independently. One input → one output; a different outcome needs a different input. Add 10-digit, 11-digit and E.164 phone variants, or one pattern entry that accepts all three (`"r'(\\+?1)?4155551234'"`: an input value written `r'...'` is a regex the whole value must match). Keep new entries distinct from existing ones so the fuzzy lookup cannot return the wrong record. Mark free-text arguments in `freetext_params` instead of adding an entry per phrasing. **An entry exists only when a caller step completes the trigger** — asking about a balance is not a tool call; offered ≠ completed; a refusal or an abandoned request gets no entry; an empty entry list is often correct — and every completed tool-backed step must have one. One mapping per distinct input the agent might send, not one per tool. Derive in one direction only: profile values from mock outputs, never an entry edited to match a story value.
 - **Approach C**: identity fields only.
 - **Always list the existing test profiles first** — clients pre-build profiles tested against their backend. A profile missing a field the flow needs is not reusable: create a complete one.
 - `information` uses the sectioned shape: `main_agent_variables` (sent to the agent under test as dynamic variables at call time; `X-`prefixed keys become SIP/WebSocket headers) and `testing_agent_variables` (persona/context for the caller). Every registered dynamic variable needs a non-empty value on every scenario.

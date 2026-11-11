@@ -59,6 +59,25 @@ How the agent sees a status of 400 or above:
 
 One input can only have one outcome, so give the failure case its own input.
 
+## Matching a Format with a Pattern
+
+When every value in a format should get the same reply, write the input value as a pattern (`"r'...'"`) instead of one mapping per value:
+
+```json
+{
+  "input": {"phone_number": "r'(\\+?1)?4155551234'"},
+  "output": {"borrower_id": "B001", "first_name": "John", "last_name": "Doe"}
+}
+```
+
+This one mapping answers `4155551234`, `14155551234` and `+14155551234`.
+
+- The whole value must match, ignoring case. Numbers are matched as text.
+- Mock data is JSON, so backslashes are doubled (`\\d`, `\\+`). Character classes such as `[0-9]` avoid them.
+- Patterns use RE2 syntax: no backreferences (`\1`) or lookarounds (`(?=...)`), repeat counts up to 1000, at most 200 characters. An invalid pattern is rejected on save.
+- A call whose arguments are exactly a mapping's plain values gets that mapping even when a pattern also matches. Otherwise list order decides, so put specific mappings before a pattern catch-all.
+- Values that need different replies still need one mapping each; a pattern gives every value it accepts the same reply.
+
 ## Tool Data Design
 
 Help the user design mock data by asking:
@@ -84,5 +103,6 @@ A PATCH that omits an existing tool **removes it entirely**.
 - **`name`** must exactly match the tool name in the main agent description (max 64 chars, alphanumeric + underscores + hyphens)
 - **`information`** is an array of input/output mappings — Cekura matches incoming tool calls to the closest input and returns the corresponding output
 - **`freetext_params`** — Parameter names to skip during mock matching (free-text fields like "notes" or "reason" that vary per call)
-- **Phone format variants** — For phone-based lookups, add mappings for ALL variants: 10-digit, 11-digit with leading 1, and full E.164
+- **Phone format variants** — For phone-based lookups, add mappings for ALL variants: 10-digit, 11-digit with leading 1, and full E.164, or one pattern mapping that accepts all three
+- **Patterns** — An input value written `"r'...'"` matches every value the regex accepts. See [Matching a Format with a Pattern](#matching-a-format-with-a-pattern)
 - **Chain dependencies** — If tool B depends on output from tool A, the mock data must be consistent across tools

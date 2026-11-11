@@ -4,6 +4,20 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.6 — 2026-11-11
+
+**Regex patterns in mock tool inputs.** `cekura-create-agent` 1.3.0 and
+`cekura-eval-design` 0.11.2.
+
+- A mock input value written `"r'...'"` is a regex the whole value must
+  match, ignoring case. One pattern mapping such as
+  `"r'(\\+?1)?4155551234'"` can replace the 10-digit, 11-digit and E.164
+  phone variants.
+- The rules travel with it: RE2 syntax (no backreferences or lookarounds),
+  up to 200 characters, backslashes doubled in JSON, and specific mappings
+  listed before a pattern catch-all.
+- `codex/AGENTS.md` and `GEMINI.md` carry the same rule.
+
 ## 0.19.5 — 2026-11-05
 
 **Bulk edits of conditional-actions evaluators.** `cekura-eval-design` 0.11.1,

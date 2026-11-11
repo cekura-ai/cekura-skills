@@ -417,7 +417,8 @@ In Cekura UI: Agent Settings > Mock Tools > Auto-Fetch. Cekura pulls tool defini
 Create mock tools with input/output mappings. **Critical rules:**
 - `name` must exactly match the tool name in the agent description
 - **Per-input branching is required** — A single input/output mapping per tool is NOT enough. If a tool accepts different parameters that should return different results (different users, topics, actions), each variant needs its own mapping. Without branching, every call returns the same output regardless of input.
-- **Phone format variants** — Add mappings for ALL formats: 10-digit, 11-digit with leading 1, full E.164
+- **Phone format variants** — Add mappings for ALL formats: 10-digit, 11-digit with leading 1, full E.164, or one pattern mapping that accepts all three
+- **Patterns** — An input value written `"r'...'"` is a regex the whole value must match, ignoring case, e.g. `"r'(\\+?1)?4155551234'"`. RE2 syntax (no backreferences or lookarounds), up to 200 characters, backslashes doubled in JSON. A call whose arguments are exactly a mapping's plain values gets that mapping; otherwise list order decides, so put specific mappings before a pattern catch-all
 - **Chain dependencies** — Downstream tools must have matching data for IDs returned by upstream tools
 - **Append-not-replace** — When PATCHing `information` array, GET existing data first, merge, then PATCH
 
