@@ -4,6 +4,18 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.7 — 2026-11-20
+
+**`/report-bug` keeps report text out of the shell.** A bare `EOF` line in
+failure-log text ended the issue-body heredoc early, and the shell ran the
+rest of the log as commands.
+
+- Issue and PR bodies are written to a file in a fresh `mktemp -d` folder and
+  passed with `--body-file`; no heredoc or `--body "..."`.
+- Issue titles, PR titles and commit messages go in single quotes with any
+  `'` removed, so `$(...)` in them is never run.
+- Branch names are limited to lowercase letters, digits and hyphens.
+
 ## 0.19.6 — 2026-11-11
 
 **Regex patterns in mock tool inputs.** `cekura-create-agent` 1.3.0 and
