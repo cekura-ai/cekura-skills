@@ -164,6 +164,7 @@ The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the 
 |-----------|---------|
 | MCP failure hook | Auto-detects `mcp__cekura__*` failures, logs them, suggests `/report-bug` |
 | Reproduction gate hook (`hooks/repro-gate.sh`, `PreToolUse` on Edit/Write/Bash) | Denies file edits and provider-mutating requests while a `.cekura/selfimprove.lock` session has no valid `repro.json` gate artifact in the manifest's `audit.dir` (bound to the lock's session id; deterministic: exactly 1/1 fail; stochastic: ≥ `stochastic_min_fails` fails, default 2). Allows `.cekura/`/`.claude/` writes, `CEKURA-REPRO-INJECT` fault-injection edits, and Clone-phase provider writes recorded in `clone.json` (POSTs while `creating: true`, then only URLs naming a recorded clone id). No lockfile → inert. |
+| Telemetry disclosure hook (`hooks/telemetry-disclosure.sh`, `PreToolUse` on `cekura_skill_started` and `cekura_report_issue`) | `notice`: the first time a skill pings Cekura, shows the user a one-line notice (`systemMessage`), then leaves `~/.claude/cekura-telemetry-notice-shown` so it never repeats; never blocks. `review`: returns `permissionDecision: "ask"`, so every issue report waits for the user's approval in Claude Code's own prompt, even when Cekura tools are always-allowed. Matchers are `mcp__.*cekura__…` because plugin-provided tools are named `mcp__plugin_cekura_cekura__…` and `/setup-mcp` ones `mcp__cekura__…`. The commands' tracking block carries the same rule as text for clients without hooks, with an exception for the Cekura dashboard assistant, where the conversation already runs on Cekura. |
 | Auto-update hook — Claude Code CLI (`hooks/hooks.json` → `SessionStart` → `claude-self-update.sh`) | **Legacy-channel only.** No-ops instantly unless the plugin was installed as `cekura@cekura-skills` (the self-hosted marketplace, where third-party auto-update defaults off); throttled to once/day; never fails the session. Installs from other marketplaces (e.g. claude-community) rely on the platform's own catalog re-pin + auto-update instead. Does **not** affect Claude Desktop, which keeps a separate plugin store under `~/Library/Application Support/Claude/local-agent-mode-sessions/.../rpm/` governed by its own `installationPreference` (the CLI hook writes to `~/.claude/plugins/`). |
 | Auto-update hook — Codex (`hooks/codex-hooks.json` → `codex-self-update.sh`) | `SessionStart` hook running `codex plugin marketplace upgrade cekura && codex plugin add cekura@cekura`, throttled to once/day. **Codex requires the user to trust it once via `/hooks`** before it runs — there is no manifest field to pre-trust. Wired via the `hooks` field in `cekura/.codex-plugin/plugin.json`. |
 
@@ -236,10 +237,11 @@ Two mechanisms for catching issues:
 
 ```
 cekura/hooks/
-  hooks.json             # Claude Code hook registration (SessionStart → CLI auto-update; PreToolUse → repro gate; PostToolUseFailure → mcp__cekura__.*)
+  hooks.json             # Claude Code hook registration (SessionStart → CLI auto-update; PreToolUse → repro gate + telemetry disclosure; PostToolUseFailure → mcp__cekura__.*)
   cursor-hooks.json      # Empty — suppresses Cursor's folder discovery of hooks.json
   copilot-hooks.json     # Empty — suppresses Copilot's folder discovery of hooks.json
   repro-gate.sh          # Deterministic must-fail-first gate for self-improve sessions (see table above)
+  telemetry-disclosure.sh # One-time usage-ping notice; approval prompt before every issue report (see table above)
   claude-self-update.sh  # Legacy-channel auto-update: guarded (cekura@cekura-skills installs only), 24h-throttled, best-effort
   on-mcp-failure.sh      # Logs failure, returns additionalContext to Claude
 ```

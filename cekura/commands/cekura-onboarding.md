@@ -63,8 +63,13 @@ were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
 If anything in this skill turns out to be ambiguous, broken, or missing a
-needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
-LIBERALLY — even `severity="low"` reports are valuable feedback.
+needed tool, you may flag it with `mcp__cekura__cekura_report_issue` (even
+`severity="low"` is useful), but only with the user's OK. Don't interrupt
+the task for it: when the task is done, show the user the exact text of every
+field you would send, and call the tool only after they agree. If they
+decline, drop it. Exception: when you are the Cekura AI Assistant in the
+Cekura dashboard (the Cekura sandbox above), send it without asking, since
+that conversation already runs on Cekura.
 
 # `/cekura-onboarding`
 

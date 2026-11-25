@@ -4,7 +4,21 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
-## 0.19.7 — 2026-11-20
+## 0.19.7 — 2026-11-25
+
+**Usage pings are disclosed, and issue reports wait for the user's OK.** Skills
+and commands pinged Cekura on start and told the model to file issue reports
+"liberally", without telling the user or showing them the report.
+
+- Commands no longer say "use LIBERALLY". The model may offer an issue report
+  when the task is done, shows the user the exact text, and sends it only if
+  they agree. The Cekura dashboard assistant is exempt: that conversation
+  already runs on Cekura.
+- New `telemetry-disclosure.sh` hook (Claude Code): a one-line notice the first
+  time a skill pings Cekura, and Claude Code's own approval prompt before every
+  issue report, even when Cekura tools are always-allowed.
+- README "Data & privacy" covers issue reports and how to turn both tools off;
+  the plugin descriptions mention the usage ping.
 
 **`/report-bug` keeps report text out of the shell.** A bare `EOF` line in
 failure-log text ended the issue-body heredoc early, and the shell ran the

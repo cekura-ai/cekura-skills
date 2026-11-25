@@ -21,6 +21,26 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "mcp__.*cekura__cekura_skill_started",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/telemetry-disclosure.sh notice",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.*cekura__cekura_report_issue",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/telemetry-disclosure.sh review",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [

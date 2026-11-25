@@ -2,7 +2,7 @@
   "name": "cekura",
   "displayName": "Cekura",
   "version": "0.19.7",
-  "description": "Cekura voice AI testing & evaluation \u2014 platform onboarding, agent setup, metric design and improvement, evaluator design and execution.",
+  "description": "Cekura voice AI testing & evaluation \u2014 platform onboarding, agent setup, metric design and improvement, evaluator design and execution. Skills send Cekura a usage ping (skill name and plugin version); see the README's Data & privacy section.",
   "author": {
     "name": "Cekura",
     "email": "support@cekura.ai",
