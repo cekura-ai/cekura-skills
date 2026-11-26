@@ -1,7 +1,7 @@
 {
   "name": "cekura",
   "version": "0.19.7",
-  "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from GitHub Copilot.",
+  "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from GitHub Copilot. Skills send Cekura a usage ping (skill name and plugin version); see the README's Data & privacy section.",
   "author": {
     "name": "Cekura",
     "email": "support@cekura.ai",

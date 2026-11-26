@@ -2,7 +2,7 @@
 name: report-bug
 description: Report a bug in a Cekura skill, command, or MCP integration
 argument-hint: "[description of what went wrong]"
-allowed-tools: ["Bash", "Read", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Bash", "Read", "Write", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-tracking-beacon -->
 
@@ -14,14 +14,27 @@ were invoked from Cekura sandbox), also pass it as `conversation_id`. The call
 returns immediately; it lets us understand which skills are actually being used.
 
 If anything in this skill turns out to be ambiguous, broken, or missing a
-needed tool, call `mcp__cekura__cekura_report_issue` to flag it. Use this
-LIBERALLY — even `severity="low"` reports are valuable feedback.
+needed tool, you may flag it with `mcp__cekura__cekura_report_issue` (even
+`severity="low"` is useful), but only with the user's OK. Don't interrupt
+the task for it: when the task is done, show the user the exact text of every
+field you would send. In Claude Code, then call the tool: Claude Code asks the
+user to approve it and remembers a "Yes, and don't ask again". Anywhere else,
+ask in chat and call the tool only after they agree. If they decline, drop it.
+Exception: when you are the Cekura AI Assistant in the Cekura dashboard (the
+Cekura sandbox above), send it without asking, since that conversation
+already runs on Cekura.
 
 # Report a Cekura Skills Bug
 
 Collect context about a bug the user encountered and file it as a GitHub issue on `cekura-ai/cekura-skills`. If the user doesn't have `gh` CLI, format the report for manual submission.
 
 ## Process
+
+**Keep report text out of the shell (Steps 5 and 6).** The user's description and the failure-log lines can contain anything: log lines are server error text, not something the user wrote. Never paste that text into a command line:
+
+- **Bodies go in a file.** Write issue and PR bodies with the `Write` tool into a fresh folder made by `mktemp -d`, then pass the file with `--body-file`. Never use a heredoc or `--body "..."`: a line reading `EOF` in the text ends a heredoc early, and the shell runs whatever follows it. A fresh folder, not a fixed name like `/tmp/report.md`, so no other user on a shared machine can read or replace the file.
+- **Titles and commit messages go in single quotes**, with any `'` removed from the text. The shell runs nothing inside single quotes; inside double quotes, `$(...)` still runs.
+- **Branch names** use lowercase letters, digits and hyphens only.
 
 ### 1. Collect Bug Context
 
@@ -87,12 +100,12 @@ If the issue is clearly a typo, wrong tool name, or stale reference in a skill/c
    git checkout -b fix/<short-description>
    # Make the edit
    git add <file>
-   git commit -m "fix: <description>"
+   git commit -m 'fix: <description>'
    ```
-3. Try to push and open a PR:
+3. Try to push and open a PR. Write the PR body to `<folder>/pr-body.md` with the `Write` tool, in a folder made with `mktemp -d` as in Step 6 (delete it afterwards), then:
    ```bash
    git push origin fix/<short-description>
-   gh pr create --repo cekura-ai/cekura-skills --title "fix: <description>" --body "<details>"
+   gh pr create --repo cekura-ai/cekura-skills --title 'fix: <description>' --body-file '<folder>/pr-body.md'
    ```
 4. If push fails (no access), tell the user: "Fix applied locally. The maintainers have been notified via the issue below."
 
@@ -100,13 +113,26 @@ If the issue is clearly a typo, wrong tool name, or stale reference in a skill/c
 
 **The issue lands on a public repository.** Before running `gh issue create`, show the user the complete issue body (including any scrubbed log excerpts from Step 3) and get their explicit OK to publish it. Do not file the issue without that confirmation.
 
-Format and create the issue:
+Once the user approves, file it without putting the body on the command line:
 
-```bash
-gh issue create --repo cekura-ai/cekura-skills \
-  --title "Bug: <short description>" \
-  --label "bug" \
-  --body "$(cat <<'EOF'
+1. Make a private folder for the report:
+   ```bash
+   mktemp -d
+   ```
+   Use the path it prints, written out in full, in place of `<folder>` below.
+2. Write the approved body (template below) to `<folder>/issue-body.md` with the `Write` tool.
+3. File the issue. The title is in single quotes, with any `'` removed from it:
+   ```bash
+   gh issue create --repo cekura-ai/cekura-skills \
+     --title 'Bug: <short description>' \
+     --label "bug" \
+     --body-file '<folder>/issue-body.md'
+   ```
+4. Delete the folder, whether or not filing worked: `rm -rf '<folder>'`.
+
+Issue body template:
+
+````markdown
 ## Bug Report
 
 **What happened:**
@@ -141,9 +167,7 @@ gh issue create --repo cekura-ai/cekura-skills \
 
 ---
 *Filed automatically via `/report-bug` in Cekura Skills*
-EOF
-)"
-```
+````
 
 ### 7. Fallback: No `gh` CLI
 

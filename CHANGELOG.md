@@ -4,7 +4,7 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
-## 0.19.7 — 2026-11-26
+## 0.19.8 — 2026-11-26
 
 **No API keys or bot notes left in files others can see (CEK-8118).**
 `cekura-create-agent` 1.3.1, `cekura-infra-test-suite` 0.4.1 and
@@ -16,6 +16,35 @@ All notable changes to the Cekura plugin. Versions follow
 - Infra-suite discovery notes and the self-improve failure report (which holds
   call transcripts) go in the project's `.cekura/scratch/` folder, with its own
   `.gitignore` of `*`, instead of the machine-wide `/tmp`.
+
+## 0.19.7 — 2026-11-25
+
+**Usage pings are disclosed, and issue reports wait for the user's OK.** Skills
+and commands pinged Cekura on start and told the model to file issue reports
+"liberally", without telling the user or showing them the report.
+
+- Commands no longer say "use LIBERALLY". The model may offer an issue report
+  when the task is done and shows the user the exact text. In Claude Code the
+  approval comes from Claude Code's own prompt; elsewhere the model asks in
+  chat. The Cekura dashboard assistant is exempt: that conversation already
+  runs on Cekura.
+- New `telemetry-disclosure.sh` hook (Claude Code): a one-line notice the first
+  time a skill pings Cekura, and Claude Code's own approval prompt before every
+  issue report. A "Yes, and don't ask again" on that prompt is remembered, and
+  a deny rule for the tool is honoured; a blanket approval of all Cekura tools
+  still gets the prompt.
+- README "Data & privacy" covers issue reports and how to turn both tools off;
+  the plugin descriptions mention the usage ping.
+
+**`/report-bug` keeps report text out of the shell.** A bare `EOF` line in
+failure-log text ended the issue-body heredoc early, and the shell ran the
+rest of the log as commands.
+
+- Issue and PR bodies are written to a file in a fresh `mktemp -d` folder and
+  passed with `--body-file`; no heredoc or `--body "..."`.
+- Issue titles, PR titles and commit messages go in single quotes with any
+  `'` removed, so `$(...)` in them is never run.
+- Branch names are limited to lowercase letters, digits and hyphens.
 
 ## 0.19.6 — 2026-11-11
 

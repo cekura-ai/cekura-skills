@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "cekura",
-      "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals \u2014 all in one plugin.",
+      "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals \u2014 all in one plugin. Skills send Cekura a usage ping (skill name and plugin version); see the README's Data & privacy section.",
       "author": {
         "name": "Cekura",
         "email": "support@cekura.ai"

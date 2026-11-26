@@ -11,7 +11,7 @@
     {
       "name": "cekura",
       "source": "cekura",
-      "description": "Access Cekura voice AI testing & evaluation skills, commands, and MCP tools directly from Cursor."
+      "description": "Access Cekura voice AI testing & evaluation skills, commands, and MCP tools directly from Cursor. Skills send Cekura a usage ping (skill name and plugin version); see the README's Data & privacy section."
     }
   ]
 }
