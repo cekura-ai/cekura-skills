@@ -6,8 +6,11 @@ you in the spec**. A question whose answer changes no assertion is not worth ask
 Find what you can from the code first. Surface only the gaps you genuinely cannot resolve, in one
 batch, at the end. Do not interview the user through the whole list.
 
-Keep the findings as working notes outside the repository (e.g. `/tmp/cekura-suite-discovery.md`);
-they are not a deliverable, and their substance ends up in the README coverage table. Every
+Keep the findings as working notes in `.cekura/scratch/` at the repository root (e.g.
+`.cekura/scratch/suite-discovery.md`), never in `/tmp`, where other users of the machine can read
+them. Before the first note, create `.cekura/scratch/.gitignore` containing a single `*` line, so
+git ignores the whole folder. The notes are not a deliverable, and their substance ends up in the
+README coverage table. Every
 numeric value and every quoted phrase must carry a `file:line`, because those are what turn a
 sequence assertion into a threshold assertion, and an unsourced number is a guess.
 
