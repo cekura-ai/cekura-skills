@@ -26,8 +26,11 @@ Self-hosted scenario execution runs against the live agent the run-setup points 
 **For `result_id` inputs (common case): run the bundled helper** [`agents/fetch_failures.py`](../agents/fetch_failures.py). It does the result scan AND the per-run bulk retrieve in one process, guaranteeing `metadata.ended_reason` (Signal 5) is captured for every kept failure. Do NOT hand-call `results_retrieve` + `runs_bulk_retrieve` for the same `result_id` — dropping the second step was the dominant cause of phantom early-end diagnoses.
 
 ```
-CEKURA_API_KEY=<key> python3 <skill_root>/agents/fetch_failures.py <result_id> --out /tmp/r<result_id>.md
+mkdir -p .cekura/scratch && printf '*\n' > .cekura/scratch/.gitignore
+CEKURA_API_KEY=<key> python3 <skill_root>/agents/fetch_failures.py <result_id> --out .cekura/scratch/r<result_id>.md
 ```
+
+The report holds call transcripts, so it goes in the project's `.cekura/scratch/` folder, which the first line makes git ignore, never in `/tmp`, where other users of the machine can read it.
 
 The report contains: a funnel line citing per-run `evaluation_status`; one block per kept failure with run id, scenario name, `evaluation_status`, **`metadata.ended_reason` (Signal 5)**, duration, `error_message`, `scenario_instructions`, expected-outcome bullets, failed alignments (`aligned: no` only), and the flattened transcript.
 

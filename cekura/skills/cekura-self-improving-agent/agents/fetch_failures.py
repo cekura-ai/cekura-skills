@@ -21,8 +21,8 @@ motivated this helper.
 USAGE
     CEKURA_API_KEY=… python3 fetch_failures.py <result_id> [--out FILE] [--json]
     CEKURA_API_KEY=… python3 fetch_failures.py 123456
-    CEKURA_API_KEY=… python3 fetch_failures.py 123456 --out /tmp/r123456.md
-    CEKURA_API_KEY=… python3 fetch_failures.py 123456 --json > runs.json
+    CEKURA_API_KEY=… python3 fetch_failures.py 123456 --out .cekura/scratch/r123456.md
+    CEKURA_API_KEY=… python3 fetch_failures.py 123456 --json > .cekura/scratch/runs.json
 
 EXIT CODES
     0  success — kept-failure summary written

@@ -4,6 +4,21 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.8 — 2026-11-26
+
+**No API keys or bot notes left in files others can see (CEK-8118).**
+`cekura-create-agent` 1.3.1, `cekura-infra-test-suite` 0.4.1 and
+`cekura-self-improving-agent` 3.0.2.
+
+- Wiring up the SDK no longer appends the real `CEKURA_API_KEY` to `.env` or
+  `.env.example`. `.env.example` gets the name only; the user sets the value,
+  and is warned first when git does not ignore `.env`.
+- Infra-suite discovery notes and the self-improve failure report (which holds
+  call transcripts) go in the project's `.cekura/scratch/` folder, with its own
+  `.gitignore` of `*`, instead of the machine-wide `/tmp`. In the Cekura
+  dashboard the infra-suite notes stay in the conversation, so they cannot
+  reach the customer's pull request.
+
 ## 0.19.7 — 2026-11-25
 
 **Usage pings are disclosed, and issue reports wait for the user's OK.** Skills
