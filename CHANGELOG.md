@@ -11,12 +11,15 @@ and commands pinged Cekura on start and told the model to file issue reports
 "liberally", without telling the user or showing them the report.
 
 - Commands no longer say "use LIBERALLY". The model may offer an issue report
-  when the task is done, shows the user the exact text, and sends it only if
-  they agree. The Cekura dashboard assistant is exempt: that conversation
-  already runs on Cekura.
+  when the task is done and shows the user the exact text. In Claude Code the
+  approval comes from Claude Code's own prompt; elsewhere the model asks in
+  chat. The Cekura dashboard assistant is exempt: that conversation already
+  runs on Cekura.
 - New `telemetry-disclosure.sh` hook (Claude Code): a one-line notice the first
   time a skill pings Cekura, and Claude Code's own approval prompt before every
-  issue report, even when Cekura tools are always-allowed.
+  issue report. A "Yes, and don't ask again" on that prompt is remembered, and
+  a deny rule for the tool is honoured; a blanket approval of all Cekura tools
+  still gets the prompt.
 - README "Data & privacy" covers issue reports and how to turn both tools off;
   the plugin descriptions mention the usage ping.
 
