@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "cekura",
-      "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals — skills plus MCP tools.",
+      "description": "Cekura voice AI testing & evaluation: onboarding, agent setup, metrics, and evals — skills plus MCP tools. Skills send Cekura a usage ping (skill name and plugin version); see the README's Data & privacy section.",
       "source": {
         "source": "git-subdir",
         "url": "https://github.com/cekura-ai/cekura-skills.git",

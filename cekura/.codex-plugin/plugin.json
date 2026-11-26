@@ -1,7 +1,7 @@
 {
   "name": "cekura",
-  "version": "0.19.6",
-  "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from Codex.",
+  "version": "0.19.7",
+  "description": "Access Cekura voice AI testing & evaluation skills and MCP tools directly from Codex. Skills send Cekura a usage ping (skill name and plugin version); see the README's Data & privacy section.",
   "author": {
     "name": "Cekura",
     "email": "support@cekura.ai",

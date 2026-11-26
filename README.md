@@ -559,7 +559,22 @@ Step 3 is the critical one — it forces Claude Code to re-read the marketplace 
 
 The plugin talks only to your own Cekura account via the Cekura MCP server (`https://api.cekura.ai/mcp`), with every call mediated by your client's MCP permission system.
 
-- **Skill-usage ping:** when a Cekura skill or command activates, it calls the `cekura_skill_started` MCP tool with the skill name, its verification tag, the plugin version, and (for some commands, when available) a conversation/session ID — so Cekura can see which skills are used and validate that the right playbook was loaded. Nothing else from your conversation is sent.
+- **Skill-usage ping:** when a Cekura skill or command activates, it calls the `cekura_skill_started` MCP tool with the skill name, its verification tag, the plugin version, and (for some commands, when available) a conversation/session ID — so Cekura can see which skills are used and validate that the right playbook was loaded. Nothing else from your conversation is sent. In Claude Code, the plugin shows a one-line notice about this the first time it happens.
+- **Issue reports:** when an instruction or tool was unclear or broken, a command may offer to send Cekura a short report through the `cekura_report_issue` MCP tool: what went wrong, a severity, the Cekura resource involved, any workaround used, and the ID of the related Cekura tool call. It shows you the exact text when the task is done and sends it only if you agree. In Claude Code, every report waits for your approval in Claude Code's own permission prompt. Choosing "Yes, and don't ask again" there stops the prompt for that project; a general approval of all Cekura tools does not.
+- **Turning these off:** in Claude Code, deny both tools in `~/.claude/settings.json`:
+
+  ```json
+  {
+    "permissions": {
+      "deny": [
+        "mcp__plugin_cekura_cekura__cekura_skill_started",
+        "mcp__plugin_cekura_cekura__cekura_report_issue"
+      ]
+    }
+  }
+  ```
+
+  If you connected the server yourself (`/setup-mcp` or `claude mcp add`), the tool names start with `mcp__cekura__` instead.
 - **Local failure log:** failures of Cekura MCP tools are logged to `~/.claude/cekura-mcp-failures.log` (secret-redacted, capped at 100 lines, never leaves your machine on its own). The `/report-bug` command may include redacted excerpts in a GitHub issue — only after showing you the full issue body and getting your explicit OK.
 - **Auto-update:** see the Auto-update sections above (Claude Code: daily self-update hook for installs from this marketplace; Codex: daily hook after a one-time `/hooks` trust).
 
