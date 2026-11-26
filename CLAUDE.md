@@ -109,6 +109,7 @@ When writing or updating skills/commands:
 - Reference MCP tools by name (e.g., `mcp__cekura__metrics_create`)
 - Use the standard API Access section format (see any SKILL.md for the pattern)
 - Include `mcp__cekura__*` tool names in command `allowed-tools` frontmatter
+- Keep `allowed-tools` to what the file's own steps use. A listed tool runs **without a permission prompt**, and these files read text that outsiders write (call transcripts, agent descriptions, tool output), so an instruction hidden in that text would run unseen. Read-only tools (`Read`, `Grep`, `Glob`) are fine. List `Write` / `Edit` only when a step saves a file. Never list bare `Bash` or `WebFetch` (CI-enforced by `cekura/scripts/validate_skills.py`); pre-approve only the exact commands a step runs, e.g. `Bash(claude mcp list *)`, and let everything else go through the user's normal prompt.
 
 ### Known MCP Limitations
 
@@ -118,7 +119,7 @@ One MCP endpoint has an issue that requires a `curl` workaround:
 
 Mock tools are managed via `mcp__cekura__aiagents_partial_update` using the `mock_tools` field — pass the full desired list of tools. Mock mode is now per-run: pass `mock_tool_names` (list of tool names) to `mcp__cekura__scenarios_run_voice` (or any run_scenarios endpoint) to activate mocking for only those tools on that run (omit to mock all configured tools).
 
-The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the create-agent skill's "Known MCP Limitations & Curl Workarounds" section for full curl examples. Skills that hit these endpoints should include `Bash` in their `allowed-tools` frontmatter.
+The workaround uses `$CEKURA_API_KEY` in the `X-CEKURA-API-KEY` header. See the create-agent skill's "Known MCP Limitations & Curl Workarounds" section for full curl examples. Don't pre-approve `Bash` for it: the curl call carries the API key, so it goes through the user's normal permission prompt.
 
 ## Plugin Overview (single `cekura` plugin)
 

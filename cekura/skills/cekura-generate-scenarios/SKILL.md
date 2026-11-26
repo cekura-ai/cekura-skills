@@ -17,7 +17,7 @@ description: |
   reproduce just that call as one evaluator scenario.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
-allowed-tools: AskUserQuestion Bash Read Write Edit Grep Glob Skill mcp__cekura__cekura_skill_started
+allowed-tools: AskUserQuestion Read Skill mcp__cekura__cekura_skill_started
 metadata:
   author: cekura
   version: "0.4.0"

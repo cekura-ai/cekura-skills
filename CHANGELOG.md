@@ -4,6 +4,29 @@ All notable changes to the Cekura plugin. Versions follow
 [semantic versioning](https://semver.org); the Claude plugin version lives in
 `cekura/.claude-plugin/plugin.json` (single source — see CLAUDE.md).
 
+## 0.19.9 — 2026-11-26
+
+**Commands and skills pre-approve only the tools their steps use.** A tool in
+`allowed-tools` runs without a permission prompt. Several files listed
+`Bash`, `Write`, `Edit` or `WebFetch` without using them, while reading
+transcripts and agent text that outsiders write, so an instruction hidden in
+that text could have run a command, changed a file or fetched a URL unseen.
+
+- Dropped unused grants: `/create-metric` (`Write`, `Edit`, `Grep`, `Glob`,
+  `WebFetch`), `/manual-create-update-eval` (`Write`, `Edit`, `Bash`, `Grep`,
+  `Glob`), `/cekura-onboarding` (`Bash`), `/eval-results` (`Write`; saving the
+  summary to a file now asks first), `cekura-flag-call-log-failures` (`Bash`,
+  `Write`, `Edit`, `Glob`) and `cekura-generate-scenarios` (`Bash`, `Write`,
+  `Edit`, `Grep`, `Glob`).
+- `/upgrade-skills`, `/setup-mcp` and `/report-bug` pre-approve only their
+  fixed, harmless commands (`claude plugin marketplace update` and
+  `claude plugin update` for Cekura only,
+  `claude mcp list`, `claude --version`, `uname`, `mktemp -d`). Everything
+  else they run, including `claude mcp add`, `gh issue create` and `git push`,
+  goes through Claude Code's normal prompt.
+- CI (`validate_skills.py`) fails a skill or command that pre-approves bare
+  `Bash` or `WebFetch`.
+
 ## 0.19.8 — 2026-11-26
 
 **No API keys or bot notes left in files others can see (CEK-8118).**

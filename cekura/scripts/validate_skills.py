@@ -13,6 +13,10 @@
   5. every prose skill count in README.md and CLAUDE.md matches the real
      number of skills (a new skill that only updates the tables leaves the
      surrounding sentence claiming the old count -- this has shipped twice)
+  6. no skill or command pre-approves bare `Bash` or `WebFetch` in
+     `allowed-tools` (a listed tool runs without a permission prompt, so an
+     instruction hidden in a transcript could run a command or reach a URL
+     unseen); scoped rules such as `Bash(claude mcp list *)` are fine
 
 Usage:
   python3 cekura/scripts/validate_skills.py
@@ -24,11 +28,19 @@ from pathlib import Path
 
 import yaml
 
+from validate_ack_tags import frontmatter_allowed_tools
+
 REPO = Path(__file__).resolve().parents[2]
 SKILLS = REPO / "cekura" / "skills"
+COMMANDS = REPO / "cekura" / "commands"
 
 MAX_DESCRIPTION_CHARS = 1024
 MAX_SKILL_LINES = 500
+
+# `Bash(<command>)` / `WebFetch(domain:<host>)` limit the grant; the bare name
+# pre-approves every shell command / every URL.
+SCOPED_TOOL_RE = re.compile(r"\b(?:Bash|WebFetch)\([^)]*\)")
+BARE_TOOL_RE = re.compile(r"(?<![\w-])(Bash|WebFetch)(?![\w-])")
 
 
 def check_skill_frontmatter(errors):
@@ -206,6 +218,21 @@ def check_prose_counts(errors):
                     )
 
 
+def check_allowed_tools(errors):
+    paths = sorted(SKILLS.glob("*/SKILL.md")) + sorted(COMMANDS.glob("*.md"))
+    for path in paths:
+        declared = frontmatter_allowed_tools(path.read_text())
+        if declared is None:
+            continue
+        unscoped = BARE_TOOL_RE.findall(SCOPED_TOOL_RE.sub("", declared))
+        for tool in sorted(set(unscoped)):
+            errors.append(
+                f"{path.relative_to(REPO)}: allowed-tools pre-approves bare "
+                f"`{tool}`; list the exact commands a step runs "
+                "(e.g. `Bash(claude mcp list *)`) or drop it so the user is prompted"
+            )
+
+
 def main():
     errors = []
     check_skill_frontmatter(errors)
@@ -213,6 +240,7 @@ def main():
     check_mcp_url_parity(errors)
     check_docs_inventory(errors)
     check_prose_counts(errors)
+    check_allowed_tools(errors)
     if errors:
         print("skill validation FAILED:")
         for e in errors:

@@ -6,7 +6,6 @@ allowed-tools:
   [
     "AskUserQuestion",
     "Read",
-    "Bash",
     "Skill",
     "mcp__cekura__list_available_tools",
     "mcp__cekura__test_simple_tool",

@@ -2,7 +2,7 @@
 name: report-bug
 description: Report a bug in a Cekura skill, command, or MCP integration
 argument-hint: "[description of what went wrong]"
-allowed-tools: ["Bash", "Read", "Write", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Bash(claude --version *)", "Bash(uname *)", "Bash(mktemp -d)", "Read", "Write", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-tracking-beacon -->
 

@@ -2,7 +2,7 @@
 name: eval-results
 description: Fetch Cekura eval results and summarize common workflow issues
 argument-hint: "[agent ID or result ID]"
-allowed-tools: ["AskUserQuestion", "Read", "Write", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["AskUserQuestion", "Read", "mcp__cekura__results_list", "mcp__cekura__results_retrieve", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-tracking-beacon -->
 
