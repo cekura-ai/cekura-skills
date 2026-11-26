@@ -15,7 +15,9 @@ All notable changes to the Cekura plugin. Versions follow
   and is warned first when git does not ignore `.env`.
 - Infra-suite discovery notes and the self-improve failure report (which holds
   call transcripts) go in the project's `.cekura/scratch/` folder, with its own
-  `.gitignore` of `*`, instead of the machine-wide `/tmp`.
+  `.gitignore` of `*`, instead of the machine-wide `/tmp`. In the Cekura
+  dashboard the infra-suite notes stay in the conversation, so they cannot
+  reach the customer's pull request.
 
 ## 0.19.7 — 2026-11-25
 

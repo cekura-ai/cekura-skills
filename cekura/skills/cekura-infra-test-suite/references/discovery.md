@@ -9,8 +9,10 @@ batch, at the end. Do not interview the user through the whole list.
 Keep the findings as working notes in `.cekura/scratch/` at the repository root (e.g.
 `.cekura/scratch/suite-discovery.md`), never in `/tmp`, where other users of the machine can read
 them. Before the first note, create `.cekura/scratch/.gitignore` containing a single `*` line, so
-git ignores the whole folder. The notes are not a deliverable, and their substance ends up in the
-README coverage table. Every
+git ignores the whole folder. When you are the Cekura AI Assistant in the Cekura dashboard, write
+no notes file at all and keep the findings in the conversation: a file you add to the checked-out
+repository there can end up in the customer's pull request. The notes are not a deliverable, and
+their substance ends up in the README coverage table. Every
 numeric value and every quoted phrase must carry a `file:line`, because those are what turn a
 sequence assertion into a threshold assertion, and an unsourced number is a guess.
 
