@@ -16,7 +16,7 @@ license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
 metadata:
   author: cekura
-  version: "3.0.1"
+  version: "3.0.2"
 ---
 
 <!-- cekura-ack-tag: ack:cekura-self-improving-agent:6w3k4p -->

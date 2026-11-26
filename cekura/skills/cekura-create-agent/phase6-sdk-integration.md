@@ -180,10 +180,11 @@ If yes, edit the pipeline accordingly.
 
 ## 6g. Wire CEKURA_API_KEY into the runtime
 
-Set the env var so the SDK can pick it up:
+The SDK reads the key from the `CEKURA_API_KEY` environment variable. **Never write the key's value into any file.** `.env.example` is usually committed, and `.env` is only safe when git ignores it.
 
-- If `.env` or `.env.example` exists in the repo, append `CEKURA_API_KEY=<key>` (or a placeholder with a comment).
-- Otherwise, tell the user explicitly how to set it for their runtime (shell export, deployment env, secret manager). Never hardcode the key in code.
+- If `.env.example` exists, add the name only, with no value: `CEKURA_API_KEY=`.
+- Tell the user to set the value themselves for their runtime (shell export, deployment env, secret manager). If they keep keys in `.env`, first check that git ignores it (`git check-ignore -q .env`); if it does not, say so and suggest adding `.env` to `.gitignore` before they put the key there.
+- Never hardcode the key in code.
 
 ## 6h. Falling back when the user refuses the SDK
 
