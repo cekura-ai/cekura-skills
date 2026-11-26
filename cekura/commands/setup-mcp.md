@@ -1,7 +1,7 @@
 ---
 name: setup-mcp
 description: Configure the Cekura MCP server for the cekura plugin
-allowed-tools: ["Bash", "Read", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__test_simple_tool", "mcp__cekura__list_available_tools", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Bash(claude mcp list *)", "Read", "Grep", "Glob", "AskUserQuestion", "mcp__cekura__test_simple_tool", "mcp__cekura__list_available_tools", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-tracking-beacon -->
 

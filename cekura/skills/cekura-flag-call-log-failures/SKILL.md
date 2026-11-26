@@ -16,7 +16,7 @@ description: |
   `cekura-generate-scenarios` — it does NOT create scenarios.
 license: MIT
 compatibility: Requires a Cekura account (https://dashboard.cekura.ai) — sign in via OAuth or use an API key.
-allowed-tools: AskUserQuestion Bash Read Write Edit Grep Glob Skill
+allowed-tools: AskUserQuestion Read Grep Skill
 metadata:
   author: cekura
   version: "0.3.0"

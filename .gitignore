@@ -12,6 +12,9 @@
 node_modules/
 npm-debug.log*
 
+# Python (validate_skills.py imports validate_ack_tags.py)
+__pycache__/
+
 # Local skills CLI test artifacts
 skills-lock.json
 # Ignore the skills-CLI's local .agents/ artifacts, but keep our committed

@@ -1,7 +1,7 @@
 ---
 name: upgrade-skills
 description: Update Cekura skills to the latest version from GitHub
-allowed-tools: ["Bash", "Read", "Grep", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
+allowed-tools: ["Bash(claude plugin marketplace update cekura-skills)", "Bash(claude plugin update cekura@cekura-skills)", "Read", "Grep", "mcp__cekura__cekura_skill_started", "mcp__cekura__cekura_report_issue"]
 ---
 <!-- cekura-tracking-beacon -->
 
